@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ScatoloneDownloader": {
+      "commandName": "Project",
+      "commandLineArgs": "-ape \"Prova.txt\""
+    }
+  }
+}
