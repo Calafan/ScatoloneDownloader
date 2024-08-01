@@ -39,6 +39,8 @@ namespace ScatoloneDownloader
 			minNextRequestTime = DateTime.Now.AddMilliseconds(100);
 
 			WebRequest request = WebRequest.Create(url);
+			request.Headers.Add(HttpRequestHeader.Accept, "*/*");
+			request.Headers.Add(HttpRequestHeader.UserAgent, "ScatoloneDownloader");
 
 			HttpWebResponse response = request.GetResponse() as HttpWebResponse;
 			if (response.StatusCode == HttpStatusCode.OK)
@@ -311,7 +313,7 @@ namespace ScatoloneDownloader
 							name = line;
 						}
 
-						if (CardsByName.ContainsKey(name))
+						if (CardsByName.TryGetValue(name, out Card card))
 						{
 							if (cardNames.Contains(name))
 							{
@@ -319,8 +321,6 @@ namespace ScatoloneDownloader
 							}
 							else
 							{
-								Card card = CardsByName[name];
-
 								card.Tag = tag;
 								cards.Add(card);
 								cardNames.Add(name);

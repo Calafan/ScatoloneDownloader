@@ -2,7 +2,7 @@
   "profiles": {
     "ScatoloneDownloader": {
       "commandName": "Project",
-      "commandLineArgs": "-ape \"Prova.txt\""
+      "commandLineArgs": "-y 2023"
     }
   }
 }
