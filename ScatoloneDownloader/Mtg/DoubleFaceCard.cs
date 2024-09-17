@@ -1,5 +1,6 @@
 ﻿using System.Drawing;
 using System.IO;
+using System.Reflection.Metadata.Ecma335;
 
 using ScatoloneDownloader.Json.Cards;
 
@@ -72,7 +73,14 @@ namespace ScatoloneDownloader.Mtg
 
 		private protected override Image GetImage(GetManager getManager)
 		{
-			return MergeFaces(getManager.GetImageStream(FrontImageUri), getManager.GetImageStream(RearImageUri));
+			Image mergedImage = MergeFaces(getManager.GetImageStream(FrontImageUri), getManager.GetImageStream(RearImageUri));
+
+			if (TypeLine.Contains("Siege"))
+			{
+				mergedImage.RotateFlip(RotateFlipType.Rotate180FlipNone);
+			}
+
+			return mergedImage;
 		}
 	}
 }

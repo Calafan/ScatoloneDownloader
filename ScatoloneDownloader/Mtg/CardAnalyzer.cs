@@ -78,9 +78,6 @@ namespace ScatoloneDownloader.Mtg
 						color = card.Colors[0];
 					}
 
-					if (card.Cmc == 0.0 && !card.TypeLine.Contains("land", StringComparison.CurrentCultureIgnoreCase) && color == "U")
-						Console.WriteLine();
-
 					foreach (string type in CardTypes)
 					{
 						if (card.TypeLine.Contains(type, StringComparison.CurrentCultureIgnoreCase))
@@ -130,7 +127,9 @@ namespace ScatoloneDownloader.Mtg
 
 			foreach (string type in CardTypes)
 			{
-				stringBuilder.AppendLine(tab + type.Capitalize() + "s:" + Tabs[type] + cardCountByType[type] + " (" + GetPercentage(cardCountByType[type], totalCards) + "%)");
+				string pluralizedType = type != "sorcery" ? type + "s" : "sorceries";
+
+				stringBuilder.AppendLine(tab + pluralizedType.Capitalize() + Tabs[type] + cardCountByType[type] + " (" + GetPercentage(cardCountByType[type], totalCards) + "%)");
 			}
 
 			stringBuilder.AppendLine();
