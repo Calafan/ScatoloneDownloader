@@ -38,7 +38,10 @@ namespace ScatoloneDownloader.Json.Cards
 		[JsonPropertyName("variation")]
 		public bool Variation { get; set; }
 
-		[JsonPropertyName("set")]
+        [JsonPropertyName("textless")]
+        public bool Textless { get; set; }
+
+        [JsonPropertyName("set")]
 		public string Set { get; set; }
 
 		[JsonPropertyName("set_name")]

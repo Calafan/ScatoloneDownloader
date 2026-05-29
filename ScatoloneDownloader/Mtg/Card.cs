@@ -12,6 +12,9 @@ namespace ScatoloneDownloader.Mtg
 	{
 		private static readonly List<string> InvalidSetsType = new() { "masters", "masterpiece", "from_the_vault", "spellbook", "premium_deck", "memorabilia" };
 		private static readonly List<string> InvalidFrameEffects = new() { "inverted", "showcase", "extendedart" };
+		private const double CardWidthMm = 63d;
+		private const double CardHeightMm = 88d;
+		private const double AdditionalBorderMm = 3d;
 
 		private readonly List<string> WhiteBorderSets = new(){ "ptk", "s99" };
 		private protected readonly List<string> ForbiddenCharacters = new() { "\\", "/", ":", "*", "?", "\"", "<", ">", "|" };
@@ -46,6 +49,7 @@ namespace ScatoloneDownloader.Mtg
 
 		internal bool Reprint { get; init; }
 		internal bool Variation { get; init; }
+		internal bool Textless { get; init; }
 		internal bool IsBasicLand { get { return !string.IsNullOrEmpty(TypeLine) && TypeLine.Contains("Basic") && TypeLine.Contains("Land"); } }
 
 		internal string Set { get; init; }
@@ -74,6 +78,7 @@ namespace ScatoloneDownloader.Mtg
 
 			Reprint = jsonCard.Reprint;
 			Variation = jsonCard.Variation;
+            Textless = jsonCard.Textless;
 
 			Set = jsonCard.Set;
 			SetName = jsonCard.SetName;
@@ -148,26 +153,52 @@ namespace ScatoloneDownloader.Mtg
 		}
 
 
-		private static Image NormalizeBorders(Image image)
+      private static Color GetBorderColor(Image image)
 		{
-			Color borderColor = ((Bitmap)image).GetPixel(20, 20);		//TODO Usare il nero, quale?
+			int x = Math.Clamp(20, 0, image.Width - 1);
+			int y = Math.Clamp(20, 0, image.Height - 1);
 
-			using (Graphics g = Graphics.FromImage(image))
+			if (image is Bitmap bitmap)
 			{
-				Brush brush = new Pen(borderColor).Brush;
-
-				Size size = new(25, image.Height);
-
-				g.FillRectangle(brush, new Rectangle(new Point(0, 0), size));
-				g.FillRectangle(brush, new Rectangle(new Point(image.Width - size.Width, 0), size));
-
-				size = new Size(image.Width, 25);
-
-				g.FillRectangle(brush, new Rectangle(new Point(0, 0), size));
-				g.FillRectangle(brush, new Rectangle(new Point(0, image.Height - size.Height), size));
+				return bitmap.GetPixel(x, y);
 			}
 
-			return image;
+			using Bitmap sampledBitmap = new(image);
+			return sampledBitmap.GetPixel(x, y);
+		}
+
+      private static void NormalizeBorders(Image image)
+		{
+            Color borderColor = GetBorderColor(image);      //TODO Usare il nero, quale?
+
+           using (Graphics g = Graphics.FromImage(image))
+           using (SolidBrush brush = new(borderColor))
+			{
+               const int borderThickness = 25;
+
+				g.FillRectangle(brush, 0, 0, borderThickness, image.Height);
+				g.FillRectangle(brush, image.Width - borderThickness, 0, borderThickness, image.Height);
+				g.FillRectangle(brush, 0, 0, image.Width, borderThickness);
+				g.FillRectangle(brush, 0, image.Height - borderThickness, image.Width, borderThickness);
+			}
+		}
+
+		private static Image AddOuterBorder(Image image)
+		{
+			Color borderColor = GetBorderColor(image);
+
+			int horizontalBorder = (int)Math.Round(image.Width * (AdditionalBorderMm / CardWidthMm));
+			int verticalBorder = (int)Math.Round(image.Height * (AdditionalBorderMm / CardHeightMm));
+
+			Bitmap borderedImage = new(image.Width + (horizontalBorder * 2), image.Height + (verticalBorder * 2));
+
+			using (Graphics g = Graphics.FromImage(borderedImage))
+			{
+				g.Clear(borderColor);
+				g.DrawImage(image, horizontalBorder, verticalBorder, image.Width, image.Height);
+			}
+
+			return borderedImage;
 		}
 
 
@@ -245,7 +276,7 @@ namespace ScatoloneDownloader.Mtg
 		internal bool IsValid(bool downloadReprints, bool downloadTokens)
 		{
 			bool isLanguageValid = Language == "en";
-			bool isReprint = (Reprint || Variation || IsDifferentFrameVariation() || BorderColor == "borderless") && !downloadReprints;
+			bool isReprint = (Reprint || Variation || IsDifferentFrameVariation() || Textless || BorderColor == "borderless") && !downloadReprints;
 			bool isEtched = FrameEffects != null && FrameEffects.Contains("etched");
 
 			bool isValid = IsSetValid() && isLanguageValid && (!isReprint || IsBasicLand) && IsLayoutValid(downloadTokens) && IsGameValid() && IsBorderValid() && !isEtched;
@@ -273,10 +304,11 @@ namespace ScatoloneDownloader.Mtg
 				path = Path.Combine(basePath, validName);
 			}
 
-			Image image = NormalizeBorders(GetImage(getManager));
-			image.Save(path + ".png");
+            using Image sourceImage = GetImage(getManager);
+			NormalizeBorders(sourceImage);
 
-			image.Dispose();
+			using Image image = AddOuterBorder(sourceImage);
+			image.Save(path + ".png");
 		}
 
 		internal void Print()
