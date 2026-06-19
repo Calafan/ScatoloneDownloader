@@ -4,9 +4,12 @@ using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 
+using Microsoft.Extensions.Logging;
+
 using ScatoloneDownloader.Json.BulkData;
 using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Json.Sets;
+using ScatoloneDownloader.Logging;
 using ScatoloneDownloader.Mtg;
 using ScatoloneDownloader.Scryfall;
 
@@ -21,6 +24,8 @@ namespace ScatoloneDownloader
 		{
 			Converters = { new JsonCardConverter() }
 		};
+
+		private static readonly ILogger Logger = AppLogger.CreateLogger<GetManager>();
 
 		private readonly ScryfallClient scryfallClient = new();
 
@@ -111,7 +116,7 @@ namespace ScatoloneDownloader
 				}
 				catch
 				{
-					SimpleLogger.Instance.Error("Missing parameters: " + card.Name + " - " + card.Set);
+					Logger.LogError("Missing parameters: {Name} - {Set}", card.Name, card.Set);
 				}
 			}
 
@@ -278,7 +283,7 @@ namespace ScatoloneDownloader
 						{
 							if (cardNames.Contains(name))
 							{
-								SimpleLogger.Instance.Warning("Duplicate card: " + name);
+								Logger.LogWarning("Duplicate card: {Name}", name);
 							}
 							else
 							{
@@ -289,7 +294,7 @@ namespace ScatoloneDownloader
 						}
 						else
 						{
-							SimpleLogger.Instance.Warning("Missing card: " + name);
+							Logger.LogWarning("Missing card: {Name}", name);
 						}
 					}
 				}
