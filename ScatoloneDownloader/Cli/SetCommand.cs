@@ -17,7 +17,10 @@ namespace ScatoloneDownloader.Cli
 	{
 		protected override async Task<int> ExecuteAsync(CommandContext context, SetSettings settings, CancellationToken cancellationToken)
 		{
-			FolderCleaner.ClearWithPrompt();
+			if (settings.Clear)
+			{
+				FolderCleaner.Clear();
+			}
 
 			await new CardService().RunSetsAsync(settings.Sets, settings.Reprints, settings.Tokens, settings.PrintOnly);
 

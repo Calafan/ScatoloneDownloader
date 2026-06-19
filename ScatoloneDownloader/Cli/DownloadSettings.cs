@@ -18,5 +18,9 @@ namespace ScatoloneDownloader.Cli
 		[CommandOption("-p|--print-only")]
 		[Description("Only write the card list, without downloading images.")]
 		public bool PrintOnly { get; set; }
+
+		[CommandOption("-c|--clear")]
+		[Description("Delete the existing output folders before starting (off by default).")]
+		public bool Clear { get; set; }
 	}
 }
