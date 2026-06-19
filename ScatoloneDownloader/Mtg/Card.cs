@@ -1,18 +1,17 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.IO;
 
-using ScatoloneDownloader.Enums;
-using ScatoloneDownloader.Filtering;
 using ScatoloneDownloader.Json.Cards;
 
 namespace ScatoloneDownloader.Mtg
 {
+	/// <summary>
+	/// A Scryfall card as data. Filtering, imaging, and download/output behavior
+	/// live in their own components; this type only holds the card's fields and
+	/// the small derived facts (<see cref="IsBasicLand"/>) read across the app.
+	/// </summary>
 	public abstract class Card
 	{
-		private protected readonly List<string> ForbiddenCharacters = new() { "\\", "/", ":", "*", "?", "\"", "<", ">", "|" };
-
-		internal static readonly Dictionary<Mode, string> BasePaths = new(){ { Mode.All, @".\All" } , { Mode.Set, @".\Sets" }, { Mode.Years, @".\Years" }, { Mode.Files, @".\Lists" } };
 		internal static readonly List<string> BasicLandTypes = new()
 		{
 			"Plains",
@@ -71,7 +70,7 @@ namespace ScatoloneDownloader.Mtg
 
 			Reprint = jsonCard.Reprint;
 			Variation = jsonCard.Variation;
-            Textless = jsonCard.Textless;
+			Textless = jsonCard.Textless;
 
 			Set = jsonCard.Set;
 			SetName = jsonCard.SetName;
@@ -87,112 +86,6 @@ namespace ScatoloneDownloader.Mtg
 		internal static Card CreateCard(JsonCard jsonCard)
 		{
 			return jsonCard.ImageUris != null ? new SingleFaceCard(jsonCard) : new DoubleFaceCard(jsonCard);
-		}
-
-		/// <summary>
-		/// Produces the finished printable PNG for this card. Subclasses fetch their
-		/// face image(s) and delegate the pixel work to the imaging component.
-		/// </summary>
-		private protected abstract byte[] ComposePng(GetManager getManager);
-
-		private protected string RemoveInvalidCharacters(string path)
-		{
-			if (path.Contains(" // "))
-			{
-				path = path.Replace(" // ", "_");
-			}
-
-			foreach (string character in ForbiddenCharacters)
-			{
-				if (path.Contains(character))
-				{
-					path = path.Replace(character, string.Empty);
-				}
-			}
-
-			return path;
-		}
-
-		private protected string GetPath(Mode mode, string fileName)
-		{
-			string path = BasePaths[mode];
-
-			if (!Directory.Exists(path))
-			{
-				Directory.CreateDirectory(path);
-			}
-
-			switch (mode)
-			{
-				case Mode.All:
-				case Mode.Years:
-				{
-					path = Path.Combine(path, ReleasedAt.Year.ToString());
-
-					if (!Directory.Exists(path))
-					{
-						Directory.CreateDirectory(path);
-					}
-
-					path = Path.Combine(path, RemoveInvalidCharacters(SetName));
-					break;
-				}
-				case Mode.Set:
-				{
-					path = Path.Combine(path, RemoveInvalidCharacters(SetName));
-					break;
-				}
-				case Mode.Files:
-				{
-					path = Path.Combine(path, Path.GetFileNameWithoutExtension(fileName));
-
-					if (!string.IsNullOrEmpty(Tag))
-					{
-						path = Path.Combine(path, Tag);
-					}
-
-					break;
-				}
-			}
-
-			if (!Directory.Exists(path))
-			{
-				Directory.CreateDirectory(path);
-			}
-
-			return path;
-		}
-
-
-		internal void Download(GetManager getManager, Mode mode, string fileName)
-		{
-			string basePath = GetPath(mode, fileName);
-
-			int i = 1;
-			string validName = RemoveInvalidCharacters(Name);
-			string path = Path.Combine(basePath, validName);
-
-			while (File.Exists(path + ".png"))
-			{
-				path = Path.Combine(basePath, validName + i++.ToString());
-			}
-
-			//Le carte sono in ordine casuale ma voglio che l'art originale abbia sempre il nome senza numero
-			if (i != 1 && !IsBasicLand && CardFilter.IsDownloadable(this, false, false))
-			{
-				File.Move(Path.Combine(basePath, validName) + ".png", path + ".png");
-				path = Path.Combine(basePath, validName);
-			}
-
-			byte[] png = ComposePng(getManager);
-			File.WriteAllBytes(path + ".png", png);
-		}
-
-		internal void Print()
-		{
-			string basePath = GetPath(Mode.Files, string.Empty);
-
-			File.AppendAllText(Path.Combine(basePath, "List.txt"), Name + "\n");
 		}
 	}
 }

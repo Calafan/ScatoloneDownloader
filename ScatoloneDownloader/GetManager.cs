@@ -325,9 +325,9 @@ namespace ScatoloneDownloader
 			return cards;
 		}
 
-		internal Stream GetImageStream(string url)
+		internal Task<Stream> GetImageStreamAsync(string url)
 		{
-			return scryfallClient.GetStreamAsync(url).GetAwaiter().GetResult();
+			return scryfallClient.GetStreamAsync(url);
 		}
 	}
 }

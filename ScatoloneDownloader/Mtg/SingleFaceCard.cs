@@ -1,4 +1,3 @@
-using ScatoloneDownloader.Imaging;
 using ScatoloneDownloader.Json.Cards;
 
 namespace ScatoloneDownloader.Mtg
@@ -11,11 +10,6 @@ namespace ScatoloneDownloader.Mtg
 		internal SingleFaceCard(JsonCard jsonCard) : base(jsonCard)
 		{
 			ImageUri = jsonCard.ImageUris.Png;
-		}
-
-		private protected override byte[] ComposePng(GetManager getManager)
-		{
-			return CardImageComposer.ComposeSingleFace(getManager.GetImageStream(ImageUri));
 		}
 	}
 }

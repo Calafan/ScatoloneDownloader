@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 using CommandLine;
 using CommandLine.Text;
+using ScatoloneDownloader.Download;
 using ScatoloneDownloader.Enums;
 using ScatoloneDownloader.Filtering;
 using ScatoloneDownloader.Mtg;
@@ -26,30 +27,31 @@ namespace ScatoloneDownloader
 			Console.ReadKey();
 			Console.Clear();
 
-			if (Directory.Exists(Card.BasePaths[Mode.All]))
+			if (Directory.Exists(OutputPaths.BasePaths[Mode.All]))
 			{
-				Directory.Delete(Card.BasePaths[Mode.All], true);
+				Directory.Delete(OutputPaths.BasePaths[Mode.All], true);
 			}
 
-			if (Directory.Exists(Card.BasePaths[Mode.Set]))
+			if (Directory.Exists(OutputPaths.BasePaths[Mode.Set]))
 			{
-				Directory.Delete(Card.BasePaths[Mode.Set], true);
+				Directory.Delete(OutputPaths.BasePaths[Mode.Set], true);
 			}
 
-			if (Directory.Exists(Card.BasePaths[Mode.Years]))
+			if (Directory.Exists(OutputPaths.BasePaths[Mode.Years]))
 			{
-				Directory.Delete(Card.BasePaths[Mode.Years], true);
+				Directory.Delete(OutputPaths.BasePaths[Mode.Years], true);
 			}
 
-			if (Directory.Exists(Card.BasePaths[Mode.Files]))
+			if (Directory.Exists(OutputPaths.BasePaths[Mode.Files]))
 			{
-				Directory.Delete(Card.BasePaths[Mode.Files], true);
+				Directory.Delete(OutputPaths.BasePaths[Mode.Files], true);
 			}
 		}
 
 		static async Task GetCards(Mode mode, bool downloadReprints, bool downloadTokens, bool downloadLands, string set, List<int> years, string file, bool download, bool analyze, bool printOnly)
 		{
 			GetManager getManager = new();
+			CardDownloader downloader = new(getManager);
 			string specificText = string.Empty;
 
 			switch(mode)
@@ -93,12 +95,12 @@ namespace ScatoloneDownloader
 			{
 				Console.WriteLine("Analyzing cards.");
 
-				if (!Directory.Exists(Card.BasePaths[Mode.Files]))
+				if (!Directory.Exists(OutputPaths.BasePaths[Mode.Files]))
 				{
-					Directory.CreateDirectory(Card.BasePaths[Mode.Files]);
+					Directory.CreateDirectory(OutputPaths.BasePaths[Mode.Files]);
 				}
 
-				string path = Path.Combine(Card.BasePaths[Mode.Files], Path.GetFileNameWithoutExtension(file) + "Stats.txt");
+				string path = Path.Combine(OutputPaths.BasePaths[Mode.Files], Path.GetFileNameWithoutExtension(file) + "Stats.txt");
 
 				CardAnalyzer cardAnalyzer = new(cards);
 				cardAnalyzer.SaveAnalysis(path);
@@ -110,7 +112,7 @@ namespace ScatoloneDownloader
 				
 				foreach(Card card in cards)
 				{
-					card.Print();
+					downloader.WriteToList(card);
 				}
 			}
 			else if (download)
@@ -119,7 +121,7 @@ namespace ScatoloneDownloader
 				int i = 0;
 				foreach (Card card in cards)
 				{
-					card.Download(getManager, mode, file);
+					await downloader.DownloadAsync(card, mode, file);
 					i++;
 					ConsoleWriter.Write(string.Format("{0} / {1}   ", i, cards.Count));
 				}
