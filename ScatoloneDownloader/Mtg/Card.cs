@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 
 using ScatoloneDownloader.Enums;
@@ -11,10 +10,6 @@ namespace ScatoloneDownloader.Mtg
 {
 	public abstract class Card
 	{
-		private const double CardWidthMm = 63d;
-		private const double CardHeightMm = 88d;
-		private const double AdditionalBorderMm = 3d;
-
 		private protected readonly List<string> ForbiddenCharacters = new() { "\\", "/", ":", "*", "?", "\"", "<", ">", "|" };
 
 		internal static readonly Dictionary<Mode, string> BasePaths = new(){ { Mode.All, @".\All" } , { Mode.Set, @".\Sets" }, { Mode.Years, @".\Years" }, { Mode.Files, @".\Lists" } };
@@ -94,56 +89,11 @@ namespace ScatoloneDownloader.Mtg
 			return jsonCard.ImageUris != null ? new SingleFaceCard(jsonCard) : new DoubleFaceCard(jsonCard);
 		}
 
-      private static Color GetBorderColor(Image image)
-		{
-			int x = Math.Clamp(20, 0, image.Width - 1);
-			int y = Math.Clamp(20, 0, image.Height - 1);
-
-			if (image is Bitmap bitmap)
-			{
-				return bitmap.GetPixel(x, y);
-			}
-
-			using Bitmap sampledBitmap = new(image);
-			return sampledBitmap.GetPixel(x, y);
-		}
-
-      private static void NormalizeBorders(Image image)
-		{
-            Color borderColor = GetBorderColor(image);      //TODO Usare il nero, quale?
-
-           using (Graphics g = Graphics.FromImage(image))
-           using (SolidBrush brush = new(borderColor))
-			{
-               const int borderThickness = 25;
-
-				g.FillRectangle(brush, 0, 0, borderThickness, image.Height);
-				g.FillRectangle(brush, image.Width - borderThickness, 0, borderThickness, image.Height);
-				g.FillRectangle(brush, 0, 0, image.Width, borderThickness);
-				g.FillRectangle(brush, 0, image.Height - borderThickness, image.Width, borderThickness);
-			}
-		}
-
-		private static Image AddOuterBorder(Image image)
-		{
-			Color borderColor = GetBorderColor(image);
-
-			int horizontalBorder = (int)Math.Round(image.Width * (AdditionalBorderMm / CardWidthMm));
-			int verticalBorder = (int)Math.Round(image.Height * (AdditionalBorderMm / CardHeightMm));
-
-			Bitmap borderedImage = new(image.Width + (horizontalBorder * 2), image.Height + (verticalBorder * 2));
-
-			using (Graphics g = Graphics.FromImage(borderedImage))
-			{
-				g.Clear(borderColor);
-				g.DrawImage(image, horizontalBorder, verticalBorder, image.Width, image.Height);
-			}
-
-			return borderedImage;
-		}
-
-
-		private protected abstract Image GetImage(GetManager getManager);
+		/// <summary>
+		/// Produces the finished printable PNG for this card. Subclasses fetch their
+		/// face image(s) and delegate the pixel work to the imaging component.
+		/// </summary>
+		private protected abstract byte[] ComposePng(GetManager getManager);
 
 		private protected string RemoveInvalidCharacters(string path)
 		{
@@ -234,11 +184,8 @@ namespace ScatoloneDownloader.Mtg
 				path = Path.Combine(basePath, validName);
 			}
 
-            using Image sourceImage = GetImage(getManager);
-			NormalizeBorders(sourceImage);
-
-			using Image image = AddOuterBorder(sourceImage);
-			image.Save(path + ".png");
+			byte[] png = ComposePng(getManager);
+			File.WriteAllBytes(path + ".png", png);
 		}
 
 		internal void Print()

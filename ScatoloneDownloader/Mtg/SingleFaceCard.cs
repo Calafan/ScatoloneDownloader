@@ -1,5 +1,4 @@
-﻿using System.Drawing;
-
+using ScatoloneDownloader.Imaging;
 using ScatoloneDownloader.Json.Cards;
 
 namespace ScatoloneDownloader.Mtg
@@ -14,9 +13,9 @@ namespace ScatoloneDownloader.Mtg
 			ImageUri = jsonCard.ImageUris.Png;
 		}
 
-		private protected override Image GetImage(GetManager getManager)
+		private protected override byte[] ComposePng(GetManager getManager)
 		{
-			return Image.FromStream(getManager.GetImageStream(ImageUri));
+			return CardImageComposer.ComposeSingleFace(getManager.GetImageStream(ImageUri));
 		}
 	}
 }
