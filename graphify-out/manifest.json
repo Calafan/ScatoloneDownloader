@@ -1,0 +1,147 @@
+{
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader.sln": {
+    "mtime": 1629554157.524577,
+    "ast_hash": "b120f43377431ed0000fc58e604f6248",
+    "semantic_hash": "b120f43377431ed0000fc58e604f6248"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\ConsoleWriter.cs": {
+    "mtime": 1635614566.36228,
+    "ast_hash": "6ced73cd70fdaf48942adf1b0f901bbb",
+    "semantic_hash": "6ced73cd70fdaf48942adf1b0f901bbb"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\Enums\\Mode.cs": {
+    "mtime": 1629831418.3917792,
+    "ast_hash": "fa104fff7828c937ce50a4c84d201dcc",
+    "semantic_hash": "fa104fff7828c937ce50a4c84d201dcc"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\Extensions\\StringExtensions.cs": {
+    "mtime": 1629986655.5119648,
+    "ast_hash": "e20570835fc029ebb5aacf8c22befdc3",
+    "semantic_hash": "e20570835fc029ebb5aacf8c22befdc3"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\GetManager.cs": {
+    "mtime": 1722496482.9650443,
+    "ast_hash": "43d692ad0c01e39fa4259a897b6faef3",
+    "semantic_hash": "43d692ad0c01e39fa4259a897b6faef3"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\Json\\BulkData\\BulkData.cs": {
+    "mtime": 1629648612.0936308,
+    "ast_hash": "a80a475e8bc37be5978e014b0638c942",
+    "semantic_hash": "a80a475e8bc37be5978e014b0638c942"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\Json\\BulkData\\BulkDataCollection.cs": {
+    "mtime": 1629648594.9567063,
+    "ast_hash": "45e91616d4cb54a6d4f116cde9af4a3e",
+    "semantic_hash": "45e91616d4cb54a6d4f116cde9af4a3e"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\Json\\Cards\\CardSearch.cs": {
+    "mtime": 1629804576.8908525,
+    "ast_hash": "22e668c0535da35b66f31f759d86c366",
+    "semantic_hash": "22e668c0535da35b66f31f759d86c366"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\Json\\Cards\\JsonCard.cs": {
+    "mtime": 1780049923.4527469,
+    "ast_hash": "db479be66d5238ea7d8de758ed1b13e9",
+    "semantic_hash": "db479be66d5238ea7d8de758ed1b13e9"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\Json\\Cards\\JsonCardConverter.cs": {
+    "mtime": 1629651163.7490146,
+    "ast_hash": "062cc27329c6fa772e537af5cf5f25d3",
+    "semantic_hash": "062cc27329c6fa772e537af5cf5f25d3"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\Json\\Cards\\JsonCardFace.cs": {
+    "mtime": 1629993377.2854598,
+    "ast_hash": "37c93463d3214ad6a37797a1607c65b9",
+    "semantic_hash": "37c93463d3214ad6a37797a1607c65b9"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\Json\\Cards\\JsonImageUris.cs": {
+    "mtime": 1629650541.5288994,
+    "ast_hash": "4dace34ea1e20b603068565b881943ce",
+    "semantic_hash": "4dace34ea1e20b603068565b881943ce"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\Json\\Sets\\Set.cs": {
+    "mtime": 1629804613.6960216,
+    "ast_hash": "b2b2f2f65f7949b5148dce59be445bf1",
+    "semantic_hash": "b2b2f2f65f7949b5148dce59be445bf1"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\Json\\Sets\\SetSearch.cs": {
+    "mtime": 1629804697.9540544,
+    "ast_hash": "92a34a59759d84cbcc0bed50047ebd34",
+    "semantic_hash": "92a34a59759d84cbcc0bed50047ebd34"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\Mtg\\Card.cs": {
+    "mtime": 1780050041.054857,
+    "ast_hash": "6f869114ae9745bef247d1d126e4b48c",
+    "semantic_hash": "6f869114ae9745bef247d1d126e4b48c"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\Mtg\\CardAnalyzer.cs": {
+    "mtime": 1722507140.3817322,
+    "ast_hash": "60a722ebd198f3cc893553b509ff5523",
+    "semantic_hash": "60a722ebd198f3cc893553b509ff5523"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\Mtg\\DoubleFaceCard.cs": {
+    "mtime": 1726560691.754419,
+    "ast_hash": "49546d27918899793d43ed26e8936b24",
+    "semantic_hash": "49546d27918899793d43ed26e8936b24"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\Mtg\\SingleFaceCard.cs": {
+    "mtime": 1630017881.056561,
+    "ast_hash": "f4db088802c2237dbf21cdb532b2b711",
+    "semantic_hash": "f4db088802c2237dbf21cdb532b2b711"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\Options\\CommandLineOptions.cs": {
+    "mtime": 1674992495.5360122,
+    "ast_hash": "15f110bfdadced3d80c51686ad55d299",
+    "semantic_hash": "15f110bfdadced3d80c51686ad55d299"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\Options\\IAllOptions.cs": {
+    "mtime": 1635619424.364306,
+    "ast_hash": "c6476ce112dfd8a9cd64d40f07e8639e",
+    "semantic_hash": "c6476ce112dfd8a9cd64d40f07e8639e"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\Options\\IDataOptions.cs": {
+    "mtime": 1629968064.8932998,
+    "ast_hash": "0aab142e704c7b007b5144690ad4bb67",
+    "semantic_hash": "0aab142e704c7b007b5144690ad4bb67"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\Options\\IFileOptions.cs": {
+    "mtime": 1630075452.6872768,
+    "ast_hash": "f557e9912fad5e012dfd3ea485b3722f",
+    "semantic_hash": "f557e9912fad5e012dfd3ea485b3722f"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\Options\\ISetOptions.cs": {
+    "mtime": 1629640718.8774333,
+    "ast_hash": "37a9fc66e35d23e8fec2f7369494c540",
+    "semantic_hash": "37a9fc66e35d23e8fec2f7369494c540"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\Options\\IYearOptions.cs": {
+    "mtime": 1629640725.0589957,
+    "ast_hash": "7f1d423563c7a045ca400eca02d2f876",
+    "semantic_hash": "7f1d423563c7a045ca400eca02d2f876"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\Program.cs": {
+    "mtime": 1674992915.8525414,
+    "ast_hash": "b0177fb55433adca326dce27510d67a0",
+    "semantic_hash": "b0177fb55433adca326dce27510d67a0"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\Properties\\Resources.Designer.cs": {
+    "mtime": 1629641948.7215333,
+    "ast_hash": "04de7a45caf4af9553fd4a76188b3e73",
+    "semantic_hash": "04de7a45caf4af9553fd4a76188b3e73"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\Properties\\launchSettings.json": {
+    "mtime": 1709030928.806118,
+    "ast_hash": "87a7cf84848239c459884a5a7b81ead1",
+    "semantic_hash": "87a7cf84848239c459884a5a7b81ead1"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\ScatoloneDownloader.csproj": {
+    "mtime": 1751620905.8605826,
+    "ast_hash": "dbed17fc3e3a4b0855ca9bdfb904a61c",
+    "semantic_hash": "dbed17fc3e3a4b0855ca9bdfb904a61c"
+  },
+  "E:\\Working\\Repos\\Scryfall\\ScatoloneDownloader\\ScatoloneDownloader\\SimpleLogger.cs": {
+    "mtime": 1629842110.9354029,
+    "ast_hash": "69134014f3756f6a4543603205b79189",
+    "semantic_hash": "69134014f3756f6a4543603205b79189"
+  }
+}
