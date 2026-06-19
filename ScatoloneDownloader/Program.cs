@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using CommandLine;
 using CommandLine.Text;
 using ScatoloneDownloader.Enums;
+using ScatoloneDownloader.Filtering;
 using ScatoloneDownloader.Mtg;
 using ScatoloneDownloader.Options;
 
@@ -85,7 +86,7 @@ namespace ScatoloneDownloader
 			if (mode != Mode.Files)
 			{
 				Console.WriteLine("Validating cards.");
-				cards = Card.ValidateCards(cards, downloadReprints, downloadTokens);
+				cards = CardFilter.Validate(cards, downloadReprints, downloadTokens);
 			}
 
 			if (analyze)

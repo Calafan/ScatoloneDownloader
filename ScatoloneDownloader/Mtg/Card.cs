@@ -4,19 +4,17 @@ using System.Drawing;
 using System.IO;
 
 using ScatoloneDownloader.Enums;
+using ScatoloneDownloader.Filtering;
 using ScatoloneDownloader.Json.Cards;
 
 namespace ScatoloneDownloader.Mtg
 {
 	public abstract class Card
 	{
-		private static readonly List<string> InvalidSetsType = new() { "masters", "masterpiece", "from_the_vault", "spellbook", "premium_deck", "memorabilia" };
-		private static readonly List<string> InvalidFrameEffects = new() { "inverted", "showcase", "extendedart" };
 		private const double CardWidthMm = 63d;
 		private const double CardHeightMm = 88d;
 		private const double AdditionalBorderMm = 3d;
 
-		private readonly List<string> WhiteBorderSets = new(){ "ptk", "s99" };
 		private protected readonly List<string> ForbiddenCharacters = new() { "\\", "/", ":", "*", "?", "\"", "<", ">", "|" };
 
 		internal static readonly Dictionary<Mode, string> BasePaths = new(){ { Mode.All, @".\All" } , { Mode.Set, @".\Sets" }, { Mode.Years, @".\Years" }, { Mode.Files, @".\Lists" } };
@@ -95,63 +93,6 @@ namespace ScatoloneDownloader.Mtg
 		{
 			return jsonCard.ImageUris != null ? new SingleFaceCard(jsonCard) : new DoubleFaceCard(jsonCard);
 		}
-
-		static internal List<Card> ValidateCards(List<Card> allCards, bool downloadReprints, bool downloadTokens)
-		{
-			List<Card> cards = new();
-
-			foreach(Card card in allCards)
-			{
-				if (card != null && card.IsValid(downloadReprints, downloadTokens))
-				{
-					cards.Add(card);
-				}
-			}
-
-			return cards;
-		}
-
-
-		private bool IsSetValid()
-		{
-			return !InvalidSetsType.Contains(SetType);
-		}
-
-		private bool IsLayoutValid(bool downloadTokens)
-		{
-			bool isToken = Layout.Contains("token");
-			bool isEmblem = Layout.Contains("emblem");
-			bool isScheme = Layout.Contains("scheme");
-
-			return !((isToken && !downloadTokens) || isEmblem || isScheme);
-		}
-
-		private bool IsGameValid()
-		{
-			return Games.Count == 0 || Games.Contains("paper");
-		}
-
-		private bool IsBorderValid()
-		{
-			return (BorderColor == "black") || (BorderColor == "silver") || (BorderColor == "borderless") || WhiteBorderSets.Contains(Set);
-		}
-
-		private bool IsDifferentFrameVariation()
-		{
-			if (FrameEffects != null)
-			{
-				foreach (string frameEffect in FrameEffects)
-				{
-					if (InvalidFrameEffects.Contains(frameEffect))
-					{
-						return true;
-					}
-				}
-			}
-
-			return false;
-		}
-
 
       private static Color GetBorderColor(Image image)
 		{
@@ -273,17 +214,6 @@ namespace ScatoloneDownloader.Mtg
 		}
 
 
-		internal bool IsValid(bool downloadReprints, bool downloadTokens)
-		{
-			bool isLanguageValid = Language == "en";
-			bool isReprint = (Reprint || Variation || IsDifferentFrameVariation() || Textless || BorderColor == "borderless") && !downloadReprints;
-			bool isEtched = FrameEffects != null && FrameEffects.Contains("etched");
-
-			bool isValid = IsSetValid() && isLanguageValid && (!isReprint || IsBasicLand) && IsLayoutValid(downloadTokens) && IsGameValid() && IsBorderValid() && !isEtched;
-
-			return isValid;
-		}
-
 		internal void Download(GetManager getManager, Mode mode, string fileName)
 		{
 			string basePath = GetPath(mode, fileName);
@@ -298,7 +228,7 @@ namespace ScatoloneDownloader.Mtg
 			}
 
 			//Le carte sono in ordine casuale ma voglio che l'art originale abbia sempre il nome senza numero
-			if (i != 1 && !IsBasicLand && IsValid(false, false))
+			if (i != 1 && !IsBasicLand && CardFilter.IsDownloadable(this, false, false))
 			{
 				File.Move(Path.Combine(basePath, validName) + ".png", path + ".png");
 				path = Path.Combine(basePath, validName);

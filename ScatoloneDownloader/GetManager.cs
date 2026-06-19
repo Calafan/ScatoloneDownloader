@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 using Microsoft.Extensions.Logging;
 
+using ScatoloneDownloader.Filtering;
 using ScatoloneDownloader.Json.BulkData;
 using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Json.Sets;
@@ -101,7 +102,7 @@ namespace ScatoloneDownloader
 						}
 
 						//Le carte sono in ordine casuale ma voglio che l'art originale abbia sempre il nome senza numero
-						if (i != 1 && card.IsValid(false, false))
+						if (i != 1 && CardFilter.IsDownloadable(card, false, false))
 						{
 							Card notFirstArtCard = CardsByName[card.Name];
 
@@ -311,7 +312,7 @@ namespace ScatoloneDownloader
 					{
 						Card basicLand = CardsByName[name];
 
-						if (basicLand.BorderColor != "white" && basicLand.BorderColor != "silver")
+						if (CardFilter.IsBasicLandBorderAllowed(basicLand))
 						{
 							cards.Add(CardsByName[name]);
 						}
