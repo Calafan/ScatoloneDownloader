@@ -1,15 +1,14 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Net;
 using System.Text.Json;
-using System.Threading;
+using System.Threading.Tasks;
 
 using ScatoloneDownloader.Json.BulkData;
 using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Json.Sets;
 using ScatoloneDownloader.Mtg;
+using ScatoloneDownloader.Scryfall;
 
 namespace ScatoloneDownloader
 {
@@ -23,50 +22,12 @@ namespace ScatoloneDownloader
 			Converters = { new JsonCardConverter() }
 		};
 
-		private DateTime minNextRequestTime;
+		private readonly ScryfallClient scryfallClient = new();
+
 		private Dictionary<string, Card> CardsByName;
 
 
-		private Stream Get(string url)
-		{
-			TimeSpan sleepingTime = minNextRequestTime - DateTime.Now;
-
-			if (sleepingTime.TotalMilliseconds > 0)
-			{
-				Thread.Sleep(sleepingTime);
-			}
-
-			minNextRequestTime = DateTime.Now.AddMilliseconds(100);
-
-			WebRequest request = WebRequest.Create(url);
-			request.Headers.Add(HttpRequestHeader.Accept, "*/*");
-			request.Headers.Add(HttpRequestHeader.UserAgent, "ScatoloneDownloader");
-
-			HttpWebResponse response = request.GetResponse() as HttpWebResponse;
-			if (response.StatusCode == HttpStatusCode.OK)
-			{
-				return response.GetResponseStream();
-			}
-			else
-			{
-				throw new WebException(string.Format("Unable to contact: {0}. Status code: {1}", url, response.StatusCode));
-			}
-		}
-
-		private string GetJson(string url)
-		{
-			string json;
-
-			using (Stream stream = Get(url))
-			{
-				using StreamReader reader = new(stream);
-				json = reader.ReadToEnd();
-			}
-
-			return json;
-		}
-
-		private List<Card> GetCardSearch(string searchUri)
+		private async Task<List<Card>> GetCardSearch(string searchUri)
 		{
 			List<Card> cards = new();
 
@@ -77,7 +38,7 @@ namespace ScatoloneDownloader
 			{
 				searchUri = firstTime ? searchUri : setSearch.NextPage;
 
-				string json = GetJson(searchUri);
+				string json = await scryfallClient.GetJsonAsync(searchUri);
 				setSearch = JsonSerializer.Deserialize<CardSearch>(json, JsonSerializerOptions);
 
 				cards.AddRange(setSearch.Data);
@@ -89,14 +50,14 @@ namespace ScatoloneDownloader
 			return cards;
 		}
 
-		private List<Card> GetCardList(string name)
+		private async Task<List<Card>> GetCardList(string name)
 		{
 			const string BulkDataUrl = "bulk-data";
 
 
 			string url = BaseUrl + BulkDataUrl;
 
-			string json = GetJson(url);
+			string json = await scryfallClient.GetJsonAsync(url);
 
 			BulkDataCollection bulkDataCollection = JsonSerializer.Deserialize<BulkDataCollection>(json);
 
@@ -104,7 +65,7 @@ namespace ScatoloneDownloader
 			{
 				if (bulkData.Name == name)
 				{
-					json = GetJson(bulkData.DownloadUri);
+					json = await scryfallClient.GetJsonAsync(bulkData.DownloadUri);
 
 					return JsonSerializer.Deserialize<List<Card>>(json, JsonSerializerOptions);
 				}
@@ -113,11 +74,11 @@ namespace ScatoloneDownloader
 			throw new KeyNotFoundException(string.Format("Unable to found \"{0}\" bulk-data file reference. Request: {1}", name, url));
 		}
 
-		private void PopulateCardsByName(bool downloadLands)
+		private async Task PopulateCardsByName(bool downloadLands)
 		{
 			CardsByName = new();
 
-			List<Card> cards = GetDefaultCards();
+			List<Card> cards = await GetDefaultCards();
 
 			foreach(Card card in cards)
 			{
@@ -156,7 +117,7 @@ namespace ScatoloneDownloader
 
 			if (downloadLands)
 			{
-				cards = GetUniqueArtwork();
+				cards = await GetUniqueArtwork();
 
 				foreach (Card card in cards)
 				{
@@ -180,16 +141,16 @@ namespace ScatoloneDownloader
 		}
 
 
-		internal List<Card> GetUniqueArtwork()
+		internal async Task<List<Card>> GetUniqueArtwork()
 		{
 			const string UniqueArtwork = "Unique Artwork";
 
-			return GetCardList(UniqueArtwork);
+			return await GetCardList(UniqueArtwork);
 		}
 
-		internal List<Card> GetUniqueArtwork(string excludeFile)
+		internal async Task<List<Card>> GetUniqueArtwork(string excludeFile)
 		{
-			List<Card> uniqueArtworkCards = GetUniqueArtwork();
+			List<Card> uniqueArtworkCards = await GetUniqueArtwork();
 			List<Card> cards = new();
 
 			HashSet<string> cardNames = new();
@@ -231,34 +192,34 @@ namespace ScatoloneDownloader
 			return cards;
 		}
 
-		internal List<Card> GetDefaultCards()
+		internal async Task<List<Card>> GetDefaultCards()
 		{
 			const string UniqueArtwork = "Default Cards";
 
-			return GetCardList(UniqueArtwork);
+			return await GetCardList(UniqueArtwork);
 		}
 
-		internal List<Card> GetSet(string setCode)
+		internal async Task<List<Card>> GetSet(string setCode)
 		{
 			List<Card> cards = new();
 			string url = BaseUrl + SetsUrl + setCode;
 
-			string json = GetJson(url);
+			string json = await scryfallClient.GetJsonAsync(url);
 			Set set = JsonSerializer.Deserialize<Set>(json);
 
 			if (set.CardCount > 0)
 			{
-				cards = GetCardSearch(set.SearchUri);
+				cards = await GetCardSearch(set.SearchUri);
 			}
 
 			return cards;
 		}
 
-		internal List<Card> GetYears(List<int> years)
+		internal async Task<List<Card>> GetYears(List<int> years)
 		{
 			string url = BaseUrl + SetsUrl;
 
-			string json = GetJson(url);
+			string json = await scryfallClient.GetJsonAsync(url);
 			SetSearch sets = JsonSerializer.Deserialize<SetSearch>(json);
 
 			List<Card> cards = new();
@@ -269,21 +230,21 @@ namespace ScatoloneDownloader
 
 				if (years.Contains(releasedYear) && set.CardCount > 0)
 				{
-					cards.AddRange(GetCardSearch(set.SearchUri));
+					cards.AddRange(await GetCardSearch(set.SearchUri));
 				}
 			}
 
 			return cards;
 		}
 
-		internal List<Card> GetCardList(string fileName, bool downloadLands)
+		internal async Task<List<Card>> GetCardList(string fileName, bool downloadLands)
 		{
 			HashSet<string> cardNames = new();
 			List<Card> cards = new();
 
 			if (CardsByName == null)
 			{
-				PopulateCardsByName(downloadLands);
+				await PopulateCardsByName(downloadLands);
 			}
 
 			using (StreamReader reader = new(new FileStream(fileName, FileMode.Open)))
@@ -360,7 +321,7 @@ namespace ScatoloneDownloader
 
 		internal Stream GetImageStream(string url)
 		{
-			return Get(url);
+			return scryfallClient.GetStreamAsync(url).GetAwaiter().GetResult();
 		}
 	}
 }

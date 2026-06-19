@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 
 using CommandLine;
 using CommandLine.Text;
@@ -13,9 +14,9 @@ namespace ScatoloneDownloader
 	class Program
 	{
 
-		static void Main(string[] args)
+		static async Task Main(string[] args)
 		{
-			ParserResult<CommandLineOptions> result = Parser.Default.ParseArguments<CommandLineOptions>(args).WithParsed(Run);//.WithNotParsed(Errors);
+			await Parser.Default.ParseArguments<CommandLineOptions>(args).WithParsedAsync(Run);
 		}
 
 		static void ClearFolders()
@@ -45,7 +46,7 @@ namespace ScatoloneDownloader
 			}
 		}
 
-		static void GetCards(Mode mode, bool downloadReprints, bool downloadTokens, bool downloadLands, string set, List<int> years, string file, bool download, bool analyze, bool printOnly)
+		static async Task GetCards(Mode mode, bool downloadReprints, bool downloadTokens, bool downloadLands, string set, List<int> years, string file, bool download, bool analyze, bool printOnly)
 		{
 			GetManager getManager = new();
 			string specificText = string.Empty;
@@ -72,14 +73,14 @@ namespace ScatoloneDownloader
 			}
 
 			Console.WriteLine(string.Format("Getting {0} cards informations.", specificText));
-			List<Card> cards = mode switch
+			List<Card> cards = await (mode switch
 			{
 				Mode.All => string.IsNullOrEmpty(file) ? getManager.GetUniqueArtwork() : getManager.GetUniqueArtwork(file),
 				Mode.Set => getManager.GetSet(set),
 				Mode.Years => getManager.GetYears(years),
 				Mode.Files => getManager.GetCardList(file, downloadLands),
 				_ => throw new Exception(),
-			};
+			});
 
 			if (mode != Mode.Files)
 			{
@@ -124,7 +125,7 @@ namespace ScatoloneDownloader
 			}
 		}
 
-		static void Run(CommandLineOptions options)
+		static async Task Run(CommandLineOptions options)
 		{
 			ClearFolders();
 
@@ -134,7 +135,7 @@ namespace ScatoloneDownloader
 
 				if (string.IsNullOrEmpty(exludeFile) || File.Exists(exludeFile))
 				{
-					GetCards(Mode.All, options.Reprints, options.Tokens, options.Lands, null, null, options.ExcludeFile, true, false, options.PrintOnly);
+					await GetCards(Mode.All, options.Reprints, options.Tokens, options.Lands, null, null, options.ExcludeFile, true, false, options.PrintOnly);
 				}
 				else
 				{
@@ -145,7 +146,7 @@ namespace ScatoloneDownloader
 			{
 				foreach (string set in options.Sets)
 				{
-					GetCards(Mode.Set, options.Reprints, options.Tokens, options.Lands, set, null, null, true, false, options.PrintOnly);
+					await GetCards(Mode.Set, options.Reprints, options.Tokens, options.Lands, set, null, null, true, false, options.PrintOnly);
 				}
 
 				List<int> years = new();
@@ -158,14 +159,14 @@ namespace ScatoloneDownloader
 
 				if (years.Count > 0)
 				{
-					GetCards(Mode.Years, options.Reprints, options.Tokens, options.Lands, null, years, null, true, false, options.PrintOnly);
+					await GetCards(Mode.Years, options.Reprints, options.Tokens, options.Lands, null, years, null, true, false, options.PrintOnly);
 				}
 
 				foreach (string file in options.Files)
 				{
 					if (File.Exists(file))
 					{
-						GetCards(Mode.Files, options.Reprints, options.Tokens, options.Lands, null, null, file, true, true, options.PrintOnly);
+						await GetCards(Mode.Files, options.Reprints, options.Tokens, options.Lands, null, null, file, true, true, options.PrintOnly);
 					}
 					else
 					{
@@ -177,7 +178,7 @@ namespace ScatoloneDownloader
 				{
 					if (File.Exists(file))
 					{
-						GetCards(Mode.Files, options.Reprints, options.Tokens, false, null, null, file, false, true, options.PrintOnly);
+						await GetCards(Mode.Files, options.Reprints, options.Tokens, false, null, null, file, false, true, options.PrintOnly);
 					}
 					else
 					{
