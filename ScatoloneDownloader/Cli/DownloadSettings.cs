@@ -22,5 +22,9 @@ namespace ScatoloneDownloader.Cli
 		[CommandOption("-c|--clear")]
 		[Description("Delete the existing output folders before starting (off by default).")]
 		public bool Clear { get; set; }
+
+		[CommandOption("-o|--output <DIR>")]
+		[Description("Root folder for output (default: ./Output).")]
+		public string Output { get; set; }
 	}
 }

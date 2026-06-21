@@ -15,6 +15,7 @@ namespace ScatoloneDownloader
 			app.Configure(config =>
 			{
 				config.SetApplicationName("ScatoloneDownloader");
+				config.SetInterceptor(new OutputPathInterceptor());
 
 				config.AddCommand<AllCommand>("all")
 					.WithDescription("Download all unique-artwork cards, grouped by released year and set.");

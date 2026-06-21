@@ -9,7 +9,7 @@ namespace ScatoloneDownloader.Cli
 	{
 		internal static void Clear()
 		{
-			foreach (string path in OutputPaths.BasePaths.Values)
+			foreach (string path in OutputPaths.BasePaths)
 			{
 				if (Directory.Exists(path))
 				{

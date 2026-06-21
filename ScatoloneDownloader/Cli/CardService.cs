@@ -104,9 +104,9 @@ namespace ScatoloneDownloader.Cli
 			{
 				AnsiConsole.MarkupLine("Analyzing cards.");
 
-				Directory.CreateDirectory(OutputPaths.BasePaths[Mode.Files]);
+				Directory.CreateDirectory(OutputPaths.BasePath(Mode.Files));
 
-				string path = Path.Combine(OutputPaths.BasePaths[Mode.Files], Path.GetFileNameWithoutExtension(file) + "Stats.txt");
+				string path = Path.Combine(OutputPaths.BasePath(Mode.Files), Path.GetFileNameWithoutExtension(file) + "Stats.txt");
 
 				CardAnalyzer cardAnalyzer = new(cards);
 				cardAnalyzer.SaveAnalysis(path);

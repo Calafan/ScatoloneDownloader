@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 using ScatoloneDownloader.Enums;
 using ScatoloneDownloader.Mtg;
@@ -7,21 +8,43 @@ using ScatoloneDownloader.Mtg;
 namespace ScatoloneDownloader.Download
 {
 	/// <summary>
-	/// Owns the on-disk output layout: the per-mode base folders, filename
-	/// sanitization, and per-card directory building. Paths are built with
-	/// <see cref="Path.Combine"/> so they work on every platform.
+	/// Owns the on-disk output layout: the output root, per-mode sub-folders,
+	/// filename sanitization, and per-card directory building. Paths are built
+	/// with <see cref="Path.Combine"/> so they work on every platform.
 	/// </summary>
 	internal static class OutputPaths
 	{
 		private static readonly string[] ForbiddenCharacters = ["\\", "/", ":", "*", "?", "\"", "<", ">", "|"];
 
-		internal static readonly IReadOnlyDictionary<Mode, string> BasePaths = new Dictionary<Mode, string>
+		// Root holding every per-mode folder. Defaults to ./Output (relative to the
+		// working directory) and can be overridden with the --output option.
+		internal static string Root { get; private set; } = Path.Combine(".", "Output");
+
+		private static readonly IReadOnlyDictionary<Mode, string> SubFolders = new Dictionary<Mode, string>
 		{
-			{ Mode.All, Path.Combine(".", "All") },
-			{ Mode.Set, Path.Combine(".", "Sets") },
-			{ Mode.Years, Path.Combine(".", "Years") },
-			{ Mode.Files, Path.Combine(".", "Lists") },
+			{ Mode.All, "All" },
+			{ Mode.Set, "Sets" },
+			{ Mode.Years, "Years" },
+			{ Mode.Files, "Lists" },
 		};
+
+		/// <summary>Overrides the output <see cref="Root"/>; ignores null/blank input.</summary>
+		internal static void UseRoot(string root)
+		{
+			if (!string.IsNullOrWhiteSpace(root))
+			{
+				Root = root;
+			}
+		}
+
+		/// <summary>The base folder for a mode, under the configured <see cref="Root"/>.</summary>
+		internal static string BasePath(Mode mode)
+		{
+			return Path.Combine(Root, SubFolders[mode]);
+		}
+
+		/// <summary>Every per-mode base folder, for bulk operations like --clear.</summary>
+		internal static IEnumerable<string> BasePaths => SubFolders.Values.Select(name => Path.Combine(Root, name));
 
 		internal static string Sanitize(string path)
 		{
@@ -44,7 +67,7 @@ namespace ScatoloneDownloader.Download
 		/// <summary>Builds (and creates) the directory a card's image belongs in.</summary>
 		internal static string BuildCardDirectory(Card card, Mode mode, string fileName)
 		{
-			string path = BasePaths[mode];
+			string path = BasePath(mode);
 
 			Directory.CreateDirectory(path);
 
