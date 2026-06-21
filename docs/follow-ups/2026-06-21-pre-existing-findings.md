@@ -134,6 +134,33 @@ andrebbero in `using`.
 
 ---
 
+## Lavoro post-review applicato (2026-06-21)
+Interventi fatti **dopo** la chiusura dei FU sopra, durante l'hardening del branch
+`refactor`. Tutti committati, build pulita (0 warning / 0 errori).
+
+| Intervento | Commit | Note |
+|-----------|--------|------|
+| Retry 429/5xx con backoff (honra `Retry-After`) + intervallo richieste 100→150 ms | `185ecd3` | Il rate-limit dell'API è il vincolo binding: senza retry il paging di `cards/search` tripava 429. Confermato da una run reale 2026. |
+| Misura throughput a fine download (baseline) | `f369af3` | Colonna tempo trascorso sulla progress bar + riga `N carte in Xs — ms/carta, carte/s`. |
+| Publish single-file (framework-dependent, win-x64) | `8387367` | `dotnet publish -c Release -r win-x64` → **1 solo** `ScatoloneDownloader.exe` (~43 MB, native SkiaSharp embedded) invece di ~32 file. Solo `publish`; `build` invariato. |
+| Fix CA2024 (`StreamReader.EndOfStream` in metodo async) | `6ca76b3` | I due loop di lettura file in `GetManager` ora usano `await reader.ReadLineAsync()`. Vedi anche [dotnet10-opportunities](2026-06-21-dotnet10-opportunities.md). |
+| Output root configurabile, default `./Output` | `5535edd` | Le immagini finivano in cartelle piatte `./All`, `./Sets`, `./Years`, `./Lists` relative alla cwd → sparse ovunque venisse lanciato l'app. Ora tutte sotto un'unica radice, sovrascrivibile con `-o\|--output <DIR>`. |
+
+### Nota sull'output root (`5535edd`)
+- `OutputPaths.Root` (default `./Output`) tiene la radice; `BasePath(mode)`/`BasePaths`
+  derivano le sotto-cartelle per-modo da essa. Sostituisce il vecchio dizionario
+  `BasePaths` con prefisso `"."` hardcoded (citato in FU-1).
+- Un `ICommandInterceptor` globale (`OutputPathInterceptor`) applica `--output` **prima**
+  di qualunque comando, così anche `--clear` agisce sulla radice scelta.
+- Struttura risultante: `<root>/{All,Sets,Years,Lists}/...` (gerarchia interna invariata).
+
+### Baseline throughput (run reale 2026)
+1664 carte in 481,8 s → ~290 ms/carta, **3,45 carte/s** (download sequenziale). Numero
+di riferimento per valutare un eventuale download parallelo delle immagini (vedi nota
+trasversale in [dotnet10-opportunities](2026-06-21-dotnet10-opportunities.md)).
+
+---
+
 ## Lacune di test (deferite per scelta)
 Nessun test automatizzato. Aree a maggior rischio di regressione da coprire quando
 si introdurranno i test:

@@ -2,8 +2,9 @@
 
 Il progetto è stato migrato a `net10.0` (SDK 10.0.301). Build pulita (0/0). Questa
 nota raccoglie cosa conviene sfruttare della migrazione, calato su *questo* codice,
-così la decisione resta tracciata. **Nessuna di queste voci è stata applicata** —
-decisione del 2026-06-21: solo valutazione.
+così la decisione resta tracciata. Le voci della tabella **Priorità** restano da
+valutare (decisione del 2026-06-21: solo valutazione); l'unica già applicata è il fix
+CA2024 emerso dagli analyzer .NET 10 (vedi sotto, commit `6ca76b3`).
 
 ## Priorità
 
@@ -29,9 +30,16 @@ decisione del 2026-06-21: solo valutazione.
 ### 2. Nullable reference types (qualità)
 Non è una feature di .NET 10, ma la migrazione è il momento giusto. `Nullable enable`
 farebbe emergere a compile-time i rischi di null-deref già notati in code review
-(es. `StreamReader.ReadLine()` che può restituire `null`, le face-URI delle carte
-doppie). Costo medio (molti warning iniziali da sistemare), alto valore di
-manutenibilità — allineato all'obiettivo "più leggibile/modificabile".
+(es. le face-URI delle carte doppie). Costo medio (molti warning iniziali da
+sistemare), alto valore di manutenibilità — allineato all'obiettivo "più
+leggibile/modificabile".
+
+### ✅ CA2024 — `StreamReader.EndOfStream` in metodo async (fatto, commit `6ca76b3`)
+Analyzer **nuovo in .NET 10**: la migrazione l'ha fatto emergere su due loop
+pre-esistenti in `GetManager` (`!reader.EndOfStream` + `reader.ReadLine()` sincroni
+dentro metodi `async`). Risolto convertendo entrambi a `await reader.ReadLineAsync()`,
+che cede il thread e restituisce `null` a fine stream — eliminando anche la potenziale
+`NullReferenceException` del vecchio `ReadLine().Trim()`. Build di nuovo a 0 warning.
 
 ### 3. JSON source generation (il win "di sostanza", con caveat)
 Il percorso caldo è la deserializzazione del bulk-data (`List<Card>`, centinaia di MB,
