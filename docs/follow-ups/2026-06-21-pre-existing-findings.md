@@ -15,7 +15,7 @@ dispose di `HttpClient`) sono già state applicate — vedi commit `b5318b1`.
 | FU-1 | ✅ Risolto | `e1f3ed6` |
 | FU-2 | 🟡 Deciso: lasciato com'è (documentato) — vedi nota nella sezione FU-2 | — |
 | FU-3 | ✅ Risolto | `a783ec7` |
-| FU-4 | ⏳ Aperto — decisione (valore/approccio timeout) | — |
+| FU-4 | ✅ Risolto — idle-timeout per-read (30 s) | `IdleTimeoutStream` |
 | FU-5 | ✅ Risolto | `a783ec7` |
 | FU-6 | ✅ Risolto | `a783ec7` |
 | FU-7 | ✅ Risolto | `a783ec7` |
@@ -86,8 +86,13 @@ bulk-data Scryfall, che richiedono minuti. Con lo streaming (`ResponseHeadersRea
 già applicato) il default copre solo gli header; per protezione vera serve un
 timeout *per-read* via `CancellationToken`, non `HttpClient.Timeout`.
 
-- **Decisione richiesta:** se si vuole un timeout, dimensionarlo sul caso bulk-data
-  o implementarlo come idle-timeout sullo stream.
+- **DECISIONE (2026-06-21): idle-timeout per-read.** Introdotto
+  `ScatoloneDownloader/Scryfall/IdleTimeoutStream.cs`, che avvolge lo stream di
+  risposta e cancella la singola lettura se non arrivano byte per 30 s
+  (`ReadIdleTimeout`). Il timer si resetta a ogni lettura, quindi un download lungo
+  ma sano non viene mai tagliato — solo una connessione muta a metà corpo. Applicato
+  al percorso bulk-data (`GetFromJsonAsync`); le immagini restano sul timeout totale
+  di default (payload piccoli).
 
 ## FU-5 · `File.Move` non protetto sulla regola canonical-artwork (P3, pre-existing)
 **File:** `ScatoloneDownloader/Download/CardDownloader.cs:45`

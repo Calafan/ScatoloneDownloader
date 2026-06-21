@@ -17,6 +17,10 @@ namespace ScatoloneDownloader.Scryfall
 	{
 		private static readonly TimeSpan MinRequestInterval = TimeSpan.FromMilliseconds(100);
 
+		// Max time a single bulk-data read may stall before we give up. The whole
+		// download can still take minutes — only an idle (silent) connection trips this.
+		private static readonly TimeSpan ReadIdleTimeout = TimeSpan.FromSeconds(30);
+
 		private readonly HttpClient httpClient;
 
 		// Monotonic (ms since boot), so the rate-limit gate is immune to wall-clock
@@ -59,9 +63,10 @@ namespace ScatoloneDownloader.Scryfall
 				throw new HttpRequestException(string.Format("Unable to contact: {0}. Status code: {1}", url, response.StatusCode));
 			}
 
-			using Stream stream = await response.Content.ReadAsStreamAsync();
+			Stream stream = await response.Content.ReadAsStreamAsync();
+			using IdleTimeoutStream guardedStream = new(stream, ReadIdleTimeout);
 
-			return await JsonSerializer.DeserializeAsync<T>(stream, options);
+			return await JsonSerializer.DeserializeAsync<T>(guardedStream, options);
 		}
 
 		/// <summary>
