@@ -22,7 +22,7 @@ namespace ScatoloneDownloader.Cli
 				FolderCleaner.Clear();
 			}
 
-			await new CardService().RunSetsAsync(settings.Sets, settings.Reprints, settings.Tokens, settings.PrintOnly);
+			await CardService.RunSetsAsync(settings.Sets, settings.Reprints, settings.Tokens, settings.PrintOnly);
 
 			return 0;
 		}

@@ -19,17 +19,17 @@ namespace ScatoloneDownloader.Cli
 	/// Program.GetCards dispatch; the subcommands call the mode-specific entry
 	/// points below.
 	/// </summary>
-	internal sealed class CardService
+	internal static class CardService
 	{
 		internal const int MinYear = 1993;
 		internal const int MaxYear = 2050;
 
-		internal Task RunAllAsync(string excludeFile, bool reprints, bool tokens, bool printOnly)
+		internal static Task RunAllAsync(string excludeFile, bool reprints, bool tokens, bool printOnly)
 		{
 			return GetCardsAsync(Mode.All, reprints, tokens, false, null, null, excludeFile, download: true, analyze: false, printOnly);
 		}
 
-		internal async Task RunSetsAsync(IEnumerable<string> sets, bool reprints, bool tokens, bool printOnly)
+		internal static async Task RunSetsAsync(IEnumerable<string> sets, bool reprints, bool tokens, bool printOnly)
 		{
 			foreach (string set in sets)
 			{
@@ -37,14 +37,14 @@ namespace ScatoloneDownloader.Cli
 			}
 		}
 
-		internal Task RunYearsAsync(IEnumerable<int> years, bool reprints, bool tokens, bool printOnly)
+		internal static Task RunYearsAsync(IEnumerable<int> years, bool reprints, bool tokens, bool printOnly)
 		{
 			List<int> validYears = years.Where(year => year >= MinYear && year <= MaxYear).ToList();
 
 			return GetCardsAsync(Mode.Years, reprints, tokens, false, null, validYears, null, download: true, analyze: false, printOnly);
 		}
 
-		internal async Task RunFilesAsync(IEnumerable<string> files, bool reprints, bool tokens, bool lands, bool printOnly)
+		internal static async Task RunFilesAsync(IEnumerable<string> files, bool reprints, bool tokens, bool lands, bool printOnly)
 		{
 			foreach (string file in files)
 			{
@@ -60,7 +60,7 @@ namespace ScatoloneDownloader.Cli
 			}
 		}
 
-		internal async Task RunAnalyzeAsync(IEnumerable<string> files, bool reprints, bool tokens, bool printOnly)
+		internal static async Task RunAnalyzeAsync(IEnumerable<string> files, bool reprints, bool tokens, bool printOnly)
 		{
 			foreach (string file in files)
 			{
@@ -76,7 +76,7 @@ namespace ScatoloneDownloader.Cli
 		}
 
 
-		private async Task GetCardsAsync(Mode mode, bool downloadReprints, bool downloadTokens, bool downloadLands, string set, List<int> years, string file, bool download, bool analyze, bool printOnly)
+		private static async Task GetCardsAsync(Mode mode, bool downloadReprints, bool downloadTokens, bool downloadLands, string set, List<int> years, string file, bool download, bool analyze, bool printOnly)
 		{
 			using GetManager getManager = new();
 			CardDownloader downloader = new(getManager);

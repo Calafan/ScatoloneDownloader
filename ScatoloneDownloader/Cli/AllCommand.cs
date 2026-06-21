@@ -34,7 +34,7 @@ namespace ScatoloneDownloader.Cli
 				FolderCleaner.Clear();
 			}
 
-			await new CardService().RunAllAsync(settings.ExcludeFile, settings.Reprints, settings.Tokens, settings.PrintOnly);
+			await CardService.RunAllAsync(settings.ExcludeFile, settings.Reprints, settings.Tokens, settings.PrintOnly);
 
 			return 0;
 		}
