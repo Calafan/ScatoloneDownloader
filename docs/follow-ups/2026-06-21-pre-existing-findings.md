@@ -9,6 +9,18 @@ decisione di progetto esplicita.
 Le due segnalazioni *introdotte* dal refactor e sicure (streaming bulk-data,
 dispose di `HttpClient`) sono già state applicate — vedi commit `b5318b1`.
 
+## Stato (aggiornato 2026-06-21)
+| ID | Stato | Commit |
+|----|-------|--------|
+| FU-1 | ✅ Risolto | `e1f3ed6` |
+| FU-2 | ⏳ Aperto — decisione di design (impatto pratico ~nullo: manager usa-e-getta per run) | — |
+| FU-3 | ✅ Risolto | `a783ec7` |
+| FU-4 | ⏳ Aperto — decisione (valore/approccio timeout) | — |
+| FU-5 | ✅ Risolto | `a783ec7` |
+| FU-6 | ✅ Risolto | `a783ec7` |
+| FU-7 | ✅ Risolto | `a783ec7` |
+| FU-8 | ✅ Risolto | `a783ec7` |
+
 ## Legenda
 - **Severità**: P1 alto impatto · P2 medio · P3 basso.
 - **Tipo**: `pre-existing` = già presente prima del refactor · `behavior-change` =
