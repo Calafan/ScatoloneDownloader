@@ -158,9 +158,10 @@ namespace ScatoloneDownloader
 
 			using (StreamReader reader = new(new FileStream(excludeFile, FileMode.Open)))
 			{
-				while (!reader.EndOfStream)
+				string rawLine;
+				while ((rawLine = await reader.ReadLineAsync()) is not null)
 				{
-					string line = reader.ReadLine().Trim();
+					string line = rawLine.Trim();
 
 					if (!(string.IsNullOrEmpty(line) || line.StartsWith("--")))
 					{
@@ -248,9 +249,10 @@ namespace ScatoloneDownloader
 
 			using (StreamReader reader = new(new FileStream(fileName, FileMode.Open)))
 			{
-				while (!reader.EndOfStream)
+				string rawLine;
+				while ((rawLine = await reader.ReadLineAsync()) is not null)
 				{
-					string line = reader.ReadLine().Trim();
+					string line = rawLine.Trim();
 
 					if (!(string.IsNullOrEmpty(line) || line.StartsWith("--")))
 					{
