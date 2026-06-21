@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -128,8 +129,10 @@ namespace ScatoloneDownloader.Cli
 
 		private static async Task DownloadAllAsync(CardDownloader downloader, List<Card> cards, Mode mode, string file, string specificText)
 		{
+			Stopwatch stopwatch = Stopwatch.StartNew();
+
 			await AnsiConsole.Progress()
-				.Columns(new TaskDescriptionColumn(), new ProgressBarColumn(), new PercentageColumn(), new RemainingTimeColumn())
+				.Columns(new TaskDescriptionColumn(), new ProgressBarColumn(), new PercentageColumn(), new RemainingTimeColumn(), new ElapsedTimeColumn())
 				.StartAsync(async ctx =>
 				{
 					ProgressTask task = ctx.AddTask($"Downloading {specificText}", maxValue: cards.Count);
@@ -140,6 +143,22 @@ namespace ScatoloneDownloader.Cli
 						task.Increment(1);
 					}
 				});
+
+			stopwatch.Stop();
+
+			ReportThroughput(cards.Count, stopwatch.Elapsed);
+		}
+
+		// Baseline measurement for the (currently sequential) download loop, so any
+		// future parallelization can be compared against real numbers.
+		private static void ReportThroughput(int cardCount, TimeSpan elapsed)
+		{
+			double seconds = elapsed.TotalSeconds;
+			double perCardMs = cardCount > 0 ? elapsed.TotalMilliseconds / cardCount : 0;
+			double cardsPerSecond = seconds > 0 ? cardCount / seconds : 0;
+
+			AnsiConsole.MarkupLineInterpolated(
+				$"Downloaded {cardCount} cards in {seconds:N1}s — {perCardMs:N0} ms/card, {cardsPerSecond:N2} cards/s.");
 		}
 
 		private static string DescribeRequest(Mode mode, string set, List<int> years, string file)
