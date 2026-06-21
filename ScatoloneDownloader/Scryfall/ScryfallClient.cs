@@ -12,10 +12,16 @@ namespace ScatoloneDownloader.Scryfall
 	/// reused for every request, and an async gate keeps consecutive requests
 	/// spaced by at least <see cref="MinRequestInterval"/> to honour Scryfall's
 	/// rate limit. Downloads stay sequential; the gate is the single choke point.
+	/// A 429 (or 5xx) is retried with backoff, honouring any <c>Retry-After</c>
+	/// header, because sustained paging can still trip the limit.
 	/// </summary>
 	internal sealed class ScryfallClient : IDisposable
 	{
-		private static readonly TimeSpan MinRequestInterval = TimeSpan.FromMilliseconds(100);
+		// Scryfall asks for 50-100 ms between requests (~10 req/s). 100 ms sits right
+		// on the limit and still trips 429 under sustained paging, so leave a margin.
+		private static readonly TimeSpan MinRequestInterval = TimeSpan.FromMilliseconds(150);
+
+		private const int MaxRetries = 5;
 
 		// Max time a single bulk-data read may stall before we give up. The whole
 		// download can still take minutes — only an idle (silent) connection trips this.
@@ -54,14 +60,7 @@ namespace ScatoloneDownloader.Scryfall
 		/// </summary>
 		internal async Task<T> GetFromJsonAsync<T>(string url, JsonSerializerOptions options = null)
 		{
-			await ThrottleAsync();
-
-			using HttpResponseMessage response = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
-
-			if (response.StatusCode != HttpStatusCode.OK)
-			{
-				throw new HttpRequestException(string.Format("Unable to contact: {0}. Status code: {1}", url, response.StatusCode));
-			}
+			using HttpResponseMessage response = await SendWithRetryAsync(url, HttpCompletionOption.ResponseHeadersRead);
 
 			Stream stream = await response.Content.ReadAsStreamAsync();
 			using IdleTimeoutStream guardedStream = new(stream, ReadIdleTimeout);
@@ -76,18 +75,47 @@ namespace ScatoloneDownloader.Scryfall
 		/// </summary>
 		internal async Task<Stream> GetStreamAsync(string url)
 		{
-			await ThrottleAsync();
-
-			using HttpResponseMessage response = await httpClient.GetAsync(url);
-
-			if (response.StatusCode != HttpStatusCode.OK)
-			{
-				throw new HttpRequestException(string.Format("Unable to contact: {0}. Status code: {1}", url, response.StatusCode));
-			}
+			using HttpResponseMessage response = await SendWithRetryAsync(url, HttpCompletionOption.ResponseContentRead);
 
 			byte[] bytes = await response.Content.ReadAsByteArrayAsync();
 
 			return new MemoryStream(bytes);
+		}
+
+		/// <summary>
+		/// Issues a throttled GET and retries a 429/5xx with backoff (honouring any
+		/// <c>Retry-After</c> header) up to <see cref="MaxRetries"/> times. Returns the
+		/// successful response — the caller owns and disposes it.
+		/// </summary>
+		private async Task<HttpResponseMessage> SendWithRetryAsync(string url, HttpCompletionOption completionOption)
+		{
+			for (int attempt = 1; ; attempt++)
+			{
+				await ThrottleAsync();
+
+				HttpResponseMessage response = await httpClient.GetAsync(url, completionOption);
+
+				if (response.StatusCode == HttpStatusCode.OK)
+				{
+					return response;
+				}
+
+				bool transient = response.StatusCode == HttpStatusCode.TooManyRequests || (int)response.StatusCode >= 500;
+
+				if (transient && attempt <= MaxRetries)
+				{
+					TimeSpan delay = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(Math.Pow(2, attempt) * 0.5);
+					response.Dispose();
+
+					await Task.Delay(delay);
+					continue;
+				}
+
+				HttpStatusCode status = response.StatusCode;
+				response.Dispose();
+
+				throw new HttpRequestException(string.Format("Unable to contact: {0}. Status code: {1}", url, status));
+			}
 		}
 
 		public void Dispose()
