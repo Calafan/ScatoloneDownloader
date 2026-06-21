@@ -42,7 +42,15 @@ namespace ScatoloneDownloader.Download
 			// This is one of the two places the canonical-artwork rule lives (see GetManager.PopulateCardsByName).
 			if (i != 1 && !card.IsBasicLand && CardFilter.IsDownloadable(card, false, false))
 			{
-				File.Move(Path.Combine(baseDirectory, validName) + ".png", path + ".png");
+				string canonicalPath = Path.Combine(baseDirectory, validName) + ".png";
+
+				// Free the un-numbered name for the canonical art. The earlier non-canonical
+				// file should be there, but guard the move so a missing file can't crash the run.
+				if (File.Exists(canonicalPath))
+				{
+					File.Move(canonicalPath, path + ".png");
+				}
+
 				path = Path.Combine(baseDirectory, validName);
 			}
 
@@ -63,15 +71,15 @@ namespace ScatoloneDownloader.Download
 			{
 				case DoubleFaceCard doubleFace:
 				{
-					Stream front = await getManager.GetImageStreamAsync(doubleFace.FrontImageUri);
-					Stream rear = await getManager.GetImageStreamAsync(doubleFace.RearImageUri);
+					using Stream front = await getManager.GetImageStreamAsync(doubleFace.FrontImageUri);
+					using Stream rear = await getManager.GetImageStreamAsync(doubleFace.RearImageUri);
 					bool isSiege = doubleFace.TypeLine.Contains("Siege");
 
 					return CardImageComposer.ComposeDoubleFace(front, rear, isSiege);
 				}
 				case SingleFaceCard singleFace:
 				{
-					Stream image = await getManager.GetImageStreamAsync(singleFace.ImageUri);
+					using Stream image = await getManager.GetImageStreamAsync(singleFace.ImageUri);
 
 					return CardImageComposer.ComposeSingleFace(image);
 				}

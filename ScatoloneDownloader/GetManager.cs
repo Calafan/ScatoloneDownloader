@@ -110,9 +110,9 @@ namespace ScatoloneDownloader
 						}
 					}
 				}
-				catch
+				catch (Exception ex)
 				{
-					Logger.LogError("Missing parameters: {Name} - {Set}", card.Name, card.Set);
+					Logger.LogError(ex, "Missing parameters: {Name} - {Set}", card.Name, card.Set);
 				}
 			}
 

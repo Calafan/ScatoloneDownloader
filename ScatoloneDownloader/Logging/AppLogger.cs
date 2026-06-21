@@ -3,14 +3,12 @@ using Microsoft.Extensions.Logging;
 namespace ScatoloneDownloader.Logging
 {
 	/// <summary>
-	/// Process-wide access to the logging abstraction. Backed by
-	/// <see cref="ILoggerFactory"/> so the concrete provider is swappable —
-	/// the default writes single-line entries to the console, and
-	/// <see cref="Configure"/> lets the composition root replace it.
+	/// Process-wide access to the logging abstraction. Backed by an
+	/// <see cref="ILoggerFactory"/> that writes single-line entries to the console.
 	/// </summary>
 	internal static class AppLogger
 	{
-		private static ILoggerFactory factory = LoggerFactory.Create(builder =>
+		private static readonly ILoggerFactory factory = LoggerFactory.Create(builder =>
 		{
 			builder.AddSimpleConsole(options =>
 			{
@@ -19,11 +17,6 @@ namespace ScatoloneDownloader.Logging
 			});
 			builder.SetMinimumLevel(LogLevel.Information);
 		});
-
-		internal static void Configure(ILoggerFactory loggerFactory)
-		{
-			factory = loggerFactory;
-		}
 
 		internal static ILogger CreateLogger<T>()
 		{

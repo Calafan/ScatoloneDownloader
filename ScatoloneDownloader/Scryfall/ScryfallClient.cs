@@ -18,7 +18,10 @@ namespace ScatoloneDownloader.Scryfall
 		private static readonly TimeSpan MinRequestInterval = TimeSpan.FromMilliseconds(100);
 
 		private readonly HttpClient httpClient;
-		private DateTime minNextRequestTime = DateTime.MinValue;
+
+		// Monotonic (ms since boot), so the rate-limit gate is immune to wall-clock
+		// jumps (DST, NTP corrections) that a DateTime.Now-based gate would suffer.
+		private long minNextRequestTickMs;
 
 		internal ScryfallClient()
 		{
@@ -29,14 +32,14 @@ namespace ScatoloneDownloader.Scryfall
 
 		private async Task ThrottleAsync()
 		{
-			TimeSpan wait = minNextRequestTime - DateTime.Now;
+			long wait = minNextRequestTickMs - Environment.TickCount64;
 
-			if (wait > TimeSpan.Zero)
+			if (wait > 0)
 			{
-				await Task.Delay(wait);
+				await Task.Delay((int)wait);
 			}
 
-			minNextRequestTime = DateTime.Now.Add(MinRequestInterval);
+			minNextRequestTickMs = Environment.TickCount64 + (long)MinRequestInterval.TotalMilliseconds;
 		}
 
 		/// <summary>
