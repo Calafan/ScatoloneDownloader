@@ -56,9 +56,9 @@ namespace ScatoloneDownloader.Download
 
 			byte[] png = await ComposeAsync(card);
 			await File.WriteAllBytesAsync(path + ".png", png);
-		}
+        }
 
-		internal void WriteToList(Card card)
+        internal static void WriteToList(Card card)
 		{
 			string baseDirectory = OutputPaths.BuildCardDirectory(card, Mode.Files, string.Empty);
 

@@ -13,19 +13,19 @@ namespace ScatoloneDownloader.Filtering
 	/// </summary>
 	internal static class CardFilter
 	{
-		private static readonly HashSet<string> InvalidSetTypes = new()
-		{
-			"masters", "masterpiece", "from_the_vault", "spellbook", "premium_deck", "memorabilia"
-		};
+		private static readonly HashSet<string> InvalidSetTypes =
+        [
+            "masters", "masterpiece", "from_the_vault", "spellbook", "premium_deck", "memorabilia"
+		];
 
-		private static readonly HashSet<string> InvalidFrameEffects = new()
-		{
-			"inverted", "showcase", "extendedart"
-		};
+		private static readonly HashSet<string> InvalidFrameEffects =
+        [
+            "inverted", "showcase", "extendedart"
+		];
 
-		private static readonly HashSet<string> WhiteBorderSets = new() { "ptk", "s99" };
+		private static readonly HashSet<string> WhiteBorderSets = ["ptk", "s99"];
 
-		private static readonly HashSet<string> ValidBorderColors = new() { "black", "silver", "borderless" };
+		private static readonly HashSet<string> ValidBorderColors = ["black", "silver", "borderless"];
 
 
 		// --- Named rules ------------------------------------------------------
@@ -93,7 +93,7 @@ namespace ScatoloneDownloader.Filtering
 		/// <summary>Keeps only the downloadable cards from the given list.</summary>
 		internal static List<Card> Validate(IEnumerable<Card> cards, bool downloadReprints, bool downloadTokens)
 		{
-			List<Card> valid = new();
+			List<Card> valid = [];
 
 			foreach (Card card in cards)
 			{

@@ -117,7 +117,7 @@ namespace ScatoloneDownloader.Cli
 
 				foreach (Card card in cards)
 				{
-					downloader.WriteToList(card);
+                    CardDownloader.WriteToList(card);
 				}
 			}
 			else if (download)

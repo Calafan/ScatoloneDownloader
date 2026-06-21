@@ -10,8 +10,8 @@ namespace ScatoloneDownloader.Mtg
 {
 	internal class CardAnalyzer
 	{
-		private static readonly List<string> CardColors = new() { "W", "U", "B", "R", "G", "Multicolor", "Colorless" };
-		private static readonly List<string> CardTypes = new() { "creature", "land", "artifact", "enchantment", "planeswalker", "instant", "sorcery" };
+		private static readonly List<string> CardColors = ["W", "U", "B", "R", "G", "Multicolor", "Colorless"];
+		private static readonly List<string> CardTypes = ["creature", "land", "artifact", "enchantment", "planeswalker", "instant", "sorcery"];
 
 		private static readonly Dictionary<string, string> ColorPrintableNames = new() { 
 			{ "W", "White" }, 
@@ -30,14 +30,14 @@ namespace ScatoloneDownloader.Mtg
 
 		internal CardAnalyzer(List<Card> cards)
 		{
-			CardsByColorAndType = new();
-			CardsByColorAndCmc = new();
-			MulticolorColorDistribution = new();
+			CardsByColorAndType = [];
+			CardsByColorAndCmc = [];
+			MulticolorColorDistribution = [];
 
 			foreach (string color in CardColors)
 			{
-				CardsByColorAndType.Add(color, new Dictionary<string, int>());
-				CardsByColorAndCmc.Add(color, new Dictionary<double, int>());
+				CardsByColorAndType.Add(color, []);
+				CardsByColorAndCmc.Add(color, []);
 
 				if (color != "Multicolor" && color != "Colorless")
 				{
@@ -84,12 +84,13 @@ namespace ScatoloneDownloader.Mtg
 						{
 							CardsByColorAndType[color][type]++;
 
-							if (!CardsByColorAndCmc[color].ContainsKey(card.Cmc))
+							if (!CardsByColorAndCmc[color].TryGetValue(card.Cmc, out int value))
 							{
-								CardsByColorAndCmc[color].Add(card.Cmc, 0);
+                                value = 0;
+                                CardsByColorAndCmc[color].Add(card.Cmc, value);
 							}
 
-							CardsByColorAndCmc[color][card.Cmc]++;
+							CardsByColorAndCmc[color][card.Cmc] = ++value;
 							break;
 						}
 					}
@@ -150,8 +151,8 @@ namespace ScatoloneDownloader.Mtg
 		{
 			StringBuilder stringBuilder = new();
 
-			Dictionary<string, int> cardsByType = new();
-			Dictionary<double, int> cardsByCmc = new();
+			Dictionary<string, int> cardsByType = [];
+			Dictionary<double, int> cardsByCmc = [];
 
 			foreach (string type in CardTypes)
 			{
@@ -174,12 +175,8 @@ namespace ScatoloneDownloader.Mtg
 				{
 					totalManaCost += cmc * CardsByColorAndCmc[color][cmc];
 
-					if (!cardsByCmc.ContainsKey(cmc))
-					{
-						cardsByCmc.Add(cmc, 0);
-					}
-
-					cardsByCmc[cmc] += CardsByColorAndCmc[color][cmc];
+					cardsByCmc.TryAdd(cmc, 0);
+                    cardsByCmc[cmc] += CardsByColorAndCmc[color][cmc];
 				}
 			}
 

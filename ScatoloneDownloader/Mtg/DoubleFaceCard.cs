@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 using ScatoloneDownloader.Json.Cards;
 
 namespace ScatoloneDownloader.Mtg
@@ -15,10 +13,9 @@ namespace ScatoloneDownloader.Mtg
 		internal DoubleFaceCard(JsonCard jsonCard) : base(jsonCard)
 		{
 			FrontName = jsonCard.CardFaces[0].Name;
-			RearName = jsonCard.CardFaces[1].Name;
+            RearName = jsonCard.CardFaces[1].Name;
 
-			Colors = new List<string>(jsonCard.CardFaces[0].Colors);
-			Colors.AddRange(jsonCard.CardFaces[1].Colors);
+            Colors = [.. jsonCard.CardFaces[0].Colors, .. jsonCard.CardFaces[1].Colors];
 
 			if (jsonCard.CardFaces[0].ImageUris != null)
 			{

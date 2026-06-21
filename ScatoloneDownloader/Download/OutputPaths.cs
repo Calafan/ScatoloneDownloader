@@ -13,7 +13,7 @@ namespace ScatoloneDownloader.Download
 	/// </summary>
 	internal static class OutputPaths
 	{
-		private static readonly string[] ForbiddenCharacters = { "\\", "/", ":", "*", "?", "\"", "<", ">", "|" };
+		private static readonly string[] ForbiddenCharacters = ["\\", "/", ":", "*", "?", "\"", "<", ">", "|"];
 
 		internal static readonly IReadOnlyDictionary<Mode, string> BasePaths = new Dictionary<Mode, string>
 		{

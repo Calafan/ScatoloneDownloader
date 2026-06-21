@@ -35,7 +35,7 @@ namespace ScatoloneDownloader
 
 		private async Task<List<Card>> GetCardSearch(string searchUri)
 		{
-			List<Card> cards = new();
+			List<Card> cards = [];
 
 			CardSearch setSearch = null;
 			bool firstTime = true;
@@ -77,7 +77,7 @@ namespace ScatoloneDownloader
 
 		private async Task PopulateCardsByName(bool downloadLands)
 		{
-			CardsByName = new();
+			CardsByName = [];
 
 			List<Card> cards = await GetDefaultCards();
 
@@ -152,9 +152,9 @@ namespace ScatoloneDownloader
 		internal async Task<List<Card>> GetUniqueArtwork(string excludeFile)
 		{
 			List<Card> uniqueArtworkCards = await GetUniqueArtwork();
-			List<Card> cards = new();
+			List<Card> cards = [];
 
-			HashSet<string> cardNames = new();
+			HashSet<string> cardNames = [];
 
 			using (StreamReader reader = new(new FileStream(excludeFile, FileMode.Open)))
 			{
@@ -202,7 +202,7 @@ namespace ScatoloneDownloader
 
 		internal async Task<List<Card>> GetSet(string setCode)
 		{
-			List<Card> cards = new();
+			List<Card> cards = [];
 			string url = BaseUrl + SetsUrl + setCode;
 
 			Set set = await scryfallClient.GetFromJsonAsync<Set>(url);
@@ -221,7 +221,7 @@ namespace ScatoloneDownloader
 
 			SetSearch sets = await scryfallClient.GetFromJsonAsync<SetSearch>(url);
 
-			List<Card> cards = new();
+			List<Card> cards = [];
 
 			foreach(Set set in sets.Sets)
 			{
@@ -238,8 +238,8 @@ namespace ScatoloneDownloader
 
 		internal async Task<List<Card>> GetCardList(string fileName, bool downloadLands)
 		{
-			HashSet<string> cardNames = new();
-			List<Card> cards = new();
+			HashSet<string> cardNames = [];
+			List<Card> cards = [];
 
 			if (CardsByName == null)
 			{

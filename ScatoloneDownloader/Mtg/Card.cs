@@ -12,9 +12,9 @@ namespace ScatoloneDownloader.Mtg
 	/// </summary>
 	public abstract class Card
 	{
-		internal static readonly List<string> BasicLandTypes = new()
-		{
-			"Plains",
+		internal static readonly List<string> BasicLandTypes =
+        [
+            "Plains",
 			"Island",
 			"Swamp",
 			"Mountain",
@@ -25,7 +25,7 @@ namespace ScatoloneDownloader.Mtg
 			"Snow-Covered Swamp",
 			"Snow-Covered Mountain",
 			"Snow-Covered Forest"
-		};
+		];
 
 
 		internal string Name { get; init; }
