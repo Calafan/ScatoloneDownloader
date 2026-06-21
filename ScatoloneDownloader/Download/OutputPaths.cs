@@ -68,9 +68,13 @@ namespace ScatoloneDownloader.Download
 				{
 					path = Path.Combine(path, Path.GetFileNameWithoutExtension(fileName));
 
-					if (!string.IsNullOrEmpty(card.Tag))
+					// Tag comes from the hand-written list, so sanitize it like any other
+					// path segment and neutralize "."/".." so it cannot escape the base folder.
+					string tag = Sanitize(card.Tag ?? string.Empty).Trim().TrimStart('.');
+
+					if (!string.IsNullOrEmpty(tag))
 					{
-						path = Path.Combine(path, card.Tag);
+						path = Path.Combine(path, tag);
 					}
 
 					break;
