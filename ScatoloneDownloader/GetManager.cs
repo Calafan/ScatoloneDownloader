@@ -16,7 +16,7 @@ using ScatoloneDownloader.Scryfall;
 
 namespace ScatoloneDownloader
 {
-	internal class GetManager
+	internal sealed class GetManager : IDisposable
 	{
 		private const string BaseUrl = "https://api.scryfall.com/";
 		private const string SetsUrl = "sets/";
@@ -44,8 +44,7 @@ namespace ScatoloneDownloader
 			{
 				searchUri = firstTime ? searchUri : setSearch.NextPage;
 
-				string json = await scryfallClient.GetJsonAsync(searchUri);
-				setSearch = JsonSerializer.Deserialize<CardSearch>(json, JsonSerializerOptions);
+				setSearch = await scryfallClient.GetFromJsonAsync<CardSearch>(searchUri, JsonSerializerOptions);
 
 				cards.AddRange(setSearch.Data);
 
@@ -63,17 +62,13 @@ namespace ScatoloneDownloader
 
 			string url = BaseUrl + BulkDataUrl;
 
-			string json = await scryfallClient.GetJsonAsync(url);
-
-			BulkDataCollection bulkDataCollection = JsonSerializer.Deserialize<BulkDataCollection>(json);
+			BulkDataCollection bulkDataCollection = await scryfallClient.GetFromJsonAsync<BulkDataCollection>(url);
 
 			foreach (BulkData bulkData in bulkDataCollection.Data)
 			{
 				if (bulkData.Name == name)
 				{
-					json = await scryfallClient.GetJsonAsync(bulkData.DownloadUri);
-
-					return JsonSerializer.Deserialize<List<Card>>(json, JsonSerializerOptions);
+					return await scryfallClient.GetFromJsonAsync<List<Card>>(bulkData.DownloadUri, JsonSerializerOptions);
 				}
 			}
 
@@ -210,8 +205,7 @@ namespace ScatoloneDownloader
 			List<Card> cards = new();
 			string url = BaseUrl + SetsUrl + setCode;
 
-			string json = await scryfallClient.GetJsonAsync(url);
-			Set set = JsonSerializer.Deserialize<Set>(json);
+			Set set = await scryfallClient.GetFromJsonAsync<Set>(url);
 
 			if (set.CardCount > 0)
 			{
@@ -225,8 +219,7 @@ namespace ScatoloneDownloader
 		{
 			string url = BaseUrl + SetsUrl;
 
-			string json = await scryfallClient.GetJsonAsync(url);
-			SetSearch sets = JsonSerializer.Deserialize<SetSearch>(json);
+			SetSearch sets = await scryfallClient.GetFromJsonAsync<SetSearch>(url);
 
 			List<Card> cards = new();
 
@@ -328,6 +321,11 @@ namespace ScatoloneDownloader
 		internal Task<Stream> GetImageStreamAsync(string url)
 		{
 			return scryfallClient.GetStreamAsync(url);
+		}
+
+		public void Dispose()
+		{
+			scryfallClient.Dispose();
 		}
 	}
 }

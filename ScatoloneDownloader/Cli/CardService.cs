@@ -77,7 +77,7 @@ namespace ScatoloneDownloader.Cli
 
 		private async Task GetCardsAsync(Mode mode, bool downloadReprints, bool downloadTokens, bool downloadLands, string set, List<int> years, string file, bool download, bool analyze, bool printOnly)
 		{
-			GetManager getManager = new();
+			using GetManager getManager = new();
 			CardDownloader downloader = new(getManager);
 
 			string specificText = DescribeRequest(mode, set, years, file);

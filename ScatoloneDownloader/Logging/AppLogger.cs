@@ -20,17 +20,17 @@ namespace ScatoloneDownloader.Logging
 			builder.SetMinimumLevel(LogLevel.Information);
 		});
 
-		public static void Configure(ILoggerFactory loggerFactory)
+		internal static void Configure(ILoggerFactory loggerFactory)
 		{
 			factory = loggerFactory;
 		}
 
-		public static ILogger CreateLogger<T>()
+		internal static ILogger CreateLogger<T>()
 		{
 			return factory.CreateLogger<T>();
 		}
 
-		public static ILogger CreateLogger(string categoryName)
+		internal static ILogger CreateLogger(string categoryName)
 		{
 			return factory.CreateLogger(categoryName);
 		}
