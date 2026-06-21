@@ -13,7 +13,7 @@ dispose di `HttpClient`) sono già state applicate — vedi commit `b5318b1`.
 | ID | Stato | Commit |
 |----|-------|--------|
 | FU-1 | ✅ Risolto | `e1f3ed6` |
-| FU-2 | ⏳ Aperto — decisione di design (impatto pratico ~nullo: manager usa-e-getta per run) | — |
+| FU-2 | 🟡 Deciso: lasciato com'è (documentato) — vedi nota nella sezione FU-2 | — |
 | FU-3 | ✅ Risolto | `a783ec7` |
 | FU-4 | ⏳ Aperto — decisione (valore/approccio timeout) | — |
 | FU-5 | ✅ Risolto | `a783ec7` |
@@ -61,6 +61,12 @@ run può "trapelare" in una run successiva sullo stesso processo.
   con il tag (record `with`) al momento dell'assegnazione, invece di mutare
   l'istanza in cache.
 - **Nota:** tocca il confine del modello dati → richiede decisione di design.
+- **DECISIONE (2026-06-21): lasciato com'è.** Oggi ogni file di lista crea un
+  `GetManager` nuovo (`using GetManager getManager = new();` per chiamata), quindi
+  `CardsByName` non è condiviso tra run e la finestra di rischio è chiusa in pratica.
+  Lo scenario che la riaprirebbe è riusare *un solo* `GetManager` per più file (per
+  evitare di riscaricare il bulk-data ogni volta): se/quando si farà quella
+  ottimizzazione, rendere `Tag` immutabile **nello stesso intervento**.
 
 ## FU-3 · `catch {}` muto in `PopulateCardsByName` (P3, pre-existing)
 **File:** `ScatoloneDownloader/GetManager.cs:118-121`
