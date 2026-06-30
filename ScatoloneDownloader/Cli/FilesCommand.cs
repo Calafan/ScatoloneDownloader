@@ -11,10 +11,6 @@ namespace ScatoloneDownloader.Cli
 		[CommandArgument(0, "<FILES>")]
 		[Description("One or more list files to download from.")]
 		public string[] Files { get; set; }
-
-		[CommandOption("-l|--lands")]
-		[Description("Add basic lands to the download list.")]
-		public bool Lands { get; set; }
 	}
 
 	internal sealed class FilesCommand : AsyncCommand<FilesSettings>

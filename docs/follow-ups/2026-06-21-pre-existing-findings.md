@@ -161,6 +161,13 @@ trasversale in [dotnet10-opportunities](2026-06-21-dotnet10-opportunities.md)).
 
 ---
 
+## Lavoro 2026-06-30 — gestione terre base
+Due interventi sulla gestione delle terre base, in due commit distinti.
+
+| Intervento | Note |
+|-----------|------|
+| Terre base **escluse di default** da `all`/`set`/`years` (e `analyze`); `-l\|--lands` promossa da opzione di `files` a opzione **comune** per includerle | Prima `set`/`years` le scaricavano sempre. La decisione è centralizzata in `CardFilter.IsDownloadable(..., bool downloadLands)`; `GetManager.GetUniqueArtwork(excludeFile)` non scarta più le terre base a mano, così `--lands` vale anche per `all --exclude`. Verifica: `set m21 --print-only` → default 186 carte / 0 terre, `--lands` 206 / 20. |
+
 ## Lacune di test (deferite per scelta)
 Nessun test automatizzato. Aree a maggior rischio di regressione da coprire quando
 si introdurranno i test:

@@ -73,12 +73,18 @@ namespace ScatoloneDownloader.Filtering
 		// --- Composite --------------------------------------------------------
 
 		/// <summary>
-		/// The ordered conjunction of the rules. Reprint-like cards are excluded
+		/// The ordered conjunction of the rules. Basic lands are excluded unless
+		/// <paramref name="downloadLands"/> is set. Reprint-like cards are excluded
 		/// unless <paramref name="downloadReprints"/> is set, except for basic lands
-		/// which are always kept.
+		/// which are always kept once lands are requested.
 		/// </summary>
-		internal static bool IsDownloadable(Card card, bool downloadReprints, bool downloadTokens)
+		internal static bool IsDownloadable(Card card, bool downloadReprints, bool downloadTokens, bool downloadLands)
 		{
+			if (card.IsBasicLand && !downloadLands)
+			{
+				return false;
+			}
+
 			bool reprintExcluded = !downloadReprints && IsReprintLike(card);
 
 			return HasValidSetType(card)
@@ -91,13 +97,13 @@ namespace ScatoloneDownloader.Filtering
 		}
 
 		/// <summary>Keeps only the downloadable cards from the given list.</summary>
-		internal static List<Card> Validate(IEnumerable<Card> cards, bool downloadReprints, bool downloadTokens)
+		internal static List<Card> Validate(IEnumerable<Card> cards, bool downloadReprints, bool downloadTokens, bool downloadLands)
 		{
 			List<Card> valid = [];
 
 			foreach (Card card in cards)
 			{
-				if (card != null && IsDownloadable(card, downloadReprints, downloadTokens))
+				if (card != null && IsDownloadable(card, downloadReprints, downloadTokens, downloadLands))
 				{
 					valid.Add(card);
 				}

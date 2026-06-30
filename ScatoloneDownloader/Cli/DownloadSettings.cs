@@ -15,6 +15,10 @@ namespace ScatoloneDownloader.Cli
 		[Description("Include tokens (ignored by default).")]
 		public bool Tokens { get; set; }
 
+		[CommandOption("-l|--lands")]
+		[Description("Include basic lands (excluded by default).")]
+		public bool Lands { get; set; }
+
 		[CommandOption("-p|--print-only")]
 		[Description("Only write the card list, without downloading images.")]
 		public bool PrintOnly { get; set; }

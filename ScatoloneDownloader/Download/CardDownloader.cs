@@ -40,7 +40,7 @@ namespace ScatoloneDownloader.Download
 
 			// Le carte sono in ordine casuale ma voglio che l'art originale abbia sempre il nome senza numero.
 			// This is one of the two places the canonical-artwork rule lives (see GetManager.PopulateCardsByName).
-			if (i != 1 && !card.IsBasicLand && CardFilter.IsDownloadable(card, false, false))
+			if (i != 1 && !card.IsBasicLand && CardFilter.IsDownloadable(card, false, false, false))
 			{
 				string canonicalPath = Path.Combine(baseDirectory, validName) + ".png";
 

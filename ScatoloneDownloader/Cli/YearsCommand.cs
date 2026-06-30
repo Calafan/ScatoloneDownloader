@@ -39,7 +39,7 @@ namespace ScatoloneDownloader.Cli
 				FolderCleaner.Clear();
 			}
 
-			await CardService.RunYearsAsync(settings.Years, settings.Reprints, settings.Tokens, settings.PrintOnly);
+			await CardService.RunYearsAsync(settings.Years, settings.Reprints, settings.Tokens, settings.Lands, settings.PrintOnly);
 
 			return 0;
 		}

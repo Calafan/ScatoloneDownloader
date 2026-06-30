@@ -24,24 +24,24 @@ namespace ScatoloneDownloader.Cli
 		internal const int MinYear = 1993;
 		internal const int MaxYear = 2050;
 
-		internal static Task RunAllAsync(string excludeFile, bool reprints, bool tokens, bool printOnly)
+		internal static Task RunAllAsync(string excludeFile, bool reprints, bool tokens, bool lands, bool printOnly)
 		{
-			return GetCardsAsync(Mode.All, reprints, tokens, false, null, null, excludeFile, download: true, analyze: false, printOnly);
+			return GetCardsAsync(Mode.All, reprints, tokens, lands, null, null, excludeFile, download: true, analyze: false, printOnly);
 		}
 
-		internal static async Task RunSetsAsync(IEnumerable<string> sets, bool reprints, bool tokens, bool printOnly)
+		internal static async Task RunSetsAsync(IEnumerable<string> sets, bool reprints, bool tokens, bool lands, bool printOnly)
 		{
 			foreach (string set in sets)
 			{
-				await GetCardsAsync(Mode.Set, reprints, tokens, false, set, null, null, download: true, analyze: false, printOnly);
+				await GetCardsAsync(Mode.Set, reprints, tokens, lands, set, null, null, download: true, analyze: false, printOnly);
 			}
 		}
 
-		internal static Task RunYearsAsync(IEnumerable<int> years, bool reprints, bool tokens, bool printOnly)
+		internal static Task RunYearsAsync(IEnumerable<int> years, bool reprints, bool tokens, bool lands, bool printOnly)
 		{
 			List<int> validYears = years.Where(year => year >= MinYear && year <= MaxYear).ToList();
 
-			return GetCardsAsync(Mode.Years, reprints, tokens, false, null, validYears, null, download: true, analyze: false, printOnly);
+			return GetCardsAsync(Mode.Years, reprints, tokens, lands, null, validYears, null, download: true, analyze: false, printOnly);
 		}
 
 		internal static async Task RunFilesAsync(IEnumerable<string> files, bool reprints, bool tokens, bool lands, bool printOnly)
@@ -60,13 +60,13 @@ namespace ScatoloneDownloader.Cli
 			}
 		}
 
-		internal static async Task RunAnalyzeAsync(IEnumerable<string> files, bool reprints, bool tokens, bool printOnly)
+		internal static async Task RunAnalyzeAsync(IEnumerable<string> files, bool reprints, bool tokens, bool lands, bool printOnly)
 		{
 			foreach (string file in files)
 			{
 				if (File.Exists(file))
 				{
-					await GetCardsAsync(Mode.Files, reprints, tokens, false, null, null, file, download: false, analyze: true, printOnly);
+					await GetCardsAsync(Mode.Files, reprints, tokens, lands, null, null, file, download: false, analyze: true, printOnly);
 				}
 				else
 				{
@@ -97,7 +97,7 @@ namespace ScatoloneDownloader.Cli
 			if (mode != Mode.Files)
 			{
 				AnsiConsole.MarkupLine("Validating cards.");
-				cards = CardFilter.Validate(cards, downloadReprints, downloadTokens);
+				cards = CardFilter.Validate(cards, downloadReprints, downloadTokens, downloadLands);
 			}
 
 			if (analyze)

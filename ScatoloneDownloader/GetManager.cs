@@ -97,7 +97,7 @@ namespace ScatoloneDownloader
 						}
 
 						//Le carte sono in ordine casuale ma voglio che l'art originale abbia sempre il nome senza numero
-						if (i != 1 && CardFilter.IsDownloadable(card, false, false))
+						if (i != 1 && CardFilter.IsDownloadable(card, false, false, false))
 						{
 							Card notFirstArtCard = CardsByName[card.Name];
 
@@ -183,9 +183,11 @@ namespace ScatoloneDownloader
 				}
 			}
 
+			// Basic-land inclusion is decided centrally by CardFilter (via --lands);
+			// here we only drop the names listed in the exclude file.
 			foreach (Card card in uniqueArtworkCards)
 			{
-				if (!card.IsBasicLand && !cardNames.Contains(card.Name))
+				if (!cardNames.Contains(card.Name))
 				{
 					cards.Add(card);
 				}

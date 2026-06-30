@@ -49,13 +49,13 @@ ScatoloneDownloader <comando> [argomenti] [opzioni]
 | `-c, --clear` | Cancella le cartelle di output prima di partire |
 | `-r, --reprints` | Include i reprint (esclusi di default) |
 | `-t, --tokens` | Include i token (esclusi di default) |
+| `-l, --lands` | Include le terre base (escluse di default) |
 | `-p, --print-only` | Scrive solo la lista delle carte, senza scaricare immagini |
 | `-h, --help` | Aiuto (anche per singolo comando, es. `years --help`) |
 
 Opzioni specifiche:
 
 - `all` — `-e, --exclude <FILE>`: esclude le carte elencate nel file.
-- `files` — `-l, --lands`: aggiunge le terre base alla lista.
 
 ### Esempi
 
@@ -68,6 +68,9 @@ ScatoloneDownloader years 2024 2025 2026 --output D:\Scryfall
 
 # Un paio di set, ripulendo prima la destinazione
 ScatoloneDownloader set neo dmu --clear
+
+# Carte del 2026, terre base incluse
+ScatoloneDownloader years 2026 --lands
 
 # Da lista scritta a mano, incluse le terre base
 ScatoloneDownloader files mazzo.txt --lands
