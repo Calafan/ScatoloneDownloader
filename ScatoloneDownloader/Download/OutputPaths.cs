@@ -26,6 +26,7 @@ namespace ScatoloneDownloader.Download
 			{ Mode.Set, "Sets" },
 			{ Mode.Years, "Years" },
 			{ Mode.Files, "Lists" },
+			{ Mode.Lands, "BasicLands" },
 		};
 
 		/// <summary>Overrides the output <see cref="Root"/>; ignores null/blank input.</summary>
@@ -85,6 +86,13 @@ namespace ScatoloneDownloader.Download
 				case Mode.Set:
 				{
 					path = Path.Combine(path, Sanitize(card.SetName));
+					break;
+				}
+				case Mode.Lands:
+				{
+					// Group every printing of a basic land under a folder named after
+					// its type (the card name: Plains, Snow-Covered Island, Wastes, ...).
+					path = Path.Combine(path, Sanitize(card.Name));
 					break;
 				}
 				case Mode.Files:

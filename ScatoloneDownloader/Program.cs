@@ -29,6 +29,9 @@ namespace ScatoloneDownloader
 				config.AddCommand<FilesCommand>("files")
 					.WithDescription("Download cards listed in file(s) and write a stats file.");
 
+				config.AddCommand<LandsCommand>("lands")
+					.WithDescription("Download every basic land artwork, grouped by land type.");
+
 				config.AddCommand<AnalyzeCommand>("analyze")
 					.WithDescription("Analyze list file(s) without downloading images.");
 			});

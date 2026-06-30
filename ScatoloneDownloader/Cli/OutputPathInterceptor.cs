@@ -12,9 +12,9 @@ namespace ScatoloneDownloader.Cli
 	{
 		public void Intercept(CommandContext context, CommandSettings settings)
 		{
-			if (settings is DownloadSettings download)
+			if (settings is CommonSettings common)
 			{
-				OutputPaths.UseRoot(download.Output);
+				OutputPaths.UseRoot(common.Output);
 			}
 		}
 

@@ -39,6 +39,7 @@ ScatoloneDownloader <comando> [argomenti] [opzioni]
 | `set <SETS>` | Scarica i set indicati per codice | uno o più codici set (es. `neo dmu`) |
 | `years <YEARS>` | Scarica le carte uscite negli anni indicati (1993–2050) | uno o più anni |
 | `files <FILES>` | Scarica dalle liste scritte a mano e genera un file di statistiche | uno o più file |
+| `lands` | Scarica **tutti** gli artwork delle terre base, divisi per tipo | — |
 | `analyze <FILES>` | Analizza le liste **senza** scaricare immagini | uno o più file |
 
 ### Opzioni comuni
@@ -56,6 +57,8 @@ ScatoloneDownloader <comando> [argomenti] [opzioni]
 Opzioni specifiche:
 
 - `all` — `-e, --exclude <FILE>`: esclude le carte elencate nel file.
+- `lands` — usa solo le opzioni generali `-o/--output`, `-c/--clear`, `-p/--print-only`
+  (i filtri reprint/token/lands non si applicano: scarica ogni artwork di terra base).
 
 ### Esempi
 
@@ -75,6 +78,9 @@ ScatoloneDownloader years 2026 --lands
 # Da lista scritta a mano, incluse le terre base
 ScatoloneDownloader files mazzo.txt --lands
 
+# Tutte le terre base stampate, divise per tipo
+ScatoloneDownloader lands
+
 # Solo analisi, nessun download
 ScatoloneDownloader analyze mazzo.txt
 ```
@@ -85,10 +91,11 @@ Tutto finisce sotto la radice scelta (`./Output` di default):
 
 ```
 <root>/
-├─ All/    <anno>/<set>/<carta>.png
-├─ Sets/   <set>/<carta>.png
-├─ Years/  <anno>/<set>/<carta>.png
-└─ Lists/  <nome-lista>/<tag>/<carta>.png
+├─ All/        <anno>/<set>/<carta>.png
+├─ Sets/       <set>/<carta>.png
+├─ Years/      <anno>/<set>/<carta>.png
+├─ Lists/      <nome-lista>/<tag>/<carta>.png
+└─ BasicLands/ <tipo>/<carta>.png        (comando lands: Plains/, Island/, ...)
 ```
 
 ## Formato dei file di lista (`files` / `analyze`)

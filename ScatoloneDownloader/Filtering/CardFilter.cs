@@ -111,5 +111,29 @@ namespace ScatoloneDownloader.Filtering
 
 			return valid;
 		}
+
+		/// <summary>
+		/// Collection rule for the <c>lands</c> command: keep every English paper basic
+		/// land. Unlike <see cref="IsDownloadable"/> this applies no reprint/variant
+		/// gate — the goal is the full set of printed basic-land artworks (one per
+		/// unique illustration, as the Unique Artwork dataset already provides).
+		/// </summary>
+		internal static bool IsCollectibleBasicLand(Card card) => card.IsBasicLand && IsEnglish(card) && IsPaperGame(card);
+
+		/// <summary>Keeps only the collectible basic lands from the given list.</summary>
+		internal static List<Card> ValidateBasicLands(IEnumerable<Card> cards)
+		{
+			List<Card> valid = [];
+
+			foreach (Card card in cards)
+			{
+				if (card != null && IsCollectibleBasicLand(card))
+				{
+					valid.Add(card);
+				}
+			}
+
+			return valid;
+		}
 	}
 }

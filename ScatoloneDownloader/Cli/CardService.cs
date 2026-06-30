@@ -44,6 +44,11 @@ namespace ScatoloneDownloader.Cli
 			return GetCardsAsync(Mode.Years, reprints, tokens, lands, null, validYears, null, download: true, analyze: false, printOnly);
 		}
 
+		internal static Task RunLandsAsync(bool printOnly)
+		{
+			return GetCardsAsync(Mode.Lands, downloadReprints: false, downloadTokens: false, downloadLands: true, null, null, null, download: true, analyze: false, printOnly);
+		}
+
 		internal static async Task RunFilesAsync(IEnumerable<string> files, bool reprints, bool tokens, bool lands, bool printOnly)
 		{
 			foreach (string file in files)
@@ -91,10 +96,16 @@ namespace ScatoloneDownloader.Cli
 				Mode.Set => getManager.GetSet(set),
 				Mode.Years => getManager.GetYears(years),
 				Mode.Files => getManager.GetCardList(file, downloadLands),
+				Mode.Lands => getManager.GetUniqueArtwork(),
 				_ => throw new ArgumentOutOfRangeException(nameof(mode)),
 			});
 
-			if (mode != Mode.Files)
+			if (mode == Mode.Lands)
+			{
+				AnsiConsole.MarkupLine("Validating basic lands.");
+				cards = CardFilter.ValidateBasicLands(cards);
+			}
+			else if (mode != Mode.Files)
 			{
 				AnsiConsole.MarkupLine("Validating cards.");
 				cards = CardFilter.Validate(cards, downloadReprints, downloadTokens, downloadLands);
@@ -174,6 +185,8 @@ namespace ScatoloneDownloader.Cli
 					return joined + (years.Count == 1 ? " year" : " years");
 				case Mode.Files:
 					return file + " content";
+				case Mode.Lands:
+					return "Basic Lands";
 				default:
 					return string.Empty;
 			}

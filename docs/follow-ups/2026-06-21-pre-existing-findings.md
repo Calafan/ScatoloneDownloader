@@ -167,6 +167,7 @@ Due interventi sulla gestione delle terre base, in due commit distinti.
 | Intervento | Note |
 |-----------|------|
 | Terre base **escluse di default** da `all`/`set`/`years` (e `analyze`); `-l\|--lands` promossa da opzione di `files` a opzione **comune** per includerle | Prima `set`/`years` le scaricavano sempre. La decisione è centralizzata in `CardFilter.IsDownloadable(..., bool downloadLands)`; `GetManager.GetUniqueArtwork(excludeFile)` non scarta più le terre base a mano, così `--lands` vale anche per `all --exclude`. Verifica: `set m21 --print-only` → default 186 carte / 0 terre, `--lands` 206 / 20. |
+| Nuovo comando **`lands`**: scarica ogni artwork di terra base, diviso per tipo | Sorgente: dataset Unique Artwork filtrato con `CardFilter.ValidateBasicLands` (solo `IsBasicLand && IsEnglish && IsPaperGame`, **nessun** gate reprint — scelta utente: massima copertura, ~1856 carte). Output `BasicLands/<tipo>/` via `Mode.Lands`. Settings snelle: estratta base `CommonSettings` (`-o/-c/-p`) da cui derivano `DownloadSettings` e `LandsSettings`, così `lands` non espone `-r/-t/-l`. |
 
 ## Lacune di test (deferite per scelta)
 Nessun test automatizzato. Aree a maggior rischio di regressione da coprire quando
