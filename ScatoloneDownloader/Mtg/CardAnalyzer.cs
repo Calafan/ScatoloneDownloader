@@ -68,7 +68,7 @@ namespace ScatoloneDownloader.Mtg
 
         private static int GetPercentage(int value, int total)
         {
-            return total != 0 ? value * 100 / total : 0;
+            return total != 0 ? (int)Math.Round(value * 100.0 / total) : 0;
         }
 
 
@@ -86,12 +86,19 @@ namespace ScatoloneDownloader.Mtg
 
             StringBuilder sb = new();
 
+            // --- Color distribution summary (top of report) ----------------------
+            // One line per ColorCategory with count + percentage, so the designer
+            // can tell at a glance whether the color balance is right.
+            AppendColorDistribution(sb, report);
+
+            sb.AppendLine();
+
             // --- Global section ---------------------------------------------------
             int totalSpells = report.MacroTypeCounts[MacroType.Spell];
             int totalPermanents = report.TotalCards - totalSpells;
 
             AppendSection(sb, header: null, report, report.MacroTypeCounts, report.TotalCards,
-                totalPermanents, totalSpells, report.AverageCmc, report.TotalCards);
+                totalPermanents, totalSpells, report.AverageCmc);
 
             // --- Per-ColorCategory sections ---------------------------------------
             foreach (string category in CategoryOrder)
@@ -107,7 +114,7 @@ namespace ScatoloneDownloader.Mtg
                 double catAvgCmc = report.AverageCmcPerCategory[category];
 
                 AppendSection(sb, PrintableNames.GetValueOrDefault(category, category),
-                    report, typeCounts, catTotal, catPermanents, catSpells, catAvgCmc, catTotal,
+                    report, typeCounts, catTotal, catPermanents, catSpells, catAvgCmc,
                     category, report.CmcByCategory[category]);
             }
 
@@ -115,18 +122,42 @@ namespace ScatoloneDownloader.Mtg
             writer.Write(sb.ToString());
         }
 
-        private static void AppendSection(
-            StringBuilder sb,
-            string? header,
-            AnalysisReport report,
-            Dictionary<MacroType, int> typeCounts,
-            int totalCards,
-            int totalPermanents,
-            int totalSpells,
-            double avgCmc,
-            int sectionTotal,
-            string? category = null,
-            Dictionary<double, int>? cmcDistribution = null)
+        private static void AppendColorDistribution(StringBuilder sb, AnalysisReport report)
+        {
+            sb.AppendLine("Color distribution");
+            sb.AppendLine("------------------");
+
+            int total = report.TotalCards;
+
+            // Single-color breakdown: multicolor cards count in EVERY color in
+            // their color_identity, so the sum of these counts can exceed the
+            // total card count. Lands are excluded from per-color and shown separately.
+            string[] colorOrder = ["W", "U", "B", "R", "G"];
+            string[] colorNames = ["White", "Blue", "Black", "Red", "Green"];
+
+            for (int i = 0; i < colorOrder.Length; i++)
+            {
+                report.IndividualColorCounts.TryGetValue(colorOrder[i], out int count);
+                if (count == 0) continue;
+
+                int pct = GetPercentage(count, total);
+                sb.AppendLine($"\t{colorNames[i]}:\t{count} ({pct}%)");
+            }
+
+            if (report.ColorlessCount > 0)
+            {
+                int pct = GetPercentage(report.ColorlessCount, total);
+                sb.AppendLine($"\tColorless:\t{report.ColorlessCount} ({pct}%)");
+            }
+
+            if (report.LandCount > 0)
+            {
+                int pct = GetPercentage(report.LandCount, total);
+                sb.AppendLine($"\tLands:\t{report.LandCount} ({pct}%)");
+            }
+        }
+
+        private static void AppendSection(StringBuilder sb, string? header, AnalysisReport report, Dictionary<MacroType, int> typeCounts, int totalCards, int totalPermanents, int totalSpells, double avgCmc, string? category = null, Dictionary<double, int>? cmcDistribution = null)
         {
             string tab = string.Empty;
 
@@ -326,6 +357,38 @@ namespace ScatoloneDownloader.Mtg
                 }
             }
 
+            // Per-single-color counts: multicolor cards contribute to every color
+            // in their color_identity. Lands are excluded and tracked separately.
+            Dictionary<string, int> individualColors = new()
+            {
+                { "W", 0 }, { "U", 0 }, { "B", 0 }, { "R", 0 }, { "G", 0 },
+            };
+            int colorlessCount = 0;
+            int landCount = 0;
+
+            foreach (Card c in relevant)
+            {
+                if (c.MacroType == MacroType.Land)
+                {
+                    landCount++;
+                    continue;
+                }
+
+                if (c.ColorIdentity.Count == 0)
+                {
+                    colorlessCount++;
+                    continue;
+                }
+
+                foreach (string color in c.ColorIdentity)
+                {
+                    if (individualColors.ContainsKey(color))
+                    {
+                        individualColors[color]++;
+                    }
+                }
+            }
+
             return new AnalysisReport
             {
                 MacroTypeCounts = macroTypeCounts,
@@ -338,6 +401,9 @@ namespace ScatoloneDownloader.Mtg
                 GlobalPipDensity = globalPipDensity,
                 AverageCmc = avgCmc,
                 PipDensityPerCategory = pipPerCat,
+                IndividualColorCounts = individualColors,
+                ColorlessCount = colorlessCount,
+                LandCount = landCount,
                 TotalCards = total,
             };
         }

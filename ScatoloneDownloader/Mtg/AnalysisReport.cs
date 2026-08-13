@@ -44,6 +44,19 @@ namespace ScatoloneDownloader.Mtg
         /// <summary>Average CMC per ColorCategory.</summary>
         internal Dictionary<string, double> AverageCmcPerCategory { get; init; } = new();
 
+        /// <summary>
+        /// Per-single-color card count: multicolor cards contribute to EVERY
+        /// color in their color_identity. Lands are excluded from this count and
+        /// tracked separately in <see cref="LandCount"/>.
+        /// </summary>
+        internal Dictionary<string, int> IndividualColorCounts { get; init; } = new();
+
+        /// <summary>Non-land cards with an empty color_identity (artifacts, eldrazi, ...).</summary>
+        internal int ColorlessCount { get; init; }
+
+        /// <summary>Cards whose MacroType is Land, regardless of color_identity.</summary>
+        internal int LandCount { get; init; }
+
         /// <summary>Total card count analyzed (excludes basic lands + tagged cards, per existing rule).</summary>
         internal int TotalCards { get; init; }
     }

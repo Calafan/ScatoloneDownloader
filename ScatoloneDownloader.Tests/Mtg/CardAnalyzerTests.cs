@@ -92,6 +92,46 @@ public sealed class CardAnalyzerTests : IDisposable
     }
 
     [Fact]
+    public void SaveAnalysis_ColorDistributionSection_AtTop_WithCountsAndPercentages()
+    {
+        List<Card> cards =
+        [
+            Card("Bolt1", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant"),
+            Card("Bolt2", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant"),
+            Card("Bear", colors: ["G"], colorIdentity: ["G"], typeLine: "Creature"),
+            Card("Boros Charm", colors: ["R", "W"], colorIdentity: ["R", "W"], typeLine: "Instant"),
+            Card("Sol Ring", colors: [], colorIdentity: [], typeLine: "Artifact"),
+            Card("Savai Triome", colors: [], colorIdentity: ["W", "B", "R"], typeLine: "Land"),
+        ];
+
+        CardAnalyzer analyzer = new(cards);
+
+        analyzer.SaveAnalysis(tempFile);
+
+        string text = File.ReadAllText(tempFile);
+
+        // The color distribution section comes FIRST, before the global stats.
+        int distIdx = text.IndexOf("Color distribution");
+        Assert.True(distIdx >= 0, "should have a 'Color distribution' header section");
+
+        int globalIdx = text.IndexOf("Cards: 6");
+        Assert.True(globalIdx > distIdx, "color distribution should appear before the global stats section");
+
+        // 6 cards total. Multicolor cards count in ALL their colors.
+        // Boros Charm (R+W): +1 R, +1 W.  Savai Triome is a Land — separate.
+        // R: Bolt1 + Bolt2 + Boros Charm = 3 (50%)
+        // W: Boros Charm = 1 (17%)
+        // G: Bear = 1 (17%)
+        // Colorless: Sol Ring = 1 (17%)
+        // Lands: Savai Triome = 1 (17%)
+        Assert.Contains("Red:\t3 (50%)", text);
+        Assert.Contains("Green:\t1 (17%)", text);
+        Assert.Contains("White:\t1 (17%)", text);
+        Assert.Contains("Colorless:\t1 (17%)", text);
+        Assert.Contains("Lands:\t1 (17%)", text);
+    }
+
+    [Fact]
     public void SaveAnalysis_SkipsBasicLands_AndCardsWithTag()
     {
         Card basicLand = Card("Plains", colors: ["W"], colorIdentity: ["W"], typeLine: "Basic Land — Plains");
