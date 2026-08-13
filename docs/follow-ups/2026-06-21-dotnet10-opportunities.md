@@ -42,7 +42,7 @@ che cede il thread e restituisce `null` a fine stream — eliminando anche la po
 `NullReferenceException` del vecchio `ReadLine().Trim()`. Build di nuovo a 0 warning.
 
 ### 3. JSON source generation (il win "di sostanza", con caveat)
-Il percorso caldo è la deserializzazione del bulk-data (`List<Card>`, centinaia di MB,
+Il percorso caldo è la deserializzazione del bulk-data (centinaia di MB,
 centinaia di migliaia di oggetti) che oggi passa per la reflection di
 `System.Text.Json`. Un `JsonSerializerContext` source-gen sui DTO (`JsonCard`,
 `JsonImageUris`, `JsonCardFace`, `CardSearch`, `Set`, `SetSearch`,
@@ -51,6 +51,18 @@ centinaia di migliaia di oggetti) che oggi passa per la reflection di
   soprattutto sulle allocazioni. Il *wall-clock* di quell'operazione è probabilmente
   dominato dal **download di rete**, non dalla reflection → non aspettarsi che dimezzi
   i tempi. Va ri-verificato che l'output resti identico.
+
+> **Aggiornamento 2026-08-13:** il percorso bulk è cambiato forma. Scryfall
+> migra i bulk export a **JSONL gzip** (`.jsonl.gz`), e il path .NET ora
+> usa il nuovo `ScryfallClient.GetJsonLinesAsync<Card>` che deserializza
+> **una `Card` per riga** via `JsonSerializer.Deserialize<Card>(line)`, non
+> più `GetFromJsonAsync<List<Card>>` (vedi
+> `docs/solutions/bugs/scryfall-bulk-data-migrated-to-jsonl-gz.md` e
+> `pre-existing-findings.md` → "Lavoro 2026-08-13"). Il source-gen resta
+> utile, ma ora si applicherebbe al **parser per-riga** invece che a un
+> array deserializer; il guadagno relativo è minore (line-level reflection
+> è già più leggero dell'array reflection per via delle allocazioni
+> ridotte). Rivalutare dopo aver misurato.
 
 ### ❌ NativeAOT / trimming — sconsigliato (per ora)
 Sarebbe ideale per un CLI (avvio istantaneo, singolo exe), ma tre ostacoli concreti:

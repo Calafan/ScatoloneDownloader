@@ -169,6 +169,21 @@ Due interventi sulla gestione delle terre base, in due commit distinti.
 | Terre base **escluse di default** da `all`/`set`/`years` (e `analyze`); `-l\|--lands` promossa da opzione di `files` a opzione **comune** per includerle | Prima `set`/`years` le scaricavano sempre. La decisione è centralizzata in `CardFilter.IsDownloadable(..., bool downloadLands)`; `GetManager.GetUniqueArtwork(excludeFile)` non scarta più le terre base a mano, così `--lands` vale anche per `all --exclude`. Verifica: `set m21 --print-only` → default 186 carte / 0 terre, `--lands` 206 / 20. |
 | Nuovo comando **`lands`**: scarica ogni artwork di terra base, diviso per tipo | Sorgente: dataset Unique Artwork filtrato con `CardFilter.ValidateBasicLands` (solo `IsBasicLand && IsEnglish && IsPaperGame`, **nessun** gate reprint — scelta utente: massima copertura, ~1856 carte). Output `BasicLands/<tipo>/` via `Mode.Lands`. Settings snelle: estratta base `CommonSettings` (`-o/-c/-p`) da cui derivano `DownloadSettings` e `LandsSettings`, così `lands` non espone `-r/-t/-l`. |
 
+## Lavoro 2026-08-13 — migrazione bulk-data a JSONL gzip
+Scryfall ha cambiato il formato dei bulk export: da un singolo array JSON servito al vecchio campo `download_uri`/`uri` a un archivio **`.jsonl.gz`** pubblicato tramite il nuovo campo `jsonl_download_uri` nell'oggetto `bulk_data`. Il vecchio endpoint `uri` ora restituisce solo metadata (`bulk_data`), non più carte → `GetFromJsonAsync<List<Card>>(bulkData.Uri)` crashava.
+
+| Intervento | File | Note |
+|-----------|------|------|
+| Mappato `JsonlDownloadUri` su `BulkData` | `Json/BulkData/BulkData.cs` | Il vecchio `Uri` è tenuto (endpoint metadata, ancora utile). |
+| Aggiunto `GetJsonLinesAsync<T>` su `ScryfallClient` | `Scryfall/ScryfallClient.cs` | Stream → `IdleTimeoutStream` (FU-4) → `GZipStream` → `StreamReader.ReadLineAsync` → `JsonSerializer.Deserialize<T>(line)`. Reuse throttle/`SendWithRetryAsync`/retry 429-5xx. |
+| `GetManager.GetCardList` punta a `JsonlDownloadUri` + `await foreach` | `GetManager.cs` | `CardService` downstream invariato: continua a ricevere `List<Card>`. |
+
+Dettagli completi (root cause, perché funziona, prevenzione) in
+`docs/solutions/bugs/scryfall-bulk-data-migrated-to-jsonl-gz.md`. Eredita la
+guarigione di **FU-4** (idle-timeout per-read, 30 s) — il nuovo path JSONL
+passa per lo stesso `IdleTimeoutStream`, quindi una connessione muta muore
+ancora entro 30 s, mentre un download lungo-ma-sano non viene tagliato.
+
 ## Lacune di test (deferite per scelta)
 Nessun test automatizzato. Aree a maggior rischio di regressione da coprire quando
 si introdurranno i test:

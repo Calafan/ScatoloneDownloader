@@ -68,7 +68,14 @@ namespace ScatoloneDownloader
 			{
 				if (bulkData.Name == name)
 				{
-					return await scryfallClient.GetFromJsonAsync<List<Card>>(bulkData.DownloadUri, JsonSerializerOptions);
+					// Scryfall bulk files are gzipped JSONL — one card per line — not a
+					// single JSON array anymore. Stream them line by line.
+					List<Card> cards = [];
+					await foreach (Card card in scryfallClient.GetJsonLinesAsync<Card>(bulkData.JsonlDownloadUri, JsonSerializerOptions))
+					{
+						cards.Add(card);
+					}
+					return cards;
 				}
 			}
 

@@ -7,7 +7,10 @@ namespace ScatoloneDownloader.Json.BulkData
         [JsonPropertyName("name")]
         public string Name { get; set; }
 
-        [JsonPropertyName("download_uri")]
-        public string DownloadUri { get; set; }
+        [JsonPropertyName("uri")]
+        public string Uri { get; set; }
+
+        [JsonPropertyName("jsonl_download_uri")]
+        public string JsonlDownloadUri { get; set; }
     }
 }

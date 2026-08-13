@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Text.Json;
@@ -19,7 +21,7 @@ namespace ScatoloneDownloader.Scryfall
 	{
 		// Scryfall asks for 50-100 ms between requests (~10 req/s). 100 ms sits right
 		// on the limit and still trips 429 under sustained paging, so leave a margin.
-		private static readonly TimeSpan MinRequestInterval = TimeSpan.FromMilliseconds(150);
+		private static readonly TimeSpan MinRequestInterval = TimeSpan.FromMilliseconds(250);
 
 		private const int MaxRetries = 5;
 
@@ -66,6 +68,34 @@ namespace ScatoloneDownloader.Scryfall
 			using IdleTimeoutStream guardedStream = new(stream, ReadIdleTimeout);
 
 			return await JsonSerializer.DeserializeAsync<T>(guardedStream, options);
+		}
+
+		/// <summary>
+		/// Streams a gzipped JSONL (JSON Lines) bulk-data resource — one
+		/// <typeparamref name="T"/> per line — without buffering the whole file.
+		/// Scryfall bulk exports are now <c>.jsonl.gz</c> archives (often &gt;1&#160;GB
+		/// decompressed), so each record is deserialized and yielded in turn and the
+		/// gzip stream is never fully expanded into memory.
+		/// </summary>
+		internal async IAsyncEnumerable<T> GetJsonLinesAsync<T>(string url, JsonSerializerOptions options = null)
+		{
+			using HttpResponseMessage response = await SendWithRetryAsync(url, HttpCompletionOption.ResponseHeadersRead);
+
+			Stream stream = await response.Content.ReadAsStreamAsync();
+			using IdleTimeoutStream guardedStream = new(stream, ReadIdleTimeout);
+			using GZipStream gzip = new(guardedStream, CompressionMode.Decompress);
+			using StreamReader reader = new(gzip);
+
+			string line;
+			while ((line = await reader.ReadLineAsync()) is not null)
+			{
+				if (line.Length == 0)
+				{
+					continue;
+				}
+
+				yield return JsonSerializer.Deserialize<T>(line, options);
+			}
 		}
 
 		/// <summary>
