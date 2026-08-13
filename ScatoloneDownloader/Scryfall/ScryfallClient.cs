@@ -19,9 +19,12 @@ namespace ScatoloneDownloader.Scryfall
     /// </summary>
     internal sealed class ScryfallClient : IDisposable
     {
-        // Scryfall asks for 50-100 ms between requests (~10 req/s). 100 ms sits right
-        // on the limit and still trips 429 under sustained paging, so leave a margin.
-        private static readonly TimeSpan MinRequestInterval = TimeSpan.FromMilliseconds(250);
+        // Scryfall rate limits: /cards/search is 2/s (500 ms); other data endpoints
+        // allow 10/s (100 ms). 250 ms was under the search limit and tripped 429
+        // under sustained paging (e.g. the `years` command across many sets).
+        // 500 ms sits safely on the search limit; bulk/data calls are few enough
+        // that the extra headroom costs nothing.
+        private static readonly TimeSpan MinRequestInterval = TimeSpan.FromMilliseconds(500);
 
         private const int MaxRetries = 5;
 

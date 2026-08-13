@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -13,6 +14,8 @@ using ScatoloneDownloader.Json.Sets;
 using ScatoloneDownloader.Logging;
 using ScatoloneDownloader.Mtg;
 using ScatoloneDownloader.Scryfall;
+
+using Spectre.Console;
 
 namespace ScatoloneDownloader
 {
@@ -231,19 +234,63 @@ namespace ScatoloneDownloader
 
             SetSearch sets = await scryfallClient.GetFromJsonAsync<SetSearch>(url);
 
+            HashSet<int> yearSet = [.. years];
+
+            // Matching sets with cards, for the threshold check.
+            List<Set> matchingSets = sets.Sets
+                .Where(s => yearSet.Contains(DateTime.Parse(s.ReleasedAt).Year) && s.CardCount > 0)
+                .ToList();
+
+            // Above the threshold the paginated search path generates too many
+            // /cards/search calls (each at the stricter 2/s rate limit) and trips
+            // 429. Switch to a single bulk "Default Cards" download (74 MB gz,
+            // data endpoint = 10/s) and filter by year locally — one HTTP round
+            // trip replaces hundreds.
+            if (YearsBulkDecision(matchingSets, BulkYearsThreshold))
+            {
+                AnsiConsole.MarkupLineInterpolated($"[yellow]Estimated {matchingSets.Sum(s => s.CardCount)} cards across {matchingSets.Count} sets — using bulk download to respect Scryfall's rate limit.[/]");
+
+                List<Card> bulkCards = await GetDefaultCards();
+
+                return FilterByYear(bulkCards, yearSet);
+            }
+
+            // Below threshold: paginate search as before (cheaper for small volumes).
             List<Card> cards = [];
 
-            foreach (Set set in sets.Sets)
+            foreach (Set set in matchingSets)
             {
-                int releasedYear = DateTime.Parse(set.ReleasedAt).Year;
-
-                if (years.Contains(releasedYear) && set.CardCount > 0)
-                {
-                    cards.AddRange(await GetCardSearch(set.SearchUri));
-                }
+                cards.AddRange(await GetCardSearch(set.SearchUri));
             }
 
             return cards;
+        }
+
+        // --- bulk-vs-search decision + local year filter (pure logic, tested) --
+
+        internal const int BulkYearsThreshold = 500;
+
+        /// <summary>
+        /// Returns true when the combined <see cref="Set.CardCount"/> of the
+        /// matching sets exceeds the threshold, signalling that the paginated
+        /// search path would make too many /cards/search calls and should be
+        /// replaced by a single bulk-data download.
+        /// </summary>
+        internal static bool YearsBulkDecision(IReadOnlyList<Set> matchingSets, int threshold)
+        {
+            int total = matchingSets.Sum(s => s.CardCount);
+
+            return total > threshold;
+        }
+
+        /// <summary>
+        /// Keeps only the cards whose <see cref="Card.ReleasedAt"/> year is in
+        /// the given set. Used by the bulk path of <see cref="GetYears"/> to
+        /// replace the per-set search pagination with a local filter.
+        /// </summary>
+        internal static List<Card> FilterByYear(List<Card> cards, HashSet<int> years)
+        {
+            return cards.Where(c => years.Contains(c.ReleasedAt.Year)).ToList();
         }
 
         internal async Task<List<Card>> GetCardList(string fileName, bool downloadLands)
