@@ -9,157 +9,157 @@ using System.Threading.Tasks;
 
 namespace ScatoloneDownloader.Scryfall
 {
-	/// <summary>
-	/// Async HTTP access to the Scryfall API. A single <see cref="HttpClient"/> is
-	/// reused for every request, and an async gate keeps consecutive requests
-	/// spaced by at least <see cref="MinRequestInterval"/> to honour Scryfall's
-	/// rate limit. Downloads stay sequential; the gate is the single choke point.
-	/// A 429 (or 5xx) is retried with backoff, honouring any <c>Retry-After</c>
-	/// header, because sustained paging can still trip the limit.
-	/// </summary>
-	internal sealed class ScryfallClient : IDisposable
-	{
-		// Scryfall asks for 50-100 ms between requests (~10 req/s). 100 ms sits right
-		// on the limit and still trips 429 under sustained paging, so leave a margin.
-		private static readonly TimeSpan MinRequestInterval = TimeSpan.FromMilliseconds(250);
+    /// <summary>
+    /// Async HTTP access to the Scryfall API. A single <see cref="HttpClient"/> is
+    /// reused for every request, and an async gate keeps consecutive requests
+    /// spaced by at least <see cref="MinRequestInterval"/> to honour Scryfall's
+    /// rate limit. Downloads stay sequential; the gate is the single choke point.
+    /// A 429 (or 5xx) is retried with backoff, honouring any <c>Retry-After</c>
+    /// header, because sustained paging can still trip the limit.
+    /// </summary>
+    internal sealed class ScryfallClient : IDisposable
+    {
+        // Scryfall asks for 50-100 ms between requests (~10 req/s). 100 ms sits right
+        // on the limit and still trips 429 under sustained paging, so leave a margin.
+        private static readonly TimeSpan MinRequestInterval = TimeSpan.FromMilliseconds(250);
 
-		private const int MaxRetries = 5;
+        private const int MaxRetries = 5;
 
-		// Max time a single bulk-data read may stall before we give up. The whole
-		// download can still take minutes — only an idle (silent) connection trips this.
-		private static readonly TimeSpan ReadIdleTimeout = TimeSpan.FromSeconds(30);
+        // Max time a single bulk-data read may stall before we give up. The whole
+        // download can still take minutes — only an idle (silent) connection trips this.
+        private static readonly TimeSpan ReadIdleTimeout = TimeSpan.FromSeconds(30);
 
-		private readonly HttpClient httpClient;
+        private readonly HttpClient httpClient;
 
-		// Monotonic (ms since boot), so the rate-limit gate is immune to wall-clock
-		// jumps (DST, NTP corrections) that a DateTime.Now-based gate would suffer.
-		private long minNextRequestTickMs;
+        // Monotonic (ms since boot), so the rate-limit gate is immune to wall-clock
+        // jumps (DST, NTP corrections) that a DateTime.Now-based gate would suffer.
+        private long minNextRequestTickMs;
 
-internal ScryfallClient()
-			{
-				httpClient = new HttpClient();
-				httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
-				httpClient.DefaultRequestHeaders.Add("User-Agent", "ScatoloneDownloader");
-			}
+        internal ScryfallClient()
+        {
+            httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
+            httpClient.DefaultRequestHeaders.Add("User-Agent", "ScatoloneDownloader");
+        }
 
-			/// <summary>Test seam: inject a custom handler (e.g. a stub that returns a
-			/// canned gzip JSONL stream) without touching the production path.</summary>
-			internal ScryfallClient(HttpMessageHandler handler)
-			{
-				httpClient = new HttpClient(handler);
-				httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
-				httpClient.DefaultRequestHeaders.Add("User-Agent", "ScatoloneDownloader");
-			}
+        /// <summary>Test seam: inject a custom handler (e.g. a stub that returns a
+        /// canned gzip JSONL stream) without touching the production path.</summary>
+        internal ScryfallClient(HttpMessageHandler handler)
+        {
+            httpClient = new HttpClient(handler);
+            httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
+            httpClient.DefaultRequestHeaders.Add("User-Agent", "ScatoloneDownloader");
+        }
 
-		private async Task ThrottleAsync()
-		{
-			long wait = minNextRequestTickMs - Environment.TickCount64;
+        private async Task ThrottleAsync()
+        {
+            long wait = minNextRequestTickMs - Environment.TickCount64;
 
-			if (wait > 0)
-			{
-				await Task.Delay((int)wait);
-			}
+            if (wait > 0)
+            {
+                await Task.Delay((int)wait);
+            }
 
-			minNextRequestTickMs = Environment.TickCount64 + (long)MinRequestInterval.TotalMilliseconds;
-		}
+            minNextRequestTickMs = Environment.TickCount64 + (long)MinRequestInterval.TotalMilliseconds;
+        }
 
-		/// <summary>
-		/// Streams a JSON resource straight into the deserializer without buffering the
-		/// whole payload first. Scryfall bulk-data files run to hundreds of megabytes
-		/// (sometimes &gt;2&#160;GB), so we read with <see cref="HttpCompletionOption.ResponseHeadersRead"/>
-		/// and deserialize from the live response stream.
-		/// </summary>
-		internal async Task<T> GetFromJsonAsync<T>(string url, JsonSerializerOptions options = null)
-		{
-			using HttpResponseMessage response = await SendWithRetryAsync(url, HttpCompletionOption.ResponseHeadersRead);
+        /// <summary>
+        /// Streams a JSON resource straight into the deserializer without buffering the
+        /// whole payload first. Scryfall bulk-data files run to hundreds of megabytes
+        /// (sometimes &gt;2&#160;GB), so we read with <see cref="HttpCompletionOption.ResponseHeadersRead"/>
+        /// and deserialize from the live response stream.
+        /// </summary>
+        internal async Task<T> GetFromJsonAsync<T>(string url, JsonSerializerOptions options = null)
+        {
+            using HttpResponseMessage response = await SendWithRetryAsync(url, HttpCompletionOption.ResponseHeadersRead);
 
-			Stream stream = await response.Content.ReadAsStreamAsync();
-			using IdleTimeoutStream guardedStream = new(stream, ReadIdleTimeout);
+            Stream stream = await response.Content.ReadAsStreamAsync();
+            using IdleTimeoutStream guardedStream = new(stream, ReadIdleTimeout);
 
-			return await JsonSerializer.DeserializeAsync<T>(guardedStream, options);
-		}
+            return await JsonSerializer.DeserializeAsync<T>(guardedStream, options);
+        }
 
-		/// <summary>
-		/// Streams a gzipped JSONL (JSON Lines) bulk-data resource — one
-		/// <typeparamref name="T"/> per line — without buffering the whole file.
-		/// Scryfall bulk exports are now <c>.jsonl.gz</c> archives (often &gt;1&#160;GB
-		/// decompressed), so each record is deserialized and yielded in turn and the
-		/// gzip stream is never fully expanded into memory.
-		/// </summary>
-		internal async IAsyncEnumerable<T> GetJsonLinesAsync<T>(string url, JsonSerializerOptions options = null)
-		{
-			using HttpResponseMessage response = await SendWithRetryAsync(url, HttpCompletionOption.ResponseHeadersRead);
+        /// <summary>
+        /// Streams a gzipped JSONL (JSON Lines) bulk-data resource — one
+        /// <typeparamref name="T"/> per line — without buffering the whole file.
+        /// Scryfall bulk exports are now <c>.jsonl.gz</c> archives (often &gt;1&#160;GB
+        /// decompressed), so each record is deserialized and yielded in turn and the
+        /// gzip stream is never fully expanded into memory.
+        /// </summary>
+        internal async IAsyncEnumerable<T> GetJsonLinesAsync<T>(string url, JsonSerializerOptions options = null)
+        {
+            using HttpResponseMessage response = await SendWithRetryAsync(url, HttpCompletionOption.ResponseHeadersRead);
 
-			Stream stream = await response.Content.ReadAsStreamAsync();
-			using IdleTimeoutStream guardedStream = new(stream, ReadIdleTimeout);
-			using GZipStream gzip = new(guardedStream, CompressionMode.Decompress);
-			using StreamReader reader = new(gzip);
+            Stream stream = await response.Content.ReadAsStreamAsync();
+            using IdleTimeoutStream guardedStream = new(stream, ReadIdleTimeout);
+            using GZipStream gzip = new(guardedStream, CompressionMode.Decompress);
+            using StreamReader reader = new(gzip);
 
-			string line;
-			while ((line = await reader.ReadLineAsync()) is not null)
-			{
-				if (line.Length == 0)
-				{
-					continue;
-				}
+            string line;
+            while ((line = await reader.ReadLineAsync()) is not null)
+            {
+                if (line.Length == 0)
+                {
+                    continue;
+                }
 
-				yield return JsonSerializer.Deserialize<T>(line, options);
-			}
-		}
+                yield return JsonSerializer.Deserialize<T>(line, options);
+            }
+        }
 
-		/// <summary>
-		/// Fetches a (small) binary resource — card images — and buffers it into a
-		/// seekable <see cref="MemoryStream"/>, so the caller owns the bytes and the
-		/// underlying response can be released.
-		/// </summary>
-		internal async Task<Stream> GetStreamAsync(string url)
-		{
-			using HttpResponseMessage response = await SendWithRetryAsync(url, HttpCompletionOption.ResponseContentRead);
+        /// <summary>
+        /// Fetches a (small) binary resource — card images — and buffers it into a
+        /// seekable <see cref="MemoryStream"/>, so the caller owns the bytes and the
+        /// underlying response can be released.
+        /// </summary>
+        internal async Task<Stream> GetStreamAsync(string url)
+        {
+            using HttpResponseMessage response = await SendWithRetryAsync(url, HttpCompletionOption.ResponseContentRead);
 
-			byte[] bytes = await response.Content.ReadAsByteArrayAsync();
+            byte[] bytes = await response.Content.ReadAsByteArrayAsync();
 
-			return new MemoryStream(bytes);
-		}
+            return new MemoryStream(bytes);
+        }
 
-		/// <summary>
-		/// Issues a throttled GET and retries a 429/5xx with backoff (honouring any
-		/// <c>Retry-After</c> header) up to <see cref="MaxRetries"/> times. Returns the
-		/// successful response — the caller owns and disposes it.
-		/// </summary>
-		private async Task<HttpResponseMessage> SendWithRetryAsync(string url, HttpCompletionOption completionOption)
-		{
-			for (int attempt = 1; ; attempt++)
-			{
-				await ThrottleAsync();
+        /// <summary>
+        /// Issues a throttled GET and retries a 429/5xx with backoff (honouring any
+        /// <c>Retry-After</c> header) up to <see cref="MaxRetries"/> times. Returns the
+        /// successful response — the caller owns and disposes it.
+        /// </summary>
+        private async Task<HttpResponseMessage> SendWithRetryAsync(string url, HttpCompletionOption completionOption)
+        {
+            for (int attempt = 1; ; attempt++)
+            {
+                await ThrottleAsync();
 
-				HttpResponseMessage response = await httpClient.GetAsync(url, completionOption);
+                HttpResponseMessage response = await httpClient.GetAsync(url, completionOption);
 
-				if (response.StatusCode == HttpStatusCode.OK)
-				{
-					return response;
-				}
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    return response;
+                }
 
-				bool transient = response.StatusCode == HttpStatusCode.TooManyRequests || (int)response.StatusCode >= 500;
+                bool transient = response.StatusCode == HttpStatusCode.TooManyRequests || (int)response.StatusCode >= 500;
 
-				if (transient && attempt <= MaxRetries)
-				{
-					TimeSpan delay = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(Math.Pow(2, attempt) * 0.5);
-					response.Dispose();
+                if (transient && attempt <= MaxRetries)
+                {
+                    TimeSpan delay = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(Math.Pow(2, attempt) * 0.5);
+                    response.Dispose();
 
-					await Task.Delay(delay);
-					continue;
-				}
+                    await Task.Delay(delay);
+                    continue;
+                }
 
-				HttpStatusCode status = response.StatusCode;
-				response.Dispose();
+                HttpStatusCode status = response.StatusCode;
+                response.Dispose();
 
-				throw new HttpRequestException(string.Format("Unable to contact: {0}. Status code: {1}", url, status));
-			}
-		}
+                throw new HttpRequestException(string.Format("Unable to contact: {0}. Status code: {1}", url, status));
+            }
+        }
 
-		public void Dispose()
-		{
-			httpClient.Dispose();
-		}
-	}
+        public void Dispose()
+        {
+            httpClient.Dispose();
+        }
+    }
 }

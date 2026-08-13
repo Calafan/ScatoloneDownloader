@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace ScatoloneDownloader.Extensions
 {
-	public static class StringExtensions
+    public static class StringExtensions
     {
         public static string Capitalize(this string input) =>
             input switch

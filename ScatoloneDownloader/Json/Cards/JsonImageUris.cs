@@ -3,7 +3,7 @@
 namespace ScatoloneDownloader.Json.Cards
 {
     public class JsonImageUris
-	{
+    {
         [JsonPropertyName("small")]
         public string Small { get; set; }
 

@@ -5,7 +5,7 @@ using ScatoloneDownloader.Mtg;
 
 namespace ScatoloneDownloader.Json.Cards
 {
-	public class CardSearch
+    public class CardSearch
     {
         [JsonPropertyName("has_more")]
         public bool HasMore { get; set; }

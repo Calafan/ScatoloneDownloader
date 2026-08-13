@@ -8,35 +8,35 @@ using Spectre.Console.Cli;
 
 namespace ScatoloneDownloader.Cli
 {
-	internal sealed class AllSettings : DownloadSettings
-	{
-		[CommandOption("-e|--exclude <FILE>")]
-		[Description("Exclude the cards listed in the given file.")]
-		public string ExcludeFile { get; set; }
+    internal sealed class AllSettings : DownloadSettings
+    {
+        [CommandOption("-e|--exclude <FILE>")]
+        [Description("Exclude the cards listed in the given file.")]
+        public string ExcludeFile { get; set; }
 
-		public override ValidationResult Validate()
-		{
-			if (!string.IsNullOrEmpty(ExcludeFile) && !File.Exists(ExcludeFile))
-			{
-				return ValidationResult.Error("File not found: " + ExcludeFile);
-			}
+        public override ValidationResult Validate()
+        {
+            if (!string.IsNullOrEmpty(ExcludeFile) && !File.Exists(ExcludeFile))
+            {
+                return ValidationResult.Error("File not found: " + ExcludeFile);
+            }
 
-			return ValidationResult.Success();
-		}
-	}
+            return ValidationResult.Success();
+        }
+    }
 
-	internal sealed class AllCommand : AsyncCommand<AllSettings>
-	{
-		protected override async Task<int> ExecuteAsync(CommandContext context, AllSettings settings, CancellationToken cancellationToken)
-		{
-			if (settings.Clear)
-			{
-				FolderCleaner.Clear();
-			}
+    internal sealed class AllCommand : AsyncCommand<AllSettings>
+    {
+        protected override async Task<int> ExecuteAsync(CommandContext context, AllSettings settings, CancellationToken cancellationToken)
+        {
+            if (settings.Clear)
+            {
+                FolderCleaner.Clear();
+            }
 
-			await CardService.RunAllAsync(settings.ExcludeFile, settings.Reprints, settings.Tokens, settings.Lands, settings.PrintOnly);
+            await CardService.RunAllAsync(settings.ExcludeFile, settings.Reprints, settings.Tokens, settings.Lands, settings.PrintOnly);
 
-			return 0;
-		}
-	}
+            return 0;
+        }
+    }
 }

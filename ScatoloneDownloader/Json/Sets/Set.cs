@@ -2,8 +2,8 @@
 
 namespace ScatoloneDownloader.Json.Sets
 {
-	public class Set
-	{
+    public class Set
+    {
         [JsonPropertyName("code")]
         public string Code { get; set; }
 

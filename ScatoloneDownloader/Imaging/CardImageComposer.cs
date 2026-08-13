@@ -5,169 +5,169 @@ using SkiaSharp;
 
 namespace ScatoloneDownloader.Imaging
 {
-	/// <summary>
-	/// Builds the final printable PNG for a card. This is the only component that
-	/// references the image library (R5). The pipeline order is load-bearing:
-	/// for a double-faced card it is <c>merge → Siege rotation → normalize borders
-	/// → outer border</c>; a single face skips the first two steps.
-	/// </summary>
-	internal static class CardImageComposer
-	{
-		// Physical card geometry, used to size the proportional outer border.
-		private const double CardWidthMm = 63d;
-		private const double CardHeightMm = 88d;
-		private const double AdditionalBorderMm = 3d;
+    /// <summary>
+    /// Builds the final printable PNG for a card. This is the only component that
+    /// references the image library (R5). The pipeline order is load-bearing:
+    /// for a double-faced card it is <c>merge → Siege rotation → normalize borders
+    /// → outer border</c>; a single face skips the first two steps.
+    /// </summary>
+    internal static class CardImageComposer
+    {
+        // Physical card geometry, used to size the proportional outer border.
+        private const double CardWidthMm = 63d;
+        private const double CardHeightMm = 88d;
+        private const double AdditionalBorderMm = 3d;
 
-		// The pixel sampled to pick the border-fill colour.
-		private const int BorderSampleX = 20;
-		private const int BorderSampleY = 20;
+        // The pixel sampled to pick the border-fill colour.
+        private const int BorderSampleX = 20;
+        private const int BorderSampleY = 20;
 
-		// Thickness of the edge bands repainted during border normalization.
-		private const int NormalizeBorderThickness = 25;
-
-
-		/// <summary>Decodes a single-face card and applies the border finishing.</summary>
-		internal static byte[] ComposeSingleFace(Stream imageStream)
-		{
-			using SKBitmap card = Decode(imageStream);
-
-			return Finalize(card);
-		}
-
-		/// <summary>
-		/// Merges the two faces side-by-side at single-card size, optionally rotates
-		/// a Siege card 180°, then applies the border finishing.
-		/// </summary>
-		internal static byte[] ComposeDoubleFace(Stream frontStream, Stream rearStream, bool isSiege)
-		{
-			using SKBitmap merged = MergeFaces(frontStream, rearStream);
-
-			if (isSiege)
-			{
-				using SKBitmap rotated = Rotate(merged, 180f);
-
-				return Finalize(rotated);
-			}
-
-			return Finalize(merged);
-		}
+        // Thickness of the edge bands repainted during border normalization.
+        private const int NormalizeBorderThickness = 25;
 
 
-		private static SKBitmap Decode(Stream stream)
-		{
-			using Stream owned = stream;
+        /// <summary>Decodes a single-face card and applies the border finishing.</summary>
+        internal static byte[] ComposeSingleFace(Stream imageStream)
+        {
+            using SKBitmap card = Decode(imageStream);
 
-			return SKBitmap.Decode(owned)
-				?? throw new InvalidOperationException("Unable to decode card image.");
-		}
+            return Finalize(card);
+        }
 
-		private static SKBitmap MergeFaces(Stream frontStream, Stream rearStream)
-		{
-			using SKBitmap front = Decode(frontStream);
-			using SKBitmap rear = Decode(rearStream);
+        /// <summary>
+        /// Merges the two faces side-by-side at single-card size, optionally rotates
+        /// a Siege card 180°, then applies the border finishing.
+        /// </summary>
+        internal static byte[] ComposeDoubleFace(Stream frontStream, Stream rearStream, bool isSiege)
+        {
+            using SKBitmap merged = MergeFaces(frontStream, rearStream);
 
-			int canvasWidth = front.Width;
-			int canvasHeight = front.Height;
+            if (isSiege)
+            {
+                using SKBitmap rotated = Rotate(merged, 180f);
 
-			// Background taken from the front face's top-left pixel, as before.
-			SKColor background = front.GetPixel(0, 0);
+                return Finalize(rotated);
+            }
 
-			float resizeRatio = (float)front.Width / front.Height;
+            return Finalize(merged);
+        }
 
-			using SKBitmap frontRotated = Rotate(front, 270f);
-			using SKBitmap rearRotated = Rotate(rear, 270f);
 
-			float newWidth = rearRotated.Width * resizeRatio;
-			float newHeight = rearRotated.Height * resizeRatio;
+        private static SKBitmap Decode(Stream stream)
+        {
+            using Stream owned = stream;
 
-			SKRect rearRect = SKRect.Create(0, 0, newWidth, newHeight);
-			SKRect frontRect = SKRect.Create(0, canvasHeight - newHeight, newWidth, newHeight);
+            return SKBitmap.Decode(owned)
+                ?? throw new InvalidOperationException("Unable to decode card image.");
+        }
 
-			SKBitmap doubleCard = new(canvasWidth, canvasHeight);
+        private static SKBitmap MergeFaces(Stream frontStream, Stream rearStream)
+        {
+            using SKBitmap front = Decode(frontStream);
+            using SKBitmap rear = Decode(rearStream);
 
-			using (SKCanvas canvas = new(doubleCard))
-			using (SKPaint paint = new() { FilterQuality = SKFilterQuality.High, IsAntialias = true })
-			{
-				canvas.Clear(background);
-				canvas.DrawBitmap(rearRotated, rearRect, paint);
-				canvas.DrawBitmap(frontRotated, frontRect, paint);
-			}
+            int canvasWidth = front.Width;
+            int canvasHeight = front.Height;
 
-			return doubleCard;
-		}
+            // Background taken from the front face's top-left pixel, as before.
+            SKColor background = front.GetPixel(0, 0);
 
-		/// <summary>Applies border normalization then the proportional outer border, and encodes PNG.</summary>
-		private static byte[] Finalize(SKBitmap card)
-		{
-			SKColor borderColor = SamplePixel(card, BorderSampleX, BorderSampleY);
+            float resizeRatio = (float)front.Width / front.Height;
 
-			NormalizeBorders(card, borderColor);
+            using SKBitmap frontRotated = Rotate(front, 270f);
+            using SKBitmap rearRotated = Rotate(rear, 270f);
 
-			using SKBitmap bordered = AddOuterBorder(card, borderColor);
-			using SKData data = bordered.Encode(SKEncodedImageFormat.Png, 100);
+            float newWidth = rearRotated.Width * resizeRatio;
+            float newHeight = rearRotated.Height * resizeRatio;
 
-			return data.ToArray();
-		}
+            SKRect rearRect = SKRect.Create(0, 0, newWidth, newHeight);
+            SKRect frontRect = SKRect.Create(0, canvasHeight - newHeight, newWidth, newHeight);
 
-		private static SKColor SamplePixel(SKBitmap bitmap, int x, int y)
-		{
-			int sampleX = Math.Clamp(x, 0, bitmap.Width - 1);
-			int sampleY = Math.Clamp(y, 0, bitmap.Height - 1);
+            SKBitmap doubleCard = new(canvasWidth, canvasHeight);
 
-			// SKBitmap.GetPixel returns a straight (non-premultiplied) colour,
-			// matching the old System.Drawing GetPixel.
-			return bitmap.GetPixel(sampleX, sampleY);
-		}
+            using (SKCanvas canvas = new(doubleCard))
+            using (SKPaint paint = new() { FilterQuality = SKFilterQuality.High, IsAntialias = true })
+            {
+                canvas.Clear(background);
+                canvas.DrawBitmap(rearRotated, rearRect, paint);
+                canvas.DrawBitmap(frontRotated, frontRect, paint);
+            }
 
-		private static void NormalizeBorders(SKBitmap bitmap, SKColor color)
-		{
-			using SKCanvas canvas = new(bitmap);
-			using SKPaint paint = new() { Color = color, BlendMode = SKBlendMode.Src, IsAntialias = false };
+            return doubleCard;
+        }
 
-			int thickness = NormalizeBorderThickness;
+        /// <summary>Applies border normalization then the proportional outer border, and encodes PNG.</summary>
+        private static byte[] Finalize(SKBitmap card)
+        {
+            SKColor borderColor = SamplePixel(card, BorderSampleX, BorderSampleY);
 
-			canvas.DrawRect(0, 0, thickness, bitmap.Height, paint);
-			canvas.DrawRect(bitmap.Width - thickness, 0, thickness, bitmap.Height, paint);
-			canvas.DrawRect(0, 0, bitmap.Width, thickness, paint);
-			canvas.DrawRect(0, bitmap.Height - thickness, bitmap.Width, thickness, paint);
-		}
+            NormalizeBorders(card, borderColor);
 
-		private static SKBitmap AddOuterBorder(SKBitmap bitmap, SKColor color)
-		{
-			int horizontalBorder = (int)Math.Round(bitmap.Width * (AdditionalBorderMm / CardWidthMm));
-			int verticalBorder = (int)Math.Round(bitmap.Height * (AdditionalBorderMm / CardHeightMm));
+            using SKBitmap bordered = AddOuterBorder(card, borderColor);
+            using SKData data = bordered.Encode(SKEncodedImageFormat.Png, 100);
 
-			SKBitmap bordered = new(bitmap.Width + (horizontalBorder * 2), bitmap.Height + (verticalBorder * 2));
+            return data.ToArray();
+        }
 
-			using (SKCanvas canvas = new(bordered))
-			{
-				canvas.Clear(color);
-				canvas.DrawBitmap(bitmap, horizontalBorder, verticalBorder);
-			}
+        private static SKColor SamplePixel(SKBitmap bitmap, int x, int y)
+        {
+            int sampleX = Math.Clamp(x, 0, bitmap.Width - 1);
+            int sampleY = Math.Clamp(y, 0, bitmap.Height - 1);
 
-			return bordered;
-		}
+            // SKBitmap.GetPixel returns a straight (non-premultiplied) colour,
+            // matching the old System.Drawing GetPixel.
+            return bitmap.GetPixel(sampleX, sampleY);
+        }
 
-		/// <summary>Rotates a bitmap clockwise by the given angle (90/180/270).</summary>
-		private static SKBitmap Rotate(SKBitmap source, float degrees)
-		{
-			double radians = degrees * Math.PI / 180d;
-			float sin = (float)Math.Abs(Math.Sin(radians));
-			float cos = (float)Math.Abs(Math.Cos(radians));
+        private static void NormalizeBorders(SKBitmap bitmap, SKColor color)
+        {
+            using SKCanvas canvas = new(bitmap);
+            using SKPaint paint = new() { Color = color, BlendMode = SKBlendMode.Src, IsAntialias = false };
 
-			int newWidth = (int)Math.Round(source.Width * cos + source.Height * sin);
-			int newHeight = (int)Math.Round(source.Width * sin + source.Height * cos);
+            int thickness = NormalizeBorderThickness;
 
-			SKBitmap rotated = new(newWidth, newHeight);
+            canvas.DrawRect(0, 0, thickness, bitmap.Height, paint);
+            canvas.DrawRect(bitmap.Width - thickness, 0, thickness, bitmap.Height, paint);
+            canvas.DrawRect(0, 0, bitmap.Width, thickness, paint);
+            canvas.DrawRect(0, bitmap.Height - thickness, bitmap.Width, thickness, paint);
+        }
 
-			using (SKCanvas canvas = new(rotated))
-			{
-				canvas.Translate(newWidth / 2f, newHeight / 2f);
-				canvas.RotateDegrees(degrees);
-				canvas.DrawBitmap(source, -source.Width / 2f, -source.Height / 2f);
-			}
+        private static SKBitmap AddOuterBorder(SKBitmap bitmap, SKColor color)
+        {
+            int horizontalBorder = (int)Math.Round(bitmap.Width * (AdditionalBorderMm / CardWidthMm));
+            int verticalBorder = (int)Math.Round(bitmap.Height * (AdditionalBorderMm / CardHeightMm));
 
-			return rotated;
-		}
-	}
+            SKBitmap bordered = new(bitmap.Width + (horizontalBorder * 2), bitmap.Height + (verticalBorder * 2));
+
+            using (SKCanvas canvas = new(bordered))
+            {
+                canvas.Clear(color);
+                canvas.DrawBitmap(bitmap, horizontalBorder, verticalBorder);
+            }
+
+            return bordered;
+        }
+
+        /// <summary>Rotates a bitmap clockwise by the given angle (90/180/270).</summary>
+        private static SKBitmap Rotate(SKBitmap source, float degrees)
+        {
+            double radians = degrees * Math.PI / 180d;
+            float sin = (float)Math.Abs(Math.Sin(radians));
+            float cos = (float)Math.Abs(Math.Cos(radians));
+
+            int newWidth = (int)Math.Round(source.Width * cos + source.Height * sin);
+            int newHeight = (int)Math.Round(source.Width * sin + source.Height * cos);
+
+            SKBitmap rotated = new(newWidth, newHeight);
+
+            using (SKCanvas canvas = new(rotated))
+            {
+                canvas.Translate(newWidth / 2f, newHeight / 2f);
+                canvas.RotateDegrees(degrees);
+                canvas.DrawBitmap(source, -source.Width / 2f, -source.Height / 2f);
+            }
+
+            return rotated;
+        }
+    }
 }

@@ -3,8 +3,8 @@ using System.Text.Json.Serialization;
 
 namespace ScatoloneDownloader.Json.Sets
 {
-	public class SetSearch
-	{
+    public class SetSearch
+    {
         [JsonPropertyName("object")]
         public string Object { get; set; }
 

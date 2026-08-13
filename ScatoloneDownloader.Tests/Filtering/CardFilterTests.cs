@@ -168,6 +168,119 @@ public sealed class CardFilterTests
         Assert.Equal("Island", land.Name);
     }
 
+    // --- promo-treatment / canonical-artwork rule ---------------------------
+
+    [Fact]
+    public void IsPromoTreatment_NullOrEmptyPromoTypes_IsNotTreatment()
+    {
+        Card noTypes = Card("Lightning Bolt", promoTypes: null);
+        Card emptyTypes = Card("Lightning Bolt", promoTypes: []);
+
+        Assert.False(CardFilter.IsPromoTreatment(noTypes));
+        Assert.False(CardFilter.IsPromoTreatment(emptyTypes));
+    }
+
+    [Fact]
+    public void IsPromoTreatment_UniversesBeyondOnly_IsNotTreatment()
+    {
+        // "universesbeyond" is a categorical branding (Warhammer, Lord of the Rings, ...)
+        // not a special foil treatment — the card art is ordinary, so it is a valid
+        // canonical artwork candidate.
+        Card ub = Card("Abaddon the Despoiler", promoTypes: ["universesbeyond"]);
+
+        Assert.False(CardFilter.IsPromoTreatment(ub));
+    }
+
+    [Theory]
+    [InlineData("surgefoil")]
+    [InlineData("thick")]
+    [InlineData("textured")]
+    [InlineData("halofoil")]
+    [InlineData("ripplefoil")]
+    [InlineData("stepandcompleat")]
+    [InlineData("gilded")]
+    [InlineData("oil_slick")]
+    public void IsPromoTreatment_DetectsSpecialFoilTreatments(string treatment)
+    {
+        Card c = Card("Abaddon the Despoiler", promoTypes: [treatment, "universesbeyond"]);
+
+        Assert.True(CardFilter.IsPromoTreatment(c));
+    }
+
+    [Fact]
+    public void IsPromoTreatment_MixedKnownAndUnknown_StillReturnsTrue_WhenAnySpecialPresent()
+    {
+        Card c = Card("X", promoTypes: ["mynewhypothetical", "surgefoil"]);
+
+        Assert.True(CardFilter.IsPromoTreatment(c));
+    }
+
+    // --- canonical-artwork composite ----------------------------------------
+
+    [Fact]
+    public void IsCanonicalArtwork_PlainPrinting_Qualifies()
+    {
+        // The #171 printing of Abaddon: legendary frame, only "universesbeyond"
+        // branding, foil finish, black border, English. Should win the canonical slot.
+        Card plain = Card(
+            "Abaddon the Despoiler",
+            set: "40k",
+            setName: "Warhammer 40,000 Commander",
+            typeLine: "Legendary Creature — Traitor",
+            promoTypes: ["universesbeyond"]);
+
+        Assert.True(CardFilter.IsCanonicalArtwork(plain));
+    }
+
+    [Fact]
+    public void IsCanonicalArtwork_SurgeFoilPromo_Disqualified_FromCanonicalSlot()
+    {
+        // The #2 printing of Abaddon: same art, but surgefoil treatment — the
+        // digital render doesn't digitize cleanly, so it does NOT win canonical
+        // even though it passes IsDownloadable.
+        Card surgefoil = Card(
+            "Abaddon the Despoiler",
+            set: "40k",
+            setName: "Warhammer 40,000 Commander",
+            typeLine: "Legendary Creature — Traitor",
+            promoTypes: ["surgefoil", "universesbeyond"]);
+
+        // Still downloadable on its own (so --reprints can pull it to a numbered slot).
+        Assert.True(CardFilter.IsDownloadable(surgefoil, downloadReprints: true, downloadTokens: false, downloadLands: false));
+        // But not canonical.
+        Assert.False(CardFilter.IsCanonicalArtwork(surgefoil));
+    }
+
+    [Fact]
+    public void IsCanonicalArtwork_InvertedEtchedFrame_Disqualified()
+    {
+        // #178/#319 printings have frame_effects "inverted,etched" on top of the
+        // surgefoil/thick promo treatment — disqualified by both gates.
+        Card special = Card(
+            "Abaddon the Despoiler",
+            set: "40k",
+            setName: "Warhammer 40,000 Commander",
+            typeLine: "Legendary Creature — Traitor",
+            promoTypes: ["thick", "surgefoil", "universesbeyond"],
+            frameEffects: ["legendary", "inverted", "etched"]);
+
+        Assert.False(CardFilter.IsCanonicalArtwork(special));
+    }
+
+    [Fact]
+    public void IsCanonicalArtwork_BasicLand_Disqualified()
+    {
+        // Basic lands are excluded from the strict IsDownloadable gate (downloadLands=false),
+        // which the composite reuses — so a basic land never wins the canonical slot
+        // via the plain-card path. (Basic lands have their own dedup path.)
+        Card plains = Card(
+            "Plains",
+            layout: "normal",
+            typeLine: "Basic Land — Plains");
+
+        Assert.False(CardFilter.IsCanonicalArtwork(plains));
+    }
+
     // --- factory -----------------------------------------------------------
 
     /// <summary>
@@ -177,6 +290,7 @@ public sealed class CardFilterTests
     private static Card Card(
         string name,
         string set = "LEA",
+        string setName = "Limited Edition Alpha",
         string language = "en",
         string layout = "normal",
         string typeLine = "Instant",
@@ -186,7 +300,8 @@ public sealed class CardFilterTests
         bool variation = false,
         bool textless = false,
         List<string>? games = null,
-        List<string>? frameEffects = null)
+        List<string>? frameEffects = null,
+        List<string>? promoTypes = null)
     {
         JsonCard json = new()
         {
@@ -201,12 +316,13 @@ public sealed class CardFilterTests
             Variation = variation,
             Textless = textless,
             Set = set,
-            SetName = "Limited Edition Alpha",
+            SetName = setName,
             SetType = setType,
             BorderColor = borderColor,
             Cmc = 1,
             Colors = ["R"],
             ImageUris = new JsonImageUris { Png = "https://test/img.png" },
+            PromoTypes = promoTypes,
         };
 
         return ScatoloneDownloader.Mtg.Card.CreateCard(json);
