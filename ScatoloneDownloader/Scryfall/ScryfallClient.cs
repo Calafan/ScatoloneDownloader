@@ -35,12 +35,21 @@ namespace ScatoloneDownloader.Scryfall
 		// jumps (DST, NTP corrections) that a DateTime.Now-based gate would suffer.
 		private long minNextRequestTickMs;
 
-		internal ScryfallClient()
-		{
-			httpClient = new HttpClient();
-			httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
-			httpClient.DefaultRequestHeaders.Add("User-Agent", "ScatoloneDownloader");
-		}
+internal ScryfallClient()
+			{
+				httpClient = new HttpClient();
+				httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
+				httpClient.DefaultRequestHeaders.Add("User-Agent", "ScatoloneDownloader");
+			}
+
+			/// <summary>Test seam: inject a custom handler (e.g. a stub that returns a
+			/// canned gzip JSONL stream) without touching the production path.</summary>
+			internal ScryfallClient(HttpMessageHandler handler)
+			{
+				httpClient = new HttpClient(handler);
+				httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
+				httpClient.DefaultRequestHeaders.Add("User-Agent", "ScatoloneDownloader");
+			}
 
 		private async Task ThrottleAsync()
 		{

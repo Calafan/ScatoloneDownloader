@@ -1,8 +1,7 @@
 {
   "profiles": {
     "ScatoloneDownloader": {
-      "commandName": "Project",
-      "commandLineArgs": "years 2023"
+      "commandName": "Project"
     }
   }
 }
