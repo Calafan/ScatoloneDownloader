@@ -29,6 +29,8 @@ namespace ScatoloneDownloader.Mtg
 
 
         internal string Name { get; init; }
+        internal string Id { get; init; }
+        internal string CollectorNumber { get; init; }
         internal string Language { get; init; }
         internal string Layout { get; init; }
 
@@ -75,6 +77,8 @@ namespace ScatoloneDownloader.Mtg
         internal Card(JsonCard jsonCard)
         {
             Name = jsonCard.Name;
+            Id = jsonCard.Id;
+            CollectorNumber = jsonCard.CollectorNumber;
             Language = jsonCard.Language;
             Layout = jsonCard.Layout;
 

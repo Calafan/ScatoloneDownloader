@@ -27,9 +27,11 @@ namespace ScatoloneDownloader.Mtg
         private readonly Dictionary<string, Dictionary<string, int>> CardsByColorAndType;
         private readonly Dictionary<string, Dictionary<double, int>> CardsByColorAndCmc;
         private readonly Dictionary<string, int> MulticolorColorDistribution;
+        private readonly List<Card> analyzedCards;
 
         internal CardAnalyzer(List<Card> cards)
         {
+            analyzedCards = cards ?? [];
             CardsByColorAndType = [];
             CardsByColorAndCmc = [];
             MulticolorColorDistribution = [];
@@ -221,6 +223,137 @@ namespace ScatoloneDownloader.Mtg
 
             using StreamWriter writer = new(path);
             writer.Write(stringBuilder.ToString());
+        }
+
+
+        // --- Phase 1: extended metrics + CSV export ---------------------------
+
+
+        /// <summary>
+        /// Computes all extended cube metrics (R2) from the cards passed to the
+        /// constructor, returning an immutable <see cref="AnalysisReport"/>. Cards
+        /// with a non-empty <see cref="Card.Tag"/> or <see cref="Card.IsBasicLand"/>
+        /// are excluded, matching the existing .txt analyzer behavior.
+        /// </summary>
+        internal AnalysisReport Analyze()
+        {
+            IEnumerable<Card> relevant = analyzedCards
+                .Where(c => !c.IsBasicLand && string.IsNullOrEmpty(c.Tag))
+                .ToList();
+
+            int total = relevant.Count();
+
+            // MacroType ratios.
+            Dictionary<MacroType, int> macroTypeCounts = new()
+            {
+                { MacroType.Creature, 0 },
+                { MacroType.Land, 0 },
+                { MacroType.OtherPermanent, 0 },
+                { MacroType.Spell, 0 },
+            };
+            foreach (Card c in relevant)
+            {
+                macroTypeCounts[c.MacroType]++;
+            }
+
+            // ColorCategory density (Guilds/Shards/Wedges/4-5/Colorless/mono).
+            Dictionary<string, int> colorCategoryCounts = [];
+            foreach (Card c in relevant)
+            {
+                string cat = c.ColorCategory;
+                colorCategoryCounts.TryGetValue(cat, out int cur);
+                colorCategoryCounts[cat] = cur + 1;
+            }
+
+            // Rating tiers: (color, stars) — keyed by first color in ColorIdentity
+            // (or "Colorless" for empty). Only 3★/4★/5★ per Plan §4.2.
+            Dictionary<(string, int), int> ratingTiers = [];
+            foreach (Card c in relevant)
+            {
+                if (c.Rating < 3) continue;
+                string colorKey = c.ColorIdentity.Count > 0 ? c.ColorIdentity[0] : "Colorless";
+                var key = (colorKey, c.Rating);
+                ratingTiers.TryGetValue(key, out int cur);
+                ratingTiers[key] = cur + 1;
+            }
+
+            // Curve by MacroType: CMC buckets 1/2/3/4/5/6(=6+).
+            Dictionary<MacroType, Dictionary<int, int>> curveByMacroType = new()
+            {
+                { MacroType.Creature, [] },
+                { MacroType.Spell, [] },
+                { MacroType.OtherPermanent, [] },
+                { MacroType.Land, [] },
+            };
+            foreach (Card c in relevant)
+            {
+                int bucket = c.Cmc >= 6 ? 6 : (int)c.Cmc;
+                if (!curveByMacroType.TryGetValue(c.MacroType, out var macro))
+                {
+                    macro = [];
+                    curveByMacroType[c.MacroType] = macro;
+                }
+                macro.TryGetValue(bucket, out int cur);
+                macro[bucket] = cur + 1;
+            }
+
+            // Pip density: global average colored pips per card.
+            double globalPips = relevant.Sum(c => (double)c.ManaPips);
+            double globalPipDensity = total > 0 ? globalPips / total : 0;
+
+            // Average CMC.
+            double totalManaCost = relevant.Sum(c => c.Cmc);
+            double avgCmc = total > 0 ? totalManaCost / total : 0;
+
+            // Pip density per ColorCategory.
+            Dictionary<string, double> pipPerCat = [];
+            var groupedByCat = relevant.GroupBy(c => c.ColorCategory);
+            foreach (var g in groupedByCat)
+            {
+                int cnt = g.Count();
+                if (cnt > 0)
+                {
+                    pipPerCat[g.Key] = g.Sum(c => (double)c.ManaPips) / cnt;
+                }
+            }
+
+            return new AnalysisReport
+            {
+                MacroTypeCounts = macroTypeCounts,
+                ColorCategoryCounts = colorCategoryCounts,
+                RatingTiers = ratingTiers,
+                CurveByMacroType = curveByMacroType,
+                GlobalPipDensity = globalPipDensity,
+                AverageCmc = avgCmc,
+                PipDensityPerCategory = pipPerCat,
+                TotalCards = total,
+            };
+        }
+
+        /// <summary>
+        /// Writes one CSV file per ColorCategory, using the canonical plan format:
+        /// <c>Name,SetCode,CollectorNumber,ManaValue,MacroType,Rating,XmpLabel,ScryfallId,ColorIdentity</c>.
+        /// </summary>
+        internal void SaveAnalysisCsv(string directory)
+        {
+            Directory.CreateDirectory(directory);
+
+            IEnumerable<Card> relevant = analyzedCards
+                .Where(c => !c.IsBasicLand && string.IsNullOrEmpty(c.Tag));
+
+            foreach (var group in relevant.GroupBy(c => c.ColorCategory))
+            {
+                string filePath = Path.Combine(directory, group.Key + ".csv");
+                using StreamWriter writer = new(filePath);
+                writer.WriteLine("Name,SetCode,CollectorNumber,ManaValue,MacroType,Rating,XmpLabel,ScryfallId,ColorIdentity");
+
+                foreach (Card c in group)
+                {
+                    string colorIdentity = string.Join("/", c.ColorIdentity);
+                    string line = $"{c.Name},{c.Set},{c.CollectorNumber},{c.Cmc},{c.MacroType},{c.Rating},{c.XmpLabel},{c.Id},{colorIdentity}";
+                    writer.WriteLine(line);
+                }
+            }
         }
     }
 }
