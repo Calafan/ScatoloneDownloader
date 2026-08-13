@@ -45,13 +45,11 @@ public sealed class CardAnalyzerTests : IDisposable
         string text = File.ReadAllText(tempFile);
 
         Assert.Contains("Cards: 0 - Permanents: 0 (0%) Spells: 0 (0%)", text);
+        // 4 MacroType rows (not 7 type-strings anymore).
         Assert.Contains("Creatures", text);
         Assert.Contains("Lands", text);
-        Assert.Contains("Artifacts", text);
-        Assert.Contains("Enchantments", text);
-        Assert.Contains("Planeswalkers", text);
-        Assert.Contains("Instants", text);
-        Assert.Contains("Sorceries", text);
+        Assert.Contains("OtherPermanents", text);
+        Assert.Contains("Spells", text);
         Assert.Contains("CMC distribution:", text);
         Assert.Contains("Average CMC: 0", text);
     }
@@ -61,13 +59,13 @@ public sealed class CardAnalyzerTests : IDisposable
     {
         List<Card> cards =
         [
-            Card("Lightning Bolt", colors: ["R"], typeLine: "Instant", cmc: 1),
-            Card("Shock", colors: ["R"], typeLine: "Instant", cmc: 1),
-            Card("Counterspell", colors: ["U"], typeLine: "Instant", cmc: 2),
-            Card("Serra Angel", colors: ["W"], typeLine: "Creature — Angel", cmc: 5),
-            Card("Sol Ring", colors: [], typeLine: "Artifact", cmc: 1),
-            Card("Forest", colors: [], typeLine: "Basic Land — Forest"), // basic land skipped
-            Card("Boros Charm", colors: ["R", "W"], typeLine: "Instant", cmc: 2),
+            Card("Lightning Bolt", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 1),
+            Card("Shock", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 1),
+            Card("Counterspell", colors: ["U"], colorIdentity: ["U"], typeLine: "Instant", cmc: 2),
+            Card("Serra Angel", colors: ["W"], colorIdentity: ["W"], typeLine: "Creature — Angel", cmc: 5),
+            Card("Sol Ring", colors: [], colorIdentity: [], typeLine: "Artifact", cmc: 1),
+            Card("Forest", colors: [], colorIdentity: [], typeLine: "Basic Land — Forest"), // basic land skipped
+            Card("Boros Charm", colors: ["R", "W"], colorIdentity: ["R", "W"], typeLine: "Instant", cmc: 2),
         ];
 
         CardAnalyzer analyzer = new(cards);
@@ -78,25 +76,16 @@ public sealed class CardAnalyzerTests : IDisposable
 
         // Top-level totals: 6 non-basic, non-tag cards.
         Assert.Contains("Cards: 6", text);
-        // Lightning Bolt, Shock, Counterspell, Boros Charm = 4 instants; 0 sorceries.
-        Assert.Contains("Instants", text);
-        Assert.Contains("Sorceries", text);
-        // 1 creature (Serra Angel), 1 artifact (Sol Ring) → 2 permanents.
+        // 4 instants → Spells=4; 1 creature + 1 artifact → Permanents=2.
         Assert.Contains("Permanents: 2", text);
-        // 4 spells (4 instants) → spells.
         Assert.Contains("Spells: 4", text);
 
-        // Color sections print printable names.
+        // ColorCategory sections use Guild/Color printable names.
         Assert.Contains("Red", text);
         Assert.Contains("Blue", text);
         Assert.Contains("White", text);
-        Assert.Contains("Multicolor", text);
+        Assert.Contains("Boros", text);      // RW guild
         Assert.Contains("Colorless", text);
-
-        // Multicolor distribution: Boros Charm = R+W → both get +1.
-        Assert.Contains("Red:\t1", text);
-        Assert.Contains("White:\t1", text);
-        Assert.Contains("Color distribution:", text);
 
         // Average CMC global = (1+1+2+5+1+2)/6 = 12/6 = 2.
         Assert.Contains("Average CMC: 2", text);
@@ -105,8 +94,8 @@ public sealed class CardAnalyzerTests : IDisposable
     [Fact]
     public void SaveAnalysis_SkipsBasicLands_AndCardsWithTag()
     {
-        Card basicLand = Card("Plains", colors: ["W"], typeLine: "Basic Land — Plains");
-        Card tagged = Card("Sol Ring", colors: [], typeLine: "Artifact");
+        Card basicLand = Card("Plains", colors: ["W"], colorIdentity: ["W"], typeLine: "Basic Land — Plains");
+        Card tagged = Card("Sol Ring", colors: [], colorIdentity: [], typeLine: "Artifact");
         tagged.Tag = "artifacts";
 
         CardAnalyzer analyzer = new([basicLand, tagged]);
@@ -124,10 +113,10 @@ public sealed class CardAnalyzerTests : IDisposable
     {
         List<Card> cards =
         [
-            Card("Bolt", colors: ["R"], typeLine: "Instant", cmc: 4),
-            Card("Bolt", colors: ["R"], typeLine: "Instant", cmc: 1),
-            Card("Bolt", colors: ["R"], typeLine: "Instant", cmc: 2),
-            Card("Bolt", colors: ["R"], typeLine: "Instant", cmc: 8),
+            Card("Bolt", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 4),
+            Card("Bolt", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 1),
+            Card("Bolt", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 2),
+            Card("Bolt", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 8),
         ];
 
         CardAnalyzer analyzer = new(cards);
@@ -156,8 +145,9 @@ public sealed class CardAnalyzerTests : IDisposable
     [Fact]
     public void SaveAnalysis_LandType_GoesToColorless()
     {
-        // A non-basic land with no colors is bucketed as "Colorless" (see ctor).
-        Card dualPathLand = Card("Burst Habitat", colors: [], typeLine: "Land", cmc: 0);
+        // A non-basic land with no colors is bucketed as "Colorless" via
+        // ColorCategory (Phase 0), not via the old Colors=0 heuristic.
+        Card dualPathLand = Card("Burst Habitat", colors: [], colorIdentity: [], typeLine: "Land", cmc: 0);
 
         CardAnalyzer analyzer = new([dualPathLand]);
 
@@ -165,10 +155,9 @@ public sealed class CardAnalyzerTests : IDisposable
 
         string text = File.ReadAllText(tempFile);
 
-        // The card is a land → colorless land bucket; total is 1 in colorless.
+        // The card is a land → colorless category; MacroType=Land.
         Assert.Contains("Colorless", text);
-        // A land counts as a "land" type entry; pluralization is "Lands".
-        Assert.Contains("Lands\t", text);
+        Assert.Contains("Lands:\t", text);  // 4 MacroType row, not "Lands\t" tab alignment
     }
 
     // --- factory -----------------------------------------------------------
@@ -176,6 +165,7 @@ public sealed class CardAnalyzerTests : IDisposable
     private static Card Card(
         string name,
         List<string>? colors,
+        List<string>? colorIdentity,
         string typeLine,
         double cmc = 0)
     {
@@ -197,6 +187,7 @@ public sealed class CardAnalyzerTests : IDisposable
             BorderColor = "black",
             Cmc = cmc,
             Colors = colors ?? [],
+            ColorIdentity = colorIdentity ?? [],
             ImageUris = new JsonImageUris { Png = "https://test/img.png" },
         };
 
