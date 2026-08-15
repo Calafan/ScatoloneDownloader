@@ -101,10 +101,10 @@ public sealed class CardAnalyzerExtendedTests : IDisposable
         List<Card> cards =
         [
             MakeCard("Bolt", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 1, manaCost: "{R}"),       // 1 pip
-			MakeCard("Shock", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 1, manaCost: "{R}"),       // 1 pip
-			MakeCard("FBolt", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 2, manaCost: "{1}{R}"),  // 1 pip
-			MakeCard("Dragon", colors: ["R"], colorIdentity: ["R"], typeLine: "Creature", cmc: 4, manaCost: "{2}{R}{R}"), // 2 pips
-		];
+            MakeCard("Shock", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 1, manaCost: "{R}"),       // 1 pip
+            MakeCard("FBolt", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 2, manaCost: "{1}{R}"),  // 1 pip
+            MakeCard("Dragon", colors: ["R"], colorIdentity: ["R"], typeLine: "Creature", cmc: 4, manaCost: "{2}{R}{R}"), // 2 pips
+        ];
 
         CardAnalyzer analyzer = new(cards);
         AnalysisReport report = analyzer.Analyze();
@@ -121,7 +121,7 @@ public sealed class CardAnalyzerExtendedTests : IDisposable
             MakeCard("C1", colors: ["R"], colorIdentity: ["R"], typeLine: "Creature", cmc: 1),
             MakeCard("C2", colors: ["R"], colorIdentity: ["R"], typeLine: "Creature", cmc: 2),
             MakeCard("C6", colors: ["R"], colorIdentity: ["R"], typeLine: "Creature", cmc: 8), // bucket 6+
-			MakeCard("S1", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 1),
+            MakeCard("S1", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 1),
             MakeCard("S3", colors: ["R"], colorIdentity: ["R"], typeLine: "Sorcery", cmc: 3),
         ];
 

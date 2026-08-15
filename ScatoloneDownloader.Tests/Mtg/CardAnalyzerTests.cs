@@ -183,6 +183,36 @@ public sealed class CardAnalyzerTests : IDisposable
     }
 
     [Fact]
+    public void SaveAnalysis_LandsExcludedFromStats_AppearsAtBottomSection()
+    {
+        // A non-basic land with no color identity (Command Beacon) shouldn't be
+        // double-counted in the card stats but must appear in a "Lands" block at
+        // the bottom, by its ColorCategory.
+        Card tower = Card("Command Beacon", colors: [], colorIdentity: [], typeLine: "Land", cmc: 0);
+        Card savai = Card("Savai Triome", colors: [], colorIdentity: ["W", "B", "R"], typeLine: "Land", cmc: 0);
+        Card bolt = Card("Bolt", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 1);
+
+        CardAnalyzer analyzer = new([tower, savai, bolt]);
+
+        analyzer.SaveAnalysis(tempFile);
+
+        string text = File.ReadAllText(tempFile);
+
+        // Total cards = 1 (Bolt). Lands are NOT counted.
+        Assert.Contains("Cards: 1", text);
+
+        // Lands section at the bottom.
+        int globalIdx = text.IndexOf("Cards: 1");
+        int landsIdx = text.IndexOf("Lands", globalIdx);
+        Assert.True(landsIdx > globalIdx, "Lands section should appear after global/per-color stats");
+
+        // Inside lands section: Savai Triome → ColorCategory "RWB" → "Mardu".
+        string landsText = text.Substring(landsIdx);
+        Assert.Contains("Colorless:\t1", landsText);   // Command Beacon
+        Assert.Contains("Mardu:\t1", landsText);      // Savai via RWB
+    }
+
+    [Fact]
     public void SaveAnalysis_LandType_GoesToColorless()
     {
         // A non-basic land with no colors is bucketed as "Colorless" via
@@ -195,9 +225,11 @@ public sealed class CardAnalyzerTests : IDisposable
 
         string text = File.ReadAllText(tempFile);
 
-        // The card is a land → colorless category; MacroType=Land.
-        Assert.Contains("Colorless", text);
-        Assert.Contains("Lands:\t", text);  // 4 MacroType row, not "Lands\t" tab alignment
+        // Total cards = 0 (lands excluded from stats).
+        Assert.Contains("Cards: 0 - Permanents: 0 (0%) Spells: 0 (0%)", text);
+        // Lands section present at bottom with the land.
+        Assert.Contains("Lands", text);
+        Assert.Contains("Colorless:\t1", text);
     }
 
     // --- factory -----------------------------------------------------------
