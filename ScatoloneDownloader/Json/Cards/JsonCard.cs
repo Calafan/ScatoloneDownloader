@@ -5,6 +5,9 @@ namespace ScatoloneDownloader.Json.Cards
 {
     public class JsonCard
     {
+        [JsonPropertyName("id")]
+        public string Id { get; set; }
+
         [JsonPropertyName("name")]
         public string Name { get; set; }
 
@@ -25,6 +28,9 @@ namespace ScatoloneDownloader.Json.Cards
 
         [JsonPropertyName("type_line")]
         public string TypeLine { get; set; }
+
+        [JsonPropertyName("collector_number")]
+        public string CollectorNumber { get; set; }
 
         [JsonPropertyName("games")]
         public List<string> Games { get; set; }
@@ -58,6 +64,12 @@ namespace ScatoloneDownloader.Json.Cards
 
         [JsonPropertyName("colors")]
         public List<string> Colors { get; set; }
+
+        [JsonPropertyName("color_identity")]
+        public List<string> ColorIdentity { get; set; }
+
+        [JsonPropertyName("mana_cost")]
+        public string ManaCost { get; set; }
 
         [JsonPropertyName("promo_types")]
         public List<string> PromoTypes { get; set; }

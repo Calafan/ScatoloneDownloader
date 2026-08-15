@@ -117,7 +117,7 @@ namespace ScatoloneDownloader.Cli
 
                 Directory.CreateDirectory(OutputPaths.BasePath(Mode.Files));
 
-                string path = Path.Combine(OutputPaths.BasePath(Mode.Files), Path.GetFileNameWithoutExtension(file) + "Stats.txt");
+                string path = Path.Combine(OutputPaths.BasePath(Mode.Files), Path.GetFileNameWithoutExtension(file) + "Stats.md");
 
                 CardAnalyzer cardAnalyzer = new(cards);
                 cardAnalyzer.SaveAnalysis(path);

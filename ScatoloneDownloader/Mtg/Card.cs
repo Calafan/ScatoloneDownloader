@@ -29,6 +29,8 @@ namespace ScatoloneDownloader.Mtg
 
 
         internal string Name { get; init; }
+        internal string Id { get; init; }
+        internal string CollectorNumber { get; init; }
         internal string Language { get; init; }
         internal string Layout { get; init; }
 
@@ -52,8 +54,22 @@ namespace ScatoloneDownloader.Mtg
 
         internal double Cmc { get; init; }
         internal List<string> Colors { get; init; }
+        internal List<string> ColorIdentity { get; init; }
+        internal string ManaCost { get; init; }
 
         internal List<string> PromoTypes { get; init; }
+
+        // --- Cube management fields (Phase 0) --------------------------------
+        // Rating and XmpLabel come from XMP metadata (Adobe Bridge), not Scryfall.
+        // Default to 0 / empty when no XMP is read yet; the analyzer handles the
+        // un-rated case. MacroType and ColorCategory are derived from Scryfall
+        // fields at construction. ManaPips is parsed from ManaCost.
+
+        internal int Rating { get; set; }
+        internal string XmpLabel { get; set; } = string.Empty;
+        internal MacroType MacroType { get; init; }
+        internal string ColorCategory { get; init; }
+        internal int ManaPips { get; init; }
 
         internal string Tag { get; set; }
 
@@ -61,6 +77,8 @@ namespace ScatoloneDownloader.Mtg
         internal Card(JsonCard jsonCard)
         {
             Name = jsonCard.Name;
+            Id = jsonCard.Id;
+            CollectorNumber = jsonCard.CollectorNumber;
             Language = jsonCard.Language;
             Layout = jsonCard.Layout;
 
@@ -83,7 +101,14 @@ namespace ScatoloneDownloader.Mtg
 
             Cmc = jsonCard.Cmc;
             Colors = jsonCard.Colors;
+            ColorIdentity = jsonCard.ColorIdentity ?? [];
+            ManaCost = jsonCard.ManaCost ?? string.Empty;
             PromoTypes = jsonCard.PromoTypes;
+
+            // Derived cube-design fields.
+            MacroType = MacroTypeResolver.Resolve(TypeLine);
+            ColorCategory = ColorCategoryClassifier.Classify(ColorIdentity);
+            ManaPips = ManaPipsParser.CountColoredPips(ManaCost);
         }
 
         internal static Card CreateCard(JsonCard jsonCard)
