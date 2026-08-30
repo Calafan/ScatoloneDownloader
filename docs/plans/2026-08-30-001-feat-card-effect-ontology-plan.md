@@ -23,17 +23,18 @@ supersedes_decisions:
 
 ---
 
-## Status — ✅ COMPLETE (Phases 1-5, 2026-08-30)
+## Status — ✅ COMPLETE (Phases 1-6, 2026-08-30)
 
-All five phases are implemented, documented, and verified on `feature/xmp-manager`:
+All six phases are implemented, documented, and verified on `feature/xmp-manager`:
 
 - **Phase 1** — `cube-metadata.json` schema (`scryfallId`, `status`, name-ordered `Save`), `CardStatus`/`StatusResolver`, `MetadataJsonSynchronizer` (rename of `EffectSynchronizer`), tagger rating/status editing. ✅ DONE
 - **Phase 2** — `import` command (XMP → JSON one-time seed). ✅ DONE
 - **Phase 3** — `restore` command (git + Scryfall → images, no XMP writer). ✅ DONE
 - **Phase 4** — Restructured multi-root `Views/` tree (`0_Unrated`, `0_Excluded`, both `1_Deep_*` variants, `2_ByRating`, `3_ByEffect`, `4_ByColor`, `5_ByType`); `build-views` now reads rating/status/effects from the JSON only. ✅ DONE
 - **Phase 5** — Documentation pass: XML doc comments on every new/changed type in Phases 1-4, stale-comment cleanup (`Card.cs` cube-management-field block corrected — rating/status/effects no longer described as XMP-sourced), new `docs/cube-metadata.md` (lifecycle, recovery guarantee, full JSON schema, view-tree layout), README updated with the four new commands. ✅ DONE
+- **Phase 6 (Part B)** — `CubeMetadataStore` repartitioned from a single JSON file to a `metadata/` DIRECTORY of three rating-tier files (`pool.json` 3-5, `fringe.json` 1-2, `unrated.json` 0); `Load` merges all present tiers, `Save` always repartitions and rewrites all three by current rating (a rating change moves the card automatically, an untouched tier stays byte-identical); `-m|--metadata` is now a directory (default `./metadata`) across `tag`/`import`/`build-views`/`restore`; `restore` confirmed to read the merged union of all tiers; `ViewGenerator`'s `0_Unrated` root changed from `{Color}/{MacroType}` to `{ReleasedAt.Year}/{SetName}` (B4) to make the ~26k-card unrated backlog easy to work through set-by-set. ✅ DONE
 
-**Final verification:** `dotnet build` — 0 warnings / 0 errors. `dotnet test` — 196 passed, 7 failed (the pre-existing `CardAnalyzerTests` stale `.txt`-era assertions called out in Part A below; zero new failures introduced by this feature).
+**Final verification:** `dotnet build` — 0 warnings / 0 errors. `dotnet test` — 218 passed, 0 failed (the 7 previously-stale `CardAnalyzerTests` were fixed upstream of this feature; baseline is now fully green, and this feature adds no failures).
 
 ---
 
@@ -147,11 +148,39 @@ Goal: anyone (or future-you) can re-read the whole feature months later and unde
 5. Mark this plan doc's phases DONE and update the Status section.
 6. Final build + test (0 warnings/errors; only the 7 known pre-existing test failures).
 
+## Part B — Rating-tier storage partition + unrated year/set view (2026-08-30 follow-up)
+
+**Why:** `cube-metadata.json` is also the **recovery manifest** (oracle_id → scryfallId → name for EVERY card, ~30k+ and growing), so all cards are kept on purpose — the user is deliberately evaluating the whole library. A single 30k-entry file is unwieldy to hand-edit. Future state: most cards will be rated 1-2. Partition by rating tier keeps the curated pool small and the huge un-rated bulk isolated.
+
+### Decisions
+- **B1. Store = a DIRECTORY of tier files**, one entry per card by its CURRENT rating:
+  - `pool.json` — rating 3-5 (active cube; small; main hand-edit target; tiny diffs)
+  - `fringe.json` — rating 1-2 (evaluated but cut; grows large over time)
+  - `unrated.json` — rating 0 (library manifest ~26k; changes only when new cards appear)
+  - `-m|--metadata` becomes a DIRECTORY (default `./metadata`).
+- **B2. Load** merges all present tier files into one in-memory `CubeMetadata` (dict by oracle_id; a card lives in exactly one file). **Save** repartitions by rating and rewrites each tier file deterministically (sorted by name, oracle_id). A rating change MOVES the card between files automatically; an unchanged tier serializes byte-identically → no git churn.
+- **B3. `restore`** reads the UNION of all tier files (full manifest) and re-downloads every card by `scryfallId`.
+- **B4. Unrated view = `0_Unrated/{Year}/{SetName}/`** (mirrors the physical Source layout by year + expansion) so un-rated cards are easy to find and work through. `Year` = `Card.ReleasedAt.Year`, `SetName` = `Card.SetName`. Other roots unchanged.
+
+### Execution — Phase 6 ✅ DONE
+- `Metadata/CubeMetadataStore.cs`: `Load(dir)` merges pool/fringe/unrated; `Save(dir)` repartitions entries by rating tier and writes each file (keep deterministic `(Name, OracleId)` order + `WhenWritingNull`). Add a `rating → tier file` helper (`TierFileName`). Missing dir/files → empty; tolerant load. ✅
+- `-m` → directory semantics (default `./metadata`) in `TagCommand`, `ImportCommand`, `BuildViewsCommand`, `RestoreCommand`, and `MetadataJsonSynchronizer.SyncFromJson`. ✅
+- `ViewGenerator.BuildTargets`: `0_Unrated` becomes `{ReleasedAt.Year}/{SetName}` (Card already carries both; `SetName` sanitized via `OutputPaths.Sanitize`). ✅
+- Tests: `ScatoloneDownloader.Tests/Metadata/CubeMetadataStoreTests.cs` extended with tier routing (`TierFileName_RoutesByRating`), partition-on-save, always-writes-all-three-files, rating-move-between-files, merge-on-load, tolerant-missing-tier, deterministic dup-key resolution, and byte-identical-unchanged-tier coverage; `ScatoloneDownloader.Tests/Mtg/ViewGeneratorTests.cs` extended with unrated-by-year/set (incl. different buckets and `SetName` sanitization). ✅
+- Docs: `docs/cube-metadata.md` rewritten (metadata/ directory layout, tier files, hand-edit rules, updated `0_Unrated` row) + this plan's Status section and this Phase 6 block. ✅
+- Known cost: rating a card while tagging rewrites `unrated.json` (it loses that entry). ~26k-entry write per rating (~100ms); acceptable, optimizable later (dirty-only writes).
+
+**Final verification (Phase 6):** `dotnet build` — 0 warnings / 0 errors. `dotnet test` — 218 passed, 0 failed.
+
+### Assumptions
+- Default metadata dir `./metadata`; tier boundaries pool=3-5, fringe=1-2, unrated=0.
+- Unrated view keyed by `ReleasedAt.Year` + `SetName`.
+
 ## Out of Scope
 - Auto-classification of effects (ML/oracle-text). Manual tagging only.
 - CSV versioning repository (superseded by JSON).
 - Multi-user merge of the JSON (single-curator).
-- Refreshing the 7 stale `CardAnalyzerTests` (separate task).
+- ~~Refreshing the 7 stale `CardAnalyzerTests` (separate task).~~ Done separately, upstream of Phase 6 — baseline is now 0 failures.
 
 ## Assumptions
 - One `oracle_id` per normalized image name (first matched printing wins); `scryfallId` pins the exact image.
@@ -161,4 +190,4 @@ Goal: anyone (or future-you) can re-read the whole feature months later and unde
 ## Handoff
 Once P1-P9 are resolved (filled above), this plan is a complete, file-level spec. Execution delegated to Sonnet, phase by phase (1 -> 2 -> 3 -> 4), building after each. **Phase 5 (docs/comments, P9) runs LAST**, after 1-4 are green, so it documents the final code.
 
-**Executed 2026-08-30 — all five phases complete.** See the Status section above for the final verification numbers. No further phases are planned; follow-on work (e.g. refreshing the 7 stale `CardAnalyzerTests`) is out of scope per the section above and should be tracked as a separate task.
+**Executed 2026-08-30 — all six phases complete** (Phases 1-5, then Part B / Phase 6 as a same-day follow-up). See the Status section above for the final verification numbers. The 7 previously-stale `CardAnalyzerTests` have since been fixed upstream of this feature, so the baseline is fully green (0 failures). No further phases are planned.
