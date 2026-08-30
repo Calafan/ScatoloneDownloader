@@ -30,6 +30,12 @@ namespace ScatoloneDownloader.Mtg
 
         internal string Name { get; init; }
         internal string Id { get; init; }
+
+        /// <summary>Scryfall <c>oracle_id</c>: stable across printings, unlike
+        /// <see cref="Id"/> (printing-specific). Used as the key for cube
+        /// evaluation metadata so re-downloads that match a different printing
+        /// still resolve to the same card.</summary>
+        internal string OracleId { get; init; }
         internal string CollectorNumber { get; init; }
         internal string Language { get; init; }
         internal string Layout { get; init; }
@@ -59,14 +65,37 @@ namespace ScatoloneDownloader.Mtg
 
         internal List<string> PromoTypes { get; init; }
 
-        // --- Cube management fields (Phase 0) --------------------------------
-        // Rating and XmpLabel come from XMP metadata (Adobe Bridge), not Scryfall.
-        // Default to 0 / empty when no XMP is read yet; the analyzer handles the
-        // un-rated case. MacroType and ColorCategory are derived from Scryfall
-        // fields at construction. ManaPips is parsed from ManaCost.
+        // --- Cube management fields ------------------------------------------
+        // Rating/Status/Effects are the tagger-authored evaluation: loaded from
+        // cube-metadata.json by MetadataJsonSynchronizer (see property docs
+        // below), never from XMP. XmpLabel is legacy Adobe Bridge color-label
+        // data, read only once by the `import` seed command (MetadataSynchronizer)
+        // to migrate an existing Bridge label into cube-metadata.json; no other
+        // code path reads it. MacroType and ColorCategory are derived from
+        // Scryfall fields at construction. ManaPips is parsed from ManaCost.
 
+        /// <summary>Cube rating (0 = unrated, 1-5 stars). Loaded from
+        /// <c>cube-metadata.json</c> by <see cref="MetadataJsonSynchronizer"/>;
+        /// authored in the web tagger, never derived from XMP after the initial
+        /// <c>import</c> seed.</summary>
         internal int Rating { get; set; }
+
+        /// <summary>Legacy Adobe Bridge color-label text, read once by the
+        /// <c>import</c> command's <see cref="MetadataSynchronizer"/> and used
+        /// only to default <see cref="Status"/> when a JSON entry has none yet.
+        /// Not read by the tagger or view generation.</summary>
         internal string XmpLabel { get; set; } = string.Empty;
+
+        /// <summary>Ban/Token/Jolly pool status. Loaded from
+        /// <c>cube-metadata.json</c> by <see cref="MetadataJsonSynchronizer"/>;
+        /// defaults to <see cref="CardStatus.None"/> (normal pool card).</summary>
+        internal CardStatus Status { get; set; } = CardStatus.None;
+
+        /// <summary>Functional effect tags (multi-valued bitset). Loaded from
+        /// <c>cube-metadata.json</c> by <see cref="MetadataJsonSynchronizer"/>;
+        /// defaults to <see cref="CardEffect.None"/> when the card is untagged.</summary>
+        internal CardEffect Effects { get; set; } = CardEffect.None;
+
         internal MacroType MacroType { get; init; }
         internal string ColorCategory { get; init; }
         internal int ManaPips { get; init; }
@@ -78,6 +107,7 @@ namespace ScatoloneDownloader.Mtg
         {
             Name = jsonCard.Name;
             Id = jsonCard.Id;
+            OracleId = jsonCard.OracleId;
             CollectorNumber = jsonCard.CollectorNumber;
             Language = jsonCard.Language;
             Layout = jsonCard.Layout;
