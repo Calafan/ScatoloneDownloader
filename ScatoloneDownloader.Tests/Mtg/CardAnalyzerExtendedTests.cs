@@ -139,37 +139,6 @@ public sealed class CardAnalyzerExtendedTests : IDisposable
         Assert.Equal(1, report.CurveByMacroType[MacroType.Spell][3]);
     }
 
-    [Fact]
-    public void SaveAnalysisCsv_WritesPerColorCsvFiles()
-    {
-        List<Card> cards =
-        [
-            MakeCard("Lightning Bolt", set: "LEA", collectorNumber: "161", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 1, rating: 5, scryfallId: "abc123"),
-            MakeCard("Bear", set: "LEA", collectorNumber: "200", colors: ["G"], colorIdentity: ["G"], typeLine: "Creature — Bear", cmc: 2, rating: 3, scryfallId: "def456"),
-        ];
-
-        CardAnalyzer analyzer = new(cards);
-
-        string csvDir = Path.Combine(Path.GetTempPath(), "csvtest_" + Guid.NewGuid().ToString("N"));
-        analyzer.SaveAnalysisCsv(csvDir);
-
-        try
-        {
-            string redCsv = Path.Combine(csvDir, "R.csv");
-            Assert.True(File.Exists(redCsv), "R.csv should exist");
-            string greenCsv = Path.Combine(csvDir, "G.csv");
-            Assert.True(File.Exists(greenCsv), "G.csv should exist");
-
-            string redContent = File.ReadAllText(redCsv);
-            Assert.Contains("Name,SetCode,CollectorNumber,ManaValue,MacroType,Rating,XmpLabel,ScryfallId,ColorIdentity", redContent);
-            Assert.Contains("Lightning Bolt,LEA,161,1,Spell,5,,abc123,R", redContent);
-        }
-        finally
-        {
-            if (Directory.Exists(csvDir)) Directory.Delete(csvDir, true);
-        }
-    }
-
     // --- factory -----------------------------------------------------------
 
     private static Card MakeCard(

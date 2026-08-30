@@ -7,8 +7,8 @@ namespace ScatoloneDownloader.Mtg
     /// <see cref="CardAnalyzer.Analyze"/>. Each property corresponds to an R2
     /// metric from the cube management plan. Every metric here uses the
     /// Phase 0 classifications — <see cref="MacroType"/> (from type_line) and
-    /// <see cref="Card.ColorCategory"/> (from color_identity) — so the .txt and
-    /// CSV outputs render from a single source, eliminating the old
+    /// <see cref="Card.ColorCategory"/> (from color_identity) — so the Markdown
+    /// and CSV outputs render from a single source, eliminating the old
     /// Colors-derived 7-bucket parallel pipeline.
     /// </summary>
     public sealed class AnalysisReport
@@ -20,7 +20,7 @@ namespace ScatoloneDownloader.Mtg
         internal Dictionary<string, int> ColorCategoryCounts { get; init; } = [];
 
         /// <summary>MacroType breakdown per ColorCategory: [category][macroType] = count.
-        /// Drives the per-color section of the .txt report.</summary>
+        /// Drives the per-color section of the Markdown report.</summary>
         internal Dictionary<string, Dictionary<MacroType, int>> MacroTypeByCategory { get; init; } = [];
 
         /// <summary>CMC distribution per ColorCategory: [category][cmc] = count.</summary>
@@ -63,6 +63,14 @@ namespace ScatoloneDownloader.Mtg
 
         /// <summary>Lands grouped by ColorCategory — for the bottom Lands section.</summary>
         internal Dictionary<string, int> LandsByCategory { get; init; } = [];
+
+        /// <summary>Card count per <see cref="CardEffect"/> flag across non-land cards.
+        /// Counts OVERLAP: a card with N effects is counted under each, so the sum
+        /// exceeds <see cref="TotalCards"/>.</summary>
+        internal Dictionary<CardEffect, int> EffectCounts { get; init; } = [];
+
+        /// <summary>Non-land cards with no effect tagged yet.</summary>
+        internal int UntaggedEffectCount { get; init; }
 
         /// <summary>Total card count analyzed (excludes basic lands + tagged cards, per existing rule).</summary>
         internal int TotalCards { get; init; }

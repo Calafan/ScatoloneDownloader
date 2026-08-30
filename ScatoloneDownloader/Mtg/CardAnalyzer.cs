@@ -8,7 +8,7 @@ namespace ScatoloneDownloader.Mtg
 {
     internal class CardAnalyzer
     {
-        // Render order for the 4 MacroType rows in the .txt report.
+        // Render order for the 4 MacroType rows in the Markdown report.
         private static readonly MacroType[] MacroTypeOrder =
         [
             MacroType.Creature,
@@ -16,38 +16,6 @@ namespace ScatoloneDownloader.Mtg
             MacroType.OtherPermanent,
             MacroType.Spell,
         ];
-
-        // Printable names for the per-color section headers.
-        private static readonly Dictionary<string, string> PrintableNames = new()
-        {
-            { "W", "White" },
-            { "U", "Blue" },
-            { "B", "Black" },
-            { "R", "Red" },
-            { "G", "Green" },
-            { "WU", "Azorius" },
-            { "UB", "Dimir" },
-            { "BR", "Rakdos" },
-            { "RG", "Gruul" },
-            { "GW", "Selesnya" },
-            { "WB", "Orzhov" },
-            { "UR", "Izzet" },
-            { "BG", "Golgari" },
-            { "RW", "Boros" },
-            { "GU", "Simic" },
-            { "WUB", "Esper" },
-            { "UBR", "Grixis" },
-            { "BRG", "Jund" },
-            { "RGW", "Naya" },
-            { "GWU", "Bant" },
-            { "WBG", "Abzan" },
-            { "URW", "Jeskai" },
-            { "BUG", "Sultai" },
-            { "RWB", "Mardu" },
-            { "GUR", "Temur" },
-            { "4_5_Colors", "4-5 Colors" },
-            { "Colorless", "Colorless" },
-        };
 
         // Order in which per-color sections appear: monocolor, guilds, shards/wedges, 4-5, colorless.
         private static readonly List<string> CategoryOrder =
@@ -86,6 +54,7 @@ namespace ScatoloneDownloader.Mtg
             AppendColorDistribution(sb, report);
             AppendLandsSection(sb, report);
             AppendCategoryAnalysis(sb, report);
+            AppendEffectDistribution(sb, report);
 
             using StreamWriter writer = new(path);
             writer.Write(sb.ToString());
@@ -185,7 +154,7 @@ namespace ScatoloneDownloader.Mtg
                     continue;
                 }
 
-                string name = PrintableNames.GetValueOrDefault(category, category);
+                string name = ColorCategoryClassifier.Display(category);
                 sb.AppendLine($"| {name} | {count} |");
             }
 
@@ -224,7 +193,7 @@ namespace ScatoloneDownloader.Mtg
                         continue;
                     }
 
-                    string name = PrintableNames.GetValueOrDefault(category, category);
+                    string name = ColorCategoryClassifier.Display(category);
                     Dictionary<MacroType, int> typeCounts = report.MacroTypeByCategory[category];
 
                     int catSpells = typeCounts.GetValueOrDefault(MacroType.Spell, 0);
@@ -251,6 +220,31 @@ namespace ScatoloneDownloader.Mtg
 
                 sb.AppendLine();
             }
+        }
+
+        private static void AppendEffectDistribution(StringBuilder sb, AnalysisReport report)
+        {
+            int tagged = report.TotalCards - report.UntaggedEffectCount;
+
+            sb.AppendLine("## 5. Effect Distribution (Excluding Lands)");
+            sb.AppendLine("*A card can carry several effects, so counts overlap and their sum exceeds the card total.*");
+            sb.AppendLine($"*   **Tagged:** {tagged} / {report.TotalCards} ({GetPercentage(tagged, report.TotalCards)}%) | **Untagged:** {report.UntaggedEffectCount}");
+            sb.AppendLine();
+
+            sb.AppendLine("| Effect | Cards | % of Non-Land |");
+            sb.AppendLine("| :--- | :--- | :--- |");
+
+            IEnumerable<KeyValuePair<CardEffect, int>> rows = report.EffectCounts
+                .Where(kvp => kvp.Value > 0)
+                .OrderByDescending(kvp => kvp.Value)
+                .ThenBy(kvp => (int)kvp.Key);
+
+            foreach (var (effect, count) in rows)
+            {
+                sb.AppendLine($"| {effect} | {count} | {GetPercentage(count, report.TotalCards)}% |");
+            }
+
+            sb.AppendLine();
         }
 
         private static string FormatCmcDistribution(Dictionary<double, int> rawCmc)
@@ -363,12 +357,12 @@ namespace ScatoloneDownloader.Mtg
                 {
                     typeCounts[c.MacroType]++;
 
-                    // CMC totale della categoria
+                    // Total CMC for the category
                     cmcCounts.TryGetValue(c.Cmc, out int v);
                     cmcCounts[c.Cmc] = v + 1;
                     sumCmc += c.Cmc;
 
-                    // CMC specifico delle creature
+                    // Creature-specific CMC
                     if (c.MacroType == MacroType.Creature)
                     {
                         creatureCmcCounts.TryGetValue(c.Cmc, out int cv);
@@ -387,6 +381,35 @@ namespace ScatoloneDownloader.Mtg
 
                 int catCreatures = typeCounts[MacroType.Creature];
                 avgCreatureCmcByCat[g.Key] = catCreatures > 0 ? sumCreatureCmc / catCreatures : 0;
+            }
+
+            // Effect distribution over non-land cards. Counts overlap: a card with
+            // several effects is tallied under each flag it carries.
+            Dictionary<CardEffect, int> effectCounts = [];
+            foreach (CardEffect flag in Enum.GetValues<CardEffect>())
+            {
+                if (flag != CardEffect.None)
+                {
+                    effectCounts[flag] = 0;
+                }
+            }
+
+            int untaggedEffects = 0;
+            foreach (Card c in nonLands)
+            {
+                if (c.Effects == CardEffect.None)
+                {
+                    untaggedEffects++;
+                    continue;
+                }
+
+                foreach (CardEffect flag in Enum.GetValues<CardEffect>())
+                {
+                    if (flag != CardEffect.None && c.Effects.HasFlag(flag))
+                    {
+                        effectCounts[flag]++;
+                    }
+                }
             }
 
             double globalPips = nonLands.Sum(c => (double)c.ManaPips);
@@ -447,30 +470,10 @@ namespace ScatoloneDownloader.Mtg
                 ColorlessCount = colorlessCount,
                 LandCount = landCount,
                 LandsByCategory = landsByCategory,
+                EffectCounts = effectCounts,
+                UntaggedEffectCount = untaggedEffects,
                 TotalCards = total,
             };
-        }
-
-        internal void SaveAnalysisCsv(string directory)
-        {
-            Directory.CreateDirectory(directory);
-
-            IEnumerable<Card> relevant = analyzedCards
-                .Where(c => !c.IsBasicLand && string.IsNullOrEmpty(c.Tag) && c.MacroType != MacroType.Land);
-
-            foreach (var group in relevant.GroupBy(c => c.ColorCategory))
-            {
-                string filePath = Path.Combine(directory, group.Key + ".csv");
-                using StreamWriter writer = new(filePath);
-                writer.WriteLine("Name,SetCode,CollectorNumber,ManaValue,MacroType,Rating,XmpLabel,ScryfallId,ColorIdentity");
-
-                foreach (Card c in group)
-                {
-                    string colorIdentity = string.Join("/", c.ColorIdentity);
-                    string line = $"{c.Name},{c.Set},{c.CollectorNumber},{c.Cmc},{c.MacroType},{c.Rating},{c.XmpLabel},{c.Id},{colorIdentity}";
-                    writer.WriteLine(line);
-                }
-            }
         }
     }
 }
