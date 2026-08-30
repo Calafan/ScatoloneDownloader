@@ -244,8 +244,14 @@ namespace ScatoloneDownloader.Metadata
                         .ToDictionary(kvp => kvp.Key, kvp => Canonicalize(kvp.Value)),
                 };
 
+                // Write to a temp file then atomically move it over the target, so
+                // a crash mid-write can never leave a torn tier file (which Load
+                // would then discard, silently dropping that whole tier). The move
+                // is atomic on the same volume.
                 string tierPath = Path.Combine(fullDirectory, tierFileName);
-                File.WriteAllText(tierPath, JsonSerializer.Serialize(tierDocument, Options));
+                string tempPath = tierPath + ".tmp";
+                File.WriteAllText(tempPath, JsonSerializer.Serialize(tierDocument, Options));
+                File.Move(tempPath, tierPath, overwrite: true);
             }
         }
 
