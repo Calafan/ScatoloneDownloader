@@ -39,6 +39,7 @@ A single CLI that, from a working folder of rated/labeled card images, can: prod
 2. **No DB cache.** LiteDB (original Plan proposal) is eliminated. CSV is source, Scryfall bulk is join data, both fit in memory at ~4,000 cards. Removes a dependency, a schema, and a sync layer.
 
 3. **XMP write — hand-rolled, zero-dep.** PNG XMP lives in an `iTXt` chunk with keyword `XML:com.adobe.xmp`. Read via `MetadataExtractor` (MIT, already considered). Write via hand-rolled PNG chunk manipulation + `System.Xml.Linq` for RDF/XMP XML (~200 lines, TDD with SkiaSharp test infra). Eliminates Magick.NET (AGPL/commercial license) and Adobe XmpCore SDK. Fragile only if Scryfall changes PNG encoding (improbable).
+   > **SUPERSEDED (2026-08-30, see `2026-08-30-001-feat-card-effect-ontology-plan.md#4`).** Only XMP *read* is needed (Bridge writes it); `XmpManager` reads via `Magick.NET-Q16-AnyCPU`. No hand-rolled writer, no in-app XMP write.
 
 4. **Bridge labels mapping (locked to existing configuration).** Red = Banned, Yellow = Token, Green = Jolly (Wildcard). Blue and Purple remain free for ad-hoc designer use. Aligned to the user's current Adobe Bridge preset — zero migration, zero custom preset file. `xmp:Label` XMP field stores the color name; the analyzer maps to the semantic category.
 
@@ -57,6 +58,7 @@ A single CLI that, from a working folder of rated/labeled card images, can: prod
 11. **Rating → CSV buckets.** 1★ = `scraps/rank_1_unplayable.csv`, 2★ = `scraps/rank_2_obsolete.csv`, 3–5★ = `active_cube/` (split by color/guild), Label=Banned → `exceptions/banned.csv`, Label=Token → `exceptions/tokens.csv` (new, from Bridge label mapping), Label=Jolly → `exceptions/wildcards.csv`.
 
 12. **CSV format — extended.** `Name,SetCode,CollectorNumber,ManaValue,MacroType,Rating,XmpLabel,ScryfallId,ColorIdentity`. The `ColorIdentity` column is added beyond the original Plan format to drive Guilds/Shards classification without re-fetching Scryfall.
+    > **SUPERSEDED (2026-08-30, see `2026-08-30-001-feat-card-effect-ontology-plan.md#2`).** Git versioning moves to a JSON sidecar keyed by `oracle_id` (multi-valued effects don't fit CSV cleanly). The CSV-repository / `export-git` / `restore` flow was never built. CSV survives only as an analyzer report artifact (`SaveAnalysisCsv`).
 
 ### Requirements
 

@@ -85,6 +85,24 @@ ScatoloneDownloader lands
 ScatoloneDownloader analyze mazzo.txt
 ```
 
+## Gestione del cubo (rating, status, effetti)
+
+Oltre al download, il tool gestisce la valutazione del cubo: rating, status
+(Banned/Token/Jolly) ed effetti funzionali delle carte, salvati in
+`cube-metadata.json` (tracciato da git — è la fonte di verità: git + Scryfall
+bastano a ricostruire tutto). Dettagli completi, schema JSON e struttura delle
+viste in [`docs/cube-metadata.md`](docs/cube-metadata.md).
+
+| Comando | Descrizione | Esempio |
+|---------|-------------|---------|
+| `tag <DIR>` | Avvia il tagger web locale (da tastiera) per assegnare rating, status ed effetti; salva automaticamente su `cube-metadata.json` a ogni modifica | `ScatoloneDownloader tag .\Master` |
+| `import <DIR>` | Migra una tantum i rating/label XMP già scritti da Adobe Bridge dentro `cube-metadata.json` (unico comando che legge ancora XMP) | `ScatoloneDownloader import .\Master --overwrite` |
+| `build-views <DIR>` | Rigenera l'albero `Views/` (symlink/hardlink, multi-radice) e il report `Cubo_Analysis.md` leggendo rating/status/effetti da `cube-metadata.json` | `ScatoloneDownloader build-views .\Master -v .\Views` |
+| `restore --images <DIR>` | Recovery: ricostruisce la cartella immagini da `cube-metadata.json` + bulk-data Scryfall (nessuna XMP scritta) | `ScatoloneDownloader restore --images .\Master -m cube-metadata.json` |
+
+Tutti e quattro accettano `-m, --metadata <FILE>` per il percorso di
+`cube-metadata.json` (default: `./cube-metadata.json`).
+
 ## Struttura dell'output
 
 Tutto finisce sotto la radice scelta (`./Output` di default):
