@@ -11,13 +11,14 @@ using Xunit;
 namespace ScatoloneDownloader.Tests.Mtg;
 
 /// <summary>
-/// Phase 4 coverage for <see cref="ViewGenerator.GenerateViews"/>: pins the
-/// root/exclusion rules from the plan (D7 rating 1-2 excluded entirely,
-/// Banned/Token routed only to <c>0_Excluded</c>, all other roots generated
-/// per P8) by inspecting the real folder tree it links cards into. Uses a
-/// throwaway temp directory tree; link creation falls back from symlink to a
-/// native hard link, which works without elevation as long as source and
-/// views share a volume (guaranteed here — both live under the same temp root).
+/// Phase 4 + Plan Part B coverage for <see cref="ViewGenerator.GenerateViews"/>:
+/// pins the root/exclusion rules from the plan (D7 rating 1-2 excluded
+/// entirely, Banned/Token routed only to <c>0_Excluded</c>, all other roots
+/// generated per P8, <c>0_Unrated</c> keyed by year/set per B4) by inspecting
+/// the real folder tree it links cards into. Uses a throwaway temp directory
+/// tree; link creation falls back from symlink to a native hard link, which
+/// works without elevation as long as source and views share a volume
+/// (guaranteed here — both live under the same temp root).
 /// </summary>
 public sealed class ViewGeneratorTests : IDisposable
 {
@@ -55,19 +56,47 @@ public sealed class ViewGeneratorTests : IDisposable
     }
 
     [Fact]
-    public void GenerateViews_Rating0_GoesToUnratedByColorAndMacroType_OnlyAndAlsoGeneralViews()
+    public void GenerateViews_Rating0_GoesToUnratedByYearAndSet_OnlyAndAlsoGeneralViews()
     {
+        // Default MakeCardFile releasedAt/setName are "1993-08-05" / "Alpha".
         var (card, filePath) = MakeCardFile("Unrated Bear", rating: 0, colorIdentity: ["G"], typeLine: "Creature — Bear");
 
         ViewGenerator.GenerateViews([(card, filePath)], viewsDir);
 
-        AssertLinked(Path.Combine(viewsDir, "0_Unrated", "1 Green", "Creature"), "Unrated Bear.png");
+        // B4: 0_Unrated is keyed by Year/Set, not Color/MacroType — this is the
+        // full recovery-manifest backlog, mirroring the physical Source layout.
+        AssertLinked(Path.Combine(viewsDir, "0_Unrated", "1993", "Alpha"), "Unrated Bear.png");
         // General views are not rating-gated, so an unrated card still appears here.
         AssertLinked(Path.Combine(viewsDir, "5_ByType", "Creature"), "Unrated Bear.png");
+        AssertLinked(Path.Combine(viewsDir, "4_ByColor", "1 Green", "Creature", "Cost 1"), "Unrated Bear.png");
         // Rating-gated roots must NOT contain an unrated card.
         Assert.False(Directory.Exists(Path.Combine(viewsDir, "2_ByRating")));
         Assert.False(Directory.Exists(Path.Combine(viewsDir, "1_Deep_Effect")));
         Assert.False(Directory.Exists(Path.Combine(viewsDir, "1_Deep_Rating")));
+    }
+
+    [Fact]
+    public void GenerateViews_Rating0_DifferentYearsAndSets_LandInDifferentUnratedBuckets()
+    {
+        var (oldCard, oldPath) = MakeCardFile("Old Bear", rating: 0, releasedAt: "1994-04-01", setName: "The Dark");
+        var (newCard, newPath) = MakeCardFile("New Bear", rating: 0, releasedAt: "2026-03-01", setName: "Some Future Set");
+
+        ViewGenerator.GenerateViews([(oldCard, oldPath), (newCard, newPath)], viewsDir);
+
+        AssertLinked(Path.Combine(viewsDir, "0_Unrated", "1994", "The Dark"), "Old Bear.png");
+        AssertLinked(Path.Combine(viewsDir, "0_Unrated", "2026", "Some Future Set"), "New Bear.png");
+    }
+
+    [Fact]
+    public void GenerateViews_Rating0_SetNameWithForbiddenCharacters_IsSanitized()
+    {
+        var (card, filePath) = MakeCardFile("Wasteland Bear", rating: 0, releasedAt: "2024-03-08", setName: "Fallout: Wasteland");
+
+        ViewGenerator.GenerateViews([(card, filePath)], viewsDir);
+
+        // OutputPaths.Sanitize strips filesystem-forbidden characters (":" here)
+        // so the folder name is always a valid path segment.
+        AssertLinked(Path.Combine(viewsDir, "0_Unrated", "2024", "Fallout Wasteland"), "Wasteland Bear.png");
     }
 
     [Theory]
@@ -147,19 +176,21 @@ public sealed class ViewGeneratorTests : IDisposable
         CardEffect effects = CardEffect.None,
         List<string>? colorIdentity = null,
         string typeLine = "Instant",
-        double cmc = 1)
+        double cmc = 1,
+        string releasedAt = "1993-08-05",
+        string setName = "Alpha")
     {
         JsonCard json = new()
         {
             Name = name,
             Language = "en",
-            ReleasedAt = "1993-08-05",
+            ReleasedAt = releasedAt,
             Layout = "normal",
             TypeLine = typeLine,
             Games = ["paper"],
             FrameEffects = [],
             Set = "LEA",
-            SetName = "Alpha",
+            SetName = setName,
             SetType = "core",
             BorderColor = "black",
             Cmc = cmc,

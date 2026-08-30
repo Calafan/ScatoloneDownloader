@@ -5,16 +5,18 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 
+using ScatoloneDownloader.Download;
+
 using Spectre.Console;
 
 namespace ScatoloneDownloader.Mtg
 {
     /// <summary>
     /// Builds the multi-root cube view tree from rating/status/effects loaded
-    /// (by <see cref="MetadataJsonSynchronizer"/>) from <c>cube-metadata.json</c>.
+    /// (by <see cref="MetadataJsonSynchronizer"/>) from the metadata directory.
     /// Every card is linked (never copied) into zero or more folders — see
     /// <see cref="BuildTargets"/> for the exact root/exclusion rules (Plan
-    /// decisions D7, P6, P7, P8).
+    /// decisions D7, P6, P7, P8, B4).
     /// </summary>
     internal static class ViewGenerator
     {
@@ -111,7 +113,7 @@ namespace ScatoloneDownloader.Mtg
             AnsiConsole.MarkupLine($"\n[green]Successfully created {createdLinks} links for {successCount} cards.[/]");
             if (ratingExcludedCount > 0)
             {
-                AnsiConsole.MarkupLine($"[grey]{ratingExcludedCount} cards with rating 1-2 excluded from every view (D7) — master folder + JSON only.[/]");
+                AnsiConsole.MarkupLine($"[grey]{ratingExcludedCount} cards with rating 1-2 excluded from every view (D7) — master folder + metadata only.[/]");
             }
             if (failCount > 0)
             {
@@ -132,7 +134,7 @@ namespace ScatoloneDownloader.Mtg
             List<string> targets = [];
 
             // D7: never generate rating 1-2 views at all (rarely browsed; the
-            // master folder + cube-metadata.json remain the source of truth).
+            // master folder + metadata directory remain the source of truth).
             if (card.Rating is 1 or 2)
             {
                 return targets;
@@ -157,9 +159,15 @@ namespace ScatoloneDownloader.Mtg
 
             if (card.Rating == 0)
             {
-                // VIEW: 0_Unrated -> Color / MacroType. Keeps ungraded cards
-                // browsable without polluting the rating-gated roots below.
-                targets.Add(Path.Combine(root, "0_Unrated", colorFolder, macroType));
+                // VIEW: 0_Unrated -> Year / Set (B4). This is the ~26k-card
+                // recovery-manifest backlog, not a curated pool, so it mirrors the
+                // physical Source folder's year/expansion layout (easy to work
+                // through set-by-set) instead of the color/type split every other
+                // root uses — color/type isn't a useful axis for cards no one has
+                // evaluated yet.
+                string yearFolder = card.ReleasedAt.Year.ToString(CultureInfo.InvariantCulture);
+                string setFolder = OutputPaths.Sanitize(card.SetName);
+                targets.Add(Path.Combine(root, "0_Unrated", yearFolder, setFolder));
             }
             else
             {
