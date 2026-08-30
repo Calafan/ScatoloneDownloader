@@ -22,10 +22,11 @@ namespace ScatoloneDownloader.Cli
     /// Local web tagger for card rating/status/effects. Serves a single-card,
     /// keyboard-driven page from an in-process <see cref="HttpListener"/> (no
     /// ASP.NET dependency), opens the browser, and autosaves each change to the
-    /// git-tracked <c>cube-metadata.json</c> keyed by <see cref="Card.OracleId"/>.
-    /// This tool is the authoring authority: rating/status/effects are loaded from
-    /// that JSON at startup (never from XMP — Adobe Bridge is optional, and XMP is
-    /// read only once, by the <c>import</c> command, to seed the JSON).
+    /// git-tracked metadata directory's rating-tier files, keyed by
+    /// <see cref="Card.OracleId"/> (see <see cref="CubeMetadataStore"/>). This
+    /// tool is the authoring authority: rating/status/effects are loaded from
+    /// there at startup (never from XMP — Adobe Bridge is optional, and XMP is
+    /// read only once, by the <c>import</c> command, to seed the metadata).
     /// </summary>
     internal sealed class TagCommand : AsyncCommand<TagCommand.Settings>
     {
@@ -36,8 +37,8 @@ namespace ScatoloneDownloader.Cli
             public string SourceDirectory { get; set; }
 
             [CommandOption("-m|--metadata")]
-            [Description("Path to the git-tracked cube-metadata.json. Defaults to ./cube-metadata.json.")]
-            public string MetadataPath { get; set; }
+            [Description("Path to the git-tracked metadata directory (pool.json/fringe.json/unrated.json). Defaults to ./metadata.")]
+            public string MetadataDirectory { get; set; }
 
             [CommandOption("-p|--port")]
             [Description("Local port for the tagger web server. Default 8765.")]
@@ -48,7 +49,7 @@ namespace ScatoloneDownloader.Cli
         private readonly object saveLock = new();
         private List<(Card Card, string Path)> matched = [];
         private CubeMetadata metadata = new();
-        private string metadataFullPath = "cube-metadata.json";
+        private string metadataDir = "metadata";
         private string[] effectNames = [];
 
         protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
@@ -60,9 +61,9 @@ namespace ScatoloneDownloader.Cli
             }
 
             string masterDir = Path.GetFullPath(settings.SourceDirectory);
-            metadataFullPath = string.IsNullOrWhiteSpace(settings.MetadataPath)
-                ? Path.GetFullPath("cube-metadata.json")
-                : Path.GetFullPath(settings.MetadataPath);
+            metadataDir = string.IsNullOrWhiteSpace(settings.MetadataDirectory)
+                ? Path.GetFullPath("metadata")
+                : Path.GetFullPath(settings.MetadataDirectory);
 
             string[] pngFiles = Directory.GetFiles(masterDir, "*.png", SearchOption.AllDirectories);
             if (pngFiles.Length == 0)
@@ -100,9 +101,10 @@ namespace ScatoloneDownloader.Cli
             if (matched.Count == 0) return 0;
 
             // Rating/status/effects are authored here and loaded straight from the
-            // JSON — XMP is legacy input only, read once by the `import` command.
-            metadata = CubeMetadataStore.Load(metadataFullPath);
-            MetadataJsonSynchronizer.SyncFromJson(matched.Select(m => m.Card), metadataFullPath);
+            // metadata directory's tier files — XMP is legacy input only, read
+            // once by the `import` command.
+            metadata = CubeMetadataStore.Load(metadataDir);
+            MetadataJsonSynchronizer.SyncFromJson(matched.Select(m => m.Card), metadataDir);
 
             effectNames = EffectResolver.ToNames((CardEffect)~0).ToArray();
 
@@ -129,7 +131,7 @@ namespace ScatoloneDownloader.Cli
             TryOpenBrowser(url);
 
             AnsiConsole.MarkupLine($"[green]Tagger running at[/] [underline]{url}[/]");
-            AnsiConsole.MarkupLine($"[grey]Autosaving to {metadataFullPath}. Press ENTER here to stop.[/]");
+            AnsiConsole.MarkupLine($"[grey]Autosaving to {metadataDir}. Press ENTER here to stop.[/]");
 
             await Task.Run(() => Console.ReadLine());
 
@@ -269,7 +271,7 @@ namespace ScatoloneDownloader.Cli
                     // A human saved this card: record the manual-review instant.
                     ReviewedAt = DateTimeOffset.UtcNow,
                 };
-                CubeMetadataStore.Save(metadataFullPath, metadata);
+                CubeMetadataStore.Save(metadataDir, metadata);
             }
 
             return true;

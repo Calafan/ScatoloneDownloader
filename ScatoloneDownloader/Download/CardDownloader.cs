@@ -70,7 +70,7 @@ namespace ScatoloneDownloader.Download
         /// <summary>Fetches face image(s) and composes the final printable PNG bytes,
         /// without touching disk. Exposed (not just used by <see cref="DownloadAsync"/>)
         /// so <c>restore</c> can reuse the exact same composition pipeline when
-        /// rebuilding an image folder from <c>cube-metadata.json</c> + Scryfall bulk.</summary>
+        /// rebuilding an image folder from the metadata directory + Scryfall bulk.</summary>
         internal async Task<byte[]> ComposeAsync(Card card)
         {
             switch (card)

@@ -15,10 +15,12 @@ namespace ScatoloneDownloader.Cli
 {
     /// <summary>
     /// Closes the disaster-recovery loop: rebuilds an image folder from nothing
-    /// but <c>cube-metadata.json</c> (git) and the Scryfall bulk download. No XMP
-    /// is written — rating/status/effects live only in the JSON and are edited in
-    /// the web tagger, never on the images themselves. Idempotent: existing files
-    /// are left untouched.
+    /// but the git-tracked metadata directory (see <see cref="CubeMetadataStore"/>
+    /// — <see cref="CubeMetadataStore.Load"/> merges the UNION of all rating-tier
+    /// files, so every card in the library is restored, not just the pool) and
+    /// the Scryfall bulk download. No XMP is written — rating/status/effects live
+    /// only in the metadata and are edited in the web tagger, never on the images
+    /// themselves. Idempotent: existing files are left untouched.
     /// </summary>
     internal sealed class RestoreCommand : AsyncCommand<RestoreCommand.Settings>
     {
@@ -29,8 +31,8 @@ namespace ScatoloneDownloader.Cli
             public string ImagesDirectory { get; set; }
 
             [CommandOption("-m|--metadata")]
-            [Description("Path to the git-tracked cube-metadata.json. Defaults to ./cube-metadata.json.")]
-            public string MetadataPath { get; set; }
+            [Description("Path to the git-tracked metadata directory (pool.json/fringe.json/unrated.json). Defaults to ./metadata.")]
+            public string MetadataDirectory { get; set; }
 
             public override ValidationResult Validate()
             {
@@ -46,18 +48,18 @@ namespace ScatoloneDownloader.Cli
         protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
         {
             string imagesDir = Path.GetFullPath(settings.ImagesDirectory);
-            string metadataFullPath = string.IsNullOrWhiteSpace(settings.MetadataPath)
-                ? Path.GetFullPath("cube-metadata.json")
-                : Path.GetFullPath(settings.MetadataPath);
+            string metadataDir = string.IsNullOrWhiteSpace(settings.MetadataDirectory)
+                ? Path.GetFullPath("metadata")
+                : Path.GetFullPath(settings.MetadataDirectory);
 
-            CubeMetadata metadata = CubeMetadataStore.Load(metadataFullPath);
+            CubeMetadata metadata = CubeMetadataStore.Load(metadataDir);
             if (metadata.Cards.Count == 0)
             {
-                AnsiConsole.MarkupLine($"[yellow]No entries found in '{metadataFullPath}'. Nothing to restore.[/]");
+                AnsiConsole.MarkupLine($"[yellow]No entries found in '{metadataDir}'. Nothing to restore.[/]");
                 return 0;
             }
 
-            AnsiConsole.MarkupLine($"[cyan]Metadata  :[/] {metadataFullPath} ({metadata.Cards.Count} entries)");
+            AnsiConsole.MarkupLine($"[cyan]Metadata  :[/] {metadataDir} ({metadata.Cards.Count} entries)");
             AnsiConsole.MarkupLine($"[cyan]Images dir:[/] {imagesDir}");
 
             Directory.CreateDirectory(imagesDir);

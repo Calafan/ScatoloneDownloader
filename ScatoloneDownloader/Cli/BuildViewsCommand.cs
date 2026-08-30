@@ -15,10 +15,11 @@ namespace ScatoloneDownloader.Cli
 {
     /// <summary>
     /// Regenerates the multi-root <c>Views/</c> tree (see <see cref="ViewGenerator"/>
-    /// and <c>docs/cube-metadata.md</c>) from the physical master folder plus
-    /// <c>cube-metadata.json</c>, then writes the analysis report alongside it.
-    /// Rating/status/effects are loaded from the JSON only — this command never
-    /// reads XMP, so it is safe to run without Adobe Bridge installed.
+    /// and <c>docs/cube-metadata.md</c>) from the physical master folder plus the
+    /// git-tracked metadata directory (see <see cref="CubeMetadataStore"/>), then
+    /// writes the analysis report alongside it. Rating/status/effects are loaded
+    /// from the metadata only — this command never reads XMP, so it is safe to
+    /// run without Adobe Bridge installed.
     /// </summary>
     internal sealed class BuildViewsCommand : AsyncCommand<BuildViewsCommand.Settings>
     {
@@ -33,8 +34,8 @@ namespace ScatoloneDownloader.Cli
             public string ViewsDirectory { get; set; }
 
             [CommandOption("-m|--metadata")]
-            [Description("Path to the git-tracked cube-metadata.json (effects/eval). Defaults to ./cube-metadata.json.")]
-            public string MetadataPath { get; set; }
+            [Description("Path to the git-tracked metadata directory (pool.json/fringe.json/unrated.json). Defaults to ./metadata.")]
+            public string MetadataDirectory { get; set; }
         }
 
         protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
@@ -110,14 +111,14 @@ namespace ScatoloneDownloader.Cli
 
             if (matchedCards.Count == 0) return 0;
 
-            string metadataPath = string.IsNullOrWhiteSpace(settings.MetadataPath)
-                ? "cube-metadata.json"
-                : Path.GetFullPath(settings.MetadataPath);
+            string metadataDir = string.IsNullOrWhiteSpace(settings.MetadataDirectory)
+                ? Path.GetFullPath("metadata")
+                : Path.GetFullPath(settings.MetadataDirectory);
 
-            // Rating/status/effects come from the JSON only — XMP is legacy input,
-            // read once by `import`, never by view generation (P5).
-            AnsiConsole.MarkupLine($"[yellow]Loading rating/status/effect tags from '{metadataPath}'...[/]");
-            MetadataJsonSynchronizer.SyncFromJson(matchedCards.Select(m => m.Card), metadataPath);
+            // Rating/status/effects come from the metadata only — XMP is legacy
+            // input, read once by `import`, never by view generation (P5).
+            AnsiConsole.MarkupLine($"[yellow]Loading rating/status/effect tags from '{metadataDir}'...[/]");
+            MetadataJsonSynchronizer.SyncFromJson(matchedCards.Select(m => m.Card), metadataDir);
             AnsiConsole.MarkupLine("[green]Metadata loaded.[/]");
 
             AnsiConsole.MarkupLine($"[yellow]Generating views in '{viewsDir}'...[/]");

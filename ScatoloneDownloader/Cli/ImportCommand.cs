@@ -15,10 +15,11 @@ namespace ScatoloneDownloader.Cli
 {
     /// <summary>
     /// One-time seed command: migrates existing Adobe Bridge XMP ratings/labels
-    /// into <c>cube-metadata.json</c> so the git snapshot becomes complete and
-    /// Bridge can be retired. This is the ONLY place XMP is read going forward
-    /// (see <see cref="MetadataSynchronizer"/>) — after running <c>import</c> once,
-    /// the web tagger is authoritative and this command is rarely needed again.
+    /// into the git-tracked metadata directory (see <see cref="CubeMetadataStore"/>)
+    /// so the git snapshot becomes complete and Bridge can be retired. This is
+    /// the ONLY place XMP is read going forward (see <see cref="MetadataSynchronizer"/>)
+    /// — after running <c>import</c> once, the web tagger is authoritative and
+    /// this command is rarely needed again.
     /// </summary>
     internal sealed class ImportCommand : AsyncCommand<ImportCommand.Settings>
     {
@@ -29,11 +30,11 @@ namespace ScatoloneDownloader.Cli
             public string SourceDirectory { get; set; }
 
             [CommandOption("-m|--metadata")]
-            [Description("Path to the git-tracked cube-metadata.json. Defaults to ./cube-metadata.json.")]
-            public string MetadataPath { get; set; }
+            [Description("Path to the git-tracked metadata directory (pool.json/fringe.json/unrated.json). Defaults to ./metadata.")]
+            public string MetadataDirectory { get; set; }
 
             [CommandOption("--overwrite")]
-            [Description("Overwrite rating/label already present in the JSON with the XMP value (off by default: XMP only fills entries that have none yet).")]
+            [Description("Overwrite rating/label already present in the metadata with the XMP value (off by default: XMP only fills entries that have none yet).")]
             public bool Overwrite { get; set; }
         }
 
@@ -46,9 +47,9 @@ namespace ScatoloneDownloader.Cli
             }
 
             string masterDir = Path.GetFullPath(settings.SourceDirectory);
-            string metadataFullPath = string.IsNullOrWhiteSpace(settings.MetadataPath)
-                ? Path.GetFullPath("cube-metadata.json")
-                : Path.GetFullPath(settings.MetadataPath);
+            string metadataDir = string.IsNullOrWhiteSpace(settings.MetadataDirectory)
+                ? Path.GetFullPath("metadata")
+                : Path.GetFullPath(settings.MetadataDirectory);
 
             string[] pngFiles = Directory.GetFiles(masterDir, "*.png", SearchOption.AllDirectories);
             if (pngFiles.Length == 0)
@@ -91,11 +92,11 @@ namespace ScatoloneDownloader.Cli
             AnsiConsole.MarkupLine($"[green]Matched {matched.Count} cards.[/]");
             if (matched.Count == 0) return 0;
 
-            // The only place XMP is still read: a one-time seed into the JSON.
+            // The only place XMP is still read: a one-time seed into the metadata.
             AnsiConsole.MarkupLine("[yellow]Reading XMP rating/label from disk...[/]");
             MetadataSynchronizer.SyncCardsFromDisk(matched);
 
-            CubeMetadata metadata = CubeMetadataStore.Load(metadataFullPath);
+            CubeMetadata metadata = CubeMetadataStore.Load(metadataDir);
 
             int added = 0;
             int updated = 0;
@@ -147,9 +148,9 @@ namespace ScatoloneDownloader.Cli
                 }
             }
 
-            CubeMetadataStore.Save(metadataFullPath, metadata);
+            CubeMetadataStore.Save(metadataDir, metadata);
 
-            AnsiConsole.MarkupLine($"[green]Import complete:[/] {added} added, {updated} updated. Saved to {metadataFullPath}.");
+            AnsiConsole.MarkupLine($"[green]Import complete:[/] {added} added, {updated} updated. Saved to {metadataDir}.");
 
             return 0;
         }

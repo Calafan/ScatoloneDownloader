@@ -36,16 +36,16 @@ namespace ScatoloneDownloader
                     .WithDescription("Analyze list file(s) without downloading images.");
 
                 config.AddCommand<BuildViewsCommand>("build-views")
-                    .WithDescription("Read rating/status/effects from cube-metadata.json and build the cube views via symlinks.");
+                    .WithDescription("Read rating/status/effects from the metadata directory and build the cube views via symlinks.");
 
                 config.AddCommand<TagCommand>("tag")
-                    .WithDescription("Launch the local web tagger to assign card rating/status/effects and autosave to cube-metadata.json.");
+                    .WithDescription("Launch the local web tagger to assign card rating/status/effects and autosave to the metadata directory.");
 
                 config.AddCommand<ImportCommand>("import")
-                    .WithDescription("One-time seed: read Adobe Bridge XMP rating/label and migrate it into cube-metadata.json.");
+                    .WithDescription("One-time seed: read Adobe Bridge XMP rating/label and migrate it into the metadata directory.");
 
                 config.AddCommand<RestoreCommand>("restore")
-                    .WithDescription("Rebuild an image folder from cube-metadata.json + Scryfall bulk data (no XMP written).");
+                    .WithDescription("Rebuild an image folder from the metadata directory + Scryfall bulk data (no XMP written).");
             });
 
             return await app.RunAsync(args);

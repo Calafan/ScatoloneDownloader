@@ -67,32 +67,34 @@ namespace ScatoloneDownloader.Mtg
 
         // --- Cube management fields ------------------------------------------
         // Rating/Status/Effects are the tagger-authored evaluation: loaded from
-        // cube-metadata.json by MetadataJsonSynchronizer (see property docs
-        // below), never from XMP. XmpLabel is legacy Adobe Bridge color-label
-        // data, read only once by the `import` seed command (MetadataSynchronizer)
-        // to migrate an existing Bridge label into cube-metadata.json; no other
-        // code path reads it. MacroType and ColorCategory are derived from
-        // Scryfall fields at construction. ManaPips is parsed from ManaCost.
+        // the git-tracked metadata directory's rating-tier files by
+        // MetadataJsonSynchronizer (see property docs below), never from XMP.
+        // XmpLabel is legacy Adobe Bridge color-label data, read only once by the
+        // `import` seed command (MetadataSynchronizer) to migrate an existing
+        // Bridge label into the metadata; no other code path reads it. MacroType
+        // and ColorCategory are derived from Scryfall fields at construction.
+        // ManaPips is parsed from ManaCost.
 
-        /// <summary>Cube rating (0 = unrated, 1-5 stars). Loaded from
-        /// <c>cube-metadata.json</c> by <see cref="MetadataJsonSynchronizer"/>;
-        /// authored in the web tagger, never derived from XMP after the initial
-        /// <c>import</c> seed.</summary>
+        /// <summary>Cube rating (0 = unrated, 1-5 stars). Loaded from the
+        /// metadata directory by <see cref="MetadataJsonSynchronizer"/>; authored
+        /// in the web tagger, never derived from XMP after the initial
+        /// <c>import</c> seed. Also the field that decides which rating-tier
+        /// file (<see cref="Metadata.CubeMetadataStore"/>) the card is stored in.</summary>
         internal int Rating { get; set; }
 
         /// <summary>Legacy Adobe Bridge color-label text, read once by the
         /// <c>import</c> command's <see cref="MetadataSynchronizer"/> and used
-        /// only to default <see cref="Status"/> when a JSON entry has none yet.
-        /// Not read by the tagger or view generation.</summary>
+        /// only to default <see cref="Status"/> when a metadata entry has none
+        /// yet. Not read by the tagger or view generation.</summary>
         internal string XmpLabel { get; set; } = string.Empty;
 
-        /// <summary>Ban/Token/Jolly pool status. Loaded from
-        /// <c>cube-metadata.json</c> by <see cref="MetadataJsonSynchronizer"/>;
-        /// defaults to <see cref="CardStatus.None"/> (normal pool card).</summary>
+        /// <summary>Ban/Token/Jolly pool status. Loaded from the metadata
+        /// directory by <see cref="MetadataJsonSynchronizer"/>; defaults to
+        /// <see cref="CardStatus.None"/> (normal pool card).</summary>
         internal CardStatus Status { get; set; } = CardStatus.None;
 
         /// <summary>Functional effect tags (multi-valued bitset). Loaded from
-        /// <c>cube-metadata.json</c> by <see cref="MetadataJsonSynchronizer"/>;
+        /// the metadata directory by <see cref="MetadataJsonSynchronizer"/>;
         /// defaults to <see cref="CardEffect.None"/> when the card is untagged.</summary>
         internal CardEffect Effects { get; set; } = CardEffect.None;
 
