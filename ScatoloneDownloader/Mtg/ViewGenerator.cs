@@ -122,28 +122,35 @@ namespace ScatoloneDownloader.Mtg
         }
 
         /// <summary>
-        /// Every view-tree folder a single card belongs in. Empty when the card is
-        /// excluded from all views (D7: rating 1-2). Banned/Token status routes
-        /// exclusively to <c>0_Excluded</c> — never into the pool/effect/rating/
-        /// color/type roots. Otherwise the card lands in every applicable root
-        /// (P8: generate the full set); a card may be linked several times within
-        /// a root when it carries multiple effects.
+        /// Every view-tree folder a single card belongs in.
+        /// <list type="bullet">
+        /// <item><description>Any status (Banned/Token/Jolly) -> a single flat
+        /// top-level folder per tag (<c>0_Banned</c>/<c>0_Token</c>/<c>0_Jolly</c>),
+        /// with the card directly inside — no color/type/cost split. Checked before
+        /// D7, so a status card is never dropped by the rating-1-2 exclusion.</description></item>
+        /// <item><description>Normal rating 1-2 -> excluded from every view (D7).</description></item>
+        /// <item><description>Normal rating 0 -> ONLY <c>0_Unrated/{Year}/{Set}</c>
+        /// (B4). Kept out of the browse views so the ~26k-card library backlog can
+        /// never flood and choke them.</description></item>
+        /// <item><description>Normal rating 3-5 (the curated pool) -> the full
+        /// multi-root browse tree; multi-linked once per effect.</description></item>
+        /// </list>
         /// </summary>
         private static List<string> BuildTargets(Card card, string root)
         {
-            List<string> targets = [];
-
-            // D7: never generate rating 1-2 views at all (rarely browsed; the
-            // master folder + metadata directory remain the source of truth).
-            if (card.Rating is 1 or 2)
+            // Status cards (Banned/Token/Jolly) go to a single flat folder per tag
+            // at the top level, at ANY rating — so a tagged card never hides and is
+            // not split by color/cost. Before D7, so rating 1-2 can't drop it.
+            if (card.Status != CardStatus.None)
             {
-                return targets;
+                return [Path.Combine(root, "0_" + card.Status)];
             }
 
-            if (card.Status is CardStatus.Banned or CardStatus.Token)
+            // D7: normal rating 1-2 cards are excluded from every view (rarely
+            // browsed; the master folder + metadata directory remain the truth).
+            if (card.Rating is 1 or 2)
             {
-                targets.Add(Path.Combine(root, "0_Excluded", card.Status.ToString()));
-                return targets;
+                return [];
             }
 
             // "Supertipo" (P6) = MacroType: Creature/Land/OtherPermanent/Spell.
@@ -157,37 +164,33 @@ namespace ScatoloneDownloader.Mtg
                 effectNames = ["_Untagged"];
             }
 
+            // Unrated (rating 0): ONLY the year/set backlog view (B4 + #1). This is
+            // the recovery-manifest backlog, mirroring the physical Source layout so
+            // it can be worked through set-by-set; it is deliberately kept out of
+            // every browse root (color/type isn't a useful axis for cards no one has
+            // evaluated yet, and ~26k of them would choke Bridge).
             if (card.Rating == 0)
             {
-                // VIEW: 0_Unrated -> Year / Set (B4). This is the ~26k-card
-                // recovery-manifest backlog, not a curated pool, so it mirrors the
-                // physical Source folder's year/expansion layout (easy to work
-                // through set-by-set) instead of the color/type split every other
-                // root uses — color/type isn't a useful axis for cards no one has
-                // evaluated yet.
                 string yearFolder = card.ReleasedAt.Year.ToString(CultureInfo.InvariantCulture);
                 string setFolder = OutputPaths.Sanitize(card.SetName);
-                targets.Add(Path.Combine(root, "0_Unrated", yearFolder, setFolder));
+                return [Path.Combine(root, "0_Unrated", yearFolder, setFolder)];
             }
-            else
+
+            // Rating 3-5 (the curated pool): the full multi-root browse tree.
+            List<string> targets = [];
+            string ratingFolder = $"{card.Rating}_Stars";
+
+            // VIEW: 2_ByRating -> {N}_Stars / Color.
+            targets.Add(Path.Combine(root, "2_ByRating", ratingFolder, colorFolder));
+
+            // VIEW 1 (both order variants, P7). Multi-link per effect; untagged
+            // rated cards fall into "_Untagged".
+            foreach (string effectName in effectNames)
             {
-                // Only 3/4/5 reach here (0 handled above, 1-2 excluded earlier).
-                string ratingFolder = $"{card.Rating}_Stars";
-
-                // VIEW: 2_ByRating -> {N}_Stars / Color.
-                targets.Add(Path.Combine(root, "2_ByRating", ratingFolder, colorFolder));
-
-                // VIEW 1 (both order variants, P7), rating>=3 only. Multi-link
-                // per effect; untagged rated cards fall into "_Untagged".
-                foreach (string effectName in effectNames)
-                {
-                    targets.Add(Path.Combine(root, "1_Deep_Effect", colorFolder, macroType, effectName, cmcFolder, ratingFolder));
-                    targets.Add(Path.Combine(root, "1_Deep_Rating", colorFolder, ratingFolder, macroType, effectName, cmcFolder));
-                }
+                targets.Add(Path.Combine(root, "1_Deep_Effect", colorFolder, macroType, effectName, cmcFolder, ratingFolder));
+                targets.Add(Path.Combine(root, "1_Deep_Rating", colorFolder, ratingFolder, macroType, effectName, cmcFolder));
             }
 
-            // General organization views: not rating-gated (0/3/4/5 all included),
-            // just excluded from Banned/Token (handled above) and rating 1-2 (D7).
             foreach (string effectName in effectNames)
             {
                 targets.Add(Path.Combine(root, "3_ByEffect", effectName, colorFolder));

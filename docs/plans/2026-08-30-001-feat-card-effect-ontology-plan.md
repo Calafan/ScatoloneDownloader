@@ -30,7 +30,8 @@ All six phases are implemented, documented, and verified on `feature/xmp-manager
 - **Phase 1** — `cube-metadata.json` schema (`scryfallId`, `status`, name-ordered `Save`), `CardStatus`/`StatusResolver`, `MetadataJsonSynchronizer` (rename of `EffectSynchronizer`), tagger rating/status editing. ✅ DONE
 - **Phase 2** — `import` command (XMP → JSON one-time seed). ✅ DONE
 - **Phase 3** — `restore` command (git + Scryfall → images, no XMP writer). ✅ DONE
-- **Phase 4** — Restructured multi-root `Views/` tree (`0_Unrated`, `0_Excluded`, both `1_Deep_*` variants, `2_ByRating`, `3_ByEffect`, `4_ByColor`, `5_ByType`); `build-views` now reads rating/status/effects from the JSON only. ✅ DONE
+- **Phase 4** — Restructured multi-root `Views/` tree (`0_Unrated`, the flat per-tag `0_Banned`/`0_Token`/`0_Jolly`, both `1_Deep_*` variants, `2_ByRating`, `3_ByEffect`, `4_ByColor`, `5_ByType`); `build-views` now reads rating/status/effects from the JSON only. ✅ DONE
+- **Review fixes (pre-merge, 2026-08-30)** — after a code review + a smoke test on real data: unrated (rating 0) cards are kept OUT of the `3_ByEffect`/`4_ByColor`/`5_ByType` browse roots (they live only in `0_Unrated`, else the ~26k backlog chokes Bridge) (#1); any status (Banned/Token/Jolly) routes to a single flat top-level `0_{Status}` folder, checked before D7 so tagged 1-2 star cards no longer vanish (#3); tier files are now written atomically (temp file + rename) so a crash can't leave a torn JSON (#5). ✅ DONE
 - **Phase 5** — Documentation pass: XML doc comments on every new/changed type in Phases 1-4, stale-comment cleanup (`Card.cs` cube-management-field block corrected — rating/status/effects no longer described as XMP-sourced), new `docs/cube-metadata.md` (lifecycle, recovery guarantee, full JSON schema, view-tree layout), README updated with the four new commands. ✅ DONE
 - **Phase 6 (Part B)** — `CubeMetadataStore` repartitioned from a single JSON file to a `metadata/` DIRECTORY of three rating-tier files (`pool.json` 3-5, `fringe.json` 1-2, `unrated.json` 0); `Load` merges all present tiers, `Save` always repartitions and rewrites all three by current rating (a rating change moves the card automatically, an untouched tier stays byte-identical); `-m|--metadata` is now a directory (default `./metadata`) across `tag`/`import`/`build-views`/`restore`; `restore` confirmed to read the merged union of all tiers; `ViewGenerator`'s `0_Unrated` root changed from `{Color}/{MacroType}` to `{ReleasedAt.Year}/{SetName}` (B4) to make the ~26k-card unrated backlog easy to work through set-by-set. ✅ DONE
 
@@ -125,7 +126,7 @@ Files: `Mtg/ViewGenerator.cs` (rewrite), `Cli/BuildViewsCommand.cs`.
 1. Exclude rating 1-2 entirely (**D7**). Exclude `status` Banned/Token from pool/effect/rating/color/type views.
 2. Roots (prefix-ordered), each leaf sharded so no folder is huge:
    - `0_Unrated/` (rating 0) — `{color}/{MacroType}/`
-   - `0_Excluded/` — `Banned/`, `Token/` (by `status`)
+   - `0_Banned/` `0_Token/` `0_Jolly/` — flat, one folder per `status` tag (card directly inside; any rating)
    - `1_Deep_Effect/` — `Color / MacroType / Effect / CMC / Rating` (rating>=3; no-effect -> `_Untagged`) — **[P7]**
    - `1_Deep_Rating/` — `Color / Rating / MacroType / Effect / CMC` (rating>=3; no-effect -> `_Untagged`) — **[P7]**
    - `2_ByRating/{5_Stars|4_Stars|3_Stars}/{color}/`

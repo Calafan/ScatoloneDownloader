@@ -12,13 +12,14 @@ namespace ScatoloneDownloader.Tests.Mtg;
 
 /// <summary>
 /// Phase 4 + Plan Part B coverage for <see cref="ViewGenerator.GenerateViews"/>:
-/// pins the root/exclusion rules from the plan (D7 rating 1-2 excluded
-/// entirely, Banned/Token routed only to <c>0_Excluded</c>, all other roots
-/// generated per P8, <c>0_Unrated</c> keyed by year/set per B4) by inspecting
-/// the real folder tree it links cards into. Uses a throwaway temp directory
-/// tree; link creation falls back from symlink to a native hard link, which
-/// works without elevation as long as source and views share a volume
-/// (guaranteed here — both live under the same temp root).
+/// pins the root/exclusion rules (normal rating 1-2 excluded entirely per D7;
+/// any status card routed to a single flat <c>0_Banned</c>/<c>0_Token</c>/
+/// <c>0_Jolly</c> tag folder; unrated cards kept to <c>0_Unrated/{Year}/{Set}</c>
+/// only; rating 3-5 filling the browse roots) by inspecting the real folder tree
+/// it links cards into. Uses a throwaway temp directory tree; link creation falls
+/// back from symlink to a native hard link, which works without elevation as long
+/// as source and views share a volume (guaranteed here — both live under the same
+/// temp root).
 /// </summary>
 public sealed class ViewGeneratorTests : IDisposable
 {
@@ -56,23 +57,21 @@ public sealed class ViewGeneratorTests : IDisposable
     }
 
     [Fact]
-    public void GenerateViews_Rating0_GoesToUnratedByYearAndSet_OnlyAndAlsoGeneralViews()
+    public void GenerateViews_Rating0_GoesToUnratedByYearAndSet_Only()
     {
         // Default MakeCardFile releasedAt/setName are "1993-08-05" / "Alpha".
         var (card, filePath) = MakeCardFile("Unrated Bear", rating: 0, colorIdentity: ["G"], typeLine: "Creature — Bear");
 
         ViewGenerator.GenerateViews([(card, filePath)], viewsDir);
 
-        // B4: 0_Unrated is keyed by Year/Set, not Color/MacroType — this is the
-        // full recovery-manifest backlog, mirroring the physical Source layout.
+        // B4: 0_Unrated is keyed by Year/Set, mirroring the physical Source layout.
         AssertLinked(Path.Combine(viewsDir, "0_Unrated", "1993", "Alpha"), "Unrated Bear.png");
-        // General views are not rating-gated, so an unrated card still appears here.
-        AssertLinked(Path.Combine(viewsDir, "5_ByType", "Creature"), "Unrated Bear.png");
-        AssertLinked(Path.Combine(viewsDir, "4_ByColor", "1 Green", "Creature", "Cost 1"), "Unrated Bear.png");
-        // Rating-gated roots must NOT contain an unrated card.
-        Assert.False(Directory.Exists(Path.Combine(viewsDir, "2_ByRating")));
-        Assert.False(Directory.Exists(Path.Combine(viewsDir, "1_Deep_Effect")));
-        Assert.False(Directory.Exists(Path.Combine(viewsDir, "1_Deep_Rating")));
+        // #1: an unrated card lives ONLY in 0_Unrated — it must not leak into any
+        // browse view, so the ~26k-card backlog can never flood/choke them.
+        foreach (string other in new[] { "2_ByRating", "3_ByEffect", "4_ByColor", "5_ByType", "1_Deep_Effect", "1_Deep_Rating" })
+        {
+            Assert.False(Directory.Exists(Path.Combine(viewsDir, other)), $"unrated card must not appear in {other}");
+        }
     }
 
     [Fact]
@@ -100,34 +99,36 @@ public sealed class ViewGeneratorTests : IDisposable
     }
 
     [Theory]
-    [InlineData(CardStatus.Banned, "Banned")]
-    [InlineData(CardStatus.Token, "Token")]
-    public void GenerateViews_BannedOrToken_OnlyGoesToExcludedRoot(CardStatus status, string folder)
+    [InlineData(CardStatus.Banned, "0_Banned")]
+    [InlineData(CardStatus.Token, "0_Token")]
+    [InlineData(CardStatus.Jolly, "0_Jolly")]
+    public void GenerateViews_StatusCard_GoesToSingleFlatTagFolder_Only(CardStatus status, string folder)
     {
-        var (card, filePath) = MakeCardFile("Excluded Card", rating: 4, status: status);
+        var (card, filePath) = MakeCardFile("Status Card", rating: 4, status: status, colorIdentity: ["G"], typeLine: "Creature — Bear");
 
         ViewGenerator.GenerateViews([(card, filePath)], viewsDir);
 
-        AssertLinked(Path.Combine(viewsDir, "0_Excluded", folder), "Excluded Card.png");
+        // A single flat folder per tag at the top level — the card sits directly
+        // inside, with no color/type/cost split.
+        AssertLinked(Path.Combine(viewsDir, folder), "Status Card.png");
 
-        // Must not leak into any pool/effect/rating/color/type view.
-        Assert.False(Directory.Exists(Path.Combine(viewsDir, "2_ByRating")));
-        Assert.False(Directory.Exists(Path.Combine(viewsDir, "3_ByEffect")));
-        Assert.False(Directory.Exists(Path.Combine(viewsDir, "4_ByColor")));
-        Assert.False(Directory.Exists(Path.Combine(viewsDir, "5_ByType")));
-        Assert.False(Directory.Exists(Path.Combine(viewsDir, "1_Deep_Effect")));
-        Assert.False(Directory.Exists(Path.Combine(viewsDir, "1_Deep_Rating")));
+        // And nowhere else.
+        foreach (string other in new[] { "2_ByRating", "3_ByEffect", "4_ByColor", "5_ByType", "1_Deep_Effect", "1_Deep_Rating", "0_Unrated" })
+        {
+            Assert.False(Directory.Exists(Path.Combine(viewsDir, other)), $"status card must not appear in {other}");
+        }
     }
 
     [Fact]
-    public void GenerateViews_JollyStatus_IsNotExcluded_BehavesLikeNormalCard()
+    public void GenerateViews_StatusCard_OverridesRating1Or2Exclusion()
     {
-        var (card, filePath) = MakeCardFile("Jolly Bear", rating: 3, status: CardStatus.Jolly, colorIdentity: ["G"], typeLine: "Creature — Bear");
+        // A tagged card must still surface in its flat folder even at rating 1-2,
+        // which would exclude a NORMAL card from every view (D7).
+        var (card, filePath) = MakeCardFile("Banned Weakling", rating: 1, status: CardStatus.Banned);
 
         ViewGenerator.GenerateViews([(card, filePath)], viewsDir);
 
-        AssertLinked(Path.Combine(viewsDir, "2_ByRating", "3_Stars", "1 Green"), "Jolly Bear.png");
-        Assert.False(Directory.Exists(Path.Combine(viewsDir, "0_Excluded")));
+        AssertLinked(Path.Combine(viewsDir, "0_Banned"), "Banned Weakling.png");
     }
 
     [Fact]

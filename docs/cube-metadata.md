@@ -145,7 +145,7 @@ Each of the three tier files has the same shape:
 | `scryfallId` | `string` (nullable, omitted when absent) | `import`, `tag` | The Scryfall printing `id` (not `oracle_id`) of the exact art this evaluation was made against. `restore` prefers this to re-download the *same* printing/art; if it's missing or the printing has vanished from the current bulk data, `restore` falls back to the first printing found for the `oracle_id`. Hand-editing this is fine if you know the correct printing UUID; leaving it blank just means `restore` uses the fallback. |
 | `rating` | `int`, 0-5 | `import` (seed), `tag` (authoritative) | Cube rating; `0` = unrated. **Never comes from XMP after the initial `import`** — `tag`/`build-views` read this field exclusively. **This is also the field that decides which tier file (`pool.json`/`fringe.json`/`unrated.json`) the entry lives in** — the next `Save` moves it if you hand-edit this to cross a tier boundary. Ratings of `1` or `2` are deliberately invisible in every generated view (see D7 below) — they still round-trip, just aren't browsable in `Views/`. |
 | `label` | `string` | `import` (copies the Bridge label verbatim), `tag` (preserves it) | Legacy Adobe Bridge color-label text (e.g. `"Red"`), carried along for reference. **Nothing derives behavior from this field anymore** — `status` superseded it. Safe to ignore or blank out by hand. |
-| `status` | `string`, one of `Banned \| Token \| Jolly`, or omitted/null for a normal card | `import` (default-fills from the Bridge label, only if empty), `tag` (authoritative, always wins) | Mutually-exclusive pool status. `Banned`/`Token` cards are pulled out of every normal view (`0_Unrated`, `1_Deep_*`, `2_ByRating`, `3_ByEffect`, `4_ByColor`, `5_ByType`) and appear **only** under `Views/0_Excluded/{Banned\|Token}/`. `Jolly` is not excluded from anything — it's informational. Hand-editable directly as one of the four strings (case-insensitive on read); an unrecognized or blank value is treated as no status. |
+| `status` | `string`, one of `Banned \| Token \| Jolly`, or omitted/null for a normal card | `import` (default-fills from the Bridge label, only if empty), `tag` (authoritative, always wins) | Mutually-exclusive pool status. A tagged card (`Banned`/`Token`/`Jolly`) is pulled out of every other view and appears **only** under its own flat top-level folder — `Views/0_Banned/`, `Views/0_Token/`, or `Views/0_Jolly/` — with the card directly inside, at any rating (the status is checked before the rating rules, so a tagged 1-2 star card still shows). Hand-editable directly as one of the strings (case-insensitive on read); an unrecognized or blank value is treated as no status. |
 | `effects` | `string[]`, canonical `CardEffect` member names | `tag` only | Functional effect tags (a card can carry several). Stored as an array of names, not a packed bitmask, so git diffs show exactly which tag changed. Unknown/duplicate names are dropped on the next `Save` (round-tripped through the resolver). Hand-editable with any of the canonical names in `Mtg/CardEffect.cs` (aliases like `"board wipe"` are also accepted on read, but always re-written canonically). Empty/absent = untagged, which routes to the `_Untagged` bucket in the effect-gated views. |
 | `reviewedAt` | ISO-8601 UTC timestamp (`DateTimeOffset?`), omitted when null | `tag` only | Stamped automatically the instant a human changes anything for a card in the tagger (rating, status, or an effect toggle) — it is the "someone actually looked at this" marker used by the tagger's progress counter and untagged-filter. `null`/absent = never manually reviewed. The store preserves this verbatim on every `Save` — nothing else re-stamps or clears it, so do not hand-edit it unless you intend to reset the review flag for that card. |
 
@@ -174,31 +174,34 @@ Each of the three tier files has the same shape:
 
 `build-views` links (never copies) each master `.png` into every applicable
 root below. A card can appear multiple times within a root when it carries
-several effects. Two blanket exclusion rules apply across **all** roots
-except `0_Excluded` itself:
+several effects. Two blanket rules apply across **all** roots:
 
-- **D7 — rating 1-2 is never generated.** Cards rated 1 or 2 star do not
-  appear in any view root at all (not even `0_Unrated` — that's for rating
-  `0` specifically). They still exist in the master folder and in
-  `fringe.json`; they're just rarely useful to browse, so no links are
-  created for them.
-- **Banned/Token status routes exclusively to `0_Excluded`.** A card with
-  `status: "Banned"` or `status: "Token"` never appears in any of the other
-  roots — only under `0_Excluded/Banned/` or `0_Excluded/Token/`. `Jolly` and
-  unset status are not excluded from anything.
+- **Any status (Banned/Token/Jolly) → a single flat tag folder.** A card with a
+  `status` goes to exactly one top-level folder — `0_Banned/`, `0_Token/`, or
+  `0_Jolly/` — with the card directly inside (no color/type/cost split), and
+  appears in NO other root. Checked before the rating rules, so a tagged card is
+  never dropped by the rating-1-2 exclusion (a banned 1-star card still shows in
+  `0_Banned/`). A normal card (no status) is unaffected.
+- **D7 — normal rating 1-2 is never generated.** A normal (statusless) card
+  rated 1 or 2 appears in no view root at all. It still exists in the master
+  folder and `fringe.json`; it's just rarely useful to browse.
 
 Roots (all generated every run):
 
 | Root | Layout | Included cards |
 |---|---|---|
-| `0_Unrated/` | `{Year}/{SetName}/` (B4) | rating `0`, not Banned/Token |
-| `0_Excluded/` | `Banned/`, `Token/` (flat) | `status` is Banned or Token (any rating) |
-| `1_Deep_Effect/` | `Color / MacroType / Effect / Cost N / Rating` | rating `>=3`, not Banned/Token |
-| `1_Deep_Rating/` | `Color / Rating / MacroType / Effect / Cost N` | rating `>=3`, not Banned/Token |
-| `2_ByRating/` | `{N}_Stars/{Color}/` (N = 3, 4, or 5) | rating `>=3`, not Banned/Token |
-| `3_ByEffect/` | `{Effect}/{Color}/` | rating `0` or `>=3`, not Banned/Token |
-| `4_ByColor/` | `{Color}/{MacroType}/Cost N/` | rating `0` or `>=3`, not Banned/Token |
-| `5_ByType/` | `{MacroType}/` (flat convenience) | rating `0` or `>=3`, not Banned/Token |
+| `0_Banned/` `0_Token/` `0_Jolly/` | flat — card directly inside | `status` = that tag (any rating) |
+| `0_Unrated/` | `{Year}/{SetName}/` (B4) | rating `0`, no status |
+| `1_Deep_Effect/` | `Color / MacroType / Effect / Cost N / Rating` | rating `>=3`, no status |
+| `1_Deep_Rating/` | `Color / Rating / MacroType / Effect / Cost N` | rating `>=3`, no status |
+| `2_ByRating/` | `{N}_Stars/{Color}/` (N = 3, 4, or 5) | rating `>=3`, no status |
+| `3_ByEffect/` | `{Effect}/{Color}/` | rating `>=3`, no status |
+| `4_ByColor/` | `{Color}/{MacroType}/Cost N/` | rating `>=3`, no status |
+| `5_ByType/` | `{MacroType}/` (flat convenience) | rating `>=3`, no status |
+
+Rating 0 (unrated) now lives **only** in `0_Unrated` — it is deliberately kept
+out of `3_ByEffect`/`4_ByColor`/`5_ByType` so the ~26k-card backlog can never
+flood and choke those browse roots in Adobe Bridge.
 
 Notes:
 
@@ -216,7 +219,8 @@ Notes:
 - **"MacroType"** ("Supertipo", `P6`) is `Creature`, `Land`, `OtherPermanent`,
   or `Spell` — Scryfall's type line collapsed to the coarse bucket the cube
   cares about (see `Mtg/MacroTypeResolver.cs`).
-- **`{Color}`** (used by every root except `0_Unrated`) is the guild/shard-aware
+- **`{Color}`** (used by every browse root — not the flat `0_*` tag folders or
+  `0_Unrated`) is the guild/shard-aware
   folder name from `ColorCategoryClassifier.ViewFolderName` (e.g. `1 White`,
   `2 Azorius`, `3 Esper`, `4 4-5 Colors`, `5 Colorless`) — the numeric prefix
   keeps a plain filesystem name-sort grouping mono > guild > shard/wedge >
