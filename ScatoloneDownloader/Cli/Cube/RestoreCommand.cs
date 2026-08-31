@@ -24,15 +24,11 @@ namespace ScatoloneDownloader.Cli
     /// </summary>
     internal sealed class RestoreCommand : AsyncCommand<RestoreCommand.Settings>
     {
-        public sealed class Settings : CommandSettings
+        public sealed class Settings : MetadataSettings
         {
             [CommandOption("-i|--images <DIR>")]
             [Description("Destination folder for the restored .png images (created if missing).")]
             public string ImagesDirectory { get; set; }
-
-            [CommandOption("-m|--metadata")]
-            [Description("Path to the git-tracked metadata directory (pool.json/fringe.json/unrated.json). Defaults to ./metadata.")]
-            public string MetadataDirectory { get; set; }
 
             public override ValidationResult Validate()
             {
@@ -48,9 +44,7 @@ namespace ScatoloneDownloader.Cli
         protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
         {
             string imagesDir = Path.GetFullPath(settings.ImagesDirectory);
-            string metadataDir = string.IsNullOrWhiteSpace(settings.MetadataDirectory)
-                ? Path.GetFullPath("metadata")
-                : Path.GetFullPath(settings.MetadataDirectory);
+            string metadataDir = settings.ResolveDirectory();
 
             CubeMetadata metadata = CubeMetadataStore.Load(metadataDir);
             if (metadata.Cards.Count == 0)

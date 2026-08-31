@@ -28,12 +28,8 @@ namespace ScatoloneDownloader.Cli
     /// </summary>
     internal sealed class MakeListCommand : AsyncCommand<MakeListCommand.Settings>
     {
-        public sealed class Settings : CommandSettings
+        public sealed class Settings : MetadataSettings
         {
-            [CommandOption("-m|--metadata")]
-            [Description("Path to the git-tracked metadata directory (pool.json/fringe.json/unrated.json). Defaults to ./metadata.")]
-            public string MetadataDirectory { get; set; }
-
             [CommandOption("-o|--output <FILE>")]
             [Description("Output list file to write (the format the `files` command reads).")]
             public string OutputFile { get; set; }
@@ -51,9 +47,7 @@ namespace ScatoloneDownloader.Cli
 
         protected override Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
         {
-            string metadataDir = string.IsNullOrWhiteSpace(settings.MetadataDirectory)
-                ? Path.GetFullPath("metadata")
-                : Path.GetFullPath(settings.MetadataDirectory);
+            string metadataDir = settings.ResolveDirectory();
 
             CubeMetadata metadata = CubeMetadataStore.Load(metadataDir);
 

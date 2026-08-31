@@ -6,10 +6,11 @@ using System.Linq;
 using System.Runtime.InteropServices;
 
 using ScatoloneDownloader.Download;
+using ScatoloneDownloader.Mtg;
 
 using Spectre.Console;
 
-namespace ScatoloneDownloader.Mtg
+namespace ScatoloneDownloader.Cube
 {
     /// <summary>
     /// Builds the multi-root cube view tree from rating/status/effects loaded

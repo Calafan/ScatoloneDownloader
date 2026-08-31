@@ -23,15 +23,11 @@ namespace ScatoloneDownloader.Cli
     /// </summary>
     internal sealed class ImportCommand : AsyncCommand<ImportCommand.Settings>
     {
-        public sealed class Settings : CommandSettings
+        public sealed class Settings : MetadataSettings
         {
             [CommandArgument(0, "<SOURCE_DIR>")]
             [Description("Source folder containing the physical master files (.png) with XMP metadata.")]
             public string SourceDirectory { get; set; }
-
-            [CommandOption("-m|--metadata")]
-            [Description("Path to the git-tracked metadata directory (pool.json/fringe.json/unrated.json). Defaults to ./metadata.")]
-            public string MetadataDirectory { get; set; }
 
             [CommandOption("--overwrite")]
             [Description("Refresh label (and a REAL, non-zero XMP rating) on entries that already exist; off by default (XMP only fills entries that have none yet). Never demotes a stored rating to 0 and never repoints scryfallId unless it is empty.")]
@@ -47,9 +43,7 @@ namespace ScatoloneDownloader.Cli
             }
 
             string masterDir = Path.GetFullPath(settings.SourceDirectory);
-            string metadataDir = string.IsNullOrWhiteSpace(settings.MetadataDirectory)
-                ? Path.GetFullPath("metadata")
-                : Path.GetFullPath(settings.MetadataDirectory);
+            string metadataDir = settings.ResolveDirectory();
 
             string[] pngFiles = Directory.GetFiles(masterDir, "*.png", SearchOption.AllDirectories);
             if (pngFiles.Length == 0)

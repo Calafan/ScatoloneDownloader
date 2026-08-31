@@ -4,7 +4,7 @@ namespace ScatoloneDownloader.Mtg
     /// The three rating bands the cube is partitioned into. This is the SINGLE
     /// source of truth for the rating boundaries, shared by metadata storage
     /// (<see cref="Metadata.CubeMetadataStore.TierFileName"/> routes each band to
-    /// its own tier file) and view generation (<see cref="ViewGenerator"/> shows
+    /// its own tier file) and view generation (<see cref="Cube.ViewGenerator"/> shows
     /// only <see cref="Pool"/> in the browse tree, keeps <see cref="Unrated"/> in
     /// the year/set backlog view, and excludes <see cref="Fringe"/> entirely per
     /// D7). Change the boundaries in <see cref="RatingTierClassifier.Classify"/>

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
+using ScatoloneDownloader.Cube;
 using ScatoloneDownloader.Mtg;
 
 using Spectre.Console;
@@ -23,7 +24,7 @@ namespace ScatoloneDownloader.Cli
     /// </summary>
     internal sealed class BuildViewsCommand : AsyncCommand<BuildViewsCommand.Settings>
     {
-        public sealed class Settings : CommandSettings
+        public sealed class Settings : MetadataSettings
         {
             [CommandArgument(0, "<SOURCE_DIR>")]
             [Description("Source folder containing the physical master files (.png).")]
@@ -32,10 +33,6 @@ namespace ScatoloneDownloader.Cli
             [CommandOption("-v|--views")]
             [Description("Destination folder for the generated views.")]
             public string ViewsDirectory { get; set; }
-
-            [CommandOption("-m|--metadata")]
-            [Description("Path to the git-tracked metadata directory (pool.json/fringe.json/unrated.json). Defaults to ./metadata.")]
-            public string MetadataDirectory { get; set; }
         }
 
         protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
@@ -97,9 +94,7 @@ namespace ScatoloneDownloader.Cli
 
             if (matchedCards.Count == 0) return 0;
 
-            string metadataDir = string.IsNullOrWhiteSpace(settings.MetadataDirectory)
-                ? Path.GetFullPath("metadata")
-                : Path.GetFullPath(settings.MetadataDirectory);
+            string metadataDir = settings.ResolveDirectory();
 
             // Rating/status/effects come from the metadata only — XMP is legacy
             // input, read once by `import`, never by view generation (P5).

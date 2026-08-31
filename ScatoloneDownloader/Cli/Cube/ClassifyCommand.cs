@@ -4,6 +4,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
+using ScatoloneDownloader.Cube;
 using ScatoloneDownloader.Metadata;
 using ScatoloneDownloader.Mtg;
 
@@ -25,12 +26,8 @@ namespace ScatoloneDownloader.Cli
     /// </summary>
     internal sealed class ClassifyCommand : AsyncCommand<ClassifyCommand.Settings>
     {
-        public sealed class Settings : CommandSettings
+        public sealed class Settings : MetadataSettings
         {
-            [CommandOption("-m|--metadata")]
-            [Description("Path to the git-tracked metadata directory (pool.json/fringe.json/unrated.json). Defaults to ./metadata.")]
-            public string MetadataDirectory { get; set; }
-
             [CommandOption("--overwrite")]
             [Description("Re-propose effects over entries that already have auto-tags (still-unreviewed only). Reviewed entries are never touched.")]
             public bool Overwrite { get; set; }
@@ -42,9 +39,7 @@ namespace ScatoloneDownloader.Cli
 
         protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
         {
-            string metadataDir = string.IsNullOrWhiteSpace(settings.MetadataDirectory)
-                ? Path.GetFullPath("metadata")
-                : Path.GetFullPath(settings.MetadataDirectory);
+            string metadataDir = settings.ResolveDirectory();
 
             CubeMetadata metadata = CubeMetadataStore.Load(metadataDir);
             if (metadata.Cards.Count == 0)

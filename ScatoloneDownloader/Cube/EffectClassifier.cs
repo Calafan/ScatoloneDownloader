@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace ScatoloneDownloader.Mtg
+using ScatoloneDownloader.Mtg;
+
+namespace ScatoloneDownloader.Cube
 {
     /// <summary>
     /// First-pass, rule-based auto-classifier: reads a card's rules text (plus its

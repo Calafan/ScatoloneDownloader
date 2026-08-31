@@ -10,6 +10,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
+using ScatoloneDownloader.Cube;
 using ScatoloneDownloader.Metadata;
 using ScatoloneDownloader.Mtg;
 
@@ -30,15 +31,11 @@ namespace ScatoloneDownloader.Cli
     /// </summary>
     internal sealed class TagCommand : AsyncCommand<TagCommand.Settings>
     {
-        public sealed class Settings : CommandSettings
+        public sealed class Settings : MetadataSettings
         {
             [CommandArgument(0, "<SOURCE_DIR>")]
             [Description("Source folder containing the physical master files (.png).")]
             public string SourceDirectory { get; set; }
-
-            [CommandOption("-m|--metadata")]
-            [Description("Path to the git-tracked metadata directory (pool.json/fringe.json/unrated.json). Defaults to ./metadata.")]
-            public string MetadataDirectory { get; set; }
 
             [CommandOption("-p|--port")]
             [Description("Local port for the tagger web server. Default 8765.")]
@@ -61,9 +58,7 @@ namespace ScatoloneDownloader.Cli
             }
 
             string masterDir = Path.GetFullPath(settings.SourceDirectory);
-            metadataDir = string.IsNullOrWhiteSpace(settings.MetadataDirectory)
-                ? Path.GetFullPath("metadata")
-                : Path.GetFullPath(settings.MetadataDirectory);
+            metadataDir = settings.ResolveDirectory();
 
             string[] pngFiles = Directory.GetFiles(masterDir, "*.png", SearchOption.AllDirectories);
             if (pngFiles.Length == 0)

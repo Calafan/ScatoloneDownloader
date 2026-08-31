@@ -86,7 +86,7 @@ namespace ScatoloneDownloader.Mtg
         // ManaPips is parsed from ManaCost.
 
         /// <summary>Cube rating (0 = unrated, 1-5 stars). Loaded from the
-        /// metadata directory by <see cref="MetadataJsonSynchronizer"/>; authored
+        /// metadata directory by <see cref="Cube.MetadataJsonSynchronizer"/>; authored
         /// in the web tagger, never derived from XMP after the initial
         /// <c>import</c> seed. Also the field that decides which rating-tier
         /// file (<see cref="Metadata.CubeMetadataStore"/>) the card is stored in.</summary>
@@ -99,12 +99,12 @@ namespace ScatoloneDownloader.Mtg
         internal string XmpLabel { get; set; } = string.Empty;
 
         /// <summary>Ban/Token/Jolly pool status. Loaded from the metadata
-        /// directory by <see cref="MetadataJsonSynchronizer"/>; defaults to
+        /// directory by <see cref="Cube.MetadataJsonSynchronizer"/>; defaults to
         /// <see cref="CardStatus.None"/> (normal pool card).</summary>
         internal CardStatus Status { get; set; } = CardStatus.None;
 
         /// <summary>Functional effect tags (multi-valued bitset). Loaded from
-        /// the metadata directory by <see cref="MetadataJsonSynchronizer"/>;
+        /// the metadata directory by <see cref="Cube.MetadataJsonSynchronizer"/>;
         /// defaults to <see cref="CardEffect.None"/> when the card is untagged.</summary>
         internal CardEffect Effects { get; set; } = CardEffect.None;
 

@@ -143,7 +143,7 @@ namespace ScatoloneDownloader.Metadata
         /// <summary>Routes a card to its tier file by its CURRENT rating (B1),
         /// using the shared <see cref="RatingTierClassifier"/> so the rating
         /// boundaries live in exactly one place (also read by
-        /// <see cref="ViewGenerator"/>).</summary>
+        /// <see cref="Cube.ViewGenerator"/>).</summary>
         internal static string TierFileName(int rating)
         {
             return RatingTierClassifier.Classify(rating) switch

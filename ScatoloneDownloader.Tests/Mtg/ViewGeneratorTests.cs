@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
+using ScatoloneDownloader.Cube;
 using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Mtg;
 

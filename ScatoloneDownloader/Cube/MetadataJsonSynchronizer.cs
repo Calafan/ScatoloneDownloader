@@ -1,8 +1,9 @@
 using System.Collections.Generic;
 
 using ScatoloneDownloader.Metadata;
+using ScatoloneDownloader.Mtg;
 
-namespace ScatoloneDownloader.Mtg
+namespace ScatoloneDownloader.Cube
 {
     /// <summary>
     /// Loads rating, status, and effect tags from the metadata directory's
