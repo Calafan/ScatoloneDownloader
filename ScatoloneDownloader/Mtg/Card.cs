@@ -70,8 +70,8 @@ namespace ScatoloneDownloader.Mtg
         // the git-tracked metadata directory's rating-tier files by
         // MetadataJsonSynchronizer (see property docs below), never from XMP.
         // XmpLabel is legacy Adobe Bridge color-label data, read only once by the
-        // `import` seed command (MetadataSynchronizer) to migrate an existing
-        // Bridge label into the metadata; no other code path reads it. MacroType
+        // `import` seed command (via XmpManager) to migrate an existing Bridge
+        // label into the metadata; no other code path reads it. MacroType
         // and ColorCategory are derived from Scryfall fields at construction.
         // ManaPips is parsed from ManaCost.
 
@@ -83,7 +83,7 @@ namespace ScatoloneDownloader.Mtg
         internal int Rating { get; set; }
 
         /// <summary>Legacy Adobe Bridge color-label text, read once by the
-        /// <c>import</c> command's <see cref="MetadataSynchronizer"/> and used
+        /// <c>import</c> command (via <see cref="Metadata.XmpManager"/>) and used
         /// only to default <see cref="Status"/> when a metadata entry has none
         /// yet. Not read by the tagger or view generation.</summary>
         internal string XmpLabel { get; set; } = string.Empty;
