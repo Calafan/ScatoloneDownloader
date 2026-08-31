@@ -34,16 +34,38 @@ namespace ScatoloneDownloader.Mtg
         /// </summary>
         internal static void GenerateViews(IEnumerable<(Card Card, string FilePath)> cardFiles, string viewsRootDirectory)
         {
+            var fileList = cardFiles as IList<(Card Card, string FilePath)> ?? cardFiles.ToList();
+            int totalFiles = fileList.Count;
+
+            // Nothing to link — do not even touch (let alone delete) the views root.
+            if (totalFiles == 0) return;
+
+            // SAFETY GUARD: this method deletes viewsRootDirectory wholesale, so
+            // refuse to run if that directory contains any source image — deleting
+            // it would destroy the irreplaceable master library. (BuildViewsCommand
+            // adds a stronger master-vs-views overlap check with both paths in hand;
+            // this catches any direct caller / views-root-is-master mistake.)
+            string viewsFull = WithSeparator(Path.GetFullPath(viewsRootDirectory));
+            foreach (var (_, sourcePath) in fileList)
+            {
+                if (Path.GetFullPath(sourcePath).StartsWith(viewsFull, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException(
+                        $"Refusing to generate views: the views directory '{viewsRootDirectory}' contains source image " +
+                        $"'{sourcePath}'. Deleting the views root would destroy master images — point --views at a separate folder.");
+                }
+            }
+
             if (Directory.Exists(viewsRootDirectory))
             {
                 Directory.Delete(viewsRootDirectory, true);
             }
             Directory.CreateDirectory(viewsRootDirectory);
 
-            var fileList = cardFiles as IList<(Card Card, string FilePath)> ?? cardFiles.ToList();
-            int totalFiles = fileList.Count;
-
-            if (totalFiles == 0) return;
+            // Distinct target folders created so far, so CreateLink issues one
+            // CreateDirectory per folder instead of once per link (tens of thousands
+            // of links collapse onto a few hundred folders).
+            HashSet<string> createdDirs = new(StringComparer.OrdinalIgnoreCase);
 
             int failCount = 0;
             int successCount = 0;
@@ -76,32 +98,43 @@ namespace ScatoloneDownloader.Mtg
                             continue;
                         }
 
-                        string fileName = Path.GetFileName(sourcePath);
-                        List<string> targets = BuildTargets(card, viewsRootDirectory);
-
-                        if (targets.Count == 0)
+                        // Isolate each card: a bad target path (e.g. MAX_PATH from
+                        // deep nesting, an invalid path char) must count as a link
+                        // failure and let the run finish, never unwind the loop and
+                        // abort AFTER the old tree was already deleted.
+                        try
                         {
-                            // D7: rating 1-2 is deliberately excluded from every root.
-                            ratingExcludedCount++;
-                            task.Increment(1);
-                            continue;
-                        }
+                            string fileName = Path.GetFileName(sourcePath);
+                            List<string> targets = BuildTargets(card, viewsRootDirectory);
 
-                        bool cardOk = true;
-                        foreach (string target in targets)
+                            if (targets.Count == 0)
+                            {
+                                // D7: rating 1-2 is deliberately excluded from every root.
+                                ratingExcludedCount++;
+                                task.Increment(1);
+                                continue;
+                            }
+
+                            bool cardOk = true;
+                            foreach (string target in targets)
+                            {
+                                if (CreateLink(sourcePath, target, fileName, createdDirs))
+                                {
+                                    createdLinks++;
+                                }
+                                else
+                                {
+                                    cardOk = false;
+                                }
+                            }
+
+                            if (cardOk) successCount++;
+                            else failCount++;
+                        }
+                        catch (Exception)
                         {
-                            if (CreateLink(sourcePath, target, fileName))
-                            {
-                                createdLinks++;
-                            }
-                            else
-                            {
-                                cardOk = false;
-                            }
+                            failCount++;
                         }
-
-                        if (cardOk) successCount++;
-                        else failCount++;
 
                         task.Increment(1);
                     }
@@ -211,9 +244,28 @@ namespace ScatoloneDownloader.Mtg
                 : ((int)cmc).ToString(CultureInfo.InvariantCulture);
         }
 
-        private static bool CreateLink(string sourcePath, string targetDirectory, string fileName)
+        /// <summary>True when two directory paths are identical or one nests inside
+        /// the other, comparing full normalized paths case-insensitively (Windows).
+        /// Used to refuse a views root that overlaps the master library.</summary>
+        internal static bool PathsOverlap(string a, string b)
         {
-            Directory.CreateDirectory(targetDirectory);
+            string na = WithSeparator(Path.GetFullPath(a));
+            string nb = WithSeparator(Path.GetFullPath(b));
+            return na.StartsWith(nb, StringComparison.OrdinalIgnoreCase)
+                || nb.StartsWith(na, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string WithSeparator(string path)
+        {
+            return path.EndsWith(Path.DirectorySeparatorChar) ? path : path + Path.DirectorySeparatorChar;
+        }
+
+        private static bool CreateLink(string sourcePath, string targetDirectory, string fileName, HashSet<string> createdDirs)
+        {
+            if (createdDirs.Add(targetDirectory))
+            {
+                Directory.CreateDirectory(targetDirectory);
+            }
             string targetFile = Path.Combine(targetDirectory, fileName);
 
             if (!File.Exists(targetFile))

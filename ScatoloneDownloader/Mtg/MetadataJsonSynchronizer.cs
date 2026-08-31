@@ -23,8 +23,14 @@ namespace ScatoloneDownloader.Mtg
         /// values from a previous sync call.</summary>
         internal static void SyncFromJson(IEnumerable<Card> cards, string metadataDirectory)
         {
-            CubeMetadata data = CubeMetadataStore.Load(metadataDirectory);
+            SyncFromJson(cards, CubeMetadataStore.Load(metadataDirectory));
+        }
 
+        /// <summary>Overload for callers that have already loaded the metadata
+        /// (e.g. the tagger, which keeps the merged document in memory for
+        /// autosave) — avoids deserializing every tier file a second time.</summary>
+        internal static void SyncFromJson(IEnumerable<Card> cards, CubeMetadata data)
+        {
             foreach (Card card in cards)
             {
                 if (!string.IsNullOrEmpty(card.OracleId)

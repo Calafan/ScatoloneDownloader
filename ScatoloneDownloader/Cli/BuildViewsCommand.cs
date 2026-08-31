@@ -60,6 +60,18 @@ namespace ScatoloneDownloader.Cli
                 viewsDir = Path.GetFullPath(viewsDir);
             }
 
+            // build-views deletes the views directory wholesale before regenerating.
+            // Refuse if it is the same as, or nests with, the master library, so a
+            // typo in --views can never wipe the irreplaceable source images.
+            if (ViewGenerator.PathsOverlap(masterDir, viewsDir))
+            {
+                AnsiConsole.MarkupLine(
+                    $"[red]Error: the views folder '{viewsDir}' overlaps the master folder '{masterDir}'.[/]");
+                AnsiConsole.MarkupLine(
+                    "[yellow]The views folder is deleted and rebuilt on every run — point --views at a separate location.[/]");
+                return 1;
+            }
+
             AnsiConsole.MarkupLine($"[cyan]Master folder:[/] {masterDir}");
             AnsiConsole.MarkupLine($"[cyan]Views folder :[/] {viewsDir}");
 

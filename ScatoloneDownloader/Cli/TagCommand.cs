@@ -104,7 +104,7 @@ namespace ScatoloneDownloader.Cli
             // metadata directory's tier files — XMP is legacy input only, read
             // once by the `import` command.
             metadata = CubeMetadataStore.Load(metadataDir);
-            MetadataJsonSynchronizer.SyncFromJson(matched.Select(m => m.Card), metadataDir);
+            MetadataJsonSynchronizer.SyncFromJson(matched.Select(m => m.Card), metadata);
 
             effectNames = EffectResolver.ToNames((CardEffect)~0).ToArray();
 
@@ -365,9 +365,12 @@ namespace ScatoloneDownloader.Cli
   #help { font-size:12px; color:var(--muted); border-top:1px solid #2c313c; padding-top:10px; }
   #filter { font-size:12px; color:var(--accent); }
   kbd { background:#0d0f14; border-radius:4px; padding:1px 5px; font-size:11px; }
+  #saveErr { position:fixed; top:0; left:0; right:0; z-index:10; background:#8a1f1f; color:#fff; padding:10px 14px; font-weight:600; text-align:center; }
+  #saveErr[hidden] { display:none; }
 </style>
 </head>
 <body>
+<div id="saveErr" hidden>&#9888; Save failed &mdash; edits are NOT being written to disk. Check the terminal, then retry the last change.</div>
 <div id="app">
   <div id="imgwrap"><img id="card" alt="card"></div>
   <div id="panel">
@@ -510,13 +513,26 @@ function setStatus(name) {
   render();
 }
 
+function showSaveError() { document.getElementById("saveErr").hidden = false; }
+function clearSaveError() { document.getElementById("saveErr").hidden = true; }
+
 async function save(c) {
   try {
-    await fetch("/api/save", {
+    const r = await fetch("/api/save", {
       method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({ index: c.index, rating: c.rating, status: c.status, effects: [...c.effects] })
     });
-  } catch (e) { /* keep local state; retry on next toggle */ }
+    // fetch does NOT reject on HTTP 500, and the server can also answer 200
+    // with {ok:false} (e.g. a card with no oracle_id). Treat both as failures
+    // so a silent save error can never masquerade as a saved edit.
+    let ok = r.ok;
+    if (ok) { try { const j = await r.json(); ok = !j || j.ok !== false; } catch { ok = false; } }
+    if (!ok) { c.reviewed = false; showSaveError(); render(); return; }
+    clearSaveError();
+  } catch (e) {
+    // network/server unreachable: mark unsaved and surface it, don't swallow.
+    c.reviewed = false; showSaveError(); render();
+  }
 }
 
 function move(d) { pos = Math.max(0, Math.min(order.length-1, pos+d)); render(); }

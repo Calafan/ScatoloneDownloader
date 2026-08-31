@@ -121,8 +121,14 @@ namespace ScatoloneDownloader.Cli
                         continue;
                     }
 
+                    // Write to a temp file then atomically move it into place, so an
+                    // interrupted write (Ctrl-C, crash, disk full) never leaves a
+                    // truncated .png that the skip-existing check above would then
+                    // accept as "restored" forever.
                     byte[] png = await downloader.ComposeAsync(card);
-                    await File.WriteAllBytesAsync(destPath, png);
+                    string tempPath = destPath + ".tmp";
+                    await File.WriteAllBytesAsync(tempPath, png);
+                    File.Move(tempPath, destPath, overwrite: true);
                     downloaded++;
                 }
             }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ScatoloneDownloader.Mtg
 {
@@ -35,6 +36,13 @@ namespace ScatoloneDownloader.Mtg
             ["directdamage"]                = CardEffect.Burn,
             ["sac"]                         = CardEffect.Sacrifice,
         };
+
+        /// <summary>All real effect flags in declared (ascending bit) order, cached
+        /// once. <see cref="ToNames"/> runs per-entry on every tagger save and
+        /// per-card during view generation, so it must not re-allocate the values
+        /// array (or box operands via <see cref="Enum.HasFlag"/>) each call.</summary>
+        private static readonly CardEffect[] AllFlags =
+            Enum.GetValues<CardEffect>().Where(f => f != CardEffect.None).ToArray();
 
         /// <summary>OR-combines a set of tag strings into a single flags value,
         /// silently skipping anything unrecognized.</summary>
@@ -95,14 +103,10 @@ namespace ScatoloneDownloader.Mtg
         {
             List<string> names = [];
 
-            foreach (CardEffect flag in Enum.GetValues<CardEffect>())
+            foreach (CardEffect flag in AllFlags)
             {
-                if (flag == CardEffect.None)
-                {
-                    continue;
-                }
-
-                if (effects.HasFlag(flag))
+                // Non-boxing flag test (HasFlag boxes both operands).
+                if ((effects & flag) == flag)
                 {
                     names.Add(flag.ToString());
                 }
