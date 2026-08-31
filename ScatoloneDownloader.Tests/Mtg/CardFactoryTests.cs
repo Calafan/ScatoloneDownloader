@@ -148,6 +148,48 @@ public sealed class CardFactoryTests
         Assert.Equal(["W"], card.Colors);
     }
 
+    [Fact]
+    public void CreateCard_MapsOracleTextAndKeywords_FromTopLevel()
+    {
+        JsonCard json = MakeCard(imageUris: MakePngUri("https://test/x.png"));
+        json.OracleText = "Deal 3 damage to any target.";
+        json.Keywords = ["Flash"];
+
+        ScatoloneDownloader.Mtg.Card card = ScatoloneDownloader.Mtg.Card.CreateCard(json);
+
+        Assert.Equal("Deal 3 damage to any target.", card.OracleText);
+        Assert.Equal(["Flash"], card.Keywords);
+    }
+
+    [Fact]
+    public void CreateCard_DoubleFace_AggregatesFaceOracleText_WhenTopLevelEmpty()
+    {
+        // DFC entries carry rules text on the faces, not the top level.
+        JsonCard json = MakeCard(imageUris: null);
+        json.OracleText = null;
+        json.CardFaces =
+        [
+            new JsonCardFace { Name = "Front", Colors = ["U"], OracleText = "Front text.", ImageUris = MakePngUri("https://test/f.png") },
+            new JsonCardFace { Name = "Rear", Colors = ["U"], OracleText = "Rear text.", ImageUris = MakePngUri("https://test/r.png") },
+        ];
+
+        ScatoloneDownloader.Mtg.Card card = ScatoloneDownloader.Mtg.Card.CreateCard(json);
+
+        Assert.Equal("Front text.\nRear text.", card.OracleText);
+    }
+
+    [Fact]
+    public void CreateCard_NoOracleTextOrKeywords_DefaultToEmpty()
+    {
+        JsonCard json = MakeCard(imageUris: MakePngUri("https://test/x.png"));
+        // OracleText and Keywords intentionally left null on the JSON.
+
+        ScatoloneDownloader.Mtg.Card card = ScatoloneDownloader.Mtg.Card.CreateCard(json);
+
+        Assert.Equal(string.Empty, card.OracleText);
+        Assert.Empty(card.Keywords);
+    }
+
     // --- factory -----------------------------------------------------------
 
     private static JsonCard MakeCard(

@@ -32,6 +32,12 @@ namespace ScatoloneDownloader.Json.Cards
         [JsonPropertyName("type_line")]
         public string TypeLine { get; set; }
 
+        [JsonPropertyName("oracle_text")]
+        public string OracleText { get; set; }
+
+        [JsonPropertyName("keywords")]
+        public List<string> Keywords { get; set; }
+
         [JsonPropertyName("collector_number")]
         public string CollectorNumber { get; set; }
 

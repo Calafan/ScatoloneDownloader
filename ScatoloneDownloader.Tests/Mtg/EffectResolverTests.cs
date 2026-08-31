@@ -23,6 +23,12 @@ public sealed class EffectResolverTests
     [InlineData("board wipe", CardEffect.Wipe)]
     [InlineData("vindicate", CardEffect.RemovePermanent)]
     [InlineData("direct damage", CardEffect.Burn)]
+    [InlineData("Tutor", CardEffect.Tutor)]
+    [InlineData("search library", CardEffect.Tutor)]
+    [InlineData("search your library", CardEffect.Tutor)]
+    [InlineData("Fixing", CardEffect.Fixing)]
+    [InlineData("mana fixing", CardEffect.Fixing)]
+    [InlineData("colour fixing", CardEffect.Fixing)]
     public void TryParseSingle_MemberNamesAndAliases_Resolve(string raw, CardEffect expected)
     {
         Assert.True(EffectResolver.TryParseSingle(raw, out CardEffect effect));
