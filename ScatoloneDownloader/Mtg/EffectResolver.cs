@@ -44,6 +44,11 @@ namespace ScatoloneDownloader.Mtg
             ["mana fixing"]                 = CardEffect.Fixing,
             ["color fixing"]                = CardEffect.Fixing,
             ["colour fixing"]               = CardEffect.Fixing,
+            ["pacifism"]                    = CardEffect.Pacify,
+            ["arrest"]                      = CardEffect.Pacify,
+            ["detain"]                      = CardEffect.Pacify,
+            ["tapper"]                      = CardEffect.Pacify,
+            ["tap down"]                    = CardEffect.Pacify,
         };
 
         /// <summary>All real effect flags in declared (ascending bit) order, cached
