@@ -133,6 +133,16 @@ defaulting to `./metadata`.
    any `.png` missing from `<dir>`. Idempotent — already-present files are
    left untouched, so it's also the right command to top up a partial image
    folder. Writes no XMP; rating/status/effects live only in the metadata.
+5. **`make-list -m metadata -o <file>`** — writes a download list (the exact
+   format the pre-existing `files` command reads) of the **pool (rating 3-5)**
+   from the metadata, offline (no Scryfall call). The plain pool is one card
+   name per line, alphabetical; cards with a status are pulled into their own
+   `-- Banned` / `-- Token` / `-- Jolly` sections and written as
+   `Name -- Status`. Because the `files` reader takes the name before `--` and
+   the tag after it (which becomes an output sub-folder), running
+   `files <that file>` re-downloads the pool and drops Banned/Token/Jolly cards
+   into matching sub-folders automatically. Deterministic (no timestamp), so a
+   committed list only diffs when the pool actually changes.
 
 ## Metadata entry schema
 

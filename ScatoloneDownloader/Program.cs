@@ -46,6 +46,9 @@ namespace ScatoloneDownloader
 
                 config.AddCommand<RestoreCommand>("restore")
                     .WithDescription("Rebuild an image folder from the metadata directory + Scryfall bulk data (no XMP written).");
+
+                config.AddCommand<MakeListCommand>("make-list")
+                    .WithDescription("Write a download list (for the `files` command) of the pool (rating 3-5) from the metadata directory, with Banned/Token/Jolly in their own sections.");
             });
 
             return await app.RunAsync(args);
