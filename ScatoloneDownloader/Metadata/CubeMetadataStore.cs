@@ -140,22 +140,18 @@ namespace ScatoloneDownloader.Metadata
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
         };
 
-        /// <summary>Routes a card to its tier file by its CURRENT rating (B1):
-        /// 3-5 -> pool (active cube), 1-2 -> fringe (evaluated but cut), 0 (or
-        /// any unexpected out-of-range value, defensively) -> unrated.</summary>
+        /// <summary>Routes a card to its tier file by its CURRENT rating (B1),
+        /// using the shared <see cref="RatingTierClassifier"/> so the rating
+        /// boundaries live in exactly one place (also read by
+        /// <see cref="ViewGenerator"/>).</summary>
         internal static string TierFileName(int rating)
         {
-            if (rating >= 3)
+            return RatingTierClassifier.Classify(rating) switch
             {
-                return "pool.json";
-            }
-
-            if (rating >= 1)
-            {
-                return "fringe.json";
-            }
-
-            return "unrated.json";
+                RatingTier.Pool => "pool.json",
+                RatingTier.Fringe => "fringe.json",
+                _ => "unrated.json",
+            };
         }
 
         /// <summary>

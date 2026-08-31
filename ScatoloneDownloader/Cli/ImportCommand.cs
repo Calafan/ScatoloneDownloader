@@ -60,33 +60,12 @@ namespace ScatoloneDownloader.Cli
 
             AnsiConsole.MarkupLine($"[yellow]Found {pngFiles.Length} files. Loading bulk data from Scryfall...[/]");
 
-            List<(Card Card, string FilePath)> matched = [];
+            List<(Card Card, string FilePath)> matched;
 
             using (GetManager manager = new())
             {
                 List<Card> allCards = await manager.GetDefaultCards();
-
-                Dictionary<string, Card> cardsByName = new(StringComparer.OrdinalIgnoreCase);
-                foreach (Card c in allCards)
-                {
-                    if (!cardsByName.ContainsKey(c.Name))
-                    {
-                        cardsByName.Add(c.Name, c);
-                    }
-                }
-
-                foreach (string file in pngFiles)
-                {
-                    string cardName = CardNameNormalizer.Normalize(Path.GetFileNameWithoutExtension(file));
-                    if (cardsByName.TryGetValue(cardName, out Card card))
-                    {
-                        matched.Add((card, file));
-                    }
-                    else
-                    {
-                        AnsiConsole.MarkupLine($"[red]Warning:[/] no Scryfall card found for file '{Path.GetFileName(file)}' (searched name: '{cardName}')");
-                    }
-                }
+                matched = CardImageMatcher.Match(allCards, pngFiles, warnUnmatched: true);
             }
 
             AnsiConsole.MarkupLine($"[green]Matched {matched.Count} cards.[/]");

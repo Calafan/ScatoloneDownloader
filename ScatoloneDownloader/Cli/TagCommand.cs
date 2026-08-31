@@ -77,24 +77,7 @@ namespace ScatoloneDownloader.Cli
             using (GetManager manager = new())
             {
                 List<Card> allCards = await manager.GetDefaultCards();
-
-                Dictionary<string, Card> cardsByName = new(StringComparer.OrdinalIgnoreCase);
-                foreach (Card c in allCards)
-                {
-                    if (!cardsByName.ContainsKey(c.Name))
-                    {
-                        cardsByName.Add(c.Name, c);
-                    }
-                }
-
-                foreach (string file in pngFiles)
-                {
-                    string cardName = CardNameNormalizer.Normalize(Path.GetFileNameWithoutExtension(file));
-                    if (cardsByName.TryGetValue(cardName, out Card card))
-                    {
-                        matched.Add((card, file));
-                    }
-                }
+                matched = CardImageMatcher.Match(allCards, pngFiles, warnUnmatched: true);
             }
 
             AnsiConsole.MarkupLine($"[green]Matched {matched.Count} cards.[/]");
@@ -107,6 +90,19 @@ namespace ScatoloneDownloader.Cli
             MetadataJsonSynchronizer.SyncFromJson(matched.Select(m => m.Card), metadata);
 
             effectNames = EffectResolver.ToNames((CardEffect)~0).ToArray();
+
+            // Guard the effect-to-hotkey mapping: the page assigns EFFECT_KEYS[i]
+            // to effect i, so a new CardEffect beyond the available keys would get
+            // no hotkey and could only be toggled by mouse. Fail loudly at startup
+            // rather than shipping a silently un-keyable effect.
+            if (effectNames.Length > EffectHotkeys.Length)
+            {
+                AnsiConsole.MarkupLine(
+                    $"[red]Error: {effectNames.Length} effects but only {EffectHotkeys.Length} hotkeys in TagCommand.EffectHotkeys.[/]");
+                AnsiConsole.MarkupLine(
+                    "[yellow]Add more keys to EffectHotkeys (avoiding 0-5 and n/b/t/j/c/f) so every effect has a hotkey.[/]");
+                return 1;
+            }
 
             int tagged = matched.Count(m => m.Card.Effects != CardEffect.None);
             AnsiConsole.MarkupLine($"[cyan]Already tagged:[/] {tagged} / {matched.Count}");
@@ -173,7 +169,7 @@ namespace ScatoloneDownloader.Cli
 
             if (path == "/")
             {
-                TryWrite(ctx, 200, "text/html; charset=utf-8", Encoding.UTF8.GetBytes(Html));
+                TryWrite(ctx, 200, "text/html; charset=utf-8", Encoding.UTF8.GetBytes(GetPageHtml()));
                 return;
             }
 
@@ -338,234 +334,30 @@ namespace ScatoloneDownloader.Cli
             }
         }
 
-        // Single-page tagger UI. Self-contained, no external resources.
-        private const string Html = """
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Scatolone Cube Tagger</title>
-<style>
-  :root { --bg:#12141a; --panel:#1c1f27; --accent:#4da3ff; --on:#2e7d32; --txt:#e6e6e6; --muted:#8b93a3; }
-  * { box-sizing: border-box; }
-  body { margin:0; background:var(--bg); color:var(--txt); font:15px/1.4 system-ui,Segoe UI,sans-serif; height:100vh; overflow:hidden; }
-  #app { display:flex; height:100vh; }
-  #imgwrap { flex:1; display:flex; align-items:center; justify-content:center; padding:16px; }
-  #card { max-width:100%; max-height:94vh; border-radius:14px; box-shadow:0 8px 40px rgba(0,0,0,.6); }
-  #panel { width:360px; background:var(--panel); padding:18px; display:flex; flex-direction:column; gap:12px; overflow-y:auto; }
-  #progress { font-size:13px; color:var(--muted); }
-  #name { font-size:18px; font-weight:600; }
-  #meta { font-size:12px; color:var(--muted); }
-  #effects { display:flex; flex-direction:column; gap:6px; }
-  .eff { display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid #2c313c; border-radius:8px; cursor:pointer; user-select:none; }
-  .eff.active { background:var(--on); border-color:var(--on); }
-  .key { display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px; padding:0 5px; border-radius:5px; background:#0d0f14; color:var(--accent); font-weight:700; font-size:12px; }
-  .eff.active .key { color:#fff; }
-  #rating { display:flex; gap:6px; }
-  .star { font-size:22px; line-height:1; color:#3a3f4b; cursor:pointer; user-select:none; }
-  .star.active { color:#f2c94c; }
-  #status { display:flex; gap:6px; }
-  .stat { display:flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid #2c313c; border-radius:8px; cursor:pointer; user-select:none; }
-  .stat.active { background:#8a3b3b; border-color:#8a3b3b; }
-  .stat.active .key { color:#fff; }
-  #help { font-size:12px; color:var(--muted); border-top:1px solid #2c313c; padding-top:10px; }
-  #filter { font-size:12px; color:var(--accent); }
-  kbd { background:#0d0f14; border-radius:4px; padding:1px 5px; font-size:11px; }
-  #saveErr { position:fixed; top:0; left:0; right:0; z-index:10; background:#8a1f1f; color:#fff; padding:10px 14px; font-weight:600; text-align:center; }
-  #saveErr[hidden] { display:none; }
-</style>
-</head>
-<body>
-<div id="saveErr" hidden>&#9888; Save failed &mdash; edits are NOT being written to disk. Check the terminal, then retry the last change.</div>
-<div id="app">
-  <div id="imgwrap"><img id="card" alt="card"></div>
-  <div id="panel">
-    <div id="progress"></div>
-    <div id="name"></div>
-    <div id="meta"></div>
-    <div id="filter"></div>
-    <div id="rating"></div>
-    <div id="status"></div>
-    <div id="effects"></div>
-    <div id="help">
-      <div><kbd>hotkey</kbd> toggle effect</div>
-      <div><kbd>0</kbd>-<kbd>5</kbd> set rating</div>
-      <div><kbd>n</kbd>/<kbd>b</kbd>/<kbd>t</kbd>/<kbd>j</kbd> status: None / Banned / Token / Jolly</div>
-      <div><kbd>&larr;</kbd>/<kbd>&rarr;</kbd> or <kbd>Enter</kbd> prev / next</div>
-      <div><kbd>c</kbd> confirm reviewed (no change)</div>
-      <div><kbd>f</kbd> filter untagged &nbsp; <kbd>Home</kbd> first</div>
-    </div>
-  </div>
-</div>
-<script>
-// Effect hotkeys deliberately avoid digits (0-5 = rating) and n/b/t/j/c/f
-// (status + confirm + filter), so every action has one dedicated key.
-const EFFECT_KEYS = "qweryuiopasdghkl".split("");
-const STATUS_ORDER = [
-  { key: "n", name: "None" },
-  { key: "b", name: "Banned" },
-  { key: "t", name: "Token" },
-  { key: "j", name: "Jolly" },
-];
-const STATUS_KEYS = Object.fromEntries(STATUS_ORDER.map(s => [s.key, s.name]));
+        // Effect hotkey string injected into the tagger page (TaggerPage.html's
+        // "__EFFECT_KEYS__" placeholder). Kept here as the SINGLE source of truth
+        // so the startup check below can guarantee there are at least as many keys
+        // as effects — a new CardEffect with no key would otherwise silently get no
+        // hotkey. Keys avoid 0-5 (rating) and n/b/t/j/c/f (status/confirm/filter).
+        internal const string EffectHotkeys = "qweryuiopasdghkl";
 
-let cards = [], effects = [], order = [], pos = 0, filterUntagged = false;
+        // The tagger's single-page UI lives in the embedded resource
+        // Cli/TaggerPage.html (so editors/linters see the HTML/JS). It is loaded and
+        // key-substituted once, on the first "/" request.
+        private static string pageHtml;
 
-async function boot() {
-  const r = await fetch("/api/cards");
-  const data = await r.json();
-  effects = data.effects;
-  cards = data.cards.map(c => ({...c, effects: new Set(c.effects)}));
-  buildOrder();
-  render();
-}
+        internal static string GetPageHtml()
+        {
+            if (pageHtml == null)
+            {
+                const string resourceName = "ScatoloneDownloader.Cli.TaggerPage.html";
+                using Stream stream = typeof(TagCommand).Assembly.GetManifestResourceStream(resourceName)
+                    ?? throw new InvalidOperationException($"Embedded tagger page '{resourceName}' not found.");
+                using StreamReader reader = new(stream);
+                pageHtml = reader.ReadToEnd().Replace("__EFFECT_KEYS__", EffectHotkeys);
+            }
 
-function buildOrder() {
-  order = cards.map((c,i)=>i).filter(i => !filterUntagged || cards[i].effects.size === 0);
-  if (order.length === 0) order = cards.map((c,i)=>i);
-  if (pos >= order.length) pos = order.length - 1;
-  if (pos < 0) pos = 0;
-}
-
-function cur() { return cards[order[pos]]; }
-
-function render() {
-  const c = cur();
-  document.getElementById("card").src = "/img/" + c.index + "?t=" + c.index;
-  const taggedTotal = cards.filter(x => x.effects.size > 0).length;
-  const reviewedTotal = cards.filter(x => x.reviewed).length;
-  document.getElementById("progress").textContent =
-    `Card ${pos+1} / ${order.length}` + (filterUntagged ? " (untagged view)" : "") +
-    ` — tagged ${taggedTotal}/${cards.length} · reviewed ${reviewedTotal}`;
-  document.getElementById("name").textContent = c.name;
-  document.getElementById("meta").textContent =
-    `${c.rating ? "★".repeat(c.rating) : "unrated"}` +
-    `${c.status && c.status !== "None" ? " · " + c.status : ""}` +
-    ` · ${c.reviewed ? "reviewed ✓" : "NEW"}`;
-  document.getElementById("filter").textContent = filterUntagged ? "Filter: untagged only (press f)" : "";
-
-  renderRating(c);
-  renderStatus(c);
-
-  const box = document.getElementById("effects");
-  box.innerHTML = "";
-  effects.forEach((name, i) => {
-    const active = c.effects.has(name);
-    const div = document.createElement("div");
-    div.className = "eff" + (active ? " active" : "");
-    div.innerHTML = `<span class="key">${(EFFECT_KEYS[i]||"").toUpperCase()}</span><span>${name}</span>`;
-    div.onclick = () => toggle(i);
-    box.appendChild(div);
-  });
-  preload();
-}
-
-function renderRating(c) {
-  const box = document.getElementById("rating");
-  box.innerHTML = "";
-  for (let r = 0; r <= 5; r++) {
-    const span = document.createElement("span");
-    span.className = "star" + (r > 0 && r <= c.rating ? " active" : "");
-    span.textContent = r === 0 ? "0" : "★";
-    span.title = r === 0 ? "Unrated (key 0)" : `Rating ${r} (key ${r})`;
-    span.onclick = () => setRating(r);
-    box.appendChild(span);
-  }
-}
-
-function renderStatus(c) {
-  const box = document.getElementById("status");
-  box.innerHTML = "";
-  STATUS_ORDER.forEach(s => {
-    const div = document.createElement("div");
-    div.className = "stat" + (c.status === s.name ? " active" : "");
-    div.innerHTML = `<span class="key">${s.key.toUpperCase()}</span><span>${s.name}</span>`;
-    div.onclick = () => setStatus(s.name);
-    box.appendChild(div);
-  });
-}
-
-function preload() {
-  if (pos+1 < order.length) { const im = new Image(); im.src = "/img/" + cards[order[pos+1]].index; }
-}
-
-function toggle(i) {
-  const name = effects[i];
-  if (!name) return;
-  const c = cur();
-  if (c.effects.has(name)) c.effects.delete(name); else c.effects.add(name);
-  c.reviewed = true; // a manual toggle is a manual review
-  save(c);
-  render();
-}
-
-// Sets the rating outright (0 clears it back to unrated) rather than toggling,
-// since rating is single-valued, not a bitset like effects.
-function setRating(r) {
-  const c = cur();
-  c.rating = r;
-  c.reviewed = true; // a manual rating change is a manual review
-  save(c);
-  render();
-}
-
-// Status is mutually exclusive (None/Banned/Token/Jolly), so this always
-// assigns the new value; pressing "n" is how you clear it back to None.
-function setStatus(name) {
-  const c = cur();
-  c.status = name;
-  c.reviewed = true; // a manual status change is a manual review
-  save(c);
-  render();
-}
-
-function showSaveError() { document.getElementById("saveErr").hidden = false; }
-function clearSaveError() { document.getElementById("saveErr").hidden = true; }
-
-async function save(c) {
-  try {
-    const r = await fetch("/api/save", {
-      method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ index: c.index, rating: c.rating, status: c.status, effects: [...c.effects] })
-    });
-    // fetch does NOT reject on HTTP 500, and the server can also answer 200
-    // with {ok:false} (e.g. a card with no oracle_id). Treat both as failures
-    // so a silent save error can never masquerade as a saved edit.
-    let ok = r.ok;
-    if (ok) { try { const j = await r.json(); ok = !j || j.ok !== false; } catch { ok = false; } }
-    if (!ok) { c.reviewed = false; showSaveError(); render(); return; }
-    clearSaveError();
-  } catch (e) {
-    // network/server unreachable: mark unsaved and surface it, don't swallow.
-    c.reviewed = false; showSaveError(); render();
-  }
-}
-
-function move(d) { pos = Math.max(0, Math.min(order.length-1, pos+d)); render(); }
-
-document.addEventListener("keydown", e => {
-  if (e.key === "ArrowRight" || e.key === "Enter" || e.key === " ") { e.preventDefault(); move(1); return; }
-  if (e.key === "ArrowLeft") { e.preventDefault(); move(-1); return; }
-  if (e.key === "Home") { pos = 0; render(); return; }
-  if (e.key === "c") { const c = cur(); c.reviewed = true; save(c); render(); return; } // confirm, no change
-  if (e.key === "f") { filterUntagged = !filterUntagged; pos = 0; buildOrder(); render(); return; }
-
-  const key = e.key.toLowerCase();
-
-  if (key >= "0" && key <= "5") { e.preventDefault(); setRating(Number(key)); return; }
-
-  const statusName = STATUS_KEYS[key];
-  if (statusName) { e.preventDefault(); setStatus(statusName); return; }
-
-  const i = EFFECT_KEYS.indexOf(key);
-  if (i >= 0 && i < effects.length) { e.preventDefault(); toggle(i); }
-});
-
-boot();
-</script>
-</body>
-</html>
-""";
+            return pageHtml;
+        }
     }
 }
