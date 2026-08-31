@@ -39,27 +39,46 @@ lives in exactly one file, chosen by its **current rating**:
 | `metadata/unrated.json` | 0 | The bulk library manifest (tens of thousands of entries). Changes only when Scryfall adds new printings, not from day-to-day curation. |
 
 **Loading** (`CubeMetadataStore.Load`) reads whichever of the three files are
-present and merges them into one in-memory set, keyed by `oracle_id`. It is
-tolerant end to end: a missing `metadata/` directory, a missing individual
-tier file, or a blank/corrupt tier file all just contribute nothing rather
-than crashing the tagger/views. (If the same `oracle_id` somehow appears in
-more than one file — should never happen from normal use — the first one
-found in `pool.json` → `fringe.json` → `unrated.json` order wins.)
+present and merges them into one in-memory set, keyed by `oracle_id`. A
+missing `metadata/` directory, a missing individual tier file, or a blank
+(whitespace-only) tier file all just contribute nothing. But a tier file that
+is **present and non-blank yet cannot be parsed** (a merge conflict, a
+hand-edit that broke the JSON) now **throws** and aborts the command, instead
+of being silently treated as empty — otherwise the next save would overwrite
+and permanently destroy that tier of the recovery manifest. Fix or remove the
+file and retry. (If the same `oracle_id` somehow appears in more than one file
+— should never happen from normal use — the first one found in `pool.json` →
+`fringe.json` → `unrated.json` order wins.)
 
-**Saving** (`CubeMetadataStore.Save`) **always rewrites all three files**
-from the full in-memory set: every entry is routed to its tier file by
-`TierFileName(rating)`. This is what makes a rating change "just work" — bump
-a card from 0 to 4 in the tagger, hit save, and the entry disappears from
-`unrated.json` and appears in `pool.json` on the very next write; there is no
+**Saving** comes in two forms:
+
+- **`CubeMetadataStore.SaveEntry`** — the hot path the tagger uses on every
+  edit. It persists a *single* card, touching only the tier file(s) it belongs
+  in: the new-rating tier always, plus the previous-rating tier when the
+  rating crossed a `pool`/`fringe`/`unrated` boundary. Each touched tier is
+  **re-read from disk first**, so a concurrent external change (a `git pull`, a
+  second editor, a hand-edit) to *other* entries survives instead of being
+  clobbered by the tagger's in-memory snapshot. The new tier is written
+  *before* the old one is pruned, so a crash between the two writes leaves the
+  card momentarily in both tiers (resolved pool-first by `Load`) rather than
+  missing from all of them.
+- **`CubeMetadataStore.Save`** — the batch path (e.g. `import`) that rewrites
+  all three files from the full in-memory set, routing each entry by
+  `TierFileName(rating)`. It stages all three temp files first, then moves them
+  into place, so the window in which the tiers are mutually inconsistent is
+  just the fast `File.Move` calls.
+
+Either way a rating change "just works" — bump a card from 0 to 4 and it
+disappears from `unrated.json` and appears in `pool.json`; there is no
 separate "move" step. Within each tier file, entries stay sorted by
-`(name, oracle_id)` exactly as before, so an **untouched tier serializes
-byte-identically** to what was already on disk and produces no git diff, no
-matter how many other cards changed tier that run.
+`(name, oracle_id)`, so an **untouched tier serializes byte-identically** to
+what was already on disk and produces no git diff.
 
-Known cost: because rating a single card in `unrated.json` still triggers a
-full rewrite of that ~26k-entry file (~100ms), every tagger save while
-working through the unrated backlog pays that cost. Acceptable for now;
-optimizable later with dirty-only writes if it becomes a bottleneck.
+Known cost: an incremental save that touches the `unrated.json` tier (rating a
+card *out* of the backlog, or editing a card that stays unrated) still
+rewrites that whole ~26k-entry file once. But the common case — editing a card
+already in the pool — now rewrites only the small `pool.json`, so working
+through the pool no longer pays the backlog's cost on every keystroke.
 
 All four commands below take `-m|--metadata <DIR>` for this directory,
 defaulting to `./metadata`.
@@ -93,10 +112,13 @@ defaulting to `./metadata`.
 2. **`tag <SOURCE_DIR> [-m metadata] [-p port]`** — the authoring tool going
    forward. Launches a local web UI (keyboard-driven, one card at a time) to
    set rating (0-5), status (None/Banned/Token/Jolly), and effect tags. Every
-   change autosaves immediately (which repartitions and rewrites all three
-   tier files, see above) — there is no separate "save" step, so a closed tab
-   never loses more than the field just changed. Adobe Bridge is optional
-   from this point on; nothing reads XMP again unless you re-run `import`.
+   change autosaves immediately (incrementally, via `SaveEntry` — only the
+   affected tier file(s) are rewritten, see above) — there is no separate
+   "save" step, so a closed tab never loses more than the field just changed.
+   If a save fails (bad `--metadata` path, disk full, a corrupt tier file) the
+   web UI shows a red banner and marks the card unsaved rather than silently
+   dropping the edit. Adobe Bridge is optional from this point on; nothing
+   reads XMP again unless you re-run `import`.
 3. **`build-views <SOURCE_DIR> [-v views] [-m metadata]`** — generates the
    `Views/` folder tree (see below) by loading rating/status/effects from the
    metadata directory (the merged view of all three tier files) and linking
@@ -154,9 +176,13 @@ Each of the three tier files has the same shape:
 - Edit whichever tier file currently holds the card (`pool.json` for your
   active cube is the common case). Don't rename the `oracle_id` keys.
 - If you hand-edit `rating` to cross a tier boundary (e.g. bump a
-  `fringe.json` entry from 2 to 4), it stays in the "wrong" file until the
-  next time any command (`tag`, `import`, `build-views`) loads and re-saves
-  the metadata — at that point it's automatically moved to the correct file.
+  `fringe.json` entry from 2 to 4), it stays in the "wrong" file until a
+  command re-saves *that card*: editing it in `tag` moves it (the incremental
+  save prunes the old tier), and `import` (which does a full re-partitioning
+  save) moves every mis-filed entry at once. `build-views` only *reads* the
+  metadata, so it never moves anything. Simplest: just fix the entry in the
+  correct tier file directly (add it to `pool.json`, remove it from
+  `fringe.json`).
 - `effects` must use member names from `Mtg/CardEffect.cs` (or a recognized
   alias); anything else is silently dropped on the next save by any command.
 - `status` must be one of `Banned`, `Token`, `Jolly`, or omitted — anything
@@ -164,11 +190,16 @@ Each of the three tier files has the same shape:
 - Don't touch `reviewedAt` unless you specifically want to reset a card's
   reviewed flag back to "never reviewed" (delete the field) — leave it alone
   otherwise so the tagger's progress tracking stays accurate.
-- Re-running `tag`, `import`, or `build-views` will re-save all three tier
-  files in canonical, sorted form regardless of how they were hand-edited, so
-  formatting drift self-heals; only the *values* need to be correct. An
-  untouched tier's bytes never change from this, so a stray edit to
+- Any save re-writes the tier(s) it touches in canonical, sorted form
+  regardless of how they were hand-edited, so formatting drift self-heals;
+  only the *values* need to be correct. `import` re-canonicalizes all three
+  files; the `tag` incremental save re-canonicalizes only the tier(s) of the
+  card you edit. An untouched tier's bytes never change, so a stray edit to
   `pool.json` alone won't cause a spurious diff in `unrated.json`.
+- **Never leave a tier file as invalid JSON** (e.g. an unresolved merge
+  conflict). Commands now *refuse to load* a present-but-unparseable tier and
+  abort, rather than silently dropping it — so fix the JSON (or delete the
+  file if you truly mean it to be empty) before re-running anything.
 
 ## The `Views/` folder tree
 

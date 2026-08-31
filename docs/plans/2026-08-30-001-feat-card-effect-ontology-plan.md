@@ -192,3 +192,52 @@ Goal: anyone (or future-you) can re-read the whole feature months later and unde
 Once P1-P9 are resolved (filled above), this plan is a complete, file-level spec. Execution delegated to Sonnet, phase by phase (1 -> 2 -> 3 -> 4), building after each. **Phase 5 (docs/comments, P9) runs LAST**, after 1-4 are green, so it documents the final code.
 
 **Executed 2026-08-30 — all six phases complete** (Phases 1-5, then Part B / Phase 6 as a same-day follow-up). See the Status section above for the final verification numbers. The 7 previously-stale `CardAnalyzerTests` have since been fixed upstream of this feature, so the baseline is fully green (0 failures). No further phases are planned.
+
+## Code review (2026-08-31)
+
+Ran `ce-code-review` on the full branch (base `c61e12d`, 33 files) with five
+sequential reviewer personas (correctness, adversarial, reliability,
+performance, maintainability). No P0. Findings grouped into three batches.
+
+### Batch A — safe mechanical fixes ✅ DONE (`c9e42c6`)
+- **#3** `build-views` refuses a `--views` dir that equals/nests with the
+  master library (`ViewGenerator.PathsOverlap` + a per-source defensive check
+  before the wholesale delete) — a typo can no longer wipe the source images.
+- **#12** the tagger web client detects a failed save (HTTP 500 or
+  `{ok:false}`), shows a red banner, and marks the card unsaved instead of
+  swallowing the error.
+- **#11** `restore` writes each image to a temp file then atomically renames
+  (no truncated `.png` accepted forever by skip-existing).
+- **#14** per-card link generation isolated in try/catch (one bad path no
+  longer aborts the run after the old tree was deleted).
+- **#17** `Directory.CreateDirectory` once per distinct folder (HashSet).
+- **#16** `EffectResolver.ToNames` caches the flag array + non-boxing test.
+- **#18** tagger no longer deserializes the tier files twice at startup.
+
+### Batch B core — metadata durability (the three P1s) ✅ DONE (`422285e`)
+Resolved as one redesign of the store + tagger autosave:
+- **#1** `LoadTierFile` is now strict — a present-but-unparseable tier throws
+  and aborts instead of being swallowed and then overwritten.
+- **#4 / #15** `CubeMetadataStore.SaveEntry` persists one card incrementally
+  (only its tier file(s)), reloading each touched tier from disk first — so a
+  keystroke no longer rewrites the whole ~30k library and a concurrent
+  external edit (git pull / second editor) to other entries is preserved.
+  `TagCommand.ApplySave` now calls it.
+- **#5** `Save` (batch path) stages all three temp files then moves them;
+  `SaveEntry` writes the new tier before pruning the old, so a card is never
+  absent from every tier.
+- Tests: +7 in `CubeMetadataStoreTests` (strict/blank load, incremental tier
+  routing, same-tier no-touch, reload-merge, corrupt-abort). 226 pass.
+
+### Batch B remainder — OPEN (after the merge decision)
+- **import semantics** — #6 `ScryfallId` overwritten unconditionally on
+  existing entries; #7 `--overwrite` reseeds `rating` from XMP `0` and demotes
+  tagger-rated pool cards; #8 two reprint files normalizing to one name seed
+  last-write-wins.
+- **refactors** — #19 extract a shared image↔card name matcher (duplicated in
+  4 commands); #20 single `RatingTier` classifier for the 3/1 thresholds
+  (currently duplicated in `TierFileName` and `BuildTargets`); #21 move the
+  tagger's inline HTML/JS to an embedded resource + assert the effect-hotkey
+  map can't silently overflow.
+- **pre-existing / advisory** — analyzer counts Banned/Token/unrated in
+  distributions; Scryfall retry ignores transport exceptions.
