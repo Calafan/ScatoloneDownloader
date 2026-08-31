@@ -111,10 +111,12 @@ namespace ScatoloneDownloader.Metadata
     /// <item><description><c>fringe.json</c> — rating 1-2 (evaluated but cut; grows over time).</description></item>
     /// <item><description><c>unrated.json</c> — rating 0 (the bulk library manifest; changes only when new cards appear).</description></item>
     /// </list>
-    /// <see cref="Save"/> always rewrites all three files from the full
-    /// in-memory set, so a rating change transparently moves a card from one
-    /// tier file to another. Every file is otherwise as deterministic as before
-    /// — entries sorted by <c>(name, oracle_id)</c>, effects/status
+    /// <see cref="Save"/> rewrites all three files from the full in-memory set
+    /// (used by batch commands like <c>import</c>), while <see cref="SaveEntry"/>
+    /// persists one card incrementally by touching only the tier file(s) it
+    /// belongs in (the hot path for the web tagger). Either way a rating change
+    /// transparently moves a card from one tier file to another. Every file is
+    /// deterministic — entries sorted by <c>(name, oracle_id)</c>, effects/status
     /// canonicalized — so an untouched tier serializes byte-identically and
     /// produces no git diff.
     /// </summary>
@@ -189,8 +191,14 @@ namespace ScatoloneDownloader.Metadata
             return merged;
         }
 
-        /// <summary>Reads a single tier file. Returns an empty document when the
-        /// file is missing, blank, or corrupt.</summary>
+        /// <summary>Reads a single tier file. A MISSING or blank file returns an
+        /// empty document (the normal "this tier has no cards yet" case). A file
+        /// that is present and non-blank but cannot be parsed THROWS
+        /// <see cref="InvalidDataException"/> instead of being silently treated as
+        /// empty: swallowing it here would let the next full-rewrite
+        /// <see cref="Save"/> overwrite and permanently destroy a hand-edited or
+        /// merge-conflicted tier of the disaster-recovery manifest. Callers run in
+        /// a command context and surface the error rather than losing data.</summary>
         private static CubeMetadata LoadTierFile(string path)
         {
             if (!File.Exists(path))
@@ -198,14 +206,23 @@ namespace ScatoloneDownloader.Metadata
                 return new CubeMetadata();
             }
 
-            try
-            {
-                string json = File.ReadAllText(path);
-                return JsonSerializer.Deserialize<CubeMetadata>(json, Options) ?? new CubeMetadata();
-            }
-            catch (Exception)
+            string json = File.ReadAllText(path);
+            if (string.IsNullOrWhiteSpace(json))
             {
                 return new CubeMetadata();
+            }
+
+            try
+            {
+                return JsonSerializer.Deserialize<CubeMetadata>(json, Options) ?? new CubeMetadata();
+            }
+            catch (JsonException ex)
+            {
+                throw new InvalidDataException(
+                    $"Metadata tier file '{path}' is present but is not valid JSON ({ex.Message}). " +
+                    "Refusing to load it, so a save cannot overwrite and lose its contents — " +
+                    "fix the file (e.g. resolve a merge conflict) or remove it, then retry.",
+                    ex);
             }
         }
 
@@ -233,26 +250,114 @@ namespace ScatoloneDownloader.Metadata
                 byTier[TierFileName(kvp.Value.Rating)].Add(kvp);
             }
 
+            // Stage EVERY tier to a temp file first, then move them all into place.
+            // Each move is atomic on the same volume (so a crash mid-write never
+            // leaves a torn tier file), and staging first shrinks the window in
+            // which the three files are mutually inconsistent — a card demoted
+            // across tiers momentarily absent from all of them — to just the few
+            // fast File.Move calls rather than the full ~30k serialization.
+            List<(string TempPath, string FinalPath)> staged = [];
             foreach (string tierFileName in TierFileNames)
             {
                 CubeMetadata tierDocument = new()
                 {
                     Version = data.Version,
-                    Cards = byTier[tierFileName]
-                        .OrderBy(kvp => kvp.Value.Name, StringComparer.Ordinal)
-                        .ThenBy(kvp => kvp.Key, StringComparer.Ordinal)
-                        .ToDictionary(kvp => kvp.Key, kvp => Canonicalize(kvp.Value)),
+                    Cards = OrderAndCanonicalize(byTier[tierFileName]),
                 };
 
-                // Write to a temp file then atomically move it over the target, so
-                // a crash mid-write can never leave a torn tier file (which Load
-                // would then discard, silently dropping that whole tier). The move
-                // is atomic on the same volume.
                 string tierPath = Path.Combine(fullDirectory, tierFileName);
                 string tempPath = tierPath + ".tmp";
                 File.WriteAllText(tempPath, JsonSerializer.Serialize(tierDocument, Options));
-                File.Move(tempPath, tierPath, overwrite: true);
+                staged.Add((tempPath, tierPath));
             }
+
+            foreach ((string tempPath, string finalPath) in staged)
+            {
+                File.Move(tempPath, finalPath, overwrite: true);
+            }
+        }
+
+        /// <summary>
+        /// Persists a SINGLE entry incrementally — the hot path used by the web
+        /// tagger on every edit. Touches only the tier file(s) the entry belongs
+        /// in: always the new-rating tier, plus the previous-rating tier when the
+        /// rating change moved the card across a pool/fringe/unrated boundary. This
+        /// replaces the whole-library rewrite the tagger used to do per keystroke
+        /// (which re-serialized all ~30k entries — including the huge, unchanged
+        /// unrated backlog — every time).
+        /// <para>
+        /// Each touched tier is RE-READ from disk immediately before rewriting, so
+        /// a concurrent external change (a git pull/merge, a hand-edit, a second
+        /// process) to any OTHER entry — in this tier or, by never being touched,
+        /// in the other tiers — survives instead of being clobbered by a stale
+        /// in-memory snapshot.
+        /// </para>
+        /// <para>
+        /// The new-rating tier is written BEFORE the old one is pruned, so a crash
+        /// between the two writes leaves the card momentarily in both tiers
+        /// (resolved pool-first by <see cref="Load"/>) rather than missing from
+        /// every tier. Throws (via <see cref="LoadTierFile"/>) if a touched tier
+        /// file is present but unparseable, refusing to overwrite a corrupt tier.
+        /// </para>
+        /// </summary>
+        /// <param name="previousRating">The rating the entry had at its last save,
+        /// or <c>null</c> if it was not previously persisted (nothing to prune).</param>
+        internal static void SaveEntry(string metadataDirectory, string oracleId, CardMetadataEntry entry, int? previousRating)
+        {
+            string fullDirectory = Path.GetFullPath(metadataDirectory);
+            Directory.CreateDirectory(fullDirectory);
+
+            string newTier = TierFileName(entry.Rating);
+
+            // 1. Add/replace the entry in its destination tier — written first so
+            //    the card is never absent from every tier (see remarks above).
+            CubeMetadata newDoc = LoadTierFile(Path.Combine(fullDirectory, newTier));
+            newDoc.Cards[oracleId] = entry;
+            WriteTierFileAtomic(fullDirectory, newTier, newDoc);
+
+            // 2. If the rating moved the card across a tier boundary, prune it from
+            //    its previous tier (only rewriting that file if it actually held it).
+            if (previousRating is int prev)
+            {
+                string oldTier = TierFileName(prev);
+                if (!string.Equals(oldTier, newTier, StringComparison.Ordinal))
+                {
+                    CubeMetadata oldDoc = LoadTierFile(Path.Combine(fullDirectory, oldTier));
+                    if (oldDoc.Cards.Remove(oracleId))
+                    {
+                        WriteTierFileAtomic(fullDirectory, oldTier, oldDoc);
+                    }
+                }
+            }
+        }
+
+        /// <summary>Serializes one tier document to a temp file then atomically
+        /// moves it over the destination, ordering + canonicalizing entries so an
+        /// unchanged tier stays byte-identical (no git churn).</summary>
+        private static void WriteTierFileAtomic(string fullDirectory, string tierFileName, CubeMetadata document)
+        {
+            CubeMetadata ordered = new()
+            {
+                Version = document.Version,
+                Cards = OrderAndCanonicalize(document.Cards),
+            };
+
+            string tierPath = Path.Combine(fullDirectory, tierFileName);
+            string tempPath = tierPath + ".tmp";
+            File.WriteAllText(tempPath, JsonSerializer.Serialize(ordered, Options));
+            File.Move(tempPath, tierPath, overwrite: true);
+        }
+
+        /// <summary>Orders entries by <c>(name, oracle_id)</c> ordinal and
+        /// canonicalizes each, producing the deterministic dictionary a tier file
+        /// is written from.</summary>
+        private static Dictionary<string, CardMetadataEntry> OrderAndCanonicalize(
+            IEnumerable<KeyValuePair<string, CardMetadataEntry>> entries)
+        {
+            return entries
+                .OrderBy(kvp => kvp.Value.Name, StringComparer.Ordinal)
+                .ThenBy(kvp => kvp.Key, StringComparer.Ordinal)
+                .ToDictionary(kvp => kvp.Key, kvp => Canonicalize(kvp.Value));
         }
 
         /// <summary>Normalizes an entry's effects to canonical names (dropping

@@ -279,6 +279,120 @@ public sealed class CubeMetadataStoreTests : IDisposable
         Assert.Equal(poolBytesBefore, poolBytesAfter);
     }
 
+    // --- review fixes: strict load + incremental SaveEntry -------------------
+
+    [Fact]
+    public void Load_PresentButCorruptTierFile_Throws_RatherThanSilentlyDroppingTheTier()
+    {
+        // A merge-conflicted or hand-broken tier file must NOT be swallowed as
+        // empty (the next full save would then overwrite and lose it).
+        Directory.CreateDirectory(tempDir);
+        File.WriteAllText(Path.Combine(tempDir, "pool.json"), "{ this is not valid json ");
+
+        Assert.Throws<InvalidDataException>(() => CubeMetadataStore.Load(tempDir));
+    }
+
+    [Fact]
+    public void Load_BlankTierFile_TreatedAsEmpty_NotCorrupt()
+    {
+        // A whitespace-only file (e.g. `> pool.json`) is a benign empty tier, not
+        // corruption — it must load as empty, not throw.
+        Directory.CreateDirectory(tempDir);
+        File.WriteAllText(Path.Combine(tempDir, "pool.json"), "   \n  ");
+        WriteTierFile("unrated.json", ("oracle-1", new CardMetadataEntry { Name = "Bear", Rating = 0 }));
+
+        CubeMetadata merged = CubeMetadataStore.Load(tempDir);
+
+        Assert.Equal("Bear", Assert.Single(merged.Cards).Value.Name);
+    }
+
+    [Fact]
+    public void SaveEntry_NewEntry_WritesOnlyItsTier_LeavesOthersUntouched()
+    {
+        CubeMetadataStore.SaveEntry(tempDir, "oracle-1",
+            new CardMetadataEntry { Name = "Pool Card", Rating = 5 }, previousRating: null);
+
+        Assert.Equal("Pool Card", Assert.Single(ReadTierFile("pool.json").Cards).Value.Name);
+        // Incremental: a pool-card save must not spawn empty fringe/unrated files.
+        Assert.False(File.Exists(Path.Combine(tempDir, "fringe.json")));
+        Assert.False(File.Exists(Path.Combine(tempDir, "unrated.json")));
+    }
+
+    [Fact]
+    public void SaveEntry_Promotion_MovesCardToNewTier_AndPrunesOldTier()
+    {
+        CubeMetadata seed = new();
+        seed.Cards["oracle-1"] = new CardMetadataEntry { Name = "Mover", Rating = 0 };
+        CubeMetadataStore.Save(tempDir, seed);
+        Assert.Single(ReadTierFile("unrated.json").Cards);
+
+        // Promote 0 -> 4 incrementally (the tagger's rating change).
+        CubeMetadataStore.SaveEntry(tempDir, "oracle-1",
+            new CardMetadataEntry { Name = "Mover", Rating = 4 }, previousRating: 0);
+
+        Assert.Empty(ReadTierFile("unrated.json").Cards);
+        CardMetadataEntry moved = Assert.Single(ReadTierFile("pool.json").Cards).Value;
+        Assert.Equal(4, moved.Rating);
+        Assert.Single(CubeMetadataStore.Load(tempDir).Cards);
+    }
+
+    [Fact]
+    public void SaveEntry_SameTierEdit_LeavesOtherTiersByteIdentical()
+    {
+        CubeMetadata seed = new();
+        seed.Cards["oracle-pool"] = new CardMetadataEntry { Name = "Pool Card", Rating = 4 };
+        seed.Cards["oracle-unrated"] = new CardMetadataEntry { Name = "Unrated Card", Rating = 0 };
+        CubeMetadataStore.Save(tempDir, seed);
+        byte[] unratedBefore = File.ReadAllBytes(Path.Combine(tempDir, "unrated.json"));
+
+        // Edit the pool card staying in pool (4 -> 5): the ~26k-style unrated tier
+        // must not be rewritten at all (the whole point of the incremental save).
+        CubeMetadataStore.SaveEntry(tempDir, "oracle-pool",
+            new CardMetadataEntry { Name = "Pool Card", Rating = 5 }, previousRating: 4);
+
+        Assert.Equal(unratedBefore, File.ReadAllBytes(Path.Combine(tempDir, "unrated.json")));
+        Assert.Equal(5, ReadTierFile("pool.json").Cards["oracle-pool"].Rating);
+    }
+
+    [Fact]
+    public void SaveEntry_ReloadsTierFromDisk_PreservesConcurrentExternalEditToOtherEntry()
+    {
+        CubeMetadata seed = new();
+        seed.Cards["oracle-A"] = new CardMetadataEntry { Name = "Card A", Rating = 5 };
+        seed.Cards["oracle-B"] = new CardMetadataEntry { Name = "Card B", Rating = 5 };
+        CubeMetadataStore.Save(tempDir, seed);
+
+        // An external writer (git pull / second editor) changes B directly on disk
+        // after any in-memory snapshot was taken.
+        WriteTierFile("pool.json",
+            ("oracle-A", new CardMetadataEntry { Name = "Card A", Rating = 5 }),
+            ("oracle-B", new CardMetadataEntry { Name = "Card B EDITED", Rating = 5, Effects = ["Ramp"] }));
+
+        // SaveEntry updates only A; because it reloads the tier from disk first,
+        // B's external edit must survive rather than being clobbered.
+        CubeMetadataStore.SaveEntry(tempDir, "oracle-A",
+            new CardMetadataEntry { Name = "Card A", Rating = 5, Effects = ["Burn"] }, previousRating: 5);
+
+        CubeMetadata pool = ReadTierFile("pool.json");
+        Assert.Equal("Card B EDITED", pool.Cards["oracle-B"].Name);
+        Assert.Equal(["Ramp"], pool.Cards["oracle-B"].Effects);
+        Assert.Equal(["Burn"], pool.Cards["oracle-A"].Effects);
+    }
+
+    [Fact]
+    public void SaveEntry_CorruptTouchedTier_Throws_WithoutOverwriting()
+    {
+        Directory.CreateDirectory(tempDir);
+        File.WriteAllText(Path.Combine(tempDir, "pool.json"), "{ broken json");
+
+        Assert.Throws<InvalidDataException>(() =>
+            CubeMetadataStore.SaveEntry(tempDir, "oracle-1",
+                new CardMetadataEntry { Name = "X", Rating = 5 }, previousRating: null));
+
+        // The corrupt file is left intact, never overwritten.
+        Assert.Equal("{ broken json", File.ReadAllText(Path.Combine(tempDir, "pool.json")));
+    }
+
     // --- helpers -------------------------------------------------------------
 
     /// <summary>Reads exactly one tier file's raw content, bypassing the

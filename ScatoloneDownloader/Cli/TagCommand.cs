@@ -259,8 +259,9 @@ namespace ScatoloneDownloader.Cli
                 // Label is legacy XMP-mirror data this tool no longer authors;
                 // preserve whatever the `import` seed (or a prior save) left there.
                 metadata.Cards.TryGetValue(card.OracleId, out CardMetadataEntry existing);
+                int? previousRating = existing?.Rating;
 
-                metadata.Cards[card.OracleId] = new CardMetadataEntry
+                CardMetadataEntry updated = new()
                 {
                     Name = card.Name,
                     Rating = rating,
@@ -271,7 +272,13 @@ namespace ScatoloneDownloader.Cli
                     // A human saved this card: record the manual-review instant.
                     ReviewedAt = DateTimeOffset.UtcNow,
                 };
-                CubeMetadataStore.Save(metadataDir, metadata);
+                metadata.Cards[card.OracleId] = updated;
+
+                // Persist just this card: rewrites only the tier file(s) it belongs
+                // in, and reloads them from disk first, so a huge unrated backlog is
+                // not re-serialized per keystroke and a concurrent external edit to
+                // other entries is not clobbered by this in-memory snapshot.
+                CubeMetadataStore.SaveEntry(metadataDir, card.OracleId, updated, previousRating);
             }
 
             return true;
