@@ -35,5 +35,6 @@ namespace ScatoloneDownloader.Mtg
         Steal           = 1 << 16,   // threaten / act of treason / control magic (temporary or permanent control theft)
         Tutor           = 1 << 17,   // search library for a card (Demonic Tutor, Green Sun's Zenith, creature fetch) — selection/consistency, not raw card advantage
         Fixing          = 1 << 18,   // mana colour fixing (dual/fetch lands, multicolour rocks) — distinct from Ramp; a card can be both
+        Pacify          = 1 << 19,   // soft/pseudo removal: neutralise a creature without destroying it (tap-lock/Icy Manipulator, Pacifism/Arrest, detain)
     }
 }

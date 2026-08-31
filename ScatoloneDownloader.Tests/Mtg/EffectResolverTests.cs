@@ -29,6 +29,11 @@ public sealed class EffectResolverTests
     [InlineData("Fixing", CardEffect.Fixing)]
     [InlineData("mana fixing", CardEffect.Fixing)]
     [InlineData("colour fixing", CardEffect.Fixing)]
+    [InlineData("Pacify", CardEffect.Pacify)]
+    [InlineData("pacifism", CardEffect.Pacify)]
+    [InlineData("arrest", CardEffect.Pacify)]
+    [InlineData("detain", CardEffect.Pacify)]
+    [InlineData("tapper", CardEffect.Pacify)]
     public void TryParseSingle_MemberNamesAndAliases_Resolve(string raw, CardEffect expected)
     {
         Assert.True(EffectResolver.TryParseSingle(raw, out CardEffect effect));
