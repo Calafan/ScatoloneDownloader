@@ -38,7 +38,7 @@ namespace ScatoloneDownloader.Download
                 path = Path.Combine(baseDirectory, validName + i++.ToString());
             }
 
-            // Le carte sono in ordine casuale ma voglio che l'art originale abbia sempre il nome senza numero.
+            // Cards arrive in random order, but the original artwork must always keep the un-numbered name.
             // This is one of the two places the canonical-artwork rule lives (see GetManager.PopulateCardsByName).
             // Treated promos (surgefoil, textured, ...) are excluded from the canonical slot so a plain
             // printing always frees the un-numbered name.
@@ -67,7 +67,11 @@ namespace ScatoloneDownloader.Download
             File.AppendAllText(Path.Combine(baseDirectory, ListFileName), card.Name + "\n");
         }
 
-        private async Task<byte[]> ComposeAsync(Card card)
+        /// <summary>Fetches face image(s) and composes the final printable PNG bytes,
+        /// without touching disk. Exposed (not just used by <see cref="DownloadAsync"/>)
+        /// so <c>restore</c> can reuse the exact same composition pipeline when
+        /// rebuilding an image folder from the metadata directory + Scryfall bulk.</summary>
+        internal async Task<byte[]> ComposeAsync(Card card)
         {
             switch (card)
             {

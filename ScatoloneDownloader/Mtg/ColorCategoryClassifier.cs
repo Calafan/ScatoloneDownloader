@@ -1,3 +1,5 @@
+#nullable enable annotations
+
 using System.Collections.Generic;
 using System.Linq;
 
@@ -81,6 +83,46 @@ namespace ScatoloneDownloader.Mtg
                 3 => TriColorCodes.TryGetValue(sortKey, out string t) ? t : sortKey,
                 _ => "4_5_Colors",
             };
+        }
+
+        /// <summary>Human-readable name per ColorCategory code: single-color words,
+        /// guild names, shard/wedge names, plus the 4-5 and Colorless buckets.
+        /// Shared by the analysis report and the by-color view folders.</summary>
+        private static readonly Dictionary<string, string> DisplayNames = new()
+        {
+            { "W", "White" }, { "U", "Blue" }, { "B", "Black" }, { "R", "Red" }, { "G", "Green" },
+            { "WU", "Azorius" }, { "UB", "Dimir" }, { "BR", "Rakdos" }, { "RG", "Gruul" }, { "GW", "Selesnya" },
+            { "WB", "Orzhov" }, { "UR", "Izzet" }, { "BG", "Golgari" }, { "RW", "Boros" }, { "GU", "Simic" },
+            { "WUB", "Esper" }, { "UBR", "Grixis" }, { "BRG", "Jund" }, { "RGW", "Naya" }, { "GWU", "Bant" },
+            { "WBG", "Abzan" }, { "URW", "Jeskai" }, { "BUG", "Sultai" }, { "RWB", "Mardu" }, { "GUR", "Temur" },
+            { "4_5_Colors", "4-5 Colors" }, { "Colorless", "Colorless" },
+        };
+
+        /// <summary>Readable name for a ColorCategory code (falls back to the code).</summary>
+        internal static string Display(string category)
+        {
+            return DisplayNames.GetValueOrDefault(category, category);
+        }
+
+        /// <summary>Ordering group so a plain name sort yields mono (1) &gt; guilds (2)
+        /// &gt; shards/wedges (3) &gt; 4-5 colors (4) &gt; colorless (5). Guild/shard codes
+        /// are letters, so their length is their color count.</summary>
+        internal static int SortGroup(string category)
+        {
+            return category switch
+            {
+                "Colorless" => 5,
+                "4_5_Colors" => 4,
+                _ => category.Length,
+            };
+        }
+
+        /// <summary>By-color view folder name: a group-index prefix (so a filesystem
+        /// name sort groups by color count) followed by the readable guild/shard name,
+        /// e.g. "1 White", "2 Azorius", "3 Esper", "5 Colorless".</summary>
+        internal static string ViewFolderName(string category)
+        {
+            return $"{SortGroup(category)} {Display(category)}";
         }
     }
 }

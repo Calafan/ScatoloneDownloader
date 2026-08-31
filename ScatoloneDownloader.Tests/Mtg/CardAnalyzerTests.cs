@@ -12,11 +12,11 @@ namespace ScatoloneDownloader.Tests.Mtg;
 
 /// <summary>
 /// Output-contract coverage for <see cref="CardAnalyzer"/>. It runs the
-/// analyzer on a small hand-crafted card set, writes the report to a temp
-/// file, and asserts the headers, totals, percentages, CMC distribution, and
-/// the multicolor color-distribution block. This pins the analysis output
-/// shape so refactors of the analyzer do not silently reformat the stats
-/// file consumed by the <c>files</c>/<c>analyze</c> commands.
+/// analyzer on a small hand-crafted card set, writes the Markdown report to a
+/// temp file, and asserts the section headers, totals, percentages, CMC
+/// distribution, and the multicolor color-distribution block. This pins the
+/// Markdown analysis output shape so refactors of the analyzer do not silently
+/// reformat the report.
 /// </summary>
 public sealed class CardAnalyzerTests : IDisposable
 {
@@ -24,7 +24,7 @@ public sealed class CardAnalyzerTests : IDisposable
 
     public CardAnalyzerTests()
     {
-        tempFile = Path.Combine(Path.GetTempPath(), "cardanalyzer_" + Guid.NewGuid().ToString("N") + ".txt");
+        tempFile = Path.Combine(Path.GetTempPath(), "cardanalyzer_" + Guid.NewGuid().ToString("N") + ".md");
     }
 
     public void Dispose()
@@ -44,14 +44,15 @@ public sealed class CardAnalyzerTests : IDisposable
 
         string text = File.ReadAllText(tempFile);
 
-        Assert.Contains("Cards: 0 - Permanents: 0 (0%) Spells: 0 (0%)", text);
-        // 4 MacroType rows (not 7 type-strings anymore).
-        Assert.Contains("Creatures", text);
-        Assert.Contains("Lands", text);
-        Assert.Contains("OtherPermanents", text);
-        Assert.Contains("Spells", text);
-        Assert.Contains("CMC distribution:", text);
-        Assert.Contains("Average CMC: 0", text);
+        Assert.Contains("## 1. Global Distribution (0 Cards)", text);
+        Assert.Contains("**Permanents:** 0 (0%) | **Spells:** 0 (0%)", text);
+        // The 4 MacroType table rows are always rendered.
+        Assert.Contains("| Creatures |", text);
+        Assert.Contains("| Lands |", text);
+        Assert.Contains("| OtherPermanents |", text);
+        Assert.Contains("| Spells |", text);
+        Assert.Contains("**Global CMC:**", text);
+        Assert.Contains("**Global Average CMC:** 0", text);
     }
 
     [Fact]
@@ -74,11 +75,11 @@ public sealed class CardAnalyzerTests : IDisposable
 
         string text = File.ReadAllText(tempFile);
 
-        // Top-level totals: 6 non-basic, non-tag cards.
-        Assert.Contains("Cards: 6", text);
+        // Top-level totals: 6 non-basic, non-tag cards (the header counts cards + lands).
+        Assert.Contains("Global Distribution (6 Cards)", text);
         // 4 instants → Spells=4; 1 creature + 1 artifact → Permanents=2.
-        Assert.Contains("Permanents: 2", text);
-        Assert.Contains("Spells: 4", text);
+        Assert.Contains("**Permanents:** 2", text);
+        Assert.Contains("**Spells:** 4", text);
 
         // ColorCategory sections use Guild/Color printable names.
         Assert.Contains("Red", text);
@@ -88,11 +89,11 @@ public sealed class CardAnalyzerTests : IDisposable
         Assert.Contains("Colorless", text);
 
         // Average CMC global = (1+1+2+5+1+2)/6 = 12/6 = 2.
-        Assert.Contains("Average CMC: 2", text);
+        Assert.Contains("**Global Average CMC:** 2", text);
     }
 
     [Fact]
-    public void SaveAnalysis_ColorDistributionSection_AtTop_WithCountsAndPercentages()
+    public void SaveAnalysis_ColorDistributionSection_AfterGlobal_WithCountsAndPercentages()
     {
         List<Card> cards =
         [
@@ -110,25 +111,22 @@ public sealed class CardAnalyzerTests : IDisposable
 
         string text = File.ReadAllText(tempFile);
 
-        // The color distribution section comes FIRST, before the global stats.
-        int distIdx = text.IndexOf("Color distribution");
-        Assert.True(distIdx >= 0, "should have a 'Color distribution' header section");
+        // Color distribution is section 2, AFTER the global section 1.
+        int globalIdx = text.IndexOf("## 1. Global Distribution");
+        int distIdx = text.IndexOf("## 2. Color Distribution");
+        Assert.True(globalIdx >= 0, "should have the global section");
+        Assert.True(distIdx > globalIdx, "color distribution (section 2) comes after the global section (section 1)");
 
-        int globalIdx = text.IndexOf("Cards: 6");
-        Assert.True(globalIdx > distIdx, "color distribution should appear before the global stats section");
-
-        // 6 cards total. Multicolor cards count in ALL their colors.
-        // Boros Charm (R+W): +1 R, +1 W.  Savai Triome is a Land — separate.
-        // R: Bolt1 + Bolt2 + Boros Charm = 3 (50%)
-        // W: Boros Charm = 1 (17%)
-        // G: Bear = 1 (17%)
-        // Colorless: Sol Ring = 1 (17%)
-        // Lands: Savai Triome = 1 (17%)
-        Assert.Contains("Red:\t3 (50%)", text);
-        Assert.Contains("Green:\t1 (17%)", text);
-        Assert.Contains("White:\t1 (17%)", text);
-        Assert.Contains("Colorless:\t1 (17%)", text);
-        Assert.Contains("Lands:\t1 (17%)", text);
+        // 5 non-land cards; multicolor cards count in ALL their colors; percentages
+        // exclude lands from the denominator (Savai Triome is a Land — separate).
+        // R: Bolt1 + Bolt2 + Boros Charm = 3 / 5 = 60%
+        // W: Boros Charm = 1 / 5 = 20%   G: Bear = 1 / 5 = 20%   Colorless: Sol Ring = 1 / 5 = 20%
+        Assert.Contains("| **Red** | 3 | 60% |", text);
+        Assert.Contains("| **Green** | 1 | 20% |", text);
+        Assert.Contains("| **White** | 1 | 20% |", text);
+        Assert.Contains("| **Colorless** | 1 | 20% |", text);
+        // Savai Triome (RWB land) shows in the Lands section as "Mardu".
+        Assert.Contains("| Mardu | 1 |", text);
     }
 
     [Fact]
@@ -144,8 +142,9 @@ public sealed class CardAnalyzerTests : IDisposable
 
         string text = File.ReadAllText(tempFile);
 
-        // Both should be excluded from the count, so totals are zero.
-        Assert.Contains("Cards: 0 - Permanents: 0 (0%) Spells: 0 (0%)", text);
+        // Both are excluded from the count, so the totals are zero.
+        Assert.Contains("## 1. Global Distribution (0 Cards)", text);
+        Assert.Contains("**Permanents:** 0 (0%) | **Spells:** 0 (0%)", text);
     }
 
     [Fact]
@@ -165,21 +164,19 @@ public sealed class CardAnalyzerTests : IDisposable
 
         string text = File.ReadAllText(tempFile);
 
-        // The "CMC distribution:" lines follow the card's section header. We only
-        // need to verify that each CMC value is present and CMC values appear in
-        // ascending order in the global section.
-        int i1 = text.IndexOf("CMC distribution:");
-        Assert.True(i1 >= 0);
-        // Find the CMC keys' positions; assert ascending by their numeric order.
-        int i4 = text.IndexOf("\t4:\t", i1, StringComparison.Ordinal);
-        int i1line = text.IndexOf("\t1:\t", i1, StringComparison.Ordinal);
-        int i2 = text.IndexOf("\t2:\t", i1, StringComparison.Ordinal);
-        int i8 = text.IndexOf("\t8:\t", i1, StringComparison.Ordinal);
+        // The Global CMC line lists buckets 0..6+ in ascending order; CMC 8 falls
+        // into the "6+" bucket (values are capped at 6+, so there is no "8").
+        int gidx = text.IndexOf("**Global CMC:**");
+        Assert.True(gidx >= 0);
+        int p1 = text.IndexOf("`1:", gidx, StringComparison.Ordinal);
+        int p2 = text.IndexOf("`2:", gidx, StringComparison.Ordinal);
+        int p4 = text.IndexOf("`4:", gidx, StringComparison.Ordinal);
+        int p6 = text.IndexOf("`6+:", gidx, StringComparison.Ordinal);
 
-        Assert.True(i1line >= 0 && i2 >= 0 && i4 >= 0 && i8 >= 0);
-        Assert.True(i1line < i2);
-        Assert.True(i2 < i4);
-        Assert.True(i4 < i8);
+        Assert.True(p1 >= 0 && p2 >= 0 && p4 >= 0 && p6 >= 0);
+        Assert.True(p1 < p2);
+        Assert.True(p2 < p4);
+        Assert.True(p4 < p6);
     }
 
     [Fact]
@@ -198,18 +195,20 @@ public sealed class CardAnalyzerTests : IDisposable
 
         string text = File.ReadAllText(tempFile);
 
-        // Total cards = 1 (Bolt). Lands are NOT counted.
-        Assert.Contains("Cards: 1", text);
+        // Bolt is the only non-land card, so it is the only Spell; lands are NOT
+        // counted in the per-type stats.
+        Assert.Contains("**Spells:** 1", text);
 
-        // Lands section at the bottom.
-        int globalIdx = text.IndexOf("Cards: 1");
-        int landsIdx = text.IndexOf("Lands", globalIdx);
+        // Lands section (2 lands) appears after the global section.
+        Assert.Contains("## 3. Lands Distribution (2 Cards)", text);
+        int globalIdx = text.IndexOf("## 1. Global Distribution");
+        int landsIdx = text.IndexOf("## 3. Lands Distribution");
         Assert.True(landsIdx > globalIdx, "Lands section should appear after global/per-color stats");
 
-        // Inside lands section: Savai Triome → ColorCategory "RWB" → "Mardu".
+        // Inside the lands section: Command Beacon → Colorless; Savai Triome → RWB → "Mardu".
         string landsText = text.Substring(landsIdx);
-        Assert.Contains("Colorless:\t1", landsText);   // Command Beacon
-        Assert.Contains("Mardu:\t1", landsText);      // Savai via RWB
+        Assert.Contains("| Colorless | 1 |", landsText);
+        Assert.Contains("| Mardu | 1 |", landsText);
     }
 
     [Fact]
@@ -225,11 +224,11 @@ public sealed class CardAnalyzerTests : IDisposable
 
         string text = File.ReadAllText(tempFile);
 
-        // Total cards = 0 (lands excluded from stats).
-        Assert.Contains("Cards: 0 - Permanents: 0 (0%) Spells: 0 (0%)", text);
-        // Lands section present at bottom with the land.
-        Assert.Contains("Lands", text);
-        Assert.Contains("Colorless:\t1", text);
+        // Lands are excluded from the per-type stats (0 permanents / 0 spells).
+        Assert.Contains("**Permanents:** 0 (0%) | **Spells:** 0 (0%)", text);
+        // Lands section present at the bottom with the single land.
+        Assert.Contains("## 3. Lands Distribution (1 Cards)", text);
+        Assert.Contains("| Colorless | 1 |", text);
     }
 
     // --- factory -----------------------------------------------------------

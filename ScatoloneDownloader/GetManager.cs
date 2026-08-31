@@ -106,7 +106,7 @@ namespace ScatoloneDownloader
                             name = card.Name + i++;
                         }
 
-                        //Le carte sono in ordine casuale ma voglio che l'art originale abbia sempre il nome senza numero
+                        // Cards arrive in random order, but the original artwork must always keep the un-numbered name.
                         if (i != 1 && CardFilter.IsCanonicalArtwork(card))
                         {
                             Card notFirstArtCard = CardsByName[card.Name];
@@ -208,9 +208,9 @@ namespace ScatoloneDownloader
 
         internal async Task<List<Card>> GetDefaultCards()
         {
-            const string UniqueArtwork = "Default Cards";
+            const string AllArtworks = "Default Cards";
 
-            return await GetCardList(UniqueArtwork);
+            return await GetCardList(AllArtworks);
         }
 
         internal async Task<List<Card>> GetSet(string setCode)
