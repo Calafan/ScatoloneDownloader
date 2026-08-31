@@ -39,6 +39,10 @@
 
 	<ItemGroup>
 	  <EmbeddedResource Include="Resources\magic_the_gathering_mana.ico" />
+	  <!-- Tagger single-page UI, loaded at runtime by TagCommand. -->
+	  <EmbeddedResource Include="Cli\TaggerPage.html">
+	    <LogicalName>ScatoloneDownloader.Cli.TaggerPage.html</LogicalName>
+	  </EmbeddedResource>
 	</ItemGroup>
 
 	<ItemGroup>
