@@ -32,5 +32,6 @@ namespace ScatoloneDownloader.Mtg
         Protection      = 1 << 13,
         Burn            = 1 << 14,   // direct damage
         Sacrifice       = 1 << 15,
+        Steal           = 1 << 16,   // threaten / act of treason / control magic (temporary or permanent control theft)
     }
 }

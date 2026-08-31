@@ -44,7 +44,7 @@ All six phases are implemented, documented, and verified on `feature/xmp-manager
 Implemented and building clean (solution 0 warnings / 0 errors; 159 tests pass, 7 pre-existing `CardAnalyzerTests` fail = stale `.txt`-era assertions from the `a69cb63` .md migration, unrelated):
 
 - `oracle_id` on `JsonCard` + `Card.OracleId` (stable key across printings).
-- `[Flags] enum CardEffect` (16 effects; Creature/Land excluded — they are `MacroType`).
+- `[Flags] enum CardEffect` (16 effects at design time; `Steal` added post-review -> 17; Creature/Land excluded — they are `MacroType`).
 - `EffectResolver` (names/aliases <-> flags, unknown-safe, canonical order).
 - `Metadata/CubeMetadataStore.cs` — `CubeMetadata`/`CardMetadataEntry` + deterministic Load/Save; `ReviewedAt` (`DateTimeOffset?`) manual-review timestamp (tagger stamps, store preserves).
 - `Card.Effects` + `Mtg/EffectSynchronizer.cs` (loads effects from JSON by oracle_id).
