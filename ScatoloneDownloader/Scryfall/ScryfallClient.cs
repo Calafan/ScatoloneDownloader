@@ -126,8 +126,12 @@ namespace ScatoloneDownloader.Scryfall
 
         /// <summary>
         /// Issues a throttled GET and retries a 429/5xx with backoff (honouring any
-        /// <c>Retry-After</c> header) up to <see cref="MaxRetries"/> times. Returns the
-        /// successful response — the caller owns and disposes it.
+        /// <c>Retry-After</c> header) up to <see cref="MaxRetries"/> times. A
+        /// transport-level failure (<see cref="HttpRequestException"/> — TCP reset,
+        /// DNS — or a <see cref="TaskCanceledException"/> from HttpClient's timeout)
+        /// is retried the same way, so a single network blip during a multi-minute
+        /// bulk download does not abort the whole run. Returns the successful
+        /// response — the caller owns and disposes it.
         /// </summary>
         private async Task<HttpResponseMessage> SendWithRetryAsync(string url, HttpCompletionOption completionOption)
         {
@@ -135,7 +139,21 @@ namespace ScatoloneDownloader.Scryfall
             {
                 await ThrottleAsync();
 
-                HttpResponseMessage response = await httpClient.GetAsync(url, completionOption);
+                HttpResponseMessage response;
+                try
+                {
+                    response = await httpClient.GetAsync(url, completionOption);
+                }
+                catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+                {
+                    if (attempt <= MaxRetries)
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt) * 0.5));
+                        continue;
+                    }
+
+                    throw;
+                }
 
                 if (response.StatusCode == HttpStatusCode.OK)
                 {

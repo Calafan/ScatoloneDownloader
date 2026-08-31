@@ -33,6 +33,17 @@ namespace ScatoloneDownloader.Mtg
             analyzedCards = cards ?? [];
         }
 
+        /// <summary>Builds an analyzer over the active pool only — rating 3-5 and
+        /// no Banned/Token/Jolly status — so the cube report matches what the views
+        /// surface (and the <see cref="CardStatus"/> doc). The plain constructor
+        /// analyzes whatever it is given, which the download <c>analyze</c>/<c>files</c>
+        /// path relies on (those cards carry no rating).</summary>
+        internal static CardAnalyzer ForPool(IEnumerable<Card> cards)
+        {
+            return new CardAnalyzer(
+                (cards ?? []).Where(c => c.Status == CardStatus.None && c.Rating >= 3).ToList());
+        }
+
         private static int GetPercentage(int value, int total)
         {
             return total != 0 ? (int)Math.Round(value * 100.0 / total) : 0;

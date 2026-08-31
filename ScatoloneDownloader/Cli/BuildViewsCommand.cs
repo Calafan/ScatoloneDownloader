@@ -113,7 +113,10 @@ namespace ScatoloneDownloader.Cli
 
             AnsiConsole.MarkupLine("[yellow]Generating analysis report...[/]");
 
-            CardAnalyzer analyzer = new(matchedCards.Select(m => m.Card).ToList());
+            // Analyse the active pool only (rating 3-5, no Banned/Token/Jolly) so
+            // the report matches the views — the unrated backlog and excluded
+            // status cards must not skew the distributions.
+            CardAnalyzer analyzer = CardAnalyzer.ForPool(matchedCards.Select(m => m.Card));
 
             if (!Directory.Exists(viewsDir))
             {
