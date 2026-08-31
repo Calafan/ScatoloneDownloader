@@ -35,6 +35,15 @@ namespace ScatoloneDownloader.Mtg
             ["direct damage"]               = CardEffect.Burn,
             ["directdamage"]                = CardEffect.Burn,
             ["sac"]                         = CardEffect.Sacrifice,
+            ["threaten"]                    = CardEffect.Steal,
+            ["act of treason"]              = CardEffect.Steal,
+            ["control magic"]               = CardEffect.Steal,
+            ["mind control"]                = CardEffect.Steal,
+            ["search library"]              = CardEffect.Tutor,
+            ["search your library"]         = CardEffect.Tutor,
+            ["mana fixing"]                 = CardEffect.Fixing,
+            ["color fixing"]                = CardEffect.Fixing,
+            ["colour fixing"]               = CardEffect.Fixing,
         };
 
         /// <summary>All real effect flags in declared (ascending bit) order, cached

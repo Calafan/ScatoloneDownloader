@@ -44,7 +44,7 @@ All six phases are implemented, documented, and verified on `feature/xmp-manager
 Implemented and building clean (solution 0 warnings / 0 errors; 159 tests pass, 7 pre-existing `CardAnalyzerTests` fail = stale `.txt`-era assertions from the `a69cb63` .md migration, unrelated):
 
 - `oracle_id` on `JsonCard` + `Card.OracleId` (stable key across printings).
-- `[Flags] enum CardEffect` (16 effects; Creature/Land excluded — they are `MacroType`).
+- `[Flags] enum CardEffect` (16 effects at design time; `Steal` added post-review -> 17; Creature/Land excluded — they are `MacroType`).
 - `EffectResolver` (names/aliases <-> flags, unknown-safe, canonical order).
 - `Metadata/CubeMetadataStore.cs` — `CubeMetadata`/`CardMetadataEntry` + deterministic Load/Save; `ReviewedAt` (`DateTimeOffset?`) manual-review timestamp (tagger stamps, store preserves).
 - `Card.Effects` + `Mtg/EffectSynchronizer.cs` (loads effects from JSON by oracle_id).
@@ -262,3 +262,37 @@ Resolved as one redesign of the store + tagger autosave:
 **Post-refactor verification:** `dotnet build` 0 warnings / 0 errors,
 `dotnet test` 258 passed. Merged feature is `main` `197835e`; these three
 refactors continue on `feature/xmp-manager` and are not yet merged.
+
+## Effect auto-classifier — groundwork (2026-08-31)
+
+Preparing the (still-unbuilt) automatic effect classifier. Ordered as:
+verify recovery loop → finalize taxonomy → plumb inputs → build a classifier
+that PROPOSES (never overwrites) → human confirms in the tagger.
+
+### Taxonomy finalized ✅ (`6becd0c`, `1fac2dd`)
+- 19 `CardEffect` flags. Added: `Steal` (control theft), `Tutor` (search
+  library — selection/consistency, not raw card advantage), `Fixing` (mana
+  colour fixing — distinct from `Ramp`; a card can be both).
+- Hotkey budget: `TagCommand.EffectHotkeys` now 19 chars; only `z` free → 20
+  effects max on the single-key scheme. A 21st needs a different input scheme.
+
+### Inputs plumbed ✅ (`1fac2dd`)
+- `Card.OracleText` (top-level `oracle_text`, or the per-face texts joined for
+  DFCs) + `Card.Keywords`, from `JsonCard`/`JsonCardFace`. `TypeLine` and
+  `ManaCost` were already present. This is the classifier's read surface.
+
+### Point 4 — the classifier contract (agreed; build WITH the classifier)
+- **Propose, never decide.** The classifier writes `Effects` for cards it can
+  read, but must NOT stamp `reviewedAt` — an entry with effects and
+  `reviewedAt == null` is an *unconfirmed suggestion*.
+- **Human confirms in the tagger.** The existing NEW/reviewed badge already
+  keys off `reviewedAt`; extend the tagger with a filter for "has effects but
+  not yet reviewed" (the auto-tag queue). Confirming stamps `reviewedAt` as
+  today, promoting a suggestion to a human-verified tag.
+- **No speculative provenance field now.** `reviewedAt == null` already carries
+  "needs review", so a separate `source` (Manual/Auto) enum is deliberately
+  NOT added until the classifier exists and would actually populate it (avoids
+  dead code — cf. the removed `MetadataSynchronizer`). Revisit only if the
+  tagger needs to distinguish "auto-suggested" from "human-started-but-unsaved".
+- **Never touch a human-reviewed entry.** If `reviewedAt != null`, the
+  classifier leaves `Effects` alone — the manual tag wins.

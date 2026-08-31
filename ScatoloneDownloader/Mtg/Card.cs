@@ -44,6 +44,16 @@ namespace ScatoloneDownloader.Mtg
 
         internal string TypeLine { get; init; }
 
+        /// <summary>Rules text. For a double-faced card the per-face texts are
+        /// joined (top-level <c>oracle_text</c> is usually empty there). Input for
+        /// the future effect auto-classifier; empty when Scryfall omits it.</summary>
+        internal string OracleText { get; init; }
+
+        /// <summary>Scryfall keyword abilities (e.g. "Flash", "Hexproof",
+        /// "Flying"). Cheap structured signal alongside <see cref="OracleText"/>
+        /// for classification. Never null (empty when absent).</summary>
+        internal List<string> Keywords { get; init; }
+
         internal List<string> Games { get; init; }
         internal List<string> FrameEffects { get; init; }
 
@@ -117,6 +127,8 @@ namespace ScatoloneDownloader.Mtg
             ReleasedAt = DateTime.Parse(jsonCard.ReleasedAt);
 
             TypeLine = jsonCard.TypeLine;
+            OracleText = ResolveOracleText(jsonCard);
+            Keywords = jsonCard.Keywords ?? [];
 
             Games = jsonCard.Games;
 
@@ -141,6 +153,33 @@ namespace ScatoloneDownloader.Mtg
             MacroType = MacroTypeResolver.Resolve(TypeLine);
             ColorCategory = ColorCategoryClassifier.Classify(ColorIdentity);
             ManaPips = ManaPipsParser.CountColoredPips(ManaCost);
+        }
+
+        /// <summary>Rules text for classification: the top-level
+        /// <c>oracle_text</c> when present, otherwise the per-face texts joined
+        /// (double-faced cards carry their text on the faces, not the top level).</summary>
+        private static string ResolveOracleText(JsonCard jsonCard)
+        {
+            if (!string.IsNullOrEmpty(jsonCard.OracleText))
+            {
+                return jsonCard.OracleText;
+            }
+
+            if (jsonCard.CardFaces == null)
+            {
+                return string.Empty;
+            }
+
+            List<string> faceTexts = [];
+            foreach (JsonCardFace face in jsonCard.CardFaces)
+            {
+                if (!string.IsNullOrEmpty(face.OracleText))
+                {
+                    faceTexts.Add(face.OracleText);
+                }
+            }
+
+            return string.Join("\n", faceTexts);
         }
 
         internal static Card CreateCard(JsonCard jsonCard)

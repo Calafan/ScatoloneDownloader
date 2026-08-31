@@ -339,7 +339,7 @@ namespace ScatoloneDownloader.Cli
         // so the startup check below can guarantee there are at least as many keys
         // as effects — a new CardEffect with no key would otherwise silently get no
         // hotkey. Keys avoid 0-5 (rating) and n/b/t/j/c/f (status/confirm/filter).
-        internal const string EffectHotkeys = "qweryuiopasdghkl";
+        internal const string EffectHotkeys = "qweryuiopasdghklmvx";
 
         // The tagger's single-page UI lives in the embedded resource
         // Cli/TaggerPage.html (so editors/linters see the HTML/JS). It is loaded and
