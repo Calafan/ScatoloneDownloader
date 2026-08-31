@@ -229,11 +229,20 @@ Resolved as one redesign of the store + tagger autosave:
 - Tests: +7 in `CubeMetadataStoreTests` (strict/blank load, incremental tier
   routing, same-tier no-touch, reload-merge, corrupt-abort). 226 pass.
 
-### Batch B remainder — OPEN (after the merge decision)
-- **import semantics** — #6 `ScryfallId` overwritten unconditionally on
-  existing entries; #7 `--overwrite` reseeds `rating` from XMP `0` and demotes
-  tagger-rated pool cards; #8 two reprint files normalizing to one name seed
-  last-write-wins.
+### Batch B import semantics ✅ DONE (`e7da10e`)
+- **#6** `scryfallId` on an existing entry is set only when empty or
+  `--overwrite`, never repointing a tagger-pinned printing.
+- **#7** `--overwrite` refreshes rating only from a real XMP rating (>0); an
+  XMP 0 never demotes a tagger pool rating to unrated.
+- **#8** `import` reads each file's XMP once and reduces to one card per
+  `oracle_id` (`ReduceByOracle`, keep max rating / labeled file), so reprints
+  sharing one Scryfall `Card` no longer seed last-file-wins.
+- The gating (`ApplyImportSeed`) and reduction (`ReduceByOracle`) are pure
+  internal methods with 10 unit tests. Removed the now-dead
+  `MetadataSynchronizer` (also settles the #24 name-pair confusion); `import`
+  reads XMP directly via `XmpManager`.
+
+### Still OPEN — refactors + advisory (post-merge follow-up)
 - **refactors** — #19 extract a shared image↔card name matcher (duplicated in
   4 commands); #20 single `RatingTier` classifier for the 3/1 thresholds
   (currently duplicated in `TierFileName` and `BuildTargets`); #21 move the
