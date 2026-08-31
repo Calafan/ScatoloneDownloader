@@ -179,9 +179,12 @@ namespace ScatoloneDownloader.Mtg
                 return [Path.Combine(root, "0_" + card.Status)];
             }
 
-            // D7: normal rating 1-2 cards are excluded from every view (rarely
-            // browsed; the master folder + metadata directory remain the truth).
-            if (card.Rating is 1 or 2)
+            RatingTier tier = RatingTierClassifier.Classify(card.Rating);
+
+            // D7: normal Fringe (rating 1-2) cards are excluded from every view
+            // (rarely browsed; the master folder + metadata directory remain the
+            // truth).
+            if (tier == RatingTier.Fringe)
             {
                 return [];
             }
@@ -202,7 +205,7 @@ namespace ScatoloneDownloader.Mtg
             // it can be worked through set-by-set; it is deliberately kept out of
             // every browse root (color/type isn't a useful axis for cards no one has
             // evaluated yet, and ~26k of them would choke Bridge).
-            if (card.Rating == 0)
+            if (tier == RatingTier.Unrated)
             {
                 string yearFolder = card.ReleasedAt.Year.ToString(CultureInfo.InvariantCulture);
                 string setFolder = OutputPaths.Sanitize(card.SetName);
