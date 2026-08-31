@@ -242,11 +242,23 @@ Resolved as one redesign of the store + tagger autosave:
   `MetadataSynchronizer` (also settles the #24 name-pair confusion); `import`
   reads XMP directly via `XmpManager`.
 
-### Still OPEN — refactors + advisory (post-merge follow-up)
-- **refactors** — #19 extract a shared image↔card name matcher (duplicated in
-  4 commands); #20 single `RatingTier` classifier for the 3/1 thresholds
-  (currently duplicated in `TierFileName` and `BuildTargets`); #21 move the
-  tagger's inline HTML/JS to an embedded resource + assert the effect-hotkey
-  map can't silently overflow.
-- **pre-existing / advisory** — analyzer counts Banned/Token/unrated in
-  distributions; Scryfall retry ignores transport exceptions.
+### Batch B refactors ✅ DONE (on `feature/xmp-manager`, post-merge)
+- **#20** (`4e9486b`) — `Mtg/RatingTier.cs` (enum + `RatingTierClassifier`) is
+  the single source of truth for the 0 / 1-2 / 3-5 boundaries; both
+  `CubeMetadataStore.TierFileName` and `ViewGenerator.BuildTargets` switch on
+  it. `RatingTierTests` pins the boundaries and asserts they agree.
+- **#19** (`5d82a0f`) — `Cli/CardImageMatcher.Match` replaces the name-match
+  block copy-pasted into import/tag/build-views (now all warn on unmatched
+  uniformly); `restore` stays separate (reverse id/oracle match).
+  `CardImageMatcherTests` added.
+- **#21** (`c82a411`) — tagger UI moved to embedded `Cli/TaggerPage.html`;
+  `EffectHotkeys` is one C# const injected into the page, with a startup check
+  that fails if effects outnumber hotkeys. `TagCommandTests` added.
+
+### Still OPEN — advisory only (pre-existing, non-blocking)
+- Analyzer counts Banned/Token/unrated in distributions; Scryfall retry
+  ignores transport-level exceptions. Neither introduced by this feature.
+
+**Post-refactor verification:** `dotnet build` 0 warnings / 0 errors,
+`dotnet test` 258 passed. Merged feature is `main` `197835e`; these three
+refactors continue on `feature/xmp-manager` and are not yet merged.
