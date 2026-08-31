@@ -49,6 +49,9 @@ namespace ScatoloneDownloader
 
                 config.AddCommand<MakeListCommand>("make-list")
                     .WithDescription("Write a download list (for the `files` command) of the pool (rating 3-5) from the metadata directory, with Banned/Token/Jolly in their own sections.");
+
+                config.AddCommand<ClassifyCommand>("classify")
+                    .WithDescription("Auto-propose effect tags from Scryfall rules text into the metadata (unreviewed suggestions; confirm them in the tagger). Never touches reviewed entries.");
             });
 
             return await app.RunAsync(args);

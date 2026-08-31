@@ -52,7 +52,7 @@
       <div><kbd>n</kbd>/<kbd>b</kbd>/<kbd>t</kbd>/<kbd>j</kbd> status: None / Banned / Token / Jolly</div>
       <div><kbd>&larr;</kbd>/<kbd>&rarr;</kbd> or <kbd>Enter</kbd> prev / next</div>
       <div><kbd>c</kbd> confirm reviewed (no change)</div>
-      <div><kbd>f</kbd> filter untagged &nbsp; <kbd>Home</kbd> first</div>
+      <div><kbd>f</kbd> cycle filter (all / untagged / auto-pending) &nbsp; <kbd>Home</kbd> first</div>
     </div>
   </div>
 </div>
@@ -70,7 +70,14 @@ const STATUS_ORDER = [
 ];
 const STATUS_KEYS = Object.fromEntries(STATUS_ORDER.map(s => [s.key, s.name]));
 
-let cards = [], effects = [], order = [], pos = 0, filterUntagged = false;
+let cards = [], effects = [], order = [], pos = 0, filterMode = 0;
+// Filter cycles with "f": 0 = all, 1 = untagged, 2 = auto (pending review).
+const FILTER_LABELS = ["", "Filter: untagged only (press f)", "Filter: AUTO — pending review (press f)"];
+
+// A card the auto-classifier tagged but no human has confirmed yet: it has
+// effects but reviewedAt is still null (the tagger stamps reviewed on any
+// manual change, so only classify produces effects-without-review).
+function isAutoPending(c) { return c.effects.size > 0 && !c.reviewed; }
 
 async function boot() {
   const r = await fetch("/api/cards");
@@ -82,7 +89,11 @@ async function boot() {
 }
 
 function buildOrder() {
-  order = cards.map((c,i)=>i).filter(i => !filterUntagged || cards[i].effects.size === 0);
+  order = cards.map((c,i)=>i).filter(i => {
+    if (filterMode === 1) return cards[i].effects.size === 0;   // untagged only
+    if (filterMode === 2) return isAutoPending(cards[i]);       // auto, pending review
+    return true;                                                // all
+  });
   if (order.length === 0) order = cards.map((c,i)=>i);
   if (pos >= order.length) pos = order.length - 1;
   if (pos < 0) pos = 0;
@@ -95,15 +106,17 @@ function render() {
   document.getElementById("card").src = "/img/" + c.index + "?t=" + c.index;
   const taggedTotal = cards.filter(x => x.effects.size > 0).length;
   const reviewedTotal = cards.filter(x => x.reviewed).length;
+  const autoTotal = cards.filter(isAutoPending).length;
   document.getElementById("progress").textContent =
-    `Card ${pos+1} / ${order.length}` + (filterUntagged ? " (untagged view)" : "") +
-    ` — tagged ${taggedTotal}/${cards.length} · reviewed ${reviewedTotal}`;
+    `Card ${pos+1} / ${order.length}` + (filterMode ? " (" + ["", "untagged", "auto"][filterMode] + " view)" : "") +
+    ` — tagged ${taggedTotal}/${cards.length} · reviewed ${reviewedTotal} · auto-pending ${autoTotal}`;
   document.getElementById("name").textContent = c.name;
+  const badge = isAutoPending(c) ? "AUTO — pending review" : (c.reviewed ? "reviewed ✓" : "NEW");
   document.getElementById("meta").textContent =
     `${c.rating ? "★".repeat(c.rating) : "unrated"}` +
     `${c.status && c.status !== "None" ? " · " + c.status : ""}` +
-    ` · ${c.reviewed ? "reviewed ✓" : "NEW"}`;
-  document.getElementById("filter").textContent = filterUntagged ? "Filter: untagged only (press f)" : "";
+    ` · ${badge}`;
+  document.getElementById("filter").textContent = FILTER_LABELS[filterMode];
 
   renderRating(c);
   renderStatus(c);
@@ -209,7 +222,7 @@ document.addEventListener("keydown", e => {
   if (e.key === "ArrowLeft") { e.preventDefault(); move(-1); return; }
   if (e.key === "Home") { pos = 0; render(); return; }
   if (e.key === "c") { const c = cur(); c.reviewed = true; save(c); render(); return; } // confirm, no change
-  if (e.key === "f") { filterUntagged = !filterUntagged; pos = 0; buildOrder(); render(); return; }
+  if (e.key === "f") { filterMode = (filterMode + 1) % 3; pos = 0; buildOrder(); render(); return; }
 
   const key = e.key.toLowerCase();
 
