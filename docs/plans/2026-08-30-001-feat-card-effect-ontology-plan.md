@@ -296,3 +296,20 @@ that PROPOSES (never overwrites) → human confirms in the tagger.
   tagger needs to distinguish "auto-suggested" from "human-started-but-unsaved".
 - **Never touch a human-reviewed entry.** If `reviewedAt != null`, the
   classifier leaves `Effects` alone — the manual tag wins.
+
+### Effect auto-classifier — BUILT ✅ (`48db5cb`)
+- `Mtg/EffectClassifier.cs`: rule-based (regex over oracle_text + keywords),
+  precision-leaning; strips Ramp from lands. 20 unit tests over real card text.
+- `Cli/ClassifyCommand.cs` (`classify -m <dir> [--overwrite] [--dry-run]`):
+  proposes effects into metadata, writes `effects` but NEVER stamps
+  `reviewedAt`; never touches a reviewed entry; default fills blanks only.
+  Per-entry decision is the pure `Decide` (5 tests). Registered as `classify`.
+- Tagger: `f` cycles all / untagged / auto-pending; effects-without-review show
+  an "AUTO — pending review" badge (the confirm queue). Realizes the point-4
+  propose-not-decide contract.
+- Also added `Pacify` (1<<19, soft/pseudo removal — tap-lock/Pacifism/Arrest/
+  detain); 20 effects total, single-key hotkey scheme now full ('z' last).
+- Verified live: `classify` on real oracle_ids tagged Bolt/Counterspell/Sol
+  Ring and left a reviewed Pacifism entry untouched.
+- Still not done: recovery round-trip on real Source (flagged higher priority),
+  advisory P3s (analyzer banned/token counts, Scryfall transport retry).

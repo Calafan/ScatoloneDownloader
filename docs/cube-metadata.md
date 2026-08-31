@@ -143,6 +143,16 @@ defaulting to `./metadata`.
    `files <that file>` re-downloads the pool and drops Banned/Token/Jolly cards
    into matching sub-folders automatically. Deterministic (no timestamp), so a
    committed list only diffs when the pool actually changes.
+6. **`classify -m metadata [--overwrite] [--dry-run]`** — auto-proposes effect
+   tags from Scryfall rules text (see `EffectClassifier`) into the metadata.
+   Strictly *propose, never decide*: it writes `effects` but never stamps
+   `reviewedAt`, and it never touches a human-reviewed entry. By default it
+   only fills entries with no effects yet (`--overwrite` re-proposes over
+   still-unreviewed ones; `--dry-run` reports without writing). Every
+   suggestion then shows up in the tagger as **AUTO — pending review** (press
+   `f` there to cycle to the auto-pending queue); confirming it in the tagger
+   is what promotes a suggestion to a human-verified tag (`reviewedAt` gets
+   stamped). Rule-based and heuristic — a starting point, not an oracle.
 
 ## Metadata entry schema
 
