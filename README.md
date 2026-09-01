@@ -102,8 +102,10 @@ non ancora valutata) — così il file da editare a mano resta piccolo anche con
 | `import <DIR>` | Migra una tantum i rating/label XMP già scritti da Adobe Bridge dentro `metadata/` (unico comando che legge ancora XMP) | `ScatoloneDownloader import .\Master --overwrite` |
 | `build-views <DIR>` | Rigenera l'albero `Views/` (symlink/hardlink, multi-radice) e il report `Cubo_Analysis.md` leggendo rating/status/effetti da `metadata/` | `ScatoloneDownloader build-views .\Master -v .\Views` |
 | `restore --images <DIR>` | Recovery: ricostruisce la cartella immagini dall'unione di tutti i file di `metadata/` + bulk-data Scryfall (nessuna XMP scritta) | `ScatoloneDownloader restore --images .\Master -m metadata` |
+| `make-list -o <FILE>` | Genera (offline) una lista di download per il comando `files` con il solo pool (rating 3-5); i card con status finiscono in sezioni `-- Banned`/`-- Token`/`-- Jolly` così `files` li smista in sotto-cartelle | `ScatoloneDownloader make-list -m metadata -o pool.txt` |
+| `classify` | Auto-propone gli effetti dal testo regole Scryfall dentro `metadata/` (solo suggerimenti: scrive `effects` ma non marca `reviewedAt`, non tocca le carte già revisionate; confermali nel tagger) | `ScatoloneDownloader classify -m metadata --dry-run` |
 
-Tutti e quattro accettano `-m, --metadata <DIR>` per la cartella dei metadati
+Tutti accettano `-m, --metadata <DIR>` per la cartella dei metadati
 (default: `./metadata`).
 
 ## Struttura dell'output

@@ -178,7 +178,10 @@ Goal: anyone (or future-you) can re-read the whole feature months later and unde
 - Unrated view keyed by `ReleasedAt.Year` + `SetName`.
 
 ## Out of Scope
-- Auto-classification of effects (ML/oracle-text). Manual tagging only.
+- ~~Auto-classification of effects (ML/oracle-text). Manual tagging only.~~
+  Superseded 2026-08-31: a rule-based (not ML) *propose-never-decide* classifier
+  was added (`classify` / `EffectClassifier`) — it suggests effects but a human
+  still confirms each in the tagger. See the "Effect auto-classifier — BUILT" section.
 - CSV versioning repository (superseded by JSON).
 - Multi-user merge of the JSON (single-curator).
 - ~~Refreshing the 7 stale `CardAnalyzerTests` (separate task).~~ Done separately, upstream of Phase 6 — baseline is now 0 failures.
@@ -260,8 +263,9 @@ Resolved as one redesign of the store + tagger autosave:
   ignores transport-level exceptions. Neither introduced by this feature.
 
 **Post-refactor verification:** `dotnet build` 0 warnings / 0 errors,
-`dotnet test` 258 passed. Merged feature is `main` `197835e`; these three
-refactors continue on `feature/xmp-manager` and are not yet merged.
+`dotnet test` 258 passed. The three refactors were re-merged to `main` via
+`--no-ff` `c9ef173`; `main` and `feature/xmp-manager` have since stayed in sync
+through every follow-up below.
 
 ## Effect auto-classifier — groundwork (2026-08-31)
 
@@ -311,5 +315,25 @@ that PROPOSES (never overwrites) → human confirms in the tagger.
   detain); 20 effects total, single-key hotkey scheme now full ('z' last).
 - Verified live: `classify` on real oracle_ids tagged Bolt/Counterspell/Sol
   Ring and left a reviewed Pacifism entry untouched.
-- Still not done: recovery round-trip on real Source (flagged higher priority),
-  advisory P3s (analyzer banned/token counts, Scryfall transport retry).
+
+### Follow-ups since the classifier — all DONE
+- **Advisory P3s CLOSED** (`e2cb3d8`): `CardAnalyzer.ForPool` limits build-views'
+  analysis to the pool (rating 3-5, no status) — the download `analyze`/`files`
+  path keeps the plain ctor; `ScryfallClient.SendWithRetryAsync` now also retries
+  transport-level `HttpRequestException`/`TaskCanceledException`, not just 429/5xx.
+- **`make-list` command** added (offline pool download-list for `files`, with
+  Banned/Token/Jolly in their own sections) — see `docs/cube-metadata.md`.
+- **Recovery round-trip VERIFIED on real data** (2026-09-01, Arabian Nights
+  subset copied to temp, Source only read): `import` → 77 entries with real XMP
+  ratings, `restore` → 77 images with filenames identical to the originals
+  (incl. accented "Juzám Djinn"), `build-views` → pool-only tree + `Cubo_Analysis.md`
+  counting the 7 pool cards, `classify --dry-run` → 37/77 taggable. The
+  disaster-recovery premise holds; Source left untouched.
+- **`restore` continue-on-error CLOSED** (`46aedc6`): per-card try/catch + a
+  `failed` counter + `.tmp` cleanup + a re-run hint, so one bad card can't abort
+  a full library recovery.
+- **Code reorganized by concern** (`59eef98`, then `cad2270`): `Mtg/` shared card
+  domain, `Cube/` cube app services, `Cli/Download/` (ns `…Cli.Download`) and
+  `Cli/Cube/` (ns `…Cli.Cube`) commands; namespaces now match folders.
+
+All verifications green (323 tests). `main` = `feature/xmp-manager` = `cad2270`.
