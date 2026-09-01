@@ -2,7 +2,7 @@ using System.ComponentModel;
 
 using Spectre.Console.Cli;
 
-namespace ScatoloneDownloader.Cli
+namespace ScatoloneDownloader.Cli.Download
 {
     /// <summary>Options shared by every subcommand, including <c>lands</c>.</summary>
     internal class CommonSettings : CommandSettings

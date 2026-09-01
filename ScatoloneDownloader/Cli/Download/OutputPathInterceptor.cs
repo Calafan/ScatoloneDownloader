@@ -2,7 +2,7 @@ using ScatoloneDownloader.Download;
 
 using Spectre.Console.Cli;
 
-namespace ScatoloneDownloader.Cli
+namespace ScatoloneDownloader.Cli.Download
 {
     /// <summary>
     /// Applies the shared <c>--output</c> option to <see cref="OutputPaths.Root"/>

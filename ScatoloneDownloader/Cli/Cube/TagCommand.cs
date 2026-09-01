@@ -17,7 +17,7 @@ using ScatoloneDownloader.Mtg;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
-namespace ScatoloneDownloader.Cli
+namespace ScatoloneDownloader.Cli.Cube
 {
     /// <summary>
     /// Local web tagger for card rating/status/effects. Serves a single-card,

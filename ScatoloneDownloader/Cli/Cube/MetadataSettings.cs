@@ -3,7 +3,7 @@ using System.IO;
 
 using Spectre.Console.Cli;
 
-namespace ScatoloneDownloader.Cli
+namespace ScatoloneDownloader.Cli.Cube
 {
     /// <summary>
     /// Base settings for every cube command that reads or writes the metadata

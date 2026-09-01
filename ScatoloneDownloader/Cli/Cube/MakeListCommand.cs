@@ -13,7 +13,7 @@ using ScatoloneDownloader.Mtg;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
-namespace ScatoloneDownloader.Cli
+namespace ScatoloneDownloader.Cli.Cube
 {
     /// <summary>
     /// Generates a download list file (the exact format the <c>files</c> command

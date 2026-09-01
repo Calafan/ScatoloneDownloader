@@ -2,7 +2,7 @@ using System.IO;
 
 using ScatoloneDownloader.Download;
 
-namespace ScatoloneDownloader.Cli
+namespace ScatoloneDownloader.Cli.Download
 {
     /// <summary>Deletes the per-mode output folders. Opt-in via the --clear flag.</summary>
     internal static class FolderCleaner

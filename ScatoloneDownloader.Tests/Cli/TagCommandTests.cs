@@ -1,4 +1,4 @@
-using ScatoloneDownloader.Cli;
+using ScatoloneDownloader.Cli.Cube;
 using ScatoloneDownloader.Mtg;
 
 using Xunit;

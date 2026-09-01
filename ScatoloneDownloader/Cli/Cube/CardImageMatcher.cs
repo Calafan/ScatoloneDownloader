@@ -6,7 +6,7 @@ using ScatoloneDownloader.Mtg;
 
 using Spectre.Console;
 
-namespace ScatoloneDownloader.Cli
+namespace ScatoloneDownloader.Cli.Cube
 {
     /// <summary>
     /// Matches physical master image files to Scryfall cards by NAME, shared by

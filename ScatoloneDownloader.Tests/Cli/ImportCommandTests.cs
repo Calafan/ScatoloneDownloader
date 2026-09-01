@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-using ScatoloneDownloader.Cli;
+using ScatoloneDownloader.Cli.Cube;
 using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Metadata;
 using ScatoloneDownloader.Mtg;

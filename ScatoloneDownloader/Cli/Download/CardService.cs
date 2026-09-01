@@ -12,7 +12,7 @@ using ScatoloneDownloader.Mtg;
 
 using Spectre.Console;
 
-namespace ScatoloneDownloader.Cli
+namespace ScatoloneDownloader.Cli.Download
 {
     /// <summary>
     /// Orchestrates a single download/analyze run. Replaces the old 11-parameter

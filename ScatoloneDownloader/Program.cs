@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 
-using ScatoloneDownloader.Cli;
+using ScatoloneDownloader.Cli.Cube;
+using ScatoloneDownloader.Cli.Download;
 
 using Spectre.Console.Cli;
 

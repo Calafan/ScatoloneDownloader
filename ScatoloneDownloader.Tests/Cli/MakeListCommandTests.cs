@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 
-using ScatoloneDownloader.Cli;
+using ScatoloneDownloader.Cli.Cube;
 using ScatoloneDownloader.Metadata;
 using ScatoloneDownloader.Mtg;
 

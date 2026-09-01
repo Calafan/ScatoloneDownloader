@@ -12,7 +12,7 @@ using ScatoloneDownloader.Mtg;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
-namespace ScatoloneDownloader.Cli
+namespace ScatoloneDownloader.Cli.Cube
 {
     /// <summary>
     /// Regenerates the multi-root <c>Views/</c> tree (see <see cref="ViewGenerator"/>

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 using Spectre.Console.Cli;
 
-namespace ScatoloneDownloader.Cli
+namespace ScatoloneDownloader.Cli.Download
 {
     internal sealed class FilesSettings : DownloadSettings
     {

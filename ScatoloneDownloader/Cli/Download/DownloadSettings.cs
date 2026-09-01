@@ -2,7 +2,7 @@ using System.ComponentModel;
 
 using Spectre.Console.Cli;
 
-namespace ScatoloneDownloader.Cli
+namespace ScatoloneDownloader.Cli.Download
 {
     /// <summary>Options shared by the card-download/analyze subcommands.</summary>
     internal class DownloadSettings : CommonSettings

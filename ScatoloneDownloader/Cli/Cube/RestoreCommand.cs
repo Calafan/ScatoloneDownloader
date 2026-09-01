@@ -12,7 +12,7 @@ using ScatoloneDownloader.Mtg;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
-namespace ScatoloneDownloader.Cli
+namespace ScatoloneDownloader.Cli.Cube
 {
     /// <summary>
     /// Closes the disaster-recovery loop: rebuilds an image folder from nothing

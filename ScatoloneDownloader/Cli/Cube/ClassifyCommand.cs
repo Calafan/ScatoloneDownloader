@@ -11,7 +11,7 @@ using ScatoloneDownloader.Mtg;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
-namespace ScatoloneDownloader.Cli
+namespace ScatoloneDownloader.Cli.Cube
 {
     /// <summary>
     /// Auto-classifies effect tags from Scryfall rules text and PROPOSES them into
