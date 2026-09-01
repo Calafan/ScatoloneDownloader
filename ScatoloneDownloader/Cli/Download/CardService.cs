@@ -17,23 +17,69 @@ namespace ScatoloneDownloader.Cli.Download
     /// <summary>
     /// Orchestrates a single download/analyze run. Replaces the old 11-parameter
     /// Program.GetCards dispatch; the subcommands call the mode-specific entry
-    /// points below.
+    /// points below, each of which builds a <see cref="CardRequest"/> and hands it
+    /// to <see cref="GetCardsAsync"/>.
     /// </summary>
     internal static class CardService
     {
         internal const int MinYear = 1993;
         internal const int MaxYear = 2050;
 
+        /// <summary>
+        /// One download/analyze request. Bundling the inputs replaces a
+        /// 10-argument positional call where half the slots were <c>null</c>: each
+        /// entry point sets only the fields its mode needs and leaves the rest at
+        /// their defaults.
+        /// </summary>
+        private sealed record CardRequest
+        {
+            internal Mode Mode { get; init; }
+            internal bool Reprints { get; init; }
+            internal bool Tokens { get; init; }
+            internal bool Lands { get; init; }
+
+            /// <summary>Set code (Mode.Set only).</summary>
+            internal string Set { get; init; }
+
+            /// <summary>Release years (Mode.Years only).</summary>
+            internal List<int> Years { get; init; }
+
+            /// <summary>List file to read (Mode.Files) or exclude file (Mode.All).</summary>
+            internal string File { get; init; }
+
+            internal bool Download { get; init; }
+            internal bool Analyze { get; init; }
+            internal bool PrintOnly { get; init; }
+        }
+
         internal static Task RunAllAsync(string excludeFile, bool reprints, bool tokens, bool lands, bool printOnly)
         {
-            return GetCardsAsync(Mode.All, reprints, tokens, lands, null, null, excludeFile, download: true, analyze: false, printOnly);
+            return GetCardsAsync(new CardRequest
+            {
+                Mode = Mode.All,
+                Reprints = reprints,
+                Tokens = tokens,
+                Lands = lands,
+                File = excludeFile,
+                Download = true,
+                PrintOnly = printOnly,
+            });
         }
 
         internal static async Task RunSetsAsync(IEnumerable<string> sets, bool reprints, bool tokens, bool lands, bool printOnly)
         {
             foreach (string set in sets)
             {
-                await GetCardsAsync(Mode.Set, reprints, tokens, lands, set, null, null, download: true, analyze: false, printOnly);
+                await GetCardsAsync(new CardRequest
+                {
+                    Mode = Mode.Set,
+                    Reprints = reprints,
+                    Tokens = tokens,
+                    Lands = lands,
+                    Set = set,
+                    Download = true,
+                    PrintOnly = printOnly,
+                });
             }
         }
 
@@ -41,12 +87,27 @@ namespace ScatoloneDownloader.Cli.Download
         {
             List<int> validYears = years.Where(year => year >= MinYear && year <= MaxYear).ToList();
 
-            return GetCardsAsync(Mode.Years, reprints, tokens, lands, null, validYears, null, download: true, analyze: false, printOnly);
+            return GetCardsAsync(new CardRequest
+            {
+                Mode = Mode.Years,
+                Reprints = reprints,
+                Tokens = tokens,
+                Lands = lands,
+                Years = validYears,
+                Download = true,
+                PrintOnly = printOnly,
+            });
         }
 
         internal static Task RunLandsAsync(bool printOnly)
         {
-            return GetCardsAsync(Mode.Lands, downloadReprints: false, downloadTokens: false, downloadLands: true, null, null, null, download: true, analyze: false, printOnly);
+            return GetCardsAsync(new CardRequest
+            {
+                Mode = Mode.Lands,
+                Lands = true,
+                Download = true,
+                PrintOnly = printOnly,
+            });
         }
 
         internal static async Task RunFilesAsync(IEnumerable<string> files, bool reprints, bool tokens, bool lands, bool printOnly)
@@ -55,8 +116,18 @@ namespace ScatoloneDownloader.Cli.Download
             {
                 if (File.Exists(file))
                 {
-                    // A Files download also writes the stats file (analyze: true), as before.
-                    await GetCardsAsync(Mode.Files, reprints, tokens, lands, null, null, file, download: true, analyze: true, printOnly);
+                    // A Files download also writes the stats file (Analyze = true), as before.
+                    await GetCardsAsync(new CardRequest
+                    {
+                        Mode = Mode.Files,
+                        Reprints = reprints,
+                        Tokens = tokens,
+                        Lands = lands,
+                        File = file,
+                        Download = true,
+                        Analyze = true,
+                        PrintOnly = printOnly,
+                    });
                 }
                 else
                 {
@@ -71,7 +142,16 @@ namespace ScatoloneDownloader.Cli.Download
             {
                 if (File.Exists(file))
                 {
-                    await GetCardsAsync(Mode.Files, reprints, tokens, lands, null, null, file, download: false, analyze: true, printOnly);
+                    await GetCardsAsync(new CardRequest
+                    {
+                        Mode = Mode.Files,
+                        Reprints = reprints,
+                        Tokens = tokens,
+                        Lands = lands,
+                        File = file,
+                        Analyze = true,
+                        PrintOnly = printOnly,
+                    });
                 }
                 else
                 {
@@ -81,49 +161,49 @@ namespace ScatoloneDownloader.Cli.Download
         }
 
 
-        private static async Task GetCardsAsync(Mode mode, bool downloadReprints, bool downloadTokens, bool downloadLands, string set, List<int> years, string file, bool download, bool analyze, bool printOnly)
+        private static async Task GetCardsAsync(CardRequest req)
         {
             using GetManager getManager = new();
             CardDownloader downloader = new(getManager);
 
-            string specificText = DescribeRequest(mode, set, years, file);
+            string specificText = DescribeRequest(req);
 
             AnsiConsole.MarkupLineInterpolated($"Getting {specificText} cards informations.");
 
-            List<Card> cards = await (mode switch
+            List<Card> cards = await (req.Mode switch
             {
-                Mode.All => string.IsNullOrEmpty(file) ? getManager.GetUniqueArtwork() : getManager.GetUniqueArtwork(file),
-                Mode.Set => getManager.GetSet(set),
-                Mode.Years => getManager.GetYears(years),
-                Mode.Files => getManager.GetCardList(file, downloadLands),
+                Mode.All => string.IsNullOrEmpty(req.File) ? getManager.GetUniqueArtwork() : getManager.GetUniqueArtwork(req.File),
+                Mode.Set => getManager.GetSet(req.Set),
+                Mode.Years => getManager.GetYears(req.Years),
+                Mode.Files => getManager.GetCardList(req.File, req.Lands),
                 Mode.Lands => getManager.GetUniqueArtwork(),
-                _ => throw new ArgumentOutOfRangeException(nameof(mode)),
+                _ => throw new ArgumentOutOfRangeException(nameof(req)),
             });
 
-            if (mode == Mode.Lands)
+            if (req.Mode == Mode.Lands)
             {
                 AnsiConsole.MarkupLine("Validating basic lands.");
                 cards = CardFilter.ValidateBasicLands(cards);
             }
-            else if (mode != Mode.Files)
+            else if (req.Mode != Mode.Files)
             {
                 AnsiConsole.MarkupLine("Validating cards.");
-                cards = CardFilter.Validate(cards, downloadReprints, downloadTokens, downloadLands);
+                cards = CardFilter.Validate(cards, req.Reprints, req.Tokens, req.Lands);
             }
 
-            if (analyze)
+            if (req.Analyze)
             {
                 AnsiConsole.MarkupLine("Analyzing cards.");
 
                 Directory.CreateDirectory(OutputPaths.BasePath(Mode.Files));
 
-                string path = Path.Combine(OutputPaths.BasePath(Mode.Files), Path.GetFileNameWithoutExtension(file) + "Stats.md");
+                string path = Path.Combine(OutputPaths.BasePath(Mode.Files), Path.GetFileNameWithoutExtension(req.File) + "Stats.md");
 
                 CardAnalyzer cardAnalyzer = new(cards);
                 cardAnalyzer.SaveAnalysis(path);
             }
 
-            if (printOnly)
+            if (req.PrintOnly)
             {
                 AnsiConsole.MarkupLine("Writing list.");
 
@@ -132,9 +212,9 @@ namespace ScatoloneDownloader.Cli.Download
                     CardDownloader.WriteToList(card);
                 }
             }
-            else if (download)
+            else if (req.Download)
             {
-                await DownloadAllAsync(downloader, cards, mode, file, specificText);
+                await DownloadAllAsync(downloader, cards, req.Mode, req.File, specificText);
             }
         }
 
@@ -172,19 +252,19 @@ namespace ScatoloneDownloader.Cli.Download
                 $"Downloaded {cardCount} cards in {seconds:N1}s — {perCardMs:N0} ms/card, {cardsPerSecond:N2} cards/s.");
         }
 
-        private static string DescribeRequest(Mode mode, string set, List<int> years, string file)
+        private static string DescribeRequest(CardRequest req)
         {
-            switch (mode)
+            switch (req.Mode)
             {
                 case Mode.All:
                     return "Unique Artworks";
                 case Mode.Set:
-                    return set + " set";
+                    return req.Set + " set";
                 case Mode.Years:
-                    string joined = string.Join(", ", years);
-                    return joined + (years.Count == 1 ? " year" : " years");
+                    string joined = string.Join(", ", req.Years);
+                    return joined + (req.Years.Count == 1 ? " year" : " years");
                 case Mode.Files:
-                    return file + " content";
+                    return req.File + " content";
                 case Mode.Lands:
                     return "Basic Lands";
                 default:

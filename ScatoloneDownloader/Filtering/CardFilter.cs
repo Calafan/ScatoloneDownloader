@@ -55,7 +55,6 @@ namespace ScatoloneDownloader.Filtering
             "invisible",
             "vinyl",
             "firstspherefoil",
-            "textured",
         ];
 
 

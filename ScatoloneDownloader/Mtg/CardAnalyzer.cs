@@ -344,7 +344,7 @@ namespace ScatoloneDownloader.Mtg
 
             Dictionary<string, Dictionary<MacroType, int>> macroByCat = [];
             Dictionary<string, Dictionary<double, int>> cmcByCat = [];
-            Dictionary<string, Dictionary<double, int>> creatureCmcByCat = []; // Distribuzione specifica creature
+            Dictionary<string, Dictionary<double, int>> creatureCmcByCat = []; // Creature-specific CMC distribution
             Dictionary<string, double> avgCmcByCat = [];
             Dictionary<string, double> avgCreatureCmcByCat = [];
 

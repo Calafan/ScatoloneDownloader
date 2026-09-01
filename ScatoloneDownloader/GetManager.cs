@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 using Microsoft.Extensions.Logging;
 
+using ScatoloneDownloader.Download;
 using ScatoloneDownloader.Filtering;
 using ScatoloneDownloader.Json.BulkData;
 using ScatoloneDownloader.Json.Cards;
@@ -58,7 +59,13 @@ namespace ScatoloneDownloader
             return cards;
         }
 
-        private async Task<List<Card>> GetCardList(string name)
+        /// <summary>
+        /// Downloads and streams a Scryfall bulk-data file by its catalog name
+        /// (e.g. "Default Cards", "Unique Artwork"). Distinct from the public
+        /// <see cref="GetCardList(string, bool)"/>, which reads a local download-list
+        /// FILE — this one fetches the whole bulk dataset over HTTP.
+        /// </summary>
+        private async Task<List<Card>> FetchBulkList(string bulkDataName)
         {
             const string BulkDataUrl = "bulk-data";
 
@@ -69,7 +76,7 @@ namespace ScatoloneDownloader
 
             foreach (BulkData bulkData in bulkDataCollection.Data)
             {
-                if (bulkData.Name == name)
+                if (bulkData.Name == bulkDataName)
                 {
                     // Scryfall bulk files are gzipped JSONL — one card per line — not a
                     // single JSON array anymore. Stream them line by line.
@@ -82,7 +89,7 @@ namespace ScatoloneDownloader
                 }
             }
 
-            throw new KeyNotFoundException(string.Format("Unable to found \"{0}\" bulk-data file reference. Request: {1}", name, url));
+            throw new KeyNotFoundException(string.Format("Unable to find \"{0}\" bulk-data file reference. Request: {1}", bulkDataName, url));
         }
 
         private async Task PopulateCardsByName(bool downloadLands)
@@ -97,17 +104,10 @@ namespace ScatoloneDownloader
                 {
                     if (!card.IsBasicLand)
                     {
-
-                        string name = card.Name;
-                        int i = 1;
-
-                        while (CardsByName.ContainsKey(name))
-                        {
-                            name = card.Name + i++;
-                        }
+                        string name = NextFreeName(CardsByName, card.Name);
 
                         // Cards arrive in random order, but the original artwork must always keep the un-numbered name.
-                        if (i != 1 && CardFilter.IsCanonicalArtwork(card))
+                        if (name != card.Name && CardFilter.IsCanonicalArtwork(card))
                         {
                             Card notFirstArtCard = CardsByName[card.Name];
 
@@ -134,14 +134,7 @@ namespace ScatoloneDownloader
                 {
                     if (card.IsBasicLand)
                     {
-
-                        string name = card.Name;
-                        int i = 1;
-
-                        while (CardsByName.ContainsKey(name))
-                        {
-                            name = card.Name + i++;
-                        }
+                        string name = NextFreeName(CardsByName, card.Name);
 
                         card.Tag = "Basic Lands";
 
@@ -151,12 +144,29 @@ namespace ScatoloneDownloader
             }
         }
 
+        // Cards arrive in arbitrary order and names collide across printings, so
+        // each collision spills onto a numbered slot ("Name", "Name1", "Name2", ...).
+        // Returns the first free slot for baseName; a returned value != baseName
+        // means the un-numbered slot was already taken.
+        private static string NextFreeName(Dictionary<string, Card> map, string baseName)
+        {
+            string name = baseName;
+            int i = 1;
+
+            while (map.ContainsKey(name))
+            {
+                name = baseName + i++;
+            }
+
+            return name;
+        }
+
 
         internal async Task<List<Card>> GetUniqueArtwork()
         {
             const string UniqueArtwork = "Unique Artwork";
 
-            return await GetCardList(UniqueArtwork);
+            return await FetchBulkList(UniqueArtwork);
         }
 
         internal async Task<List<Card>> GetUniqueArtwork(string excludeFile)
@@ -164,40 +174,17 @@ namespace ScatoloneDownloader
             List<Card> uniqueArtworkCards = await GetUniqueArtwork();
             List<Card> cards = [];
 
-            HashSet<string> cardNames = [];
-
-            using (StreamReader reader = new(new FileStream(excludeFile, FileMode.Open)))
+            HashSet<string> excludedNames = [];
+            foreach (CardListEntry entry in await CardListFile.ReadAsync(excludeFile))
             {
-                string rawLine;
-                while ((rawLine = await reader.ReadLineAsync()) is not null)
-                {
-                    string line = rawLine.Trim();
-
-                    if (!(string.IsNullOrEmpty(line) || line.StartsWith("--")))
-                    {
-                        string name;
-
-                        if (line.Contains("--"))
-                        {
-                            string[] parts = line.Split("--", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-                            name = parts[0];
-                        }
-                        else
-                        {
-                            name = line;
-                        }
-
-                        cardNames.Add(name);
-                    }
-                }
+                excludedNames.Add(entry.Name);
             }
 
             // Basic-land inclusion is decided centrally by CardFilter (via --lands);
             // here we only drop the names listed in the exclude file.
             foreach (Card card in uniqueArtworkCards)
             {
-                if (!cardNames.Contains(card.Name))
+                if (!excludedNames.Contains(card.Name))
                 {
                     cards.Add(card);
                 }
@@ -210,7 +197,7 @@ namespace ScatoloneDownloader
         {
             const string AllArtworks = "Default Cards";
 
-            return await GetCardList(AllArtworks);
+            return await FetchBulkList(AllArtworks);
         }
 
         internal async Task<List<Card>> GetSet(string setCode)
@@ -295,7 +282,7 @@ namespace ScatoloneDownloader
 
         internal async Task<List<Card>> GetCardList(string fileName, bool downloadLands)
         {
-            HashSet<string> cardNames = [];
+            HashSet<string> seenNames = [];
             List<Card> cards = [];
 
             if (CardsByName == null)
@@ -303,52 +290,23 @@ namespace ScatoloneDownloader
                 await PopulateCardsByName(downloadLands);
             }
 
-            using (StreamReader reader = new(new FileStream(fileName, FileMode.Open)))
+            foreach (CardListEntry entry in await CardListFile.ReadAsync(fileName))
             {
-                string rawLine;
-                while ((rawLine = await reader.ReadLineAsync()) is not null)
+                if (CardsByName.TryGetValue(entry.Name, out Card card))
                 {
-                    string line = rawLine.Trim();
-
-                    if (!(string.IsNullOrEmpty(line) || line.StartsWith("--")))
+                    if (!seenNames.Add(entry.Name))
                     {
-                        string tag = string.Empty;
-
-                        string name;
-                        if (line.Contains("--"))
-                        {
-                            string[] parts = line.Split("--", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-                            name = parts[0];
-
-                            if (parts.Length > 1)
-                            {
-                                tag = parts[1];
-                            }
-                        }
-                        else
-                        {
-                            name = line;
-                        }
-
-                        if (CardsByName.TryGetValue(name, out Card card))
-                        {
-                            if (cardNames.Contains(name))
-                            {
-                                Logger.LogWarning("Duplicate card: {Name}", name);
-                            }
-                            else
-                            {
-                                card.Tag = tag;
-                                cards.Add(card);
-                                cardNames.Add(name);
-                            }
-                        }
-                        else
-                        {
-                            Logger.LogWarning("Missing card: {Name}", name);
-                        }
+                        Logger.LogWarning("Duplicate card: {Name}", entry.Name);
                     }
+                    else
+                    {
+                        card.Tag = entry.Tag;
+                        cards.Add(card);
+                    }
+                }
+                else
+                {
+                    Logger.LogWarning("Missing card: {Name}", entry.Name);
                 }
             }
 
