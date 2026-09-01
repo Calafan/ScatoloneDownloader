@@ -17,7 +17,9 @@ namespace ScatoloneDownloader.Json.Cards
 
         public override void Write(Utf8JsonWriter writer, Card value, JsonSerializerOptions options)
         {
-            throw new NotImplementedException();
+            // Read-only converter: Card is only ever deserialized from Scryfall,
+            // never written back out. Serialize a JsonCard directly if you need JSON.
+            throw new NotSupportedException($"{nameof(Card)} is deserialize-only; it cannot be written back to JSON.");
         }
     }
 }
