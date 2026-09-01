@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -63,6 +64,7 @@ namespace ScatoloneDownloader.Cli
             int downloaded = 0;
             int alreadyPresent = 0;
             int unresolved = 0;
+            int failed = 0;
 
             using (GetManager manager = new())
             {
@@ -115,23 +117,57 @@ namespace ScatoloneDownloader.Cli
                         continue;
                     }
 
-                    // Write to a temp file then atomically move it into place, so an
-                    // interrupted write (Ctrl-C, crash, disk full) never leaves a
-                    // truncated .png that the skip-existing check above would then
-                    // accept as "restored" forever.
-                    byte[] png = await downloader.ComposeAsync(card);
-                    string tempPath = destPath + ".tmp";
-                    await File.WriteAllBytesAsync(tempPath, png);
-                    File.Move(tempPath, destPath, overwrite: true);
-                    downloaded++;
+                    try
+                    {
+                        // Write to a temp file then atomically move it into place, so
+                        // an interrupted write (Ctrl-C, crash, disk full) never leaves
+                        // a truncated .png that the skip-existing check above would
+                        // then accept as "restored" forever.
+                        byte[] png = await downloader.ComposeAsync(card);
+                        string tempPath = destPath + ".tmp";
+                        await File.WriteAllBytesAsync(tempPath, png);
+                        File.Move(tempPath, destPath, overwrite: true);
+                        downloaded++;
+                    }
+                    catch (Exception ex)
+                    {
+                        // Isolate a single bad card (404/removed image, malformed
+                        // face, network failure after retries) so it can't abort the
+                        // whole disaster-recovery run and block every card after it.
+                        // The .tmp is cleaned so a later re-run retries this card.
+                        failed++;
+                        TryDelete(destPath + ".tmp");
+                        AnsiConsole.MarkupLineInterpolated($"[red]Failed:[/] {card.Name} — {ex.Message}");
+                    }
                 }
             }
 
             AnsiConsole.MarkupLine(
                 $"[green]Restore complete:[/] {downloaded} downloaded, {alreadyPresent} already present, " +
+                (failed > 0 ? $"[red]{failed} failed[/], " : "0 failed, ") +
                 (unresolved > 0 ? $"[red]{unresolved} unresolved[/]." : "0 unresolved."));
+            if (failed > 0 || unresolved > 0)
+            {
+                AnsiConsole.MarkupLine("[grey]Re-run restore to retry the failed/unresolved cards (already-present ones are skipped).[/]");
+            }
 
             return 0;
+        }
+
+        /// <summary>Best-effort delete of a leftover temp file; never throws.</summary>
+        private static void TryDelete(string path)
+        {
+            try
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+            catch
+            {
+                // Ignore — a stray .tmp is harmless and overwritten on the next try.
+            }
         }
     }
 }
