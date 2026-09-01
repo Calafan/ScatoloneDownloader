@@ -80,6 +80,7 @@ namespace ScatoloneDownloader.Mtg
             sb.AppendLine($"## 1. Global Distribution ({totalWithLands} Cards)");
             sb.AppendLine($"*   **Permanents:** {totalPermanents} ({GetPercentage(totalPermanents, report.TotalCards)}%) | **Spells:** {totalSpells} ({GetPercentage(totalSpells, report.TotalCards)}%)");
             sb.AppendLine($"*   **Global Average CMC:** {report.AverageCmc:0.##} *(Excluding Lands)*");
+            sb.AppendLine($"*   **Global Pip Density:** {report.GlobalPipDensity:0.##} *(Avg colored pips per non-land card)*");
             sb.AppendLine();
 
             sb.AppendLine("| MacroType | Count | Percentage |");
@@ -194,8 +195,8 @@ namespace ScatoloneDownloader.Mtg
 
                 sb.AppendLine(group.Key);
                 sb.AppendLine();
-                sb.AppendLine("| Category | Cards | Perms % | Spells % | Creatures % | Avg CMC | Cr. Avg CMC | All CMC Dist (0-6+) | Cr. CMC Dist (0-6+) | Rating (3★/4★/5★) |");
-                sb.AppendLine("| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |");
+                sb.AppendLine("| Category | Cards | Perms % | Spells % | Creatures % | Avg CMC | Cr. Avg CMC | Pip Dens | All CMC Dist (0-6+) | Cr. CMC Dist (0-6+) | Rating (3★/4★/5★) |");
+                sb.AppendLine("| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |");
 
                 foreach (string category in group.Value)
                 {
@@ -213,6 +214,7 @@ namespace ScatoloneDownloader.Mtg
 
                     double catAvgCmc = report.AverageCmcPerCategory.GetValueOrDefault(category, 0);
                     double catAvgCreatureCmc = report.AverageCreatureCmcPerCategory.GetValueOrDefault(category, 0);
+                    double catPipDensity = report.PipDensityPerCategory.GetValueOrDefault(category, 0);
 
                     string cmcString = FormatCmcDistribution(report.CmcByCategory.GetValueOrDefault(category, []));
                     string creatureCmcString = catCreatures > 0
@@ -226,7 +228,7 @@ namespace ScatoloneDownloader.Mtg
 
                     string crCmcFormatted = catCreatures > 0 ? $"{catAvgCreatureCmc:0.##}" : "-";
 
-                    sb.AppendLine($"| **{name}** | {catTotal} | {GetPercentage(catPermanents, catTotal)}% | {GetPercentage(catSpells, catTotal)}% | {GetPercentage(catCreatures, catTotal)}% | {catAvgCmc:0.##} | {crCmcFormatted} | {cmcString} | {creatureCmcString} | {tiers} |");
+                    sb.AppendLine($"| **{name}** | {catTotal} | {GetPercentage(catPermanents, catTotal)}% | {GetPercentage(catSpells, catTotal)}% | {GetPercentage(catCreatures, catTotal)}% | {catAvgCmc:0.##} | {crCmcFormatted} | {catPipDensity:0.##} | {cmcString} | {creatureCmcString} | {tiers} |");
                 }
 
                 sb.AppendLine();
