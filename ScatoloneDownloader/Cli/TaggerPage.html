@@ -52,7 +52,8 @@
       <div><kbd>n</kbd>/<kbd>b</kbd>/<kbd>t</kbd>/<kbd>j</kbd> status: None / Banned / Token / Jolly</div>
       <div><kbd>&larr;</kbd>/<kbd>&rarr;</kbd> or <kbd>Enter</kbd> prev / next</div>
       <div><kbd>c</kbd> confirm reviewed (no change)</div>
-      <div><kbd>f</kbd> cycle filter (all / untagged / auto-pending) &nbsp; <kbd>Home</kbd> first</div>
+      <div><kbd>f</kbd> cycle filter (to review / all / untagged / auto) &nbsp; <kbd>Home</kbd> first</div>
+      <div>starts on <b>to review</b>: untagged + auto-tagged, not confirmed yet</div>
     </div>
   </div>
 </div>
@@ -70,14 +71,28 @@ const STATUS_ORDER = [
 ];
 const STATUS_KEYS = Object.fromEntries(STATUS_ORDER.map(s => [s.key, s.name]));
 
-let cards = [], effects = [], order = [], pos = 0, filterMode = 0;
-// Filter cycles with "f": 0 = all, 1 = untagged, 2 = auto (pending review).
-const FILTER_LABELS = ["", "Filter: untagged only (press f)", "Filter: AUTO — pending review (press f)"];
+let cards = [], effects = [], order = [], pos = 0, filterMode = 0, filterFellBack = false;
 
 // A card the auto-classifier tagged but no human has confirmed yet: it has
 // effects but reviewedAt is still null (the tagger stamps reviewed on any
 // manual change, so only classify produces effects-without-review).
 function isAutoPending(c) { return c.effects.size > 0 && !c.reviewed; }
+
+// Filter cycles with "f" and STARTS on mode 0, the working queue: every card
+// no human has confirmed yet — untagged cards AND auto-tagged suggestions in
+// one pass. The union is the whole point: `classify` writes effects only when
+// it has something to propose, so a card it read and found nothing for stays
+// effect-less and never appears in the "auto" view, while the "untagged" view
+// in turn hides every auto suggestion. Both halves are pending human review,
+// so only reviewing them together actually drains the backlog. A card a human
+// confirmed leaves the queue for good, even if it was confirmed to zero
+// effects (that is what "c" is for) — which is what makes the queue finite.
+const FILTERS = [
+  { short: "to review", label: "Filter: TO REVIEW — untagged + auto-tagged, not confirmed yet (press f)", match: c => !c.reviewed },
+  { short: "",          label: "Filter: all cards (press f)",                                             match: () => true },
+  { short: "untagged",  label: "Filter: untagged only (press f)",                                         match: c => c.effects.size === 0 },
+  { short: "auto",      label: "Filter: AUTO — pending review (press f)",                                 match: isAutoPending },
+];
 
 async function boot() {
   const r = await fetch("/api/cards");
@@ -88,13 +103,16 @@ async function boot() {
   render();
 }
 
+// Rebuilt only on boot and on "f" — never on a save. A card reviewed during a
+// pass therefore stays put instead of vanishing under the cursor; press f
+// twice (or reload) to re-cut the queue against what is now confirmed.
 function buildOrder() {
-  order = cards.map((c,i)=>i).filter(i => {
-    if (filterMode === 1) return cards[i].effects.size === 0;   // untagged only
-    if (filterMode === 2) return isAutoPending(cards[i]);       // auto, pending review
-    return true;                                                // all
-  });
-  if (order.length === 0) order = cards.map((c,i)=>i);
+  const match = FILTERS[filterMode].match;
+  order = cards.map((c,i)=>i).filter(i => match(cards[i]));
+  // Nothing matches (e.g. the whole backlog is reviewed): show every card
+  // rather than a blank page, and say so, so it can't be read as the filter.
+  filterFellBack = order.length === 0;
+  if (filterFellBack) order = cards.map((c,i)=>i);
   if (pos >= order.length) pos = order.length - 1;
   if (pos < 0) pos = 0;
 }
@@ -107,16 +125,19 @@ function render() {
   const taggedTotal = cards.filter(x => x.effects.size > 0).length;
   const reviewedTotal = cards.filter(x => x.reviewed).length;
   const autoTotal = cards.filter(isAutoPending).length;
+  const pendingTotal = cards.length - reviewedTotal;
+  const f = FILTERS[filterMode];
   document.getElementById("progress").textContent =
-    `Card ${pos+1} / ${order.length}` + (filterMode ? " (" + ["", "untagged", "auto"][filterMode] + " view)" : "") +
-    ` — tagged ${taggedTotal}/${cards.length} · reviewed ${reviewedTotal} · auto-pending ${autoTotal}`;
+    `Card ${pos+1} / ${order.length}` + (f.short ? " (" + f.short + " view)" : "") +
+    ` — to review ${pendingTotal} · tagged ${taggedTotal}/${cards.length} · reviewed ${reviewedTotal} · auto-pending ${autoTotal}`;
   document.getElementById("name").textContent = c.name;
   const badge = isAutoPending(c) ? "AUTO — pending review" : (c.reviewed ? "reviewed ✓" : "NEW");
   document.getElementById("meta").textContent =
     `${c.rating ? "★".repeat(c.rating) : "unrated"}` +
     `${c.status && c.status !== "None" ? " · " + c.status : ""}` +
     ` · ${badge}`;
-  document.getElementById("filter").textContent = FILTER_LABELS[filterMode];
+  document.getElementById("filter").textContent =
+    f.label + (filterFellBack ? " — nothing matches, showing all cards" : "");
 
   renderRating(c);
   renderStatus(c);
@@ -222,7 +243,7 @@ document.addEventListener("keydown", e => {
   if (e.key === "ArrowLeft") { e.preventDefault(); move(-1); return; }
   if (e.key === "Home") { pos = 0; render(); return; }
   if (e.key === "c") { const c = cur(); c.reviewed = true; save(c); render(); return; } // confirm, no change
-  if (e.key === "f") { filterMode = (filterMode + 1) % 3; pos = 0; buildOrder(); render(); return; }
+  if (e.key === "f") { filterMode = (filterMode + 1) % FILTERS.length; pos = 0; buildOrder(); render(); return; }
 
   const key = e.key.toLowerCase();
 

@@ -135,6 +135,16 @@ sibling of the working directory.
    web UI shows a red banner and marks the card unsaved rather than silently
    dropping the edit. Adobe Bridge is optional from this point on; nothing
    reads XMP again unless you re-run `import`.
+   The page opens on the **to review** filter — every card with no
+   `reviewedAt`, i.e. untagged cards *and* `classify` suggestions in one queue.
+   That union is deliberate: `classify` writes `effects` only when it has
+   something to propose, so a card it read and found nothing for stays
+   untagged and would never surface in an auto-only view, while an
+   untagged-only view hides every auto suggestion. `f` cycles
+   **to review → all → untagged → auto**; a card leaves the queue only once a
+   human confirms it (any edit, or `c` to confirm with no change), which is
+   what makes the backlog finite. The queue is re-cut on `f` and on reload,
+   not on each save, so cards don't vanish under the cursor mid-pass.
 3. **`build-views <SOURCE_DIR> [-v views] [-m metadata]`** — generates the
    `Views/` folder tree (see below) by loading rating/status/effects from the
    metadata directory (the merged view of all three tier files) and linking
@@ -165,8 +175,10 @@ sibling of the working directory.
    `reviewedAt`, and it never touches a human-reviewed entry. By default it
    only fills entries with no effects yet (`--overwrite` re-proposes over
    still-unreviewed ones; `--dry-run` reports without writing). Every
-   suggestion then shows up in the tagger as **AUTO — pending review** (press
-   `f` there to cycle to the auto-pending queue); confirming it in the tagger
+   suggestion then shows up in the tagger as **AUTO — pending review**, inside
+   the default *to review* queue (press `f` there to narrow to auto-only);
+   note that a card `classify` had nothing to suggest for stays untagged and
+   unreviewed, so it is in the same queue rather than lost; confirming it in the tagger
    is what promotes a suggestion to a human-verified tag (`reviewedAt` gets
    stamped). Rule-based and heuristic — a starting point, not an oracle.
 
@@ -205,7 +217,7 @@ Each of the three tier files has the same shape:
 | `label` | `string` | `import` (copies the Bridge label verbatim), `tag` (preserves it) | Legacy Adobe Bridge color-label text (e.g. `"Red"`), carried along for reference. **Nothing derives behavior from this field anymore** — `status` superseded it. Safe to ignore or blank out by hand. |
 | `status` | `string`, one of `Banned \| Token \| Jolly`, or omitted/null for a normal card | `import` (default-fills from the Bridge label, only if empty), `tag` (authoritative, always wins) | Mutually-exclusive pool status. A tagged card (`Banned`/`Token`/`Jolly`) is pulled out of every other view and appears **only** under its own flat top-level folder — `Views/0_Banned/`, `Views/0_Token/`, or `Views/0_Jolly/` — with the card directly inside, at any rating (the status is checked before the rating rules, so a tagged 1-2 star card still shows). Hand-editable directly as one of the strings (case-insensitive on read); an unrecognized or blank value is treated as no status. |
 | `effects` | `string[]`, canonical `CardEffect` member names | `tag` only | Functional effect tags (a card can carry several). Stored as an array of names, not a packed bitmask, so git diffs show exactly which tag changed. Unknown/duplicate names are dropped on the next `Save` (round-tripped through the resolver). Hand-editable with any of the canonical names in `Mtg/CardEffect.cs` (aliases like `"board wipe"` are also accepted on read, but always re-written canonically). Empty/absent = untagged, which routes to the `_Untagged` bucket in the effect-gated views. |
-| `reviewedAt` | ISO-8601 UTC timestamp (`DateTimeOffset?`), omitted when null | `tag` only | Stamped automatically the instant a human changes anything for a card in the tagger (rating, status, or an effect toggle) — it is the "someone actually looked at this" marker used by the tagger's progress counter and untagged-filter. `null`/absent = never manually reviewed. The store preserves this verbatim on every `Save` — nothing else re-stamps or clears it, so do not hand-edit it unless you intend to reset the review flag for that card. |
+| `reviewedAt` | ISO-8601 UTC timestamp (`DateTimeOffset?`), omitted when null | `tag` only | Stamped automatically the instant a human changes anything for a card in the tagger (rating, status, or an effect toggle) — it is the "someone actually looked at this" marker used by the tagger's progress counter and its default to-review filter. `null`/absent = never manually reviewed. The store preserves this verbatim on every `Save` — nothing else re-stamps or clears it, so do not hand-edit it unless you intend to reset the review flag for that card. |
 
 ### Hand-editing checklist
 
