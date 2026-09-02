@@ -74,7 +74,6 @@ namespace ScatoloneDownloader.Cli.Cube
             // SeedFromXmp reads each file's XMP once and reduces to one card per
             // oracle_id, so reprints that normalize to the same name don't clobber
             // each other last-file-wins (#8).
-            AnsiConsole.MarkupLine("[yellow]Reading XMP rating/label from disk...[/]");
             matched = SeedFromXmp(matched);
 
             CubeMetadata metadata = CubeMetadataStore.Load(metadataDir);
@@ -119,18 +118,44 @@ namespace ScatoloneDownloader.Cli.Cube
         private static List<(Card Card, string FilePath)> SeedFromXmp(List<(Card Card, string FilePath)> matched)
         {
             List<(Card Card, string FilePath, int Rating, string Label)> perFile = [];
-            foreach (var (card, filePath) in matched)
-            {
-                int rating = 0;
-                string label = string.Empty;
-                if (File.Exists(filePath))
-                {
-                    (rating, label) = XmpManager.ReadMetadata(filePath);
-                    label ??= string.Empty;
-                }
 
-                perFile.Add((card, filePath, rating, label));
-            }
+            // Every file is opened through Magick.NET to pull its XMP chunk, so on
+            // a full library this is minutes of work — by far the longest pass in
+            // the command. Report it the same way view generation does, otherwise
+            // it looks indistinguishable from a hang.
+            AnsiConsole.Progress()
+                .AutoClear(false)
+                .HideCompleted(false)
+                .Columns(new ProgressColumn[]
+                {
+                    new TaskDescriptionColumn(),
+                    new ProgressBarColumn(),
+                    new PercentageColumn(),
+                    new SpinnerColumn(),
+                })
+                .Start(ctx =>
+                {
+                    ProgressTask task = ctx.AddTask(
+                        $"[yellow]Reading XMP rating/label... [0/{matched.Count}][/]", maxValue: matched.Count);
+
+                    foreach (var (card, filePath) in matched)
+                    {
+                        task.Description = $"[yellow]Reading XMP rating/label... [cyan][{task.Value}/{matched.Count}][/][/]";
+
+                        int rating = 0;
+                        string label = string.Empty;
+                        if (File.Exists(filePath))
+                        {
+                            (rating, label) = XmpManager.ReadMetadata(filePath);
+                            label ??= string.Empty;
+                        }
+
+                        perFile.Add((card, filePath, rating, label));
+                        task.Increment(1);
+                    }
+
+                    task.Description = $"[green]XMP read complete! [cyan][{matched.Count}/{matched.Count}][/][/]";
+                });
 
             return ReduceByOracle(perFile);
         }
