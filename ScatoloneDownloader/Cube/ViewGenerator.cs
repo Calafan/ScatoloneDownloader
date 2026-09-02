@@ -30,7 +30,7 @@ namespace ScatoloneDownloader.Cube
         /// regenerate, never an incremental patch — cheap because links, not
         /// copies, are what's being (re)created). Delegates the per-card
         /// root/exclusion decisions to <see cref="BuildTargets"/> and reports a
-        /// summary line: links created, cards excluded by D7 (rating 1-2), and any
+        /// summary line: links created, cards excluded by D7 (rating 1), and any
         /// link failures (e.g. filesystem doesn't support symlinks or hard links).
         /// </summary>
         internal static void GenerateViews(IEnumerable<(Card Card, string FilePath)> cardFiles, string viewsRootDirectory)
@@ -147,7 +147,7 @@ namespace ScatoloneDownloader.Cube
             AnsiConsole.MarkupLine($"\n[green]Successfully created {createdLinks} links for {successCount} cards.[/]");
             if (ratingExcludedCount > 0)
             {
-                AnsiConsole.MarkupLine($"[grey]{ratingExcludedCount} cards with rating 1-2 excluded from every view (D7) — master folder + metadata only.[/]");
+                AnsiConsole.MarkupLine($"[grey]{ratingExcludedCount} cards with rating 1 excluded from every view (D7) — master folder + metadata only.[/]");
             }
             if (failCount > 0)
             {
@@ -161,8 +161,10 @@ namespace ScatoloneDownloader.Cube
         /// <item><description>Any status (Banned/Token/Jolly) -> a single flat
         /// top-level folder per tag (<c>0_Banned</c>/<c>0_Token</c>/<c>0_Jolly</c>),
         /// with the card directly inside — no color/type/cost split. Checked before
-        /// D7, so a status card is never dropped by the rating-1-2 exclusion.</description></item>
-        /// <item><description>Normal rating 1-2 -> excluded from every view (D7).</description></item>
+        /// D7, so a status card is never dropped by the rating-1 exclusion.</description></item>
+        /// <item><description>Normal rating 1 -> excluded from every view (D7).</description></item>
+        /// <item><description>Normal rating 2 -> ONLY <c>6_Bench/{Color}/{MacroType}/{Effect}/Cost {N}</c>,
+        /// the recovery root; multi-linked once per effect.</description></item>
         /// <item><description>Normal rating 0 -> ONLY <c>0_Unrated/{Year}/{Set}</c>
         /// (B4). Kept out of the browse views so the ~26k-card library backlog can
         /// never flood and choke them.</description></item>
@@ -182,9 +184,10 @@ namespace ScatoloneDownloader.Cube
 
             RatingTier tier = RatingTierClassifier.Classify(card.Rating);
 
-            // D7: normal Fringe (rating 1-2) cards are excluded from every view
-            // (rarely browsed; the master folder + metadata directory remain the
-            // truth).
+            // D7: normal Fringe (rating 1) cards are excluded from every view —
+            // rejected outright, so the master folder + metadata directory remain
+            // the only trace. Rating 2 is NOT dropped here; it falls through to
+            // the recovery root below.
             if (tier == RatingTier.Fringe)
             {
                 return [];
@@ -211,6 +214,19 @@ namespace ScatoloneDownloader.Cube
                 string yearFolder = card.ReleasedAt.Year.ToString(CultureInfo.InvariantCulture);
                 string setFolder = OutputPaths.Sanitize(card.SetName);
                 return [Path.Combine(root, "0_Unrated", yearFolder, setFolder)];
+            }
+
+            // Rating 2 (Bench): its own recovery root, laid out like 1_Deep_Effect
+            // minus the trailing rating leaf (every card here is a 2). Kept out of
+            // roots 1-5 for the same reason D7 exists — the pool browse tree must
+            // stay the curated pool. This is where a hole gets filled from: when
+            // the analysis report says the curve is top-heavy, "Cost 2" under a
+            // color shows exactly what is available to promote back.
+            if (tier == RatingTier.Bench)
+            {
+                return effectNames
+                    .Select(effectName => Path.Combine(root, "6_Bench", colorFolder, macroType, effectName, cmcFolder))
+                    .ToList();
             }
 
             // Rating 3-5 (the curated pool): the full multi-root browse tree.

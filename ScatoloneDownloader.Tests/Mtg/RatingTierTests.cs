@@ -17,7 +17,7 @@ public sealed class RatingTierTests
     [Theory]
     [InlineData(0, "Unrated")]
     [InlineData(1, "Fringe")]
-    [InlineData(2, "Fringe")]
+    [InlineData(2, "Bench")]
     [InlineData(3, "Pool")]
     [InlineData(4, "Pool")]
     [InlineData(5, "Pool")]
@@ -43,7 +43,9 @@ public sealed class RatingTierTests
         string expectedFromTier = RatingTierClassifier.Classify(rating).ToString() switch
         {
             "Pool" => "pool.json",
-            "Fringe" => "fringe.json",
+            // Fringe and Bench are one storage band split only for view purposes,
+            // so both must keep resolving to the same file.
+            "Fringe" or "Bench" => "fringe.json",
             _ => "unrated.json",
         };
         Assert.Equal(expectedFromTier, CubeMetadataStore.TierFileName(rating));

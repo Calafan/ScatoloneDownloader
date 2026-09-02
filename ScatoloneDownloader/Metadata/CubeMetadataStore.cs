@@ -1,4 +1,4 @@
-#nullable enable annotations
+﻿#nullable enable annotations
 
 using System;
 using System.Collections.Generic;
@@ -143,13 +143,16 @@ namespace ScatoloneDownloader.Metadata
         /// <summary>Routes a card to its tier file by its CURRENT rating (B1),
         /// using the shared <see cref="RatingTierClassifier"/> so the rating
         /// boundaries live in exactly one place (also read by
-        /// <see cref="Cube.ViewGenerator"/>).</summary>
+        /// <see cref="Cube.ViewGenerator"/>). <see cref="RatingTier.Fringe"/> and
+        /// <see cref="RatingTier.Bench"/> deliberately share one file: they are
+        /// browsed differently but stored identically, so splitting them moved no
+        /// entry on disk.</summary>
         internal static string TierFileName(int rating)
         {
             return RatingTierClassifier.Classify(rating) switch
             {
                 RatingTier.Pool => "pool.json",
-                RatingTier.Fringe => "fringe.json",
+                RatingTier.Fringe or RatingTier.Bench => "fringe.json",
                 _ => "unrated.json",
             };
         }

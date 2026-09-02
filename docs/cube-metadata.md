@@ -35,7 +35,7 @@ lives in exactly one file, chosen by its **current rating**:
 | File | Rating | Contents |
 |---|---|---|
 | `metadata/pool.json` | 3-5 | The active cube — small, the main hand-edit target, tiny diffs. |
-| `metadata/fringe.json` | 1-2 | Evaluated but cut. Grows over time as more of the backlog gets rated and rejected. |
+| `metadata/fringe.json` | 1-2 | Evaluated but cut. Grows over time as more of the backlog gets rated and rejected. Rating 1 and rating 2 share this file on purpose: they are browsed differently (only `2` gets a view, see `6_Bench` below) but stored identically, so the view split moves nothing on disk. |
 | `metadata/unrated.json` | 0 | The bulk library manifest (tens of thousands of entries). Changes only when Scryfall adds new printings, not from day-to-day curation. |
 
 **Loading** (`CubeMetadataStore.Load`) reads whichever of the three files are
@@ -185,7 +185,7 @@ Each of the three tier files has the same shape:
 |---|---|---|---|
 | `name` | `string` | `import`, `tag` | Card name. **Informational only, not a key** — safe to leave stale after a rename; the app always looks the entry up by `oracle_id`. |
 | `scryfallId` | `string` (nullable, omitted when absent) | `import`, `tag` | The Scryfall printing `id` (not `oracle_id`) of the exact art this evaluation was made against. `restore` prefers this to re-download the *same* printing/art; if it's missing or the printing has vanished from the current bulk data, `restore` falls back to the first printing found for the `oracle_id`. Hand-editing this is fine if you know the correct printing UUID; leaving it blank just means `restore` uses the fallback. |
-| `rating` | `int`, 0-5 | `import` (seed), `tag` (authoritative) | Cube rating; `0` = unrated. **Never comes from XMP after the initial `import`** — `tag`/`build-views` read this field exclusively. **This is also the field that decides which tier file (`pool.json`/`fringe.json`/`unrated.json`) the entry lives in** — the next `Save` moves it if you hand-edit this to cross a tier boundary. Ratings of `1` or `2` are deliberately invisible in every generated view (see D7 below) — they still round-trip, just aren't browsable in `Views/`. |
+| `rating` | `int`, 0-5 | `import` (seed), `tag` (authoritative) | Cube rating; `0` = unrated. **Never comes from XMP after the initial `import`** — `tag`/`build-views` read this field exclusively. **This is also the field that decides which tier file (`pool.json`/`fringe.json`/`unrated.json`) the entry lives in** — the next `Save` moves it if you hand-edit this to cross a tier boundary. Rating `1` is deliberately invisible in every generated view (see D7 below) — it still round-trips, just isn't browsable in `Views/`. Rating `2` is browsable, but only under the `6_Bench` recovery root. |
 | `label` | `string` | `import` (copies the Bridge label verbatim), `tag` (preserves it) | Legacy Adobe Bridge color-label text (e.g. `"Red"`), carried along for reference. **Nothing derives behavior from this field anymore** — `status` superseded it. Safe to ignore or blank out by hand. |
 | `status` | `string`, one of `Banned \| Token \| Jolly`, or omitted/null for a normal card | `import` (default-fills from the Bridge label, only if empty), `tag` (authoritative, always wins) | Mutually-exclusive pool status. A tagged card (`Banned`/`Token`/`Jolly`) is pulled out of every other view and appears **only** under its own flat top-level folder — `Views/0_Banned/`, `Views/0_Token/`, or `Views/0_Jolly/` — with the card directly inside, at any rating (the status is checked before the rating rules, so a tagged 1-2 star card still shows). Hand-editable directly as one of the strings (case-insensitive on read); an unrecognized or blank value is treated as no status. |
 | `effects` | `string[]`, canonical `CardEffect` member names | `tag` only | Functional effect tags (a card can carry several). Stored as an array of names, not a packed bitmask, so git diffs show exactly which tag changed. Unknown/duplicate names are dropped on the next `Save` (round-tripped through the resolver). Hand-editable with any of the canonical names in `Mtg/CardEffect.cs` (aliases like `"board wipe"` are also accepted on read, but always re-written canonically). Empty/absent = untagged, which routes to the `_Untagged` bucket in the effect-gated views. |
@@ -231,11 +231,13 @@ several effects. Two blanket rules apply across **all** roots:
   `status` goes to exactly one top-level folder — `0_Banned/`, `0_Token/`, or
   `0_Jolly/` — with the card directly inside (no color/type/cost split), and
   appears in NO other root. Checked before the rating rules, so a tagged card is
-  never dropped by the rating-1-2 exclusion (a banned 1-star card still shows in
+  never dropped by the rating-1 exclusion (a banned 1-star card still shows in
   `0_Banned/`). A normal card (no status) is unaffected.
-- **D7 — normal rating 1-2 is never generated.** A normal (statusless) card
-  rated 1 or 2 appears in no view root at all. It still exists in the master
-  folder and `fringe.json`; it's just rarely useful to browse.
+- **D7 — normal rating 1 is never generated.** A normal (statusless) card rated
+  `1` appears in no view root at all. It still exists in the master folder and
+  `fringe.json`; it was rejected outright, so there is nothing to browse it for.
+  Rating `2` is the exception carved out of the original D7: cut, but only just,
+  and therefore worth being able to find again — it gets `6_Bench/` below.
 
 Roots (all generated every run):
 
@@ -249,6 +251,7 @@ Roots (all generated every run):
 | `3_ByEffect/` | `{Effect}/{Color}/` | rating `>=3`, no status |
 | `4_ByColor/` | `{Color}/{MacroType}/Cost N/` | rating `>=3`, no status |
 | `5_ByType/` | `{MacroType}/` (flat convenience) | rating `>=3`, no status |
+| `6_Bench/` | `{Color}/{MacroType}/{Effect}/Cost N/` | rating `2`, no status |
 
 Rating 0 (unrated) now lives **only** in `0_Unrated` — it is deliberately kept
 out of `3_ByEffect`/`4_ByColor`/`5_ByType` so the ~26k-card backlog can never
@@ -264,6 +267,14 @@ Notes:
   cards nobody has evaluated yet; year/set makes it easy to work through the
   backlog one expansion at a time. `SetName` is sanitized the same way as
   every other path segment (forbidden filesystem characters stripped).
+- **`6_Bench` is the recovery root.** It holds exactly the rating-`2` cards —
+  the ones cut by a hair — and is laid out like `1_Deep_Effect` minus the
+  trailing rating level, since every card in it is a `2` and a rating folder
+  would carry no information. It is kept out of roots `1`-`5` for the same
+  reason D7 exists: the browse tree must stay the curated pool. Use it when the
+  analysis report exposes a hole — a top-heavy curve, a color short on removal —
+  and you want to see what is available to promote back: open the color, the
+  macro type, the effect you are missing, then the cost bucket.
 - **Both `1_Deep_*` variants are generated** (`P7`) so the two level orderings
   (effect-first vs. rating-first) can be compared in daily use; keep whichever
   turns out more useful, delete the other's shortcut in your file browser.

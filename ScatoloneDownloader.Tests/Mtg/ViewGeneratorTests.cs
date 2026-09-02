@@ -13,9 +13,10 @@ namespace ScatoloneDownloader.Tests.Mtg;
 
 /// <summary>
 /// Phase 4 + Plan Part B coverage for <see cref="ViewGenerator.GenerateViews"/>:
-/// pins the root/exclusion rules (normal rating 1-2 excluded entirely per D7;
-/// any status card routed to a single flat <c>0_Banned</c>/<c>0_Token</c>/
-/// <c>0_Jolly</c> tag folder; unrated cards kept to <c>0_Unrated/{Year}/{Set}</c>
+/// pins the root/exclusion rules (normal rating 1 excluded entirely per D7;
+/// rating 2 confined to the <c>6_Bench</c> recovery root; any status card routed
+/// to a single flat <c>0_Banned</c>/<c>0_Token</c>/<c>0_Jolly</c> tag folder;
+/// unrated cards kept to <c>0_Unrated/{Year}/{Set}</c>
 /// only; rating 3-5 filling the browse roots) by inspecting the real folder tree
 /// it links cards into. Uses a throwaway temp directory tree; link creation falls
 /// back from symlink to a native hard link, which works without elevation as long
@@ -44,17 +45,60 @@ public sealed class ViewGeneratorTests : IDisposable
         }
     }
 
-    [Theory]
-    [InlineData(1)]
-    [InlineData(2)]
-    public void GenerateViews_Rating1Or2_ExcludedFromEveryRoot(int rating)
+    [Fact]
+    public void GenerateViews_Rating1_ExcludedFromEveryRoot()
     {
-        var (card, filePath) = MakeCardFile("Excluded Bear", rating: rating);
+        var (card, filePath) = MakeCardFile("Excluded Bear", rating: 1);
 
         ViewGenerator.GenerateViews([(card, filePath)], viewsDir);
 
         // D7: no view root should contain this card at all.
         Assert.True(!Directory.Exists(viewsDir) || Directory.GetFiles(viewsDir, "*.png", SearchOption.AllDirectories).Length == 0);
+    }
+
+    [Fact]
+    public void GenerateViews_Rating2_GoesToBenchRecoveryRoot_Only()
+    {
+        var (card, filePath) = MakeCardFile(
+            "Bench Bear", rating: 2, colorIdentity: ["G"], typeLine: "Creature — Bear", cmc: 2,
+            effects: CardEffect.Ramp);
+
+        ViewGenerator.GenerateViews([(card, filePath)], viewsDir);
+
+        // Same five-axis layout as 1_Deep_Effect minus the rating leaf — every
+        // card in this root is a 2, so a rating folder would carry no information.
+        AssertLinked(Path.Combine(viewsDir, "6_Bench", "1 Green", "Creature", "Ramp", "Cost 2"), "Bench Bear.png");
+
+        // And nowhere else: the pool browse roots must stay the curated pool.
+        foreach (string other in new[] { "2_ByRating", "3_ByEffect", "4_ByColor", "5_ByType", "1_Deep_Effect", "1_Deep_Rating", "0_Unrated" })
+        {
+            Assert.False(Directory.Exists(Path.Combine(viewsDir, other)), $"bench card must not appear in {other}");
+        }
+    }
+
+    [Fact]
+    public void GenerateViews_Rating2_MultiEffect_MultiLinksTheBenchRoot()
+    {
+        var (card, filePath) = MakeCardFile(
+            "Bench Utility", rating: 2, colorIdentity: ["W", "U"], typeLine: "Instant", cmc: 7,
+            effects: CardEffect.Removal | CardEffect.Counter);
+
+        ViewGenerator.GenerateViews([(card, filePath)], viewsDir);
+
+        foreach (string effectName in new[] { "Removal", "Counter" })
+        {
+            AssertLinked(Path.Combine(viewsDir, "6_Bench", "2 Azorius", "Spell", effectName, "Cost 6_Plus"), "Bench Utility.png");
+        }
+    }
+
+    [Fact]
+    public void GenerateViews_Rating2_NoEffect_UsesUntaggedInBenchRoot()
+    {
+        var (card, filePath) = MakeCardFile("Bench Vanilla", rating: 2, colorIdentity: ["G"], typeLine: "Creature — Bear", cmc: 3);
+
+        ViewGenerator.GenerateViews([(card, filePath)], viewsDir);
+
+        AssertLinked(Path.Combine(viewsDir, "6_Bench", "1 Green", "Creature", "_Untagged", "Cost 3"), "Bench Vanilla.png");
     }
 
     [Fact]
@@ -114,18 +158,21 @@ public sealed class ViewGeneratorTests : IDisposable
         AssertLinked(Path.Combine(viewsDir, folder), "Status Card.png");
 
         // And nowhere else.
-        foreach (string other in new[] { "2_ByRating", "3_ByEffect", "4_ByColor", "5_ByType", "1_Deep_Effect", "1_Deep_Rating", "0_Unrated" })
+        foreach (string other in new[] { "2_ByRating", "3_ByEffect", "4_ByColor", "5_ByType", "1_Deep_Effect", "1_Deep_Rating", "0_Unrated", "6_Bench" })
         {
             Assert.False(Directory.Exists(Path.Combine(viewsDir, other)), $"status card must not appear in {other}");
         }
     }
 
-    [Fact]
-    public void GenerateViews_StatusCard_OverridesRating1Or2Exclusion()
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    public void GenerateViews_StatusCard_OverridesLowRatingRouting(int rating)
     {
-        // A tagged card must still surface in its flat folder even at rating 1-2,
-        // which would exclude a NORMAL card from every view (D7).
-        var (card, filePath) = MakeCardFile("Banned Weakling", rating: 1, status: CardStatus.Banned);
+        // Status is checked before the rating rules, so a tagged card lands in its
+        // flat folder whether the rating would have excluded it (1, per D7) or
+        // routed it to the bench (2).
+        var (card, filePath) = MakeCardFile("Banned Weakling", rating: rating, status: CardStatus.Banned);
 
         ViewGenerator.GenerateViews([(card, filePath)], viewsDir);
 
