@@ -136,11 +136,12 @@ namespace ScatoloneDownloader.Cli.Cube
                 .Start(ctx =>
                 {
                     ProgressTask task = ctx.AddTask(
-                        $"[yellow]Reading XMP rating/label... [0/{matched.Count}][/]", maxValue: matched.Count);
+                        $"[yellow]Reading XMP rating/label... {ProgressLabel.Counter(0, matched.Count)}[/]",
+                        maxValue: matched.Count);
 
                     foreach (var (card, filePath) in matched)
                     {
-                        task.Description = $"[yellow]Reading XMP rating/label... [cyan][{task.Value}/{matched.Count}][/][/]";
+                        task.Description = $"[yellow]Reading XMP rating/label... [cyan]{ProgressLabel.Counter(task.Value, matched.Count)}[/][/]";
 
                         int rating = 0;
                         string label = string.Empty;
@@ -154,7 +155,7 @@ namespace ScatoloneDownloader.Cli.Cube
                         task.Increment(1);
                     }
 
-                    task.Description = $"[green]XMP read complete! [cyan][{matched.Count}/{matched.Count}][/][/]";
+                    task.Description = $"[green]XMP read complete! [cyan]{ProgressLabel.Counter(matched.Count, matched.Count)}[/][/]";
                 });
 
             return ReduceByOracle(perFile);

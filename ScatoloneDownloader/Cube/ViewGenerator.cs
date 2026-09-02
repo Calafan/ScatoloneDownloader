@@ -86,12 +86,13 @@ namespace ScatoloneDownloader.Cube
                 .Start(ctx =>
                 {
                     // Initialize the task with the counter at 0.
-                    var task = ctx.AddTask($"[yellow]Generating views... [0/{totalFiles}][/]", maxValue: totalFiles);
+                    var task = ctx.AddTask(
+                        $"[yellow]Generating views... {ProgressLabel.Counter(0, totalFiles)}[/]", maxValue: totalFiles);
 
                     foreach (var (card, sourcePath) in fileList)
                     {
                         // Dynamically update the description to show exact progress.
-                        task.Description = $"[yellow]Generating views... [cyan][{task.Value}/{totalFiles}][/][/]";
+                        task.Description = $"[yellow]Generating views... [cyan]{ProgressLabel.Counter(task.Value, totalFiles)}[/][/]";
 
                         if (!File.Exists(sourcePath))
                         {
@@ -141,7 +142,7 @@ namespace ScatoloneDownloader.Cube
                     }
 
                     // Once done, set the final text.
-                    task.Description = $"[green]Generation complete! [cyan][{totalFiles}/{totalFiles}][/][/]";
+                    task.Description = $"[green]Generation complete! [cyan]{ProgressLabel.Counter(totalFiles, totalFiles)}[/][/]";
                 });
 
             AnsiConsole.MarkupLine($"\n[green]Successfully created {createdLinks} links for {successCount} cards.[/]");
