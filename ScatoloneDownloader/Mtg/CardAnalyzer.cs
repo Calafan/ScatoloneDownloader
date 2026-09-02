@@ -28,20 +28,37 @@ namespace ScatoloneDownloader.Mtg
 
         private readonly List<Card> analyzedCards;
 
+        // Rating-2 cards, reported as an appendix (section 6) and never mixed into
+        // the metrics above it — they are candidates, not pool.
+        private readonly List<Card> benchCards;
+
         internal CardAnalyzer(List<Card> cards)
+            : this(cards, [])
         {
-            analyzedCards = cards ?? [];
         }
 
-        /// <summary>Builds an analyzer over the active pool only — rating 3-5 and
-        /// no Banned/Token/Jolly status — so the cube report matches what the views
-        /// surface (and the <see cref="CardStatus"/> doc). The plain constructor
+        internal CardAnalyzer(List<Card> cards, List<Card> bench)
+        {
+            analyzedCards = cards ?? [];
+            benchCards = bench ?? [];
+        }
+
+        /// <summary>Builds an analyzer over the active pool only — <see cref="RatingTier.Pool"/>
+        /// and no Banned/Token/Jolly status — so the cube report matches what the
+        /// views surface (and the <see cref="CardStatus"/> doc), plus the
+        /// <see cref="RatingTier.Bench"/> cards for the availability appendix. The
+        /// tier boundaries come from <see cref="RatingTierClassifier"/> rather than
+        /// a literal, so the report can never disagree with view generation or
+        /// metadata storage about where a rating belongs. The plain constructor
         /// analyzes whatever it is given, which the download <c>analyze</c>/<c>files</c>
         /// path relies on (those cards carry no rating).</summary>
         internal static CardAnalyzer ForPool(IEnumerable<Card> cards)
         {
+            List<Card> normal = (cards ?? []).Where(c => c.Status == CardStatus.None).ToList();
+
             return new CardAnalyzer(
-                (cards ?? []).Where(c => c.Status == CardStatus.None && c.Rating >= 3).ToList());
+                normal.Where(c => RatingTierClassifier.Classify(c.Rating) == RatingTier.Pool).ToList(),
+                normal.Where(c => RatingTierClassifier.Classify(c.Rating) == RatingTier.Bench).ToList());
         }
 
         private static int GetPercentage(int value, int total)
@@ -66,6 +83,7 @@ namespace ScatoloneDownloader.Mtg
             AppendLandsSection(sb, report);
             AppendCategoryAnalysis(sb, report);
             AppendEffectDistribution(sb, report);
+            AppendBenchSection(sb, benchCards);
 
             using StreamWriter writer = new(path);
             writer.Write(sb.ToString());
@@ -255,6 +273,109 @@ namespace ScatoloneDownloader.Mtg
             foreach (var (effect, count) in rows)
             {
                 sb.AppendLine($"| {effect} | {count} | {GetPercentage(count, report.TotalCards)}% |");
+            }
+
+            sb.AppendLine();
+        }
+
+        /// <summary>
+        /// Section 6 — what is available on the bench (rating 2) to fill a hole the
+        /// sections above just exposed. Rendered from a full
+        /// <see cref="AnalysisReport"/> computed over the bench cards alone, so the
+        /// counting rules (basic lands and legacy-tagged cards skipped, lands split
+        /// out, effect counts overlapping) are exactly the pool's; only the three
+        /// axes a hole is actually diagnosed on are shown — color, cost, effect.
+        /// Omitted entirely when there is no bench, so the download
+        /// <c>analyze</c>/<c>files</c> report is unchanged.
+        /// </summary>
+        private static void AppendBenchSection(StringBuilder sb, List<Card> benchCards)
+        {
+            if (benchCards.Count == 0)
+            {
+                return;
+            }
+
+            AnalysisReport bench = new CardAnalyzer(benchCards).Analyze();
+            if (bench.TotalCards == 0 && bench.LandCount == 0)
+            {
+                return;
+            }
+
+            int tagged = bench.TotalCards - bench.UntaggedEffectCount;
+
+            sb.AppendLine($"## 6. Bench Availability ({bench.TotalCards + bench.LandCount} Cards, Rating 2)");
+            sb.AppendLine("*Cards cut by a hair. They are NOT counted in any section above — this is the");
+            sb.AppendLine("shortlist to promote from when a section above shows a hole, browsable under");
+            sb.AppendLine("`Views/6_Bench/`. Raise a card to 3 in the tagger and the next `build-views`");
+            sb.AppendLine("moves it into the pool.*");
+            sb.AppendLine($"*   **Non-Land:** {bench.TotalCards} | **Lands:** {bench.LandCount} | **Tagged:** {tagged} ({GetPercentage(tagged, bench.TotalCards)}%)");
+            sb.AppendLine();
+
+            sb.AppendLine("### Available by Color and Cost");
+            sb.AppendLine();
+            sb.AppendLine("| Category | Cards | Creatures | CMC Dist (0-6+) |");
+            sb.AppendLine("| :--- | :--- | :--- | :--- |");
+
+            foreach (string category in CategoryOrder)
+            {
+                if (!bench.ColorCategoryCounts.TryGetValue(category, out int count) || count == 0)
+                {
+                    continue;
+                }
+
+                string name = ColorCategoryClassifier.Display(category);
+                int creatures = bench.MacroTypeByCategory.GetValueOrDefault(category, [])
+                    .GetValueOrDefault(MacroType.Creature, 0);
+                string cmcString = FormatCmcDistribution(bench.CmcByCategory.GetValueOrDefault(category, []));
+
+                sb.AppendLine($"| **{name}** | {count} | {creatures} | {cmcString} |");
+            }
+
+            sb.AppendLine();
+
+            // Lands are kept out of the cost table (their CMC says nothing) and out
+            // of the effect counts, exactly as in the pool sections — so without
+            // this they would be invisible past the header count, and a bench dual
+            // is precisely what a "short on fixing" hole wants.
+            if (bench.LandCount > 0)
+            {
+                sb.AppendLine("### Available Lands");
+                sb.AppendLine();
+                sb.AppendLine("| Category | Cards |");
+                sb.AppendLine("| :--- | :--- |");
+
+                foreach (string category in CategoryOrder)
+                {
+                    if (!bench.LandsByCategory.TryGetValue(category, out int landCount) || landCount == 0)
+                    {
+                        continue;
+                    }
+
+                    sb.AppendLine($"| {ColorCategoryClassifier.Display(category)} | {landCount} |");
+                }
+
+                sb.AppendLine();
+            }
+
+            IEnumerable<KeyValuePair<CardEffect, int>> effectRows = bench.EffectCounts
+                .Where(kvp => kvp.Value > 0)
+                .OrderByDescending(kvp => kvp.Value)
+                .ThenBy(kvp => (int)kvp.Key)
+                .ToList();
+
+            if (!effectRows.Any())
+            {
+                return;
+            }
+
+            sb.AppendLine("### Available by Effect");
+            sb.AppendLine();
+            sb.AppendLine("| Effect | Cards | % of Bench Non-Land |");
+            sb.AppendLine("| :--- | :--- | :--- |");
+
+            foreach (var (effect, count) in effectRows)
+            {
+                sb.AppendLine($"| {effect} | {count} | {GetPercentage(count, bench.TotalCards)}% |");
             }
 
             sb.AppendLine();

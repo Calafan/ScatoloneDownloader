@@ -274,7 +274,12 @@ Notes:
   reason D7 exists: the browse tree must stay the curated pool. Use it when the
   analysis report exposes a hole — a top-heavy curve, a color short on removal —
   and you want to see what is available to promote back: open the color, the
-  macro type, the effect you are missing, then the cost bucket.
+  macro type, the effect you are missing, then the cost bucket. `Cubo_Analysis.md`
+  closes the loop from the other side: its **section 6, Bench Availability**,
+  counts the same rating-`2` cards by color and cost bucket, by effect, and (for
+  lands) by color identity, so the report that shows the hole also shows what is
+  on hand to fill it. That section counts toward no metric in sections 1-5 and is
+  omitted entirely when nothing is rated `2`.
 - **Both `1_Deep_*` variants are generated** (`P7`) so the two level orderings
   (effect-first vs. rating-first) can be compared in daily use; keep whichever
   turns out more useful, delete the other's shortcut in your file browser.
