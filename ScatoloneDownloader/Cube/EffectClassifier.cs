@@ -72,11 +72,11 @@ namespace ScatoloneDownloader.Cube
                 Rx(@"untap target creature[\w ]*gain control")]),
 
             // "a card" (Demonic) or a typed non-land card (creature/instant/...);
-            // deliberately NOT land searches, which are Ramp/Fixing, not Tutor.
+            // deliberately NOT land searches, which are Ramp/ManaFixing, not Tutor.
             (CardEffect.Tutor, [Rx(@"search your library for an? card"),
                 Rx(@"search your library for[\w ]*(creature|instant|sorcery|artifact|enchantment|planeswalker) card")]),
 
-            (CardEffect.Fixing, [Rx(@"add one mana of any color"), Rx(@"mana of any (one )?color"),
+            (CardEffect.ManaFixing, [Rx(@"add one mana of any color"), Rx(@"mana of any (one )?color"),
                 Rx(@"add \{[wubrg]\} or \{[wubrg]\}"), Rx(@"add \{[wubrg]\}, \{[wubrg]\}")]),
 
             // Mana ability (dork/rock) or a land-fetch to the battlefield. Lands
@@ -135,7 +135,7 @@ namespace ScatoloneDownloader.Cube
             }
 
             // A land tapping for its own mana is not Ramp (it is just a land —
-            // structural, tracked by MacroType). Its Fixing, if any, still stands.
+            // structural, tracked by MacroType). Its ManaFixing, if any, still stands.
             if (card.MacroType == MacroType.Land)
             {
                 result &= ~CardEffect.Ramp;

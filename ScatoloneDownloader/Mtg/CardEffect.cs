@@ -34,7 +34,7 @@ namespace ScatoloneDownloader.Mtg
         Sacrifice       = 1 << 15,
         Steal           = 1 << 16,   // threaten / act of treason / control magic (temporary or permanent control theft)
         Tutor           = 1 << 17,   // search library for a card (Demonic Tutor, Green Sun's Zenith, creature fetch) — selection/consistency, not raw card advantage
-        Fixing          = 1 << 18,   // mana colour fixing (dual/fetch lands, multicolour rocks) — distinct from Ramp; a card can be both
+        ManaFixing      = 1 << 18,   // mana colour fixing (dual/fetch lands, multicolour rocks) — distinct from Ramp; a card can be both. Named in full: bare "Fixing" read as "fixing what?" (mana or hand), and the tagger shows this name verbatim. Old "Fixing" tags still parse via the alias table.
         Pacify          = 1 << 19,   // soft/pseudo removal: neutralise a creature without destroying it (tap-lock/Icy Manipulator, Pacifism/Arrest, detain)
     }
 }

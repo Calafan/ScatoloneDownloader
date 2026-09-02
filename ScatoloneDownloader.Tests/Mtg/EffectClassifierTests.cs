@@ -41,22 +41,22 @@ public sealed class EffectClassifierTests
     }
 
     [Fact]
-    public void Classify_BirdsOfParadise_RampAndFixing()
+    public void Classify_BirdsOfParadise_RampAndManaFixing()
     {
         Card card = MakeCard("Birds of Paradise", "Creature — Bird", "Flying\n{T}: Add one mana of any color.", keywords: ["Flying"]);
 
-        Assert.Equal(CardEffect.Ramp | CardEffect.Fixing, EffectClassifier.Classify(card));
+        Assert.Equal(CardEffect.Ramp | CardEffect.ManaFixing, EffectClassifier.Classify(card));
     }
 
     [Fact]
-    public void Classify_DualLand_IsFixing_NotRamp()
+    public void Classify_DualLand_IsManaFixing_NotRamp()
     {
-        // A land tapping for its own (fixing) mana must be Fixing but NOT Ramp.
+        // A land tapping for its own (fixing) mana must be ManaFixing but NOT Ramp.
         Card card = MakeCard("Tundra", "Land", "{T}: Add {W} or {U}.");
 
         CardEffect result = EffectClassifier.Classify(card);
 
-        Assert.True(result.HasFlag(CardEffect.Fixing));
+        Assert.True(result.HasFlag(CardEffect.ManaFixing));
         Assert.False(result.HasFlag(CardEffect.Ramp));
     }
 

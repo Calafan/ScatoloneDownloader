@@ -26,9 +26,10 @@ public sealed class EffectResolverTests
     [InlineData("Tutor", CardEffect.Tutor)]
     [InlineData("search library", CardEffect.Tutor)]
     [InlineData("search your library", CardEffect.Tutor)]
-    [InlineData("Fixing", CardEffect.Fixing)]
-    [InlineData("mana fixing", CardEffect.Fixing)]
-    [InlineData("colour fixing", CardEffect.Fixing)]
+    [InlineData("ManaFixing", CardEffect.ManaFixing)]
+    [InlineData("Fixing", CardEffect.ManaFixing)]       // pre-rename canonical name
+    [InlineData("mana fixing", CardEffect.ManaFixing)]
+    [InlineData("colour fixing", CardEffect.ManaFixing)]
     [InlineData("Pacify", CardEffect.Pacify)]
     [InlineData("pacifism", CardEffect.Pacify)]
     [InlineData("arrest", CardEffect.Pacify)]
@@ -59,6 +60,17 @@ public sealed class EffectResolverTests
         CardEffect result = EffectResolver.Parse(["Ramp", "not-real", "threaten"]);
 
         Assert.Equal(CardEffect.Ramp | CardEffect.Steal, result);
+    }
+
+    [Fact]
+    public void ToNames_ManaFixing_SerializesUnderItsNewCanonicalName()
+    {
+        // The rename is what the tagger and the tier files show; the old "Fixing"
+        // spelling must survive on READ only, never come back on write.
+        Assert.Equal(["ManaFixing"], EffectResolver.ToNames(CardEffect.ManaFixing));
+        Assert.Equal(
+            CardEffect.ManaFixing,
+            EffectResolver.Parse(EffectResolver.ToNames(EffectResolver.Parse(["Fixing"]))));
     }
 
     [Fact]

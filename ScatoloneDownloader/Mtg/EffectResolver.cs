@@ -41,9 +41,12 @@ namespace ScatoloneDownloader.Mtg
             ["mind control"]                = CardEffect.Steal,
             ["search library"]              = CardEffect.Tutor,
             ["search your library"]         = CardEffect.Tutor,
-            ["mana fixing"]                 = CardEffect.Fixing,
-            ["color fixing"]                = CardEffect.Fixing,
-            ["colour fixing"]               = CardEffect.Fixing,
+            // "Fixing" was the canonical name before the rename to ManaFixing;
+            // keep it parsing so tier files written earlier still resolve.
+            ["fixing"]                      = CardEffect.ManaFixing,
+            ["mana fixing"]                 = CardEffect.ManaFixing,
+            ["color fixing"]                = CardEffect.ManaFixing,
+            ["colour fixing"]               = CardEffect.ManaFixing,
             ["pacifism"]                    = CardEffect.Pacify,
             ["arrest"]                      = CardEffect.Pacify,
             ["detain"]                      = CardEffect.Pacify,
