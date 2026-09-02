@@ -29,6 +29,8 @@ namespace ScatoloneDownloader.Cli.Cube
             [Description("Source folder containing the physical master files (.png) with XMP metadata.")]
             public string SourceDirectory { get; set; }
 
+            internal override string MasterDirectory => SourceDirectory;
+
             [CommandOption("--overwrite")]
             [Description("Refresh label (and a REAL, non-zero XMP rating) on entries that already exist; off by default (XMP only fills entries that have none yet). Never demotes a stored rating to 0 and never repoints scryfallId unless it is empty.")]
             public bool Overwrite { get; set; }
@@ -44,6 +46,9 @@ namespace ScatoloneDownloader.Cli.Cube
 
             string masterDir = Path.GetFullPath(settings.SourceDirectory);
             string metadataDir = settings.ResolveDirectory();
+
+            AnsiConsole.MarkupLineInterpolated($"[cyan]Master folder:[/] {masterDir}");
+            AnsiConsole.MarkupLineInterpolated($"[cyan]Metadata     :[/] {metadataDir}");
 
             string[] pngFiles = Directory.GetFiles(masterDir, "*.png", SearchOption.AllDirectories);
             if (pngFiles.Length == 0)

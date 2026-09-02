@@ -80,8 +80,16 @@ rewrites that whole ~26k-entry file once. But the common case — editing a card
 already in the pool — now rewrites only the small `pool.json`, so working
 through the pool no longer pays the backlog's cost on every keystroke.
 
-All four commands below take `-m|--metadata <DIR>` for this directory,
-defaulting to `./metadata`.
+All four commands below take `-m|--metadata <DIR>` for this directory. Omitted,
+it defaults to a `metadata` folder **beside the master library** — the sibling of
+`SOURCE_DIR`, the same rule `build-views` uses to place `Views/` — so the store
+travels with the images it describes rather than following whatever directory
+the command was launched from. `classify`, `make-list` and `restore` take no
+`SOURCE_DIR`, so they have nothing to sit beside and fall back to `./metadata`;
+each prints the directory it resolved before touching it, so a mismatch with the
+importing command shows up on the first line instead of as a mysteriously empty
+store. Pass `-m` explicitly to those three whenever the master library is not a
+sibling of the working directory.
 
 ## Command lifecycle
 

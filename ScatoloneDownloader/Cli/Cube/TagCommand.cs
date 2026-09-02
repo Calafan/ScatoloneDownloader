@@ -37,6 +37,8 @@ namespace ScatoloneDownloader.Cli.Cube
             [Description("Source folder containing the physical master files (.png).")]
             public string SourceDirectory { get; set; }
 
+            internal override string MasterDirectory => SourceDirectory;
+
             [CommandOption("-p|--port")]
             [Description("Local port for the tagger web server. Default 8765.")]
             public int Port { get; set; } = 8765;

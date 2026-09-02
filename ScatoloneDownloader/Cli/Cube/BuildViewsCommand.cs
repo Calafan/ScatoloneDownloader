@@ -30,6 +30,8 @@ namespace ScatoloneDownloader.Cli.Cube
             [Description("Source folder containing the physical master files (.png).")]
             public string SourceDirectory { get; set; }
 
+            internal override string MasterDirectory => SourceDirectory;
+
             [CommandOption("-v|--views")]
             [Description("Destination folder for the generated views.")]
             public string ViewsDirectory { get; set; }

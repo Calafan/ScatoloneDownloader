@@ -105,8 +105,13 @@ non ancora valutata) — così il file da editare a mano resta piccolo anche con
 | `make-list -o <FILE>` | Genera (offline) una lista di download per il comando `files` con il solo pool (rating 3-5); i card con status finiscono in sezioni `-- Banned`/`-- Token`/`-- Jolly` così `files` li smista in sotto-cartelle | `ScatoloneDownloader make-list -m metadata -o pool.txt` |
 | `classify` | Auto-propone gli effetti dal testo regole Scryfall dentro `metadata/` (solo suggerimenti: scrive `effects` ma non marca `reviewedAt`, non tocca le carte già revisionate; confermali nel tagger) | `ScatoloneDownloader classify -m metadata --dry-run` |
 
-Tutti accettano `-m, --metadata <DIR>` per la cartella dei metadati
-(default: `./metadata`).
+Tutti accettano `-m, --metadata <DIR>` per la cartella dei metadati. Se omesso,
+il default e una cartella `metadata` **accanto alla libreria master** (la sorella
+di `SOURCE_DIR`, stessa regola con cui `build-views` colloca `Views/`), cosi i
+metadati stanno vicino alle immagini che descrivono invece di seguire la
+directory da cui lanci il comando. `classify`, `make-list` e `restore` non
+ricevono `SOURCE_DIR`: non hanno un master accanto a cui stare e ricadono su
+`./metadata`, stampando all'avvio il percorso risolto.
 
 ## Struttura dell'output
 

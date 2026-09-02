@@ -49,6 +49,8 @@ namespace ScatoloneDownloader.Cli.Cube
         {
             string metadataDir = settings.ResolveDirectory();
 
+            AnsiConsole.MarkupLineInterpolated($"[cyan]Metadata:[/] {metadataDir}");
+
             CubeMetadata metadata = CubeMetadataStore.Load(metadataDir);
 
             List<CardMetadataEntry> pool = metadata.Cards.Values
