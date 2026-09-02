@@ -254,7 +254,13 @@ namespace ScatoloneDownloader.Cli.Cube
                 entry.Rating = card.Rating;
             }
 
-            if (string.IsNullOrEmpty(entry.Status))
+            // Default-fill the status from the Bridge color label, but only for an
+            // entry no human has reviewed. `StatusResolver.ToName(None)` is null, so
+            // "explicitly cleared to None in the tagger" and "never set" look
+            // identical on disk; without the reviewedAt gate, a card demoted from
+            // Banned back to None would be re-banned by the still-red XMP label on
+            // the next import — silently undoing tagger work.
+            if (string.IsNullOrEmpty(entry.Status) && entry.ReviewedAt == null)
             {
                 CardStatus defaultStatus = StatusResolver.FromXmpLabel(card.XmpLabel);
                 if (defaultStatus != CardStatus.None)

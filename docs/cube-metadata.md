@@ -113,10 +113,18 @@ sibling of the working directory.
    the rating and color label Adobe Bridge already wrote into each PNG's XMP
    and migrates them into the metadata directory. This is the **only**
    command that still reads XMP. By default it only fills entries that don't
-   have a rating/label yet (`--overwrite` forces the XMP value in). `Status`,
-   `Effects`, and `ReviewedAt` are never touched by `import` — those belong
-   to the tagger. Run it once when adopting this workflow on an existing
-   Bridge-rated cube; rarely needed again afterwards.
+   have a rating/label yet (`--overwrite` forces the XMP value in). `Effects`
+   and `ReviewedAt` are never touched by `import` — those belong to the tagger.
+   `Status` is only ever *default-filled* from the Bridge color label
+   (Red/Yellow/Green → Banned/Token/Jolly), never overwritten, and only on an
+   entry with no `reviewedAt`: a human who cleared a card back to `None` in the
+   tagger writes `null` there, which on disk is indistinguishable from "never
+   set", so without that gate a still-red PNG would silently re-ban the card on
+   the next import. Run it once when adopting this workflow on an existing
+   Bridge-rated cube; rarely needed again afterwards — and don't run it while
+   the tagger is open, since the tagger holds the pre-import snapshot in memory
+   and would write it back on the next keystroke. Restart `tag` after an
+   `import`.
 2. **`tag <SOURCE_DIR> [-m metadata] [-p port]`** — the authoring tool going
    forward. Launches a local web UI (keyboard-driven, one card at a time) to
    set rating (0-5), status (None/Banned/Token/Jolly), and effect tags. Every

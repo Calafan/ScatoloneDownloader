@@ -106,6 +106,40 @@ public sealed class ImportCommandTests
         Assert.Equal("Banned", entry.Status);
     }
 
+    [Fact]
+    public void ApplyImportSeed_ReviewedEntryClearedToNone_IsNotReBannedByXmpLabel()
+    {
+        // A human demoted this card from Banned back to None in the tagger.
+        // StatusResolver.ToName(None) is null, so on disk that is indistinguishable
+        // from "never set" — only reviewedAt says a human decided it. The red
+        // Bridge label must not silently re-apply Banned on the next import.
+        CardMetadataEntry entry = new()
+        {
+            Name = "Bolt",
+            Rating = 5,
+            Status = null,
+            ReviewedAt = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
+        };
+        Card card = MakeCard(oracleId: "o1", id: "printing-1", name: "Bolt", rating: 5, xmpLabel: "Red");
+
+        ImportCommand.ApplyImportSeed(entry, card, isNew: false, overwrite: true);
+
+        Assert.Null(entry.Status);
+    }
+
+    [Fact]
+    public void ApplyImportSeed_UnreviewedEntry_StillDefaultFillsStatusFromXmpLabel()
+    {
+        // The seed path the gate must not break: nobody has reviewed this entry,
+        // so the Bridge color label still gets to propose the status.
+        CardMetadataEntry entry = new() { Name = "Bolt", Rating = 5, Status = null, ReviewedAt = null };
+        Card card = MakeCard(oracleId: "o1", id: "printing-1", name: "Bolt", rating: 5, xmpLabel: "Red");
+
+        ImportCommand.ApplyImportSeed(entry, card, isNew: false, overwrite: false);
+
+        Assert.Equal("Banned", entry.Status);
+    }
+
     // --- ReduceByOracle: reprint collapsing (#8) -----------------------------
 
     [Fact]
