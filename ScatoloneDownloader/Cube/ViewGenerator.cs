@@ -35,7 +35,7 @@ namespace ScatoloneDownloader.Cube
         /// </summary>
         internal static void GenerateViews(IEnumerable<(Card Card, string FilePath)> cardFiles, string viewsRootDirectory)
         {
-            var fileList = cardFiles as IList<(Card Card, string FilePath)> ?? cardFiles.ToList();
+            IList<(Card Card, string FilePath)> fileList = cardFiles as IList<(Card Card, string FilePath)> ?? cardFiles.ToList();
             int totalFiles = fileList.Count;
 
             // Nothing to link — do not even touch (let alone delete) the views root.
@@ -47,7 +47,7 @@ namespace ScatoloneDownloader.Cube
             // adds a stronger master-vs-views overlap check with both paths in hand;
             // this catches any direct caller / views-root-is-master mistake.)
             string viewsFull = WithSeparator(Path.GetFullPath(viewsRootDirectory));
-            foreach (var (_, sourcePath) in fileList)
+            foreach ((Card _, string sourcePath) in fileList)
             {
                 if (Path.GetFullPath(sourcePath).StartsWith(viewsFull, StringComparison.OrdinalIgnoreCase))
                 {
@@ -76,20 +76,20 @@ namespace ScatoloneDownloader.Cube
             AnsiConsole.Progress()
                 .AutoClear(false)
                 .HideCompleted(false)
-                .Columns(new ProgressColumn[]
-                {
+                .Columns(
+                [
                     new TaskDescriptionColumn(),    // Shows both the text and the numeric counter
                     new ProgressBarColumn(),        // Visual completion bar
                     new PercentageColumn(),         // Percentage %
                     new SpinnerColumn(),            // Animated spinner
-                })
+                ])
                 .Start(ctx =>
                 {
                     // Initialize the task with the counter at 0.
-                    var task = ctx.AddTask(
+                    ProgressTask task = ctx.AddTask(
                         $"[yellow]Generating views... {ProgressLabel.Counter(0, totalFiles)}[/]", maxValue: totalFiles);
 
-                    foreach (var (card, sourcePath) in fileList)
+                    foreach ((Card card, string sourcePath) in fileList)
                     {
                         // Dynamically update the description to show exact progress.
                         task.Description = $"[yellow]Generating views... [cyan]{ProgressLabel.Counter(task.Value, totalFiles)}[/][/]";

@@ -114,15 +114,15 @@ public sealed class ImportCommandTests
         // Reprints share ONE Card object (bulk is keyed by name). File A carries
         // rating 5, file B carries rating 0; last-file-wins would seed 0.
         Card shared = MakeCard(oracleId: "o1", id: "p1", name: "Bolt", rating: 0, xmpLabel: "");
-        var perFile = new List<(Card, string, int, string)>
-        {
+        List<(Card, string, int, string)> perFile =
+        [
             (shared, "A.png", 5, "Green"),
             (shared, "B.png", 0, ""),
-        };
+        ];
 
         List<(Card Card, string FilePath)> result = ImportCommand.ReduceByOracle(perFile);
 
-        var reduced = Assert.Single(result);
+        (Card Card, string FilePath) reduced = Assert.Single(result);
         Assert.Equal(5, reduced.Card.Rating);          // strongest evaluation kept
         Assert.Equal("Green", reduced.Card.XmpLabel);
     }
@@ -131,15 +131,15 @@ public sealed class ImportCommandTests
     public void ReduceByOracle_TieOnRating_PrefersFileWithLabel()
     {
         Card shared = MakeCard(oracleId: "o1", id: "p1", name: "Bolt", rating: 0, xmpLabel: "");
-        var perFile = new List<(Card, string, int, string)>
-        {
+        List<(Card, string, int, string)> perFile =
+        [
             (shared, "A.png", 3, ""),
             (shared, "B.png", 3, "Red"),
-        };
+        ];
 
         List<(Card Card, string FilePath)> result = ImportCommand.ReduceByOracle(perFile);
 
-        var reduced = Assert.Single(result);
+        (Card Card, string FilePath) reduced = Assert.Single(result);
         Assert.Equal(3, reduced.Card.Rating);
         Assert.Equal("Red", reduced.Card.XmpLabel);
     }
@@ -149,11 +149,11 @@ public sealed class ImportCommandTests
     {
         Card a = MakeCard(oracleId: "o1", id: "p1", name: "Bolt", rating: 5, xmpLabel: "");
         Card b = MakeCard(oracleId: "o2", id: "p2", name: "Counterspell", rating: 4, xmpLabel: "");
-        var perFile = new List<(Card, string, int, string)>
-        {
+        List<(Card, string, int, string)> perFile =
+        [
             (a, "A.png", 5, ""),
             (b, "B.png", 4, ""),
-        };
+        ];
 
         List<(Card Card, string FilePath)> result = ImportCommand.ReduceByOracle(perFile);
 
@@ -167,11 +167,11 @@ public sealed class ImportCommandTests
         // survive (they are skipped later when the entry is written).
         Card a = MakeCard(oracleId: "", id: "p1", name: "Token A", rating: 0, xmpLabel: "");
         Card b = MakeCard(oracleId: "", id: "p2", name: "Token B", rating: 0, xmpLabel: "");
-        var perFile = new List<(Card, string, int, string)>
-        {
+        List<(Card, string, int, string)> perFile =
+        [
             (a, "A.png", 2, ""),
             (b, "B.png", 3, ""),
-        };
+        ];
 
         List<(Card Card, string FilePath)> result = ImportCommand.ReduceByOracle(perFile);
 

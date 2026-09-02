@@ -116,9 +116,9 @@ namespace ScatoloneDownloader.Mtg
             Dictionary<int, int> globalCmc = [];
             for (int i = 0; i <= 6; i++) globalCmc[i] = 0;
 
-            foreach (var macroCurve in report.CurveByMacroType.Values)
+            foreach (Dictionary<int, int> macroCurve in report.CurveByMacroType.Values)
             {
-                foreach (var (cmc, count) in macroCurve)
+                foreach ((int cmc, int count) in macroCurve)
                 {
                     int bucket = cmc >= 6 ? 6 : cmc;
                     globalCmc[bucket] += count;
@@ -198,7 +198,7 @@ namespace ScatoloneDownloader.Mtg
             sb.AppendLine("## 4. Category Analysis (Excluding Lands)");
             sb.AppendLine();
 
-            var groups = new Dictionary<string, string[]>()
+            Dictionary<string, string[]> groups = new()
             {
                 { "### Monocolor", ["W", "U", "B", "R", "G"] },
                 { "### Guilds (2-Color)", ["WU", "UB", "BR", "RG", "GW", "WB", "UR", "BG", "RW", "GU"] },
@@ -206,7 +206,7 @@ namespace ScatoloneDownloader.Mtg
                 { "### 4-5 Colors & Colorless", ["4_5_Colors", "Colorless"] }
             };
 
-            foreach (var group in groups)
+            foreach (KeyValuePair<string, string[]> group in groups)
             {
                 bool hasCardsInGroup = group.Value.Any(cat => report.ColorCategoryCounts.TryGetValue(cat, out int c) && c > 0);
                 if (!hasCardsInGroup) continue;
@@ -270,7 +270,7 @@ namespace ScatoloneDownloader.Mtg
                 .OrderByDescending(kvp => kvp.Value)
                 .ThenBy(kvp => (int)kvp.Key);
 
-            foreach (var (effect, count) in rows)
+            foreach ((CardEffect effect, int count) in rows)
             {
                 sb.AppendLine($"| {effect} | {count} | {GetPercentage(count, report.TotalCards)}% |");
             }
@@ -373,7 +373,7 @@ namespace ScatoloneDownloader.Mtg
             sb.AppendLine("| Effect | Cards | % of Bench Non-Land |");
             sb.AppendLine("| :--- | :--- | :--- |");
 
-            foreach (var (effect, count) in effectRows)
+            foreach ((CardEffect effect, int count) in effectRows)
             {
                 sb.AppendLine($"| {effect} | {count} | {GetPercentage(count, bench.TotalCards)}% |");
             }
@@ -386,13 +386,13 @@ namespace ScatoloneDownloader.Mtg
             Dictionary<int, int> buckets = [];
             for (int i = 0; i <= 6; i++) buckets[i] = 0;
 
-            foreach (var (cmc, count) in rawCmc)
+            foreach ((double cmc, int count) in rawCmc)
             {
                 int bucket = cmc >= 6 ? 6 : (int)cmc;
                 buckets[bucket] += count;
             }
 
-            var parts = buckets.OrderBy(k => k.Key)
+            IEnumerable<string> parts = buckets.OrderBy(k => k.Key)
                 .Select(kvp => kvp.Key == 6 ? $"`6+: {kvp.Value}`" : $"`{kvp.Key}: {kvp.Value}`");
 
             return string.Join(" ", parts);
@@ -441,7 +441,7 @@ namespace ScatoloneDownloader.Mtg
             foreach (Card c in nonLands)
             {
                 if (c.Rating < 3) continue;
-                var key = (c.ColorCategory, c.Rating);
+                (string ColorCategory, int Rating) key = (c.ColorCategory, c.Rating);
                 ratingTiers.TryGetValue(key, out int cur);
                 ratingTiers[key] = cur + 1;
             }
@@ -456,7 +456,7 @@ namespace ScatoloneDownloader.Mtg
             foreach (Card c in nonLands)
             {
                 int bucket = c.Cmc >= 6 ? 6 : (int)c.Cmc;
-                if (!curveByMacroType.TryGetValue(c.MacroType, out var macro))
+                if (!curveByMacroType.TryGetValue(c.MacroType, out Dictionary<int, int> macro))
                 {
                     macro = [];
                     curveByMacroType[c.MacroType] = macro;
@@ -471,7 +471,7 @@ namespace ScatoloneDownloader.Mtg
             Dictionary<string, double> avgCmcByCat = [];
             Dictionary<string, double> avgCreatureCmcByCat = [];
 
-            foreach (var g in nonLands.GroupBy(c => c.ColorCategory))
+            foreach (IGrouping<string, Card> g in nonLands.GroupBy(c => c.ColorCategory))
             {
                 Dictionary<MacroType, int> typeCounts = new()
                 {
@@ -553,7 +553,7 @@ namespace ScatoloneDownloader.Mtg
             double avgCmc = total > 0 ? totalManaCost / total : 0;
 
             Dictionary<string, double> pipPerCat = [];
-            foreach (var g in nonLands.GroupBy(c => c.ColorCategory))
+            foreach (IGrouping<string, Card> g in nonLands.GroupBy(c => c.ColorCategory))
             {
                 int cnt = g.Count();
                 if (cnt > 0)
@@ -579,9 +579,9 @@ namespace ScatoloneDownloader.Mtg
 
                 foreach (string color in c.ColorIdentity)
                 {
-                    if (individualColors.ContainsKey(color))
+                    if (individualColors.TryGetValue(color, out int value))
                     {
-                        individualColors[color]++;
+                        individualColors[color] = ++value;
                     }
                 }
             }

@@ -61,7 +61,7 @@ namespace ScatoloneDownloader.Cli.Cube
             {
                 List<Card> allCards = await manager.GetDefaultCards();
 
-                Dictionary<string, Card> cardsByOracleId = new();
+                Dictionary<string, Card> cardsByOracleId = [];
                 foreach (Card card in allCards)
                 {
                     if (!string.IsNullOrEmpty(card.OracleId))

@@ -81,7 +81,7 @@ namespace ScatoloneDownloader.Cli.Cube
             int added = 0;
             int updated = 0;
 
-            foreach (var (card, _) in matched)
+            foreach ((Card card, string _) in matched)
             {
                 if (string.IsNullOrEmpty(card.OracleId))
                 {
@@ -126,20 +126,20 @@ namespace ScatoloneDownloader.Cli.Cube
             AnsiConsole.Progress()
                 .AutoClear(false)
                 .HideCompleted(false)
-                .Columns(new ProgressColumn[]
-                {
+                .Columns(
+                [
                     new TaskDescriptionColumn(),
                     new ProgressBarColumn(),
                     new PercentageColumn(),
                     new SpinnerColumn(),
-                })
+                ])
                 .Start(ctx =>
                 {
                     ProgressTask task = ctx.AddTask(
                         $"[yellow]Reading XMP rating/label... {ProgressLabel.Counter(0, matched.Count)}[/]",
                         maxValue: matched.Count);
 
-                    foreach (var (card, filePath) in matched)
+                    foreach ((Card card, string filePath) in matched)
                     {
                         task.Description = $"[yellow]Reading XMP rating/label... [cyan]{ProgressLabel.Counter(task.Value, matched.Count)}[/][/]";
 
@@ -175,10 +175,10 @@ namespace ScatoloneDownloader.Cli.Cube
         internal static List<(Card Card, string FilePath)> ReduceByOracle(
             IEnumerable<(Card Card, string FilePath, int Rating, string Label)> perFile)
         {
-            Dictionary<string, (Card Card, string FilePath, int Rating, string Label)> best = new();
+            Dictionary<string, (Card Card, string FilePath, int Rating, string Label)> best = [];
             List<(Card Card, string FilePath)> passthrough = [];
 
-            foreach (var (card, filePath, rating, label) in perFile)
+            foreach ((Card card, string filePath, int rating, string label) in perFile)
             {
                 string safeLabel = label ?? string.Empty;
 
@@ -190,7 +190,7 @@ namespace ScatoloneDownloader.Cli.Cube
                     continue;
                 }
 
-                bool better = !best.TryGetValue(card.OracleId, out var current)
+                bool better = !best.TryGetValue(card.OracleId, out (Card Card, string FilePath, int Rating, string Label) current)
                     || rating > current.Rating
                     || (rating == current.Rating
                         && string.IsNullOrEmpty(current.Label)
@@ -203,7 +203,7 @@ namespace ScatoloneDownloader.Cli.Cube
             }
 
             List<(Card Card, string FilePath)> result = [];
-            foreach (var (card, filePath, rating, label) in best.Values)
+            foreach ((Card card, string filePath, int rating, string label) in best.Values)
             {
                 card.Rating = rating;
                 card.XmpLabel = label;

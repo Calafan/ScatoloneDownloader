@@ -415,7 +415,7 @@ public sealed class CubeMetadataStoreTests : IDisposable
         Directory.CreateDirectory(tempDir);
 
         CubeMetadata data = new();
-        foreach (var (oracleId, entry) in entries)
+        foreach ((string? oracleId, CardMetadataEntry? entry) in entries)
         {
             data.Cards[oracleId] = entry;
         }

@@ -48,7 +48,7 @@ public sealed class ViewGeneratorTests : IDisposable
     [Fact]
     public void GenerateViews_Rating1_ExcludedFromEveryRoot()
     {
-        var (card, filePath) = MakeCardFile("Excluded Bear", rating: 1);
+        (Card? card, string? filePath) = MakeCardFile("Excluded Bear", rating: 1);
 
         ViewGenerator.GenerateViews([(card, filePath)], viewsDir);
 
@@ -59,7 +59,7 @@ public sealed class ViewGeneratorTests : IDisposable
     [Fact]
     public void GenerateViews_Rating2_GoesToBenchRecoveryRoot_Only()
     {
-        var (card, filePath) = MakeCardFile(
+        (Card? card, string? filePath) = MakeCardFile(
             "Bench Bear", rating: 2, colorIdentity: ["G"], typeLine: "Creature — Bear", cmc: 2,
             effects: CardEffect.Ramp);
 
@@ -79,7 +79,7 @@ public sealed class ViewGeneratorTests : IDisposable
     [Fact]
     public void GenerateViews_Rating2_MultiEffect_MultiLinksTheBenchRoot()
     {
-        var (card, filePath) = MakeCardFile(
+        (Card? card, string? filePath) = MakeCardFile(
             "Bench Utility", rating: 2, colorIdentity: ["W", "U"], typeLine: "Instant", cmc: 7,
             effects: CardEffect.Removal | CardEffect.Counter);
 
@@ -94,7 +94,7 @@ public sealed class ViewGeneratorTests : IDisposable
     [Fact]
     public void GenerateViews_Rating2_NoEffect_UsesUntaggedInBenchRoot()
     {
-        var (card, filePath) = MakeCardFile("Bench Vanilla", rating: 2, colorIdentity: ["G"], typeLine: "Creature — Bear", cmc: 3);
+        (Card? card, string? filePath) = MakeCardFile("Bench Vanilla", rating: 2, colorIdentity: ["G"], typeLine: "Creature — Bear", cmc: 3);
 
         ViewGenerator.GenerateViews([(card, filePath)], viewsDir);
 
@@ -105,7 +105,7 @@ public sealed class ViewGeneratorTests : IDisposable
     public void GenerateViews_Rating0_GoesToUnratedByYearAndSet_Only()
     {
         // Default MakeCardFile releasedAt/setName are "1993-08-05" / "Alpha".
-        var (card, filePath) = MakeCardFile("Unrated Bear", rating: 0, colorIdentity: ["G"], typeLine: "Creature — Bear");
+        (Card? card, string? filePath) = MakeCardFile("Unrated Bear", rating: 0, colorIdentity: ["G"], typeLine: "Creature — Bear");
 
         ViewGenerator.GenerateViews([(card, filePath)], viewsDir);
 
@@ -122,8 +122,8 @@ public sealed class ViewGeneratorTests : IDisposable
     [Fact]
     public void GenerateViews_Rating0_DifferentYearsAndSets_LandInDifferentUnratedBuckets()
     {
-        var (oldCard, oldPath) = MakeCardFile("Old Bear", rating: 0, releasedAt: "1994-04-01", setName: "The Dark");
-        var (newCard, newPath) = MakeCardFile("New Bear", rating: 0, releasedAt: "2026-03-01", setName: "Some Future Set");
+        (Card? oldCard, string? oldPath) = MakeCardFile("Old Bear", rating: 0, releasedAt: "1994-04-01", setName: "The Dark");
+        (Card? newCard, string? newPath) = MakeCardFile("New Bear", rating: 0, releasedAt: "2026-03-01", setName: "Some Future Set");
 
         ViewGenerator.GenerateViews([(oldCard, oldPath), (newCard, newPath)], viewsDir);
 
@@ -134,7 +134,7 @@ public sealed class ViewGeneratorTests : IDisposable
     [Fact]
     public void GenerateViews_Rating0_SetNameWithForbiddenCharacters_IsSanitized()
     {
-        var (card, filePath) = MakeCardFile("Wasteland Bear", rating: 0, releasedAt: "2024-03-08", setName: "Fallout: Wasteland");
+        (Card? card, string? filePath) = MakeCardFile("Wasteland Bear", rating: 0, releasedAt: "2024-03-08", setName: "Fallout: Wasteland");
 
         ViewGenerator.GenerateViews([(card, filePath)], viewsDir);
 
@@ -149,7 +149,7 @@ public sealed class ViewGeneratorTests : IDisposable
     [InlineData(CardStatus.Jolly, "0_Jolly")]
     public void GenerateViews_StatusCard_GoesToSingleFlatTagFolder_Only(CardStatus status, string folder)
     {
-        var (card, filePath) = MakeCardFile("Status Card", rating: 4, status: status, colorIdentity: ["G"], typeLine: "Creature — Bear");
+        (Card? card, string? filePath) = MakeCardFile("Status Card", rating: 4, status: status, colorIdentity: ["G"], typeLine: "Creature — Bear");
 
         ViewGenerator.GenerateViews([(card, filePath)], viewsDir);
 
@@ -172,7 +172,7 @@ public sealed class ViewGeneratorTests : IDisposable
         // Status is checked before the rating rules, so a tagged card lands in its
         // flat folder whether the rating would have excluded it (1, per D7) or
         // routed it to the bench (2).
-        var (card, filePath) = MakeCardFile("Banned Weakling", rating: rating, status: CardStatus.Banned);
+        (Card? card, string? filePath) = MakeCardFile("Banned Weakling", rating: rating, status: CardStatus.Banned);
 
         ViewGenerator.GenerateViews([(card, filePath)], viewsDir);
 
@@ -182,7 +182,7 @@ public sealed class ViewGeneratorTests : IDisposable
     [Fact]
     public void GenerateViews_RatedNoEffect_UsesUntaggedInDeepViews()
     {
-        var (card, filePath) = MakeCardFile("Vanilla Bear", rating: 4, colorIdentity: ["G"], typeLine: "Creature — Bear", cmc: 3);
+        (Card? card, string? filePath) = MakeCardFile("Vanilla Bear", rating: 4, colorIdentity: ["G"], typeLine: "Creature — Bear", cmc: 3);
 
         ViewGenerator.GenerateViews([(card, filePath)], viewsDir);
 
@@ -194,7 +194,7 @@ public sealed class ViewGeneratorTests : IDisposable
     [Fact]
     public void GenerateViews_RatedMultiEffect_MultiLinksEveryRootByEffect()
     {
-        var (card, filePath) = MakeCardFile(
+        (Card? card, string? filePath) = MakeCardFile(
             "Multi Effect Bear", rating: 5, colorIdentity: ["G"], typeLine: "Creature — Bear", cmc: 2,
             effects: CardEffect.Ramp | CardEffect.Buff);
 

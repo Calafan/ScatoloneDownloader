@@ -21,12 +21,12 @@ public sealed class CardImageMatcherTests
     public void Match_ByNormalizedName_ReturnsCardWithItsFile()
     {
         Card bolt = MakeCard(id: "p1", name: "Lightning Bolt");
-        var cards = new[] { bolt };
-        var files = new[] { @"C:\master\1993\Alpha\Lightning Bolt.png" };
+        Card[] cards = [bolt];
+        string[] files = [@"C:\master\1993\Alpha\Lightning Bolt.png"];
 
         List<(Card Card, string FilePath)> matched = CardImageMatcher.Match(cards, files, warnUnmatched: false);
 
-        var single = Assert.Single(matched);
+        (Card Card, string FilePath) single = Assert.Single(matched);
         Assert.Same(bolt, single.Card);
         Assert.Equal(files[0], single.FilePath);
     }
@@ -37,9 +37,9 @@ public sealed class CardImageMatcherTests
         // CardNameNormalizer turns "_" into " // ", so a DFC file matches the
         // Scryfall two-part name.
         Card dfc = MakeCard(id: "p1", name: "Fire // Ice");
-        var files = new[] { @"C:\master\Fire_Ice.png" };
+        string[] files = [@"C:\master\Fire_Ice.png"];
 
-        List<(Card Card, string FilePath)> matched = CardImageMatcher.Match(new[] { dfc }, files, warnUnmatched: false);
+        List<(Card Card, string FilePath)> matched = CardImageMatcher.Match([dfc], files, warnUnmatched: false);
 
         Assert.Same(dfc, Assert.Single(matched).Card);
     }
@@ -48,13 +48,13 @@ public sealed class CardImageMatcherTests
     public void Match_UnmatchedFile_IsSkipped()
     {
         Card bolt = MakeCard(id: "p1", name: "Lightning Bolt");
-        var files = new[]
-        {
+        string[] files =
+        [
             @"C:\master\Lightning Bolt.png",
             @"C:\master\Totally Not A Card.png",
-        };
+        ];
 
-        List<(Card Card, string FilePath)> matched = CardImageMatcher.Match(new[] { bolt }, files, warnUnmatched: false);
+        List<(Card Card, string FilePath)> matched = CardImageMatcher.Match([bolt], files, warnUnmatched: false);
 
         Assert.Same(bolt, Assert.Single(matched).Card);
     }
@@ -66,9 +66,9 @@ public sealed class CardImageMatcherTests
         // the first card enumerated is the one matched to the file.
         Card first = MakeCard(id: "printing-first", name: "Forest");
         Card second = MakeCard(id: "printing-second", name: "Forest");
-        var files = new[] { @"C:\master\Forest.png" };
+        string[] files = [@"C:\master\Forest.png"];
 
-        List<(Card Card, string FilePath)> matched = CardImageMatcher.Match(new[] { first, second }, files, warnUnmatched: false);
+        List<(Card Card, string FilePath)> matched = CardImageMatcher.Match([first, second], files, warnUnmatched: false);
 
         Assert.Same(first, Assert.Single(matched).Card);
     }
@@ -78,15 +78,15 @@ public sealed class CardImageMatcherTests
     {
         Card a = MakeCard(id: "p1", name: "Ancestral Recall");
         Card b = MakeCard(id: "p2", name: "Black Lotus");
-        var files = new[]
-        {
+        string[] files =
+        [
             @"C:\master\Black Lotus.png",
             @"C:\master\Ancestral Recall.png",
-        };
+        ];
 
-        List<(Card Card, string FilePath)> matched = CardImageMatcher.Match(new[] { a, b }, files, warnUnmatched: false);
+        List<(Card Card, string FilePath)> matched = CardImageMatcher.Match([a, b], files, warnUnmatched: false);
 
-        Assert.Equal(new[] { "Black Lotus", "Ancestral Recall" }, matched.Select(m => m.Card.Name));
+        Assert.Equal(["Black Lotus", "Ancestral Recall"], matched.Select(m => m.Card.Name));
     }
 
     private static Card MakeCard(string id, string name)

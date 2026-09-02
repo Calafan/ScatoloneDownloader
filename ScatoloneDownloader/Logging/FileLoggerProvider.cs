@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading;
 
 using Microsoft.Extensions.Logging;
 
@@ -15,7 +16,7 @@ namespace ScatoloneDownloader.Logging
     {
         private readonly string path;
         private readonly LogLevel minLevel;
-        private readonly object gate = new();
+        private readonly Lock gate = new();
 
         internal FileLoggerProvider(string path, LogLevel minLevel)
         {

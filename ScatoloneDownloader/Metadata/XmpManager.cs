@@ -69,14 +69,14 @@ namespace ScatoloneDownloader.Metadata
             XAttribute attr = descriptionNode.Attribute(Xmp + "Rating");
             if (attr != null)
             {
-                int.TryParse(attr.Value, out rating);
+                _ = int.TryParse(attr.Value, out rating);
                 return rating;
             }
 
             XElement element = descriptionNode.Element(Xmp + "Rating");
             if (element != null)
             {
-                int.TryParse(element.Value, out rating);
+                _ = int.TryParse(element.Value, out rating);
             }
 
             return rating;

@@ -119,7 +119,7 @@ namespace ScatoloneDownloader.Cli.Cube
                 return 1;
             }
 
-            Task serverLoop = Task.Run(() => ServeAsync(listener));
+            Task serverLoop = Task.Run(() => ServeAsync(listener), cancellationToken);
 
             TryOpenBrowser(url);
 
