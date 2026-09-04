@@ -30,7 +30,8 @@ namespace ScatoloneDownloader
 
         private readonly ScryfallClient scryfallClient = new();
 
-        // Built once per GetManager and reused across list files in the same run.
+        // Built lazily, once per GetManager. CardService creates a fresh manager
+        // for every request (see GetCardsAsync), so this never outlives one file.
         private Dictionary<string, Card>? cardsByName;
 
         // Takes a nullable URI because it comes straight off a Scryfall Set,
