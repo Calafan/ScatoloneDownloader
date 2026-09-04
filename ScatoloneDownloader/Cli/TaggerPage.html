@@ -5,54 +5,80 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Scatolone Cube Tagger</title>
 <style>
-  :root { --bg:#12141a; --panel:#1c1f27; --accent:#4da3ff; --on:#2e7d32; --txt:#e6e6e6; --muted:#8b93a3; }
+  :root { --bg:#12141a; --panel:#1c1f27; --rail:#171a21; --accent:#4da3ff; --on:#2e7d32; --txt:#e6e6e6; --muted:#8b93a3; --line:#2c313c; }
   * { box-sizing: border-box; }
   body { margin:0; background:var(--bg); color:var(--txt); font:15px/1.4 system-ui,Segoe UI,sans-serif; height:100vh; overflow:hidden; }
+
+  /* Three zones. The masters are 745x1040, so the card is bound by HEIGHT and
+     cannot use extra width — which is what frees both side rails for the UI.
+     Left: scope, set once and then left alone. Centre: the card. Right: the
+     per-card controls, next to where the eye already is. */
   #app { display:flex; height:100vh; }
-  #imgwrap { flex:1; display:flex; align-items:center; justify-content:center; padding:16px; }
-  #card { max-width:100%; max-height:94vh; border-radius:14px; box-shadow:0 8px 40px rgba(0,0,0,.6); }
-  #panel { width:450px; background:var(--panel); padding:18px; display:flex; flex-direction:column; gap:12px; overflow-y:auto; }
-  #progress { font-size:13px; color:var(--muted); }
-  #name { font-size:18px; font-weight:600; }
+  #rail { flex:0 0 270px; background:var(--rail); border-right:1px solid var(--line); padding:16px; display:flex; flex-direction:column; gap:14px; overflow-y:auto; }
+  #imgwrap { flex:1 1 auto; min-width:0; display:flex; align-items:center; justify-content:center; padding:16px; }
+  #card { max-width:100%; max-height:96vh; border-radius:14px; box-shadow:0 8px 40px rgba(0,0,0,.6); }
+  #panel { flex:0 1 620px; min-width:430px; background:var(--panel); padding:18px; display:flex; flex-direction:column; gap:14px; overflow-y:auto; }
+
+  /* --- left rail --- */
+  .railhead { font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--line); padding-bottom:6px; }
+  .field { display:flex; flex-direction:column; gap:3px; }
+  .field label { font-size:11px; color:var(--muted); }
+  select { width:100%; background:#0d0f14; color:var(--txt); border:1px solid var(--line); border-radius:6px; padding:6px 7px; font:13px system-ui,Segoe UI,sans-serif; }
+  #filter { font-size:11px; color:var(--accent); line-height:1.35; }
+  #filter.fellback { color:#e0a33e; }
+  #stats { display:grid; grid-template-columns:1fr auto; gap:3px 8px; font-size:12px; color:var(--muted); border-top:1px solid var(--line); padding-top:12px; }
+  #stats b { color:var(--txt); font-variant-numeric:tabular-nums; font-weight:600; }
+  #queuepos { font-size:19px; font-weight:600; color:var(--txt); font-variant-numeric:tabular-nums; }
+  #shufmode { font-size:11px; color:var(--muted); }
+
+  /* --- right panel --- */
+  #name { font-size:21px; font-weight:600; line-height:1.2; }
+  #folder { font-size:12px; color:var(--muted); }
   #meta { font-size:12px; color:var(--muted); }
-  #effects { display:flex; flex-direction:column; gap:6px; }
-  .eff { display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid #2c313c; border-radius:8px; cursor:pointer; user-select:none; }
+  #rating { display:flex; gap:6px; }
+  .star { font-size:24px; line-height:1; color:#3a3f4b; cursor:pointer; user-select:none; }
+  .star.active { color:#f2c94c; }
+  #status { display:flex; flex-wrap:wrap; gap:6px; }
+  .stat { display:flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid var(--line); border-radius:8px; cursor:pointer; user-select:none; font-size:13px; }
+  .stat.active { background:#8a3b3b; border-color:#8a3b3b; }
+  .stat.active .key { color:#fff; }
+
+  /* Two columns at the default panel width, three if it gets wider: 20 effects
+     in one column overflowed the viewport, which is what pushed the help text
+     off the bottom and forced the scrollbar. */
+  #effects { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:6px; }
+  .eff { display:flex; align-items:center; gap:9px; padding:7px 9px; border:1px solid var(--line); border-radius:8px; cursor:pointer; user-select:none; font-size:14px; }
   .eff.active { background:var(--on); border-color:var(--on); }
   .key { display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px; padding:0 5px; border-radius:5px; background:#0d0f14; color:var(--accent); font-weight:700; font-size:12px; }
   .eff.active .key { color:#fff; }
-  #rating { display:flex; gap:6px; }
-  .star { font-size:22px; line-height:1; color:#3a3f4b; cursor:pointer; user-select:none; }
-  .star.active { color:#f2c94c; }
-  #status { display:flex; gap:6px; }
-  .stat { display:flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid #2c313c; border-radius:8px; cursor:pointer; user-select:none; }
-  .stat.active { background:#8a3b3b; border-color:#8a3b3b; }
-  .stat.active .key { color:#fff; }
-  #help { font-size:12px; color:var(--muted); border-top:1px solid #2c313c; padding-top:10px; }
-  #filter { font-size:12px; color:var(--accent); }
+
+  #help { font-size:12px; color:var(--muted); border-top:1px solid var(--line); padding-top:10px; margin-top:auto; display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:2px 14px; }
   kbd { background:#0d0f14; border-radius:4px; padding:1px 5px; font-size:11px; }
-  #saveErr { position:fixed; top:0; left:0; right:0; z-index:10; background:#8a1f1f; color:#fff; padding:10px 14px; font-weight:600; text-align:center; }
+
+  #saveErr { position:fixed; top:0; left:0; right:0; z-index:30; background:#8a1f1f; color:#fff; padding:10px 14px; font-weight:600; text-align:center; }
   #saveErr[hidden] { display:none; }
 
-  /* Scope pickers: the Bridge equivalents of choosing a folder and a label level. */
-  #scope { display:grid; grid-template-columns:auto 1fr; gap:6px 8px; align-items:center; font-size:12px; }
-  #scope label { color:var(--muted); }
-  select { width:100%; background:#0d0f14; color:var(--txt); border:1px solid #2c313c; border-radius:6px; padding:5px 6px; font:12px system-ui,Segoe UI,sans-serif; }
-
-  /* Card list: an overlay, not a third column, so the image keeps the width. */
+  /* Card list: an overlay, not a fourth column, so the three zones keep their room. */
   #listwrap { position:fixed; inset:0; z-index:20; background:rgba(10,11,15,.94); display:flex; flex-direction:column; padding:18px; }
   #listwrap[hidden] { display:none; }
   #listhead { display:flex; gap:10px; align-items:center; margin-bottom:10px; }
-  #search { flex:1; background:#0d0f14; color:var(--txt); border:1px solid #2c313c; border-radius:6px; padding:8px 10px; font:14px system-ui,Segoe UI,sans-serif; }
+  #search { flex:1; background:#0d0f14; color:var(--txt); border:1px solid var(--line); border-radius:6px; padding:8px 10px; font:14px system-ui,Segoe UI,sans-serif; }
   #listcount { font-size:12px; color:var(--muted); white-space:nowrap; }
-  #listbody { flex:1; overflow-y:auto; border:1px solid #2c313c; border-radius:8px; }
-  .row { display:grid; grid-template-columns:2fr 70px 70px 3fr 90px; gap:10px; align-items:center; padding:6px 10px; border-bottom:1px solid #22262f; cursor:pointer; font-size:13px; }
-  .row:hover { background:#1c1f27; }
+  #listbody { flex:1; overflow-y:auto; border:1px solid var(--line); border-radius:8px; }
+  .row { display:grid; grid-template-columns:2fr 70px 70px 2fr 3fr 90px; gap:10px; align-items:center; padding:6px 10px; border-bottom:1px solid #22262f; cursor:pointer; font-size:13px; }
+  .row:hover { background:var(--panel); }
   .row.current { background:#243044; }
   .row .rname { font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .row .rstars { color:#f2c94c; }
-  .row .rstat, .row .reff, .row .rbadge { color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .row .rstat, .row .rfolder, .row .reff, .row .rbadge { color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .row .rbadge.new { color:var(--accent); }
   .row .rbadge.auto { color:#e0a33e; }
+
+  /* Narrow windows: drop the rails to keep the card readable. */
+  @media (max-width: 1400px) {
+    #rail { flex-basis:230px; }
+    #panel { flex-basis:470px; min-width:380px; }
+  }
 </style>
 </head>
 <body>
@@ -65,16 +91,31 @@
   <div id="listbody"></div>
 </div>
 <div id="app">
-  <div id="imgwrap"><img id="card" alt="card"></div>
-  <div id="panel">
-    <div id="progress"></div>
-    <div id="name"></div>
-    <div id="meta"></div>
+
+  <div id="rail">
+    <div class="railhead">Scope</div>
+    <div class="field"><label for="reviewSel">Review <kbd>f</kbd></label><select id="reviewSel"></select></div>
+    <div class="field"><label for="rateSel">Rating <kbd>,</kbd></label><select id="rateSel"></select></div>
+    <div class="field"><label for="yearSel">Year</label><select id="yearSel"></select></div>
+    <div class="field"><label for="folderSel">Set</label><select id="folderSel"></select></div>
     <div id="filter"></div>
-    <div id="scope">
-      <label for="yearSel">Year</label><select id="yearSel"></select>
-      <label for="folderSel">Set</label><select id="folderSel"></select>
-      <label for="rateSel">Rating</label><select id="rateSel"></select>
+    <div id="stats">
+      <span>in queue</span><span id="queuepos"></span>
+      <span>to review</span><b id="nPending"></b>
+      <span>tagged</span><b id="nTagged"></b>
+      <span>reviewed</span><b id="nReviewed"></b>
+      <span>auto-pending</span><b id="nAuto"></b>
+    </div>
+    <div id="shufmode"></div>
+  </div>
+
+  <div id="imgwrap"><img id="card" alt="card"></div>
+
+  <div id="panel">
+    <div>
+      <div id="name"></div>
+      <div id="folder"></div>
+      <div id="meta"></div>
     </div>
     <div id="rating"></div>
     <div id="status"></div>
@@ -82,15 +123,16 @@
     <div id="help">
       <div><kbd>hotkey</kbd> toggle effect</div>
       <div><kbd>0</kbd>-<kbd>5</kbd> set rating</div>
-      <div><kbd>n</kbd>/<kbd>b</kbd>/<kbd>t</kbd>/<kbd>j</kbd> status: None / Banned / Token / Jolly</div>
+      <div><kbd>n</kbd>/<kbd>b</kbd>/<kbd>t</kbd>/<kbd>j</kbd> status None/Banned/Token/Jolly</div>
       <div><kbd>&larr;</kbd>/<kbd>&rarr;</kbd> or <kbd>Enter</kbd> prev / next</div>
       <div><kbd>c</kbd> confirm reviewed (no change)</div>
-      <div><kbd>f</kbd> cycle review filter &nbsp; <kbd>,</kbd> cycle rating filter &nbsp; <kbd>Home</kbd> first</div>
-      <div><kbd>/</kbd> card list (search by name, click to jump) &nbsp; <kbd>Esc</kbd> close</div>
-      <div><kbd>.</kbd> shuffle on/off (on by default, so eras stay mixed)</div>
-      <div>starts on <b>to review</b>: untagged + auto-tagged, not confirmed yet</div>
+      <div><kbd>Home</kbd> back to the first card</div>
+      <div><kbd>f</kbd> review filter &nbsp; <kbd>,</kbd> rating filter</div>
+      <div><kbd>/</kbd> card list &nbsp; <kbd>Esc</kbd> close it</div>
+      <div><kbd>.</kbd> shuffle on/off</div>
     </div>
   </div>
+
 </div>
 <script>
 // Effect hotkeys deliberately avoid digits (0-5 = rating) and n/b/t/j/c/f
@@ -151,10 +193,10 @@ function isAutoPending(c) { return c.effects.size > 0 && !c.reviewed; }
 // confirmed leaves the queue for good, even if it was confirmed to zero
 // effects (that is what "c" is for) — which is what makes the queue finite.
 const FILTERS = [
-  { short: "to review", label: "TO REVIEW — untagged + auto-tagged, not confirmed yet", match: c => !c.reviewed },
-  { short: "",          label: "all cards",                                             match: () => true },
-  { short: "untagged",  label: "untagged only",                                         match: c => c.effects.size === 0 },
-  { short: "auto",      label: "AUTO — pending review",                                 match: isAutoPending },
+  { short: "to review", label: "to review — untagged + auto-tagged", match: c => !c.reviewed },
+  { short: "",          label: "all cards",                          match: () => true },
+  { short: "untagged",  label: "untagged only",                      match: c => c.effects.size === 0 },
+  { short: "auto",      label: "auto — pending review",              match: isAutoPending },
 ];
 
 // The rating axis, cycled with ",". Separate from the review filter on purpose:
@@ -199,7 +241,7 @@ async function boot() {
 
 // Rebuilt on boot and on any filter change — never on a save. A card reviewed
 // during a pass therefore stays put instead of vanishing under the cursor;
-// press f twice (or reload) to re-cut the queue against what is now confirmed.
+// change the filter (or reload) to re-cut the queue against what is now confirmed.
 function buildOrder() {
   const match = FILTERS[filterMode].match;
   const rate = RATING_FILTERS[ratingMode].match;
@@ -219,10 +261,11 @@ function buildOrder() {
 // Populated once from the cards themselves, so the pickers can only ever offer
 // folders that exist. The set list is re-cut whenever the year changes.
 function buildScopeControls() {
+  fillSelect("reviewSel", FILTERS.map((f, i) => [String(i), f.label]), String(filterMode));
+  fillSelect("rateSel", RATING_FILTERS.map((f, i) => [String(i), f.label]), String(ratingMode));
   const years = [...new Set(cards.map(c => yearOf(c.folder)))].filter(Boolean).sort();
   fillSelect("yearSel", [["", "all years"], ...years.map(y => [y, y])], yearSel);
   buildFolderSelect();
-  fillSelect("rateSel", RATING_FILTERS.map((f, i) => [String(i), f.label]), String(ratingMode));
 }
 
 function buildFolderSelect() {
@@ -249,26 +292,30 @@ function cur() { return cards[order[pos]]; }
 function render() {
   const c = cur();
   document.getElementById("card").src = "/img/" + c.index + "?t=" + c.index;
+
   const taggedTotal = cards.filter(x => x.effects.size > 0).length;
   const reviewedTotal = cards.filter(x => x.reviewed).length;
   const autoTotal = cards.filter(isAutoPending).length;
-  const pendingTotal = cards.length - reviewedTotal;
-  const f = FILTERS[filterMode];
-  const scopeShort = [f.short, RATING_FILTERS[ratingMode].short, folderSel || yearSel].filter(Boolean).join(" · ");
-  document.getElementById("progress").textContent =
-    `Card ${pos+1} / ${order.length}` + (scopeShort ? " (" + scopeShort + ")" : "") +
-    ` — to review ${pendingTotal} · tagged ${taggedTotal}/${cards.length} · reviewed ${reviewedTotal} · auto-pending ${autoTotal}`;
+
+  document.getElementById("queuepos").textContent = `${pos+1} / ${order.length}`;
+  document.getElementById("nPending").textContent = (cards.length - reviewedTotal).toLocaleString();
+  document.getElementById("nTagged").textContent = `${taggedTotal.toLocaleString()} / ${cards.length.toLocaleString()}`;
+  document.getElementById("nReviewed").textContent = reviewedTotal.toLocaleString();
+  document.getElementById("nAuto").textContent = autoTotal.toLocaleString();
+
+  const filterEl = document.getElementById("filter");
+  filterEl.textContent = filterFellBack
+    ? "Nothing matches this combination — showing every card."
+    : `Showing: ${FILTERS[filterMode].label} · ${RATING_FILTERS[ratingMode].label}`;
+  filterEl.className = filterFellBack ? "fellback" : "";
+  document.getElementById("shufmode").textContent = shuffled ? "· shuffled" : "· library order";
+
   document.getElementById("name").textContent = c.name;
-  const badge = isAutoPending(c) ? "AUTO — pending review" : (c.reviewed ? "reviewed ✓" : "NEW");
+  document.getElementById("folder").textContent = c.folder;
   document.getElementById("meta").textContent =
     `${c.rating ? "★".repeat(c.rating) : "unrated"}` +
     `${c.status && c.status !== "None" ? " · " + c.status : ""}` +
-    `${c.folder ? " · " + c.folder : ""}` +
-    ` · ${badge}`;
-  document.getElementById("filter").textContent =
-    `Filter: ${f.label} · ${RATING_FILTERS[ratingMode].label}` +
-    (filterFellBack ? " — nothing matches, showing all cards" : "") +
-    (shuffled ? " · shuffled" : " · library order");
+    ` · ${isAutoPending(c) ? "AUTO — pending review" : (c.reviewed ? "reviewed ✓" : "NEW")}`;
 
   renderRating(c);
   renderStatus(c);
@@ -337,11 +384,13 @@ function renderList() {
       `<span class="rname"></span>` +
       `<span class="rstars">${c.rating ? "★".repeat(c.rating) : ""}</span>` +
       `<span class="rstat">${c.status && c.status !== "None" ? c.status : ""}</span>` +
+      `<span class="rfolder"></span>` +
       `<span class="reff"></span>` +
       `<span class="rbadge ${badge}">${badge}</span>`;
-    // textContent, not innerHTML: card names carry quotes, ampersands and other
-    // characters that would otherwise be parsed as markup.
+    // textContent, not innerHTML: card names and set folders carry quotes,
+    // ampersands and other characters that would otherwise be parsed as markup.
     div.querySelector(".rname").textContent = c.name;
+    div.querySelector(".rfolder").textContent = c.folder;
     div.querySelector(".reff").textContent = [...c.effects].join(", ");
     div.onclick = () => { pos = h.queuePos; closeList(); render(); };
     body.appendChild(div);
@@ -426,6 +475,8 @@ function requeue() { pos = 0; buildOrder(); render(); }
 // Every picker hands focus straight back to the page. Without the blur the
 // select keeps the keyboard, so the next arrow key would change the selection
 // instead of moving to the next card.
+document.getElementById("reviewSel").onchange = e => { filterMode = Number(e.target.value); e.target.blur(); requeue(); };
+document.getElementById("rateSel").onchange = e => { ratingMode = Number(e.target.value); e.target.blur(); requeue(); };
 document.getElementById("yearSel").onchange = e => {
   yearSel = e.target.value;
   folderSel = "";           // a set from the old year would match nothing
@@ -434,7 +485,6 @@ document.getElementById("yearSel").onchange = e => {
   requeue();
 };
 document.getElementById("folderSel").onchange = e => { folderSel = e.target.value; e.target.blur(); requeue(); };
-document.getElementById("rateSel").onchange = e => { ratingMode = Number(e.target.value); e.target.blur(); requeue(); };
 document.getElementById("search").oninput = () => renderList();
 
 // Typing in the search box or a picker must reach the field, not the tagger:
@@ -453,7 +503,12 @@ document.addEventListener("keydown", e => {
   if (e.key === "Home") { pos = 0; render(); return; }
   if (e.key === "/") { e.preventDefault(); listOpen ? closeList() : openList(); return; }
   if (e.key === "c") { const c = cur(); c.reviewed = true; save(c); render(); return; } // confirm, no change
-  if (e.key === "f") { filterMode = (filterMode + 1) % FILTERS.length; requeue(); return; }
+  if (e.key === "f") {
+    filterMode = (filterMode + 1) % FILTERS.length;
+    document.getElementById("reviewSel").value = String(filterMode);
+    requeue();
+    return;
+  }
   if (e.key === ",") {
     ratingMode = (ratingMode + 1) % RATING_FILTERS.length;
     document.getElementById("rateSel").value = String(ratingMode);
