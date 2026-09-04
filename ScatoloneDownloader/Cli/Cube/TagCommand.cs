@@ -370,14 +370,15 @@ namespace ScatoloneDownloader.Cli.Cube
         // as effects — a new CardEffect with no key would otherwise silently get no
         // hotkey. Keys avoid 0-5 (rating) and n/b/t/j/c/f (status/confirm/filter);
         // four page actions had to take punctuation because no letter was left:
-        // "." (shuffle), "," (rating filter), "/" (card list), and "-" now carries
-        // the 21st effect.
+        // "." (shuffle), "," (rating filter), "/" (card list); the effects past
+        // the alphabet then take "-" and "'".
         //
         // The alphabet is full, but the keyboard is not: the rating branch only
         // claims 0-5, so 6-9 are free, as are several punctuation keys. Prefer
         // ones that need no modifier on an Italian layout, which is what ruled
-        // out ";" (Shift+",") in favour of "-" (bottom row, beside ".").
-        internal const string EffectHotkeys = "qweryuiopasdghklmvxz-";
+        // out ";" (Shift+",") and "=" (Shift+"0") in favour of "-" and "'",
+        // both single presses on an Italian and a US layout alike.
+        internal const string EffectHotkeys = "qweryuiopasdghklmvxz-'";
 
         // The tagger's single-page UI lives in the embedded resource
         // Cli/TaggerPage.html (so editors/linters see the HTML/JS). It is loaded and

@@ -71,6 +71,12 @@ namespace ScatoloneDownloader.Cube
                 Rx(@"return[\w ]*from (your|a) graveyard to the battlefield"),
                 Rx(@"put[\w ]*creature card from[\w ]*graveyard onto the battlefield")]),
 
+            // "Mill" only became keyword wording in 2021; everything printed
+            // before that spells the action out, so both forms are needed or the
+            // whole pre-2021 library goes untagged.
+            (CardEffect.Mill, [Rx(@"\bmills? (?:[\w-]+ ){0,2}cards?\b"),
+                Rx(@"put(?:s)? the top [\w ]{0,25}library into [\w ]{0,25}graveyard")]),
+
             (CardEffect.Buff, [Rx(@"gets? \+\d+/\+\d+"), Rx(@"creatures you control get \+"), Rx(@"\+\d+/\+\d+ until end of turn")]),
 
             // NB: no bare "regenerate" — "can't be regenerated" (Wrath) would false-positive.

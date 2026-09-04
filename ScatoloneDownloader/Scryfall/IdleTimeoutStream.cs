@@ -33,6 +33,13 @@ namespace ScatoloneDownloader.Scryfall
         {
             TimeSpan budget = idleTimeout;
 
+            // Remembered rather than re-derived from the clock in the catch below:
+            // the cancellation timer and the Stopwatch are two different clocks, so
+            // on a read cut short by the lifetime budget the elapsed time can still
+            // read a hair under the ceiling and the failure would be reported as a
+            // stall. Whoever set the budget is who ran out.
+            bool cappedByTotal = false;
+
             if (totalTimeout != null)
             {
                 TimeSpan remaining = totalTimeout.Value - lifetime.Elapsed;
@@ -43,9 +50,10 @@ namespace ScatoloneDownloader.Scryfall
                         string.Format("Download exceeded its {0:N0} s ceiling.", totalTimeout.Value.TotalSeconds));
                 }
 
-                if (remaining < budget)
+                if (remaining <= budget)
                 {
                     budget = remaining;
+                    cappedByTotal = true;
                 }
             }
 
@@ -58,9 +66,9 @@ namespace ScatoloneDownloader.Scryfall
             }
             catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
             {
-                // Which clock ran out decides the message: an idle connection and a
+                // Which budget ran out decides the message: an idle connection and a
                 // transfer that overstayed its welcome need different diagnoses.
-                if (totalTimeout != null && lifetime.Elapsed >= totalTimeout.Value)
+                if (cappedByTotal && totalTimeout != null)
                 {
                     throw new IOException(
                         string.Format("Download exceeded its {0:N0} s ceiling.", totalTimeout.Value.TotalSeconds));

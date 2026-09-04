@@ -40,6 +40,16 @@ public sealed class EffectClassifierTests
     [InlineData("Armageddon", "Sorcery", "Destroy all lands.", CardEffect.LandDestruction)]
     [InlineData("Rain of Salt", "Sorcery", "Destroy two target lands.", CardEffect.LandDestruction)]
     [InlineData("Sinkhole", "Sorcery", "Destroy target land.", CardEffect.LandDestruction)]
+    [InlineData("Glimpse the Unthinkable", "Sorcery", "Target player mills ten cards.", CardEffect.Mill)]
+    // "Mill" is only keyword wording from 2021 on; the pre-2021 library spells
+    // the action out, so the old phrasing has to match too.
+    [InlineData("Millstone", "Artifact", "{2}, {T}: Target player puts the top two cards of their library into their graveyard.", CardEffect.Mill)]
+    // Self-mill is the same effect aimed the other way — a graveyard deck's fuel.
+    // CardAdvantage rides along because dredge's reminder text says "if you would
+    // draw a card": reminder text is part of oracle_text, and the classifier only
+    // proposes, so the extra flag is noise a reviewer drops rather than a bug to
+    // chase with a negative lookahead.
+    [InlineData("Stinkweed Imp", "Creature — Imp", "Flying\nWhenever this creature deals combat damage to a creature, destroy that creature.\nDredge 5 (If you would draw a card, you may mill five cards instead.)", CardEffect.CardAdvantage | CardEffect.Mill)]
     public void Classify_ExactMatch_ForHighConfidenceCards(string name, string typeLine, string oracle, CardEffect expected)
     {
         Card card = MakeCard(name, typeLine, oracle);

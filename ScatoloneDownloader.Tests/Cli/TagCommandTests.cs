@@ -29,7 +29,7 @@ public sealed class TagCommandTests
         // Reserved: 0-5 (rating), n/b/t/j (status), c (confirm), f (review
         // filter), and three punctuation keys the page took once the alphabet
         // ran out: "." (shuffle), "," (rating filter), "/" (card list).
-        const string reserved = "012345nbtjcf.,/";  // NB: "-" is an effect key, not reserved
+        const string reserved = "012345nbtjcf.,/";  // NB: "-" and "'" are effect keys, not reserved
         foreach (char key in TagCommand.EffectHotkeys)
         {
             Assert.DoesNotContain(key, reserved);
