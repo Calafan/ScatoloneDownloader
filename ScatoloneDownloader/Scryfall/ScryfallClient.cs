@@ -32,6 +32,13 @@ namespace ScatoloneDownloader.Scryfall
         // download can still take minutes — only an idle (silent) connection trips this.
         private static readonly TimeSpan ReadIdleTimeout = TimeSpan.FromSeconds(30);
 
+        // Hard ceiling on one response body, whatever the per-read guard sees. The
+        // bulk file is the biggest thing this client fetches and takes seconds on a
+        // healthy line, so a body still arriving after this long is not slow, it is
+        // broken — and an unbounded wait here reads to the user as a frozen command
+        // with no output at all.
+        private static readonly TimeSpan ReadTotalTimeout = TimeSpan.FromMinutes(10);
+
         private readonly HttpClient httpClient;
 
         // Monotonic (ms since boot), so the rate-limit gate is immune to wall-clock
@@ -77,7 +84,7 @@ namespace ScatoloneDownloader.Scryfall
             using HttpResponseMessage response = await SendWithRetryAsync(url, HttpCompletionOption.ResponseHeadersRead);
 
             Stream stream = await response.Content.ReadAsStreamAsync();
-            using IdleTimeoutStream guardedStream = new(stream, ReadIdleTimeout);
+            using IdleTimeoutStream guardedStream = new(stream, ReadIdleTimeout, ReadTotalTimeout);
 
             return await JsonSerializer.DeserializeAsync<T>(guardedStream, options);
         }
@@ -94,7 +101,7 @@ namespace ScatoloneDownloader.Scryfall
             using HttpResponseMessage response = await SendWithRetryAsync(url, HttpCompletionOption.ResponseHeadersRead);
 
             Stream stream = await response.Content.ReadAsStreamAsync();
-            using IdleTimeoutStream guardedStream = new(stream, ReadIdleTimeout);
+            using IdleTimeoutStream guardedStream = new(stream, ReadIdleTimeout, ReadTotalTimeout);
             using GZipStream gzip = new(guardedStream, CompressionMode.Decompress);
             using StreamReader reader = new(gzip);
 

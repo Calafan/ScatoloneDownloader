@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -69,6 +70,12 @@ namespace ScatoloneDownloader
         {
             const string BulkDataUrl = "bulk-data";
 
+            // How many streamed cards between heartbeat lines. The Default Cards
+            // export runs to six figures, so this yields a handful of lines —
+            // enough to prove the transfer is alive without turning the log into
+            // a progress bar.
+            const int BulkProgressInterval = 25000;
+
 
             string url = BaseUrl + BulkDataUrl;
 
@@ -81,10 +88,29 @@ namespace ScatoloneDownloader
                     // Scryfall bulk files are gzipped JSONL — one card per line — not a
                     // single JSON array anymore. Stream them line by line.
                     List<Card> cards = [];
+
+                    // Heartbeat. Every command that touches Scryfall starts here, and
+                    // until it finishes there is nothing on screen: a stalled download
+                    // and a slow one used to look identical, which is exactly how a
+                    // hung fetch passed for a long import. A line every
+                    // BulkProgressInterval cards costs nothing and survives being
+                    // piped to a file, unlike a spinner.
+                    Stopwatch elapsed = Stopwatch.StartNew();
+
                     await foreach (Card card in scryfallClient.GetJsonLinesAsync<Card>(bulkData.JsonlDownloadUri, JsonSerializerOptions))
                     {
                         cards.Add(card);
+
+                        if (cards.Count % BulkProgressInterval == 0)
+                        {
+                            AnsiConsole.MarkupLineInterpolated(
+                                $"[grey]  ...{cards.Count:N0} cards ({elapsed.Elapsed.TotalSeconds:N0}s)[/]");
+                        }
                     }
+
+                    AnsiConsole.MarkupLineInterpolated(
+                        $"[green]Loaded {cards.Count:N0} cards[/] [grey]in {elapsed.Elapsed.TotalSeconds:N1}s.[/]");
+
                     return cards;
                 }
             }
