@@ -29,7 +29,7 @@ namespace ScatoloneDownloader.Logging
             return new FileLogger(this, categoryName);
         }
 
-        internal void Append(LogLevel level, string category, string message, Exception exception)
+        internal void Append(LogLevel level, string category, string message, Exception? exception)
         {
             string line = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [{level}] {category} - {message}";
 
@@ -63,7 +63,7 @@ namespace ScatoloneDownloader.Logging
 
             public bool IsEnabled(LogLevel logLevel) => logLevel >= provider.minLevel && logLevel != LogLevel.None;
 
-            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
             {
                 if (!IsEnabled(logLevel))
                 {

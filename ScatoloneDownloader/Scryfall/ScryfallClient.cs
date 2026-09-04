@@ -74,14 +74,18 @@ namespace ScatoloneDownloader.Scryfall
         /// (sometimes &gt;2&#160;GB), so we read with <see cref="HttpCompletionOption.ResponseHeadersRead"/>
         /// and deserialize from the live response stream.
         /// </summary>
-        internal async Task<T> GetFromJsonAsync<T>(string url, JsonSerializerOptions options = null)
+        internal async Task<T> GetFromJsonAsync<T>(string url, JsonSerializerOptions? options = null)
         {
             using HttpResponseMessage response = await SendWithRetryAsync(url, HttpCompletionOption.ResponseHeadersRead);
 
             Stream stream = await response.Content.ReadAsStreamAsync();
             using IdleTimeoutStream guardedStream = new(stream, ReadIdleTimeout, ReadTotalTimeout);
 
-            return await JsonSerializer.DeserializeAsync<T>(guardedStream, options);
+            // A JSON body of literal `null` (or an empty one) deserializes to null.
+            // Callers all treat the result as a payload, so fail here with the URL
+            // rather than letting a null travel into the parsing code.
+            return await JsonSerializer.DeserializeAsync<T>(guardedStream, options)
+                ?? throw new InvalidDataException($"Scryfall returned an empty JSON body for {url}.");
         }
 
         /// <summary>
@@ -91,7 +95,7 @@ namespace ScatoloneDownloader.Scryfall
         /// decompressed), so each record is deserialized and yielded in turn and the
         /// gzip stream is never fully expanded into memory.
         /// </summary>
-        internal async IAsyncEnumerable<T> GetJsonLinesAsync<T>(string url, JsonSerializerOptions options = null)
+        internal async IAsyncEnumerable<T> GetJsonLinesAsync<T>(string url, JsonSerializerOptions? options = null)
         {
             using HttpResponseMessage response = await SendWithRetryAsync(url, HttpCompletionOption.ResponseHeadersRead);
 
@@ -100,7 +104,7 @@ namespace ScatoloneDownloader.Scryfall
             using GZipStream gzip = new(guardedStream, CompressionMode.Decompress);
             using StreamReader reader = new(gzip);
 
-            string line;
+            string? line;
             while ((line = await reader.ReadLineAsync()) is not null)
             {
                 if (line.Length == 0)
@@ -108,7 +112,8 @@ namespace ScatoloneDownloader.Scryfall
                     continue;
                 }
 
-                yield return JsonSerializer.Deserialize<T>(line, options);
+                yield return JsonSerializer.Deserialize<T>(line, options)
+                    ?? throw new InvalidDataException($"Scryfall bulk line deserialized to null in {url}.");
             }
         }
 

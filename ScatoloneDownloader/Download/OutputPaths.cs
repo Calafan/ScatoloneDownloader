@@ -26,7 +26,7 @@ namespace ScatoloneDownloader.Download
         };
 
         /// <summary>Overrides the output <see cref="Root"/>; ignores null/blank input.</summary>
-        internal static void UseRoot(string root)
+        internal static void UseRoot(string? root)
         {
             if (!string.IsNullOrWhiteSpace(root))
             {
@@ -62,7 +62,7 @@ namespace ScatoloneDownloader.Download
         }
 
         /// <summary>Builds (and creates) the directory a card's image belongs in.</summary>
-        internal static string BuildCardDirectory(Card card, Mode mode, string fileName)
+        internal static string BuildCardDirectory(Card card, Mode mode, string? fileName)
         {
             string path = BasePath(mode);
 
@@ -93,7 +93,7 @@ namespace ScatoloneDownloader.Download
                     }
                 case Mode.Files:
                     {
-                        path = Path.Combine(path, Path.GetFileNameWithoutExtension(fileName));
+                        path = Path.Combine(path, Path.GetFileNameWithoutExtension(fileName ?? string.Empty));
 
                         // Tag comes from the hand-written list, so sanitize it like any other
                         // path segment and neutralize "."/".." so it cannot escape the base folder.

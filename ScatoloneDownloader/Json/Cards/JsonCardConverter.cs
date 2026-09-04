@@ -9,7 +9,8 @@ namespace ScatoloneDownloader.Json.Cards
     {
         public override Card Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            JsonCard jsonCard = JsonSerializer.Deserialize<JsonCard>(ref reader, options);
+            JsonCard jsonCard = JsonSerializer.Deserialize<JsonCard>(ref reader, options)
+                ?? throw new JsonException("Expected a card object, found null.");
 
             return Card.CreateCard(jsonCard);
         }

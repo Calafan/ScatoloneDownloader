@@ -68,7 +68,7 @@ namespace ScatoloneDownloader.Cli.Cube
 
                 foreach ((string oracleId, CardMetadataEntry entry) in metadata.Cards)
                 {
-                    if (!cardsByOracleId.TryGetValue(oracleId, out Card card))
+                    if (!cardsByOracleId.TryGetValue(oracleId, out Card? card))
                     {
                         unresolved++;
                         continue;

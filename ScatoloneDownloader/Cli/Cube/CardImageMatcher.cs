@@ -46,7 +46,7 @@ namespace ScatoloneDownloader.Cli.Cube
                 cardsByName.TryAdd(card.Name, card);
 
                 string cardKey = CardNameKey.Collapse(card.Name);
-                if (cardsByKey.TryGetValue(cardKey, out Card indexed))
+                if (cardsByKey.TryGetValue(cardKey, out Card? indexed))
                 {
                     if (!string.Equals(indexed.Name, card.Name, StringComparison.OrdinalIgnoreCase))
                     {
@@ -65,7 +65,7 @@ namespace ScatoloneDownloader.Cli.Cube
                 string fileName = Path.GetFileNameWithoutExtension(file);
                 string fileKey = CardNameKey.Collapse(fileName);
 
-                if (!cardsByName.TryGetValue(fileName, out Card card) && !ambiguousKeys.Contains(fileKey))
+                if (!cardsByName.TryGetValue(fileName, out Card? card) && !ambiguousKeys.Contains(fileKey))
                 {
                     cardsByKey.TryGetValue(fileKey, out card);
                 }

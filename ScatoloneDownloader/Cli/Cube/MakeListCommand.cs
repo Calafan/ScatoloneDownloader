@@ -26,7 +26,7 @@ namespace ScatoloneDownloader.Cli.Cube
         {
             [CommandOption("-o|--output <FILE>")]
             [Description("Output list file to write (the format the `files` command reads).")]
-            public string OutputFile { get; set; }
+            public string OutputFile { get; set; } = string.Empty;
 
             public override ValidationResult Validate()
             {
@@ -101,7 +101,7 @@ namespace ScatoloneDownloader.Cli.Cube
                     continue;
                 }
 
-                string statusName = StatusResolver.ToName(status);
+                string? statusName = StatusResolver.ToName(status);
                 sb.Append('\n').Append("-- ").Append(statusName).Append('\n');
                 foreach (CardMetadataEntry entry in group)
                 {

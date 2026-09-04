@@ -8,7 +8,7 @@ namespace ScatoloneDownloader.Cli.Download
     {
         [CommandArgument(0, "<FILES>")]
         [Description("One or more list files to download from.")]
-        public string[] Files { get; set; }
+        public string[] Files { get; set; } = [];
     }
 
     internal sealed class FilesCommand : AsyncCommand<FilesSettings>

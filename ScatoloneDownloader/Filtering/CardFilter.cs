@@ -82,12 +82,12 @@ namespace ScatoloneDownloader.Filtering
         }
 
         /// <summary>Excludes etched-foil frame treatments.</summary>
-        internal static bool IsEtched(Card card) => card.FrameEffects != null && card.FrameEffects.Contains("etched");
+        internal static bool IsEtched(Card card) => card.FrameEffects.Contains("etched");
 
         /// <summary>Reprints, variations, textless, borderless, or alternate frame treatments.</summary>
         internal static bool IsReprintLike(Card card)
         {
-            bool hasInvalidFrameEffect = card.FrameEffects != null && card.FrameEffects.Any(InvalidFrameEffects.Contains);
+            bool hasInvalidFrameEffect = card.FrameEffects.Any(InvalidFrameEffects.Contains);
 
             return card.Reprint || card.Variation || hasInvalidFrameEffect || card.Textless || card.BorderColor == "borderless";
         }
@@ -105,7 +105,7 @@ namespace ScatoloneDownloader.Filtering
         /// </summary>
         internal static bool IsPromoTreatment(Card card)
         {
-            return card.PromoTypes != null && card.PromoTypes.Any(SpecialPromoTreatments.Contains);
+            return card.PromoTypes.Any(SpecialPromoTreatments.Contains);
         }
 
         /// <summary>
@@ -148,11 +148,11 @@ namespace ScatoloneDownloader.Filtering
         }
 
         /// <summary>Keeps only the downloadable cards from the given list.</summary>
-        internal static List<Card> Validate(IEnumerable<Card> cards, bool downloadReprints, bool downloadTokens, bool downloadLands)
+        internal static List<Card> Validate(IEnumerable<Card?> cards, bool downloadReprints, bool downloadTokens, bool downloadLands)
         {
             List<Card> valid = [];
 
-            foreach (Card card in cards)
+            foreach (Card? card in cards)
             {
                 if (card != null && IsDownloadable(card, downloadReprints, downloadTokens, downloadLands))
                 {
@@ -172,11 +172,11 @@ namespace ScatoloneDownloader.Filtering
         internal static bool IsCollectibleBasicLand(Card card) => card.IsBasicLand && IsEnglish(card) && IsPaperGame(card);
 
         /// <summary>Keeps only the collectible basic lands from the given list.</summary>
-        internal static List<Card> ValidateBasicLands(IEnumerable<Card> cards)
+        internal static List<Card> ValidateBasicLands(IEnumerable<Card?> cards)
         {
             List<Card> valid = [];
 
-            foreach (Card card in cards)
+            foreach (Card? card in cards)
             {
                 if (card != null && IsCollectibleBasicLand(card))
                 {

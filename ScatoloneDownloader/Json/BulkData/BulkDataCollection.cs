@@ -5,6 +5,6 @@ namespace ScatoloneDownloader.Json.BulkData
     public class BulkDataCollection
     {
         [JsonPropertyName("data")]
-        public List<BulkData> Data { get; set; }
+        public List<BulkData>? Data { get; set; }
     }
 }

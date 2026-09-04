@@ -23,7 +23,7 @@ namespace ScatoloneDownloader.Cli.Cube
         {
             [CommandArgument(0, "<SOURCE_DIR>")]
             [Description("Source folder containing the physical master files (.png) with XMP metadata.")]
-            public string SourceDirectory { get; set; }
+            public string SourceDirectory { get; set; } = string.Empty;
 
             internal override string MasterDirectory => SourceDirectory;
 
@@ -126,8 +126,8 @@ namespace ScatoloneDownloader.Cli.Cube
                     continue; // cannot key an entry without an oracle_id
                 }
 
-                bool isNew = !metadata.Cards.TryGetValue(card.OracleId, out CardMetadataEntry existing);
-                CardMetadataEntry entry = isNew ? new CardMetadataEntry() : existing;
+                bool isNew = !metadata.Cards.TryGetValue(card.OracleId, out CardMetadataEntry? existing);
+                CardMetadataEntry entry = existing ?? new CardMetadataEntry();
 
                 ImportSeedResult changes = ApplyImportSeed(entry, card, isNew, settings.Overwrite);
 
@@ -224,7 +224,7 @@ namespace ScatoloneDownloader.Cli.Cube
                     continue;
                 }
 
-                if (!groups.TryGetValue(card.OracleId, out List<(Card, string)> group))
+                if (!groups.TryGetValue(card.OracleId, out List<(Card, string)>? group))
                 {
                     group = [];
                     groups[card.OracleId] = group;

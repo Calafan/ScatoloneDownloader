@@ -21,7 +21,7 @@ namespace ScatoloneDownloader.Download
             this.getManager = getManager;
         }
 
-        internal async Task DownloadAsync(Card card, Mode mode, string fileName)
+        internal async Task DownloadAsync(Card card, Mode mode, string? fileName)
         {
             string baseDirectory = OutputPaths.BuildCardDirectory(card, mode, fileName);
 
@@ -35,7 +35,7 @@ namespace ScatoloneDownloader.Download
             }
 
             // Cards arrive in random order, but the original artwork must always keep the un-numbered name.
-            // This is one of the two places the canonical-artwork rule lives (see GetManager.PopulateCardsByName).
+            // This is one of the two places the canonical-artwork rule lives (see GetManager.BuildCardsByName).
             // Treated promos (surgefoil, textured, ...) are excluded from the canonical slot so a plain
             // printing always frees the un-numbered name.
             if (i != 1 && !card.IsBasicLand && CardFilter.IsCanonicalArtwork(card))
@@ -73,21 +73,31 @@ namespace ScatoloneDownloader.Download
             {
                 case DoubleFaceCard doubleFace:
                     {
-                        using Stream front = await getManager.GetImageStreamAsync(doubleFace.FrontImageUri);
-                        using Stream rear = await getManager.GetImageStreamAsync(doubleFace.RearImageUri);
+                        using Stream front = await getManager.GetImageStreamAsync(RequireImageUri(doubleFace.FrontImageUri, card, "front"));
+                        using Stream rear = await getManager.GetImageStreamAsync(RequireImageUri(doubleFace.RearImageUri, card, "rear"));
                         bool isSiege = doubleFace.TypeLine.Contains("Siege");
 
                         return CardImageComposer.ComposeDoubleFace(front, rear, isSiege);
                     }
                 case SingleFaceCard singleFace:
                     {
-                        using Stream image = await getManager.GetImageStreamAsync(singleFace.ImageUri);
+                        using Stream image = await getManager.GetImageStreamAsync(RequireImageUri(singleFace.ImageUri, card, "card"));
 
                         return CardImageComposer.ComposeSingleFace(image);
                     }
                 default:
                     throw new InvalidOperationException("Unknown card type: " + card.GetType().Name);
             }
+        }
+
+        /// <summary>Scryfall can list a printing with no PNG for a face. Fail with
+        /// the card's name instead of letting an empty URL reach the HTTP client,
+        /// where the error says nothing about which card was being downloaded.</summary>
+        private static string RequireImageUri(string? uri, Card card, string face)
+        {
+            return string.IsNullOrEmpty(uri)
+                ? throw new InvalidOperationException($"Card '{card.Name}' has no {face} image URL.")
+                : uri;
         }
     }
 }

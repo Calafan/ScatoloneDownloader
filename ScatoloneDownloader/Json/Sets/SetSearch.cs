@@ -5,12 +5,12 @@ namespace ScatoloneDownloader.Json.Sets
     public class SetSearch
     {
         [JsonPropertyName("object")]
-        public string Object { get; set; }
+        public string? Object { get; set; }
 
         [JsonPropertyName("has_more")]
         public bool HasMore { get; set; }
 
         [JsonPropertyName("data")]
-        public List<Set> Sets { get; set; }
+        public List<Set>? Sets { get; set; }
     }
 }

@@ -9,7 +9,7 @@ namespace ScatoloneDownloader.Cli.Download
     {
         [CommandOption("-e|--exclude <FILE>")]
         [Description("Exclude the cards listed in the given file.")]
-        public string ExcludeFile { get; set; }
+        public string? ExcludeFile { get; set; }
 
         public override ValidationResult Validate()
         {

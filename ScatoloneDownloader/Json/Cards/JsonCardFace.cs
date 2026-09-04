@@ -5,15 +5,15 @@ namespace ScatoloneDownloader.Json.Cards
     public class JsonCardFace
     {
         [JsonPropertyName("name")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [JsonPropertyName("oracle_text")]
-        public string OracleText { get; set; }
+        public string? OracleText { get; set; }
 
         [JsonPropertyName("image_uris")]
-        public JsonImageUris ImageUris { get; set; }
+        public JsonImageUris? ImageUris { get; set; }
 
         [JsonPropertyName("colors")]
-        public List<string> Colors { get; set; }
+        public List<string>? Colors { get; set; }
     }
 }

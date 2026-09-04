@@ -17,6 +17,6 @@ namespace ScatoloneDownloader.Cli.Download
 
         [CommandOption("-o|--output <DIR>")]
         [Description("Root folder for output (default: ./Output).")]
-        public string Output { get; set; }
+        public string? Output { get; set; }
     }
 }

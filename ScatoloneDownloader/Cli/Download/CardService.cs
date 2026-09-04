@@ -34,20 +34,20 @@ namespace ScatoloneDownloader.Cli.Download
             internal bool Lands { get; init; }
 
             /// <summary>Set code (Mode.Set only).</summary>
-            internal string Set { get; init; }
+            internal string? Set { get; init; }
 
             /// <summary>Release years (Mode.Years only).</summary>
-            internal List<int> Years { get; init; }
+            internal List<int>? Years { get; init; }
 
             /// <summary>List file to read (Mode.Files) or exclude file (Mode.All).</summary>
-            internal string File { get; init; }
+            internal string? File { get; init; }
 
             internal bool Download { get; init; }
             internal bool Analyze { get; init; }
             internal bool PrintOnly { get; init; }
         }
 
-        internal static Task RunAllAsync(string excludeFile, bool reprints, bool tokens, bool lands, bool printOnly)
+        internal static Task RunAllAsync(string? excludeFile, bool reprints, bool tokens, bool lands, bool printOnly)
         {
             return GetCardsAsync(new CardRequest
             {
@@ -167,9 +167,9 @@ namespace ScatoloneDownloader.Cli.Download
             List<Card> cards = await (req.Mode switch
             {
                 Mode.All => string.IsNullOrEmpty(req.File) ? getManager.GetUniqueArtwork() : getManager.GetUniqueArtwork(req.File),
-                Mode.Set => getManager.GetSet(req.Set),
-                Mode.Years => getManager.GetYears(req.Years),
-                Mode.Files => getManager.GetCardList(req.File, req.Lands),
+                Mode.Set => getManager.GetSet(Required(req.Set, req.Mode, "set code")),
+                Mode.Years => getManager.GetYears(Required(req.Years, req.Mode, "years")),
+                Mode.Files => getManager.GetCardList(Required(req.File, req.Mode, "list file"), req.Lands),
                 Mode.Lands => getManager.GetUniqueArtwork(),
                 _ => throw new ArgumentOutOfRangeException(nameof(req)),
             });
@@ -212,7 +212,17 @@ namespace ScatoloneDownloader.Cli.Download
             }
         }
 
-        private static async Task DownloadAllAsync(CardDownloader downloader, List<Card> cards, Mode mode, string file, string specificText)
+        // Set/Years/File on a CardRequest are mode-dependent: each mode fills
+        // exactly the ones it needs. This turns "the mode promised it" into a
+        // checked assertion, so a malformed request fails by name here instead of
+        // as a null somewhere inside GetManager.
+        private static T Required<T>(T? value, Mode mode, string field)
+            where T : class
+        {
+            return value ?? throw new InvalidOperationException($"A {mode} request carries no {field}.");
+        }
+
+        private static async Task DownloadAllAsync(CardDownloader downloader, List<Card> cards, Mode mode, string? file, string specificText)
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
 
@@ -255,8 +265,9 @@ namespace ScatoloneDownloader.Cli.Download
                 case Mode.Set:
                     return req.Set + " set";
                 case Mode.Years:
-                    string joined = string.Join(", ", req.Years);
-                    return joined + (req.Years.Count == 1 ? " year" : " years");
+                    List<int> years = req.Years ?? [];
+                    string joined = string.Join(", ", years);
+                    return joined + (years.Count == 1 ? " year" : " years");
                 case Mode.Files:
                     return req.File + " content";
                 case Mode.Lands:

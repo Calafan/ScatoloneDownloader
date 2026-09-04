@@ -30,7 +30,7 @@ namespace ScatoloneDownloader.Cli.Cube
         {
             [CommandArgument(0, "<SOURCE_DIR>")]
             [Description("Source folder containing the physical master files (.png).")]
-            public string SourceDirectory { get; set; }
+            public string SourceDirectory { get; set; } = string.Empty;
 
             internal override string MasterDirectory => SourceDirectory;
 
@@ -203,7 +203,7 @@ namespace ScatoloneDownloader.Cli.Cube
             {
                 using StreamReader reader = new(ctx.Request.InputStream, ctx.Request.ContentEncoding);
                 string body = reader.ReadToEnd();
-                SaveRequest req = JsonSerializer.Deserialize<SaveRequest>(body, JsonOpts);
+                SaveRequest? req = JsonSerializer.Deserialize<SaveRequest>(body, JsonOpts);
 
                 bool ok = ApplySave(req);
                 WriteJson(ctx, new { ok });
@@ -225,7 +225,7 @@ namespace ScatoloneDownloader.Cli.Cube
         /// </summary>
         private bool IsPendingReview(Card card)
             => string.IsNullOrEmpty(card.OracleId)
-                || !metadata.Cards.TryGetValue(card.OracleId, out CardMetadataEntry entry)
+                || !metadata.Cards.TryGetValue(card.OracleId, out CardMetadataEntry? entry)
                 || entry.ReviewedAt == null;
 
         /// <summary>
@@ -237,7 +237,7 @@ namespace ScatoloneDownloader.Cli.Cube
         /// writing when the request is malformed or the card has no
         /// <see cref="Card.OracleId"/> to key the entry by.
         /// </summary>
-        private bool ApplySave(SaveRequest req)
+        private bool ApplySave(SaveRequest? req)
         {
             if (req == null || req.Index < 0 || req.Index >= matched.Count)
             {
@@ -262,7 +262,7 @@ namespace ScatoloneDownloader.Cli.Cube
             {
                 // Label is legacy XMP-mirror data this tool no longer authors;
                 // preserve whatever the `import` seed (or a prior save) left there.
-                metadata.Cards.TryGetValue(card.OracleId, out CardMetadataEntry existing);
+                metadata.Cards.TryGetValue(card.OracleId, out CardMetadataEntry? existing);
                 int? previousRating = existing?.Rating;
 
                 CardMetadataEntry updated = new()
@@ -296,8 +296,8 @@ namespace ScatoloneDownloader.Cli.Cube
         {
             public int Index { get; set; }
             public int Rating { get; set; }
-            public string Status { get; set; }
-            public string[] Effects { get; set; }
+            public string? Status { get; set; }
+            public string[]? Effects { get; set; }
         }
 
         private static readonly JsonSerializerOptions JsonOpts = new()
@@ -356,7 +356,7 @@ namespace ScatoloneDownloader.Cli.Cube
         // The tagger's single-page UI lives in the embedded resource
         // Cli/TaggerPage.html (so editors/linters see the HTML/JS). It is loaded and
         // key-substituted once, on the first "/" request.
-        private static string pageHtml;
+        private static string? pageHtml;
 
         internal static string GetPageHtml()
         {

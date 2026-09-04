@@ -8,7 +8,7 @@ namespace ScatoloneDownloader.Cli.Download
     {
         [CommandArgument(0, "<SETS>")]
         [Description("One or more set codes to download.")]
-        public string[] Sets { get; set; }
+        public string[] Sets { get; set; } = [];
     }
 
     internal sealed class SetCommand : AsyncCommand<SetSettings>

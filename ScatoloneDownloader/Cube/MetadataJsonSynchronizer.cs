@@ -33,7 +33,7 @@ namespace ScatoloneDownloader.Cube
             foreach (Card card in cards)
             {
                 if (!string.IsNullOrEmpty(card.OracleId)
-                    && data.Cards.TryGetValue(card.OracleId, out CardMetadataEntry entry))
+                    && data.Cards.TryGetValue(card.OracleId, out CardMetadataEntry? entry))
                 {
                     card.Rating = entry.Rating;
                     card.Status = entry.StatusValue;

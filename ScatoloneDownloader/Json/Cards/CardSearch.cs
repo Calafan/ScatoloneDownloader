@@ -10,9 +10,9 @@ namespace ScatoloneDownloader.Json.Cards
         public bool HasMore { get; set; }
 
         [JsonPropertyName("next_page")]
-        public string NextPage { get; set; }
+        public string? NextPage { get; set; }
 
         [JsonPropertyName("data")]
-        public List<Card> Data { get; set; }
+        public List<Card>? Data { get; set; }
     }
 }

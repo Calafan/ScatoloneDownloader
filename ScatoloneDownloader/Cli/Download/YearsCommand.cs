@@ -9,11 +9,11 @@ namespace ScatoloneDownloader.Cli.Download
     {
         [CommandArgument(0, "<YEARS>")]
         [Description("One or more release years to download.")]
-        public int[] Years { get; set; }
+        public int[] Years { get; set; } = [];
 
         public override ValidationResult Validate()
         {
-            if (Years == null || Years.Length == 0)
+            if (Years.Length == 0)
             {
                 return ValidationResult.Error("At least one year is required.");
             }

@@ -108,41 +108,52 @@ namespace ScatoloneDownloader.Mtg
         internal string ColorCategory { get; init; }
         internal int ManaPips { get; init; }
 
-        internal string Tag { get; set; }
+        /// <summary>Download sub-folder assigned by the list file being processed
+        /// (see <see cref="Cli.Cube.MakeListCommand"/>); null for cards that came
+        /// from a plain year/set download.</summary>
+        internal string? Tag { get; set; }
 
+        // Scryfall may omit any of these JSON fields, so every one is coalesced:
+        // the wire DTO (JsonCard) is nullable by nature, this domain type is not.
+        // Text fields fall back to string.Empty and lists to [], matching how the
+        // filters already read them (e.g. CardFilter.IsPaperGame counts Games).
         internal Card(JsonCard jsonCard)
         {
-            Name = jsonCard.Name;
-            Id = jsonCard.Id;
-            OracleId = jsonCard.OracleId;
-            CollectorNumber = jsonCard.CollectorNumber;
-            Language = jsonCard.Language;
-            Layout = jsonCard.Layout;
+            Name = jsonCard.Name ?? string.Empty;
+            Id = jsonCard.Id ?? string.Empty;
+            OracleId = jsonCard.OracleId ?? string.Empty;
+            CollectorNumber = jsonCard.CollectorNumber ?? string.Empty;
+            Language = jsonCard.Language ?? string.Empty;
+            Layout = jsonCard.Layout ?? string.Empty;
 
-            ReleasedAt = DateTime.Parse(jsonCard.ReleasedAt);
+            // The one field with no sensible fallback: a card without a release
+            // date cannot be foldered by year, so fail loudly and name the card.
+            ReleasedAt = DateTime.Parse(jsonCard.ReleasedAt
+                ?? throw new ArgumentException(
+                    $"Card '{jsonCard.Name}' has no released_at.", nameof(jsonCard)));
 
-            TypeLine = jsonCard.TypeLine;
+            TypeLine = jsonCard.TypeLine ?? string.Empty;
             OracleText = ResolveOracleText(jsonCard);
             Keywords = jsonCard.Keywords ?? [];
 
-            Games = jsonCard.Games;
+            Games = jsonCard.Games ?? [];
 
             Reprint = jsonCard.Reprint;
             Variation = jsonCard.Variation;
             Textless = jsonCard.Textless;
 
-            Set = jsonCard.Set;
-            SetName = jsonCard.SetName;
-            SetType = jsonCard.SetType;
+            Set = jsonCard.Set ?? string.Empty;
+            SetName = jsonCard.SetName ?? string.Empty;
+            SetType = jsonCard.SetType ?? string.Empty;
 
-            BorderColor = jsonCard.BorderColor;
-            FrameEffects = jsonCard.FrameEffects;
+            BorderColor = jsonCard.BorderColor ?? string.Empty;
+            FrameEffects = jsonCard.FrameEffects ?? [];
 
             Cmc = jsonCard.Cmc;
-            Colors = jsonCard.Colors;
+            Colors = jsonCard.Colors ?? [];
             ColorIdentity = jsonCard.ColorIdentity ?? [];
             ManaCost = jsonCard.ManaCost ?? string.Empty;
-            PromoTypes = jsonCard.PromoTypes;
+            PromoTypes = jsonCard.PromoTypes ?? [];
 
             // Derived cube-design fields.
             MacroType = MacroTypeResolver.Resolve(TypeLine);

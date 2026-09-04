@@ -19,7 +19,7 @@ namespace ScatoloneDownloader.Cli.Cube
 
         [CommandOption("-m|--metadata")]
         [Description(MetadataDescription)]
-        public string MetadataDirectory { get; set; }
+        public string? MetadataDirectory { get; set; }
 
         /// <summary>
         /// The master library this command works against, or <c>null</c> when it
@@ -28,7 +28,7 @@ namespace ScatoloneDownloader.Cli.Cube
         /// passing the path in at each call site) means a new command cannot
         /// silently fall back to the wrong default by forgetting an argument.
         /// </summary>
-        internal virtual string MasterDirectory => null;
+        internal virtual string? MasterDirectory => null;
 
         /// <summary>
         /// The metadata directory as an absolute path. An explicit

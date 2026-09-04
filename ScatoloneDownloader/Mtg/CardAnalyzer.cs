@@ -452,7 +452,7 @@ namespace ScatoloneDownloader.Mtg
             foreach (Card c in nonLands)
             {
                 int bucket = c.Cmc >= 6 ? 6 : (int)c.Cmc;
-                if (!curveByMacroType.TryGetValue(c.MacroType, out Dictionary<int, int> macro))
+                if (!curveByMacroType.TryGetValue(c.MacroType, out Dictionary<int, int>? macro))
                 {
                     macro = [];
                     curveByMacroType[c.MacroType] = macro;

@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Diagnostics.CodeAnalysis;
 using System.IO.Compression;
 using System.Text;
 using System.Xml.Linq;
@@ -51,7 +52,7 @@ namespace ScatoloneDownloader.Metadata
                 return (0, string.Empty);
             }
 
-            if (TryReadPngXmp(imagePath, out string packet) && TryParsePacket(packet, out (int, string) fast))
+            if (TryReadPngXmp(imagePath, out string? packet) && TryParsePacket(packet, out (int, string) fast))
             {
                 return fast;
             }
@@ -68,7 +69,7 @@ namespace ScatoloneDownloader.Metadata
             {
                 // Load the image only to extract the XMP profile.
                 using MagickImage image = new(imagePath);
-                IXmpProfile profile = image.GetXmpProfile();
+                IXmpProfile? profile = image.GetXmpProfile();
 
                 if (profile == null)
                 {
@@ -76,9 +77,9 @@ namespace ScatoloneDownloader.Metadata
                 }
 
                 // Magick.NET offers a convenient method to convert the raw profile to an XDocument.
-                XDocument xDocument = profile.ToXDocument();
+                XDocument? xDocument = profile.ToXDocument();
 
-                return ParseDocument(xDocument);
+                return xDocument == null ? (0, string.Empty) : ParseDocument(xDocument);
             }
             catch (Exception)
             {
@@ -94,7 +95,7 @@ namespace ScatoloneDownloader.Metadata
         /// with a seek over its payload, so the cost per file is a handful of small
         /// reads regardless of how large the image is.
         /// </summary>
-        private static bool TryReadPngXmp(string imagePath, out string packet)
+        private static bool TryReadPngXmp(string imagePath, [NotNullWhen(true)] out string? packet)
         {
             packet = null;
 
@@ -157,7 +158,7 @@ namespace ScatoloneDownloader.Metadata
         /// layouts the spec allows. Returns false for any text chunk that is not the
         /// XMP one, which is the common case (Bridge also writes tEXt comments).
         /// </summary>
-        private static bool TryExtractXmpText(string chunkType, byte[] payload, out string text)
+        private static bool TryExtractXmpText(string chunkType, byte[] payload, [NotNullWhen(true)] out string? text)
         {
             text = null;
 
@@ -299,7 +300,7 @@ namespace ScatoloneDownloader.Metadata
         private static (int Rating, string Label) ParseDocument(XDocument xDocument)
         {
             // In Adobe XMP (RDF-structured), properties usually live inside <rdf:Description>.
-            XElement descriptionNode = xDocument.Descendants(Rdf + "Description").FirstOrDefault();
+            XElement? descriptionNode = xDocument.Descendants(Rdf + "Description").FirstOrDefault();
 
             if (descriptionNode == null)
             {
@@ -315,14 +316,14 @@ namespace ScatoloneDownloader.Metadata
             // and sometimes as child nodes (<xmp:Rating>5</xmp:Rating>). Check both.
             int rating = 0;
 
-            XAttribute attr = descriptionNode.Attribute(Xmp + "Rating");
+            XAttribute? attr = descriptionNode.Attribute(Xmp + "Rating");
             if (attr != null)
             {
                 _ = int.TryParse(attr.Value, out rating);
                 return rating;
             }
 
-            XElement element = descriptionNode.Element(Xmp + "Rating");
+            XElement? element = descriptionNode.Element(Xmp + "Rating");
             if (element != null)
             {
                 _ = int.TryParse(element.Value, out rating);
@@ -333,13 +334,13 @@ namespace ScatoloneDownloader.Metadata
 
         private static string ParseLabel(XElement descriptionNode)
         {
-            XAttribute attr = descriptionNode.Attribute(Xmp + "Label");
+            XAttribute? attr = descriptionNode.Attribute(Xmp + "Label");
             if (attr != null)
             {
                 return attr.Value;
             }
 
-            XElement element = descriptionNode.Element(Xmp + "Label");
+            XElement? element = descriptionNode.Element(Xmp + "Label");
             if (element != null)
             {
                 return element.Value;

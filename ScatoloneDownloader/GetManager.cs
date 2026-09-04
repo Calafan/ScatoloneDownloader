@@ -30,26 +30,32 @@ namespace ScatoloneDownloader
 
         private readonly ScryfallClient scryfallClient = new();
 
-        private Dictionary<string, Card> CardsByName;
+        // Built once per GetManager and reused across list files in the same run.
+        private Dictionary<string, Card>? cardsByName;
 
-        private async Task<List<Card>> GetCardSearch(string searchUri)
+        // Takes a nullable URI because it comes straight off a Scryfall Set,
+        // whose search_uri is optional on the wire; a set advertising cards
+        // without one is malformed and worth saying so.
+        private async Task<List<Card>> GetCardSearch(string? searchUri)
         {
-            List<Card> cards = [];
-
-            CardSearch setSearch = null;
-            bool firstTime = true;
-
-            do
+            if (string.IsNullOrEmpty(searchUri))
             {
-                searchUri = firstTime ? searchUri : setSearch.NextPage;
-
-                setSearch = await scryfallClient.GetFromJsonAsync<CardSearch>(searchUri, JsonSerializerOptions);
-
-                cards.AddRange(setSearch.Data);
-
-                firstTime = false;
+                throw new InvalidDataException("Scryfall returned a set with no search_uri.");
             }
-            while (setSearch != null && setSearch.HasMore);
+
+            List<Card> cards = [];
+            string? nextUri = searchUri;
+
+            while (nextUri != null)
+            {
+                CardSearch page = await scryfallClient.GetFromJsonAsync<CardSearch>(nextUri, JsonSerializerOptions);
+
+                cards.AddRange(page.Data ?? []);
+
+                // Stop on the last page, and also when Scryfall claims another
+                // page but gives no link to it.
+                nextUri = page.HasMore ? page.NextPage : null;
+            }
 
             return cards;
         }
@@ -74,7 +80,7 @@ namespace ScatoloneDownloader
 
             BulkDataCollection bulkDataCollection = await scryfallClient.GetFromJsonAsync<BulkDataCollection>(url);
 
-            foreach (BulkData bulkData in bulkDataCollection.Data)
+            foreach (BulkData bulkData in bulkDataCollection.Data ?? [])
             {
                 if (bulkData.Name == bulkDataName)
                 {
@@ -90,7 +96,10 @@ namespace ScatoloneDownloader
                     // piped to a file, unlike a spinner.
                     Stopwatch elapsed = Stopwatch.StartNew();
 
-                    await foreach (Card card in scryfallClient.GetJsonLinesAsync<Card>(bulkData.JsonlDownloadUri, JsonSerializerOptions))
+                    await foreach (Card card in scryfallClient.GetJsonLinesAsync<Card>(
+                        bulkData.JsonlDownloadUri
+                            ?? throw new InvalidDataException($"Bulk-data entry \"{bulkDataName}\" has no jsonl_download_uri."),
+                        JsonSerializerOptions))
                     {
                         cards.Add(card);
 
@@ -111,9 +120,12 @@ namespace ScatoloneDownloader
             throw new KeyNotFoundException(string.Format("Unable to find \"{0}\" bulk-data file reference. Request: {1}", bulkDataName, url));
         }
 
-        private async Task PopulateCardsByName(bool downloadLands)
+        /// <summary>Builds the name-to-card index used by the list path. Returns
+        /// the map instead of assigning the field, so callers hold a value the
+        /// compiler knows is not null.</summary>
+        private async Task<Dictionary<string, Card>> BuildCardsByName(bool downloadLands)
         {
-            CardsByName = [];
+            Dictionary<string, Card> byName = [];
 
             List<Card> cards = await GetDefaultCards();
 
@@ -123,19 +135,19 @@ namespace ScatoloneDownloader
                 {
                     if (!card.IsBasicLand)
                     {
-                        string name = NextFreeName(CardsByName, card.Name);
+                        string name = NextFreeName(byName, card.Name);
 
                         // Cards arrive in random order, but the original artwork must always keep the un-numbered name.
                         if (name != card.Name && CardFilter.IsCanonicalArtwork(card))
                         {
-                            Card notFirstArtCard = CardsByName[card.Name];
+                            Card notFirstArtCard = byName[card.Name];
 
-                            CardsByName[card.Name] = card;
-                            CardsByName.Add(name, notFirstArtCard);
+                            byName[card.Name] = card;
+                            byName.Add(name, notFirstArtCard);
                         }
                         else
                         {
-                            CardsByName.Add(name, card);
+                            byName.Add(name, card);
                         }
                     }
                 }
@@ -153,14 +165,16 @@ namespace ScatoloneDownloader
                 {
                     if (card.IsBasicLand)
                     {
-                        string name = NextFreeName(CardsByName, card.Name);
+                        string name = NextFreeName(byName, card.Name);
 
                         card.Tag = "Basic Lands";
 
-                        CardsByName.Add(name, card);
+                        byName.Add(name, card);
                     }
                 }
             }
+
+            return byName;
         }
 
         // Cards arrive in arbitrary order and names collide across printings, so
@@ -242,8 +256,10 @@ namespace ScatoloneDownloader
             HashSet<int> yearSet = [.. years];
 
             // Matching sets with cards, for the threshold check.
-            List<Set> matchingSets = sets.Sets
-                .Where(s => yearSet.Contains(DateTime.Parse(s.ReleasedAt).Year) && s.CardCount > 0)
+            // A set with no released_at cannot match a requested year, so it is
+            // filtered out before the date is parsed rather than blowing up.
+            List<Set> matchingSets = (sets.Sets ?? [])
+                .Where(s => s.ReleasedAt != null && yearSet.Contains(DateTime.Parse(s.ReleasedAt).Year) && s.CardCount > 0)
                 .ToList();
 
             // Above the threshold the paginated search path generates too many
@@ -303,14 +319,11 @@ namespace ScatoloneDownloader
             HashSet<string> seenNames = [];
             List<Card> cards = [];
 
-            if (CardsByName == null)
-            {
-                await PopulateCardsByName(downloadLands);
-            }
+            Dictionary<string, Card> index = cardsByName ??= await BuildCardsByName(downloadLands);
 
             foreach (CardListEntry entry in await CardListFile.ReadAsync(fileName))
             {
-                if (CardsByName.TryGetValue(entry.Name, out Card card))
+                if (index.TryGetValue(entry.Name, out Card? card))
                 {
                     if (!seenNames.Add(entry.Name))
                     {
@@ -335,13 +348,11 @@ namespace ScatoloneDownloader
                     string name = basicLandType;
                     int i = 1;
 
-                    while (CardsByName.ContainsKey(name))
+                    while (index.TryGetValue(name, out Card? basicLand))
                     {
-                        Card basicLand = CardsByName[name];
-
                         if (CardFilter.IsBasicLandBorderAllowed(basicLand))
                         {
-                            cards.Add(CardsByName[name]);
+                            cards.Add(basicLand);
                         }
 
                         name = basicLandType + i++;

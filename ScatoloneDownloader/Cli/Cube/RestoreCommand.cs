@@ -24,7 +24,7 @@ namespace ScatoloneDownloader.Cli.Cube
         {
             [CommandOption("-i|--images <DIR>")]
             [Description("Destination folder for the restored .png images (created if missing).")]
-            public string ImagesDirectory { get; set; }
+            public string ImagesDirectory { get; set; } = string.Empty;
 
             public override ValidationResult Validate()
             {
@@ -89,7 +89,7 @@ namespace ScatoloneDownloader.Cli.Cube
 
                 foreach ((string oracleId, CardMetadataEntry entry) in metadata.Cards)
                 {
-                    Card card = null;
+                    Card? card = null;
                     if (!string.IsNullOrEmpty(entry.ScryfallId))
                     {
                         cardsById.TryGetValue(entry.ScryfallId, out card);

@@ -22,13 +22,13 @@ namespace ScatoloneDownloader.Cli.Cube
         {
             [CommandArgument(0, "<SOURCE_DIR>")]
             [Description("Source folder containing the physical master files (.png).")]
-            public string SourceDirectory { get; set; }
+            public string SourceDirectory { get; set; } = string.Empty;
 
             internal override string MasterDirectory => SourceDirectory;
 
             [CommandOption("-v|--views")]
             [Description("Destination folder for the generated views.")]
-            public string ViewsDirectory { get; set; }
+            public string? ViewsDirectory { get; set; }
         }
 
         protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
@@ -40,7 +40,7 @@ namespace ScatoloneDownloader.Cli.Cube
             }
 
             string masterDir = Path.GetFullPath(settings.SourceDirectory);
-            string viewsDir = settings.ViewsDirectory;
+            string viewsDir = settings.ViewsDirectory ?? string.Empty;
 
             if (string.IsNullOrWhiteSpace(viewsDir))
             {

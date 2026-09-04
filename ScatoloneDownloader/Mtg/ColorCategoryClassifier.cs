@@ -75,8 +75,8 @@ namespace ScatoloneDownloader.Mtg
             return sorted.Count switch
             {
                 1 => sorted[0],
-                2 => GuildCodes.TryGetValue(sortKey, out string g) ? g : sortKey,
-                3 => TriColorCodes.TryGetValue(sortKey, out string t) ? t : sortKey,
+                2 => GuildCodes.TryGetValue(sortKey, out string? g) ? g : sortKey,
+                3 => TriColorCodes.TryGetValue(sortKey, out string? t) ? t : sortKey,
                 _ => "4_5_Colors",
             };
         }
