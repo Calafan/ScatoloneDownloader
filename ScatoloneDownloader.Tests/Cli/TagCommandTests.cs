@@ -26,9 +26,10 @@ public sealed class TagCommandTests
     [Fact]
     public void EffectHotkeys_AvoidReservedKeys()
     {
-        // Reserved: 0-5 (rating), n/b/t/j (status), c (confirm), f (filter),
-        // "." (shuffle toggle — punctuation because the alphabet is full).
-        const string reserved = "012345nbtjcf.";
+        // Reserved: 0-5 (rating), n/b/t/j (status), c (confirm), f (review
+        // filter), and three punctuation keys the page took once the alphabet
+        // ran out: "." (shuffle), "," (rating filter), "/" (card list).
+        const string reserved = "012345nbtjcf.,/";
         foreach (char key in TagCommand.EffectHotkeys)
         {
             Assert.DoesNotContain(key, reserved);
@@ -43,5 +44,29 @@ public sealed class TagCommandTests
         Assert.Contains("<!doctype html>", html);
         Assert.DoesNotContain("__EFFECT_KEYS__", html);                 // placeholder replaced
         Assert.Contains($"\"{TagCommand.EffectHotkeys}\".split", html); // keys injected
+    }
+
+    [Theory]
+    // The library is laid out as <year>\<set>\<card>.png, which is what the
+    // page's two folder pickers split on.
+    [InlineData(@"C:\Master", @"C:\Master\2000\Invasion\Rogue Kavu.png", "2000/Invasion")]
+    [InlineData(@"C:\Master\", @"C:\Master\1993\Limited Edition Alpha\Fastbond.png", "1993/Limited Edition Alpha")]
+    // A file sitting straight in the root has no folder to filter by.
+    [InlineData(@"C:\Master", @"C:\Master\Loose.png", "")]
+    // Deeper or shallower layouts still yield whatever levels exist, so a
+    // library organised differently keeps working.
+    [InlineData(@"C:\Master", @"C:\Master\2020\Zendikar Rising\Promos\Card.png", "2020/Zendikar Rising/Promos")]
+    [InlineData(@"C:\Master", @"C:\Master\Unsorted\Card.png", "Unsorted")]
+    public void RelativeFolder_ReturnsForwardSlashedPathBelowTheMaster(string master, string file, string expected)
+    {
+        Assert.Equal(expected, TagCommand.RelativeFolder(master, file));
+    }
+
+    [Fact]
+    public void RelativeFolder_IsEmpty_WhenTheMasterIsUnknown()
+    {
+        // The DTO is built before the master directory is known only if something
+        // went wrong; return "" rather than a path relative to nothing.
+        Assert.Equal(string.Empty, TagCommand.RelativeFolder(string.Empty, @"C:\Master\2000\Invasion\Card.png"));
     }
 }

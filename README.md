@@ -98,7 +98,7 @@ non ancora valutata) — così il file da editare a mano resta piccolo anche con
 
 | Comando | Descrizione | Esempio |
 |---------|-------------|---------|
-| `tag <DIR>` | Avvia il tagger web locale (da tastiera) per assegnare rating, status ed effetti; salva automaticamente su `metadata/` a ogni modifica. Apre sulla coda da revisionare (carte non taggate + auto-taggate non ancora confermate), in ordine casuale: `f` cambia filtro, `.` torna all'ordine di libreria | `ScatoloneDownloader tag .\Master` |
+| `tag <DIR>` | Avvia il tagger web locale (da tastiera) per assegnare rating, status ed effetti; salva automaticamente su `metadata/` a ogni modifica. Apre sulla coda da revisionare (carte non taggate + auto-taggate non ancora confermate), in ordine casuale. Filtri combinabili per stato (`f`), livello (`,`: pool 3-5 / fringe 1-2 / non valutate / stelle esatte) e cartella (anno + set); `/` apre la lista carte con ricerca per nome | `ScatoloneDownloader tag .\Master` |
 | `import <DIR>` | Porta dentro `metadata/` i rating/label XMP scritti da Adobe Bridge (unico comando che legge ancora XMP). Da rilanciare dopo ogni sessione di Bridge; `--incremental` rilegge solo i file modificati dall'ultimo import | `ScatoloneDownloader import .\Master --overwrite --incremental` |
 | `build-views <DIR>` | Rigenera l'albero `Views/` (symlink/hardlink, multi-radice) e il report `Cubo_Analysis.md` leggendo rating/status/effetti da `metadata/` | `ScatoloneDownloader build-views .\Master -v .\Views` |
 | `restore --images <DIR>` | Recovery: ricostruisce la cartella immagini dall'unione di tutti i file di `metadata/` + bulk-data Scryfall (nessuna XMP scritta) | `ScatoloneDownloader restore --images .\Master -m metadata` |

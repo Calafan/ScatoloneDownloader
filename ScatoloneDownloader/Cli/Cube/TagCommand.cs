@@ -44,6 +44,7 @@ namespace ScatoloneDownloader.Cli.Cube
         private List<(Card Card, string Path)> matched = [];
         private CubeMetadata metadata = new();
         private string metadataDir = "metadata";
+        private string masterDir = string.Empty;
         private string[] effectNames = [];
 
         protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
@@ -54,7 +55,7 @@ namespace ScatoloneDownloader.Cli.Cube
                 return 1;
             }
 
-            string masterDir = Path.GetFullPath(settings.SourceDirectory);
+            masterDir = Path.GetFullPath(settings.SourceDirectory);
             metadataDir = settings.ResolveDirectory();
 
             string[] pngFiles = Directory.GetFiles(masterDir, "*.png", SearchOption.AllDirectories);
@@ -92,7 +93,7 @@ namespace ScatoloneDownloader.Cli.Cube
                 AnsiConsole.MarkupLine(
                     $"[red]Error: {effectNames.Length} effects but only {EffectHotkeys.Length} hotkeys in TagCommand.EffectHotkeys.[/]");
                 AnsiConsole.MarkupLine(
-                    "[yellow]Add more keys to EffectHotkeys (avoiding 0-5 and n/b/t/j/c/f) so every effect has a hotkey.[/]");
+                    "[yellow]Add more keys to EffectHotkeys (avoiding 0-5, n/b/t/j/c/f and . , /) so every effect has a hotkey.[/]");
                 return 1;
             }
 
@@ -179,6 +180,7 @@ namespace ScatoloneDownloader.Cli.Cube
                     status = m.Card.Status.ToString(),
                     effects = EffectResolver.ToNames(m.Card.Effects),
                     reviewed = !IsPendingReview(m.Card),
+                    folder = RelativeFolder(masterDir, m.Path),
                 });
                 WriteJson(ctx, new { effects = effectNames, cards = dto });
                 return;
@@ -223,6 +225,26 @@ namespace ScatoloneDownloader.Cli.Cube
         /// nothing for stays effect-less, so it is invisible in an auto-only view
         /// while an untagged-only view hides every auto suggestion.
         /// </summary>
+        /// <summary>The card's folder relative to the master library, with forward
+        /// slashes ("2000/Invasion"), or "" for a file sitting in the root. This is
+        /// what the page's folder filter groups on — the equivalent of picking a
+        /// folder in Adobe Bridge. Derived from the path rather than from the card,
+        /// because the folder is a property of how the library is laid out on disk,
+        /// not of the printing Scryfall matched.</summary>
+        internal static string RelativeFolder(string masterDir, string filePath)
+        {
+            string? dir = Path.GetDirectoryName(filePath);
+
+            if (string.IsNullOrEmpty(dir) || string.IsNullOrEmpty(masterDir))
+            {
+                return string.Empty;
+            }
+
+            string relative = Path.GetRelativePath(masterDir, dir);
+
+            return relative == "." ? string.Empty : relative.Replace(Path.DirectorySeparatorChar, '/');
+        }
+
         private bool IsPendingReview(Card card)
             => string.IsNullOrEmpty(card.OracleId)
                 || !metadata.Cards.TryGetValue(card.OracleId, out CardMetadataEntry? entry)
@@ -347,7 +369,8 @@ namespace ScatoloneDownloader.Cli.Cube
         // so the startup check below can guarantee there are at least as many keys
         // as effects — a new CardEffect with no key would otherwise silently get no
         // hotkey. Keys avoid 0-5 (rating) and n/b/t/j/c/f (status/confirm/filter);
-        // the shuffle toggle had to take "." because no letter was left.
+        // three page actions had to take punctuation because no letter was left:
+        // "." (shuffle), "," (rating filter), "/" (card list).
         // 20 keys for 20 effects — the single-key scheme is now FULL (every
         // non-reserved letter is used). A 21st CardEffect will trip the startup
         // assert; adding one means moving to a two-key / modifier input scheme.

@@ -168,6 +168,28 @@ sibling of the working directory.
    1994, and so on — which is how the first 65 reviewed cards ended up being
    entirely Alpha and Arabian Nights, a sample far too era-skewed to tune the
    auto-classifier against.
+   Two more axes narrow the queue, and they combine with the review filter
+   rather than replacing it — the questions "what still needs a human?" and
+   "which part of the library am I on?" are independent, so collapsing them
+   into one list would force choosing between *pool* and *to review* instead
+   of asking for both:
+   - **Rating** (`,` cycles, or the picker): any / pool (3-5) / fringe (1-2) /
+     unrated / each exact star. The first three mirror the store's own tier
+     files, so "pool" here means what it means in `pool.json` — the ~2600
+     cards that actually make the cube, against 30k in the library.
+   - **Folder** (two pickers): year, then set. Taken from each file's path
+     relative to `SOURCE_DIR` (`TagCommand.RelativeFolder`), not from the
+     card, because the folder describes how the library is laid out on disk.
+     A layout deeper or shallower than `<year>/<set>` still groups by
+     whatever levels it has.
+   When a combination matches nothing the page shows every card and says so,
+   rather than going blank.
+   `/` opens the **card list** for the current queue — name, rating, status,
+   effects, review badge — with a search box; clicking a row jumps to that
+   card. It renders at most 300 rows (search narrows before the cap applies,
+   so any name is reachable) because putting 30k rows in the DOM would freeze
+   the page for no gain. Keys typed while a picker or the search box has
+   focus go to the field, not to the tagger.
 3. **`build-views <SOURCE_DIR> [-v views] [-m metadata]`** — generates the
    `Views/` folder tree (see below) by loading rating/status/effects from the
    metadata directory (the merged view of all three tier files) and linking
