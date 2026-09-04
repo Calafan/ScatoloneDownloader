@@ -125,7 +125,7 @@
       <div><kbd>0</kbd>-<kbd>5</kbd> set rating</div>
       <div><kbd>n</kbd>/<kbd>b</kbd>/<kbd>t</kbd>/<kbd>j</kbd> status None/Banned/Token/Jolly</div>
       <div><kbd>&larr;</kbd>/<kbd>&rarr;</kbd> or <kbd>Enter</kbd> prev / next</div>
-      <div><kbd>c</kbd> confirm reviewed (no change)</div>
+      <div><kbd>c</kbd> confirm as-is and go to the next card</div>
       <div><kbd>Home</kbd> back to the first card</div>
       <div><kbd>f</kbd> review filter &nbsp; <kbd>,</kbd> rating filter</div>
       <div><kbd>/</kbd> card list &nbsp; <kbd>Esc</kbd> close it</div>
@@ -502,7 +502,11 @@ document.addEventListener("keydown", e => {
   if (e.key === "ArrowLeft") { e.preventDefault(); move(-1); return; }
   if (e.key === "Home") { pos = 0; render(); return; }
   if (e.key === "/") { e.preventDefault(); listOpen ? closeList() : openList(); return; }
-  if (e.key === "c") { const c = cur(); c.reviewed = true; save(c); render(); return; } // confirm, no change
+  // Confirm with no change, then move on: "c" means "this card is fine as it
+  // is", which is a finished decision, so staying on it only costs a keystroke.
+  // Effect/rating/status edits deliberately do NOT advance — you often set
+  // several on one card.
+  if (e.key === "c") { const c = cur(); c.reviewed = true; save(c); move(1); return; }
   if (e.key === "f") {
     filterMode = (filterMode + 1) % FILTERS.length;
     document.getElementById("reviewSel").value = String(filterMode);
