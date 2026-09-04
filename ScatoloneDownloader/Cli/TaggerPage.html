@@ -423,14 +423,18 @@ function move(d) { pos = Math.max(0, Math.min(order.length-1, pos+d)); render();
 
 function requeue() { pos = 0; buildOrder(); render(); }
 
+// Every picker hands focus straight back to the page. Without the blur the
+// select keeps the keyboard, so the next arrow key would change the selection
+// instead of moving to the next card.
 document.getElementById("yearSel").onchange = e => {
   yearSel = e.target.value;
   folderSel = "";           // a set from the old year would match nothing
   buildFolderSelect();
+  e.target.blur();
   requeue();
 };
-document.getElementById("folderSel").onchange = e => { folderSel = e.target.value; requeue(); };
-document.getElementById("rateSel").onchange = e => { ratingMode = Number(e.target.value); requeue(); };
+document.getElementById("folderSel").onchange = e => { folderSel = e.target.value; e.target.blur(); requeue(); };
+document.getElementById("rateSel").onchange = e => { ratingMode = Number(e.target.value); e.target.blur(); requeue(); };
 document.getElementById("search").oninput = () => renderList();
 
 // Typing in the search box or a picker must reach the field, not the tagger:
