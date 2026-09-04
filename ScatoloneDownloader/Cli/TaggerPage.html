@@ -53,6 +53,7 @@
       <div><kbd>&larr;</kbd>/<kbd>&rarr;</kbd> or <kbd>Enter</kbd> prev / next</div>
       <div><kbd>c</kbd> confirm reviewed (no change)</div>
       <div><kbd>f</kbd> cycle filter (to review / all / untagged / auto) &nbsp; <kbd>Home</kbd> first</div>
+      <div><kbd>.</kbd> shuffle on/off (on by default, so eras stay mixed)</div>
       <div>starts on <b>to review</b>: untagged + auto-tagged, not confirmed yet</div>
     </div>
   </div>
@@ -72,6 +73,27 @@ const STATUS_ORDER = [
 const STATUS_KEYS = Object.fromEntries(STATUS_ORDER.map(s => [s.key, s.name]));
 
 let cards = [], effects = [], order = [], pos = 0, filterMode = 0, filterFellBack = false;
+
+// Shuffle the queue by default. The server hands cards over in
+// Directory.GetFiles order, which is year folder ascending, so working the
+// queue from the top means reviewing 1993, then 1994, and so on: the first 65
+// cards ever reviewed were all Alpha and Arabian Nights, whose wordings look
+// nothing like modern ones. That skews any attempt to measure the
+// auto-classifier against reviewed cards, and it makes for a monotonous pass.
+// Toggle back to library order with "." — every letter is taken (20 effects
+// plus n/b/t/j/c/f is the whole alphabet), so the key had to be punctuation.
+let shuffled = true;
+
+// Fisher-Yates, in place. Called only when the queue is rebuilt (boot, filter
+// change, shuffle toggle) and never on a save, so cards keep still while you
+// work through them.
+function shuffle(xs) {
+  for (let i = xs.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [xs[i], xs[j]] = [xs[j], xs[i]];
+  }
+  return xs;
+}
 
 // A card the auto-classifier tagged but no human has confirmed yet: it has
 // effects but reviewedAt is still null (the tagger stamps reviewed on any
@@ -113,6 +135,7 @@ function buildOrder() {
   // rather than a blank page, and say so, so it can't be read as the filter.
   filterFellBack = order.length === 0;
   if (filterFellBack) order = cards.map((c,i)=>i);
+  if (shuffled) shuffle(order);
   if (pos >= order.length) pos = order.length - 1;
   if (pos < 0) pos = 0;
 }
@@ -137,7 +160,8 @@ function render() {
     `${c.status && c.status !== "None" ? " · " + c.status : ""}` +
     ` · ${badge}`;
   document.getElementById("filter").textContent =
-    f.label + (filterFellBack ? " — nothing matches, showing all cards" : "");
+    f.label + (filterFellBack ? " — nothing matches, showing all cards" : "") +
+    (shuffled ? " · shuffled" : " · library order");
 
   renderRating(c);
   renderStatus(c);
@@ -244,6 +268,7 @@ document.addEventListener("keydown", e => {
   if (e.key === "Home") { pos = 0; render(); return; }
   if (e.key === "c") { const c = cur(); c.reviewed = true; save(c); render(); return; } // confirm, no change
   if (e.key === "f") { filterMode = (filterMode + 1) % FILTERS.length; pos = 0; buildOrder(); render(); return; }
+  if (e.key === ".") { shuffled = !shuffled; pos = 0; buildOrder(); render(); return; }
 
   const key = e.key.toLowerCase();
 

@@ -26,8 +26,9 @@ public sealed class TagCommandTests
     [Fact]
     public void EffectHotkeys_AvoidReservedKeys()
     {
-        // Reserved: 0-5 (rating), n/b/t/j (status), c (confirm), f (filter).
-        const string reserved = "012345nbtjcf";
+        // Reserved: 0-5 (rating), n/b/t/j (status), c (confirm), f (filter),
+        // "." (shuffle toggle — punctuation because the alphabet is full).
+        const string reserved = "012345nbtjcf.";
         foreach (char key in TagCommand.EffectHotkeys)
         {
             Assert.DoesNotContain(key, reserved);

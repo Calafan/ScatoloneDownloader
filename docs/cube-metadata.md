@@ -161,6 +161,13 @@ sibling of the working directory.
    human confirms it (any edit, or `c` to confirm with no change), which is
    what makes the backlog finite. The queue is re-cut on `f` and on reload,
    not on each save, so cards don't vanish under the cursor mid-pass.
+   The queue is **shuffled by default**; `.` toggles back to library order (a
+   punctuation key because the 20 effect hotkeys plus `n/b/t/j/c/f` use up the
+   whole alphabet). Cards arrive in `Directory.GetFiles` order, i.e. year
+   folders ascending, so working the queue from the top reviews 1993, then
+   1994, and so on — which is how the first 65 reviewed cards ended up being
+   entirely Alpha and Arabian Nights, a sample far too era-skewed to tune the
+   auto-classifier against.
 3. **`build-views <SOURCE_DIR> [-v views] [-m metadata]`** — generates the
    `Views/` folder tree (see below) by loading rating/status/effects from the
    metadata directory (the merged view of all three tier files) and linking

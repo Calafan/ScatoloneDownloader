@@ -352,7 +352,8 @@ namespace ScatoloneDownloader.Cli.Cube
         // "__EFFECT_KEYS__" placeholder). Kept here as the SINGLE source of truth
         // so the startup check below can guarantee there are at least as many keys
         // as effects — a new CardEffect with no key would otherwise silently get no
-        // hotkey. Keys avoid 0-5 (rating) and n/b/t/j/c/f (status/confirm/filter).
+        // hotkey. Keys avoid 0-5 (rating) and n/b/t/j/c/f (status/confirm/filter);
+        // the shuffle toggle had to take "." because no letter was left.
         // 20 keys for 20 effects — the single-key scheme is now FULL (every
         // non-reserved letter is used). A 21st CardEffect will trip the startup
         // assert; adding one means moving to a two-key / modifier input scheme.
