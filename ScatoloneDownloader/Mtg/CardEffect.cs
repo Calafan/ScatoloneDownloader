@@ -36,5 +36,6 @@ namespace ScatoloneDownloader.Mtg
         Pacify          = 1 << 19,   // soft/pseudo removal: neutralise a creature without destroying it (tap-lock/Icy Manipulator, Pacifism/Arrest, detain)
         LandDestruction = 1 << 20,   // destroy/exile lands (Stone Rain, Sinkhole, Wasteland, Armageddon). Deliberately narrow: attacking the mana base by removing lands, NOT the wider "mana denial" family (Winter Orb, Blood Moon, Sphere effects), which stays untagged. Distinct from RemovePermanent, whose rules only read the literal "destroy target permanent" of a Vindicate.
         Mill            = 1 << 21,   // put cards from a library into a graveyard (Glimpse the Unthinkable, Hedron Crab, Stinkweed Imp). Covers BOTH directions: milling an opponent as a win condition and milling yourself to fuel a graveyard deck — the card is doing the same thing, only the target differs.
+        Regrowth        = 1 << 22,   // return a card from a graveyard to HAND (Regrowth, Raise Dead, Eternal Witness). Deliberately NOT merged with Reanimate, which puts it straight onto the battlefield: one hands back a card you still have to pay for, the other cheats the cost — different speeds, different decks.
     }
 }

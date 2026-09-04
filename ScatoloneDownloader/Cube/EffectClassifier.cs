@@ -71,6 +71,13 @@ namespace ScatoloneDownloader.Cube
                 Rx(@"return[\w ]*from (your|a) graveyard to the battlefield"),
                 Rx(@"put[\w ]*creature card from[\w ]*graveyard onto the battlefield")]),
 
+            // The sibling of Reanimate: same origin, different destination. The
+            // [\w ] runs cannot cross a full stop, so a card that exiles from a
+            // graveyard in one sentence and bounces a creature in the next does
+            // not accidentally read as recursion.
+            (CardEffect.Regrowth, [Rx(@"return[\w ]*from[\w ]*graveyard to[\w ']*hand"),
+                Rx(@"put[\w ]*card from[\w ]*graveyard into[\w ]*hand")]),
+
             // "Mill" only became keyword wording in 2021; everything printed
             // before that spells the action out, so both forms are needed or the
             // whole pre-2021 library goes untagged.

@@ -11,8 +11,9 @@ namespace ScatoloneDownloader.Tests.Mtg;
 /// <summary>
 /// Validates the rule-based <see cref="EffectClassifier"/> against real card
 /// oracle text. The classifier only PROPOSES (a human confirms), so these pin
-/// the high-confidence cases and a couple of deliberate limitations (e.g.
-/// Regrowth returning to hand is not caught) rather than every card.
+/// the high-confidence cases, the deliberate narrow edges (mana denial that
+/// destroys nothing, a land sacrifice paid as a drawback) and the wordings
+/// that fooled an earlier draft, rather than every card.
 /// </summary>
 public sealed class EffectClassifierTests
 {
@@ -122,15 +123,18 @@ public sealed class EffectClassifierTests
         Assert.Equal(CardEffect.None, EffectClassifier.Classify(card));
     }
 
-    [Fact]
-    public void Classify_Regrowth_ReturnToHand_IsNotCaught_KnownLimitation()
+    [Theory]
+    // Graveyard to HAND is Regrowth; graveyard to the BATTLEFIELD stays Reanimate.
+    // This used to be a documented gap: the Reanimate rules never matched a return
+    // to hand, so Regrowth itself came back untagged.
+    [InlineData("Regrowth", "Sorcery", "Return target card from your graveyard to your hand.", CardEffect.Regrowth)]
+    [InlineData("Raise Dead", "Sorcery", "Return target creature card from your graveyard to your hand.", CardEffect.Regrowth)]
+    [InlineData("Animate Dead", "Enchantment — Aura", "Return target creature card from your graveyard to the battlefield under your control.", CardEffect.Reanimate)]
+    public void Classify_GraveyardRecursion_SplitsByDestination(string name, string typeLine, string oracle, CardEffect expected)
     {
-        // Regrowth returns a card to HAND (not the battlefield), which the
-        // Reanimate rules deliberately don't match; a human tags it. Documented
-        // so a future rule change is a conscious decision, not an accident.
-        Card card = MakeCard("Regrowth", "Sorcery", "Return target card from your graveyard to your hand.");
+        Card card = MakeCard(name, typeLine, oracle);
 
-        Assert.Equal(CardEffect.None, EffectClassifier.Classify(card));
+        Assert.Equal(expected, EffectClassifier.Classify(card));
     }
 
     private static Card MakeCard(string name, string typeLine, string oracleText, List<string>? keywords = null)
