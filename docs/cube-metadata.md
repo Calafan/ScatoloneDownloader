@@ -115,6 +115,22 @@ sibling of the working directory.
    command that still reads XMP. By default it only fills entries that don't
    have a rating/label yet (`--overwrite` forces the XMP value in). `Effects`
    and `ReviewedAt` are never touched by `import` — those belong to the tagger.
+   The summary reports what actually *changed* (`Changed: n ratings, n labels,
+   n statuses`), not just how many entries were rewritten — the seed touches
+   every matched card either way, so without that line a run against the wrong
+   folder is indistinguishable from a successful one.
+   `--incremental` reads the XMP only of files modified since the previous
+   import, whose start instant is recorded in `metadata/import-state.json`.
+   On the 30151-file library that turns a 15-minute pass into 4 seconds when
+   nothing changed, or ~36 seconds after a Bridge session touching a few
+   hundred files. The filter works per **oracle_id group**, never per file: if
+   one printing changed, every printing of that card is re-read, because the
+   seed keeps the highest rating among them and re-reading only the touched
+   file could silently demote the card. Cards not yet in the store are always
+   read regardless of timestamps (a `restore` can leave a file older than the
+   last import), an unreadable timestamp counts as changed, and a missing or
+   corrupt `import-state.json` degrades to a full scan. The default is still a
+   full scan.
    `Status` is only ever *default-filled* from the Bridge color label
    (Red/Yellow/Green → Banned/Token/Jolly), never overwritten, and only on an
    entry with no `reviewedAt`: a human who cleared a card back to `None` in the
