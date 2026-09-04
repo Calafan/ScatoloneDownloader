@@ -34,5 +34,6 @@ namespace ScatoloneDownloader.Mtg
         Tutor           = 1 << 17,   // search library for a card (Demonic Tutor, Green Sun's Zenith, creature fetch) — selection/consistency, not raw card advantage
         ManaFixing      = 1 << 18,   // mana colour fixing (dual/fetch lands, multicolour rocks) — distinct from Ramp; a card can be both. Named in full: bare "Fixing" read as "fixing what?" (mana or hand), and the tagger shows this name verbatim. Old "Fixing" tags still parse via the alias table.
         Pacify          = 1 << 19,   // soft/pseudo removal: neutralise a creature without destroying it (tap-lock/Icy Manipulator, Pacifism/Arrest, detain)
+        LandDestruction = 1 << 20,   // destroy/exile lands (Stone Rain, Sinkhole, Wasteland, Armageddon). Deliberately narrow: attacking the mana base by removing lands, NOT the wider "mana denial" family (Winter Orb, Blood Moon, Sphere effects), which stays untagged. Distinct from RemovePermanent, whose rules only read the literal "destroy target permanent" of a Vindicate.
     }
 }

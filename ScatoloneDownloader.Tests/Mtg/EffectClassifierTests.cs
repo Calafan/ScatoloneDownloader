@@ -33,11 +33,39 @@ public sealed class EffectClassifierTests
     [InlineData("Mind Rot", "Sorcery", "Target player discards two cards.", CardEffect.Discard)]
     [InlineData("Divination", "Sorcery", "Draw two cards.", CardEffect.CardAdvantage)]
     [InlineData("Control Magic", "Enchantment — Aura", "Enchant creature. You control enchanted creature.", CardEffect.Steal)]
+    [InlineData("Stone Rain", "Sorcery", "Destroy target land.", CardEffect.LandDestruction)]
+    [InlineData("Wasteland", "Land", "{T}, Sacrifice Wasteland: Destroy target nonbasic land.", CardEffect.LandDestruction)]
+    // "Destroy all lands" is land destruction, not a creature/permanent wipe:
+    // Wipe's patterns deliberately list creatures, permanents and nonland only.
+    [InlineData("Armageddon", "Sorcery", "Destroy all lands.", CardEffect.LandDestruction)]
     public void Classify_ExactMatch_ForHighConfidenceCards(string name, string typeLine, string oracle, CardEffect expected)
     {
         Card card = MakeCard(name, typeLine, oracle);
 
         Assert.Equal(expected, EffectClassifier.Classify(card));
+    }
+
+    [Theory]
+    // "island" and "islandwalk" contain the letters of "land", so the patterns
+    // require a word boundary before it. Without that, every islandwalk creature
+    // would be proposed as land destruction.
+    [InlineData("Deep Spawn", "Creature — Kraken", "Islandwalk")]
+    [InlineData("Sea Serpent", "Creature — Serpent", "Sea Serpent can't attack unless defending player controls an Island.")]
+    public void Classify_IslandWordings_AreNotLandDestruction(string name, string typeLine, string oracle)
+    {
+        Card card = MakeCard(name, typeLine, oracle);
+
+        Assert.False(EffectClassifier.Classify(card).HasFlag(CardEffect.LandDestruction));
+    }
+
+    [Fact]
+    public void Classify_ManaDenial_WithoutDestroyingALand_IsNotProposed()
+    {
+        // The tag is deliberately narrow: Winter Orb attacks the mana base but
+        // destroys nothing, so it stays for a human to decide.
+        Card card = MakeCard("Winter Orb", "Artifact", "Players can't untap more than one land during their untap steps.");
+
+        Assert.False(EffectClassifier.Classify(card).HasFlag(CardEffect.LandDestruction));
     }
 
     [Fact]

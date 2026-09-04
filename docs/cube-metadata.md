@@ -162,8 +162,9 @@ sibling of the working directory.
    what makes the backlog finite. The queue is re-cut on `f` and on reload,
    not on each save, so cards don't vanish under the cursor mid-pass.
    The queue is **shuffled by default**; `.` toggles back to library order (a
-   punctuation key because the 20 effect hotkeys plus `n/b/t/j/c/f` use up the
-   whole alphabet). Cards arrive in `Directory.GetFiles` order, i.e. year
+   punctuation key because the effect hotkeys plus `n/b/t/j/c/f` use up the
+   whole alphabet — but not the keyboard: `6`-`9` and most punctuation stay
+   free, which is where a 21st effect goes rather than into a merge). Cards arrive in `Directory.GetFiles` order, i.e. year
    folders ascending, so working the queue from the top reviews 1993, then
    1994, and so on — which is how the first 65 reviewed cards ended up being
    entirely Alpha and Arabian Nights, a sample far too era-skewed to tune the

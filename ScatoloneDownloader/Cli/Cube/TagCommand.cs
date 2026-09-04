@@ -93,7 +93,7 @@ namespace ScatoloneDownloader.Cli.Cube
                 AnsiConsole.MarkupLine(
                     $"[red]Error: {effectNames.Length} effects but only {EffectHotkeys.Length} hotkeys in TagCommand.EffectHotkeys.[/]");
                 AnsiConsole.MarkupLine(
-                    "[yellow]Add more keys to EffectHotkeys (avoiding 0-5, n/b/t/j/c/f and . , /) so every effect has a hotkey.[/]");
+                    "[yellow]Add more keys to EffectHotkeys (6-9 and most punctuation are free; avoid 0-5, n/b/t/j/c/f and . , /).[/]");
                 return 1;
             }
 
@@ -369,12 +369,15 @@ namespace ScatoloneDownloader.Cli.Cube
         // so the startup check below can guarantee there are at least as many keys
         // as effects — a new CardEffect with no key would otherwise silently get no
         // hotkey. Keys avoid 0-5 (rating) and n/b/t/j/c/f (status/confirm/filter);
-        // three page actions had to take punctuation because no letter was left:
-        // "." (shuffle), "," (rating filter), "/" (card list).
-        // 20 keys for 20 effects — the single-key scheme is now FULL (every
-        // non-reserved letter is used). A 21st CardEffect will trip the startup
-        // assert; adding one means moving to a two-key / modifier input scheme.
-        internal const string EffectHotkeys = "qweryuiopasdghklmvxz";
+        // four page actions had to take punctuation because no letter was left:
+        // "." (shuffle), "," (rating filter), "/" (card list), and "-" now carries
+        // the 21st effect.
+        //
+        // The alphabet is full, but the keyboard is not: the rating branch only
+        // claims 0-5, so 6-9 are free, as are several punctuation keys. Prefer
+        // ones that need no modifier on an Italian layout, which is what ruled
+        // out ";" (Shift+",") in favour of "-" (bottom row, beside ".").
+        internal const string EffectHotkeys = "qweryuiopasdghklmvxz-";
 
         // The tagger's single-page UI lives in the embedded resource
         // Cli/TaggerPage.html (so editors/linters see the HTML/JS). It is loaded and

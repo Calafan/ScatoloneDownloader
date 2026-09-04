@@ -31,6 +31,12 @@ namespace ScatoloneDownloader.Cube
 
             (CardEffect.RemovePermanent, [Rx(@"destroy target permanent"), Rx(@"exile target permanent")]),
 
+            // \bland keeps "islandwalk" and "island" out: they contain "land" but
+            // not at a word boundary. Narrow by design — Winter Orb-style mana
+            // denial that never destroys a land is not proposed here.
+            (CardEffect.LandDestruction, [Rx(@"destroy target[\w ]*\blands?\b"), Rx(@"exile target[\w ]*\blands?\b"),
+                Rx(@"destroy all \blands?\b"), Rx(@"sacrifices? a \bland\b")]),
+
             (CardEffect.Removal, [Rx(@"destroy target[\w ]*creature"), Rx(@"exile target[\w ]*creature"),
                 Rx(@"destroy target[\w ]*(creature|planeswalker)")]),
 
