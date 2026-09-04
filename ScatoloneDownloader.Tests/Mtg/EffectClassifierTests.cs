@@ -38,6 +38,8 @@ public sealed class EffectClassifierTests
     // "Destroy all lands" is land destruction, not a creature/permanent wipe:
     // Wipe's patterns deliberately list creatures, permanents and nonland only.
     [InlineData("Armageddon", "Sorcery", "Destroy all lands.", CardEffect.LandDestruction)]
+    [InlineData("Rain of Salt", "Sorcery", "Destroy two target lands.", CardEffect.LandDestruction)]
+    [InlineData("Sinkhole", "Sorcery", "Destroy target land.", CardEffect.LandDestruction)]
     public void Classify_ExactMatch_ForHighConfidenceCards(string name, string typeLine, string oracle, CardEffect expected)
     {
         Card card = MakeCard(name, typeLine, oracle);
@@ -51,7 +53,13 @@ public sealed class EffectClassifierTests
     // would be proposed as land destruction.
     [InlineData("Deep Spawn", "Creature — Kraken", "Islandwalk")]
     [InlineData("Sea Serpent", "Creature — Serpent", "Sea Serpent can't attack unless defending player controls an Island.")]
-    public void Classify_IslandWordings_AreNotLandDestruction(string name, string typeLine, string oracle)
+    // Both of these were caught by auditing already-reviewed cards against a
+    // looser first draft of the rules. Pyramids PROTECTS lands, and the thing it
+    // destroys is an Aura; Serendib Djinn's land sacrifice is a drawback its own
+    // controller pays, not an effect aimed at an opponent.
+    [InlineData("Pyramids", "Artifact", "{2}: Destroy target Aura attached to a land.\n{2}: The next time target land would be destroyed this turn, remove all damage marked on it instead.")]
+    [InlineData("Serendib Djinn", "Creature — Djinn", "Flying\nAt the beginning of your upkeep, sacrifice a land. If you sacrifice an Island this way, this creature deals 3 damage to you.")]
+    public void Classify_LandWordings_ThatAreNotLandDestruction(string name, string typeLine, string oracle)
     {
         Card card = MakeCard(name, typeLine, oracle);
 

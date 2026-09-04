@@ -31,11 +31,21 @@ namespace ScatoloneDownloader.Cube
 
             (CardEffect.RemovePermanent, [Rx(@"destroy target permanent"), Rx(@"exile target permanent")]),
 
-            // \bland keeps "islandwalk" and "island" out: they contain "land" but
-            // not at a word boundary. Narrow by design — Winter Orb-style mana
-            // denial that never destroys a land is not proposed here.
-            (CardEffect.LandDestruction, [Rx(@"destroy target[\w ]*\blands?\b"), Rx(@"exile target[\w ]*\blands?\b"),
-                Rx(@"destroy all \blands?\b"), Rx(@"sacrifices? a \bland\b")]),
+            // Three deliberate tightenings, each from a card that fooled a looser
+            // version of these rules:
+            //   \b before "land"   — "islandwalk" and "an Island" contain the
+            //                        letters but not the word.
+            //   {0,2} filler words — "destroy target Aura attached to a land"
+            //                        (Pyramids) puts four words in between, and
+            //                        it PROTECTS lands rather than killing them.
+            //   a named victim     — "at the beginning of your upkeep, sacrifice
+            //                        a land" (Serendib Djinn) is a drawback you
+            //                        pay, not an effect you aim at someone.
+            (CardEffect.LandDestruction, [
+                Rx(@"destroy (?:[\w-]+ ){0,2}target (?:[\w-]+ ){0,2}lands?\b"),
+                Rx(@"exile (?:[\w-]+ ){0,2}target (?:[\w-]+ ){0,2}lands?\b"),
+                Rx(@"destroy all \blands?\b"),
+                Rx(@"(?:target (?:player|opponent)|each player|that player) sacrifices? (?:[\w-]+ ){0,3}lands?\b")]),
 
             (CardEffect.Removal, [Rx(@"destroy target[\w ]*creature"), Rx(@"exile target[\w ]*creature"),
                 Rx(@"destroy target[\w ]*(creature|planeswalker)")]),
