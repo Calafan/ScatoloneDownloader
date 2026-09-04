@@ -27,7 +27,7 @@ namespace ScatoloneDownloader.Cli.Cube
     /// <see cref="Card.OracleId"/> (see <see cref="CubeMetadataStore"/>). This
     /// tool is the authoring authority: rating/status/effects are loaded from
     /// there at startup (never from XMP — Adobe Bridge is optional, and XMP is
-    /// read only once, by the <c>import</c> command, to seed the metadata).
+    /// read only by the <c>import</c> command, which folds Bridge sessions back in).
     /// The page opens on the "to review" filter — see <see cref="IsPendingReview"/>.
     /// </summary>
     internal sealed class TagCommand : AsyncCommand<TagCommand.Settings>

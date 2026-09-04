@@ -15,12 +15,13 @@ using Spectre.Console.Cli;
 namespace ScatoloneDownloader.Cli.Cube
 {
     /// <summary>
-    /// One-time seed command: migrates existing Adobe Bridge XMP ratings/labels
-    /// into the git-tracked metadata directory (see <see cref="CubeMetadataStore"/>)
-    /// so the git snapshot becomes complete and Bridge can be retired. This is
-    /// the ONLY place XMP is read going forward (via <see cref="XmpManager"/>)
-    /// — after running <c>import</c> once, the web tagger is authoritative and
-    /// this command is rarely needed again.
+    /// Folds Adobe Bridge XMP ratings/labels into the git-tracked metadata
+    /// directory (see <see cref="CubeMetadataStore"/>) so the git snapshot stays
+    /// complete. This is the ONLY place XMP is read (via <see cref="XmpManager"/>):
+    /// the store is the authoring authority and the web tagger writes straight to
+    /// it, but Bridge is still in use, so this command is meant to be re-run after
+    /// every Bridge session rather than once — see <c>--incremental</c>, which
+    /// rescans only the files touched since the previous run.
     /// </summary>
     internal sealed class ImportCommand : AsyncCommand<ImportCommand.Settings>
     {

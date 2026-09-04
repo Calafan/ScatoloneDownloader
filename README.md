@@ -98,8 +98,8 @@ non ancora valutata) — così il file da editare a mano resta piccolo anche con
 
 | Comando | Descrizione | Esempio |
 |---------|-------------|---------|
-| `tag <DIR>` | Avvia il tagger web locale (da tastiera) per assegnare rating, status ed effetti; salva automaticamente su `metadata/` a ogni modifica | `ScatoloneDownloader tag .\Master` |
-| `import <DIR>` | Migra una tantum i rating/label XMP già scritti da Adobe Bridge dentro `metadata/` (unico comando che legge ancora XMP) | `ScatoloneDownloader import .\Master --overwrite` |
+| `tag <DIR>` | Avvia il tagger web locale (da tastiera) per assegnare rating, status ed effetti; salva automaticamente su `metadata/` a ogni modifica. Apre sulla coda da revisionare (carte non taggate + auto-taggate non ancora confermate), in ordine casuale: `f` cambia filtro, `.` torna all'ordine di libreria | `ScatoloneDownloader tag .\Master` |
+| `import <DIR>` | Porta dentro `metadata/` i rating/label XMP scritti da Adobe Bridge (unico comando che legge ancora XMP). Da rilanciare dopo ogni sessione di Bridge; `--incremental` rilegge solo i file modificati dall'ultimo import | `ScatoloneDownloader import .\Master --overwrite --incremental` |
 | `build-views <DIR>` | Rigenera l'albero `Views/` (symlink/hardlink, multi-radice) e il report `Cubo_Analysis.md` leggendo rating/status/effetti da `metadata/` | `ScatoloneDownloader build-views .\Master -v .\Views` |
 | `restore --images <DIR>` | Recovery: ricostruisce la cartella immagini dall'unione di tutti i file di `metadata/` + bulk-data Scryfall (nessuna XMP scritta) | `ScatoloneDownloader restore --images .\Master -m metadata` |
 | `make-list -o <FILE>` | Genera (offline) una lista di download per il comando `files` con il solo pool (rating 3-5); i card con status finiscono in sezioni `-- Banned`/`-- Token`/`-- Jolly` così `files` li smista in sotto-cartelle | `ScatoloneDownloader make-list -m metadata -o pool.txt` |
@@ -112,6 +112,22 @@ metadati stanno vicino alle immagini che descrivono invece di seguire la
 directory da cui lanci il comando. `classify`, `make-list` e `restore` non
 ricevono `SOURCE_DIR`: non hanno un master accanto a cui stare e ricadono su
 `./metadata`, stampando all'avvio il percorso risolto.
+
+### Lavorare ancora con Adobe Bridge
+
+Il tagger e `metadata/` sono la fonte di verità, ma si può continuare a mettere
+rating e label da Adobe Bridge sui PNG della libreria master e riportarli dentro
+con `import --overwrite`. Il round-trip non perde lavoro nelle due direzioni:
+`import` non declassa mai un rating già salvato a 0, non riscrive lo status di
+una carta già revisionata nel tagger, e lascia intatti effetti, `scryfallId` e
+`reviewedAt`. A fine run stampa `Changed: n ratings, n labels, n statuses`, così
+si vede subito se la sessione di Bridge è arrivata davvero a destinazione.
+
+La libreria è su un disco meccanico e la scansione XMP completa è vincolata dai
+seek (circa 15 minuti su 30k file): dopo il primo import usa `--incremental`, che
+rilegge solo i file toccati dall'ultima esecuzione (watermark in
+`metadata/import-state.json`) e chiude in pochi secondi. Le carte non ancora
+presenti nello store vengono comunque sempre lette.
 
 ## Struttura dell'output
 
