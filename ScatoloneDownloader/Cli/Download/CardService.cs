@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 
 using ScatoloneDownloader.Download;
 using ScatoloneDownloader.Enums;
@@ -159,7 +154,6 @@ namespace ScatoloneDownloader.Cli.Download
                 }
             }
         }
-
 
         private static async Task GetCardsAsync(CardRequest req)
         {

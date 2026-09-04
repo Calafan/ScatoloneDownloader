@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.IO;
 
 using Spectre.Console.Cli;
 

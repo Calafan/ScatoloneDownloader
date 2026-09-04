@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
-
 namespace ScatoloneDownloader.Download
 {
     /// <summary>One parsed line of a download-list file: the card name plus its

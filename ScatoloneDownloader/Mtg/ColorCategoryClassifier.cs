@@ -1,8 +1,5 @@
 #nullable enable annotations
 
-using System.Collections.Generic;
-using System.Linq;
-
 namespace ScatoloneDownloader.Mtg
 {
     /// <summary>
@@ -53,7 +50,6 @@ namespace ScatoloneDownloader.Mtg
 			{ "WBR", "RWB" },  // Mardu — strict "WBR", canonical "RWB"
 			{ "URG", "GUR" },  // Temur — strict "URG", canonical "GUR"
 		};
-
 
         internal static string Classify(IReadOnlyList<string>? colorIdentity)
         {

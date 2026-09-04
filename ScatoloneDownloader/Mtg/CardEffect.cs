@@ -1,5 +1,3 @@
-using System;
-
 namespace ScatoloneDownloader.Mtg
 {
     /// <summary>

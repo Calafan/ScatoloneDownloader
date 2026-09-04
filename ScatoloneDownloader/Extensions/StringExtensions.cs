@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-
-namespace ScatoloneDownloader.Extensions
+﻿namespace ScatoloneDownloader.Extensions
 {
     public static class StringExtensions
     {

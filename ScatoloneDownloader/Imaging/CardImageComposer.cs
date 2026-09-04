@@ -1,6 +1,3 @@
-using System;
-using System.IO;
-
 using SkiaSharp;
 
 namespace ScatoloneDownloader.Imaging
@@ -24,7 +21,6 @@ namespace ScatoloneDownloader.Imaging
 
         // Thickness of the edge bands repainted during border normalization.
         private const int NormalizeBorderThickness = 25;
-
 
         /// <summary>Decodes a single-face card and applies the border finishing.</summary>
         internal static byte[] ComposeSingleFace(Stream imageStream)
@@ -51,7 +47,6 @@ namespace ScatoloneDownloader.Imaging
 
             return Finalize(merged);
         }
-
 
         private static SKBitmap Decode(Stream stream)
         {

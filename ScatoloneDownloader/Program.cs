@@ -1,5 +1,3 @@
-using System.Threading.Tasks;
-
 using ScatoloneDownloader.Cli.Cube;
 using ScatoloneDownloader.Cli.Download;
 

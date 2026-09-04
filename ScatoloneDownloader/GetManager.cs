@@ -1,10 +1,5 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 using Microsoft.Extensions.Logging;
 
@@ -36,7 +31,6 @@ namespace ScatoloneDownloader
         private readonly ScryfallClient scryfallClient = new();
 
         private Dictionary<string, Card> CardsByName;
-
 
         private async Task<List<Card>> GetCardSearch(string searchUri)
         {
@@ -75,7 +69,6 @@ namespace ScatoloneDownloader
             // enough to prove the transfer is alive without turning the log into
             // a progress bar.
             const int BulkProgressInterval = 25000;
-
 
             string url = BaseUrl + BulkDataUrl;
 
@@ -186,7 +179,6 @@ namespace ScatoloneDownloader
 
             return name;
         }
-
 
         internal async Task<List<Card>> GetUniqueArtwork()
         {

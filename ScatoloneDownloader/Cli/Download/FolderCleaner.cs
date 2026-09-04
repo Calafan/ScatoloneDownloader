@@ -1,5 +1,3 @@
-using System.IO;
-
 using ScatoloneDownloader.Download;
 
 namespace ScatoloneDownloader.Cli.Download

@@ -1,7 +1,5 @@
 #nullable enable annotations
 
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace ScatoloneDownloader.Mtg
@@ -15,7 +13,6 @@ namespace ScatoloneDownloader.Mtg
     internal static partial class ManaPipsParser
     {
         private static readonly string[] ColoredSymbols = ["W", "U", "B", "R", "G"];
-
 
         /// <summary>Returns the count of colored mana pips in the cost.</summary>
         internal static int CountColoredPips(string? manaCost)
@@ -49,7 +46,6 @@ namespace ScatoloneDownloader.Mtg
 
             return pips;
         }
-
 
         [GeneratedRegex(@"\{([^}]+)\}", RegexOptions.Compiled)]
         private static partial Regex PipPattern();

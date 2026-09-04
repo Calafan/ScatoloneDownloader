@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
-
 using ScatoloneDownloader.Mtg;
 
 namespace ScatoloneDownloader.Filtering
@@ -56,7 +53,6 @@ namespace ScatoloneDownloader.Filtering
             "vinyl",
             "firstspherefoil",
         ];
-
 
         // --- Named rules ------------------------------------------------------
 
@@ -124,7 +120,6 @@ namespace ScatoloneDownloader.Filtering
             return IsDownloadable(card, downloadReprints: false, downloadTokens: false, downloadLands: false)
                 && !IsPromoTreatment(card);
         }
-
 
         // --- Composite --------------------------------------------------------
 

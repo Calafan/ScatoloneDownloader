@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-
 using ScatoloneDownloader.Mtg;
 
 using Spectre.Console;

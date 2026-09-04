@@ -1,6 +1,3 @@
-using System.Threading;
-using System.Threading.Tasks;
-
 using Spectre.Console.Cli;
 
 namespace ScatoloneDownloader.Cli.Download

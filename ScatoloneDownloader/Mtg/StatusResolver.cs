@@ -1,7 +1,5 @@
 #nullable enable annotations
 
-using System;
-
 namespace ScatoloneDownloader.Mtg
 {
     /// <summary>

@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 using ScatoloneDownloader.Json.Cards;
 
 namespace ScatoloneDownloader.Mtg
@@ -26,7 +23,6 @@ namespace ScatoloneDownloader.Mtg
             "Snow-Covered Mountain",
             "Snow-Covered Forest"
         ];
-
 
         internal string Name { get; init; }
         internal string Id { get; init; }
@@ -113,7 +109,6 @@ namespace ScatoloneDownloader.Mtg
         internal int ManaPips { get; init; }
 
         internal string Tag { get; set; }
-
 
         internal Card(JsonCard jsonCard)
         {

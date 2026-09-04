@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 using ScatoloneDownloader.Metadata;
 using ScatoloneDownloader.Mtg;
 
