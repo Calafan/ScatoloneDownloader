@@ -9,6 +9,16 @@ namespace ScatoloneDownloader.Mtg
     /// are covered by <see cref="MacroType"/> and the view tree. This enum holds
     /// only functional effects. Members are authored via the tagging tool and
     /// persisted by name (not packed int) for readable git diffs.
+    ///
+    /// Deliberately absent, decided 2026-09-05 — every tag is a question asked of
+    /// 30k cards, so one that never changes a design decision costs and returns
+    /// nothing:
+    ///   - FOGS. A Fog prevents a combat, it does not answer a threat. It buys a
+    ///     turn rather than saving a permanent, which is why it is not folded into
+    ///     <see cref="Protection"/> either, despite also being instant-speed
+    ///     prevention.
+    ///   - LIFEGAIN. A resource, not an interaction. Worth a tag only for a cube
+    ///     with an archetype built on it; this one has none.
     /// </summary>
     [Flags]
     public enum CardEffect
