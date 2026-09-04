@@ -119,6 +119,9 @@ sibling of the working directory.
    n statuses`), not just how many entries were rewritten — the seed touches
    every matched card either way, so without that line a run against the wrong
    folder is indistinguishable from a successful one.
+   `--since <DATE>` scans from an instant you name instead of from the stored
+   watermark — the watermark only moves forward, so it cannot reach back to a
+   Bridge session that predates the last run; the date is read as local time.
    `--incremental` reads the XMP only of files modified since the previous
    import, whose start instant is recorded in `metadata/import-state.json`.
    On the 30151-file library that turns a 15-minute pass into 4 seconds when

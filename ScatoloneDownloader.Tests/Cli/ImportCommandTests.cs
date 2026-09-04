@@ -391,4 +391,31 @@ public sealed class ImportCommandTests
         card.XmpLabel = xmpLabel;
         return card;
     }
+
+    [Theory]
+    // Read as LOCAL time: the user types the hour they remember working, not a
+    // UTC log line, and file timestamps are compared in the same wall clock.
+    [InlineData("2026-09-03")]
+    [InlineData("2026-09-03T06:00")]
+    [InlineData("2026-09-03 06:00:00")]
+    public void TryParseSince_AcceptsTheDateFormsAPersonWouldType(string input)
+    {
+        Assert.True(ImportCommand.TryParseSince(input, out DateTimeOffset parsed));
+        Assert.Equal(new DateTime(2026, 9, 3), parsed.Date);
+        Assert.Equal(TimeZoneInfo.Local.GetUtcOffset(parsed), parsed.Offset);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("yesterday morning")]
+    [InlineData("ieri")]
+    [InlineData("2026-13-45")]
+    public void TryParseSince_RejectsWhatItCannotRead(string? input)
+    {
+        // Rejection matters: Validate turns it into an error message, and a
+        // silently-unparsed --since would quietly widen the scan to everything.
+        Assert.False(ImportCommand.TryParseSince(input, out _));
+    }
 }

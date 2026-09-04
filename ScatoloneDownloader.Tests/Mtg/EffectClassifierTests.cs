@@ -107,12 +107,26 @@ public sealed class EffectClassifierTests
         Assert.False(result.HasFlag(CardEffect.Ramp));
     }
 
-    [Fact]
-    public void Classify_HexproofKeyword_WithNoRulesText_IsProtection()
+    [Theory]
+    // Protection counts only when it can be deployed in response. Mother of Runes
+    // answers a removal spell on the stack; a bogle with hexproof printed on it
+    // protects nobody but itself, and holds nothing up.
+    [InlineData("Mother of Runes", "Creature — Human Cleric", "{T}: Target creature you control gains protection from the color of your choice until end of turn.", true)]
+    [InlineData("Giant Growth", "Instant", "Target creature gets +3/+3 until end of turn. It gains hexproof until end of turn.", true)]
+    // NB: a Circle of Protection would pass this gate (its "{1}:" is an activated
+    // ability) but never reaches it — the rules' vocabulary has no word for
+    // PREVENTION yet, only protection/hexproof/shroud/indestructible. Whether
+    // prevention joins them is still open, and deciding it here by side effect
+    // would also silently rule on every fog.
+    [InlineData("Slippery Bogle", "Creature — Beast", "", false)]
+    [InlineData("Darksteel Colossus", "Artifact Creature — Golem", "Trample\nThis creature is indestructible.", false)]
+    [InlineData("Asceticism-style aura", "Enchantment — Aura", "Enchanted creature has hexproof.", false)]
+    public void Classify_Protection_RequiresInstantSpeed(string name, string typeLine, string oracle, bool expected)
     {
-        Card card = MakeCard("Slippery Bogle", "Creature — Beast", "", keywords: ["Hexproof"]);
+        List<string>? keywords = name == "Slippery Bogle" ? ["Hexproof"] : null;
+        Card card = MakeCard(name, typeLine, oracle, keywords);
 
-        Assert.Equal(CardEffect.Protection, EffectClassifier.Classify(card));
+        Assert.Equal(expected, EffectClassifier.Classify(card).HasFlag(CardEffect.Protection));
     }
 
     [Fact]

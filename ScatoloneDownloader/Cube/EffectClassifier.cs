@@ -20,6 +20,9 @@ namespace ScatoloneDownloader.Cube
     {
         private static Regex Rx(string pattern) => new(pattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
+        private static Regex Rx(string pattern, RegexOptions extra) =>
+            new(pattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | extra);
+
         // One entry per effect; a card gets the effect if ANY of its patterns hit.
         private static readonly (CardEffect Effect, Regex[] Patterns)[] Rules =
         [
@@ -168,7 +171,66 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Ramp;
             }
 
+            // Protection is an INTERACTION you hold up, not a property a card
+            // happens to have. A creature printed with hexproof protects only
+            // itself, passively, and answers nothing; Mother of Runes protects
+            // whatever needs it, in response, on the turn it matters. Only the
+            // second is what the tag is for, so the vocabulary above has to clear
+            // a timing gate before it counts.
+            if (result.HasFlag(CardEffect.Protection) && !IsInstantSpeed(card))
+            {
+                result &= ~CardEffect.Protection;
+            }
+
             return result;
         }
+
+        /// <summary>Whether the card's effect can be deployed in response: an
+        /// instant, a card with flash, or anything with an activated ability (a
+        /// cost, then a colon — Mother of Runes' <c>{T}:</c>, a Circle of
+        /// Protection's <c>{1}:</c>). Sorceries, static abilities and
+        /// enter-the-battlefield triggers do not qualify.</summary>
+        private static bool IsInstantSpeed(Card card)
+        {
+            if ((card.TypeLine ?? string.Empty).Contains("Instant", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            foreach (string keyword in card.Keywords ?? [])
+            {
+                if (string.Equals(keyword, "Flash", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            string text = card.OracleText ?? string.Empty;
+
+            foreach (Regex pattern in ActivatedAbility)
+            {
+                if (pattern.IsMatch(text))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // The two shapes an activated ability's cost takes before its colon. Both
+        // are bounded to a single line so an unrelated symbol cannot pair with a
+        // later colon.
+        //
+        // Loyalty abilities ("+1:", "-2:") are deliberately NOT here: a
+        // planeswalker activates at sorcery speed, so it fails the gate the same
+        // way a sorcery does. That is also why this cannot simply look for "any
+        // short prefix then a colon".
+        private static readonly Regex[] ActivatedAbility =
+        [
+            Rx(@"\{[^}\n]+\}[^:\n]{0,40}:"),
+            Rx(@"^(?:sacrifice|discard|pay|exile|tap|untap|remove|return|reveal)\b[^:\n]{0,50}:",
+                RegexOptions.Multiline),
+        ];
     }
 }

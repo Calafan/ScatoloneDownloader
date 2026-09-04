@@ -17,8 +17,9 @@ namespace ScatoloneDownloader.Cli.Cube
     /// NEVER touches an entry a human already reviewed (<c>reviewedAt != null</c>).
     /// By default it only fills entries that have no effects yet; <c>--overwrite</c>
     /// re-proposes over any still-unreviewed entry (reviewed ones stay untouched
-    /// regardless). Reads the Scryfall bulk for oracle text; writes only the
-    /// metadata directory.
+    /// regardless), which includes WITHDRAWING auto-tags the rules no longer
+    /// produce — otherwise tightening a rule could never take effect. Reads the
+    /// Scryfall bulk for oracle text; writes only the metadata directory.
     /// </summary>
     internal sealed class ClassifyCommand : AsyncCommand<ClassifyCommand.Settings>
     {
@@ -51,7 +52,7 @@ namespace ScatoloneDownloader.Cli.Cube
 
             AnsiConsole.MarkupLine("[yellow]Loading bulk data from Scryfall...[/]");
 
-            int classified = 0, reviewed = 0, hasEffects = 0, noProposal = 0, unresolved = 0;
+            int classified = 0, reviewed = 0, hasEffects = 0, noProposal = 0, cleared = 0, unresolved = 0;
 
             using (GetManager manager = new())
             {
@@ -86,6 +87,14 @@ namespace ScatoloneDownloader.Cli.Cube
                         case ClassifyOutcome.NoProposal:
                             noProposal++;
                             break;
+                        case ClassifyOutcome.Cleared:
+                            if (!settings.DryRun)
+                            {
+                                entry.EffectFlags = CardEffect.None;
+                            }
+
+                            cleared++;
+                            break;
                         case ClassifyOutcome.Classified:
                             if (!settings.DryRun)
                             {
@@ -103,12 +112,16 @@ namespace ScatoloneDownloader.Cli.Cube
                 CubeMetadataStore.Save(metadataDir, metadata);
             }
 
+            string clearedNote = cleared > 0
+                ? $", {cleared} cleared (rules no longer propose them)"
+                : string.Empty;
+
             string verb = settings.DryRun ? "Would classify" : "Classified";
             string prefix = settings.DryRun ? "[grey](dry-run)[/] " : string.Empty;
             // MarkupLine (not interpolated) so the [green]/[grey] tags render;
             // only integer counts are interpolated, which carry no markup chars.
             AnsiConsole.MarkupLine(
-                $"{prefix}[green]{verb} {classified} cards[/] — {reviewed} reviewed (kept), {hasEffects} already tagged (kept), {noProposal} no suggestion, {unresolved} unresolved.");
+                $"{prefix}[green]{verb} {classified} cards[/] — {reviewed} reviewed (kept), {hasEffects} already tagged (kept), {noProposal} no suggestion{clearedNote}, {unresolved} unresolved.");
             if (!settings.DryRun && classified > 0)
             {
                 AnsiConsole.MarkupLine("[grey]All suggestions are unreviewed — confirm them in the tagger (they show as AUTO / pending).[/]");
@@ -121,8 +134,10 @@ namespace ScatoloneDownloader.Cli.Cube
         /// contract is unit-testable without the Scryfall bulk. Reviewed entries
         /// are never proposed over; unreviewed entries are filled when empty (or
         /// re-proposed under <paramref name="overwrite"/>); a card the classifier
-        /// can't read yields <see cref="ClassifyOutcome.NoProposal"/>. Never
-        /// stamps <c>reviewedAt</c> — the caller applies only the effects.</summary>
+        /// can't read yields <see cref="ClassifyOutcome.NoProposal"/>, or
+        /// <see cref="ClassifyOutcome.Cleared"/> when it already carried tags the
+        /// rules have since stopped producing. Never stamps <c>reviewedAt</c> —
+        /// the caller applies only the effects.</summary>
         internal static (ClassifyOutcome Outcome, CardEffect Proposed) Decide(CardMetadataEntry entry, Card card, bool overwrite)
         {
             if (entry.ReviewedAt != null)
@@ -138,7 +153,15 @@ namespace ScatoloneDownloader.Cli.Cube
             CardEffect proposed = EffectClassifier.Classify(card);
             if (proposed == CardEffect.None)
             {
-                return (ClassifyOutcome.NoProposal, CardEffect.None);
+                // Under --overwrite, an entry that HAS auto-tags the current rules
+                // would no longer produce has to lose them. Without this, tightening
+                // a rule can never take effect: the card keeps a tag no rule in the
+                // codebase still stands behind, and re-running classify looks like a
+                // no-op. Only ever an unreviewed entry, so it is a stale machine
+                // guess being withdrawn, never a human decision.
+                return entry.EffectFlags != CardEffect.None
+                    ? (ClassifyOutcome.Cleared, CardEffect.None)
+                    : (ClassifyOutcome.NoProposal, CardEffect.None);
             }
 
             return (ClassifyOutcome.Classified, proposed);
@@ -160,5 +183,9 @@ namespace ScatoloneDownloader.Cli.Cube
 
         /// <summary>The classifier found nothing to suggest for this card.</summary>
         NoProposal,
+
+        /// <summary>Under <c>--overwrite</c>: the entry carried auto-tags the
+        /// current rules no longer produce, so they are withdrawn.</summary>
+        Cleared,
     }
 }

@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Globalization;
 
 using ScatoloneDownloader.Metadata;
 using ScatoloneDownloader.Mtg;
@@ -34,6 +35,41 @@ namespace ScatoloneDownloader.Cli.Cube
             [CommandOption("--incremental")]
             [Description("Only read the XMP of files modified since the last import (see import-state.json). Cards not yet in the store are always read. Off by default: a full scan is the safe answer.")]
             public bool Incremental { get; set; }
+
+            [CommandOption("--since <DATE>")]
+            [Description("Rescan files modified since this instant instead of since the last import (e.g. 2026-09-03, or 2026-09-03T06:00). Implies --incremental, and is the way to reach BACK past the stored watermark after a Bridge session that predates the last run.")]
+            public string? Since { get; set; }
+
+            public override ValidationResult Validate()
+            {
+                if (!string.IsNullOrWhiteSpace(Since) && !TryParseSince(Since, out _))
+                {
+                    return ValidationResult.Error($"--since: '{Since}' is not a date I can read. Try 2026-09-03 or 2026-09-03T06:00.");
+                }
+
+                return base.Validate();
+            }
+        }
+
+        /// <summary>Parses <c>--since</c> as local time — the user is reading a
+        /// clock on the wall, not a UTC log — and converts to the offset the
+        /// watermark comparison uses.</summary>
+        internal static bool TryParseSince(string? value, out DateTimeOffset parsed)
+        {
+            parsed = default;
+
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+
+            if (!DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime local))
+            {
+                return false;
+            }
+
+            parsed = new DateTimeOffset(DateTime.SpecifyKind(local, DateTimeKind.Local));
+            return true;
         }
 
         protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
@@ -51,9 +87,19 @@ namespace ScatoloneDownloader.Cli.Cube
             // watermark, so anything written while this one is scanning is caught
             // next time rather than falling through the gap.
             DateTimeOffset startedUtc = DateTimeOffset.UtcNow;
-            DateTimeOffset? incrementalSince = settings.Incremental
-                ? ImportState.Load(metadataDir).LastImportUtc
-                : null;
+
+            // --since wins over the stored watermark, which is the whole point of
+            // it: the watermark only ever moves forward, so it cannot be used to
+            // re-read a Bridge session that happened BEFORE the last import ran.
+            DateTimeOffset? incrementalSince = null;
+            if (TryParseSince(settings.Since, out DateTimeOffset explicitSince))
+            {
+                incrementalSince = explicitSince;
+            }
+            else if (settings.Incremental)
+            {
+                incrementalSince = ImportState.Load(metadataDir).LastImportUtc;
+            }
 
             AnsiConsole.MarkupLineInterpolated($"[cyan]Master folder:[/] {masterDir}");
             AnsiConsole.MarkupLineInterpolated($"[cyan]Metadata     :[/] {metadataDir}");
@@ -83,7 +129,7 @@ namespace ScatoloneDownloader.Cli.Cube
             // never been imported must be read no matter how old its file is.
             CubeMetadata metadata = CubeMetadataStore.Load(metadataDir);
 
-            if (settings.Incremental)
+            if (settings.Incremental || settings.Since != null)
             {
                 int before = matched.Count;
                 matched = SelectForRescan(matched, incrementalSince, [.. metadata.Cards.Keys], path => File.GetLastWriteTimeUtc(path));
@@ -165,7 +211,7 @@ namespace ScatoloneDownloader.Cli.Cube
             // Only meaningful after a FULL scan. In incremental mode "nothing
             // changed" is the expected, healthy answer for a subset of files and
             // says nothing about whether the right folder was imported.
-            if (!settings.Incremental && added == 0 && ratingsChanged == 0 && labelsChanged == 0 && statusesFilled == 0)
+            if (!settings.Incremental && settings.Since == null && added == 0 && ratingsChanged == 0 && labelsChanged == 0 && statusesFilled == 0)
             {
                 AnsiConsole.MarkupLine(
                     "[yellow]Nothing differed from the store.[/] [grey]If you expected a Bridge session to land here, check you pointed at the folder Bridge actually wrote to.[/]");

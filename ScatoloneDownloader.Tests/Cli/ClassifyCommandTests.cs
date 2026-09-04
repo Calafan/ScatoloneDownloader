@@ -70,6 +70,49 @@ public sealed class ClassifyCommandTests
     }
 
     [Fact]
+    public void Decide_StaleTagsTheRulesNoLongerProduce_AreClearedUnderOverwrite()
+    {
+        // The case that made this necessary: Protection was narrowed to
+        // instant-speed effects, so a vanilla creature carrying an old Protection
+        // guess has to lose it. Without this the tag would survive every future
+        // classify run and no rule in the codebase would stand behind it.
+        CardMetadataEntry entry = new() { Name = "Grizzly Bears", EffectFlags = CardEffect.Protection };
+
+        (ClassifyOutcome outcome, CardEffect proposed) = ClassifyCommand.Decide(entry, Vanilla, overwrite: true);
+
+        Assert.Equal(ClassifyOutcome.Cleared, outcome);
+        Assert.Equal(CardEffect.None, proposed);
+    }
+
+    [Fact]
+    public void Decide_StaleTags_SurviveWithoutOverwrite()
+    {
+        // Clearing is an --overwrite behaviour only: the default run must stay the
+        // conservative "fill the blanks" pass it has always been.
+        CardMetadataEntry entry = new() { Name = "Grizzly Bears", EffectFlags = CardEffect.Protection };
+
+        (ClassifyOutcome outcome, _) = ClassifyCommand.Decide(entry, Vanilla, overwrite: false);
+
+        Assert.Equal(ClassifyOutcome.AlreadyTagged, outcome);
+    }
+
+    [Fact]
+    public void Decide_ReviewedEntryWithStaleTags_IsStillNeverTouched()
+    {
+        // Clearing must never reach a human decision, even a stale-looking one.
+        CardMetadataEntry entry = new()
+        {
+            Name = "Grizzly Bears",
+            EffectFlags = CardEffect.Protection,
+            ReviewedAt = DateTimeOffset.UtcNow,
+        };
+
+        (ClassifyOutcome outcome, _) = ClassifyCommand.Decide(entry, Vanilla, overwrite: true);
+
+        Assert.Equal(ClassifyOutcome.Reviewed, outcome);
+    }
+
+    [Fact]
     public void Decide_UnclassifiableCard_NoProposal()
     {
         CardMetadataEntry entry = new() { Name = "Grizzly Bears" };
