@@ -154,6 +154,14 @@ const STATUS_KEYS = Object.fromEntries(STATUS_ORDER.map(s => [s.key, s.name]));
 const LIST_CAP = 300;
 
 let cards = [], effects = [], order = [], pos = 0;
+
+// The order the effect list is DISPLAYED in — alphabetical, so a name is easy to
+// find in a grid of two dozen. It holds indices into `effects`, never names,
+// because the hotkey is EFFECT_KEYS[i] for effect i: the server sends both in
+// enum declaration order, so sorting the names directly would silently reassign
+// every key. Each effect keeps the key it has always had, and only the position
+// on screen changes.
+let effectOrder = [];
 let filterMode = 0, ratingMode = 0, filterFellBack = false;
 let yearSel = "", folderSel = "", listOpen = false;
 
@@ -233,6 +241,7 @@ async function boot() {
   const r = await fetch("/api/cards");
   const data = await r.json();
   effects = data.effects;
+  effectOrder = effects.map((_, i) => i).sort((a, b) => effects[a].localeCompare(effects[b]));
   cards = data.cards.map(c => ({...c, effects: new Set(c.effects), folder: c.folder || ""}));
   buildScopeControls();
   buildOrder();
@@ -322,7 +331,8 @@ function render() {
 
   const box = document.getElementById("effects");
   box.innerHTML = "";
-  effects.forEach((name, i) => {
+  effectOrder.forEach(i => {
+    const name = effects[i];
     const active = c.effects.has(name);
     const div = document.createElement("div");
     div.className = "eff" + (active ? " active" : "");

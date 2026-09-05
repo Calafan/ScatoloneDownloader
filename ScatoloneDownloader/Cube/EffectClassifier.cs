@@ -55,6 +55,12 @@ namespace ScatoloneDownloader.Cube
 
             (CardEffect.Counter, [Rx(@"counter target[\w ]*spell")]),
 
+            // The other way to answer something on the stack. "copy target" is
+            // required rather than the bare word "copy": a token that enters "as a
+            // copy OF target creature" is Tokens, not stack interaction.
+            (CardEffect.Redirect, [Rx(@"change the targets? of"),
+                Rx(@"cop(?:y|ies) target[\w ]*(?:spell|ability)")]),
+
             (CardEffect.Bounce, [Rx(@"return target[\w ,]*to (its|their) owner'?s? hand"),
                 Rx(@"return[\w ,]*to (its|their) owner'?s? hand")]),
 

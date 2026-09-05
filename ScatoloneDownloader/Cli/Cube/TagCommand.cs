@@ -378,9 +378,9 @@ namespace ScatoloneDownloader.Cli.Cube
         // ones that need no modifier on an Italian layout, which is what ruled
         // out ";" (Shift+",") and "=" (Shift+"0") in favour of "-" and "'",
         // both single presses on an Italian and a US layout alike. Past those
-        // two the digits are next: "9" is as far from the 0-5 rating keys as the
-        // row allows, so a mis-hit reaching for 5 cannot toggle an effect.
-        internal const string EffectHotkeys = "qweryuiopasdghklmvxz-'9";
+        // two the digits are next, taken from the far end ("9", then "8"): a
+        // mis-hit reaching for the 0-5 rating keys cannot toggle an effect.
+        internal const string EffectHotkeys = "qweryuiopasdghklmvxz-'98";
 
         // The tagger's single-page UI lives in the embedded resource
         // Cli/TaggerPage.html (so editors/linters see the HTML/JS). It is loaded and

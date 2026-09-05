@@ -42,6 +42,11 @@ public sealed class EffectClassifierTests
     [InlineData("Rain of Salt", "Sorcery", "Destroy two target lands.", CardEffect.LandDestruction)]
     [InlineData("Sinkhole", "Sorcery", "Destroy target land.", CardEffect.LandDestruction)]
     [InlineData("Glimpse the Unthinkable", "Sorcery", "Target player mills ten cards.", CardEffect.Mill)]
+    [InlineData("Misdirection", "Instant", "Change the target of target spell with a single target.", CardEffect.Redirect)]
+    [InlineData("Fork", "Instant", "Copy target instant or sorcery spell. You may choose new targets for the copy.", CardEffect.Redirect)]
+    // A token entering as a copy OF something is Tokens, not stack interaction:
+    // the rules require "copy target", never the bare word "copy".
+    [InlineData("Clone", "Creature — Shapeshifter", "You may have this creature enter as a copy of any creature on the battlefield.", CardEffect.None)]
     // "Mill" is only keyword wording from 2021 on; the pre-2021 library spells
     // the action out, so the old phrasing has to match too.
     [InlineData("Millstone", "Artifact", "{2}, {T}: Target player puts the top two cards of their library into their graveyard.", CardEffect.Mill)]
