@@ -66,6 +66,17 @@ public sealed class StatusResolverTests
     [InlineData("Blue", CardStatus.None)]
     [InlineData("", CardStatus.None)]
     [InlineData(null, CardStatus.None)]
+    // Bridge stores the NAME the user gave a colour slot, not the colour. This
+    // library's labels are words, which is why reading colours alone left every
+    // banned card at status None.
+    [InlineData("Banned", CardStatus.Banned)]
+    [InlineData("banned", CardStatus.Banned)]
+    [InlineData("Token", CardStatus.Token)]
+    [InlineData("Jolly", CardStatus.Jolly)]
+    [InlineData(" Banned ", CardStatus.Banned)]
+    // A label set that names something which is not a status stays None.
+    [InlineData("Revisione", CardStatus.None)]
+    [InlineData("Seleziona", CardStatus.None)]
     public void FromXmpLabel_MapsBridgeColorsToStatus(string? label, CardStatus expected)
     {
         Assert.Equal(expected, StatusResolver.FromXmpLabel(label));
