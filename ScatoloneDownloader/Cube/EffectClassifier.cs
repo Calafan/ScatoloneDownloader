@@ -23,6 +23,28 @@ namespace ScatoloneDownloader.Cube
         private static Regex Rx(string pattern, RegexOptions extra) =>
             new(pattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | extra);
 
+        // "Mill" only became keyword wording in 2021; everything printed before
+        // that spells the action out, so both forms are needed or the whole
+        // pre-2021 library goes untagged. Hoisted out of the table below because
+        // the cost guard re-runs them against a stripped copy of the text — and
+        // declared BEFORE Rules, which captures the array in its own initializer.
+        private static readonly Regex[] MillPatterns =
+        [
+            Rx(@"\bmills? (?:[\w-]+ ){0,2}cards?\b"),
+            Rx(@"put(?:s)? the top [\w ]{0,25}library into [\w ]{0,25}graveyard"),
+        ];
+
+        // The mill you PAY, in the three shapes it is written in: a drawback you
+        // meet ("sacrifice this creature unless you mill two cards"), an extra
+        // cost on the way to the stack, and a cost before an activated ability's
+        // colon ("{T}, Mill a card: Add {C}"). See the guard below for why.
+        private static readonly Regex[] MillCosts =
+        [
+            Rx(@"unless (?:you|they|that player|its controller) mills? (?:[\w-]+ ){0,2}cards?"),
+            Rx(@"as an additional cost to cast[^.\n]{0,80}mills? (?:[\w-]+ ){0,2}cards?"),
+            Rx(@"\bmills? (?:[\w-]+ ){0,2}cards?[^:.\n]{0,30}:", RegexOptions.Multiline),
+        ];
+
         // One entry per effect; a card gets the effect if ANY of its patterns hit.
         private static readonly (CardEffect Effect, Regex[] Patterns)[] Rules =
         [
@@ -87,11 +109,7 @@ namespace ScatoloneDownloader.Cube
             (CardEffect.Regrowth, [Rx(@"return[\w ]*from[\w ]*graveyard to[\w ']*hand"),
                 Rx(@"put[\w ]*card from[\w ]*graveyard into[\w ]*hand")]),
 
-            // "Mill" only became keyword wording in 2021; everything printed
-            // before that spells the action out, so both forms are needed or the
-            // whole pre-2021 library goes untagged.
-            (CardEffect.Mill, [Rx(@"\bmills? (?:[\w-]+ ){0,2}cards?\b"),
-                Rx(@"put(?:s)? the top [\w ]{0,25}library into [\w ]{0,25}graveyard")]),
+            (CardEffect.Mill, MillPatterns),
 
             (CardEffect.Buff, [Rx(@"gets? \+\d+/\+\d+"), Rx(@"creatures you control get \+"), Rx(@"\+\d+/\+\d+ until end of turn")]),
 
@@ -188,7 +206,42 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Protection;
             }
 
+            // Milling can be the effect or the PRICE, and only the first is what
+            // the tag is for. Deep Spawn's "sacrifice this creature unless you
+            // mill two cards" is an upkeep tax; Millikin's "{T}, Mill a card:"
+            // buys mana. Neither card is doing anything to a library on purpose
+            // — the same distinction LandDestruction already draws between Stone
+            // Rain and Serendib Djinn's land sacrifice.
+            if (result.HasFlag(CardEffect.Mill) && !MillsOutsideACost(card))
+            {
+                result &= ~CardEffect.Mill;
+            }
+
             return result;
+        }
+
+        /// <summary>Whether anything is still milled once every cost clause is
+        /// struck out — i.e. whether the card mills as an EFFECT rather than only
+        /// as a price it pays. A card that does both keeps the tag, because the
+        /// surviving text still matches.</summary>
+        private static bool MillsOutsideACost(Card card)
+        {
+            string text = card.OracleText ?? string.Empty;
+
+            foreach (Regex cost in MillCosts)
+            {
+                text = cost.Replace(text, " ");
+            }
+
+            foreach (Regex pattern in MillPatterns)
+            {
+                if (pattern.IsMatch(text))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>Whether the card's effect can be deployed in response: an

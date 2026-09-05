@@ -82,6 +82,40 @@ public sealed class EffectClassifierTests
         Assert.False(EffectClassifier.Classify(card).HasFlag(CardEffect.LandDestruction));
     }
 
+    [Theory]
+    // Milling as a PRICE is not a mill card. Measured against the whole Scryfall
+    // corpus, this guard withdraws Mill from exactly five cards — the three
+    // wordings below plus Charmed Pendant and The Warring Triad — so it pins the
+    // ruling rather than re-cutting the tag.
+    [InlineData("Deep Spawn", "Creature — Kraken",
+        "Trample\nAt the beginning of your upkeep, sacrifice this creature unless you mill two cards.\n{U}: This creature gains shroud until end of turn.")]
+    [InlineData("Millikin", "Artifact Creature — Construct", "{T}, Mill a card: Add {C}.")]
+    [InlineData("Rot Farm Skeleton", "Creature — Plant Skeleton",
+        "This creature can't block.\n{2}{B}{G}, Mill four cards: Return this card from your graveyard to the battlefield. Activate only as a sorcery.")]
+    public void Classify_MillPaidAsACost_IsNotMill(string name, string typeLine, string oracle)
+    {
+        Card card = MakeCard(name, typeLine, oracle);
+
+        Assert.False(EffectClassifier.Classify(card).HasFlag(CardEffect.Mill));
+    }
+
+    [Theory]
+    // The guard strikes out cost clauses and asks what is LEFT, so a card that
+    // both pays and mills keeps the tag. Altar of Dementia's sacrifice is the
+    // cost and the mill is what it buys — the opposite arrangement to Millikin.
+    [InlineData("Altar of Dementia", "Artifact", "Sacrifice a creature: Target player mills cards equal to the sacrificed creature's power.")]
+    [InlineData("Glimpse the Unthinkable", "Sorcery", "Target player mills ten cards.")]
+    // A payoff whose only mill wording is reminder text still counts: the same
+    // reminder-text reading that gives Stinkweed Imp its Mill.
+    [InlineData("Bruvac the Grandiloquent", "Legendary Creature — Human Advisor",
+        "If an opponent would mill one or more cards, they mill twice that many cards instead. (To mill a card, a player puts the top card of their library into their graveyard.)")]
+    public void Classify_MillAsAnEffect_SurvivesTheCostGuard(string name, string typeLine, string oracle)
+    {
+        Card card = MakeCard(name, typeLine, oracle);
+
+        Assert.True(EffectClassifier.Classify(card).HasFlag(CardEffect.Mill));
+    }
+
     [Fact]
     public void Classify_ManaDenial_WithoutDestroyingALand_IsNotProposed()
     {
