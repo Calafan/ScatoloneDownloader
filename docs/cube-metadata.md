@@ -181,6 +181,8 @@ sibling of the working directory.
      unrated / each exact star. The first three mirror the store's own tier
      files, so "pool" here means what it means in `pool.json` — the ~2600
      cards that actually make the cube, against 30k in the library.
+   - **Effect** (picker): one effect, or the two questions a name cannot ask
+     - which cards carry nothing at all, and which carry anything at all.
    - **Folder** (two pickers): year, then set. Taken from each file's path
      relative to `SOURCE_DIR` (`TagCommand.RelativeFolder`), not from the
      card, because the folder describes how the library is laid out on disk.

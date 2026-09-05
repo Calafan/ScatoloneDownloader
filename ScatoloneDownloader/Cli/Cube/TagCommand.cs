@@ -366,21 +366,24 @@ namespace ScatoloneDownloader.Cli.Cube
 
         // Effect hotkey string injected into the tagger page (TaggerPage.html's
         // "__EFFECT_KEYS__" placeholder). Kept here as the SINGLE source of truth
-        // so the startup check below can guarantee there are at least as many keys
+        // so the startup check above can guarantee there are at least as many keys
         // as effects — a new CardEffect with no key would otherwise silently get no
-        // hotkey. Keys avoid 0-5 (rating) and n/b/t/j/c/f (status/confirm/filter);
-        // four page actions had to take punctuation because no letter was left:
-        // "." (shuffle), "," (rating filter), "/" (card list); the effects past
-        // the alphabet then take "-" and "'".
+        // hotkey. Indexed by ENUM POSITION: the Nth character is the Nth member of
+        // CardEffect, which is why adding a member in the middle would shift every
+        // key after it. Append, don't insert.
         //
-        // The alphabet is full, but the keyboard is not: the rating branch only
-        // claims 0-5, so 6-9 are free, as are several punctuation keys. Prefer
-        // ones that need no modifier on an Italian layout, which is what ruled
-        // out ";" (Shift+",") and "=" (Shift+"0") in favour of "-" and "'",
-        // both single presses on an Italian and a US layout alike. Past those
-        // two the digits are next, taken from the far end ("9", then "8"): a
-        // mis-hit reaching for the 0-5 rating keys cannot toggle an effect.
-        internal const string EffectHotkeys = "qweryuiopasdghklmvxz-'98";
+        // Keys are chosen initial-first, most common effect first, measured against
+        // the real library: Discard, Filter, ManaFixing, Sacrifice, Ramp, Pacify,
+        // Wipe and LandDestruction all get theirs. Eight is the CEILING, not a
+        // compromise — the 24 effects share only 11 distinct initials, and three of
+        // those (b, c, t) are reserved for status and confirm, which is what blocks
+        // Buff, Burn, Bounce, CardAdvantage, Counter, Tokens and Tutor. Freeing b
+        // and t by moving status elsewhere would raise it to ten.
+        //
+        // Where the initial is taken, the key is another letter from the name
+        // (bUff, tOkens, cArdAdvantage, remoVal); the three rarest effects take the
+        // leftovers. Filter selection is mouse-only, so no letter is spent on it.
+        internal const string EffectHotkeys = "ovy9wgrxdafkuiesz8mplqh-";
 
         // The tagger's single-page UI lives in the embedded resource
         // Cli/TaggerPage.html (so editors/linters see the HTML/JS). It is loaded and
