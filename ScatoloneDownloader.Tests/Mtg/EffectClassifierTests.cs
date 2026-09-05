@@ -168,6 +168,54 @@ public sealed class EffectClassifierTests
         Assert.Equal(expected, EffectClassifier.Classify(card).HasFlag(CardEffect.Protection));
     }
 
+    [Theory]
+    // A creature that pumps or shields only ITSELF has a stat line, not an
+    // effect — it answers nothing for the rest of the board. Decided 2026-09-05.
+    [InlineData("Adanto Vanguard", "Creature — Vampire Soldier",
+        "As long as this creature is attacking, it gets +2/+0.\nPay 4 life: This creature gains indestructible until end of turn.")]
+    [InlineData("Advanced Hoverguard", "Creature — Drone",
+        "Flying\n{U}: This creature gains shroud until end of turn.")]
+    // Its own name is the same self-reference the older printings write.
+    [InlineData("Akroma, Angel of Fury", "Legendary Creature — Angel",
+        "This spell can't be countered.\nFlying, trample, protection from white and from blue\n{R}: Akroma gets +1/+0 until end of turn.")]
+    [InlineData("Armored Armadillo", "Creature — Armadillo",
+        "Ward {1} (Whenever this creature becomes the target of a spell or ability an opponent controls, counter it unless that player pays {1}.)")]
+    // A condition ON what you control is not a beneficiary: the pump still lands
+    // on the creature itself. This is the wording the stop-word list exists for.
+    [InlineData("Aerial Engineer", "Artifact Creature — Construct",
+        "As long as you control an artifact, this creature gets +2/+0 and has flying.")]
+    public void Classify_SelfBuffAndSelfProtection_AreNotEffects(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.False(result.HasFlag(CardEffect.Buff));
+        Assert.False(result.HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // The same creatures, aimed outward, keep the tag. A "target" two lines up
+    // must not vouch for a self-buff, which is why the window is one line: the
+    // Armored Guardian entry below grants on one line and shields itself on the
+    // next, and only the first is why it counts.
+    [InlineData("Aerie Mystics", "Creature — Bird Wizard",
+        "Flying\n{1}{G}{U}: Creatures you control gain shroud until end of turn.", CardEffect.Protection)]
+    [InlineData("Armored Guardian", "Creature — Giant",
+        "{1}{W}{W}: Target creature you control gains protection from the color of your choice until end of turn.\n{1}{U}{U}: This creature gains shroud until end of turn.", CardEffect.Protection)]
+    [InlineData("Glorious Anthem", "Enchantment", "Creatures you control get +1/+1.", CardEffect.Buff)]
+    [InlineData("Bonesplitter", "Artifact — Equipment", "Equipped creature gets +2/+0.\nEquip {1}", CardEffect.Buff)]
+    // The beneficiary is whatever type line the card names, not just "creatures",
+    // and it can be a battlefield state rather than a controller.
+    [InlineData("Adeliz, the Cinder Wind", "Legendary Creature — Efreet Wizard",
+        "Flying, haste\nWhenever you cast an instant or sorcery spell, Wizards you control get +1/+1 until end of turn.", CardEffect.Buff)]
+    [InlineData("Ainok Strike Leader", "Creature — Hound Soldier",
+        "Sacrifice this creature: Creature tokens you control gain indestructible until end of turn.", CardEffect.Protection)]
+    [InlineData("Agrus Kos, Wojek Veteran", "Legendary Creature — Human Soldier",
+        "Whenever Agrus Kos attacks, attacking red creatures get +2/+0 and attacking white creatures get +0/+2 until end of turn.", CardEffect.Buff)]
+    public void Classify_EffectsAimedAtSomethingElse_Survive(string name, string typeLine, string oracle, CardEffect expected)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(expected));
+    }
+
     [Fact]
     public void Classify_VanillaCreature_IsNone()
     {

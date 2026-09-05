@@ -36,8 +36,8 @@ namespace ScatoloneDownloader.Mtg
         CardAdvantage   = 1 << 9,
         Filter          = 1 << 10,
         Reanimate       = 1 << 11,
-        Buff            = 1 << 12,
-        Protection      = 1 << 13,
+        Buff            = 1 << 12,   // raise power/toughness. Only when it lands on SOMETHING ELSE (Giant Growth, Glorious Anthem, Bonesplitter): a creature that pumps only itself has a stat line, not an effect, so "{2}{R}: This creature gets +3/+0" and "Uril gets +2/+2 for each Aura attached to it" stay untagged.
+        Protection      = 1 << 13,   // keep a permanent alive or untargetable — and, per Buff, for somebody other than the card itself. Two gates: it must be deployable in RESPONSE (an instant, flash, or an activated ability — Mother of Runes, not a bogle born with hexproof), and it must be GRANTED to something else. A creature that simply has ward/hexproof/indestructible printed on it protects nobody and holds nothing up; "This spell can't be countered" is the same self-shield written for the stack. Decided 2026-09-05.
         Burn            = 1 << 14,   // direct damage
         Sacrifice       = 1 << 15,
         Steal           = 1 << 16,   // threaten / act of treason / control magic (temporary or permanent control theft)

@@ -45,6 +45,54 @@ namespace ScatoloneDownloader.Cube
             Rx(@"\bmills? (?:[\w-]+ ){0,2}cards?[^:.\n]{0,30}:", RegexOptions.Multiline),
         ];
 
+        // Hoisted for the same reason as MillPatterns: the beneficiary guard
+        // re-walks their matches to see WHO the effect lands on.
+        private static readonly Regex[] BuffPatterns =
+        [
+            Rx(@"gets? \+\d+/\+\d+"),
+            Rx(@"creatures you control get \+"),
+            Rx(@"\+\d+/\+\d+ until end of turn"),
+        ];
+
+        // NB: no bare "regenerate" — "can't be regenerated" (Wrath) would false-positive.
+        private static readonly Regex[] ProtectionPatterns =
+        [
+            Rx(@"hexproof|indestructible|shroud|protection from"),
+            Rx(@"can'?t be (countered|the target)"),
+            Rx(@"\bward\b"),
+        ];
+
+        // The subjects that make an effect land on something OTHER than the card
+        // writing it. Looked for in the text preceding a Buff/Protection match on
+        // the same line — see GrantedToSomethingElse.
+        //
+        // "<noun> you control" has to stay open-ended: the beneficiary is any
+        // type line the card cares to name (Wizards, Merfolk, creature tokens,
+        // permanents). The stop-word list is what keeps that from swallowing the
+        // subordinate clause in "As long as you control an artifact, this
+        // creature gets +2/+0", where the card is still only pumping itself.
+        // The card talking about itself. Modern oracle text says "this creature";
+        // older printings repeat the card's name, which is handled separately
+        // because it is per-card data rather than a pattern.
+        private static readonly Regex SelfReference = Rx(
+            @"\bthis (?:creature|permanent|card|artifact|enchantment|land|token|spell|planeswalker|vehicle|equipment)\b");
+
+        // "X gains hexproof", "creatures with power 2 or less have shroud": a
+        // grant verb means SOMETHING is being given the ability, which is enough
+        // to keep the tag even when the subject is not vocabulary we recognise.
+        private static readonly Regex GrantVerb = Rx(@"\b(?:gains?|have|has|becomes?)\b");
+
+        private static readonly Regex Beneficiary = Rx(
+            @"\b(?:target|another|other|each|all|enchanted|equipped|chosen|"
+            // "that creature" is the beneficiary a second sentence refers back to:
+            // "Gain control of target creature ... that creature gets +2/+0".
+            + @"that (?:creature|permanent|player|token|card)|"
+            // "attacking" has to MODIFY the beneficiary ("attacking red creatures
+            // get +2/+0") — bare, it is just as often the card's own state, as in
+            // "As long as this creature is attacking, it gets +2/+0".
+            + @"(?:attacking|blocking) (?:[\w-]+ ){0,3}(?:creatures?|permanents?|tokens?)|"
+            + @"(?!(?:as|if|unless|while|when|whenever|though|although|because|that|and|or|but|long)\b)\w+ you control)\b");
+
         // One entry per effect; a card gets the effect if ANY of its patterns hit.
         private static readonly (CardEffect Effect, Regex[] Patterns)[] Rules =
         [
@@ -111,11 +159,9 @@ namespace ScatoloneDownloader.Cube
 
             (CardEffect.Mill, MillPatterns),
 
-            (CardEffect.Buff, [Rx(@"gets? \+\d+/\+\d+"), Rx(@"creatures you control get \+"), Rx(@"\+\d+/\+\d+ until end of turn")]),
+            (CardEffect.Buff, BuffPatterns),
 
-            // NB: no bare "regenerate" — "can't be regenerated" (Wrath) would false-positive.
-            (CardEffect.Protection, [Rx(@"hexproof|indestructible|shroud|protection from"),
-                Rx(@"can'?t be (countered|the target)"), Rx(@"\bward\b")]),
+            (CardEffect.Protection, ProtectionPatterns),
 
             (CardEffect.Burn, [Rx(@"deals? \d+ damage to (any target|target creature|target player|target planeswalker|each|any|it|that)")]),
 
@@ -217,7 +263,123 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Mill;
             }
 
+            // Buff and Protection need a beneficiary that is not the card itself.
+            // A creature that pumps or shields ONLY itself has a stat line, not an
+            // effect: it answers nothing for the rest of the board and changes no
+            // deck's plan, whereas Giant Growth and Mother of Runes are cards you
+            // hold up for whatever needs them. Same reading as the Mill guard —
+            // ask what the text does for someone else.
+            // The two differ in what SILENCE means, which is a fact about how the
+            // two are written rather than a hedge. A P/T change always names who
+            // gets it, so an unrecognised subject ("Nonartifact creatures get
+            // +2/+2") is somebody else and the tag stands. Protection words are
+            // keyword abilities a card can simply HAVE: a line reading "Ward {2}"
+            // or "Protection from red" has no subject precisely because the
+            // subject is the card itself.
+            if (result.HasFlag(CardEffect.Buff) && AimsOnlyAtItself(text, BuffPatterns, card, bareIsSelf: false))
+            {
+                result &= ~CardEffect.Buff;
+            }
+
+            if (result.HasFlag(CardEffect.Protection) && AimsOnlyAtItself(text, ProtectionPatterns, card, bareIsSelf: true))
+            {
+                result &= ~CardEffect.Protection;
+            }
+
             return result;
+        }
+
+        /// <summary>Whether every match of <paramref name="patterns"/> lands on the
+        /// card itself, judged by the subject written in front of it. The window is
+        /// the current LINE only (oracle text puts one ability per line), so a
+        /// "target" in an unrelated ability cannot vouch for a self-buff two lines
+        /// down. One match aimed elsewhere is enough to keep the tag.</summary>
+        private static bool AimsOnlyAtItself(string text, Regex[] patterns, Card card, bool bareIsSelf)
+        {
+            string ownName = ShortName(card);
+            bool sawSelf = false;
+
+            foreach (Regex pattern in patterns)
+            {
+                foreach (Match match in pattern.Matches(text))
+                {
+                    int lineStart = text.LastIndexOf('\n', Math.Max(0, match.Index - 1)) + 1;
+                    int from = Math.Max(lineStart, match.Index - 80);
+                    string before = text.Substring(from, match.Index - from);
+
+                    if (Beneficiary.IsMatch(before) || Beneficiary.IsMatch(AfterCounterClause(text, match)))
+                    {
+                        return false;
+                    }
+
+                    if (SelfReference.IsMatch(before)
+                        || (ownName.Length > 0 && before.Contains(ownName, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        sawSelf = true;
+                        continue;
+                    }
+
+                    if (GrantVerb.IsMatch(before) || !bareIsSelf)
+                    {
+                        return false;
+                    }
+
+                    sawSelf = true;
+                }
+            }
+
+            return sawSelf;
+        }
+
+        /// <summary>The one wording that names its beneficiary AFTER the ability:
+        /// "put an indestructible counter on target creature". Deliberately gated
+        /// on the word "counter" rather than reading ahead in general — a general
+        /// look-ahead reads "gets +1/+1 for each other creature you control" as a
+        /// gift to those creatures, when it is a self-buff that merely counts
+        /// them. Empty for every other shape, and stops at "." and "(" so
+        /// reminder text ("Ward {2} (Whenever this creature becomes the target
+        /// ...)") cannot vouch for itself.</summary>
+        private static string AfterCounterClause(string text, Match match)
+        {
+            int start = match.Index + match.Length;
+            int end = Math.Min(text.Length, start + 50);
+
+            if (!text.AsSpan(start, end - start).StartsWith(" counter", StringComparison.OrdinalIgnoreCase))
+            {
+                return string.Empty;
+            }
+
+            for (int i = start; i < end; i++)
+            {
+                if (text[i] is '\n' or '(' or '.')
+                {
+                    return text.Substring(start, i - start);
+                }
+            }
+
+            return text.Substring(start, end - start);
+        }
+
+        /// <summary>The name a card uses to refer to itself in its own rules text:
+        /// the front face, cut at the comma ("Multani, Yavimaya's Avatar" writes
+        /// "Multani gets +1/+1").</summary>
+        private static string ShortName(Card card)
+        {
+            string name = card.Name ?? string.Empty;
+
+            int slash = name.IndexOf(" //", StringComparison.Ordinal);
+            if (slash > 0)
+            {
+                name = name.Substring(0, slash);
+            }
+
+            int comma = name.IndexOf(',');
+            if (comma > 0)
+            {
+                name = name.Substring(0, comma);
+            }
+
+            return name.Trim();
         }
 
         /// <summary>Whether anything is still milled once every cost clause is
