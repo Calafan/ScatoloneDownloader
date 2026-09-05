@@ -96,6 +96,7 @@
     <div class="railhead">Scope</div>
     <div class="field"><label for="reviewSel">Review</label><select id="reviewSel"></select></div>
     <div class="field"><label for="rateSel">Rating</label><select id="rateSel"></select></div>
+    <div class="field"><label for="typeSel">Type</label><select id="typeSel"></select></div>
     <div class="field"><label for="effectSel">Effect</label><select id="effectSel"></select></div>
     <div class="field"><label for="yearSel">Year</label><select id="yearSel"></select></div>
     <div class="field"><label for="folderSel">Set</label><select id="folderSel"></select></div>
@@ -163,7 +164,7 @@ let cards = [], effects = [], order = [], pos = 0;
 // on screen changes.
 let effectOrder = [];
 let filterMode = 0, ratingMode = 0, effectFilter = "", filterFellBack = false;
-let yearSel = "", folderSel = "", listOpen = false;
+let yearSel = "", folderSel = "", typeSel = "", listOpen = false;
 
 // Shuffle the queue by default. The server hands cards over in
 // Directory.GetFiles order, which is year folder ascending, so working the
@@ -242,6 +243,23 @@ function effectMatch(c) {
   return c.effects.has(effectFilter);
 }
 
+// The coarse type axis, sent as MacroType by the server. Its buckets answer
+// what a set or a year cannot: how the board is made up. Ordered the way a
+// cube list is read rather than alphabetically, and spelled out in words
+// because "OtherPermanent" is an enum name, not something to read on screen.
+// Cards carrying a bucket not listed here still get an entry, under their own
+// name and last, so a new MacroType is never silently unfilterable.
+const MACRO_LABELS = {
+  Creature: "creatures",
+  OtherPermanent: "other permanents",
+  Spell: "spells",
+  Land: "lands",
+};
+
+function typeMatch(c) { return !typeSel || c.macro === typeSel; }
+
+function typeLabel() { return MACRO_LABELS[typeSel] || typeSel; }
+
 function folderMatch(c) {
   if (folderSel) return c.folder === folderSel;
   if (yearSel) return yearOf(c.folder) === yearSel;
@@ -267,7 +285,7 @@ function buildOrder() {
   const rate = RATING_FILTERS[ratingMode].match;
   order = cards.map((c,i)=>i).filter(i => {
     const c = cards[i];
-    return match(c) && rate(c) && effectMatch(c) && folderMatch(c);
+    return match(c) && rate(c) && typeMatch(c) && effectMatch(c) && folderMatch(c);
   });
   // Nothing matches (e.g. a set whose cards are all reviewed): show every card
   // rather than a blank page, and say so, so it can't be read as the filter.
@@ -289,6 +307,13 @@ function buildScopeControls() {
     [EFFECT_SOME, "— any effect at all —"],
     ...effectOrder.map(i => [effects[i], effects[i]]),
   ], effectFilter);
+  const macros = [...new Set(cards.map(c => c.macro).filter(Boolean))];
+  const known = Object.keys(MACRO_LABELS);
+  macros.sort((a, b) => {
+    const ra = known.indexOf(a), rb = known.indexOf(b);
+    return (ra < 0 ? known.length : ra) - (rb < 0 ? known.length : rb) || a.localeCompare(b);
+  });
+  fillSelect("typeSel", [["", "all types"], ...macros.map(m => [m, MACRO_LABELS[m] || m])], typeSel);
   const years = [...new Set(cards.map(c => yearOf(c.folder)))].filter(Boolean).sort();
   fillSelect("yearSel", [["", "all years"], ...years.map(y => [y, y])], yearSel);
   buildFolderSelect();
@@ -339,6 +364,7 @@ function render() {
   filterEl.textContent = filterFellBack
     ? "Nothing matches this combination — showing every card."
     : `Showing: ${FILTERS[filterMode].label} · ${RATING_FILTERS[ratingMode].label}`
+      + (typeSel ? ` · ${typeLabel()}` : "")
       + (effectFilter ? ` · ${effectLabel()}` : "")
       + (folderSel || yearSel ? ` · ${folderSel || yearSel}` : "");
   filterEl.className = filterFellBack ? "fellback" : "";
@@ -513,6 +539,7 @@ function requeue() { pos = 0; buildOrder(); render(); }
 document.getElementById("reviewSel").onchange = e => { filterMode = Number(e.target.value); e.target.blur(); requeue(); };
 document.getElementById("rateSel").onchange = e => { ratingMode = Number(e.target.value); e.target.blur(); requeue(); };
 document.getElementById("effectSel").onchange = e => { effectFilter = e.target.value; e.target.blur(); requeue(); };
+document.getElementById("typeSel").onchange = e => { typeSel = e.target.value; e.target.blur(); requeue(); };
 document.getElementById("shufBox").onchange = e => { shuffled = e.target.checked; e.target.blur(); requeue(); };
 document.getElementById("yearSel").onchange = e => {
   yearSel = e.target.value;

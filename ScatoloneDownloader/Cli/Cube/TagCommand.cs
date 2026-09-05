@@ -179,6 +179,11 @@ namespace ScatoloneDownloader.Cli.Cube
                     rating = m.Card.Rating,
                     status = m.Card.Status.ToString(),
                     effects = EffectResolver.ToNames(m.Card.Effects),
+                    // The coarse type, for the page's type filter. Sent as the
+                    // enum NAME rather than its int so the page reads as the
+                    // ontology does and a reordered enum cannot silently
+                    // re-point the filter at a different bucket.
+                    macro = m.Card.MacroType.ToString(),
                     reviewed = !IsPendingReview(m.Card),
                     folder = RelativeFolder(masterDir, m.Path),
                 });
