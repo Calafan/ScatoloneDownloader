@@ -29,7 +29,7 @@ public sealed class ClassifyCommandTests
         (ClassifyOutcome outcome, CardEffect proposed) = ClassifyCommand.Decide(entry, Bolt, overwrite: false);
 
         Assert.Equal(ClassifyOutcome.Classified, outcome);
-        Assert.Equal(CardEffect.Burn, proposed);
+        Assert.Equal(CardEffect.Removal | CardEffect.Burn, proposed);
     }
 
     [Fact]
@@ -61,12 +61,14 @@ public sealed class ClassifyCommandTests
     public void Decide_AlreadyTagged_Overwrite_ReProposes()
     {
         // Unreviewed but already auto-tagged: --overwrite re-proposes from text.
-        CardMetadataEntry entry = new() { Name = "Lightning Bolt", EffectFlags = CardEffect.Removal };
+        // The stale tag is deliberately one Bolt's text cannot produce, so the
+        // assertion still proves the proposal was REDERIVED rather than kept.
+        CardMetadataEntry entry = new() { Name = "Lightning Bolt", EffectFlags = CardEffect.Tokens };
 
         (ClassifyOutcome outcome, CardEffect proposed) = ClassifyCommand.Decide(entry, Bolt, overwrite: true);
 
         Assert.Equal(ClassifyOutcome.Classified, outcome);
-        Assert.Equal(CardEffect.Burn, proposed);
+        Assert.Equal(CardEffect.Removal | CardEffect.Burn, proposed);
     }
 
     [Fact]

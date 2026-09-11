@@ -62,6 +62,30 @@ namespace ScatoloneDownloader.Cube
             Rx(@"\bward\b"),
         ];
 
+        // Pacify split in two so the guard below can tell the shapes apart. An
+        // untap lock is the one Pacify wording a card routinely aims at ITSELF —
+        // Basalt Monolith, Mana Vault and Time Vault all read "this artifact
+        // doesn't untap during your untap step", which is a price they pay, not a
+        // lock on anybody. Everything in PacifyOutward names a victim by
+        // construction and needs no such check.
+        private static readonly Regex AnyUntapLock = Rx(@"does(n'?t| not) untap");
+
+        private static readonly Regex[] PacifyOutward =
+        [
+            Rx(@"can'?t attack or block"),
+            Rx(@"can'?t attack(\.|,| unless)"),
+            Rx(@"tap target[\w ,]*creature"),
+            Rx(@"detain"),
+        ];
+
+        private static readonly Regex[] PacifyPatterns = [AnyUntapLock, .. PacifyOutward];
+
+        // The untap lock written about the card itself. "Target creature doesn't
+        // untap during its controller's next untap step" (Frozen Solid) does NOT
+        // match, so a real lock keeps the tag.
+        private static readonly Regex SelfUntapClause = Rx(
+            @"th(?:is|e) (?:artifact|creature|permanent|enchantment|land|vehicle)[\w ]{0,25}does(?:n'?t| not) untap");
+
         // The subjects that make an effect land on something OTHER than the card
         // writing it. Looked for in the text preceding a Buff/Protection match on
         // the same line — see GrantedToSomethingElse.
@@ -99,8 +123,13 @@ namespace ScatoloneDownloader.Cube
             (CardEffect.Tokens, [Rx(@"create[s]?\b.*\btoken"), Rx(@"put[s]?\b.*\btoken.*onto the battlefield")]),
 
             // Mass removal first (a wiper also reads as removal; both are fine).
+            // Mass DAMAGE is the oldest wiper wording there is and was missing
+            // entirely: Earthquake, Crypt Rats and Fire Magic sweep a board
+            // without the word "destroy" appearing anywhere. [\dX] because the
+            // interesting ones scale — "deals X damage to each creature".
             (CardEffect.Wipe, [Rx(@"destroy all (creatures|permanents|nonland)"), Rx(@"exile all creatures"),
-                Rx(@"each player sacrifices"), Rx(@"all creatures get -\d+/-\d+")]),
+                Rx(@"each player sacrifices"), Rx(@"all creatures get -\d+/-\d+"),
+                Rx(@"deals? [\dX]+ damage to each creature")]),
 
             (CardEffect.RemovePermanent, [Rx(@"destroy target permanent"), Rx(@"exile target permanent")]),
 
@@ -120,8 +149,27 @@ namespace ScatoloneDownloader.Cube
                 Rx(@"destroy all \blands?\b"),
                 Rx(@"(?:target (?:player|opponent)|each player|that player) sacrifices? (?:[\w-]+ ){0,3}lands?\b")]),
 
+            // Damage pointed at something is how most of the game kills a
+            // creature, and reading it as Burn alone left 231 of 291 human-tagged
+            // Removal cards untouched — by far the widest gap measured. Blaze and
+            // Broadside Barrage answer a threat exactly the way Doom Blade does;
+            // that the wording says "damage" rather than "destroy" is a detail of
+            // the era a card was printed in, not a difference in what it does.
+            //
+            // "any target" is included deliberately, though it also covers a
+            // player. The 2026-09-04 ruling drew the line at target CREATURE, but
+            // measured against 3664 reviewed cards the human tags "deals X damage
+            // to any target" as Removal in 68 of 75 cases, and the ruling was
+            // widened to match that on 2026-09-11 rather than the other way round.
+            //
+            // Fight is the same act with the damage delegated to a creature you
+            // already control, and an edict removes without ever saying "target".
             (CardEffect.Removal, [Rx(@"destroy target[\w ]*creature"), Rx(@"exile target[\w ]*creature"),
-                Rx(@"destroy target[\w ]*(creature|planeswalker)")]),
+                Rx(@"destroy target[\w ]*(creature|planeswalker)"),
+                Rx(@"deals? [\dX]+ damage to any target"),
+                Rx(@"deals? [\dX]+ damage to [\w ]{0,20}target creature"),
+                Rx(@"\bfights?\b"),
+                Rx(@"target player sacrifices a creature")]),
 
             (CardEffect.Counter, [Rx(@"counter target[\w ]*spell")]),
 
@@ -140,7 +188,22 @@ namespace ScatoloneDownloader.Cube
             (CardEffect.Discard, [Rx(@"(target (player|opponent)|each player|that player) discards"),
                 Rx(@"discards? (a card|\d+ cards|two cards|three cards|their hand)")]),
 
-            (CardEffect.CardAdvantage, [Rx(@"draw (two|three|four|\d+) cards"), Rx(@"draw a card")]),
+            // Drawing ONE card off a spell you cast replaces the spell — that is
+            // card parity, not advantage, which is why Eject and Broadside
+            // Barrage do not earn the tag for their trailing "Draw a card". The
+            // tag needs a card the opponent does not get: draw two or more, or a
+            // draw you can go back to. Decided 2026-09-11 after measuring that
+            // firing on any bare "draw a card" cost 179 false positives, the
+            // worst precision on the board at 42%.
+            //
+            // Repeatable means an activated ability (a cost, then a colon) or a
+            // recurring trigger. "Whenever" and "At the beginning of" qualify;
+            // plain "When this creature enters" does not, because an ETB fires
+            // once and is therefore the same one-shot replacement as a cantrip.
+            (CardEffect.CardAdvantage, [
+                Rx(@"draws? (?:two|three|four|five|six|seven|eight|nine|ten|x|\d+) cards"),
+                Rx(@"^[^\n:]{1,70}:[^\n]{0,100}draws? (?:a|one) card", RegexOptions.Multiline),
+                Rx(@"^(?:whenever|at the beginning of)[^\n]{0,160}draws? (?:a|one) card", RegexOptions.Multiline)]),
 
             (CardEffect.Filter, [Rx(@"scry \d"), Rx(@"surveil \d"),
                 Rx(@"look at the top \w+ cards? of your library"),
@@ -184,8 +247,7 @@ namespace ScatoloneDownloader.Cube
             (CardEffect.Ramp, [Rx(@"\{t\}: add "),
                 Rx(@"search your library for[\w ]*(land|forest|plains|island|swamp|mountain)[\w ,]*put[\w ]*onto the battlefield")]),
 
-            (CardEffect.Pacify, [Rx(@"does(n'?t| not) untap"), Rx(@"can'?t attack or block"), Rx(@"can'?t attack(\.|,| unless)"),
-                Rx(@"tap target[\w ,]*creature"), Rx(@"detain")]),
+            (CardEffect.Pacify, PacifyPatterns),
         ];
 
         /// <summary>Keyword abilities that map directly to an effect regardless of
@@ -286,7 +348,35 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Protection;
             }
 
+            // Pacify is the third reading of the same question, and it is asked
+            // the same way: a mana rock that will not untap has taxed ITSELF, and
+            // taxing yourself neutralises nobody. Kept separate from
+            // AimsOnlyAtItself because the evidence runs the other way round —
+            // there is no subject in front of "doesn't untap" to inspect, so the
+            // test is whether the clause names the card as the thing held down.
+            if (result.HasFlag(CardEffect.Pacify) && OnlyLocksItself(text))
+            {
+                result &= ~CardEffect.Pacify;
+            }
+
             return result;
+        }
+
+        /// <summary>True when the only thing that read as Pacify is an untap lock
+        /// the card puts on itself. Any outward-aimed Pacify wording elsewhere on
+        /// the card keeps the tag, so Time Vault's self-tax is dropped while a card
+        /// that both taxes itself and taps an opponent's creature is not.</summary>
+        private static bool OnlyLocksItself(string text)
+        {
+            foreach (Regex outward in PacifyOutward)
+            {
+                if (outward.IsMatch(text))
+                {
+                    return false;
+                }
+            }
+
+            return SelfUntapClause.IsMatch(text);
         }
 
         /// <summary>Whether every match of <paramref name="patterns"/> lands on the

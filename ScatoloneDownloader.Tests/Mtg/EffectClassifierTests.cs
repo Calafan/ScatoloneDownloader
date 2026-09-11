@@ -19,7 +19,11 @@ public sealed class EffectClassifierTests
 {
     [Theory]
     // name, typeLine, oracleText, expected flags
-    [InlineData("Lightning Bolt", "Instant", "Lightning Bolt deals 3 damage to any target.", CardEffect.Burn)]
+    // Both, and deliberately: damage is how a red deck answers a creature, so
+    // Bolt is as much removal as Doom Blade. Decided 2026-09-11 against 3664
+    // reviewed cards, where "deals N damage to any target" is hand-tagged
+    // Removal 68 times in 75.
+    [InlineData("Lightning Bolt", "Instant", "Lightning Bolt deals 3 damage to any target.", CardEffect.Removal | CardEffect.Burn)]
     [InlineData("Wrath of God", "Sorcery", "Destroy all creatures. They can't be regenerated.", CardEffect.Wipe)]
     [InlineData("Counterspell", "Instant", "Counter target spell.", CardEffect.Counter)]
     [InlineData("Swords to Plowshares", "Instant", "Exile target creature. Its controller gains life equal to its power.", CardEffect.Removal)]
@@ -55,7 +59,12 @@ public sealed class EffectClassifierTests
     // draw a card": reminder text is part of oracle_text, and the classifier only
     // proposes, so the extra flag is noise a reviewer drops rather than a bug to
     // chase with a negative lookahead.
-    [InlineData("Stinkweed Imp", "Creature — Imp", "Flying\nWhenever this creature deals combat damage to a creature, destroy that creature.\nDredge 5 (If you would draw a card, you may mill five cards instead.)", CardEffect.CardAdvantage | CardEffect.Mill)]
+    // Dredge's reminder text says "if you would draw a card" — a replacement for
+    // a draw, never an extra one. The old CardAdvantage rule fired on any bare
+    // "draw a card" and so tagged it; requiring a repeatable or multi-card draw
+    // drops it without a special case. The Mill from that same reminder stands:
+    // see the note on reminder text further down.
+    [InlineData("Stinkweed Imp", "Creature — Imp", "Flying\nWhenever this creature deals combat damage to a creature, destroy that creature.\nDredge 5 (If you would draw a card, you may mill five cards instead.)", CardEffect.Mill)]
     public void Classify_ExactMatch_ForHighConfidenceCards(string name, string typeLine, string oracle, CardEffect expected)
     {
         Card card = MakeCard(name, typeLine, oracle);
@@ -236,6 +245,83 @@ public sealed class EffectClassifierTests
         Card card = MakeCard(name, typeLine, oracle);
 
         Assert.Equal(expected, EffectClassifier.Classify(card));
+    }
+
+    [Theory]
+    // Targeted damage answers a threat, so it is Removal as well as Burn. The
+    // scaling ones matter most: "deals X damage" is how the whole pre-modern
+    // library writes a kill spell.
+    [InlineData("Blaze", "Sorcery", "Blaze deals X damage to any target.")]
+    [InlineData("Broadside Barrage", "Instant", "Broadside Barrage deals 5 damage to target creature or planeswalker. Draw a card, then discard a card.")]
+    [InlineData("Char", "Instant", "Char deals 4 damage to any target and 2 damage to you.")]
+    // Fight is the same act with the damage delegated; an edict never says "target".
+    [InlineData("Prey Upon", "Sorcery", "Target creature you control fights target creature you don't control.")]
+    [InlineData("Diabolic Edict", "Instant", "Target player sacrifices a creature.")]
+    public void Classify_DamageAndItsCousins_AreRemoval(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
+    // Mass damage is the oldest board sweeper there is and says "destroy" nowhere.
+    [InlineData("Earthquake", "Sorcery", "Earthquake deals X damage to each creature without flying and each player.")]
+    [InlineData("Crypt Rats", "Creature — Rat", "{X}: This creature deals X damage to each creature and each player. Spend only black mana on X.")]
+    [InlineData("Pyroclasm", "Sorcery", "Pyroclasm deals 2 damage to each creature.")]
+    public void Classify_MassDamage_IsWipe(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Wipe));
+        // Sweeping the board is not aimed at anybody, so the single-target
+        // Removal reading must not come along for the ride.
+        Assert.False(result.HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
+    // "This artifact doesn't untap" is a tax the card pays itself. Neutralising
+    // nobody is not Pacify — the same self-versus-other reading as Buff.
+    [InlineData("Basalt Monolith", "Artifact", "This artifact doesn't untap during your untap step.\n{T}: Add {C}{C}{C}.\n{3}: Untap this artifact.")]
+    [InlineData("Mana Vault", "Artifact", "This artifact doesn't untap during your untap step.\nAt the beginning of your upkeep, you may pay {4}. If you do, untap this artifact.")]
+    [InlineData("Time Vault", "Artifact", "This artifact enters tapped.\nThis artifact doesn't untap during your untap step.")]
+    public void Classify_SelfUntapTax_IsNotPacify(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
+    }
+
+    [Theory]
+    // A lock put on somebody else keeps the tag, whichever wording carries it.
+    [InlineData("Icy Manipulator", "Artifact", "{1}, {T}: Tap target artifact, creature, or land.")]
+    [InlineData("Frozen Solid", "Enchantment — Aura", "Enchant creature\nEnchanted creature doesn't untap during its controller's untap step.")]
+    [InlineData("Kismet", "Enchantment", "Artifacts, creatures, and lands your opponents control enter tapped.\nEnchanted creature can't attack or block.")]
+    public void Classify_LockOnSomebodyElse_StaysPacify(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
+    }
+
+    [Theory]
+    // Two or more cards, or a draw you can come back to.
+    [InlineData("Divination", "Sorcery", "Draw two cards.")]
+    [InlineData("Ancestral Recall", "Instant", "Target player draws three cards.")]
+    // The user's own example: an activated draw on a body is card advantage
+    // because nothing stops you doing it again.
+    [InlineData("Azure Drake", "Creature — Drake", "Flying\n{3}{U}: Draw a card.")]
+    [InlineData("Ophidian", "Creature — Serpent", "Whenever this creature deals combat damage to a player, you may draw a card.")]
+    [InlineData("Howling Mine", "Artifact", "At the beginning of each player's draw step, that player draws a card.")]
+    public void Classify_RepeatableOrMultipleDraw_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // One card off a spell you cast replaces the spell: parity, not advantage.
+    [InlineData("Eject", "Instant", "This spell can't be countered.\nReturn target nonland permanent to its owner's hand.\nDraw a card.")]
+    [InlineData("Airbending Lesson", "Sorcery", "Airbend target nonland permanent.\nDraw a card.")]
+    // An enters-the-battlefield draw fires once, so it is the same one-shot
+    // replacement as a cantrip — "whenever" would be a different matter.
+    [InlineData("Wall of Omens", "Creature — Wall", "Defender\nWhen this creature enters, draw a card.")]
+    public void Classify_SingleOneShotDraw_IsNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
     }
 
     private static Card MakeCard(string name, string typeLine, string oracleText, List<string>? keywords = null)
