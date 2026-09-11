@@ -263,6 +263,22 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // Scaling damage reads the same as a fixed amount, and the two tags have to
+    // agree: before [\dX] landed, "deals X damage to any target" was Removal
+    // without being Burn, which is the ontology disagreeing with itself about one
+    // sentence. Lightning Bolt is the fixed-number control.
+    [InlineData("Blaze", "Sorcery", "Blaze deals X damage to any target.")]
+    [InlineData("Lightning Bolt", "Instant", "Lightning Bolt deals 3 damage to any target.")]
+    [InlineData("Disintegrate", "Sorcery", "Disintegrate deals X damage to target creature. If that creature would die this turn, exile it instead.")]
+    public void Classify_ScalingDamage_IsBothBurnAndRemoval(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Burn));
+        Assert.True(result.HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
     // Mass damage is the oldest board sweeper there is and says "destroy" nowhere.
     [InlineData("Earthquake", "Sorcery", "Earthquake deals X damage to each creature without flying and each player.")]
     [InlineData("Crypt Rats", "Creature — Rat", "{X}: This creature deals X damage to each creature and each player. Spend only black mana on X.")]

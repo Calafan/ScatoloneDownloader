@@ -226,7 +226,19 @@ namespace ScatoloneDownloader.Cube
 
             (CardEffect.Protection, ProtectionPatterns),
 
-            (CardEffect.Burn, [Rx(@"deals? \d+ damage to (any target|target creature|target player|target planeswalker|each|any|it|that)")]),
+            // [\dX] rather than \d so a scaling burn spell counts: Blaze and Fireball
+            // say "deals X damage", and matching only literal numbers left them as
+            // Removal without being Burn once damage started reading as Removal —
+            // an ontology that contradicted itself on the same sentence.
+            //
+            // Worth 15 recovered against 9 wrongly fired on the reviewed set, which
+            // is thin: it is here for the consistency, not for the score. The wider
+            // Burn problem is elsewhere and NOT fixed — "each" in the object list
+            // below tags mass damage as Burn, which accounts for 37 false positives,
+            // but the same wording is hand-tagged Burn on 22 other cards, so the
+            // question of whether a sweeper burns is the user's to settle, not a
+            // rule to quietly change.
+            (CardEffect.Burn, [Rx(@"deals? [\dX]+ damage to (any target|target creature|target player|target planeswalker|each|any|it|that)")]),
 
             (CardEffect.Sacrifice, [Rx(@"target player sacrifices"),
                 Rx(@"sacrifice (a|another|two|three|\d+)[\w ]*(creature|permanent|artifact|land)")]),
