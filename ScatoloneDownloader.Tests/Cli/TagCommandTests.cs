@@ -69,4 +69,78 @@ public sealed class TagCommandTests
         // went wrong; return "" rather than a path relative to nothing.
         Assert.Equal(string.Empty, TagCommand.RelativeFolder(string.Empty, @"C:\Master\2000\Invasion\Card.png"));
     }
+
+    [Fact]
+    public void BuildPrefixes_WithNoExtraHosts_IsLocalhostOnly()
+    {
+        Assert.Equal(["http://localhost:8765/"], TagCommand.BuildPrefixes(8765, null));
+        Assert.Equal(["http://localhost:8765/"], TagCommand.BuildPrefixes(8765, []));
+    }
+
+    [Fact]
+    public void BuildPrefixes_KeepsLocalhostFirst_SoTheLocalTaggerSurvivesABadHost()
+    {
+        // localhost is the only prefix Windows registers without a reservation.
+        string[] prefixes = TagCommand.BuildPrefixes(8765, ["cala.tail6de9de.ts.net"]);
+
+        Assert.Equal("http://localhost:8765/", prefixes[0]);
+        Assert.Equal("http://cala.tail6de9de.ts.net:8765/", prefixes[1]);
+    }
+
+    [Fact]
+    public void BuildPrefixes_UsesTheListenerPort_NotTheProxysPort()
+    {
+        // `tailscale serve --http=8080 http://localhost:8765` forwards to 8765 while
+        // preserving "Host: cala...:8080". http.sys ignores that port and matches on
+        // the name plus the port the connection arrived on, so 8765 is what belongs
+        // in the prefix — publishing on another tailnet port needs nothing here.
+        Assert.Equal(
+            ["http://localhost:8765/", "http://cala.tail6de9de.ts.net:8765/"],
+            TagCommand.BuildPrefixes(8765, ["cala.tail6de9de.ts.net"]));
+    }
+
+    [Theory]
+    [InlineData("cala")]
+    [InlineData("CALA")]
+    [InlineData("  cala  ")] // shells and copy-paste leave whitespace
+    public void BuildPrefixes_DoesNotRepeatAHost(string second)
+    {
+        // HttpListener throws on a duplicate prefix, so a repeated (or differently
+        // cased, or padded) --host must collapse rather than crash the tagger.
+        Assert.Equal(
+            ["http://localhost:8765/", "http://cala:8765/"],
+            TagCommand.BuildPrefixes(8765, ["cala", second]));
+    }
+
+    [Theory]
+    [InlineData("localhost")]
+    [InlineData("LocalHost")]
+    public void BuildPrefixes_IgnoresLocalhostAsAnExtraHost(string host)
+    {
+        Assert.Equal(["http://localhost:8765/"], TagCommand.BuildPrefixes(8765, [host]));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void BuildPrefixes_SkipsBlankHosts(string host)
+    {
+        Assert.Equal(["http://localhost:8765/"], TagCommand.BuildPrefixes(8765, [host]));
+    }
+
+    [Theory]
+    // Each of these parses into a prefix that never matches anything, which would
+    // start the tagger clean and still answer the phone 400 — so fail at startup.
+    [InlineData("http://cala.tail6de9de.ts.net")] // scheme
+    [InlineData("cala.tail6de9de.ts.net:8080")]   // port
+    [InlineData("cala.tail6de9de.ts.net/tagger")] // path
+    [InlineData("cala tail6de9de")]               // unquoted, split by the shell
+    [InlineData(@"CALA\Cala")]                    // a user, not a host
+    public void BuildPrefixes_RejectsAnythingThatIsNotABareHostname(string host)
+    {
+        ArgumentException ex = Assert.Throws<ArgumentException>(
+            () => TagCommand.BuildPrefixes(8765, [host]));
+
+        Assert.Contains("bare hostname", ex.Message);
+    }
 }

@@ -37,6 +37,13 @@ namespace ScatoloneDownloader.Cli.Cube
             [CommandOption("-p|--port")]
             [Description("Local port for the tagger web server. Default 8765.")]
             public int Port { get; set; } = 8765;
+
+            [CommandOption("--host")]
+            [Description(
+                "Extra hostname the tagger also answers to, besides localhost — e.g. a Tailscale "
+                + "MagicDNS name, so the page can be opened from a phone. Repeatable. Needs a "
+                + "one-time `netsh http add urlacl` reservation, which the startup error prints.")]
+            public string[] ExtraHosts { get; set; } = [];
         }
 
         // In-memory state shared between request handlers. Guarded by SaveLock.
@@ -103,9 +110,23 @@ namespace ScatoloneDownloader.Cli.Cube
             AnsiConsole.MarkupLine(
                 $"[cyan]To review:[/] {pending} / {matched.Count} [grey](untagged + auto-tagged — the tagger's default filter)[/]");
 
+            string[] prefixes;
+            try
+            {
+                prefixes = BuildPrefixes(settings.Port, settings.ExtraHosts);
+            }
+            catch (ArgumentException ex)
+            {
+                AnsiConsole.MarkupLine($"[red]Error: {ex.Message}[/]");
+                return 1;
+            }
+
             using HttpListener listener = new();
-            string url = $"http://localhost:{settings.Port}/";
-            listener.Prefixes.Add(url);
+            string url = prefixes[0];
+            foreach (string prefix in prefixes)
+            {
+                listener.Prefixes.Add(prefix);
+            }
 
             try
             {
@@ -114,7 +135,28 @@ namespace ScatoloneDownloader.Cli.Cube
             catch (HttpListenerException ex)
             {
                 AnsiConsole.MarkupLine($"[red]Could not start web server on {url}: {ex.Message}[/]");
-                AnsiConsole.MarkupLine("[yellow]Try a different port with -p, e.g. `tag <dir> -p 8790`.[/]");
+
+                if (prefixes.Length > 1)
+                {
+                    // A named host needs a one-time reservation — and so does localhost
+                    // once the port has one, because reserving any URL on a port revokes
+                    // the implicit grant that lets any user register
+                    // http://localhost:<port>/ there. Reserving only the named hosts
+                    // therefore BREAKS the prefix that already worked, which is why the
+                    // whole set is printed rather than just the new ones.
+                    AnsiConsole.MarkupLine(
+                        "[yellow]These prefixes need a one-time reservation. In an ADMIN terminal, ALL of them:[/]");
+                    foreach (string prefix in prefixes)
+                    {
+                        AnsiConsole.MarkupLine(
+                            $"[grey]  netsh http add urlacl url={prefix} user={Environment.UserDomainName}\\{Environment.UserName}[/]");
+                    }
+                }
+                else
+                {
+                    AnsiConsole.MarkupLine("[yellow]Try a different port with -p, e.g. `tag <dir> -p 8790`.[/]");
+                }
+
                 return 1;
             }
 
@@ -123,6 +165,11 @@ namespace ScatoloneDownloader.Cli.Cube
             TryOpenBrowser(url);
 
             AnsiConsole.MarkupLine($"[green]Tagger running at[/] [underline]{url}[/]");
+            foreach (string prefix in prefixes.Skip(1))
+            {
+                AnsiConsole.MarkupLine($"[green]Also answering to[/] [underline]{prefix}[/]");
+            }
+
             AnsiConsole.MarkupLine($"[grey]Autosaving to {metadataDir}. Press ENTER here to stop.[/]");
 
             await Task.Run(() => Console.ReadLine());
@@ -218,6 +265,66 @@ namespace ScatoloneDownloader.Cli.Cube
             }
 
             TryWrite(ctx, 404, "text/plain", Encoding.UTF8.GetBytes("not found"));
+        }
+
+        // Anything that would make a --host value something other than a bare name.
+        // A scheme, port or path in there builds a prefix that parses but silently
+        // never matches, which is the worst failure to debug: the tagger starts
+        // clean and the phone still gets a 400.
+        private static readonly char[] InvalidHostChars = ['/', ':', '?', '#', '@', '\\', ' ', '\t'];
+
+        /// <summary>
+        /// The listener prefixes for this run: always localhost, plus one per
+        /// <c>--host</c>. http.sys routes on the request's HOST HEADER, not on the
+        /// socket the request arrived through, so a reverse proxy that forwards to
+        /// localhost while preserving the original Host — which is exactly what
+        /// <c>tailscale serve</c> does — is answered "400 Invalid Hostname" by the
+        /// kernel, before the request ever reaches this code. Naming that host here
+        /// is what lets it through.
+        ///
+        /// Only the NAME is matched: http.sys ignores the port inside the Host
+        /// header and keys off the port the connection actually arrived on, so a
+        /// proxy published on a DIFFERENT tailnet port still lands here and needs no
+        /// prefix of its own. Both behaviours measured against http.sys, not assumed.
+        ///
+        /// localhost stays first and unconditional. Windows normally lets any user
+        /// register it with no reservation, but that grant is PER PORT and is revoked
+        /// the moment the port carries any explicit reservation — so reserving a
+        /// --host silently breaks localhost on the same port unless it is reserved
+        /// too. The startup error prints the whole set for exactly that reason.
+        /// </summary>
+        /// <exception cref="ArgumentException">A host carries a scheme, port, path or
+        /// whitespace.</exception>
+        internal static string[] BuildPrefixes(int port, IEnumerable<string>? extraHosts)
+        {
+            List<string> prefixes = [$"http://localhost:{port}/"];
+            HashSet<string> seen = new(StringComparer.OrdinalIgnoreCase) { "localhost" };
+
+            foreach (string raw in extraHosts ?? [])
+            {
+                string host = raw.Trim();
+
+                if (host.Length == 0)
+                {
+                    continue;
+                }
+
+                if (host.IndexOfAny(InvalidHostChars) >= 0)
+                {
+                    throw new ArgumentException(
+                        $"--host '{raw}' must be a bare hostname — no scheme, port, path or spaces "
+                        + "(e.g. --host cala.tail6de9de.ts.net).");
+                }
+
+                // A repeated --host, or one that just re-states localhost, is a
+                // duplicate prefix, and HttpListener throws on those.
+                if (seen.Add(host))
+                {
+                    prefixes.Add($"http://{host}:{port}/");
+                }
+            }
+
+            return [.. prefixes];
         }
 
         /// <summary>
