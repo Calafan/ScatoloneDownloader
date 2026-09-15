@@ -105,6 +105,41 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex DrawBySacrificingItself = Rx(
             @"^[^\n:]{0,60}sacrifice this [\w]+[^\n:]{0,30}:", RegexOptions.Multiline);
 
+        // The Removal rules read "destroy target creature" but nothing wider,
+        // because [\w ] cannot cross a comma — so "destroy target artifact,
+        // creature, or land" (Aftershock, Boom Box, Shattered Wings) went unread,
+        // and so did every "exile UP TO ONE target creature" O-ring, where the
+        // filler sits in front of "target". That was 49 of the 189 misses, and
+        // repairing it cost no precision at all once two families are kept out.
+        private static readonly Regex KillsAcrossCommas = Rx(
+            @"(?:destroy|exile) (?:[\w -]{0,15})?target[\w ,-]{0,45}creature");
+
+        // It comes back: a blink is not an answer.
+        private static readonly Regex ReturnsItToPlay = Rx(
+            @"return (?:it|them|that card|those cards)[\w ,']{0,40}to the battlefield");
+
+        // A creature card in a graveyard is already dead — that is graveyard hate.
+        private static readonly Regex TargetsAGraveyard = Rx(
+            @"creature cards? from[\w ']{0,25}graveyard|target creature card");
+
+        // "Deals damage equal to the number of Swamps you control to any target"
+        // kills exactly like a fixed number does; the rule only read digits.
+        private static readonly Regex DamageEqualTo = Rx(
+            @"deals damage equal to [\w' ]{0,45}to (?:any target|target creature|that creature|another target creature)");
+
+        // Pacify's own version of the self-versus-other question, and the largest
+        // single source of noise on the board: "this creature can't attack" is
+        // DEFENDER, printed on the card, and the reminder text spells it out —
+        // which is why every Wall was being proposed as pseudo-removal. So is
+        // "can't attack unless defending player controls an Island". A card that
+        // only restrains ITSELF neutralises nobody. 115 wrong -> 54.
+        private static readonly Regex SelfCantAttack = Rx(
+            @"th(?:is|e) (?:creature|permanent)[\w ']{0,30}can'?t attack|\(this creature can'?t attack\.?\)");
+
+        private static readonly Regex OutwardCantAttack = Rx(
+            @"can'?t attack or block|tap target[\w ,]*creature|\bdetain\b|target creature can'?t attack"
+            + @"|creatures? (?:your opponents control|they control)[\w ']{0,20}can'?t attack");
+
         // A creature body does not have to arrive as a token. Earthbend turns a
         // land into one, and Nature's Revolt turns every land into one; the user
         // ruled on 2026-09-15 that anything GENERATING creatures is Tokens,
@@ -518,6 +553,24 @@ namespace ScatoloneDownloader.Cube
             if (Earthbend.IsMatch(text) || LandsBecomeCreatures.IsMatch(text))
             {
                 result |= CardEffect.Tokens;
+            }
+
+            // Removal's two blind spots, added after the table because both need
+            // to look at the whole card rather than one sentence.
+            if (KillsAcrossCommas.IsMatch(text) && !ReturnsItToPlay.IsMatch(text) && !TargetsAGraveyard.IsMatch(text))
+            {
+                result |= CardEffect.Removal;
+            }
+
+            if (DamageEqualTo.IsMatch(text))
+            {
+                result |= CardEffect.Removal;
+            }
+
+            // A Wall is not a Pacify effect. See the patterns above.
+            if (result.HasFlag(CardEffect.Pacify) && SelfCantAttack.IsMatch(text) && !OutwardCantAttack.IsMatch(text))
+            {
+                result &= ~CardEffect.Pacify;
             }
 
             // Card parity dressed as card advantage. See the three patterns above

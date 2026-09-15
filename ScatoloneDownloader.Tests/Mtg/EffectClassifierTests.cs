@@ -88,6 +88,60 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // The Removal rules could not cross a comma, so every "destroy target
+    // artifact, creature, or land" went unread; nor could they cross the filler
+    // in front of "target", so every "exile up to one target creature" O-ring
+    // did too. Between them that was 49 of 189 misses.
+    [InlineData("Aftershock", "Sorcery", "Destroy target artifact, creature, or land. Aftershock deals 3 damage to you.")]
+    [InlineData("Shattered Wings", "Instant", "Destroy target artifact, enchantment, or creature with flying. Surveil 1.")]
+    [InlineData("All-Fates Stalker", "Creature — Assassin",
+        "When this creature enters, exile up to one target non-Assassin creature until this creature leaves the battlefield.")]
+    // Damage sized by a count kills exactly as damage sized by a digit does.
+    [InlineData("Cat-Gator", "Creature — Cat Crocodile",
+        "Lifelink\nWhen this creature enters, it deals damage equal to the number of Swamps you control to any target.")]
+    public void Classify_KillsTheRuleCouldNotRead_AreRemoval(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
+    // Two families the wider reading has to keep out. A blink returns the card,
+    // so it answers nothing; a card already in a graveyard is already dead.
+    [InlineData("Explosive Getaway", "Instant",
+        "Exile up to one target artifact or creature. Return it to the battlefield under its owner's control at the beginning of the next end step.")]
+    [InlineData("Nyla, Shirshu Sleuth", "Legendary Creature — Elf Detective",
+        "When Nyla enters, exile up to one target creature card from your graveyard.")]
+    public void Classify_BlinkAndGraveyardHate_AreNotRemoval(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
+    // A Wall is not a Pacify effect. "This creature can't attack" is defender,
+    // printed on the card, and its reminder text spells it out — which had every
+    // Wall in the library proposed as pseudo-removal. A self-restriction on when
+    // a creature may attack is the same shape.
+    [InlineData("Wall of Ice", "Creature — Wall", "Defender (This creature can't attack.)")]
+    [InlineData("Drift of the Dead", "Creature — Wall",
+        "Defender (This creature can't attack.)\nThis creature's power and toughness are each equal to the number of snow lands you control.")]
+    [InlineData("Deep-Sea Serpent", "Creature — Serpent", "This creature can't attack unless defending player controls an Island.")]
+    public void Classify_ACreatureThatOnlyRestrainsItself_IsNotPacify(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
+    }
+
+    [Fact]
+    public void Classify_AWallThatAlsoLocksSomebodyElse_StaysPacify()
+    {
+        // The exclusion asks whether anything is aimed OUTWARD, so a card that
+        // both has defender and taps somebody down keeps the tag.
+        CardEffect result = EffectClassifier.Classify(MakeCard("Kraken Wall", "Creature — Wall",
+            "Defender (This creature can't attack.)\n{2}, {T}: Tap target creature an opponent controls."));
+
+        Assert.True(result.HasFlag(CardEffect.Pacify));
+    }
+
+    [Theory]
     // Card parity dressed as card advantage. A loot draws and discards in the
     // same breath (ruled Filter alone on 2026-09-04); cycling pays a card to
     // replace itself and fired only through its reminder text; and an ability
