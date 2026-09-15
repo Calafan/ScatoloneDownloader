@@ -54,17 +54,13 @@ public sealed class EffectClassifierTests
     // "Mill" is only keyword wording from 2021 on; the pre-2021 library spells
     // the action out, so the old phrasing has to match too.
     [InlineData("Millstone", "Artifact", "{2}, {T}: Target player puts the top two cards of their library into their graveyard.", CardEffect.Mill)]
-    // Self-mill is the same effect aimed the other way — a graveyard deck's fuel.
-    // CardAdvantage rides along because dredge's reminder text says "if you would
-    // draw a card": reminder text is part of oracle_text, and the classifier only
-    // proposes, so the extra flag is noise a reviewer drops rather than a bug to
-    // chase with a negative lookahead.
-    // Dredge's reminder text says "if you would draw a card" — a replacement for
-    // a draw, never an extra one. The old CardAdvantage rule fired on any bare
-    // "draw a card" and so tagged it; requiring a repeatable or multi-card draw
-    // drops it without a special case. The Mill from that same reminder stands:
-    // see the note on reminder text further down.
-    [InlineData("Stinkweed Imp", "Creature — Imp", "Flying\nWhenever this creature deals combat damage to a creature, destroy that creature.\nDredge 5 (If you would draw a card, you may mill five cards instead.)", CardEffect.Mill)]
+    // Self-mill is NOT Mill as of 2026-09-15: dredge fills your own graveyard,
+    // which is what a graveyard deck runs on rather than an attack on a library.
+    // The card ends up with nothing proposed at all, and that is the point — the
+    // rest of its text ("destroy that creature") is combat damage, not removal
+    // aimed by you, and dredge's "if you would draw a card" is a replacement for
+    // a draw rather than an extra one.
+    [InlineData("Stinkweed Imp", "Creature — Imp", "Flying\nWhenever this creature deals combat damage to a creature, destroy that creature.\nDredge 5 (If you would draw a card, you may mill five cards instead.)", CardEffect.None)]
     public void Classify_ExactMatch_ForHighConfidenceCards(string name, string typeLine, string oracle, CardEffect expected)
     {
         Card card = MakeCard(name, typeLine, oracle);
@@ -92,16 +88,20 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
-    // Milling as a PRICE is not a mill card. Measured against the whole Scryfall
-    // corpus, this guard withdraws Mill from exactly five cards — the three
-    // wordings below plus Charmed Pendant and The Warring Triad — so it pins the
-    // ruling rather than re-cutting the tag.
+    // Mill has to be aimed at somebody else. Everything here fills the caster's
+    // own graveyard: as an upkeep tax (Deep Spawn), as an activation cost
+    // (Millikin), as a recursion cost (Rot Farm Skeleton), or as the whole point
+    // of a graveyard deck (Ooze Patrol). The old rule fired on all four because
+    // it only looked for the verb, and needed a separate cost guard to undo the
+    // first three; naming the victim covers all four at once.
     [InlineData("Deep Spawn", "Creature — Kraken",
         "Trample\nAt the beginning of your upkeep, sacrifice this creature unless you mill two cards.\n{U}: This creature gains shroud until end of turn.")]
     [InlineData("Millikin", "Artifact Creature — Construct", "{T}, Mill a card: Add {C}.")]
     [InlineData("Rot Farm Skeleton", "Creature — Plant Skeleton",
         "This creature can't block.\n{2}{B}{G}, Mill four cards: Return this card from your graveyard to the battlefield. Activate only as a sorcery.")]
-    public void Classify_MillPaidAsACost_IsNotMill(string name, string typeLine, string oracle)
+    [InlineData("Ooze Patrol", "Creature — Ooze",
+        "When this creature enters, mill two cards, then put a +1/+1 counter on this creature for each creature card in your graveyard.")]
+    public void Classify_MillingYourself_IsNotMill(string name, string typeLine, string oracle)
     {
         Card card = MakeCard(name, typeLine, oracle);
 
@@ -109,20 +109,91 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
-    // The guard strikes out cost clauses and asks what is LEFT, so a card that
-    // both pays and mills keeps the tag. Altar of Dementia's sacrifice is the
-    // cost and the mill is what it buys — the opposite arrangement to Millikin.
+    // The shapes the victim gets named in. Altar of Dementia puts it after a
+    // cost, Millstone in front of the spelled-out pre-2021 wording, Specimen
+    // Freighter names the defending player, and Bruvac's only mill wording is
+    // reminder text — which is part of oracle_text and counts.
     [InlineData("Altar of Dementia", "Artifact", "Sacrifice a creature: Target player mills cards equal to the sacrificed creature's power.")]
-    [InlineData("Glimpse the Unthinkable", "Sorcery", "Target player mills ten cards.")]
-    // A payoff whose only mill wording is reminder text still counts: the same
-    // reminder-text reading that gives Stinkweed Imp its Mill.
+    [InlineData("Millstone", "Artifact", "{2}, {T}: Target player puts the top two cards of their library into their graveyard.")]
+    [InlineData("Specimen Freighter", "Artifact — Spacecraft", "Whenever this Spacecraft attacks, defending player mills four cards.")]
     [InlineData("Bruvac the Grandiloquent", "Legendary Creature — Human Advisor",
         "If an opponent would mill one or more cards, they mill twice that many cards instead. (To mill a card, a player puts the top card of their library into their graveyard.)")]
-    public void Classify_MillAsAnEffect_SurvivesTheCostGuard(string name, string typeLine, string oracle)
+    public void Classify_MillingSomebodyElse_IsMill(string name, string typeLine, string oracle)
     {
         Card card = MakeCard(name, typeLine, oracle);
 
         Assert.True(EffectClassifier.Classify(card).HasFlag(CardEffect.Mill));
+    }
+
+    [Theory]
+    // Tokens means creature bodies on YOUR side. A Treasure, a Clue, a Food or a
+    // Lander is a resource the card hands over in passing, and Afterlife's
+    // Spirit is a body for the other player.
+    [InlineData("Ichor Wellspring", "Artifact", "When this artifact enters, create a Treasure token.")]
+    [InlineData("Tireless Tracker", "Creature — Human Scout", "Whenever a land you control enters, investigate. (Create a Clue token.)")]
+    [InlineData("Afterlife", "Instant", "Destroy target creature. It can't be regenerated. Its controller creates a 1/1 white Spirit creature token with flying.")]
+    [InlineData("Phelddagrif", "Legendary Creature — Hippo", "{G}: Phelddagrif gains trample until end of turn. Target opponent creates a 1/1 green Hippo creature token.")]
+    public void Classify_TokensThatAreNotYourCreatures_IsNotTokens(string name, string typeLine, string oracle)
+    {
+        Card card = MakeCard(name, typeLine, oracle);
+
+        Assert.False(EffectClassifier.Classify(card).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    [InlineData("Lingering Souls", "Sorcery", "Create two 1/1 white Spirit creature tokens with flying.")]
+    // The token that never says "creature token" because it is a copy of one.
+    [InlineData("Kiki-Jiki, Mirror Breaker", "Legendary Creature — Goblin Shaman",
+        "{T}: Create a token that's a copy of another target nonlegendary creature you control. That token gains haste.")]
+    public void Classify_CreatureTokensForYou_IsTokens(string name, string typeLine, string oracle)
+    {
+        Card card = MakeCard(name, typeLine, oracle);
+
+        Assert.True(EffectClassifier.Classify(card).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    // Discarding is only an effect when somebody else's hand is emptied. These
+    // three PAY a card: as an activation cost, as an alternative cast cost, and
+    // as the back half of a loot.
+    [InlineData("Wild Mongrel", "Creature — Dog", "Discard a card: This creature gets +1/+1 and becomes the color of your choice until end of turn.")]
+    [InlineData("Basking Rootwalla", "Creature — Lizard", "Madness {0} (If you discard this card, discard it into exile.)")]
+    [InlineData("Faithless Looting", "Sorcery", "Draw two cards, then discard two cards.")]
+    public void Classify_DiscardingYourOwnCards_IsNotDiscard(string name, string typeLine, string oracle)
+    {
+        Card card = MakeCard(name, typeLine, oracle);
+
+        Assert.False(EffectClassifier.Classify(card).HasFlag(CardEffect.Discard));
+    }
+
+    [Theory]
+    // Returning something to hand is Bounce only when it names what goes back.
+    // Ovinomancer pays its own return as an activation cost and Fleeting Effigy
+    // pays it as a drawback; neither answers anything.
+    [InlineData("Ovinomancer", "Creature — Human Wizard",
+        "{T}, Return this creature to its owner's hand: Destroy target creature. It can't be regenerated.")]
+    [InlineData("Fleeting Effigy", "Creature — Spirit",
+        "Haste\nAt the beginning of your end step, return this creature to its owner's hand.")]
+    public void Classify_ReturningItself_IsNotBounce(string name, string typeLine, string oracle)
+    {
+        Card card = MakeCard(name, typeLine, oracle);
+
+        Assert.False(EffectClassifier.Classify(card).HasFlag(CardEffect.Bounce));
+    }
+
+    [Theory]
+    [InlineData("Unsummon", "Instant", "Return target creature to its owner's hand.")]
+    // "up to one other" sits between the verb and "target", and the plural form
+    // is "to their owners' hands" — both broke a tighter first draft.
+    [InlineData("Spider-Byte, Web Warden", "Creature — Spider",
+        "When Spider-Byte enters, return up to one target nonland permanent to its owner's hand.")]
+    [InlineData("Undo", "Instant", "Return two target creatures to their owners' hands.")]
+    [InlineData("Evacuation", "Instant", "Return all creatures to their owners' hands.")]
+    public void Classify_ReturningSomethingNamed_IsBounce(string name, string typeLine, string oracle)
+    {
+        Card card = MakeCard(name, typeLine, oracle);
+
+        Assert.True(EffectClassifier.Classify(card).HasFlag(CardEffect.Bounce));
     }
 
     [Fact]

@@ -23,27 +23,58 @@ namespace ScatoloneDownloader.Cube
         private static Regex Rx(string pattern, RegexOptions extra) =>
             new(pattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | extra);
 
-        // "Mill" only became keyword wording in 2021; everything printed before
-        // that spells the action out, so both forms are needed or the whole
-        // pre-2021 library goes untagged. Hoisted out of the table below because
-        // the cost guard re-runs them against a stripped copy of the text — and
-        // declared BEFORE Rules, which captures the array in its own initializer.
+        // Mill has to name SOMEBODY ELSE'S library. A bare "mill three cards" is
+        // you filling your own graveyard, which is fuel for whatever the card
+        // does next (Ooze Patrol's counters, Fell Gravship's recursion) rather
+        // than an attack on anybody — the reading settled on 2026-09-15, and the
+        // one that makes the tag mean "this is how the deck mills somebody out".
+        // Measured against 5035 reviewed cards it is decisive: the old bare-verb
+        // rule fired on 79 cards and was wrong on 51 of them; this one fires on
+        // 28 and is wrong on none.
+        //
+        // The run between the player and the verb is what admits "an opponent
+        // WOULD mill", "each player MAY mill" and "any number of target players
+        // EACH mill". "Mill" only became keyword wording in 2021, so the
+        // spelled-out pre-2021 form needs its own pattern or the whole old
+        // library goes untagged.
+        //
+        // Naming the victim also SUBSUMES the old cost guard, which existed to
+        // drop Deep Spawn's "unless you mill two cards" and Millikin's
+        // "{T}, Mill a card:". Both are things a card does to itself, so neither
+        // matches any more and the guard is gone.
+        private const string OtherPlayer =
+            @"(?:target player|target opponent|each opponent|an opponent|that player|each player"
+            + @"|defending player|its controller|opponents?)";
+
         private static readonly Regex[] MillPatterns =
         [
-            Rx(@"\bmills? (?:[\w-]+ ){0,2}cards?\b"),
-            Rx(@"put(?:s)? the top [\w ]{0,25}library into [\w ]{0,25}graveyard"),
+            Rx(OtherPlayer + @"[\w ,]{0,40}mills?\b"),
+            Rx(@"put(?:s)? the top [\w ]{0,25}" + OtherPlayer + @"[\w' ]{0,20}library into"),
+            // Same sentence with the victim in front of the verb, which is how
+            // Millstone and most pre-2021 mill is actually written.
+            Rx(OtherPlayer + @"[\w ,]{0,30}puts? the top [\w ]{0,30}library into"),
         ];
 
-        // The mill you PAY, in the three shapes it is written in: a drawback you
-        // meet ("sacrifice this creature unless you mill two cards"), an extra
-        // cost on the way to the stack, and a cost before an activated ability's
-        // colon ("{T}, Mill a card: Add {C}"). See the guard below for why.
-        private static readonly Regex[] MillCosts =
+        // The token has to be a CREATURE, and it has to be yours. A Treasure, a
+        // Clue, a Food or a Lander is a resource the card hands you on the way
+        // past — the tag is for the cards that put bodies on the board, which is
+        // what a deck builds around. "Or a copy" covers the token that never
+        // says "creature token" because it is a copy of one.
+        private static readonly Regex[] TokenPatterns =
         [
-            Rx(@"unless (?:you|they|that player|its controller) mills? (?:[\w-]+ ){0,2}cards?"),
-            Rx(@"as an additional cost to cast[^.\n]{0,80}mills? (?:[\w-]+ ){0,2}cards?"),
-            Rx(@"\bmills? (?:[\w-]+ ){0,2}cards?[^:.\n]{0,30}:", RegexOptions.Multiline),
+            Rx(@"create[s]?\b.*\btoken"),
+            Rx(@"put[s]?\b.*\btoken.*onto the battlefield"),
         ];
+
+        private static readonly Regex CreatureTokenWording = Rx(@"creature token|token that's a copy|token copy");
+
+        // "Its controller creates a 1/1 white Spirit" (Afterlife), "target
+        // opponent creates a 1/1 green Hippo" (Phelddagrif): the body is real,
+        // but it is not on your side of the table.
+        private static readonly Regex SomebodyElseCreates = Rx(
+            @"(?:its controller|that player|each player|each opponent|target opponent|an opponent"
+            + @"|the exiled card's owner|they|opponents?)\s+(?:may have you |each )?creates?\b"
+            + @"|have an opponent create|you and target opponent each create");
 
         // Hoisted for the same reason as MillPatterns: the beneficiary guard
         // re-walks their matches to see WHO the effect lands on.
@@ -120,7 +151,7 @@ namespace ScatoloneDownloader.Cube
         // One entry per effect; a card gets the effect if ANY of its patterns hit.
         private static readonly (CardEffect Effect, Regex[] Patterns)[] Rules =
         [
-            (CardEffect.Tokens, [Rx(@"create[s]?\b.*\btoken"), Rx(@"put[s]?\b.*\btoken.*onto the battlefield")]),
+            (CardEffect.Tokens, TokenPatterns),
 
             // Mass removal first (a wiper also reads as removal; both are fine).
             // Mass DAMAGE is the oldest wiper wording there is and was missing
@@ -179,14 +210,29 @@ namespace ScatoloneDownloader.Cube
             (CardEffect.Redirect, [Rx(@"change the targets? of"),
                 Rx(@"cop(?:y|ies) target[\w ]*(?:spell|ability)")]),
 
-            (CardEffect.Bounce, [Rx(@"return target[\w ,]*to (its|their) owner'?s? hand"),
-                Rx(@"return[\w ,]*to (its|their) owner'?s? hand")]),
+            // Bounce has to say WHICH permanent goes back, because the bare
+            // sentence is just as often the price the card pays: Ovinomancer's
+            // "{T}, Return this creature to its owner's hand:" is a cost and
+            // Fleeting Effigy's end-step return is a drawback. Requiring
+            // "target" (or a mass "return each/all") took the tag from 74 wrong
+            // out of 114 fired down to 8 wrong out of 56.
+            //
+            // The filler before "target" is what admits "return UP TO ONE OTHER
+            // target nonland permanent"; the possessive alternation is what
+            // admits the plural "to their owners' hands".
+            (CardEffect.Bounce, [
+                Rx(@"return (?:[\w' ]{0,30})?target[\w ,']*to (?:its|their) owner(?:'s|s'|s)? hands?"),
+                Rx(@"return (?:each|all|every)[\w ,']*to (?:its|their) owner(?:'s|s'|s)? hands?")]),
 
             (CardEffect.Disenchant, [Rx(@"destroy target[\w ]*(artifact|enchantment)"),
                 Rx(@"exile target[\w ]*(artifact|enchantment)")]),
 
-            (CardEffect.Discard, [Rx(@"(target (player|opponent)|each player|that player) discards"),
-                Rx(@"discards? (a card|\d+ cards|two cards|three cards|their hand)")]),
+            // Same reading as Mill, and the same result. A bare "discard a card"
+            // is overwhelmingly a COST — madness, blitz, cycling reminder text,
+            // the second half of looting — rather than an attack on a hand.
+            // Naming the victim took Discard from 129 wrong out of 188 fired to
+            // 16 wrong out of 69, the largest precision gain on the board.
+            (CardEffect.Discard, [Rx(OtherPlayer + @"[\w ,]{0,30}discards?\b")]),
 
             // Drawing ONE card off a spell you cast replaces the spell — that is
             // card parity, not advantage, which is why Eject and Broadside
@@ -326,15 +372,17 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Protection;
             }
 
-            // Milling can be the effect or the PRICE, and only the first is what
-            // the tag is for. Deep Spawn's "sacrifice this creature unless you
-            // mill two cards" is an upkeep tax; Millikin's "{T}, Mill a card:"
-            // buys mana. Neither card is doing anything to a library on purpose
-            // — the same distinction LandDestruction already draws between Stone
-            // Rain and Serendib Djinn's land sacrifice.
-            if (result.HasFlag(CardEffect.Mill) && !MillsOutsideACost(card))
+            // Tokens is the third reading of the same question the Mill rule
+            // asks — what does this card do, and for whom. A Clue or a Treasure
+            // is a resource handed over in passing, and a Spirit handed to the
+            // creature's OWNER (Afterlife) is a body for the other side, so
+            // neither earns the tag that means "this deck goes wide". Written as
+            // a guard rather than as more regexes because the evidence sits
+            // anywhere on the card, not next to the verb.
+            if (result.HasFlag(CardEffect.Tokens)
+                && (!CreatureTokenWording.IsMatch(text) || SomebodyElseCreates.IsMatch(text)))
             {
-                result &= ~CardEffect.Mill;
+                result &= ~CardEffect.Tokens;
             }
 
             // Buff and Protection need a beneficiary that is not the card itself.
@@ -482,30 +530,6 @@ namespace ScatoloneDownloader.Cube
             }
 
             return name.Trim();
-        }
-
-        /// <summary>Whether anything is still milled once every cost clause is
-        /// struck out — i.e. whether the card mills as an EFFECT rather than only
-        /// as a price it pays. A card that does both keeps the tag, because the
-        /// surviving text still matches.</summary>
-        private static bool MillsOutsideACost(Card card)
-        {
-            string text = card.OracleText ?? string.Empty;
-
-            foreach (Regex cost in MillCosts)
-            {
-                text = cost.Replace(text, " ");
-            }
-
-            foreach (Regex pattern in MillPatterns)
-            {
-                if (pattern.IsMatch(text))
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         /// <summary>Whether the card's effect can be deployed in response: an
