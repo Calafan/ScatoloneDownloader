@@ -243,6 +243,46 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // A pump restricted to one creature TYPE is not Buff, ruled 2026-09-15: it
+    // promises a payoff a cube with no Minotaur deck cannot collect.
+    [InlineData("Anaba Spirit Crafter", "Creature — Minotaur Shaman", "Minotaur creatures get +1/+0.")]
+    [InlineData("Muscle Sliver", "Creature — Sliver", "All Sliver creatures get +1/+1.")]
+    [InlineData("Zuberi, Golden Feather", "Legendary Creature — Griffin",
+        "Flying\nOther Griffin creatures get +1/+1.")]
+    [InlineData("Heart Wolf", "Legendary Creature — Wolf",
+        "First strike\n{T}: Target Dwarf creature gets +2/+0 and gains first strike until end of turn.")]
+    [InlineData("Doctor Octopus, Master Planner", "Legendary Creature — Human Villain",
+        "Other Villains you control get +2/+2.\nYour maximum hand size is eight.")]
+    public void Classify_APumpForOneTribe_IsNotBuff(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // What "tribe" does NOT mean. A colour is not a tribe (Crusade, Bad Moon), a
+    // STATE is not a tribe (Castle, Weakstone), and an unrestricted anthem is the
+    // thing the tag is for.
+    [InlineData("Crusade", "Enchantment", "White creatures get +1/+1.")]
+    [InlineData("Bad Moon", "Enchantment", "Black creatures get +1/+1.")]
+    [InlineData("Castle", "Enchantment", "Untapped creatures you control get +0/+2.")]
+    [InlineData("Glorious Anthem", "Enchantment", "Creatures you control get +1/+1.")]
+    public void Classify_AColourOrAStateIsNotATribe(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Fact]
+    public void Classify_ALordThatAlsoPumpsSomethingUnrestricted_StaysBuff()
+    {
+        // The exclusion asks whether EVERY pump is tribal, so a card that both
+        // lords and pumps freely keeps the tag.
+        CardEffect result = EffectClassifier.Classify(MakeCard("Field Marshal", "Creature — Human Soldier",
+            "First strike\nOther Soldier creatures get +1/+1 and have first strike.\n{2}{W}: Target creature gets +3/+3 until end of turn."));
+
+        Assert.True(result.HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
     // The two it still has to keep out: a counter the card puts on ITSELF is a
     // stat line, and a counter on THEIR creatures helps them.
     [InlineData("Aku Djinn", "Creature — Djinn",

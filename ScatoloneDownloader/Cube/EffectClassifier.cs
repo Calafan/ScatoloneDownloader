@@ -264,6 +264,31 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex CounterForAnOpponent = Rx(
             @"\+1/\+1 counters? on [\w ]{0,30}(?:each |an |target )?opponent");
 
+        // A pump restricted to one creature TYPE is not Buff, ruled 2026-09-15:
+        // "Minotaur creatures get +1/+0" helps a Minotaur deck, and this cube has
+        // none, so the tag would promise a payoff the card cannot deliver. A
+        // COLOUR is not a tribe — Crusade and Bad Moon keep the tag — and neither
+        // is a state, which is why Castle's "untapped creatures you control" and
+        // Weakstone's "attacking creatures" stay in.
+        //
+        // The test is capitalisation, because oracle text capitalises a creature
+        // type and nothing else in this slot, minus the English words that can
+        // stand there. Scored against a version built from every creature subtype
+        // in the Scryfall bulk: this one agrees everywhere and does better on the
+        // irregular plurals the type list cannot form (Elves, Allies).
+        private const string NotATribe =
+            @"(?!(?:All|Each|Other|Those|These|Target|Attacking|Blocking|Untapped|Tapped|Enchanted|Equipped"
+            + @"|Then|When|Whenever|If|And|But|Your|Their|Creature|Permanent|Token|Legendary|Multicolored"
+            + @"|Colorless|White|Blue|Black|Red|Green|Non[\w-]*)s?\b)";
+
+        // NB case-SENSITIVE, unlike everything else here.
+        private static readonly Regex TribalPump = new(
+            @"(?:^|\n|\. )(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + NotATribe + @"[A-Z][\w']+s? creatures? (?:you control )?(?:get|have)\b"
+            + @"|(?:^|\n|\. )(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + NotATribe + @"[A-Z][\w']+s you control (?:get|have)\b"
+            + @"|[Tt]arget " + NotATribe + @"[A-Z][\w']+ creature gets"
+            + @"|(?:^|\n|\. )(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + NotATribe + @"[A-Z][\w']+s? creatures? get \+",
+            RegexOptions.CultureInvariant | RegexOptions.Multiline);
+
         // NB: no bare "regenerate" — "can't be regenerated" (Wrath) would false-positive.
         private static readonly Regex[] ProtectionPatterns =
         [
@@ -835,6 +860,15 @@ namespace ScatoloneDownloader.Cube
                 result |= CardEffect.Buff;
             }
 
+            // Last, so it can take the tag back off whichever rule granted it:
+            // a card whose ONLY pump is restricted to one creature type. See the
+            // patterns above; the "only" is why the tribal phrases are blanked and
+            // the question asked again rather than tested in place.
+            if (result.HasFlag(CardEffect.Buff) && OnlyPumpsATribe(text))
+            {
+                result &= ~CardEffect.Buff;
+            }
+
             if (result.HasFlag(CardEffect.Protection) && AimsOnlyAtItself(text, ProtectionPatterns, card, bareIsSelf: true))
             {
                 result &= ~CardEffect.Protection;
@@ -941,6 +975,22 @@ namespace ScatoloneDownloader.Cube
 
             string rest = YourOwnCreaturesCantAttack.Replace(TapsACreatureYouControl.Replace(text, " "), " ");
             return !PacifyOutward.Any(p => p.IsMatch(rest)) && !AnyUntapLock.IsMatch(rest);
+        }
+
+        /// <summary>True when every Buff wording on the card sits inside a pump
+        /// restricted to one creature type. Blank the tribal phrases out and ask
+        /// again, so a lord that also pumps something unrestricted keeps the tag.
+        /// </summary>
+        private static bool OnlyPumpsATribe(string text)
+        {
+            if (!TribalPump.IsMatch(text))
+            {
+                return false;
+            }
+
+            string rest = TribalPump.Replace(text, " ");
+            return !BuffPatterns.Any(p => p.IsMatch(rest))
+                && !(CounterOnSomebodyElse.IsMatch(rest) && !CounterForAnOpponent.IsMatch(rest));
         }
 
         /// <summary>True when EVERY line that adds mana restricts what it may be

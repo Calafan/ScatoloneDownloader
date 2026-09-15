@@ -73,8 +73,8 @@ namespace ScatoloneDownloader.Mtg
 
             [CardEffect.Buff] =
                 "Raises power and/or toughness for something OTHER than the card itself, in either vocabulary: "
-                + "+2/+2 until end of turn, or a +1/+1 counter. One counter on one creature counts. A creature that "
-                + "pumps only itself has a stat line, not an effect, and counters on THEIR creatures help them.",
+                + "+2/+2 until end of turn, or a +1/+1 counter. Not a card that pumps only ITSELF, not counters on "
+                + "THEIR creatures, and not a lord for one TRIBE — though a colour or a state still counts.",
 
             [CardEffect.Protection] =
                 "Keeps something ELSE alive, and can be held up in response. Two vocabularies count equally: a granted "
@@ -82,10 +82,9 @@ namespace ScatoloneDownloader.Mtg
                 + "card puts on itself, and not preventing the damage a creature DEALS — that is Pacify.",
 
             [CardEffect.Burn] =
-                "Damage aimed at a FACE, however it is counted — \"equal to the number of Swamps\" burns too, and "
-                + "\"each opponent loses 2 life\" is a Lava Spike the game declined to call damage. Damage aimed at a "
-                + "creature is Removal instead; \"any target\" is both. A sweeper counts only if it catches the "
-                + "players too. Damage to YOURSELF is a price the card charges.",
+                "Damage aimed at a FACE, however counted — \"damage equal to the number of Swamps\" burns, and so "
+                + "does \"each opponent loses 2 life\". Damage aimed at a creature is Removal; \"any target\" is "
+                + "both. A sweeper counts only if it catches the players. Damage to YOURSELF is a price.",
 
             [CardEffect.Sacrifice] =
                 "An outlet you can feed your OWN creatures, artifacts or permanents at will — the half of the combo that "
