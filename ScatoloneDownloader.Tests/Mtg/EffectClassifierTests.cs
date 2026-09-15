@@ -334,19 +334,91 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
-    // Scaling damage reads the same as a fixed amount, and the two tags have to
-    // agree: before [\dX] landed, "deals X damage to any target" was Removal
-    // without being Burn, which is the ontology disagreeing with itself about one
-    // sentence. Lightning Bolt is the fixed-number control.
+    // "Any target" is the one wording that is both at once, because it can be
+    // pointed at a face or at a creature. Scaling and fixed amounts read the
+    // same, which is why [\dX] is in the pattern.
     [InlineData("Blaze", "Sorcery", "Blaze deals X damage to any target.")]
     [InlineData("Lightning Bolt", "Instant", "Lightning Bolt deals 3 damage to any target.")]
-    [InlineData("Disintegrate", "Sorcery", "Disintegrate deals X damage to target creature. If that creature would die this turn, exile it instead.")]
-    public void Classify_ScalingDamage_IsBothBurnAndRemoval(string name, string typeLine, string oracle)
+    public void Classify_DamageAtAnyTarget_IsBothBurnAndRemoval(string name, string typeLine, string oracle)
     {
         CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
 
         Assert.True(result.HasFlag(CardEffect.Burn));
         Assert.True(result.HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
+    // Damage that can only ever hit a creature answers a threat, and answering a
+    // threat is Removal. Reading it as Burn too was worth 129 false positives.
+    [InlineData("Disintegrate", "Sorcery", "Disintegrate deals X damage to target creature. If that creature would die this turn, exile it instead.")]
+    [InlineData("Explosive Shot", "Instant", "Explosive Shot deals 4 damage to target creature.")]
+    public void Classify_DamageAtACreature_IsRemovalNotBurn(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Removal));
+        Assert.False(result.HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
+    // A sweeper that catches the players on its way past is Wipe AND Burn; one
+    // that only hits creatures is Wipe alone. Ruled 2026-09-15 off Inferno.
+    [InlineData("Inferno", "Instant", "Inferno deals 6 damage to each creature and each player.")]
+    [InlineData("Earthquake", "Sorcery", "Earthquake deals X damage to each creature without flying and each player.")]
+    public void Classify_SweeperThatHitsPlayers_IsWipeAndBurn(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Wipe));
+        Assert.True(result.HasFlag(CardEffect.Burn));
+    }
+
+    [Fact]
+    public void Classify_SweeperThatSparesPlayers_IsWipeAlone()
+    {
+        CardEffect result = EffectClassifier.Classify(
+            MakeCard("Pyroclasm", "Sorcery", "Pyroclasm deals 2 damage to each creature."));
+
+        Assert.True(result.HasFlag(CardEffect.Wipe));
+        Assert.False(result.HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
+    // Damage to YOURSELF is a price, not an effect — the same reading that keeps
+    // a self-mill out of Mill and an additional cost out of Sacrifice.
+    [InlineData("Ancient Tomb", "Land", "{T}: Add {C}{C}. This land deals 2 damage to you.")]
+    [InlineData("City of Brass", "Land", "Whenever this land becomes tapped, it deals 1 damage to you.\n{T}: Add one mana of any color.")]
+    [InlineData("Juzam Djinn", "Creature — Djinn", "At the beginning of your upkeep, this creature deals 1 damage to you.")]
+    public void Classify_DamageToYourself_IsNotBurn(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
+    // Sacrifice means an OUTLET for your own creatures — the half of the combo
+    // that makes a stolen creature worth taking. An activation cost in front of a
+    // colon is the canonical shape; a trigger that OFFERS the sacrifice counts too.
+    [InlineData("Ashnod's Altar", "Artifact", "Sacrifice a creature: Add {C}{C}.")]
+    [InlineData("Goblin Bombardment", "Enchantment", "Sacrifice a creature: This enchantment deals 1 damage to any target.")]
+    [InlineData("Comet Crawler", "Creature — Beast",
+        "Lifelink\nWhenever this creature attacks, you may sacrifice another creature or artifact. If you do, this creature gets +2/+0 until end of turn.")]
+    public void Classify_SacrificeOutlet_IsSacrifice(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Sacrifice));
+    }
+
+    [Theory]
+    // Three things that are not an outlet: an edict empties somebody ELSE's
+    // board, an additional cost to cast is paid once on the way to a different
+    // effect, and a land is not a creature.
+    [InlineData("Diabolic Edict", "Instant", "Target player sacrifices a creature of their choice.")]
+    [InlineData("Natural Order", "Sorcery",
+        "As an additional cost to cast this spell, sacrifice a green creature.\nSearch your library for a green creature card, put it onto the battlefield, then shuffle.")]
+    [InlineData("Harrow", "Instant",
+        "As an additional cost to cast this spell, sacrifice a land.\nSearch your library for up to two basic land cards, put them onto the battlefield, then shuffle.")]
+    public void Classify_SacrificeThatIsNotAnOutlet_IsNotSacrifice(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Sacrifice));
     }
 
     [Theory]

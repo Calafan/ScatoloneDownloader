@@ -68,6 +68,19 @@ namespace ScatoloneDownloader.Cube
 
         private static readonly Regex CreatureTokenWording = Rx(@"creature token|token that's a copy|token copy");
 
+        // Diabolic Edict and Flare of Malice make the OTHER player sacrifice,
+        // which empties their board rather than giving you a place to put yours.
+        private static readonly Regex SomebodyElseSacrifices = Rx(OtherPlayer + @"[\w ,]{0,40}sacrifices?\b");
+
+        // An outlet has to be usable at will: a cost in front of a colon
+        // ("Sacrifice a creature: ..."), or an optional sacrifice a trigger
+        // offers you. "As an additional cost to cast this spell" is neither — it
+        // is a price paid once, on the way to a different effect.
+        private static readonly Regex SacrificeOutlet = Rx(
+            @"^[^\n:]{0,60}sacrifices? (?:a|an|another|two|three|\d+)[\w ]*creature[^\n:]{0,40}:"
+            + @"|you may sacrifice (?:a|an|another|two|three|\d+)[\w ]*creature",
+            RegexOptions.Multiline);
+
         // "Its controller creates a 1/1 white Spirit" (Afterlife), "target
         // opponent creates a 1/1 green Hippo" (Phelddagrif): the body is real,
         // but it is not on your side of the table.
@@ -284,10 +297,30 @@ namespace ScatoloneDownloader.Cube
             // but the same wording is hand-tagged Burn on 22 other cards, so the
             // question of whether a sweeper burns is the user's to settle, not a
             // rule to quietly change.
-            (CardEffect.Burn, [Rx(@"deals? [\dX]+ damage to (any target|target creature|target player|target planeswalker|each|any|it|that)")]),
+            // Burn is damage aimed at a FACE. Damage pointed at a creature is how
+            // the game kills creatures and is already Removal; reading it as Burn
+            // as well is what gave the tag 129 false positives, Explosive Shot and
+            // Fanged Flames among them. Two shapes qualify: a player named as the
+            // target, and the sweeper that catches players on its way past —
+            // Inferno's "each creature and each player", which is Wipe AND Burn,
+            // while a sweeper that only hits creatures is Wipe alone. Ruled
+            // 2026-09-15.
+            //
+            // "damage to you" is deliberately absent: a painland, Ancient Tomb and
+            // Juzam Djinn charge themselves, and self-damage is a price the same
+            // way a self-mill or a sacrifice cost is. Precision 58.7% -> 86.3%.
+            (CardEffect.Burn, [
+                Rx(@"deals? [\dX]+ damage to (?:any target|target player|target opponent|each player|each opponent|that player)\b"),
+                Rx(@"deals? [\dX]+ damage to [\w ,]{0,45}each (?:player|opponent)")]),
 
-            (CardEffect.Sacrifice, [Rx(@"target player sacrifices"),
-                Rx(@"sacrifice (a|another|two|three|\d+)[\w ]*(creature|permanent|artifact|land)")]),
+            // Sacrifice is a sacrifice OUTLET: somewhere to put your OWN creatures
+            // on demand, which is what makes a stolen creature (see Steal) worth
+            // taking. Ruled 2026-09-15. Three things fall out of that and are
+            // handled by the guard below: an edict is somebody else sacrificing,
+            // a land or an artifact is not a creature, and an additional cost to
+            // cast is a one-shot price rather than an outlet you can point at
+            // anything. Precision 56.5% -> 95.4%.
+            (CardEffect.Sacrifice, [Rx(@"sacrifices? (?:a|an|another|two|three|\d+)[\w ]*creature")]),
 
             (CardEffect.Steal, [Rx(@"gains? control of"), Rx(@"you control (enchanted|target)"),
                 Rx(@"untap target creature[\w ]*gain control")]),
@@ -383,6 +416,16 @@ namespace ScatoloneDownloader.Cube
                 && (!CreatureTokenWording.IsMatch(text) || SomebodyElseCreates.IsMatch(text)))
             {
                 result &= ~CardEffect.Tokens;
+            }
+
+            // Sacrifice, asked the same way: whose creature, and can you do it
+            // when you want to? A card that only lets an OPPONENT sacrifice is an
+            // edict, and one that charges a creature as an additional cost to cast
+            // pays once and is gone — neither is an outlet.
+            if (result.HasFlag(CardEffect.Sacrifice)
+                && (SomebodyElseSacrifices.IsMatch(text) || !SacrificeOutlet.IsMatch(text)))
+            {
+                result &= ~CardEffect.Sacrifice;
             }
 
             // Buff and Protection need a beneficiary that is not the card itself.
