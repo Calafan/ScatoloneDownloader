@@ -77,8 +77,8 @@ namespace ScatoloneDownloader.Cube
         // offers you. "As an additional cost to cast this spell" is neither — it
         // is a price paid once, on the way to a different effect.
         private static readonly Regex SacrificeOutlet = Rx(
-            @"^[^\n:]{0,60}sacrifices? (?:a|an|another|two|three|\d+)[\w ]*(?:creature|artifact)[^\n:]{0,40}:"
-            + @"|you may sacrifice (?:a|an|another|two|three|\d+)[\w ]*(?:creature|artifact)",
+            @"^[^\n:]{0,60}sacrifices? (?:a|an|another|two|three|\d+)[\w ]*(?:creature|artifact|permanent)[^\n:]{0,40}:"
+            + @"|you may sacrifice (?:a|an|another|two|three|\d+)[\w ]*(?:creature|artifact|permanent)",
             RegexOptions.Multiline);
 
         // "Its controller creates a 1/1 white Spirit" (Afterlife), "target
@@ -320,12 +320,16 @@ namespace ScatoloneDownloader.Cube
             // additional cost to cast is a one-shot price rather than an outlet you
             // can point at anything. Precision 56.5% -> 88.1%, 84 wrong -> 44.
             //
-            // Artifacts count alongside creatures — Atog, Dwarven Weaponsmith and
-            // Infernal Tribute are the same card as Ashnod's Altar with a different
-            // fuel — but LANDS do not: "sacrifice a land" is Harrow paying for a
-            // fetch, never an engine. Adding artifacts was worth 12 recovered
-            // against 7 wrongly fired.
-            (CardEffect.Sacrifice, [Rx(@"sacrifices? (?:a|an|another|two|three|\d+)[\w ]*(?:creature|artifact)")]),
+            // The fuel can be a creature, an artifact, or a permanent named as such
+            // ("Sacrifice a nontoken permanent:") — Atog, Dwarven Weaponsmith and
+            // Infernal Tribute are all Ashnod's Altar with a different thing going
+            // in. Artifacts were worth 12 recovered against 7 wrongly fired;
+            // "permanent" a further 3 against 0.
+            //
+            // A LAND is deliberately not on the list, and does not need to be
+            // excluded either: "sacrifice a land" is Harrow paying for a fetch and
+            // never says "permanent", so it simply does not match.
+            (CardEffect.Sacrifice, [Rx(@"sacrifices? (?:a|an|another|two|three|\d+)[\w ]*(?:creature|artifact|permanent)")]),
 
             (CardEffect.Steal, [Rx(@"gains? control of"), Rx(@"you control (enchanted|target)"),
                 Rx(@"untap target creature[\w ]*gain control")]),

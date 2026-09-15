@@ -409,8 +409,10 @@ public sealed class EffectClassifierTests
     [InlineData("Goblin Bombardment", "Enchantment", "Sacrifice a creature: This enchantment deals 1 damage to any target.")]
     [InlineData("Comet Crawler", "Creature — Beast",
         "Lifelink\nWhenever this creature attacks, you may sacrifice another creature or artifact. If you do, this creature gets +2/+0 until end of turn.")]
-    // An artifact outlet is the same engine with different fuel.
+    // An artifact outlet, or one that names the fuel as a permanent, is the same
+    // engine with something else going in.
     [InlineData("Atog", "Creature — Atog", "Sacrifice an artifact: This creature gets +2/+2 until end of turn.")]
+    [InlineData("Infernal Tribute", "Enchantment", "{2}, Sacrifice a nontoken permanent: Draw a card.")]
     [InlineData("Dwarven Weaponsmith", "Creature — Dwarf",
         "{T}, Sacrifice an artifact: Put a +1/+1 counter on target creature. Activate only during your upkeep.")]
     public void Classify_SacrificeOutlet_IsSacrifice(string name, string typeLine, string oracle)
