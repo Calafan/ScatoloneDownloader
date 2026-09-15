@@ -123,6 +123,57 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // A +1/+1 counter is Buff in the other vocabulary, ruled 2026-09-15. One
+    // counter on one creature counts, and so do support and distribute.
+    [InlineData("Cloudbound Moogle", "Creature — Moogle",
+        "Flying\nWhen this creature enters, put a +1/+1 counter on target creature.")]
+    [InlineData("Blitzball Stadium", "Artifact",
+        "When this artifact enters, support X. (Put a +1/+1 counter on each of up to X target creatures.)")]
+    [InlineData("Cloudspire Skycycle", "Artifact — Vehicle",
+        "Flying\nWhen this Vehicle enters, distribute two +1/+1 counters among one or two other target Vehicles and/or creatures you control.")]
+    public void Classify_ACounterOnSomebodyElse_IsBuff(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // The two it still has to keep out: a counter the card puts on ITSELF is a
+    // stat line, and a counter on THEIR creatures helps them.
+    [InlineData("Aku Djinn", "Creature — Djinn",
+        "Trample\nAt the beginning of your upkeep, put a +1/+1 counter on each creature each opponent controls.")]
+    [InlineData("Aerith Gainsborough", "Legendary Creature — Human",
+        "Lifelink\nWhenever you gain life, put a +1/+1 counter on Aerith Gainsborough.")]
+    public void Classify_ACounterOnItselfOrOnThem_IsNotBuff(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // Mana without a {T}, off a permanent that spends itself, or off a spell.
+    // Ruled 2026-09-15.
+    [InlineData("Black Lotus", "Artifact",
+        "{T}, Sacrifice this artifact: Add three mana of any one color.")]
+    [InlineData("Blood Pet", "Creature — Thrull", "Sacrifice this creature: Add {B}.")]
+    [InlineData("Dark Ritual", "Instant", "Add {B}{B}{B}.")]
+    [InlineData("Crystal Vein", "Land", "{T}: Add {C}.\n{T}, Sacrifice this land: Add {C}{C}.")]
+    public void Classify_ManaOffAPermanentThatSpendsItself_IsRamp(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // The line the hand-tagging draws inside that family: entering tapped costs
+    // the turn the extra mana was meant to buy, so these five are not Ramp.
+    [InlineData("Dwarven Ruins", "Land",
+        "This land enters tapped.\n{T}: Add {R}.\n{T}, Sacrifice this land: Add {R}{R}.")]
+    [InlineData("Svyelunite Temple", "Land",
+        "This land enters tapped.\n{T}: Add {U}.\n{T}, Sacrifice this land: Add {U}{U}.")]
+    public void Classify_ASelfSacrificingLandThatEntersTapped_IsNotRamp(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
     // A shrink is an answer — a creature at zero toughness is as dead as a
     // destroyed one, in both vocabularies. Ruled 2026-09-15.
     [InlineData("Locust Spray", "Instant",

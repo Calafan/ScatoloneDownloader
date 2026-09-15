@@ -46,8 +46,9 @@ namespace ScatoloneDownloader.Mtg
                 + "Returning itself as a cost or an end-step drawback is a price the card pays, not an answer.",
 
             [CardEffect.Ramp] =
-                "More mana, or sooner: a mana ability on a creature or rock, a land put onto the battlefield. A land "
-                + "tapping for its own mana is just a land.",
+                "More mana, or sooner: a mana ability on a creature or rock, a land put onto the battlefield, a "
+                + "permanent that spends itself for mana (Black Lotus, Blood Pet), a ritual. A land tapping for its "
+                + "own single mana is just a land, and a land that enters tapped never counts.",
 
             [CardEffect.Disenchant] =
                 "Destroys or exiles a targeted artifact or enchantment.",
@@ -69,8 +70,9 @@ namespace ScatoloneDownloader.Mtg
                 "Returns a creature from a graveyard straight to the BATTLEFIELD, cheating its cost.",
 
             [CardEffect.Buff] =
-                "Raises power and/or toughness for something OTHER than the card itself. A creature that pumps only itself "
-                + "has a stat line, not an effect.",
+                "Raises power and/or toughness for something OTHER than the card itself, in either vocabulary: "
+                + "+2/+2 until end of turn, or a +1/+1 counter. One counter on one creature counts. A creature that "
+                + "pumps only itself has a stat line, not an effect, and counters on THEIR creatures help them.",
 
             [CardEffect.Protection] =
                 "Keeps something ELSE alive, and can be held up in response. Two vocabularies count equally: a granted "

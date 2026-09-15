@@ -145,6 +145,25 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex LandTapsForMoreThanOne = Rx(
             @"^\{t\}: add \{[wubrgc]\}\{", RegexOptions.Multiline);
 
+        // Mana that arrives without a {T} on a permanent you keep: Black Lotus and
+        // Lotus Petal and Blood Pet spend THEMSELVES, Dark Ritual and Songs of the
+        // Damned are the same trade written as a spell. Ruled 2026-09-15.
+        //
+        // This family was measured a round earlier and filed as noise. That was
+        // wrong, and wrong for an instructive reason: the pattern was sweeping in
+        // the five lands that enter tapped, and they were poisoning the number.
+        // Separated, it is the largest Ramp win found — 133 errors to 118.
+        private static readonly Regex SacrificesForMana = Rx(
+            @"^[^\n:]{0,50}sacrifice[^\n:]{0,40}: add ", RegexOptions.Multiline);
+
+        private static readonly Regex RitualAddsMana = Rx(@"(?:^|\n|\. )add [\w ]{0,20}\{[wubrgc]");
+
+        // The exact line the hand-tagging draws. Crystal Vein cracks for two and is
+        // tagged; Dwarven Ruins, Ebon Stronghold, Havenwood Battleground, Ruins of
+        // Trokair and Svyelunite Temple do the same thing and are not — because
+        // entering tapped costs the turn the extra mana was meant to buy.
+        private static readonly Regex LandEntersTapped = Rx(@"this land enters tapped\.");
+
         // The Removal rules read "destroy target creature" but nothing wider,
         // because [\w ] cannot cross a comma — so "destroy target artifact,
         // creature, or land" (Aftershock, Boom Box, Shattered Wings) went unread,
@@ -223,6 +242,27 @@ namespace ScatoloneDownloader.Cube
             Rx(@"creatures you control get \+"),
             Rx(@"\+\d+/\+\d+ until end of turn"),
         ];
+
+        // A +1/+1 COUNTER is Buff, ruled 2026-09-15. It is the second vocabulary
+        // for raising power and toughness, and the tag asks only where the stats
+        // land, not how long they last: one counter on one creature counts, the
+        // same as Giant Growth does.
+        //
+        // The user made this ruling against the measurement rather than with it.
+        // Of the 161 reviewed cards that put a counter on somebody else, 46 were
+        // hand-tagged Buff and the two halves are not told apart by any wording —
+        // so the number gets worse before it gets better, and the 115 reviewed
+        // entries on the wrong side of the new line were realigned by hand the
+        // same day. Judged against the realigned tags, this is the rule.
+        private static readonly Regex CounterOnSomebodyElse = Rx(
+            @"\+1/\+1 counters? on (?:target|another|each|up to|one or more)"
+            + @"|distribute [\w ]{0,20}\+1/\+1 counters"
+            + @"|\bsupport \d");
+
+        // Same question Buff always asks, in the one place this wording can point
+        // the wrong way: a counter on THEIR creatures helps them, not you.
+        private static readonly Regex CounterForAnOpponent = Rx(
+            @"\+1/\+1 counters? on [\w ]{0,30}(?:each |an |target )?opponent");
 
         // NB: no bare "regenerate" — "can't be regenerated" (Wrath) would false-positive.
         private static readonly Regex[] ProtectionPatterns =
@@ -585,6 +625,14 @@ namespace ScatoloneDownloader.Cube
                 }
             }
 
+            // Added AFTER the land strip, because Crystal Vein is a land and is
+            // exactly the card this rule is for. See the patterns above.
+            if ((SacrificesForMana.IsMatch(text) || RitualAddsMana.IsMatch(text))
+                && !LandEntersTapped.IsMatch(text))
+            {
+                result |= CardEffect.Ramp;
+            }
+
             // Protection is an INTERACTION you hold up, not a property a card
             // happens to have. A creature printed with hexproof protects only
             // itself, passively, and answers nothing; Mother of Runes protects
@@ -686,6 +734,15 @@ namespace ScatoloneDownloader.Cube
             if (result.HasFlag(CardEffect.Buff) && AimsOnlyAtItself(text, BuffPatterns, card, bareIsSelf: false))
             {
                 result &= ~CardEffect.Buff;
+            }
+
+            // Added AFTER that gate, not folded into BuffPatterns: the gate reads
+            // the text BEFORE a match for its subject, and a counter names its
+            // beneficiary after ("put a +1/+1 counter ON target creature"), so it
+            // would be stripped every time. See the patterns above.
+            if (CounterOnSomebodyElse.IsMatch(text) && !CounterForAnOpponent.IsMatch(text))
+            {
+                result |= CardEffect.Buff;
             }
 
             if (result.HasFlag(CardEffect.Protection) && AimsOnlyAtItself(text, ProtectionPatterns, card, bareIsSelf: true))
