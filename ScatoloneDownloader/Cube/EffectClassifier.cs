@@ -105,6 +105,34 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex DrawBySacrificingItself = Rx(
             @"^[^\n:]{0,60}sacrifice this [\w]+[^\n:]{0,30}:", RegexOptions.Multiline);
 
+        // A Clue and an impulse draw are both "a card the opponent does not get",
+        // but they are not the same economy, and the tagging already says so.
+        // A Clue has to be CASHED for {2}, so one of them is a rider rather than
+        // a card — it earns the tag only when the card makes them repeatedly. An
+        // impulse is a free extra card the moment it resolves, so a one-shot
+        // counts. Ruled 2026-09-15; measured, the Clue half is worth 3 and the
+        // impulse half 24, and reading a lone Clue as advantage LOSES 10.
+        private static readonly Regex ClueWording = Rx(@"\binvestigates?\b|\bclue token");
+
+        private static readonly Regex RepeatableClue = Rx(
+            @"^[^\n:]{1,70}:[^\n]{0,120}(?:investigate|clue token)"
+            + @"|^(?:whenever|at the beginning of)[^\n]{0,160}(?:investigate|clue token)",
+            RegexOptions.Multiline);
+
+        private static readonly Regex ImpulseDraw = Rx(
+            @"exiles? the top [\w ]{0,20}(?:card|cards) of your library"
+            + @"[^\n]{0,90}(?:you may (?:play|cast)|may play (?:it|them|that card))");
+
+        // The one land shape that IS Ramp, ruled 2026-09-15. A land tapping for
+        // its own single mana is just a land, but Ancient Tomb and Mishra's
+        // Workshop produce more than they cost EVERY turn, and so do the Karoo
+        // lands once they have given a land back. The "{T}, Sacrifice this land:
+        // Add {R}{R}" family is deliberately NOT caught — it spends itself for
+        // the extra mana once, which is why Dwarven Ruins and Ebon Stronghold
+        // are hand-tagged as nothing while Crystal Vein is not.
+        private static readonly Regex LandTapsForMoreThanOne = Rx(
+            @"^\{t\}: add \{[wubrgc]\}\{", RegexOptions.Multiline);
+
         // The Removal rules read "destroy target creature" but nothing wider,
         // because [\w ] cannot cross a comma — so "destroy target artifact,
         // creature, or land" (Aftershock, Boom Box, Shattered Wings) went unread,
@@ -521,6 +549,13 @@ namespace ScatoloneDownloader.Cube
             if (card.MacroType == MacroType.Land)
             {
                 result &= ~CardEffect.Ramp;
+
+                // …unless it makes more mana than it costs, every turn. See the
+                // pattern above for why the self-sacrificing ones stay out.
+                if (LandTapsForMoreThanOne.IsMatch(text))
+                {
+                    result |= CardEffect.Ramp;
+                }
             }
 
             // Protection is an INTERACTION you hold up, not a property a card
@@ -579,6 +614,13 @@ namespace ScatoloneDownloader.Cube
                 && (Loot.IsMatch(text) || Cycling.IsMatch(text) || DrawBySacrificingItself.IsMatch(text)))
             {
                 result &= ~CardEffect.CardAdvantage;
+            }
+
+            // Added AFTER the parity guard, because neither is a draw and neither
+            // should be withdrawn by a loot or a cycling cost elsewhere on the card.
+            if (ImpulseDraw.IsMatch(text) || (ClueWording.IsMatch(text) && RepeatableClue.IsMatch(text)))
+            {
+                result |= CardEffect.CardAdvantage;
             }
 
             // Sacrifice, asked the same way: whose creature, and can you do it

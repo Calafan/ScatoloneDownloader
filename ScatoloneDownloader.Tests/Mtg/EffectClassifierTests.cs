@@ -88,6 +88,59 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // An impulse draw is a free extra card the moment it resolves, so a one-shot
+    // counts. A Clue has to be CASHED for {2}, so a lone one is a rider rather
+    // than a card and earns the tag only when the card makes them repeatedly.
+    // Ruled 2026-09-15; reading a lone Clue as advantage was measured and loses.
+    [InlineData("Boros Strike-Captain", "Creature — Human Soldier",
+        "Battalion — Whenever this creature and at least two other creatures attack, exile the top card of your library. You may play that card this turn.")]
+    [InlineData("Charred Foyer", "Land",
+        "At the beginning of your upkeep, exile the top card of your library. You may play it this turn.")]
+    [InlineData("Morska, Undersea Sleuth", "Legendary Creature — Fish Detective",
+        "At the beginning of your upkeep, investigate. (Create a Clue token.)")]
+    [InlineData("June, Bounty Hunter", "Legendary Creature — Human Scout",
+        "{1}, Sacrifice another creature: Create a Clue token.")]
+    public void Classify_ImpulseAndRepeatableClues_AreCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Fact]
+    public void Classify_ASingleClue_IsNotCardAdvantage()
+    {
+        // One Clue is a rider you still have to pay {2} to cash.
+        CardEffect result = EffectClassifier.Classify(MakeCard("Cunning Maneuver", "Instant",
+            "Create a Clue token. (It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")"));
+
+        Assert.False(result.HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // A land that makes more mana than it costs, every turn, is Ramp — the one
+    // exception to "a land tapping for its own mana is just a land". Ruled
+    // 2026-09-15 off Ancient Tomb.
+    [InlineData("Ancient Tomb", "Land", "{T}: Add {C}{C}. This land deals 2 damage to you.")]
+    [InlineData("Mishra's Workshop", "Land", "{T}: Add {C}{C}{C}. Spend this mana only to cast artifact spells.")]
+    [InlineData("Karoo", "Land",
+        "This land enters tapped.\nWhen this land enters, sacrifice it unless you return an untapped Plains you control to its owner's hand.\n{T}: Add {W}{W}.")]
+    public void Classify_ALandThatMakesExtraManaEveryTurn_IsRamp(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // The two land shapes that stay out. A plain dual makes one mana; the
+    // self-sacrificing family spends itself for the extra one, which is why
+    // Dwarven Ruins is hand-tagged as nothing.
+    [InlineData("Tropical Island", "Land — Forest Island", "({T}: Add {G} or {U}.)")]
+    [InlineData("Dwarven Ruins", "Land",
+        "This land enters tapped.\n{T}: Add {R}.\n{T}, Sacrifice this land: Add {R}{R}.")]
+    public void Classify_OrdinaryLands_AreNotRamp(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
     // The Removal rules could not cross a comma, so every "destroy target
     // artifact, creature, or land" went unread; nor could they cross the filler
     // in front of "target", so every "exile up to one target creature" O-ring
