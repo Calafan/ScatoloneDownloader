@@ -234,7 +234,14 @@ namespace ScatoloneDownloader.Cli.Cube
                     reviewed = !IsPendingReview(m.Card),
                     folder = RelativeFolder(masterDir, m.Path),
                 });
-                WriteJson(ctx, new { effects = effectNames, cards = dto });
+                // The glossary rides alongside the names, same order, so the
+                // page can index it without knowing anything about the enum.
+                WriteJson(ctx, new
+                {
+                    effects = effectNames,
+                    glossary = EffectGlossary.DescribeAll(effectNames),
+                    cards = dto,
+                });
                 return;
             }
 

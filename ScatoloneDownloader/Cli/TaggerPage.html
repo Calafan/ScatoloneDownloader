@@ -47,6 +47,18 @@
      in one column overflowed the viewport, which is what pushed the help text
      off the bottom and forced the scrollbar. */
   #effects { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:6px; }
+  /* The meaning of the effect under the pointer, or the one just tapped. Kept to
+     a fixed block that is hidden when empty rather than reserved always: the
+     panel is already tight, and a permanently blank row costs a card's worth of
+     rules text on a phone. */
+  /* Rides the top of the scrolling panel, ABOVE the grid. The grid is two dozen
+     rows tall, so a hint underneath it would be off-screen exactly when the
+     pointer is at the top of the list — and sticky needs content below it to
+     stick against, which a last child does not have. */
+  #effhint { position:sticky; top:0; z-index:2; margin-bottom:6px; padding:6px 8px; border-radius:6px;
+             background:#1d2733; border:1px solid #2b3947; box-shadow:0 6px 12px rgba(13,17,23,.85);
+             color:#b9c6d4; font-size:12px; line-height:1.4; }
+  #effhint b { color:#e6edf3; }
   .eff { display:flex; align-items:center; gap:9px; padding:7px 9px; border:1px solid var(--line); border-radius:8px; cursor:pointer; user-select:none; font-size:14px; }
   .eff.active { background:var(--on); border-color:var(--on); }
   .key { display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px; padding:0 5px; border-radius:5px; background:#0d0f14; color:var(--accent); font-weight:700; font-size:12px; }
@@ -180,6 +192,7 @@
     </div>
     <div id="rating"></div>
     <div id="status"></div>
+    <div id="effhint" hidden></div>
     <div id="effects"></div>
     <div id="help">
       <div><kbd>hotkey</kbd> toggle effect</div>
@@ -219,7 +232,7 @@ const STATUS_KEYS = Object.fromEntries(STATUS_ORDER.map(s => [s.key, s.name]));
 // for finding one card, and the search box is how you narrow to it.
 const LIST_CAP = 300;
 
-let cards = [], effects = [], order = [], pos = 0;
+let cards = [], effects = [], glossary = [], order = [], pos = 0;
 
 // The order the effect list is DISPLAYED in — alphabetical, so a name is easy to
 // find in a grid of two dozen. It holds indices into `effects`, never names,
@@ -335,6 +348,7 @@ async function boot() {
   const r = await fetch("/api/cards");
   const data = await r.json();
   effects = data.effects;
+  glossary = data.glossary || [];
   effectOrder = effects.map((_, i) => i).sort((a, b) => effects[a].localeCompare(effects[b]));
   cards = data.cards.map(c => ({...c, effects: new Set(c.effects), folder: c.folder || ""}));
   buildScopeControls();
@@ -449,17 +463,39 @@ function render() {
 
   const box = document.getElementById("effects");
   box.innerHTML = "";
+  // A new card means the hint left over from the last one is about somebody else.
+  showMeaning("", "");
   effectOrder.forEach(i => {
     const name = effects[i];
     const active = c.effects.has(name);
     const div = document.createElement("div");
     div.className = "eff" + (active ? " active" : "");
     div.innerHTML = `<span class="key">${(EFFECT_KEYS[i]||"").toUpperCase()}</span><span>${name}</span>`;
-    div.onclick = () => toggle(i);
+    // What the tag MEANS, at the moment it is about to be pressed. title covers
+    // the desktop hover; the hint line below covers the phone, where there is no
+    // hover at all — showing it on tap doubles as confirmation of what was just
+    // toggled.
+    const meaning = glossary[i] || "";
+    if (meaning) {
+      div.title = `${name} — ${meaning}`;
+      div.onmouseenter = () => showMeaning(name, meaning);
+      div.onmouseleave = () => showMeaning("", "");
+    }
+    div.onclick = () => { toggle(i); if (meaning) showMeaning(name, meaning); };
     box.appendChild(div);
   });
   if (listOpen) renderList();
   preload();
+}
+
+// Fills the hint line under the effect grid. Empty name clears and hides it.
+function showMeaning(name, text) {
+  const el = document.getElementById("effhint");
+  if (!name) { el.hidden = true; el.textContent = ""; return; }
+  el.innerHTML = `<b></b> `;
+  el.firstChild.textContent = name;
+  el.appendChild(document.createTextNode(text));
+  el.hidden = false;
 }
 
 function renderRating(c) {
