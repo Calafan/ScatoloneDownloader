@@ -88,14 +88,17 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
-    // An impulse draw is a free extra card the moment it resolves, so a one-shot
-    // counts. A Clue has to be CASHED for {2}, so a lone one is a rider rather
-    // than a card and earns the tag only when the card makes them repeatedly.
-    // Ruled 2026-09-15; reading a lone Clue as advantage was measured and loses.
+    // A Clue and an impulse are asked the same question: one card, once? Made
+    // REPEATEDLY, either is a card; and an impulse that takes more than one card
+    // off the top is a draw two whatever else it does. Ruled 2026-09-15.
     [InlineData("Boros Strike-Captain", "Creature — Human Soldier",
         "Battalion — Whenever this creature and at least two other creatures attack, exile the top card of your library. You may play that card this turn.")]
     [InlineData("Charred Foyer", "Land",
         "At the beginning of your upkeep, exile the top card of your library. You may play it this turn.")]
+    [InlineData("Zenith Festival", "Sorcery",
+        "Exile the top X cards of your library. You may play them until the end of your next turn.")]
+    [InlineData("Interdimensional Web Watch", "Artifact",
+        "When this artifact enters, exile the top two cards of your library. Until the end of your next turn, you may play those cards.")]
     [InlineData("Morska, Undersea Sleuth", "Legendary Creature — Fish Detective",
         "At the beginning of your upkeep, investigate. (Create a Clue token.)")]
     [InlineData("June, Bounty Hunter", "Legendary Creature — Human Scout",
@@ -105,14 +108,46 @@ public sealed class EffectClassifierTests
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
     }
 
-    [Fact]
-    public void Classify_ASingleClue_IsNotCardAdvantage()
+    [Theory]
+    // One card, once, in either vocabulary: the Clue still has to be cashed for
+    // {2}, and the one-shot impulse just replaces the card that cast it.
+    [InlineData("Cunning Maneuver", "Instant",
+        "Create a Clue token. (It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")")]
+    [InlineData("Equilibrium Adept", "Creature — Human Wizard",
+        "When this creature enters, exile the top card of your library. Until the end of your next turn, you may play that card.")]
+    [InlineData("Haste Magic", "Instant",
+        "Target creature gets +3/+1 and gains haste until end of turn. Exile the top card of your library. You may play that card this turn.")]
+    public void Classify_OneCardOnce_IsNotCardAdvantage(string name, string typeLine, string oracle)
     {
-        // One Clue is a rider you still have to pay {2} to cash.
-        CardEffect result = EffectClassifier.Classify(MakeCard("Cunning Maneuver", "Instant",
-            "Create a Clue token. (It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")"));
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
 
-        Assert.False(result.HasFlag(CardEffect.CardAdvantage));
+    [Theory]
+    // A shrink is an answer — a creature at zero toughness is as dead as a
+    // destroyed one, in both vocabularies. Ruled 2026-09-15.
+    [InlineData("Locust Spray", "Instant",
+        "Target creature gets -1/-1 until end of turn.\nCycling {B} ({B}, Discard this card: Draw a card.)")]
+    [InlineData("Grandmother Sengir", "Legendary Creature — Human Wizard",
+        "{1}{B}, {T}: Target creature gets -1/-1 until end of turn.")]
+    [InlineData("Fevered Convulsions", "Enchantment",
+        "{2}{B}{B}: Put a -1/-1 counter on target creature.")]
+    public void Classify_AShrink_IsRemoval(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
+    // The two edges of that reading. Taking the power off leaves the creature
+    // standing, which is Pacify's job; and a shrink aimed at everybody is a Wipe.
+    [InlineData("Pradesh Gypsies", "Creature — Human Nomad",
+        "{1}{G}, {T}: Target creature gets -2/-0 until end of turn.")]
+    [InlineData("Dread of Night", "Enchantment", "White creatures get -1/-1.")]
+    public void Classify_AShrinkThatKillsNothingOrKillsEverything_IsNotRemoval(
+        string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.False(result.HasFlag(CardEffect.Removal));
     }
 
     [Theory]

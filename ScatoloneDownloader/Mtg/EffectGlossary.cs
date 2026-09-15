@@ -27,8 +27,9 @@ namespace ScatoloneDownloader.Mtg
                 + "a token an opponent creates is not yours. Earthbend and \"all lands are 1/1 creatures\" do count.",
 
             [CardEffect.Removal] =
-                "Answers one creature or planeswalker: destroy it, exile it, point damage at it, fight it, or make its "
-                + "controller sacrifice it.",
+                "Answers one creature or planeswalker: destroy it, exile it, point damage at it, fight it, make its "
+                + "controller sacrifice it, or shrink its toughness to nothing (-3/-3, a -1/-1 counter). A \"-2/-0\" "
+                + "leaves it standing, so that is Pacify; \"each creature gets -1/-1\" is a Wipe.",
 
             [CardEffect.Counter] =
                 "Answers a spell on the stack by countering it.",
@@ -58,7 +59,8 @@ namespace ScatoloneDownloader.Mtg
             [CardEffect.CardAdvantage] =
                 "A card the opponent does not get: draw two or more, a draw you can go back to (an activated ability or a "
                 + "recurring trigger), or \"draw a card for each X\". A loot, a cycle, an ETB cantrip and a one-shot "
-                + "sacrifice are all parity.",
+                + "sacrifice are all parity. One Clue or one card off the top is a rider; repeatable, or two cards at "
+                + "once, is a card.",
 
             [CardEffect.Filter] =
                 "Selection without net cards: scry, surveil, look at the top few, or a loot that draws and discards.",

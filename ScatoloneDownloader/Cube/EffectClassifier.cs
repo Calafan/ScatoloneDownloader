@@ -106,12 +106,12 @@ namespace ScatoloneDownloader.Cube
             @"^[^\n:]{0,60}sacrifice this [\w]+[^\n:]{0,30}:", RegexOptions.Multiline);
 
         // A Clue and an impulse draw are both "a card the opponent does not get",
-        // but they are not the same economy, and the tagging already says so.
-        // A Clue has to be CASHED for {2}, so one of them is a rider rather than
-        // a card — it earns the tag only when the card makes them repeatedly. An
-        // impulse is a free extra card the moment it resolves, so a one-shot
-        // counts. Ruled 2026-09-15; measured, the Clue half is worth 3 and the
-        // impulse half 24, and reading a lone Clue as advantage LOSES 10.
+        // and neither is a draw, so both are asked the same question: is it one
+        // card, once? A single Clue has to be CASHED for {2} and a single impulse
+        // replaces the card that made it, so each is a rider rather than a card.
+        // They earn the tag when the card makes them REPEATEDLY, and an impulse
+        // earns it outright when it exiles more than one card — that is a draw
+        // two wearing a different coat. Ruled 2026-09-15.
         private static readonly Regex ClueWording = Rx(@"\binvestigates?\b|\bclue token");
 
         private static readonly Regex RepeatableClue = Rx(
@@ -122,6 +122,18 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex ImpulseDraw = Rx(
             @"exiles? the top [\w ]{0,20}(?:card|cards) of your library"
             + @"[^\n]{0,90}(?:you may (?:play|cast)|may play (?:it|them|that card))");
+
+        // More than one card off the top is a draw two, whatever it costs to cast.
+        private static readonly Regex ImpulseOfSeveralCards = Rx(
+            @"exiles? the top (?:two|three|four|five|six|seven|eight|nine|ten|x|\d+) cards? of your library");
+
+        // Repeatable, read loosely ON PURPOSE. The anchored version of this test
+        // misses "Battalion — Whenever ...", "Start your engines!" and a trigger
+        // written inside a modal bullet, which between them are three of the seven
+        // one-card impulses in the reviewed set and all three are tagged. Used only
+        // once an impulse has already matched, so the looseness costs nothing.
+        private static readonly Regex RepeatableWording = Rx(
+            @"\bwhenever\b|at the beginning of|^[^\n:]{1,70}:", RegexOptions.Multiline);
 
         // The one land shape that IS Ramp, ruled 2026-09-15. A land tapping for
         // its own single mana is just a land, but Ancient Tomb and Mishra's
@@ -154,6 +166,21 @@ namespace ScatoloneDownloader.Cube
         // kills exactly like a fixed number does; the rule only read digits.
         private static readonly Regex DamageEqualTo = Rx(
             @"deals damage equal to [\w' ]{0,45}to (?:any target|target creature|that creature|another target creature)");
+
+        // A shrink is an answer: a creature whose toughness reaches zero dies just
+        // as surely as one that is destroyed, and the two vocabularies for it are
+        // "gets -N/-N" and a -1/-1 counter. Ruled 2026-09-15.
+        //
+        // TOUGHNESS is what matters, so the second number has to be non-zero:
+        // "-2/-0" takes the attack away and leaves the creature standing, which is
+        // Pacify's job, not this one. And the shrink has to be aimed at ONE named
+        // creature — measured, reading a mass "-1/-1 to each creature" as Removal
+        // costs 38 errors, because that is a Wipe and is tagged as one.
+        private static readonly Regex ShrinksOneCreature = Rx(
+            @"target creature gets? -[\dX]+/-[1-9X]");
+
+        private static readonly Regex ShrinkCounters = Rx(
+            @"put(?:s)? (?:a|an|two|three|four|\d+|x) -1/-1 counters? on (?:target|another target|up to)");
 
         // Pacify's own version of the self-versus-other question, and the largest
         // single source of noise on the board: "this creature can't attack" is
@@ -602,6 +629,13 @@ namespace ScatoloneDownloader.Cube
                 result |= CardEffect.Removal;
             }
 
+            // A shrink that takes toughness off one named creature. See the two
+            // patterns above for why the zero and the single target both matter.
+            if (ShrinksOneCreature.IsMatch(text) || ShrinkCounters.IsMatch(text))
+            {
+                result |= CardEffect.Removal;
+            }
+
             // A Wall is not a Pacify effect. See the patterns above.
             if (result.HasFlag(CardEffect.Pacify) && SelfCantAttack.IsMatch(text) && !OutwardCantAttack.IsMatch(text))
             {
@@ -618,7 +652,10 @@ namespace ScatoloneDownloader.Cube
 
             // Added AFTER the parity guard, because neither is a draw and neither
             // should be withdrawn by a loot or a cycling cost elsewhere on the card.
-            if (ImpulseDraw.IsMatch(text) || (ClueWording.IsMatch(text) && RepeatableClue.IsMatch(text)))
+            bool impulseIsACard = ImpulseDraw.IsMatch(text)
+                && (ImpulseOfSeveralCards.IsMatch(text) || RepeatableWording.IsMatch(text));
+
+            if (impulseIsACard || (ClueWording.IsMatch(text) && RepeatableClue.IsMatch(text)))
             {
                 result |= CardEffect.CardAdvantage;
             }
