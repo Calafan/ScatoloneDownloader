@@ -315,21 +315,59 @@ namespace ScatoloneDownloader.Cube
         // construction and needs no such check.
         private static readonly Regex AnyUntapLock = Rx(@"does(n'?t| not) untap");
 
+        // Preventing what a creature DEALS neutralises it without killing it,
+        // which is this tag's whole job. The reading was ruled on 2026-09-05 and
+        // written into Protection as an EXCLUSION — "not preventing the damage a
+        // creature deals, that is Pacify" — but was never added on this side, so
+        // Maze of Ith and Gaseous Form were only ever tagged by accident, through
+        // the untap bug above. Fixing that bug is what exposed the hole.
+        private static readonly Regex PreventsWhatACreatureDeals = Rx(
+            @"damage that would be dealt (?:to and dealt )?by (?:target|enchanted|that|all|each)"
+            + @"|prevent all combat damage that would be dealt by");
+
+        // The word boundary in front of "tap" is load-bearing: UNTAP target
+        // creature contains the letters of tap target creature, and without it
+        // every untapper in the library — Fyndhorn Brownie, Jandor's Saddlebags,
+        // Elder Druid, Quirion Ranger — was proposed as a tap-down. Found
+        // 2026-09-15 by bucketing the over-tags; it was a quarter of them.
         private static readonly Regex[] PacifyOutward =
         [
             Rx(@"can'?t attack or block"),
             Rx(@"can'?t attack(\.|,| unless)"),
-            Rx(@"tap target[\w ,]*creature"),
+            Rx(@"\btap target[\w ,]*creature"),
             Rx(@"detain"),
+            PreventsWhatACreatureDeals,
         ];
 
-        private static readonly Regex[] PacifyPatterns = [AnyUntapLock, .. PacifyOutward];
+        // Tapping a creature YOU control is a cost — Energy Tap and Arena buy
+        // something with it. Same question as everywhere else: whose creature?
+        private static readonly Regex TapsACreatureYouControl = Rx(
+            @"\btap target[\w ,]{0,25}creature you control");
+
+        // And "creatures you control can't attack" (Akron Legionnaire, Evil Eye of
+        // Orms-by-Gore) is a drawback the card charges you, not a lock on them.
+        private static readonly Regex YourOwnCreaturesCantAttack = Rx(
+            @"creatures you control can'?t attack");
+
+        private static readonly Regex[] PacifyPatterns = [AnyUntapLock, PreventsWhatACreatureDeals, .. PacifyOutward];
+
+        // See the two guards these feed, down in Classify.
+        private static readonly Regex OnlyWhatIsInCombatWithIt = Rx(@"blocking or blocked by");
+
+        private static readonly Regex RestrictedMana = Rx(@"spend this mana only");
 
         // The untap lock written about the card itself. "Target creature doesn't
         // untap during its controller's next untap step" (Frozen Solid) does NOT
         // match, so a real lock keeps the tag.
+        // "During YOUR untap step" is the tell that settles the rest: a real lock
+        // reads "during ITS CONTROLLER'S next untap step" (Frozen Solid), so it
+        // still keeps the tag. The pronoun form — Apes of Rath's "whenever this
+        // creature attacks, IT doesn't untap" — and the card naming itself —
+        // Merieke Ri Berit — are the same self-tax written two other ways.
         private static readonly Regex SelfUntapClause = Rx(
-            @"th(?:is|e) (?:artifact|creature|permanent|enchantment|land|vehicle)[\w ]{0,25}does(?:n'?t| not) untap");
+            @"th(?:is|e) (?:artifact|creature|permanent|enchantment|land|vehicle)[\w ]{0,25}does(?:n'?t| not) untap"
+            + @"|\bit does(?:n'?t| not) untap"
+            + @"|does(?:n'?t| not) untap during your (?:next )?untap step");
 
         // The subjects that make an effect land on something OTHER than the card
         // writing it. Looked for in the text preceding a Buff/Protection match on
@@ -372,9 +410,18 @@ namespace ScatoloneDownloader.Cube
             // entirely: Earthquake, Crypt Rats and Fire Magic sweep a board
             // without the word "destroy" appearing anywhere. [\dX] because the
             // interesting ones scale — "deals X damage to each creature".
-            (CardEffect.Wipe, [Rx(@"destroy all (creatures|permanents|nonland)"), Rx(@"exile all creatures"),
-                Rx(@"each player sacrifices"), Rx(@"all creatures get -\d+/-\d+"),
-                Rx(@"deals? [\dX]+ damage to each creature")]),
+            // Every one of these used to stop at the first adjective, which is
+            // where half the sweepers in the game put one: "destroy all WHITE
+            // permanents" (Anarchy), "destroy all GREEN creatures" (Perish),
+            // "1 damage to each WHITE AND/OR BLUE creature" (Evaporate). Widened
+            // 2026-09-15, together with the two other ways a board gets emptied —
+            // returning it all to hand, and making everybody sacrifice.
+            (CardEffect.Wipe, [
+                Rx(@"(?:destroy|exile) all(?: [\w-]{1,15}){0,3} (?:creature|permanent|nonland)"),
+                Rx(@"(?:all|each)(?: [\w-]{1,15}){0,3} creatures get -[\dX]+/-[1-9X]"),
+                Rx(@"deals? [\dX]+ damage to each(?: [\w/-]{1,20}){0,4} creature"),
+                Rx(@"return (?:all|each)[\w -]{0,30}(?:permanent|creature)s?[\w ,'-]{0,40}to (?:their owners'|its owner's) hands?"),
+                Rx(@"each player[\w ,'-]{0,80}sacrifices the rest|each player sacrifices[\w ]{0,20}(?:creature|permanent)")]),
 
             // "Nonland permanent" is how the whole modern O-ring family is worded
             // (Stormplain Detainment, Web Up, Emergency Eject), and reading only
@@ -526,7 +573,17 @@ namespace ScatoloneDownloader.Cube
             // way a self-mill or a sacrifice cost is. Precision 58.7% -> 86.3%.
             (CardEffect.Burn, [
                 Rx(@"deals? [\dX]+ damage to (?:any target|target player|target opponent|each player|each opponent|that player)\b"),
-                Rx(@"deals? [\dX]+ damage to [\w ,]{0,45}each (?:player|opponent)")]),
+                Rx(@"deals? [\dX]+ damage to [\w ,]{0,45}each (?:player|opponent)"),
+                // "Each opponent loses 2 life" is a Lava Spike at every face at
+                // once; the game just declined to call it damage. 18 of the 27
+                // reviewed cards that say it are hand-tagged Burn, and every one
+                // of them was being missed. Ruled 2026-09-15.
+                Rx(@"each opponent loses [\dX]+ life"),
+                // Damage sized by a COUNT rather than a digit. The rule for this
+                // already existed and fed Removal alone, so Cat-Gator's "damage
+                // equal to the number of Swamps to any target" was read as a kill
+                // and not as a burn. 11 of 12 such cards are tagged.
+                Rx(@"deals damage equal to [\w' ]{0,45}to (?:any target|target player|target opponent|each opponent|each player)")]),
 
             // Sacrifice is a sacrifice OUTLET: somewhere to put your OWN permanents
             // on demand, which is what makes a stolen creature (see Steal) worth
@@ -555,7 +612,14 @@ namespace ScatoloneDownloader.Cube
                 Rx(@"search your library for[\w ]*(creature|instant|sorcery|artifact|enchantment|planeswalker) card")]),
 
             (CardEffect.ManaFixing, [Rx(@"add one mana of any color"), Rx(@"mana of any (one )?color"),
-                Rx(@"add \{[wubrg]\} or \{[wubrg]\}"), Rx(@"add \{[wubrg]\}, \{[wubrg]\}")]),
+                Rx(@"add \{[wubrg]\} or \{[wubrg]\}"), Rx(@"add \{[wubrg]\}, \{[wubrg]\}"),
+                // Typecycling fetches the colour you are short of, which is the
+                // whole job. Added 2026-09-15; worth 11 on its own.
+                Rx(@"\b(?:plains|island|swamp|mountain|forest)cycling\b"),
+                // A land with two mana abilities in different colours fixes even
+                // though no single line says "or" — Bleachbone Verge, and the
+                // whole modern "{T}: Add {B}. / {T}: Add {W}." cycle.
+                Rx(@"^\{t\}: add \{([wubrg])\}\.?$[\s\S]{0,120}?^\{t\}: add \{(?!\1)([wubrg])\}", RegexOptions.Multiline)]),
 
             // Mana ability (dork/rock) or a land-fetch to the battlefield. Lands
             // are stripped below — a land tapping for its own mana is not "ramp".
@@ -688,6 +752,32 @@ namespace ScatoloneDownloader.Cube
             if (result.HasFlag(CardEffect.Pacify) && SelfCantAttack.IsMatch(text) && !OutwardCantAttack.IsMatch(text))
             {
                 result &= ~CardEffect.Pacify;
+            }
+
+            // The same question one more time, for the two shapes that name a
+            // victim and still point the wrong way. See the patterns above.
+            if (result.HasFlag(CardEffect.Pacify) && OnlyRestrainsYourOwn(text))
+            {
+                result &= ~CardEffect.Pacify;
+            }
+
+            // "Destroy all creatures blocking or blocked by this creature" reads
+            // like a sweeper and only ever touches what is already in combat with
+            // it — Abu Ja'far, Kjeldoran Frostbeast, the Glyph cycle. It is a
+            // combat trick, and it was every false positive the widened Wipe
+            // patterns above introduced.
+            if (result.HasFlag(CardEffect.Wipe) && OnlyWhatIsInCombatWithIt.IsMatch(text))
+            {
+                result &= ~CardEffect.Wipe;
+            }
+
+            // Mana you may only spend on one thing is not fixing — it buys the one
+            // card the designer had in mind. The test is per LINE, because a card
+            // with one restricted ability and one free one (Hermitic Herbalist)
+            // still fixes.
+            if (result.HasFlag(CardEffect.ManaFixing) && AllManaIsRestricted(text))
+            {
+                result &= ~CardEffect.ManaFixing;
             }
 
             // Card parity dressed as card advantage. See the three patterns above
@@ -833,6 +923,48 @@ namespace ScatoloneDownloader.Cube
             }
 
             return SelfUntapClause.IsMatch(text);
+        }
+
+        /// <summary>True when the only thing that read as Pacify restrains the
+        /// player's OWN board — tapping a creature you control as a cost, or a
+        /// card that stops your own creatures attacking. Written by blanking those
+        /// phrases and asking the outward patterns again, so a card that taps one
+        /// of yours AND one of theirs (Arena taps both, but only names the second
+        /// obliquely) is judged on what is left rather than on which clause came
+        /// first.</summary>
+        private static bool OnlyRestrainsYourOwn(string text)
+        {
+            if (!TapsACreatureYouControl.IsMatch(text) && !YourOwnCreaturesCantAttack.IsMatch(text))
+            {
+                return false;
+            }
+
+            string rest = YourOwnCreaturesCantAttack.Replace(TapsACreatureYouControl.Replace(text, " "), " ");
+            return !PacifyOutward.Any(p => p.IsMatch(rest)) && !AnyUntapLock.IsMatch(rest);
+        }
+
+        /// <summary>True when EVERY line that adds mana restricts what it may be
+        /// spent on. A card with one restricted ability and one free one still
+        /// fixes, which is why this is per line rather than a match anywhere.
+        /// </summary>
+        private static bool AllManaIsRestricted(string text)
+        {
+            bool addsAny = false;
+            foreach (string line in text.Split('\n'))
+            {
+                if (!line.Contains("add ", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                addsAny = true;
+                if (!RestrictedMana.IsMatch(line))
+                {
+                    return false;
+                }
+            }
+
+            return addsAny;
         }
 
         /// <summary>Whether every match of <paramref name="patterns"/> lands on the

@@ -123,6 +123,112 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // UNTAP target creature contains the letters of TAP target creature, so every
+    // untapper in the library was proposed as a tap-down. Found 2026-09-15; it was
+    // a quarter of Pacify's false positives.
+    [InlineData("Fyndhorn Brownie", "Creature — Elf", "{2}{G}, {T}: Untap target creature.")]
+    [InlineData("Jandor's Saddlebags", "Artifact", "{3}, {T}: Untap target creature.")]
+    [InlineData("Infuse", "Instant", "Untap target artifact, creature, or land.\nDraw a card at the beginning of the next turn's upkeep.")]
+    // The card's own untap tax, written with a pronoun or with its own name.
+    [InlineData("Apes of Rath", "Creature — Ape",
+        "Whenever this creature attacks, it doesn't untap during its controller's next untap step.")]
+    [InlineData("Merieke Ri Berit", "Legendary Creature — Human Wizard",
+        "Merieke Ri Berit doesn't untap during your untap step.\n{T}: Destroy target creature when Merieke Ri Berit leaves the battlefield or becomes untapped.")]
+    // Tapping your own, and stopping your own from attacking, are prices you pay.
+    [InlineData("Energy Tap", "Instant",
+        "Tap target untapped creature you control. If you do, add an amount of {C} equal to that creature's mana value.")]
+    [InlineData("Akron Legionnaire", "Creature — Giant Soldier",
+        "Except for creatures named Akron Legionnaire and artifact creatures, creatures you control can't attack.")]
+    public void Classify_UntappingAndSelfRestraint_AreNotPacify(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
+    }
+
+    [Theory]
+    // Preventing what a creature DEALS neutralises it, which is what this tag is
+    // for. Ruled 2026-09-05 and written into Protection as an exclusion, but not
+    // added here until 2026-09-15 — so these were only ever tagged by accident,
+    // through the untap bug above.
+    [InlineData("Maze of Ith", "Land",
+        "{T}: Untap target attacking creature. Prevent all combat damage that would be dealt to and dealt by that creature this turn.")]
+    [InlineData("Gaseous Form", "Enchantment — Aura",
+        "Enchant creature\nPrevent all combat damage that would be dealt to and dealt by enchanted creature.")]
+    [InlineData("Lady Evangela", "Legendary Creature — Human Cleric",
+        "{W}{B}, {T}: Prevent all combat damage that would be dealt by target creature this turn.")]
+    public void Classify_PreventingWhatACreatureDeals_IsPacify(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
+    }
+
+    [Theory]
+    // Every sweeper wording the rules stopped reading at the first adjective.
+    [InlineData("Anarchy", "Sorcery", "Destroy all white permanents.")]
+    [InlineData("Perish", "Sorcery", "Destroy all green creatures. They can't be regenerated.")]
+    [InlineData("Apocalypse", "Sorcery", "Exile all permanents. You discard your hand.")]
+    [InlineData("Evaporate", "Sorcery", "Evaporate deals 1 damage to each white and/or blue creature.")]
+    [InlineData("Desynchronization", "Sorcery",
+        "Return each nonland permanent that's not historic to its owner's hand.")]
+    public void Classify_ASweeperWithAnAdjective_IsWipe(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Wipe));
+    }
+
+    [Theory]
+    // The combat trick that reads like a sweeper: it only ever touches what is
+    // already in combat with the card. Every false positive the widening added.
+    [InlineData("Abu Ja'far", "Creature — Human",
+        "When this creature dies, destroy all creatures blocking or blocked by it. They can't be regenerated.")]
+    [InlineData("Kjeldoran Frostbeast", "Creature — Elemental Beast",
+        "At end of combat, destroy all creatures blocking or blocked by this creature.")]
+    public void Classify_DestroyingWhatIsBlockingIt_IsNotWipe(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Wipe));
+    }
+
+    [Theory]
+    // Two more ways a card fixes colours, neither of which says "or" on one line.
+    [InlineData("Bleachbone Verge", "Land",
+        "{T}: Add {B}.\n{T}: Add {W}. Activate only if you control a Plains or a Swamp.")]
+    [InlineData("Balamb T-Rexaur", "Creature — Dinosaur",
+        "Trample\nWhen this creature enters, you gain 3 life.\nForestcycling {2} ({2}, Discard this card: Search your library for a Forest card, reveal it, put it into your hand, then shuffle.)")]
+    public void Classify_TwoAbilitiesOrTypecycling_IsManaFixing(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
+    }
+
+    [Theory]
+    // Mana you may only spend on one thing buys the card the designer had in
+    // mind; it fixes nothing. Judged per line, so a card with one restricted
+    // ability and one free one still counts.
+    [InlineData("Herd Heirloom", "Artifact",
+        "{T}: Add one mana of any color. Spend this mana only to cast a creature spell.")]
+    public void Classify_ManaYouMayOnlySpendOnOneThing_IsNotManaFixing(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
+    }
+
+    [Fact]
+    public void Classify_OneRestrictedAbilityAndOneFree_StaysManaFixing()
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard("Hermitic Herbalist", "Creature — Elf Druid",
+            "{T}: Add one mana of any color.\n{T}: Add two mana in any combination of colors. Spend this mana only to cast creature spells."));
+
+        Assert.True(result.HasFlag(CardEffect.ManaFixing));
+    }
+
+    [Theory]
+    // Two ways a card burns a face that the rules were not reading. Ruled
+    // 2026-09-15; together they were 29 of Burn's 101 misses.
+    [InlineData("Corroding Dragonstorm", "Enchantment",
+        "When this enchantment enters, each opponent loses 2 life and you gain 2 life.")]
+    [InlineData("Cat-Gator", "Creature — Cat Crocodile",
+        "Lifelink\nWhen this creature enters, it deals damage equal to the number of Swamps you control to any target.")]
+    public void Classify_LifeLossAndCountedDamage_AreBurn(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
     // A +1/+1 counter is Buff in the other vocabulary, ruled 2026-09-15. One
     // counter on one creature counts, and so do support and distribute.
     [InlineData("Cloudbound Moogle", "Creature — Moogle",

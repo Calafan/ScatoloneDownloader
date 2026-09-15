@@ -39,7 +39,9 @@ namespace ScatoloneDownloader.Mtg
                 + "breadth is the point, so it stays this tag even when you would usually aim it at a creature.",
 
             [CardEffect.Wipe] =
-                "Mass removal: destroys, exiles or damages every creature at once.",
+                "Mass removal: the board is emptied, by any verb — destroyed, exiled, damaged, shrunk, or all "
+                + "returned to hand. An adjective does not narrow it: \"all white permanents\" still counts. "
+                + "\"Destroy all creatures blocking or blocked by this creature\" is a combat trick.",
 
             [CardEffect.Bounce] =
                 "Returns a NAMED permanent to its owner's hand (\"return target …\", or a mass \"return each/all\"). "
@@ -80,8 +82,10 @@ namespace ScatoloneDownloader.Mtg
                 + "card puts on itself, and not preventing the damage a creature DEALS — that is Pacify.",
 
             [CardEffect.Burn] =
-                "Damage aimed at a FACE. Damage aimed at a creature is Removal instead; \"any target\" is both. A sweeper "
-                + "counts only if it catches the players too. Damage to YOURSELF is a price the card charges.",
+                "Damage aimed at a FACE, however it is counted — \"equal to the number of Swamps\" burns too, and "
+                + "\"each opponent loses 2 life\" is a Lava Spike the game declined to call damage. Damage aimed at a "
+                + "creature is Removal instead; \"any target\" is both. A sweeper counts only if it catches the "
+                + "players too. Damage to YOURSELF is a price the card charges.",
 
             [CardEffect.Sacrifice] =
                 "An outlet you can feed your OWN creatures, artifacts or permanents at will — the half of the combo that "
@@ -95,11 +99,14 @@ namespace ScatoloneDownloader.Mtg
                 "Searches the library for a specific nonland card. A land search is Ramp or ManaFixing.",
 
             [CardEffect.ManaFixing] =
-                "Fixes colours: mana of any colour, or a choice between two. Distinct from Ramp, and a card can be both.",
+                "Fixes colours: mana of any colour, a choice between two, typecycling, or a land with two abilities "
+                + "in different colours. Mana you may only spend on one thing fixes nothing. Distinct from Ramp, "
+                + "and a card can be both.",
 
             [CardEffect.Pacify] =
-                "Neutralises a creature without killing it: can't attack or block, tapped down, detained, locked from "
-                + "untapping, or its combat damage prevented. A card that only taxes ITSELF neutralises nobody.",
+                "Neutralises somebody else's creature without killing it: can't attack or block, tapped down, "
+                + "detained, locked from untapping, or the damage it DEALS prevented. UNTAPPING one is not this. "
+                + "Nor is tapping one of yours as a cost, or a card that only taxes ITSELF.",
 
             [CardEffect.LandDestruction] =
                 "Destroys or exiles lands. Deliberately narrow: the wider mana-denial family (Winter Orb, Blood Moon, "
