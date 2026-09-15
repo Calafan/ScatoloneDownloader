@@ -417,6 +417,24 @@ namespace ScatoloneDownloader.Cli.Cube
                 // not re-serialized per keystroke and a concurrent external edit to
                 // other entries is not clobbered by this in-memory snapshot.
                 CubeMetadataStore.SaveEntry(metadataDir, card.OracleId, updated, previousRating);
+
+                // Record what the reviewer was shown against what they left. On a
+                // first pass "before" is the classifier's proposal, which is the
+                // only moment it can be captured — SaveEntry has just overwritten
+                // it. See ReviewLog for why this is a side file.
+                IReadOnlyList<string> before = existing?.Effects ?? [];
+                IReadOnlyList<string> after = updated.Effects ?? [];
+                ReviewLog.Append(metadataDir, new ReviewLog.Entry
+                {
+                    At = updated.ReviewedAt ?? DateTimeOffset.UtcNow,
+                    OracleId = card.OracleId,
+                    Name = card.Name ?? string.Empty,
+                    Before = before,
+                    After = after,
+                    FirstReview = existing?.ReviewedAt == null,
+                    Changed = !before.OrderBy(e => e, StringComparer.Ordinal)
+                        .SequenceEqual(after.OrderBy(e => e, StringComparer.Ordinal), StringComparer.Ordinal),
+                });
             }
 
             return true;

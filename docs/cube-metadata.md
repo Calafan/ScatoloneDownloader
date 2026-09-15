@@ -38,6 +38,29 @@ lives in exactly one file, chosen by its **current rating**:
 | `metadata/fringe.json` | 1-2 | Evaluated but cut. Grows over time as more of the backlog gets rated and rejected. Rating 1 and rating 2 share this file on purpose: they are browsed differently (only `2` gets a view, see `6_Bench` below) but stored identically, so the view split moves nothing on disk. |
 | `metadata/unrated.json` | 0 | The bulk library manifest (tens of thousands of entries). Changes only when Scryfall adds new printings, not from day-to-day curation. |
 
+Beside the three tiers sits one file that is **not** a tier and holds no card
+state:
+
+| File | Contents |
+|---|---|
+| `metadata/review-log.jsonl` | Append-only history, one JSON object per save from the tagger: `at`, `oracleId`, `name`, `before`, `after`, `firstReview`, `changed`. |
+
+`before` is what the reviewer was SHOWN — on a first pass, the classifier's
+proposal — and `after` is what they left. The tier files keep only the final
+answer, which makes agreement between the rules and the human unmeasurable
+after the fact: confirming a card without touching it records perfect
+agreement by construction and is indistinguishable from a card that was
+genuinely re-tagged. `changed` is exactly that distinction, and it is why the
+per-sitting trend (73% on 4 Sep, 55% on 12 Sep) could not be read before this
+file existed.
+
+It is a side file rather than extra keys on each entry on purpose: adding
+fields would rewrite tens of thousands of entries and churn every future diff,
+while an append-only file only grows at the end, so a commit shows the sitting
+and nothing else. It is also a HISTORY — a card reviewed twice leaves two
+lines, which is what makes a trend readable at all. Writing it is never
+load-bearing: an I/O failure logs a warning and the tag is still saved.
+
 **Loading** (`CubeMetadataStore.Load`) reads whichever of the three files are
 present and merges them into one in-memory set, keyed by `oracle_id`. A
 missing `metadata/` directory, a missing individual tier file, or a blank
