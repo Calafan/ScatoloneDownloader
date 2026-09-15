@@ -88,6 +88,33 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // Card parity dressed as card advantage. A loot draws and discards in the
+    // same breath (ruled Filter alone on 2026-09-04); cycling pays a card to
+    // replace itself and fired only through its reminder text; and an ability
+    // that sacrifices the permanent runs once, so it is not the repeatable draw
+    // the 2026-09-11 ruling asked for.
+    [InlineData("Bazaar of Baghdad", "Land", "{T}: Draw two cards, then discard three cards.")]
+    [InlineData("Boosted Sloop", "Artifact — Vehicle", "Menace\nWhenever you attack, draw a card, then discard a card.\nCrew 1")]
+    [InlineData("Airship Crash", "Sorcery",
+        "Destroy target artifact, enchantment, or creature with flying.\nCycling {2} ({2}, Discard this card: Draw a card.)")]
+    [InlineData("Airship Engine Room", "Land",
+        "This land enters tapped.\n{T}: Add {U} or {R}.\n{4}, {T}, Sacrifice this land: Draw a card.")]
+    public void Classify_CardParity_IsNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // "Draw a card for each X" is multi-card draw written the other way round,
+    // and the count-first wording was missed entirely.
+    [InlineData("Balance of Power", "Sorcery", "If target opponent has more cards in hand than you, draw cards equal to the difference.")]
+    [InlineData("Become the Avalanche", "Sorcery", "Draw a card for each creature you control with power 4 or greater.")]
+    public void Classify_CountFirstDraw_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
     // An answer that can point at ANY permanent is RemovePermanent, even when it
     // will usually be pointed at a creature. Web Up and Stormplain Detainment say
     // the same sentence, and reading only the bare "target permanent" left most

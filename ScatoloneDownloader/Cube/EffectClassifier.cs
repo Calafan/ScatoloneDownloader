@@ -81,6 +81,30 @@ namespace ScatoloneDownloader.Cube
             + @"|you may sacrifice (?:a|an|another|two|three|\d+)[\w ]*(?:creature|artifact|permanent)",
             RegexOptions.Multiline);
 
+        // Three shapes that LOOK like repeatable or multi-card draw and are not.
+        // None of them is a new ruling — each follows from one already made, and
+        // together they took CardAdvantage from 135 wrong out of 355 fired to 39
+        // out of 263 (precision 62.0% -> 85.2%).
+        //
+        //   A loot draws and discards in the same breath. "Draw then discard is
+        //   Filter alone" was ruled on 2026-09-04 and never applied on this side,
+        //   so Bazaar of Baghdad and every "draw a card, then discard a card"
+        //   vehicle counted as advantage.
+        private static readonly Regex Loot = Rx(
+            @"draws? [\w]+ cards?, then discards?"
+            + @"|discards? [\w]+ cards?[^\n.]{0,20}(?:if you do, )?draws? [\w]+ cards?"
+            + @"|you may discard a card\. if you do, draw");
+
+        //   Cycling pays a card to replace itself: exactly parity. It fired only
+        //   because its REMINDER text spells out an activated ability that draws.
+        private static readonly Regex Cycling = Rx(@"discard this card: draw a card");
+
+        //   An ability that sacrifices the permanent runs once, so it is not the
+        //   repeatable draw the 2026-09-11 ruling asked for — the same reading
+        //   that keeps a one-shot sacrifice out of the Sacrifice tag.
+        private static readonly Regex DrawBySacrificingItself = Rx(
+            @"^[^\n:]{0,60}sacrifice this [\w]+[^\n:]{0,30}:", RegexOptions.Multiline);
+
         // A creature body does not have to arrive as a token. Earthbend turns a
         // land into one, and Nature's Revolt turns every land into one; the user
         // ruled on 2026-09-15 that anything GENERATING creatures is Tokens,
@@ -318,7 +342,12 @@ namespace ScatoloneDownloader.Cube
             (CardEffect.CardAdvantage, [
                 Rx(@"draws? (?:two|three|four|five|six|seven|eight|nine|ten|x|\d+) cards"),
                 Rx(@"^[^\n:]{1,70}:[^\n]{0,100}draws? (?:a|one) card", RegexOptions.Multiline),
-                Rx(@"^(?:whenever|at the beginning of)[^\n]{0,160}draws? (?:a|one) card", RegexOptions.Multiline)]),
+                Rx(@"^(?:whenever|at the beginning of)[^\n]{0,160}draws? (?:a|one) card", RegexOptions.Multiline),
+                // "Draw a card for each creature you control" is multi-card draw
+                // written the other way round, and the count-first wording was
+                // missed entirely: Balance of Power, Baleful Stare, Become the
+                // Avalanche. Worth 24 recovered for 2 wrongly fired.
+                Rx(@"draws? a card for each|draws? cards equal to")]),
 
             (CardEffect.Filter, [Rx(@"scry \d"), Rx(@"surveil \d"),
                 Rx(@"look at the top \w+ cards? of your library"),
@@ -489,6 +518,14 @@ namespace ScatoloneDownloader.Cube
             if (Earthbend.IsMatch(text) || LandsBecomeCreatures.IsMatch(text))
             {
                 result |= CardEffect.Tokens;
+            }
+
+            // Card parity dressed as card advantage. See the three patterns above
+            // for which ruling each one follows from.
+            if (result.HasFlag(CardEffect.CardAdvantage)
+                && (Loot.IsMatch(text) || Cycling.IsMatch(text) || DrawBySacrificingItself.IsMatch(text)))
+            {
+                result &= ~CardEffect.CardAdvantage;
             }
 
             // Sacrifice, asked the same way: whose creature, and can you do it

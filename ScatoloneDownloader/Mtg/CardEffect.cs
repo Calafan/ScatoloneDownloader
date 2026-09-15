@@ -33,7 +33,7 @@ namespace ScatoloneDownloader.Mtg
         Ramp            = 1 << 6,
         Disenchant      = 1 << 7,
         Discard         = 1 << 8,   // strip cards from somebody else's HAND (Mind Rot, Hymn to Tourach, Liliana of the Veil). Like Mill, only outward: a bare "discard a card" is nearly always a cost — madness, blitz, cycling reminder text, the back half of looting — and paying it is not attacking anyone. Narrowed 2026-09-15.
-        CardAdvantage   = 1 << 9,
+        CardAdvantage   = 1 << 9,   // a card the opponent does not get: draw two or more, a draw you can go back to (an activated ability or a recurring trigger — an ETB fires once and is a cantrip), or "draw a card for each X", which is the same thing counted the other way round. PARITY is not advantage, and it wears three disguises: a loot draws and discards in one breath (that is Filter alone, ruled 2026-09-04), cycling pays a card to replace itself, and an ability that sacrifices its own permanent runs once. Ruled 2026-09-11, parity carved out 2026-09-15.
         Filter          = 1 << 10,
         Reanimate       = 1 << 11,
         Buff            = 1 << 12,   // raise power/toughness. Only when it lands on SOMETHING ELSE (Giant Growth, Glorious Anthem, Bonesplitter): a creature that pumps only itself has a stat line, not an effect, so "{2}{R}: This creature gets +3/+0" and "Uril gets +2/+2 for each Aura attached to it" stay untagged.
