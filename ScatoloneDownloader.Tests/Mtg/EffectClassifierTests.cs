@@ -336,9 +336,13 @@ public sealed class EffectClassifierTests
     [Theory]
     // "Any target" is the one wording that is both at once, because it can be
     // pointed at a face or at a creature. Scaling and fixed amounts read the
-    // same, which is why [\dX] is in the pattern.
+    // same, which is why [\dX] is in the pattern. Disintegrate's CURRENT oracle
+    // text says "any target" — the creature-only wording is the Alpha printing,
+    // and using it here once pinned the wrong behaviour.
     [InlineData("Blaze", "Sorcery", "Blaze deals X damage to any target.")]
     [InlineData("Lightning Bolt", "Instant", "Lightning Bolt deals 3 damage to any target.")]
+    [InlineData("Disintegrate", "Sorcery",
+        "Disintegrate deals X damage to any target. If it's a creature, it can't be regenerated this turn, and if it would die this turn, exile it instead.")]
     public void Classify_DamageAtAnyTarget_IsBothBurnAndRemoval(string name, string typeLine, string oracle)
     {
         CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
@@ -350,8 +354,11 @@ public sealed class EffectClassifierTests
     [Theory]
     // Damage that can only ever hit a creature answers a threat, and answering a
     // threat is Removal. Reading it as Burn too was worth 129 false positives.
-    [InlineData("Disintegrate", "Sorcery", "Disintegrate deals X damage to target creature. If that creature would die this turn, exile it instead.")]
+    // A variable amount changes nothing: measured, "deals X damage to target
+    // creature" is hand-tagged Burn on none of the six reviewed cards that say it.
     [InlineData("Explosive Shot", "Instant", "Explosive Shot deals 4 damage to target creature.")]
+    [InlineData("Thunder Salvo", "Instant",
+        "Thunder Salvo deals X damage to target creature, where X is 2 plus the number of other spells you've cast this turn.")]
     public void Classify_DamageAtACreature_IsRemovalNotBurn(string name, string typeLine, string oracle)
     {
         CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
@@ -402,6 +409,10 @@ public sealed class EffectClassifierTests
     [InlineData("Goblin Bombardment", "Enchantment", "Sacrifice a creature: This enchantment deals 1 damage to any target.")]
     [InlineData("Comet Crawler", "Creature — Beast",
         "Lifelink\nWhenever this creature attacks, you may sacrifice another creature or artifact. If you do, this creature gets +2/+0 until end of turn.")]
+    // An artifact outlet is the same engine with different fuel.
+    [InlineData("Atog", "Creature — Atog", "Sacrifice an artifact: This creature gets +2/+2 until end of turn.")]
+    [InlineData("Dwarven Weaponsmith", "Creature — Dwarf",
+        "{T}, Sacrifice an artifact: Put a +1/+1 counter on target creature. Activate only during your upkeep.")]
     public void Classify_SacrificeOutlet_IsSacrifice(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Sacrifice));

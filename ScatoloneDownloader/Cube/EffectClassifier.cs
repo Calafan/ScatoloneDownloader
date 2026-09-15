@@ -77,8 +77,8 @@ namespace ScatoloneDownloader.Cube
         // offers you. "As an additional cost to cast this spell" is neither — it
         // is a price paid once, on the way to a different effect.
         private static readonly Regex SacrificeOutlet = Rx(
-            @"^[^\n:]{0,60}sacrifices? (?:a|an|another|two|three|\d+)[\w ]*creature[^\n:]{0,40}:"
-            + @"|you may sacrifice (?:a|an|another|two|three|\d+)[\w ]*creature",
+            @"^[^\n:]{0,60}sacrifices? (?:a|an|another|two|three|\d+)[\w ]*(?:creature|artifact)[^\n:]{0,40}:"
+            + @"|you may sacrifice (?:a|an|another|two|three|\d+)[\w ]*(?:creature|artifact)",
             RegexOptions.Multiline);
 
         // "Its controller creates a 1/1 white Spirit" (Afterlife), "target
@@ -313,14 +313,19 @@ namespace ScatoloneDownloader.Cube
                 Rx(@"deals? [\dX]+ damage to (?:any target|target player|target opponent|each player|each opponent|that player)\b"),
                 Rx(@"deals? [\dX]+ damage to [\w ,]{0,45}each (?:player|opponent)")]),
 
-            // Sacrifice is a sacrifice OUTLET: somewhere to put your OWN creatures
+            // Sacrifice is a sacrifice OUTLET: somewhere to put your OWN permanents
             // on demand, which is what makes a stolen creature (see Steal) worth
-            // taking. Ruled 2026-09-15. Three things fall out of that and are
-            // handled by the guard below: an edict is somebody else sacrificing,
-            // a land or an artifact is not a creature, and an additional cost to
-            // cast is a one-shot price rather than an outlet you can point at
-            // anything. Precision 56.5% -> 95.4%.
-            (CardEffect.Sacrifice, [Rx(@"sacrifices? (?:a|an|another|two|three|\d+)[\w ]*creature")]),
+            // taking. Ruled 2026-09-15. Two things fall out of that and are handled
+            // by the guard below: an edict is somebody else sacrificing, and an
+            // additional cost to cast is a one-shot price rather than an outlet you
+            // can point at anything. Precision 56.5% -> 88.1%, 84 wrong -> 44.
+            //
+            // Artifacts count alongside creatures — Atog, Dwarven Weaponsmith and
+            // Infernal Tribute are the same card as Ashnod's Altar with a different
+            // fuel — but LANDS do not: "sacrifice a land" is Harrow paying for a
+            // fetch, never an engine. Adding artifacts was worth 12 recovered
+            // against 7 wrongly fired.
+            (CardEffect.Sacrifice, [Rx(@"sacrifices? (?:a|an|another|two|three|\d+)[\w ]*(?:creature|artifact)")]),
 
             (CardEffect.Steal, [Rx(@"gains? control of"), Rx(@"you control (enchanted|target)"),
                 Rx(@"untap target creature[\w ]*gain control")]),
