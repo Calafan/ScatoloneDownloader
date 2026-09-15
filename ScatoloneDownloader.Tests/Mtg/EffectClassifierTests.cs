@@ -88,6 +88,33 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // An answer that can point at ANY permanent is RemovePermanent, even when it
+    // will usually be pointed at a creature. Web Up and Stormplain Detainment say
+    // the same sentence, and reading only the bare "target permanent" left most
+    // of the O-ring family untouched. Ruled 2026-09-15.
+    [InlineData("Vindicate", "Sorcery", "Destroy target permanent.")]
+    [InlineData("Web Up", "Enchantment",
+        "When this enchantment enters, exile target nonland permanent an opponent controls until this enchantment leaves the battlefield.")]
+    [InlineData("Unyielding Gatekeeper", "Creature — Elephant Cleric",
+        "When this creature is turned face up, exile another target nonland permanent.")]
+    [InlineData("Hide in Plain Sight", "Instant", "Exile up to one target nonland permanent.")]
+    public void Classify_AnsweringAnyPermanent_IsRemovePermanent(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.RemovePermanent));
+    }
+
+    [Theory]
+    // A creature body does not have to arrive as a token: the deck cares about
+    // the creatures, not the wording that made them. Ruled 2026-09-15.
+    [InlineData("Nature's Revolt", "Enchantment", "All lands are 2/2 creatures that are still lands.")]
+    [InlineData("Earthbending Lesson", "Sorcery — Lesson",
+        "Earthbend 4. (Target land you control becomes a 0/0 creature with haste that's still a land.)")]
+    public void Classify_MakingCreaturesWithoutTokens_IsTokens(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
     // Damage prevention is the other half of Protection, ruled 2026-09-15. Both
     // wordings count: the effect first, and the source first.
     [InlineData("Circle of Protection: Red", "Enchantment",

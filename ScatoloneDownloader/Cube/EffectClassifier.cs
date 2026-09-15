@@ -81,6 +81,18 @@ namespace ScatoloneDownloader.Cube
             + @"|you may sacrifice (?:a|an|another|two|three|\d+)[\w ]*(?:creature|artifact|permanent)",
             RegexOptions.Multiline);
 
+        // A creature body does not have to arrive as a token. Earthbend turns a
+        // land into one, and Nature's Revolt turns every land into one; the user
+        // ruled on 2026-09-15 that anything GENERATING creatures is Tokens,
+        // because a go-wide deck cares about the bodies rather than the rules
+        // wording that produced them. Worth 22 recovered against 20 wrongly
+        // fired — near enough a wash on total error, but recall 85.8% -> 91.6%,
+        // which is the half that matters when a human confirms every proposal.
+        private static readonly Regex Earthbend = Rx(@"\bearthbends?\b");
+
+        private static readonly Regex LandsBecomeCreatures = Rx(
+            @"lands? (?:you control )?(?:are|become)[\w ]{0,20}\d+/\d+[\w ]{0,20}creatures?");
+
         // "Its controller creates a 1/1 white Spirit" (Afterlife), "target
         // opponent creates a 1/1 green Hippo" (Phelddagrif): the body is real,
         // but it is not on your side of the table.
@@ -210,7 +222,16 @@ namespace ScatoloneDownloader.Cube
                 Rx(@"each player sacrifices"), Rx(@"all creatures get -\d+/-\d+"),
                 Rx(@"deals? [\dX]+ damage to each creature")]),
 
-            (CardEffect.RemovePermanent, [Rx(@"destroy target permanent"), Rx(@"exile target permanent")]),
+            // "Nonland permanent" is how the whole modern O-ring family is worded
+            // (Stormplain Detainment, Web Up, Emergency Eject), and reading only
+            // the bare "target permanent" left 22 of 31 hand-tagged cards
+            // untouched. Ruled 2026-09-15: an answer that can point at ANY
+            // permanent is RemovePermanent, not Removal, even when the card that
+            // exiles it happens to be aimed at a creature in practice.
+            // Recall 29.0% -> 83.9%, 24 wrong -> 12.
+            (CardEffect.RemovePermanent, [
+                Rx(@"(?:destroy|exile) (?:[\w ]{0,15})?target nonland permanent"),
+                Rx(@"(?:destroy|exile) (?:[\w ]{0,15})?target permanent")]),
 
             // Three deliberate tightenings, each from a card that fooled a looser
             // version of these rules:
@@ -460,6 +481,14 @@ namespace ScatoloneDownloader.Cube
                 && (!CreatureTokenWording.IsMatch(text) || SomebodyElseCreates.IsMatch(text)))
             {
                 result &= ~CardEffect.Tokens;
+            }
+
+            // Added after the guard, not inside TokenPatterns, because these
+            // wordings never say "token" at all and so have nothing for the
+            // creature-token check to read.
+            if (Earthbend.IsMatch(text) || LandsBecomeCreatures.IsMatch(text))
+            {
+                result |= CardEffect.Tokens;
             }
 
             // Sacrifice, asked the same way: whose creature, and can you do it

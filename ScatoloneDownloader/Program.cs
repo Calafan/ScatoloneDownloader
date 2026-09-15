@@ -51,6 +51,9 @@ namespace ScatoloneDownloader
 
                 config.AddCommand<ClassifyCommand>("classify")
                     .WithDescription("Auto-propose effect tags from Scryfall rules text into the metadata (unreviewed suggestions; confirm them in the tagger). Never touches reviewed entries.");
+
+                config.AddCommand<AuditCommand>("audit")
+                    .WithDescription("Report reviewed cards that say the same thing and were tagged differently — the slips repetitive tagging produces. Read-only.");
             });
 
             return await app.RunAsync(args);

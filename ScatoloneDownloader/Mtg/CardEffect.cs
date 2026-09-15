@@ -24,7 +24,7 @@ namespace ScatoloneDownloader.Mtg
     public enum CardEffect
     {
         None            = 0,
-        Tokens          = 1 << 0,   // put CREATURE bodies onto the battlefield (Lingering Souls, Bitterblossom, Grave Titan) — and yours, not somebody else's. A Treasure, Clue, Food or Lander token is a resource the card hands over in passing, not a board presence, and Afterlife's Spirit goes to the creature's own controller; neither is what a go-wide deck is built on. Narrowed 2026-09-15.
+        Tokens          = 1 << 0,   // put CREATURE bodies onto the battlefield (Lingering Souls, Bitterblossom, Grave Titan) — and yours, not somebody else's. A Treasure, Clue, Food or Lander token is a resource the card hands over in passing, not a board presence, and Afterlife's Spirit goes to the creature's own controller; neither is what a go-wide deck is built on. Narrowed 2026-09-15, and WIDENED the same day in the other direction: a body need not arrive as a token at all, so earthbend and "all lands are 1/1 creatures" (Nature's Revolt) count — a go-wide deck cares about the creatures, not the wording that made them.
         Removal         = 1 << 1,
         Counter         = 1 << 2,
         RemovePermanent = 1 << 3,   // Vindicate / remove any permanent

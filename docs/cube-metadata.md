@@ -84,7 +84,7 @@ All four commands below take `-m|--metadata <DIR>` for this directory. Omitted,
 it defaults to a `metadata` folder **beside the master library** — the sibling of
 `SOURCE_DIR`, the same rule `build-views` uses to place `Views/` — so the store
 travels with the images it describes rather than following whatever directory
-the command was launched from. `classify`, `make-list` and `restore` take no
+the command was launched from. `classify`, `audit`, `make-list` and `restore` take no
 `SOURCE_DIR`, so they have nothing to sit beside and fall back to `./metadata`;
 each prints the directory it resolved before touching it, so a mismatch with the
 importing command shows up on the first line instead of as a mysteriously empty
@@ -232,6 +232,27 @@ sibling of the working directory.
    unreviewed, so it is in the same queue rather than lost; confirming it in the tagger
    is what promotes a suggestion to a human-verified tag (`reviewedAt` gets
    stamped). Rule-based and heuristic — a starting point, not an oracle.
+7. **`audit -m metadata [--since yyyy-MM-dd] [--limit N]`** — reports reviewed
+   cards that say the SAME THING and were tagged differently (see
+   `TagConsistencyAuditor`). Tagging tens of thousands of cards by hand is
+   repetitive work, and repetitive work slips: Red Mana Battery went untagged
+   while its four siblings are Ramp. That is not a taxonomy problem, so no
+   amount of arguing about definitions finds it — but grouping cards by what
+   their rules text reduces to does, in one pass.
+
+   Two cards share a signature when their oracle text matches once reminder
+   text, the card's own name, mana symbols and the SIZE of every number are
+   stripped. Signs are kept (`+3/+3` and `-3/-3` are opposite cards) and so are
+   activation costs (`Sacrifice a creature:` and `{T}:` in front of the same
+   effect are different cards).
+
+   Read-only on purpose. A group that disagrees is either a **slip** — one card
+   against a clear majority, marked `>>` — or a **boundary** nobody has ruled
+   on, which looks like a family split down the middle. Only a human can tell
+   which, and the second kind is a decision to record in `CardEffect`'s doc
+   rather than an entry to edit. Run it after a sitting with
+   `--since <that day>` so only the fresh groups are printed; the comparison
+   always runs against every reviewed card.
 
 ## Metadata entry schema
 
