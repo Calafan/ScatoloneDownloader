@@ -106,6 +106,41 @@ namespace ScatoloneDownloader.Cube
             Rx(@"\bward\b"),
         ];
 
+        // Damage prevention is the OTHER half of Protection, ruled 2026-09-15: a
+        // Circle of Protection and Mother of Runes do the same job — you hold
+        // them up and something survives — and the user's own tagging splits
+        // almost evenly between the two vocabularies (47 keyword, 44 prevention
+        // out of 115). Two wordings: the effect first ("prevent the next 3
+        // damage that would be dealt to target creature") and the source first
+        // ("the next time a source of your choice would deal damage to you this
+        // turn, prevent that damage").
+        private static readonly Regex PreventDamageTo = Rx(
+            @"prevent (?:the next|all)[\w ]{0,30}damage that would be dealt to");
+
+        private static readonly Regex PreventFromChosenSource = Rx(
+            @"would deal damage to [\w ,]{0,25}prevent (?:that|all)");
+
+        // Three exclusions, each drawn from how the user already tags:
+        //   - a shield the card puts on ITSELF is a stat line, as with Buff.
+        //     Modern wording says "this creature"; older cards write their name.
+        //   - a fog names no recipient at all ("prevent all combat damage that
+        //     would be dealt this turn"), and fogs are deliberately untagged.
+        //   - preventing what a creature DEALS neutralises it, which is Pacify:
+        //     Maze of Ith, Gaseous Form and Demonic Torment are hand-tagged that
+        //     way. The "dealt to and dealt by" wording is the same act.
+        private static readonly Regex PreventForItself = Rx(
+            @"dealt to (?:this creature|this permanent|it|enchanted creature) ");
+
+        private static readonly Regex PreventDealtBy = Rx(
+            @"damage that would be dealt (?:to and dealt )?by");
+
+        // The source-first wording has the same trap read the other way round:
+        // Mercenaries' "the next time THIS CREATURE would deal damage to you,
+        // prevent that damage" blunts the card's own drawback. Nothing is being
+        // protected — the damage was never aimed at anything of yours.
+        private static readonly Regex PreventsItsOwnDamage = Rx(
+            @"th(?:is|e) (?:creature|permanent|artifact|enchantment|land) would deal damage");
+
         // Pacify split in two so the guard below can tell the shapes apart. An
         // untap lock is the one Pacify wording a card routinely aims at ITSELF —
         // Basalt Monolith, Mana Vault and Time Vault all read "this artifact
@@ -460,6 +495,19 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Protection;
             }
 
+            // Prevention is added AFTER the two gates above rather than joining
+            // ProtectionPatterns, because it answers the self-versus-other
+            // question with its own vocabulary — there is no subject in front of
+            // "prevent" to inspect. It still clears the same timing gate: a
+            // static "prevent all damage that would be dealt to creatures"
+            // (Bubble Matrix) sits on the board rather than being held up, and
+            // requiring an instant, flash or an activated ability withdrew five
+            // false positives at no cost in recall.
+            if (PreventsDamageForSomebodyElse(card) && IsInstantSpeed(card))
+            {
+                result |= CardEffect.Protection;
+            }
+
             // Pacify is the third reading of the same question, and it is asked
             // the same way: a mana rock that will not untap has taxed ITSELF, and
             // taxing yourself neutralises nobody. Kept separate from
@@ -472,6 +520,47 @@ namespace ScatoloneDownloader.Cube
             }
 
             return result;
+        }
+
+        /// <summary>Whether the card prevents damage aimed at something other than
+        /// itself — the prevention half of Protection. See the patterns above for
+        /// why a fog, a self-shield and "damage dealt BY a creature" are all out.</summary>
+        private static bool PreventsDamageForSomebodyElse(Card card)
+        {
+            string text = card.OracleText ?? string.Empty;
+
+            if (!PreventDamageTo.IsMatch(text) && !PreventFromChosenSource.IsMatch(text))
+            {
+                return false;
+            }
+
+            return !PreventForItself.IsMatch(text)
+                && !PreventDealtBy.IsMatch(text)
+                && !PreventsItsOwnDamage.IsMatch(text)
+                && !PreventsForItselfByName(card);
+        }
+
+        /// <summary>"Prevent all combat damage that would be dealt to Diamond
+        /// Weapon": an older card names itself where a modern one writes "this
+        /// creature".</summary>
+        private static bool PreventsForItselfByName(Card card)
+        {
+            string name = ShortName(card);
+            if (name.Length == 0)
+            {
+                return false;
+            }
+
+            // A long name is also abbreviated to its first word in its own rules
+            // text: Rasputin Dreamweaver writes "damage that would be dealt to
+            // Rasputin". Checking the first word alone is safe because it is
+            // matched immediately after "dealt to".
+            int space = name.IndexOf(' ');
+            string shortest = space > 0 ? name[..space] : name;
+
+            string text = card.OracleText ?? string.Empty;
+            int at = text.IndexOf("dealt to ", StringComparison.OrdinalIgnoreCase);
+            return at >= 0 && text.AsSpan(at + 9).StartsWith(shortest, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>True when the only thing that read as Pacify is an untap lock

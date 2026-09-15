@@ -88,6 +88,61 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // Damage prevention is the other half of Protection, ruled 2026-09-15. Both
+    // wordings count: the effect first, and the source first.
+    [InlineData("Circle of Protection: Red", "Enchantment",
+        "{1}: The next time a red source of your choice would deal damage to you this turn, prevent that damage.")]
+    [InlineData("Healing Salve", "Instant",
+        "Choose one —\n• Target player gains 3 life.\n• Prevent the next 3 damage that would be dealt to any target this turn.")]
+    [InlineData("Orim, Samite Healer", "Legendary Creature — Human Cleric",
+        "{T}: Prevent the next 3 damage that would be dealt to any target this turn.")]
+    [InlineData("Indestructible Aura", "Instant", "Prevent all damage that would be dealt to target creature this turn.")]
+    public void Classify_PreventingDamageForSomebodyElse_IsProtection(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // The three shapes of prevention that are NOT Protection. A shield the card
+    // puts on itself is a stat line (modern wording, then a card naming itself);
+    // a fog names no recipient at all; and preventing what a creature DEALS
+    // neutralises it, which is Pacify's job — Maze of Ith and Gaseous Form are
+    // hand-tagged that way.
+    [InlineData("Ethereal Champion", "Creature — Spirit",
+        "Pay 1 life: Prevent the next 1 damage that would be dealt to this creature this turn.")]
+    [InlineData("Diamond Weapon", "Artifact Creature — Equipment",
+        "Reach\nImmune — Prevent all combat damage that would be dealt to Diamond Weapon.")]
+    [InlineData("Fog", "Instant", "Prevent all combat damage that would be dealt this turn.")]
+    [InlineData("Maze of Ith", "Land",
+        "{T}: Untap target attacking creature. Prevent all combat damage that would be dealt to and dealt by that creature this turn.")]
+    public void Classify_PreventionThatIsNotProtection(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
+    }
+
+    [Fact]
+    public void Classify_StaticPrevention_FailsTheSameTimingGateAsAPrintedKeyword()
+    {
+        // Bubble Matrix sits on the board; it is never held up in response, which
+        // is the gate the keyword half has cleared since 2026-09-05.
+        CardEffect result = EffectClassifier.Classify(
+            MakeCard("Bubble Matrix", "Artifact", "Prevent all damage that would be dealt to creatures."));
+
+        Assert.False(result.HasFlag(CardEffect.Protection));
+    }
+
+    [Fact]
+    public void Classify_TargetedRegeneration_IsNotProtection()
+    {
+        // Measured on the reviewed set: "regenerate target" caught 4 and wrongly
+        // fired on 12, so it stayed out and Death Ward is a deliberate miss.
+        CardEffect result = EffectClassifier.Classify(
+            MakeCard("Death Ward", "Instant", "Regenerate target creature."));
+
+        Assert.False(result.HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
     // Mill has to be aimed at somebody else. Everything here fills the caster's
     // own graveyard: as an upkeep tax (Deep Spawn), as an activation cost
     // (Millikin), as a recursion cost (Rot Farm Skeleton), or as the whole point
