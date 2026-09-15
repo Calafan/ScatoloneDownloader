@@ -19,9 +19,11 @@ namespace ScatoloneDownloader.Cube
     /// Two cards collapse to the same <see cref="Signature"/> when their oracle
     /// text matches after the things that do not change what a card DOES are
     /// stripped: reminder text, the card's own name, mana symbols, and the size
-    /// of every number. Signs are deliberately kept, because "+3/+3" and "-3/-3"
-    /// are opposite cards; activation costs are kept too, because "Sacrifice a
-    /// creature:" and "{T}:" in front of the same effect are different cards.
+    /// of every number. Three things are deliberately KEPT, each because dropping
+    /// it reported correct cards as contradictions: the sign, because "+3/+3" and
+    /// "-3/-3" are opposite cards; the activation cost, because "Sacrifice a
+    /// creature:" and "{T}:" in front of the same effect are different cards; and
+    /// zero, because "-2/-0" only shrinks power while "-1/-1" can kill.
     /// </para>
     /// <para>
     /// A group that disagrees is not automatically a mistake. It is either a slip
@@ -38,9 +40,18 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex ReminderText = Rx(@"\([^)]*\)");
         private static readonly Regex ManaSymbols = Rx(@"\{[^}]*\}");
         private static readonly Regex Digits = Rx(@"\b\d+\b|\bX\b");
+
         private static readonly Regex NumberWords =
             Rx(@"\b(?:one|two|three|four|five|six|seven|eight|nine|ten)\b");
         private static readonly Regex Whitespace = Rx(@"\s+");
+
+        /// <summary>Zero is not a size, it is a kind. "-2/-0" only shrinks power
+        /// while "-1/-1" can kill, and the user tags exactly that difference
+        /// (Grandmother Sengir is Removal, Pradesh Gypsies is not) — so erasing
+        /// every number alike reported three correct cards as a contradiction.
+        /// Keeping zero and flattening everything else still groups Giant Growth
+        /// with Monstrous Growth, which is the grouping that earns its keep.</summary>
+        private static string Flatten(Match number) => number.Value == "0" ? "0" : "#";
 
         /// <summary>Below this a signature is too generic to mean anything — a
         /// bare keyword line would group every vanilla flier together.</summary>
@@ -128,7 +139,7 @@ namespace ScatoloneDownloader.Cube
             }
 
             text = ManaSymbols.Replace(text, " ");
-            text = Digits.Replace(text, "#");
+            text = Digits.Replace(text, Flatten);
             text = NumberWords.Replace(text, "#");
 
             return Whitespace.Replace(text, " ").Trim().ToLowerInvariant();

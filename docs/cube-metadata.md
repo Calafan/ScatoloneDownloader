@@ -242,9 +242,11 @@ sibling of the working directory.
 
    Two cards share a signature when their oracle text matches once reminder
    text, the card's own name, mana symbols and the SIZE of every number are
-   stripped. Signs are kept (`+3/+3` and `-3/-3` are opposite cards) and so are
-   activation costs (`Sacrifice a creature:` and `{T}:` in front of the same
-   effect are different cards).
+   stripped. Three things are kept, each because dropping it reported correct
+   cards as contradictions: the sign (`+3/+3` and `-3/-3` are opposite cards),
+   the activation cost (`Sacrifice a creature:` and `{T}:` in front of the same
+   effect are different cards), and **zero** (`-2/-0` only shrinks power while
+   `-1/-1` can kill, which is a distinction the tagging already makes).
 
    Read-only on purpose. A group that disagrees is either a **slip** — one card
    against a clear majority, marked `>>` — or a **boundary** nobody has ruled

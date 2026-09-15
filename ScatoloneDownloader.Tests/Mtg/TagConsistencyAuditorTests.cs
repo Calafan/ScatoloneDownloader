@@ -43,6 +43,30 @@ public sealed class TagConsistencyAuditorTests
     }
 
     [Fact]
+    public void Signature_KeepsZero_BecauseShrinkingToughnessCanKillAndShrinkingPowerCannot()
+    {
+        // Grandmother Sengir is Removal and Pradesh Gypsies is not, which is a
+        // real distinction: -1 toughness kills a 1/1, -0 toughness kills nothing.
+        Assert.NotEqual(
+            TagConsistencyAuditor.Signature("Grandmother Sengir", "{1}{B}, {T}: Target creature gets -1/-1 until end of turn."),
+            TagConsistencyAuditor.Signature("Pradesh Gypsies", "{1}{G}, {T}: Target creature gets -2/-0 until end of turn."));
+
+        // Overkill kills outright; Shrink only takes power away.
+        Assert.NotEqual(
+            TagConsistencyAuditor.Signature("Overkill", "Target creature gets -0/-9999 until end of turn."),
+            TagConsistencyAuditor.Signature("Shrink", "Target creature gets -5/-0 until end of turn."));
+    }
+
+    [Fact]
+    public void Signature_StillIgnoresSizeAwayFromZero()
+    {
+        // The point of keeping zero is not to start caring how big a number is.
+        Assert.Equal(
+            TagConsistencyAuditor.Signature("Adarkar Sentinel", "{1}: This creature gets +0/+1 until end of turn."),
+            TagConsistencyAuditor.Signature("Carrion Ants", "{1}: This creature gets +0/+3 until end of turn."));
+    }
+
+    [Fact]
     public void Signature_KeepsTheSign_BecausePumpAndShrinkAreOppositeCards()
     {
         Assert.NotEqual(
