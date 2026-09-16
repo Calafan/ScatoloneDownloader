@@ -175,6 +175,32 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // A lock the OPPONENT can buy out of is a tax, not a lock — whether anything
+    // is neutralised is their decision. Ruled 2026-09-16.
+    [InlineData("Heroism", "Enchantment",
+        "Sacrifice a white creature: For each attacking red creature, prevent all combat damage that would be dealt by that creature this turn unless its controller pays {2}{R}.")]
+    [InlineData("Winter's Chill", "Instant",
+        "Cast this spell only during combat before blockers are declared.\nX can't be greater than the number of snow lands you control.\nChoose X target attacking creatures. For each of those creatures, its controller may pay {1} or {2}. If that player doesn't, destroy that creature at end of combat. If that player pays only {1}, prevent all combat damage that would be dealt to and dealt by that creature this combat.")]
+    public void Classify_APreventionTheyCanPayToIgnore_IsNotPacify(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
+    }
+
+    [Theory]
+    // And the three that say the same sentence as Horn of Deafening with nothing
+    // conditional about them. Realigned by hand the same day.
+    [InlineData("Safeguard", "Enchantment",
+        "{2}{W}: Prevent all combat damage that would be dealt by target creature this turn.")]
+    [InlineData("Warning", "Instant",
+        "Prevent all combat damage that would be dealt by target attacking creature this turn.")]
+    [InlineData("Subdue", "Instant",
+        "Prevent all combat damage that would be dealt by target creature this turn. That creature gets +0/+X until end of turn, where X is its mana value.")]
+    public void Classify_AnUnconditionalPrevention_IsPacify(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
+    }
+
+    [Theory]
     // Every sweeper wording the rules stopped reading at the first adjective.
     [InlineData("Anarchy", "Sorcery", "Destroy all white permanents.")]
     [InlineData("Perish", "Sorcery", "Destroy all green creatures. They can't be regenerated.")]

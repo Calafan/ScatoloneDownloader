@@ -359,6 +359,14 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex PreventionAimedAtYourOwn = Rx(
             @"target [\w ]{0,20}creature you control");
 
+        // A lock the OPPONENT can buy out of is a tax, not a lock: Heroism and
+        // Winter's Chill let the attacker pay and come through anyway, so whether
+        // anything is neutralised is their decision rather than yours. Ruled
+        // 2026-09-16 — "non c'è certezza".
+        private static readonly Regex TheyCanPayToIgnoreIt = Rx(
+            @"unless (?:its|their) controller pays|unless that player pays"
+            + @"|(?:may|doesn'?t|does) pay \{");
+
         // The word boundary in front of "tap" is load-bearing: UNTAP target
         // creature contains the letters of tap target creature, and without it
         // every untapper in the library — Fyndhorn Brownie, Jandor's Saddlebags,
@@ -800,7 +808,7 @@ namespace ScatoloneDownloader.Cube
             // somebody down. See PreventionAimedAtYourOwn above.
             if (result.HasFlag(CardEffect.Pacify)
                 && PreventsWhatACreatureDeals.IsMatch(text)
-                && PreventionAimedAtYourOwn.IsMatch(text)
+                && (PreventionAimedAtYourOwn.IsMatch(text) || TheyCanPayToIgnoreIt.IsMatch(text))
                 && !PacifyOutward.Where(p => p != PreventsWhatACreatureDeals)
                                  .Any(p => p.IsMatch(PreventsWhatACreatureDeals.Replace(text, " ")))
                 && !AnyUntapLock.IsMatch(text))
