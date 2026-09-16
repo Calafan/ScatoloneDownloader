@@ -491,6 +491,40 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // The top of your library is a second hand, ruled 2026-09-16: these never
+    // run out of cards to play even though they never draw one.
+    [InlineData("Fblthp, Lost on the Range", "Legendary Creature — Homunculus",
+        "Ward {2}\nYou may look at the top card of your library any time.\nYou may play the top card of your library.")]
+    [InlineData("Traveling Chocobo", "Creature — Bird",
+        "You may look at the top card of your library any time.\nYou may play lands and cast Bird spells from the top of your library.")]
+    // Looking at N and taking MORE THAN ONE is a draw with selection; taking
+    // exactly one is Filter, and Stock Up is both.
+    [InlineData("Stock Up", "Sorcery",
+        "Look at the top five cards of your library. Put two of them into your hand and the rest on the bottom of your library in any order.")]
+    // Casting out of a graveyard, when you can go back to it every turn.
+    [InlineData("Festival of Embers", "Enchantment",
+        "During your turn, you may cast instant and sorcery spells from your graveyard by paying 1 life in addition to their other costs.")]
+    [InlineData("Edgar, Master Machinist", "Legendary Creature — Human Artificer",
+        "Once during each of your turns, you may cast an artifact spell from your graveyard. If you cast a spell this way, that artifact enters tapped.")]
+    public void Classify_ASecondHand_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // The edges of those three. One card out of the graveyard is one card, and
+    // warp and flashback reminder text says "cast THIS CARD" — from your hand at
+    // that, which is why the rule refuses the pronoun.
+    [InlineData("Bygone Colossus", "Creature — Giant",
+        "Warp {3} (You may cast this card from your hand for its warp cost. Exile it as it resolves.)")]
+    [InlineData("Browse", "Enchantment",
+        "{2}{U}{U}: Look at the top five cards of your library, put one of them into your hand, then exile the rest.")]
+    public void Classify_OneCardFromElsewhere_IsNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
     // A loot that draws MORE than it hands back is not parity, and the guard was
     // written for the 1-for-1 case. Ruled 2026-09-16 by counting.
     [InlineData("Emmessi Tome", "Artifact", "{5}, {T}: Draw two cards, then discard a card.")]

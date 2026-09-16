@@ -118,6 +118,21 @@ namespace ScatoloneDownloader.Cube
             + @"|then discard \w+ cards? unless"
             + @"|discards? a card\. then draws? a card");
 
+        // Casting out of a graveyard or out of exile is only advantage when you
+        // can go back to it, ruled 2026-09-16 — one flashback card is one card.
+        // The negative lookahead is what keeps warp and flashback REMINDER text
+        // out: those say "you may cast THIS CARD", and from your hand at that.
+        private static readonly Regex CastsAStreamFromElsewhere = Rx(
+            @"you may cast (?!this card|it\b)[\w ,'-]{0,40}(?:spells?|cards?) from your graveyard"
+            + @"|you may (?:cast|play) (?!this card|it\b)[\w ,'-]{0,40}(?:spells?|cards?) from exile"
+            + @"|(?:spells?|cards?)[\w ,'-]{0,20}(?:can be cast|may be cast) from your graveyard");
+
+        // "Once during each of your turns" and "During your turn, you may" are
+        // permissions that keep standing, so they are repeatable with no trigger
+        // word for RepeatableWording to find.
+        private static readonly Regex StandingPermission = Rx(
+            @"once during each of your turns|during your turn, you may|each of your turns");
+
         //   The counting exception. A loot that draws THREE and discards one is
         //   not parity, it is a Careful Study with a bonus — the guard was written
         //   for the 1-for-1 case and was swallowing Emmessi Tome and Casting of
@@ -604,7 +619,16 @@ namespace ScatoloneDownloader.Cube
                 // impulse had, and the same fix; reading the trigger word ANYWHERE
                 // instead was measured and loses 11.
                 Rx(@"^(?:• )?[\w' ]{1,28}— ?(?:whenever|at the beginning of)[^\n]{0,160}draws? (?:a|one) card",
-                    RegexOptions.Multiline)]),
+                    RegexOptions.Multiline),
+                // The top of your library is a second hand, ruled 2026-09-16:
+                // Fblthp, Glarb and the Traveling Chocobo never run out of cards
+                // to play even though they never draw one.
+                Rx(@"you may (?:play|cast)[^\n]{0,60}top card of your library"
+                    + @"|play (?:lands|cards|the top card)[^\n]{0,40}from the top of your library"),
+                // Looking at N and taking MORE THAN ONE is a draw with selection.
+                // Taking exactly one is Filter, which the Filter rules say and
+                // this deliberately does not contradict. Ruled 2026-09-16.
+                Rx(@"look at the top \w+ cards? of your library[^\n]{0,60}put (?:two|three|four|five|\d+) of them into your hand")]),
 
             (CardEffect.Filter, [Rx(@"scry \d"), Rx(@"surveil \d"),
                 Rx(@"look at the top \w+ cards? of your library"),
@@ -886,6 +910,16 @@ namespace ScatoloneDownloader.Cube
             // DrawsThenDiscards above for why this is added back rather than
             // written into the guard.
             if (LootDrawsMoreThanItPays(text))
+            {
+                result |= CardEffect.CardAdvantage;
+            }
+
+            // A stream of cards out of the graveyard or exile, and only when you
+            // can go back to it. Added here rather than in the table so a loot
+            // elsewhere on the card cannot withdraw it — the cards are coming
+            // from a different zone and nothing is being paid out of hand.
+            if (CastsAStreamFromElsewhere.IsMatch(text)
+                && (RepeatableWording.IsMatch(text) || StandingPermission.IsMatch(text)))
             {
                 result |= CardEffect.CardAdvantage;
             }

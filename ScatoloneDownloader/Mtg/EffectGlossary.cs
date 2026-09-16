@@ -60,10 +60,9 @@ namespace ScatoloneDownloader.Mtg
                 + "back half of a loot — and paying it attacks nobody.",
 
             [CardEffect.CardAdvantage] =
-                "A card the opponent does not get: draw two or more, a draw you can go back to (an activated ability or a "
-                + "recurring trigger), or \"draw a card for each X\". A loot, a cycle, an ETB cantrip and a one-shot "
-                + "sacrifice are all parity. One Clue or one card off the top is a rider; repeatable, or two cards at "
-                + "once, is a card.",
+                "A card the opponent does not get: draw two or more, a draw you can go back to, \"draw for each X\", or "
+                + "the top of your library as a second hand. Count the loot — draw two discard one IS a card. One Clue, "
+                + "one card off the top, one flashback card, a cycle, an ETB cantrip: all riders.",
 
             [CardEffect.Filter] =
                 "Selection without net cards: scry, surveil, look at the top few, or a loot that draws and discards.",
