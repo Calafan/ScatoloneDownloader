@@ -105,6 +105,31 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex DrawBySacrificingItself = Rx(
             @"^[^\n:]{0,60}sacrifice this [\w]+[^\n:]{0,30}:", RegexOptions.Multiline);
 
+        //   And four more ways the same card is handed back, which the loot
+        //   pattern above does not cover because none of them says "discard":
+        //   putting cards from your hand on top (Dream Cache), shuffling one in
+        //   (Lat-Nam's Legacy), paying back the card you just drew (Jandor's
+        //   Ring), and a discard split across two sentences (Green Goblin,
+        //   Alpharael). Added 2026-09-16.
+        private static readonly Regex DrawPaidForWithACard = Rx(
+            @"put \w+ cards? from your hand[^\n]{0,30}on top"
+            + @"|shuffle (?:a|\w+) cards? from your hand into your library\. if you do, draw"
+            + @"|discard the last card you drew"
+            + @"|then discard \w+ cards? unless"
+            + @"|discards? a card\. then draws? a card");
+
+        //   The counting exception. A loot that draws THREE and discards one is
+        //   not parity, it is a Careful Study with a bonus — the guard was written
+        //   for the 1-for-1 case and was swallowing Emmessi Tome and Casting of
+        //   Bones with it. Only a PROVABLE gain rescues the tag: both counts have
+        //   to parse and the draw has to be the bigger one, so anything unreadable
+        //   stays parity.
+        private static readonly Regex DrawsThenDiscards = Rx(
+            @"draws? (\w+) cards?,? (?:then |and )?discards? (\w+) cards?");
+
+        private static readonly Regex DiscardsThenDraws = Rx(
+            @"discards? (\w+) cards?[^\n.]{0,30}draws? (\w+) cards?");
+
         // A Clue and an impulse draw are both "a card the opponent does not get",
         // and neither is a draw, so both are asked the same question: is it one
         // card, once? A single Clue has to be CASHED for {2} and a single impulse
@@ -571,7 +596,15 @@ namespace ScatoloneDownloader.Cube
                 // written the other way round, and the count-first wording was
                 // missed entirely: Balance of Power, Baleful Stare, Become the
                 // Avalanche. Worth 24 recovered for 2 wrongly fired.
-                Rx(@"draws? a card for each|draws? cards equal to")]),
+                Rx(@"draws? a card for each|draws? cards equal to"),
+                // A trigger hiding behind a LABEL. The anchored rule above wants
+                // "whenever" at the start of the line, and modern cards put an
+                // ability word or a Siege bullet in front of it — "Eerie —
+                // Whenever ...", "• Jeskai — Whenever ...". Same bug as the
+                // impulse had, and the same fix; reading the trigger word ANYWHERE
+                // instead was measured and loses 11.
+                Rx(@"^(?:• )?[\w' ]{1,28}— ?(?:whenever|at the beginning of)[^\n]{0,160}draws? (?:a|one) card",
+                    RegexOptions.Multiline)]),
 
             (CardEffect.Filter, [Rx(@"scry \d"), Rx(@"surveil \d"),
                 Rx(@"look at the top \w+ cards? of your library"),
@@ -843,9 +876,18 @@ namespace ScatoloneDownloader.Cube
             // Card parity dressed as card advantage. See the three patterns above
             // for which ruling each one follows from.
             if (result.HasFlag(CardEffect.CardAdvantage)
-                && (Loot.IsMatch(text) || Cycling.IsMatch(text) || DrawBySacrificingItself.IsMatch(text)))
+                && (Loot.IsMatch(text) || Cycling.IsMatch(text) || DrawBySacrificingItself.IsMatch(text)
+                    || DrawPaidForWithACard.IsMatch(text)))
             {
                 result &= ~CardEffect.CardAdvantage;
+            }
+
+            // …unless the loot can be counted and comes out ahead. See
+            // DrawsThenDiscards above for why this is added back rather than
+            // written into the guard.
+            if (LootDrawsMoreThanItPays(text))
+            {
+                result |= CardEffect.CardAdvantage;
             }
 
             // Added AFTER the parity guard, because neither is a draw and neither
@@ -1010,6 +1052,46 @@ namespace ScatoloneDownloader.Cube
 
             string rest = YourOwnCreaturesCantAttack.Replace(TapsACreatureYouControl.Replace(text, " "), " ");
             return !PacifyOutward.Any(p => p.IsMatch(rest)) && !AnyUntapLock.IsMatch(rest);
+        }
+
+        /// <summary>The number a card-count word stands for, or 0 when it is not
+        /// a number at all ("draws cards equal to", "discards their hand").</summary>
+        private static int CardCount(string word) => word.ToLowerInvariant() switch
+        {
+            "a" or "an" or "one" => 1,
+            "two" => 2,
+            "three" => 3,
+            "four" => 4,
+            "five" => 5,
+            "six" => 6,
+            "seven" => 7,
+            _ => int.TryParse(word, out int parsed) ? parsed : 0,
+        };
+
+        /// <summary>True when the card PROVABLY draws more cards than it hands
+        /// back. Both counts have to parse, so an unreadable one stays parity.
+        /// </summary>
+        private static bool LootDrawsMoreThanItPays(string text)
+        {
+            foreach (Match m in DrawsThenDiscards.Matches(text))
+            {
+                int drew = CardCount(m.Groups[1].Value), paid = CardCount(m.Groups[2].Value);
+                if (drew > 0 && paid > 0 && drew > paid)
+                {
+                    return true;
+                }
+            }
+
+            foreach (Match m in DiscardsThenDraws.Matches(text))
+            {
+                int paid = CardCount(m.Groups[1].Value), drew = CardCount(m.Groups[2].Value);
+                if (drew > 0 && paid > 0 && drew > paid)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>True when every Buff wording on the card sits inside a pump

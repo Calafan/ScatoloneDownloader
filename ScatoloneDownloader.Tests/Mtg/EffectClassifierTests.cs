@@ -491,6 +491,50 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // A loot that draws MORE than it hands back is not parity, and the guard was
+    // written for the 1-for-1 case. Ruled 2026-09-16 by counting.
+    [InlineData("Emmessi Tome", "Artifact", "{5}, {T}: Draw two cards, then discard a card.")]
+    [InlineData("Casting of Bones", "Enchantment — Aura",
+        "Enchant creature\nWhen enchanted creature dies, draw three cards, then discard a card.")]
+    [InlineData("Case of the Crimson Pulse", "Enchantment — Case",
+        "When this Case enters, discard a card, then draw two cards.")]
+    public void Classify_ALootThatComesOutAhead_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Four more ways the card is handed straight back, none of which says
+    // "discard" in the shape the loot pattern reads.
+    [InlineData("Dream Cache", "Sorcery",
+        "Draw three cards, then put two cards from your hand both on top of your library or both on the bottom.")]
+    [InlineData("Lat-Nam's Legacy", "Instant",
+        "Shuffle a card from your hand into your library. If you do, draw two cards at the beginning of the next turn's upkeep.")]
+    [InlineData("Jandor's Ring", "Artifact",
+        "{2}, {T}, Discard the last card you drew this turn: Draw a card.")]
+    [InlineData("Green Goblin, Revenant", "Legendary Creature — Goblin",
+        "Flying, deathtouch\nWhenever Green Goblin attacks, discard a card. Then draw a card.")]
+    public void Classify_ADrawPaidForWithACard_IsNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // A repeating draw hiding behind a label. The anchored rule wants "whenever"
+    // at the start of the line; modern cards put an ability word or a Siege
+    // bullet in front of it.
+    [InlineData("Entity Tracker", "Creature — Spirit",
+        "Flash\nEerie — Whenever an enchantment you control enters and whenever you fully unlock a Room, draw a card.")]
+    [InlineData("G'raha Tia", "Legendary Creature — Cat Scholar",
+        "Reach\nThe Allagan Eye — Whenever one or more other creatures and/or artifacts you control enter, draw a card.")]
+    [InlineData("Frostcliff Siege", "Enchantment",
+        "As this enchantment enters, choose Jeskai or Temur.\n• Jeskai — Whenever a creature you control attacks alone, draw a card.")]
+    public void Classify_ATriggerBehindALabel_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
     // "Draw a card for each X" is multi-card draw written the other way round,
     // and the count-first wording was missed entirely.
     [InlineData("Balance of Power", "Sorcery", "If target opponent has more cards in hand than you, draw cards equal to the difference.")]
