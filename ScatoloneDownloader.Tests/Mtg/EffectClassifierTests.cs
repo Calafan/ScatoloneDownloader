@@ -161,6 +161,20 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // The same sentence pointed the wrong way, twice. Mtenda Lion blunts its own
+    // attack, which is a price; Ebony Horse unhorses one of YOURS, which is
+    // vigilance bought at instant speed. Foxfire says almost exactly what Ebony
+    // Horse says and is Pacify, so the difference is only "you control".
+    [InlineData("Mtenda Lion", "Creature — Cat",
+        "Whenever this creature attacks, defending player may pay {U}. If that player does, prevent all combat damage that would be dealt by this creature this turn.")]
+    [InlineData("Ebony Horse", "Artifact",
+        "{2}, {T}: Untap target attacking creature you control. Prevent all combat damage that would be dealt to and dealt by that creature this turn.")]
+    public void Classify_PreventingWhatYourOwnDeals_IsNotPacify(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
+    }
+
+    [Theory]
     // Every sweeper wording the rules stopped reading at the first adjective.
     [InlineData("Anarchy", "Sorcery", "Destroy all white permanents.")]
     [InlineData("Perish", "Sorcery", "Destroy all green creatures. They can't be regenerated.")]

@@ -346,9 +346,18 @@ namespace ScatoloneDownloader.Cube
         // creature deals, that is Pacify" — but was never added on this side, so
         // Maze of Ith and Gaseous Form were only ever tagged by accident, through
         // the untap bug above. Fixing that bug is what exposed the hole.
+        // The subject after "by" is the whole test, and it has to name somebody:
+        // Mtenda Lion's "prevent all combat damage that would be dealt by THIS
+        // CREATURE" blunts its own attack, which is a price and not a lock. Every
+        // card the looser wording caught is caught by this one too.
         private static readonly Regex PreventsWhatACreatureDeals = Rx(
-            @"damage that would be dealt (?:to and dealt )?by (?:target|enchanted|that|all|each)"
-            + @"|prevent all combat damage that would be dealt by");
+            @"damage that would be dealt (?:to and dealt )?by (?:target|enchanted|that|all|each)");
+
+        // And the creature has to be theirs. Ebony Horse and Foxfire say the same
+        // sentence, but Ebony Horse unhorses one of YOURS — that is vigilance
+        // bought at instant speed, and it neutralises nobody.
+        private static readonly Regex PreventionAimedAtYourOwn = Rx(
+            @"target [\w ]{0,20}creature you control");
 
         // The word boundary in front of "tap" is load-bearing: UNTAP target
         // creature contains the letters of tap target creature, and without it
@@ -782,6 +791,19 @@ namespace ScatoloneDownloader.Cube
             // The same question one more time, for the two shapes that name a
             // victim and still point the wrong way. See the patterns above.
             if (result.HasFlag(CardEffect.Pacify) && OnlyRestrainsYourOwn(text))
+            {
+                result &= ~CardEffect.Pacify;
+            }
+
+            // Prevention aimed at one of your own, asked the same way: blank the
+            // prevention out and see whether anything else on the card locks
+            // somebody down. See PreventionAimedAtYourOwn above.
+            if (result.HasFlag(CardEffect.Pacify)
+                && PreventsWhatACreatureDeals.IsMatch(text)
+                && PreventionAimedAtYourOwn.IsMatch(text)
+                && !PacifyOutward.Where(p => p != PreventsWhatACreatureDeals)
+                                 .Any(p => p.IsMatch(PreventsWhatACreatureDeals.Replace(text, " ")))
+                && !AnyUntapLock.IsMatch(text))
             {
                 result &= ~CardEffect.Pacify;
             }
