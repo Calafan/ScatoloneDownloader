@@ -23,7 +23,9 @@ namespace ScatoloneDownloader.Cube
     /// it reported correct cards as contradictions: the sign, because "+3/+3" and
     /// "-3/-3" are opposite cards; the activation cost, because "Sacrifice a
     /// creature:" and "{T}:" in front of the same effect are different cards; and
-    /// zero, because "-2/-0" only shrinks power while "-1/-1" can kill.
+    /// zero, because "-2/-0" only shrinks power while "-1/-1" can kill. A fourth
+    /// was added on 2026-09-16: ONE, but only where the number counts CARDS, because
+    /// "put one of them into your hand" and "put two" are different tags.
     /// </para>
     /// <para>
     /// A group that disagrees is not automatically a mistake. It is either a slip
@@ -41,8 +43,16 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex ManaSymbols = Rx(@"\{[^}]*\}");
         private static readonly Regex Digits = Rx(@"\b\d+\b|\bX\b");
 
+        // One CARD is a kind, one point of toughness is a size. The 2026-09-16
+        // ruling that "look at N, put ONE into your hand" is Filter while "put
+        // TWO" is CardAdvantage made this tool report Impulse against Stock Up as
+        // a contradiction — but keeping every 1 apart would also split "+0/+1"
+        // from "+0/+3", which is exactly the noise Flatten exists to remove. So
+        // the distinction is drawn only where the number is counting cards.
+        private static readonly Regex OneCard = Rx(@"\bone(?= of them\b| cards?\b)");
+
         private static readonly Regex NumberWords =
-            Rx(@"\b(?:one|two|three|four|five|six|seven|eight|nine|ten)\b");
+            Rx(@"\b(?:two|three|four|five|six|seven|eight|nine|ten)\b");
         private static readonly Regex Whitespace = Rx(@"\s+");
 
         /// <summary>Zero is not a size, it is a kind. "-2/-0" only shrinks power
@@ -140,6 +150,7 @@ namespace ScatoloneDownloader.Cube
 
             text = ManaSymbols.Replace(text, " ");
             text = Digits.Replace(text, Flatten);
+            text = OneCard.Replace(text, "1");
             text = NumberWords.Replace(text, "#");
 
             return Whitespace.Replace(text, " ").Trim().ToLowerInvariant();

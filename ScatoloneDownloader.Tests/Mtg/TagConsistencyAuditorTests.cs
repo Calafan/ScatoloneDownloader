@@ -67,6 +67,30 @@ public sealed class TagConsistencyAuditorTests
     }
 
     [Fact]
+    public void Signature_KeepsOneApartFromMany_WhenItCountsCards()
+    {
+        // Ruled 2026-09-16: "look at N, put ONE into your hand" is Filter and
+        // "put TWO" is CardAdvantage, so this tool reported Impulse against Stock
+        // Up as a contradiction when it flattened both counts to the same mark.
+        Assert.NotEqual(
+            TagConsistencyAuditor.Signature("Impulse",
+                "Look at the top four cards of your library. Put one of them into your hand and the rest on the bottom."),
+            TagConsistencyAuditor.Signature("Stock Up",
+                "Look at the top five cards of your library. Put two of them into your hand and the rest on the bottom."));
+    }
+
+    [Fact]
+    public void Signature_StillIgnoresOne_WhenItIsASize()
+    {
+        // The distinction is only drawn where the number counts CARDS. One point
+        // of toughness is a size like any other, and splitting those apart is the
+        // noise the flattening exists to remove.
+        Assert.Equal(
+            TagConsistencyAuditor.Signature("Adarkar Sentinel", "{1}: This creature gets +0/+1 until end of turn."),
+            TagConsistencyAuditor.Signature("Carrion Ants", "{1}: This creature gets +0/+3 until end of turn."));
+    }
+
+    [Fact]
     public void Signature_KeepsTheSign_BecausePumpAndShrinkAreOppositeCards()
     {
         Assert.NotEqual(
