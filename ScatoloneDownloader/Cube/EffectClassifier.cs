@@ -346,10 +346,15 @@ namespace ScatoloneDownloader.Cube
         // creature deals, that is Pacify" — but was never added on this side, so
         // Maze of Ith and Gaseous Form were only ever tagged by accident, through
         // the untap bug above. Fixing that bug is what exposed the hole.
-        // The subject after "by" is the whole test, and it has to name somebody:
+        // The subject after "by" is the whole test, and it has to NAME somebody:
         // Mtenda Lion's "prevent all combat damage that would be dealt by THIS
-        // CREATURE" blunts its own attack, which is a price and not a lock. Every
-        // card the looser wording caught is caught by this one too.
+        // CREATURE" blunts its own attack, which is a price and not a lock.
+        //
+        // A bare pronoun is deliberately not in the list, and that is a decision
+        // rather than an oversight. "Dealt by IT" points back at the card itself
+        // in Goblin Snowman and at a creature YOU untapped in Elvish Scout, and
+        // both of those are out; nothing in the reviewed set uses the pronoun for
+        // somebody else's creature. Adding it bought one card and cost another.
         private static readonly Regex PreventsWhatACreatureDeals = Rx(
             @"damage that would be dealt (?:to and dealt )?by (?:target|enchanted|that|all|each)");
 

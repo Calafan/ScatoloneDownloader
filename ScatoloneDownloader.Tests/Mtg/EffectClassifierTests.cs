@@ -169,6 +169,13 @@ public sealed class EffectClassifierTests
         "Whenever this creature attacks, defending player may pay {U}. If that player does, prevent all combat damage that would be dealt by this creature this turn.")]
     [InlineData("Ebony Horse", "Artifact",
         "{2}, {T}: Untap target attacking creature you control. Prevent all combat damage that would be dealt to and dealt by that creature this turn.")]
+    // Both of these say "dealt by IT", and the pronoun points somewhere different
+    // in each: at the card itself, and at the creature you just untapped. Neither
+    // is a lock, which is why the subject list has no bare pronoun in it.
+    [InlineData("Goblin Snowman", "Creature — Goblin",
+        "Whenever this creature blocks, prevent all combat damage that would be dealt to and dealt by it this turn.\n{T}: This creature deals 1 damage to target creature it's blocking.")]
+    [InlineData("Elvish Scout", "Creature — Elf Scout",
+        "{G}, {T}: Untap target attacking creature you control. Prevent all combat damage that would be dealt to and dealt by it this turn.")]
     public void Classify_PreventingWhatYourOwnDeals_IsNotPacify(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
