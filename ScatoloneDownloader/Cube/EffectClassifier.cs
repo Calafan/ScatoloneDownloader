@@ -298,6 +298,11 @@ namespace ScatoloneDownloader.Cube
         // so the number gets worse before it gets better, and the 115 reviewed
         // entries on the wrong side of the new line were realigned by hand the
         // same day. Judged against the realigned tags, this is the rule.
+        // See OnlyPumpsInsideQuotes.
+        private static readonly Regex Quoted = Rx("\"[^\"\\n]*\"");
+        private static readonly Regex PumpInsideQuotes = Rx("\"[^\"\\n]{0,120}gets? \\+[\\dXx]");
+        private static readonly Regex PlainPump = Rx(@"gets? \+[\dXx]+/\+[\dXx]+");
+
         private static readonly Regex CounterOnSomebodyElse = Rx(
             @"\+1/\+1 counters? on (?:target|another|each|up to|one or more)"
             + @"|distribute [\w ]{0,20}\+1/\+1 counters"
@@ -325,12 +330,19 @@ namespace ScatoloneDownloader.Cube
             + @"|Then|When|Whenever|If|And|But|Your|Their|Creature|Permanent|Token|Legendary|Multicolored"
             + @"|Colorless|White|Blue|Black|Red|Green|Non[\w-]*)s?\b)";
 
-        // NB case-SENSITIVE, unlike everything else here.
+        // NB case-SENSITIVE, unlike everything else here. The clause openers were
+        // widened on 2026-09-17: a lord can sit behind an activation cost
+        // ("{T}: Other Faerie creatures get +2/+0") or inside a condition ("As
+        // long as enchanted land is a basic Mountain, Goblin creatures get
+        // +1/+2"), and the word "creatures" is optional — Lord of Atlantis says
+        // "Other Merfolk get +1/+1".
+        private const string ClauseStart = @"(?:^|\n|\. |: |, )";
+
         private static readonly Regex TribalPump = new(
-            @"(?:^|\n|\. )(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + NotATribe + @"[A-Z][\w']+s? creatures? (?:you control )?(?:get|have)\b"
-            + @"|(?:^|\n|\. )(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + NotATribe + @"[A-Z][\w']+s you control (?:get|have)\b"
+            ClauseStart + @"(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + NotATribe + @"[A-Z][\w']+s? creatures? (?:you control )?(?:get|have)\b"
+            + @"|" + ClauseStart + @"(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + NotATribe + @"[A-Z][\w']+s? (?:you control )?(?:get|have)\b"
             + @"|[Tt]arget " + NotATribe + @"[A-Z][\w']+ creature gets"
-            + @"|(?:^|\n|\. )(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + NotATribe + @"[A-Z][\w']+s? creatures? get \+",
+            + @"|" + ClauseStart + @"(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + NotATribe + @"[A-Z][\w']+s? creatures? get \+",
             RegexOptions.CultureInvariant | RegexOptions.Multiline);
 
         // NB: no bare "regenerate" — "can't be regenerated" (Wrath) would false-positive.
@@ -1008,7 +1020,7 @@ namespace ScatoloneDownloader.Cube
             // a card whose ONLY pump is restricted to one creature type. See the
             // patterns above; the "only" is why the tribal phrases are blanked and
             // the question asked again rather than tested in place.
-            if (result.HasFlag(CardEffect.Buff) && OnlyPumpsATribe(text))
+            if (result.HasFlag(CardEffect.Buff) && (OnlyPumpsATribe(text) || OnlyPumpsInsideQuotes(text)))
             {
                 result &= ~CardEffect.Buff;
             }
@@ -1161,6 +1173,36 @@ namespace ScatoloneDownloader.Cube
             return false;
         }
 
+        /// <summary>True when every pump on the card is written INSIDE QUOTES —
+        /// an ability the card hands to a token it creates (Chocobo Racetrack's
+        /// Bird, Gysahl Greens') or to somebody else's creature (Armor Sliver's
+        /// Slivers). What the card does is make the token or grant the ability;
+        /// the pump belongs to whatever received it.
+        /// <para>
+        /// A quoted ability that pumps a TARGET is the exception and keeps the
+        /// tag: Forbidden Lore's enchanted land taps to pump any creature, which
+        /// is a Buff the card handed you. Costs 2 against the hand-tagging to say
+        /// so, and it is said anyway — those two cards are right.
+        /// </para></summary>
+        private static bool OnlyPumpsInsideQuotes(string text)
+        {
+            if (!PumpInsideQuotes.IsMatch(text) || PlainPump.IsMatch(Quoted.Replace(text, " ")))
+            {
+                return false;
+            }
+
+            foreach (Match quote in Quoted.Matches(text))
+            {
+                if (PlainPump.IsMatch(quote.Value)
+                    && quote.Value.Contains("target", StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         /// <summary>True when every Buff wording on the card sits inside a pump
         /// restricted to one creature type. Blank the tribal phrases out and ask
         /// again, so a lord that also pumps something unrestricted keeps the tag.
@@ -1172,8 +1214,13 @@ namespace ScatoloneDownloader.Cube
                 return false;
             }
 
+            // Asked with PlainPump rather than BuffPatterns on purpose: the tribal
+            // phrase stops at the verb, so the numbers it was about ("+2/+0 until
+            // end of turn") survive the blanking and the bare "+N/+N until end of
+            // turn" pattern would see them and vouch for a pump that is not there.
             string rest = TribalPump.Replace(text, " ");
-            return !BuffPatterns.Any(p => p.IsMatch(rest))
+            return !PlainPump.IsMatch(rest)
+                && !Rx(@"creatures you control get \+").IsMatch(rest)
                 && !(CounterOnSomebodyElse.IsMatch(rest) && !CounterForAnOpponent.IsMatch(rest));
         }
 
@@ -1218,6 +1265,19 @@ namespace ScatoloneDownloader.Cube
                     int lineStart = text.LastIndexOf('\n', Math.Max(0, match.Index - 1)) + 1;
                     int from = Math.Max(lineStart, match.Index - 80);
                     string before = text.Substring(from, match.Index - from);
+
+                    // The subject of an effect is in its OWN clause, so cut the
+                    // window back to the last colon or sentence end. Without this
+                    // the ACTIVATION COST supplies a false beneficiary: "Tap an
+                    // untapped creature you control: THIS CREATURE gets +1/+1"
+                    // pumps nobody but itself, and so do Karplusan Giant, Vodalian
+                    // War Machine and Comet Crawler's "sacrifice ANOTHER creature.
+                    // If you do, this creature gets +2/+2". Added 2026-09-17.
+                    int clause = Math.Max(before.LastIndexOf(':'), before.LastIndexOf(". ", StringComparison.Ordinal));
+                    if (clause >= 0)
+                    {
+                        before = before[(clause + 1)..];
+                    }
 
                     if (Beneficiary.IsMatch(before) || Beneficiary.IsMatch(AfterCounterClause(text, match)))
                     {

@@ -306,6 +306,53 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // The ACTIVATION COST was being read as the beneficiary: the creature you tap
+    // to pay is not the creature being pumped. Found 2026-09-17.
+    [InlineData("Llanowar Behemoth", "Creature — Elemental",
+        "Tap an untapped creature you control: This creature gets +1/+1 until end of turn.")]
+    [InlineData("Karplusan Giant", "Creature — Giant",
+        "Tap an untapped snow land you control: This creature gets +1/+1 until end of turn.")]
+    // And a condition in the same sentence does the same thing.
+    [InlineData("Comet Crawler", "Creature — Insect",
+        "Lifelink\nWhenever this creature attacks, you may sacrifice another creature or artifact. If you do, this creature gets +2/+2 until end of turn.")]
+    // A pump the card hands to a token it creates belongs to the token.
+    [InlineData("Chocobo Racetrack", "Land",
+        "Landfall — Whenever a land you control enters, create a 2/2 green Bird creature token with \"Whenever a land you control enters, this creature gets +1/+1 until end of turn.\"")]
+    // Lords the type rule could not see: no "creatures" word, or behind a cost.
+    [InlineData("Lord of Atlantis", "Creature — Merfolk",
+        "Other Merfolk get +1/+1 and have islandwalk.")]
+    [InlineData("Adeliz, the Cinder Wind", "Legendary Creature — Efreet Wizard",
+        "Flying, haste\nWhenever you cast an instant or sorcery spell, Wizards you control get +1/+1 until end of turn.")]
+    [InlineData("Faerie Noble", "Creature — Faerie Lord",
+        "Flying\nOther Faerie creatures you control get +0/+1.\n{T}: Other Faerie creatures get +2/+0 until end of turn.")]
+    public void Classify_APumpThatLandsSomewhereElse_IsNotBuff(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Fact]
+    public void Classify_AQuotedAbilityThatPumpsATarget_StaysBuff()
+    {
+        // The exception to the quotes rule: the granted ability pumps ANY
+        // creature, so the card handed you a Buff.
+        CardEffect result = EffectClassifier.Classify(MakeCard("Forbidden Lore", "Enchantment — Aura",
+            "Enchant land\nEnchanted land has \"{T}: Target creature gets +2/+1 until end of turn.\""));
+
+        Assert.True(result.HasFlag(CardEffect.Buff));
+    }
+
+    [Fact]
+    public void Classify_ATriggerThatPumpsTheTeam_StaysBuff()
+    {
+        // The cost-cutting must not swallow this: "this creature" is only the
+        // trigger's subject, and the pump lands on the whole team.
+        CardEffect result = EffectClassifier.Classify(MakeCard("Dauntless Veteran", "Creature — Human Soldier",
+            "Whenever this creature attacks, creatures you control get +1/+1 until end of turn."));
+
+        Assert.True(result.HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
     // What "tribe" does NOT mean. A colour is not a tribe (Crusade, Bad Moon), a
     // STATE is not a tribe (Castle, Weakstone), and an unrestricted anthem is the
     // thing the tag is for.
@@ -912,8 +959,12 @@ public sealed class EffectClassifierTests
     [InlineData("Bonesplitter", "Artifact — Equipment", "Equipped creature gets +2/+0.\nEquip {1}", CardEffect.Buff)]
     // The beneficiary is whatever type line the card names, not just "creatures",
     // and it can be a battlefield state rather than a controller.
-    [InlineData("Adeliz, the Cinder Wind", "Legendary Creature — Efreet Wizard",
-        "Flying, haste\nWhenever you cast an instant or sorcery spell, Wizards you control get +1/+1 until end of turn.", CardEffect.Buff)]
+    //
+    // Adeliz used to be here as a Buff. It pumps WIZARDS, and the 2026-09-15
+    // ruling took tribal lords out of the tag; it only kept passing because the
+    // tribal rule wanted the phrase at the start of a line, and Adeliz puts it
+    // after a trigger comma. Widening the clause openers on 2026-09-17 made the
+    // classifier agree with the ruling, so the case moved to the tribal tests.
     [InlineData("Ainok Strike Leader", "Creature — Hound Soldier",
         "Sacrifice this creature: Creature tokens you control gain indestructible until end of turn.", CardEffect.Protection)]
     [InlineData("Agrus Kos, Wojek Veteran", "Legendary Creature — Human Soldier",
