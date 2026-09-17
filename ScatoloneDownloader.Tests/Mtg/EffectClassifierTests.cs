@@ -437,6 +437,60 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // The damage rules could not read a QUALIFIED target: the adjective sits
+    // between "target" and "creature", where nothing was allowed to.
+    [InlineData("D'Avenant Archer", "Creature — Human Soldier Archer",
+        "{T}: This creature deals 1 damage to target attacking or blocking creature.")]
+    [InlineData("Femeref Archers", "Creature — Human Archer",
+        "{T}: This creature deals 4 damage to target attacking creature with flying.")]
+    [InlineData("Cloud of Darkness", "Creature — Elemental",
+        "Flying\nParticle Beam — When Cloud of Darkness enters, target creature an opponent controls gets -X/-X until end of turn.")]
+    // And the amount is allowed to come after the target.
+    [InlineData("Divine Retribution", "Instant",
+        "Divine Retribution deals damage to target attacking creature equal to the number of creatures defending player controls.")]
+    // A fireball split between several things still kills one of them.
+    [InlineData("Fiery Justice", "Sorcery",
+        "Fiery Justice deals 5 damage divided as you choose among any number of targets. Target opponent gains 5 life.")]
+    [InlineData("Dwarven Catapult", "Sorcery",
+        "Dwarven Catapult deals X damage divided evenly, rounded down, among all creatures your opponents control.")]
+    // An edict aimed at them, in a wording the single shipped pattern missed.
+    [InlineData("Cornered by Black Mages", "Sorcery",
+        "Target opponent sacrifices a creature of their choice.\nCreate a 0/1 black Wizard creature token.")]
+    public void Classify_KillsTheDamageRulesCouldNotRead_AreRemoval(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
+    // NONCREATURE ends in "creature", so these read as kills. The same bug the
+    // tap/untap pair had, found the same way.
+    [InlineData("Gorilla Shaman", "Creature — Ape",
+        "{X}{X}{1}: Destroy target noncreature artifact with mana value X.")]
+    [InlineData("Joven", "Legendary Creature — Human Rogue",
+        "{R}{R}{R}, {T}: Destroy target noncreature artifact.")]
+    // And an answer that can only ever touch what is already blocking the card
+    // is a combat trick, not removal — the reading Wipe already had.
+    [InlineData("Knight of Dusk", "Creature — Human Knight",
+        "{B}{B}: Destroy target creature blocking this creature.")]
+    [InlineData("Flowstone Salamander", "Creature — Elemental Lizard",
+        "{R}: This creature deals 1 damage to target creature blocking it.")]
+    public void Classify_NoncreatureAndCombatTricks_AreNotRemoval(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
+    }
+
+    [Fact]
+    public void Classify_ASymmetricEdict_IsNotRemoval()
+    {
+        // "Each player sacrifices" costs you a creature too, and the hand-tagging
+        // declines those. Only an edict aimed at THEM counts.
+        CardEffect result = EffectClassifier.Classify(MakeCard("Abyssal Gatekeeper", "Creature — Horror",
+            "When this creature dies, each player sacrifices a creature of their choice."));
+
+        Assert.False(result.HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
     // Two families the wider reading has to keep out. A blink returns the card,
     // so it answers nothing; a card already in a graveyard is already dead.
     [InlineData("Explosive Getaway", "Instant",

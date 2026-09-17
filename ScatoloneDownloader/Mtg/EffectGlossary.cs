@@ -29,7 +29,8 @@ namespace ScatoloneDownloader.Mtg
             [CardEffect.Removal] =
                 "Answers one creature or planeswalker: destroy it, exile it, point damage at it, fight it, make its "
                 + "controller sacrifice it, or shrink its toughness to nothing (-3/-3, a -1/-1 counter). A \"-2/-0\" "
-                + "leaves it standing, so that is Pacify; \"each creature gets -1/-1\" is a Wipe.",
+                + "leaves it standing (Pacify), \"each creature\" is a Wipe, \"each player sacrifices\" costs you one "
+                + "too, and answering only what already blocks you is a combat trick.",
 
             [CardEffect.Counter] =
                 "Answers a spell on the stack by countering it.",

@@ -211,7 +211,8 @@ namespace ScatoloneDownloader.Cube
         // filler sits in front of "target". That was 49 of the 189 misses, and
         // repairing it cost no precision at all once two families are kept out.
         private static readonly Regex KillsAcrossCommas = Rx(
-            @"(?:destroy|exile) (?:[\w -]{0,15})?target[\w ,-]{0,45}creature");
+            @"(?:destroy|exile) (?:[\w -]{0,15})?target[\w ,-]{0,45}(?<!non)creature");
+
 
         // It comes back: a blink is not an answer.
         private static readonly Regex ReturnsItToPlay = Rx(
@@ -235,8 +236,11 @@ namespace ScatoloneDownloader.Cube
         // Pacify's job, not this one. And the shrink has to be aimed at ONE named
         // creature — measured, reading a mass "-1/-1 to each creature" as Removal
         // costs 38 errors, because that is a Wipe and is tagged as one.
+        // The qualifier sits in two places and both had to be allowed for: before
+        // the noun ("target ATTACKING creature") and after it ("target creature
+        // AN OPPONENT CONTROLS gets -X/-X"). Widened 2026-09-17.
         private static readonly Regex ShrinksOneCreature = Rx(
-            @"target creature gets? -[\dX]+/-[1-9X]");
+            @"target [\w -]{0,28}(?<!non)creature[\w ' -]{0,28}gets? -[\dX]+/-[1-9X]");
 
         private static readonly Regex ShrinkCounters = Rx(
             @"put(?:s)? (?:a|an|two|three|four|\d+|x) -1/-1 counters? on (?:target|another target|up to)");
@@ -439,7 +443,14 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex[] PacifyPatterns = [AnyUntapLock, PreventsWhatACreatureDeals, .. PacifyOutward];
 
         // See the two guards these feed, down in Classify.
-        private static readonly Regex OnlyWhatIsInCombatWithIt = Rx(@"blocking or blocked by");
+        // Shared by Wipe and Removal: an answer that can only ever touch what is
+        // already fighting the card is a combat trick. "Destroy all creatures
+        // blocking or blocked by this creature" reads like a sweeper (Abu Ja'far,
+        // the Glyph cycle) and "destroy target creature blocking it" reads like a
+        // kill (Knight of Dusk, Flowstone Salamander, Urborg Panther). Neither
+        // answers anything you were not already in combat with.
+        private static readonly Regex OnlyWhatIsInCombatWithIt = Rx(
+            @"blocking or blocked by|blocking (?:this creature|it)\b|blocked by (?:this creature|it)\b");
 
         private static readonly Regex RestrictedMana = Rx(@"spend this mana only");
 
@@ -552,12 +563,26 @@ namespace ScatoloneDownloader.Cube
             //
             // Fight is the same act with the damage delegated to a creature you
             // already control, and an edict removes without ever saying "target".
-            (CardEffect.Removal, [Rx(@"destroy target[\w ]*creature"), Rx(@"exile target[\w ]*creature"),
-                Rx(@"destroy target[\w ]*(creature|planeswalker)"),
+            // The lookbehind is load-bearing in every one of these: NONCREATURE
+            // ends in "creature", so "destroy target noncreature artifact"
+            // (Gorilla Shaman, Joven) read as a kill. Same shape as tap/untap.
+            (CardEffect.Removal, [
+                Rx(@"destroy target[\w ]*(?<!non)creature"), Rx(@"exile target[\w ]*(?<!non)creature"),
+                Rx(@"destroy target[\w ]*((?<!non)creature|planeswalker)"),
                 Rx(@"deals? [\dX]+ damage to any target"),
-                Rx(@"deals? [\dX]+ damage to [\w ]{0,20}target creature"),
+                // The damage rules could not read a QUALIFIED target — "damage to
+                // target ATTACKING creature", "to target creature AN OPPONENT
+                // CONTROLS" — which was 23 of the misses on its own, and the
+                // amount is allowed to come after the target as well.
+                Rx(@"deals? [\dX]+ damage to [\w ]{0,20}target [\w -]{0,28}(?<!non)creature"),
+                Rx(@"deals damage to [\w ]{0,20}target [\w -]{0,28}(?<!non)creature equal to"),
+                // A fireball split between several things still kills one of them.
+                Rx(@"deals? [\dX]+ damage divided (?:evenly, rounded down, |as you choose )?among"),
                 Rx(@"\bfights?\b"),
-                Rx(@"target player sacrifices a creature")]),
+                // An edict, in every wording — but aimed at THEM. "Each player
+                // sacrifices" costs you a creature too, and the hand-tagging
+                // declines those (Abyssal Gatekeeper, Pillar Tombs of Aku).
+                Rx(@"(?:target player|target opponent|each opponent)[\w ,]{0,30}sacrifices? (?:a|an|one|two|\d+)[\w ]{0,25}(?<!non)creature")]),
 
             (CardEffect.Counter, [Rx(@"counter target[\w ]*spell")]),
 
@@ -850,6 +875,14 @@ namespace ScatoloneDownloader.Cube
             if (ShrinksOneCreature.IsMatch(text) || ShrinkCounters.IsMatch(text))
             {
                 result |= CardEffect.Removal;
+            }
+
+            // Last, so it can take the tag back off whatever granted it: a card
+            // that can only answer what is already blocking it. See the pattern
+            // above; nothing else on these cards points outward.
+            if (result.HasFlag(CardEffect.Removal) && OnlyWhatIsInCombatWithIt.IsMatch(text))
+            {
+                result &= ~CardEffect.Removal;
             }
 
             // A Wall is not a Pacify effect. See the patterns above.
