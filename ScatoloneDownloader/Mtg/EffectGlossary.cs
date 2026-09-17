@@ -27,10 +27,9 @@ namespace ScatoloneDownloader.Mtg
                 + "a token an opponent creates is not yours. Earthbend and \"all lands are 1/1 creatures\" do count.",
 
             [CardEffect.Removal] =
-                "Answers one creature or planeswalker: destroy it, exile it, point damage at it, fight it, make its "
-                + "controller sacrifice it, or shrink its toughness to nothing (-3/-3, a -1/-1 counter). A \"-2/-0\" "
-                + "leaves it standing (Pacify), \"each creature\" is a Wipe, \"each player sacrifices\" costs you one "
-                + "too, and answering only what already blocks you is a combat trick.",
+                "Answers ONE creature: destroy, exile, damage, fight, an edict aimed at THEM, or shrink its toughness "
+                + "to nothing. Not \"-2/-0\" (Pacify), not \"each creature\" (Wipe), not \"each player sacrifices\", "
+                + "and not what only answers a creature already blocking you.",
 
             [CardEffect.Counter] =
                 "Answers a spell on the stack by countering it.",
