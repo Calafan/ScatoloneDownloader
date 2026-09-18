@@ -1109,6 +1109,31 @@ public sealed class EffectClassifierTests
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
     }
 
+    [Theory]
+    // A colour filter: you feed it mana and it hands back a colour you did not
+    // have. Ruled 2026-09-18, the mirror of the Ramp ruling — the ability that
+    // adds no mana converts colour, and that IS the job.
+    [InlineData("Farrelite Priest", "Creature — Human Cleric", "{1}: Add {W}.")]
+    [InlineData("Fire Sprites", "Creature — Faerie", "Flying\n{G}, {T}: Add {R}.")]
+    [InlineData("Agent of Stromgald", "Creature — Human Spellshaper", "{R}: Add {B}.")]
+    [InlineData("Sea Scryer", "Creature — Merfolk Wizard", "{T}: Add {C}.\n{1}, {T}: Add {U}.")]
+    [InlineData("Viridescent Bog", "Land", "{1}, {T}: Add {B}{G}.")]
+    public void Classify_AColourFilter_IsManaFixing(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
+    }
+
+    [Theory]
+    // …but paying a colour for MORE OF THE SAME colour filters nothing, and
+    // paying for colourless fixes nothing either.
+    [InlineData("Evendo, Waking Haven", "Land — Planet",
+        "This land enters tapped.\n{T}: Add {G}.\n12+ | {G}, {T}: Add {G} for each creature you control.")]
+    [InlineData("Sisay's Ring", "Artifact", "{T}: Add {C}{C}.")]
+    public void Classify_MoreOfWhatYouPaid_IsNotAColourFilter(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
+    }
+
     [Fact]
     public void Classify_CyclingThatFetchesACreature_IsNotManaFixing()
     {

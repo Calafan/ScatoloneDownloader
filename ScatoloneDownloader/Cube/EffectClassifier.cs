@@ -903,6 +903,25 @@ namespace ScatoloneDownloader.Cube
                 // over the 5,035 reviewed cards, to-hand was tagged 28 of 30
                 // (93.3%) and to-battlefield 8 of 51 (15.7%). Worth 17 on its own.
                 LandSearchToHand, LandSearchToTop,
+                // A colour filter: you feed it mana and it hands back a colour
+                // you did not have. Ruled 2026-09-18, the mirror of the Ramp
+                // ruling — the same ability that adds no mana converts colour,
+                // and that IS the job. Two shapes, and the difference matters:
+                //
+                //   GENERIC in, colour out  — Farrelite Priest "{1}: Add {W}",
+                //   Sea Scryer, Coal Golem. Always a filter.
+                //
+                //   COLOUR in, a DIFFERENT colour out — Fire Sprites "{G}, {T}:
+                //   Add {R}", Agent of Stromgald. The backreference is the whole
+                //   point: Evendo's "{G}, {T}: Add {G} for each creature you
+                //   control" pays green for more green, which is Ramp and not a
+                //   filter, and it was the only thing the first pattern got
+                //   wrong.
+                //
+                // {C} is deliberately not an output colour — colourless fixes
+                // nothing.
+                Rx(@"^[^\n:]*\{\d+\}[^\n:]*: add [\w ]{0,20}\{[wubrg]\}", RegexOptions.Multiline),
+                Rx(@"^[^\n:]*\{([wubrg])\}[^\n:]*: add [\w ]{0,20}\{(?!\1)[wubrg]\}", RegexOptions.Multiline),
                 // A Treasure is one mana of whatever colour you were short of.
                 // It fixes however many you get; whether it also RAMPS is the
                 // separate question TreasureAlsoRamps asks. Ruled 2026-09-18.
