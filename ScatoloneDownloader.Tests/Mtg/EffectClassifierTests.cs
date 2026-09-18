@@ -998,6 +998,126 @@ public sealed class EffectClassifierTests
         Assert.False(result.HasFlag(CardEffect.ManaFixing));
     }
 
+    [Theory]
+    // The eight Ramp families ruled 2026-09-18. Each is mana you did not have to
+    // make, or a land you did not have to draw.
+    [InlineData("Stone Calendar", "Artifact", "Spells you cast cost {1} less to cast.")]
+    [InlineData("Wall of Roots", "Creature — Plant Wall",
+        "Defender\nPut a -0/-1 counter on this creature: Add {G}. Activate only once each turn.")]
+    [InlineData("Elvish Spirit Guide", "Creature — Elf Spirit", "Exile this card from your hand: Add {G}.")]
+    [InlineData("Fastbond", "Enchantment", "You may play any number of lands on each of your turns.")]
+    [InlineData("Wild Growth", "Enchantment — Aura",
+        "Enchant land\nWhenever enchanted land is tapped for mana, its controller adds an additional {G}.")]
+    [InlineData("Skyshroud Ranger", "Creature — Elf Scout",
+        "{T}: You may put a land card from your hand onto the battlefield. Activate only as a sorcery.")]
+    [InlineData("Ley Druid", "Creature — Human Druid", "{T}: Untap target land.")]
+    [InlineData("Veteran Explorer", "Creature — Human Soldier Scout",
+        "When this creature dies, each player may search their library for up to two basic land cards, "
+        + "put them onto the battlefield, then shuffle.")]
+    public void Classify_ManaYouDidNotHaveToMake_IsRamp(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // A discount on the card's own cost buys nothing you did not already have —
+    // hand-tagged Ramp on 0 of 40 cards, against 20 of 40 for the rest.
+    [InlineData("Affinity-style", "Artifact", "This spell costs {1} less to cast for each artifact you control.")]
+    // The land handed to the player a removal spell was aimed at is their
+    // consolation, not your ramp.
+    [InlineData("Emergency Eject", "Instant",
+        "Destroy target nonland permanent. Its controller creates a Lander token. (It's an artifact with "
+        + "\"{2}, {T}, Sacrifice this token: Search your library for a basic land card, put it onto the "
+        + "battlefield tapped, then shuffle.\")")]
+    // One land for one land is a swap. Harrow pays one for TWO and does ramp,
+    // which is why the count is the test and not the cost.
+    [InlineData("Renewal", "Sorcery",
+        "As an additional cost to cast this spell, sacrifice a land.\n"
+        + "Search your library for a basic land card, put that card onto the battlefield, then shuffle.")]
+    public void Classify_ManaOrLandThatIsNotYours_IsNotRamp(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Fact]
+    public void Classify_Harrow_PaysOneLandForTwo_IsRamp()
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard("Harrow", "Instant",
+            "As an additional cost to cast this spell, sacrifice a land.\n"
+            + "Search your library for up to two basic land cards, put them onto the battlefield, then shuffle."))
+            .HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // Mana that costs mana converts colour; it adds none. Asked of the whole
+    // card, so one free ability elsewhere keeps the tag. The cost is any mana
+    // symbol, coloured included — Fire Sprites asks {G} for its {R} and is the
+    // plainest card in the family.
+    [InlineData("Fire Sprites", "Creature — Faerie", "Flying\n{G}, {T}: Add {R}.")]
+    [InlineData("Celestial Prism", "Artifact", "{2}, {T}: Add one mana of any color.")]
+    public void Classify_ManaThatCostsMana_IsNotRamp(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Fact]
+    public void Classify_PaidManaThatGivesBackMore_IsStillRamp()
+    {
+        // "…salvo esempi che generano più mana del costo": Astrolabe pays {1}
+        // for two, so it is up on the trade.
+        Assert.True(EffectClassifier.Classify(MakeCard("Astrolabe", "Artifact",
+            "{1}, {T}, Sacrifice this artifact: Add two mana of any one color."))
+            .HasFlag(CardEffect.Ramp));
+    }
+
+    [Fact]
+    public void Classify_OneFreeAbilityBesideAPaidOne_IsStillRamp()
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard("Mana Prism", "Artifact",
+            "{T}: Add {C}.\n{1}, {T}: Add one mana of any color."))
+            .HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // A Treasure is a Lotus Petal in token form: it always fixes, and it ramps
+    // when you get several at once or over and over. One, once, is a rider —
+    // the line already drawn for the Clue. Ruled 2026-09-18.
+    [InlineData("Professional Wrestler", "Creature — Human Warrior",
+        "When this creature enters, create a Treasure token.", false)]
+    [InlineData("Gilded Ghoda", "Creature — Frog Mount",
+        "Whenever this creature attacks while saddled, create a Treasure token.", true)]
+    [InlineData("Goldvein Pick-Axe", "Artifact — Equipment",
+        "Whenever equipped creature deals combat damage to a player, create two Treasure tokens.", true)]
+    public void Classify_Treasure_AlwaysFixes_AndRampsWhenThereAreSeveral(
+        string name, string typeLine, string oracle, bool ramps)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.ManaFixing));
+        Assert.Equal(ramps, result.HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // Every LAND flavour of cycling fixes. "Basic landcycling" is printed on 125
+    // cards, more than all five named types together, and was missed until now.
+    [InlineData("Sylvan Reclamation", "Instant", "Basic landcycling {1}{W}{W}")]
+    [InlineData("Twisted Landscape", "Land", "Landcycling {2}")]
+    [InlineData("Sheltering Ancient", "Creature — Treefolk", "Forestcycling {2}")]
+    public void Classify_Landcycling_IsManaFixing(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
+    }
+
+    [Fact]
+    public void Classify_CyclingThatFetchesACreature_IsNotManaFixing()
+    {
+        // Slivercycling, wizardcycling and halflingcycling fetch a body, not a
+        // colour. Note "islandcycling" contains "landcycling" with no word
+        // boundary in front of it, which is why \b keeps the two apart.
+        Assert.False(EffectClassifier.Classify(MakeCard("Gemhide Sliver", "Creature — Sliver", "Slivercycling {2}"))
+            .HasFlag(CardEffect.ManaFixing));
+    }
+
     [Fact]
     public void Classify_DualLand_IsManaFixing_NotRamp()
     {

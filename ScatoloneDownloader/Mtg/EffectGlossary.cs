@@ -48,9 +48,9 @@ namespace ScatoloneDownloader.Mtg
                 + "Returning itself as a cost or an end-step drawback is a price the card pays, not an answer.",
 
             [CardEffect.Ramp] =
-                "More mana, or sooner: a mana ability on a creature or rock, a land put onto the battlefield, a "
-                + "permanent that spends itself for mana (Black Lotus, Blood Pet), a ritual. A land tapping for its "
-                + "own single mana is just a land, and a land that enters tapped never counts.",
+                "More mana, or sooner: a mana ability on a creature or rock, a land onto the battlefield, a ritual, "
+                + "a cost reduction, an extra land drop, untapping lands, several Treasures. Mana that COSTS mana "
+                + "fixes colour instead. A land tapping for its own one mana is just a land.",
 
             [CardEffect.Disenchant] =
                 "Destroys or exiles a targeted artifact or enchantment.",
@@ -97,9 +97,9 @@ namespace ScatoloneDownloader.Mtg
                 "Searches the library for a specific nonland card. A land search is Ramp or ManaFixing.",
 
             [CardEffect.ManaFixing] =
-                "Fixes colours: a choice of colour that COSTS you something, typecycling, a land with two abilities, "
-                + "a land fetched to HAND. Free for a tap is just Ramp (Birds), unless it's a land. Not a land put "
-                + "onto the battlefield, not mana you may only spend on one thing.",
+                "Fixes colours: a choice that COSTS you something, any landcycling, a land with two abilities, a "
+                + "land fetched to HAND, a Treasure. Free for a tap is just Ramp (Birds), unless it's a land. Not a "
+                + "land put onto the battlefield, not mana you may only spend on one thing.",
 
             [CardEffect.Pacify] =
                 "Neutralises somebody else's creature without killing it: can't attack or block, tapped down, "

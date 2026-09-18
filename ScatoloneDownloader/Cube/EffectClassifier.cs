@@ -481,7 +481,98 @@ namespace ScatoloneDownloader.Cube
 
         private static readonly Regex RestrictedMana = Rx(@"spend this mana only");
 
-        private static readonly Regex TypeCycling = Rx(@"\b(?:plains|island|swamp|mountain|forest)cycling\b");
+        // Every LAND flavour of cycling, ruled 2026-09-18. "Basic landcycling" is
+        // printed on 125 cards — more than all five named types put together —
+        // and was missed entirely. The others (slivercycling, wizardcycling,
+        // halflingcycling, affinitycycling) fetch a creature, not a colour, and
+        // stay out. NB "islandcycling" contains "landcycling" but no word
+        // boundary in front of it, so \b keeps the two apart.
+        private static readonly Regex TypeCycling = Rx(
+            @"\b(?:basic )?landcycling\b|\b(?:plains|island|swamp|mountain|forest|desert)cycling\b");
+
+        // ---- Ramp, the families ruled 2026-09-18 ----
+
+        // Cost reduction is mana you never had to make. Only for OTHER spells:
+        // "this spell costs {1} less to cast" is a discount on itself and was
+        // hand-tagged Ramp on 0 of 40 cards, against 20 of 40 for the rest.
+        private static readonly Regex CostsLessToCast = Rx(@"costs? \{\d+\} less to cast");
+        private static readonly Regex CostsLessForItself = Rx(@"this spell costs \{\d+\} less to cast");
+
+        // Any activated ability on a NON-LAND that adds mana, whatever it asks
+        // for: a tap (Llanowar Elves), a counter (Wall of Roots), a card out of
+        // hand (Elvish Spirit Guide), charge counters (the Mana Batteries). The
+        // land exclusion is the existing structural one — a land making mana is
+        // just a land.
+        private static readonly Regex ActivatedManaAbility = Rx(
+            @"^[^\n:]{1,70}: add [\w ]{0,20}\{", RegexOptions.Multiline);
+
+        private static readonly Regex ExtraLandDrop = Rx(
+            @"play an additional land|play any number of lands|play up to \w+ additional lands"
+            + @"|additional lands? on each of your turns");
+
+        private static readonly Regex ManaMultiplier = Rx(
+            @"adds? an additional \{|for mana, (?:that player|its controller|they)[\w ]{0,12}adds?"
+            + @"|tapped for mana[^\n]{0,40}adds?");
+
+        private static readonly Regex LandFromHandToPlay = Rx(
+            @"lands? cards? from your hand[\w \/]{0,30}onto the battlefield");
+
+        // (?<!non) because "untap all NONLAND permanents" ends in the same
+        // letters — the same word-boundary trap as islandwalk and noncreature.
+        private static readonly Regex UntapsLands = Rx(
+            @"untap (?:target|all|x target|up to \w+ target)[\w ]{0,20}(?<!non)"
+            + @"(?:lands?|forests?|islands?|swamps?|mountains?|plains)\b"
+            + @"|untaps all basic lands");
+
+        private static readonly Regex LandOntoTheBattlefield = Rx(
+            @"lands? cards?[\w ,'\/]{0,60}onto the battlefield"
+            + @"|search your library for[\w ,'\/]{0,80}(?:land|forest|plains|island|swamp|mountain)"
+            + @"[\w ,'\/]{0,60}onto the battlefield");
+
+        // …but the land handed to the player a removal spell was aimed at is
+        // their consolation, not your ramp: Emergency Eject, Price of Freedom,
+        // Sandworm, Divert Disaster all say "its controller creates a Lander".
+        private static readonly Regex LandForSomebodyElse = Rx(
+            @"its controller (?:creates|may search|searches|puts)"
+            + @"|(?:that|target|defending) player (?:creates|may search|searches|puts)");
+
+        // A Treasure is a Lotus Petal in token form, so it always FIXES. Whether
+        // it also RAMPS is a question of how many you get: one, once, is a rider
+        // — the same line already drawn for the Clue. Ruled 2026-09-18.
+        private static readonly Regex MakesATreasure = Rx(@"treasure token");
+        private static readonly Regex SeveralTreasures = Rx(
+            @"create (?:two|three|four|five|x|\d+) treasure tokens"
+            + @"|creates? that many treasure tokens"
+            + @"|treasure tokens? for each|(?:two|three|four|\d+) treasure tokens");
+
+        // The Treasure's own reminder text carries "{T}, Sacrifice this token:",
+        // which would make every Treasure card read as repeatable.
+        private static readonly Regex TreasureReminderText = Rx(@"\(it's an artifact with[^)]*\)");
+
+        // Mana that costs mana converts colour, it does not add any — unless it
+        // hands back more than it took. See EveryManaAbilityIsPaidAndPoor.
+        //
+        // The cost is any MANA symbol, generic or coloured: Fire Sprites asks
+        // {G} for its {R} and is the plainest card in the family, so a pattern
+        // that only read {2} would have missed the whole point.
+        private static readonly Regex PaidManaAbility = Rx(
+            @"^[^\n:]*\{[\dwubrg]\}[^\n:]*: add ", RegexOptions.Multiline);
+        private static readonly Regex PaidManaGivesBackMore = Rx(
+            @"^[^\n:]*\{[\dwubrg]\}[^\n:]*: add (?:two|three|four|five|x|\d+) "
+            + @"|^[^\n:]*\{[\dwubrg]\}[^\n:]*: add \{[wubrgc]\}\{", RegexOptions.Multiline);
+
+        // Swapping ONE land for ONE land moves no mana: Renewal sacrifices a
+        // land to fetch a land and was hand-tagged ManaFixing alone. The count
+        // is the whole test — Harrow pays one land for TWO and is Ramp, so a
+        // veto that only read the cost would have thrown it out.
+        //
+        // The Lander token is NOT in this family and is deliberately left alone:
+        // it fetches a real land onto the battlefield, and the 17 reviewed cards
+        // that make one are all hand-tagged Ramp. Blanking the token's reminder
+        // text was tried on 2026-09-18 and lost every one of them.
+        private static readonly Regex PaysALandForTheLand = Rx(
+            @"as an additional cost to cast this spell, sacrifice a land"
+            + @"[\s\S]{0,140}search your library for an? basic land card");
 
         // See the ManaFixing rule-table entry for the ruling these two carry.
         private static readonly Regex LandSearchToHand = Rx(
@@ -812,6 +903,10 @@ namespace ScatoloneDownloader.Cube
                 // over the 5,035 reviewed cards, to-hand was tagged 28 of 30
                 // (93.3%) and to-battlefield 8 of 51 (15.7%). Worth 17 on its own.
                 LandSearchToHand, LandSearchToTop,
+                // A Treasure is one mana of whatever colour you were short of.
+                // It fixes however many you get; whether it also RAMPS is the
+                // separate question TreasureAlsoRamps asks. Ruled 2026-09-18.
+                MakesATreasure,
                 // A land with two mana abilities in different colours fixes even
                 // though no single line says "or" — Bleachbone Verge, and the
                 // whole modern "{T}: Add {B}. / {T}: Add {W}." cycle.
@@ -819,8 +914,11 @@ namespace ScatoloneDownloader.Cube
 
             // Mana ability (dork/rock) or a land-fetch to the battlefield. Lands
             // are stripped below — a land tapping for its own mana is not "ramp".
-            (CardEffect.Ramp, [Rx(@"\{t\}: add "),
-                Rx(@"search your library for[\w ]*(land|forest|plains|island|swamp|mountain)[\w ,]*put[\w ]*onto the battlefield")]),
+            // The land-search rule that used to sit here moved into the guarded
+            // branch in Classify, where LandOntoTheBattlefield says the same
+            // thing more widely AND asks the two questions this one could not:
+            // whose land is it, and did you pay a land for it.
+            (CardEffect.Ramp, [Rx(@"\{t\}: add ")]),
 
             (CardEffect.Pacify, PacifyPatterns),
         ];
@@ -879,6 +977,12 @@ namespace ScatoloneDownloader.Cube
 
                 // …unless it makes more mana than it costs, every turn. See the
                 // pattern above for why the self-sacrificing ones stay out.
+                // Entering tapped is deliberately NOT asked here, though it is
+                // asked of the sacrifice-for-mana rule below. Tried on
+                // 2026-09-18 to catch Teferi's Isle and reverted: it took the
+                // five Karoo lands with it, and those give a land back, so they
+                // tap for two net every turn after the first. One card gained,
+                // five lost.
                 if (LandTapsForMoreThanOne.IsMatch(text))
                 {
                     result |= CardEffect.Ramp;
@@ -891,6 +995,30 @@ namespace ScatoloneDownloader.Cube
                 && !LandEntersTapped.IsMatch(text))
             {
                 result |= CardEffect.Ramp;
+            }
+
+            // The eight families ruled 2026-09-18, all after the land strip for
+            // the same reason. Each is documented on its own pattern above.
+            if (CostsLessToCast.IsMatch(CostsLessForItself.Replace(text, " "))
+                || (card.MacroType != MacroType.Land && ActivatedManaAbility.IsMatch(text))
+                || ExtraLandDrop.IsMatch(text)
+                || ManaMultiplier.IsMatch(text)
+                || LandFromHandToPlay.IsMatch(text)
+                || UntapsLands.IsMatch(text)
+                || (card.MacroType != MacroType.Land
+                    && LandOntoTheBattlefield.IsMatch(text)
+                    && !LandForSomebodyElse.IsMatch(text) && !PaysALandForTheLand.IsMatch(text))
+                || TreasureAlsoRamps(text))
+            {
+                result |= CardEffect.Ramp;
+            }
+
+            // …and mana that costs mana adds nothing. Last, so it can withdraw
+            // the tag whichever rule above granted it, and asked of the whole
+            // card so that one free ability elsewhere keeps it.
+            if (result.HasFlag(CardEffect.Ramp) && EveryManaAbilityIsPaidAndPoor(text))
+            {
+                result &= ~CardEffect.Ramp;
             }
 
             // Protection is an INTERACTION you hold up, not a property a card
@@ -1286,6 +1414,47 @@ namespace ScatoloneDownloader.Cube
             return !PlainPump.IsMatch(rest)
                 && !Rx(@"creatures you control get \+").IsMatch(rest)
                 && !(CounterOnSomebodyElse.IsMatch(rest) && !CounterForAnOpponent.IsMatch(rest));
+        }
+
+        /// <summary>True when the card's Treasures come often enough or thick
+        /// enough to be extra mana rather than a rider: several at once, or one
+        /// on a repeating trigger or an activated ability. The reminder text is
+        /// blanked first, because it carries a colon and would make every
+        /// Treasure card read as repeatable.</summary>
+        private static bool TreasureAlsoRamps(string text)
+        {
+            if (!MakesATreasure.IsMatch(text))
+            {
+                return false;
+            }
+
+            return SeveralTreasures.IsMatch(text)
+                || RepeatableWording.IsMatch(TreasureReminderText.Replace(text, " "));
+        }
+
+        /// <summary>True when EVERY line that adds mana charges mana for it and
+        /// hands back no more than it took, so the card converts colour without
+        /// adding any. Per line for the same reason as
+        /// <see cref="AllManaIsRestricted"/>: one free ability is enough to make
+        /// the card ramp, however many paid ones sit beside it.</summary>
+        private static bool EveryManaAbilityIsPaidAndPoor(string text)
+        {
+            bool addsAny = false;
+            foreach (string line in text.Split('\n'))
+            {
+                if (!line.Contains(": Add ", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                addsAny = true;
+                if (!PaidManaAbility.IsMatch(line) || PaidManaGivesBackMore.IsMatch(line))
+                {
+                    return false;
+                }
+            }
+
+            return addsAny;
         }
 
         /// <summary>True when EVERY line that fixes colour asks for nothing but a
