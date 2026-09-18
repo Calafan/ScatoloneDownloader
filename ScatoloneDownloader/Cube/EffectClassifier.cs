@@ -285,6 +285,12 @@ namespace ScatoloneDownloader.Cube
             Rx(@"gets? \+\d+/\+\d+"),
             Rx(@"creatures you control get \+"),
             Rx(@"\+\d+/\+\d+ until end of turn"),
+            // A pump sized by X or by a count is still a pump; the rules only
+            // read digits. Added to THIS array rather than OR'd in later, which
+            // matters: half the cards it reaches are self-pumps ("this creature
+            // gets +1/+0 for each artifact you control") and only the beneficiary
+            // guard below can tell those apart. Added 2026-09-18.
+            Rx(@"gets? \+[xX]/\+[xX\d]|gets? \+\d+/\+[xX]|gets? \+[xX]/\+\d|gets? \+\d+/\+\d+ for each"),
         ];
 
         // A +1/+1 COUNTER is Buff, ruled 2026-09-15. It is the second vocabulary

@@ -306,6 +306,33 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // A pump sized by X or by a count is still a pump; the rules only read
+    // digits. Added 2026-09-18 INSIDE the beneficiary guard, which is the whole
+    // point — see the next test.
+    [InlineData("Berserk", "Instant",
+        "Cast this spell only before the combat damage step.\nTarget creature gains trample and gets +X/+0 until end of turn, where X is its power.")]
+    [InlineData("Soulshriek", "Instant",
+        "Target creature you control gets +X/+0 until end of turn, where X is the number of creature cards in your graveyard.")]
+    [InlineData("Frontline Rush", "Sorcery",
+        "Choose one —\n• Create two 1/1 red Goblin creature tokens.\n• Target creature gets +X/+X until end of turn, where X is the number of creatures you control.")]
+    public void Classify_APumpSizedByACount_IsBuff(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // Half the cards that scaling reaches pump only THEMSELVES, and the same
+    // guard that handles "+2/+2" has to handle these.
+    [InlineData("Rabid Wombat", "Creature — Beast",
+        "Vigilance\nThis creature gets +2/+2 for each Aura attached to it.")]
+    [InlineData("Guidelight Synergist", "Creature — Bird Artificer",
+        "Flying\nThis creature gets +1/+0 for each artifact you control.")]
+    public void Classify_AScalingSelfPump_IsNotBuff(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
     // The ACTIVATION COST was being read as the beneficiary: the creature you tap
     // to pay is not the creature being pumped. Found 2026-09-17.
     [InlineData("Llanowar Behemoth", "Creature — Elemental",
