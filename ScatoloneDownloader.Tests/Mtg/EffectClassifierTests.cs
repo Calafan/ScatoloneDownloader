@@ -257,8 +257,9 @@ public sealed class EffectClassifierTests
     [Fact]
     public void Classify_OneRestrictedAbilityAndOneFree_StaysManaFixing()
     {
-        CardEffect result = EffectClassifier.Classify(MakeCard("Hermitic Herbalist", "Creature — Elf Druid",
-            "{T}: Add one mana of any color.\n{T}: Add two mana in any combination of colors. Spend this mana only to cast creature spells."));
+        CardEffect result = EffectClassifier.Classify(MakeCard("White Lotus Hideout", "Land",
+            "{T}: Add {C}.\n{T}: Add one mana of any color. Spend this mana only to cast a Lesson or Shrine spell."
+            + "\n{1}, {T}: Add one mana of any color."));
 
         Assert.True(result.HasFlag(CardEffect.ManaFixing));
     }
@@ -937,12 +938,64 @@ public sealed class EffectClassifierTests
         Assert.False(EffectClassifier.Classify(card).HasFlag(CardEffect.LandDestruction));
     }
 
-    [Fact]
-    public void Classify_BirdsOfParadise_RampAndManaFixing()
+    [Theory]
+    // Mana you get for nothing but a tap is a mana SOURCE: the card is Ramp, and
+    // the colour is a property of the source rather than a service. Ruled
+    // 2026-09-18 — a bare {T} for any colour was tagged ManaFixing on 2 of 28
+    // reviewed cards, and for a choice of two colours 0 of 3.
+    [InlineData("Birds of Paradise", "Creature — Bird", "Flying\n{T}: Add one mana of any color.")]
+    [InlineData("Mox Jasper", "Legendary Artifact",
+        "{T}: Add one mana of any color. Activate only if you control a Dragon.")]
+    [InlineData("Wandertale Mentor", "Creature — Raccoon Bard", "{T}: Add {R} or {G}.")]
+    // …including when the bare tap is granted to something else, which is the
+    // same ability one step removed.
+    [InlineData("A Realm Reborn", "Enchantment",
+        "Other permanents you control have \"{T}: Add one mana of any color.\"")]
+    public void Classify_ManaForNothingButATap_IsRampNotManaFixing(string name, string typeLine, string oracle)
     {
-        Card card = MakeCard("Birds of Paradise", "Creature — Bird", "Flying\n{T}: Add one mana of any color.", keywords: ["Flying"]);
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
+    }
 
-        Assert.Equal(CardEffect.Ramp | CardEffect.ManaFixing, EffectClassifier.Classify(card));
+    [Theory]
+    // …but pay something on top of the tap and the card converts colour instead
+    // of making it, which is the whole job: 11 of 12 reviewed cards of this
+    // shape were tagged. A LAND is exempt and never asked — 17 of 17.
+    [InlineData("Mana Prism", "Artifact", "{T}: Add {C}.\n{1}, {T}: Add one mana of any color.")]
+    [InlineData("Celestial Prism", "Artifact", "{2}, {T}: Add one mana of any color.")]
+    [InlineData("Gene Pollinator", "Creature — Phyrexian Insect",
+        "{T}, Tap an untapped permanent you control: Add one mana of any color.")]
+    [InlineData("Birds of Paradise, but a land", "Land", "{T}: Add one mana of any color.")]
+    public void Classify_ManaThatCostsSomething_IsManaFixing(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
+    }
+
+    [Theory]
+    // A land fetched to HAND fixes the colour you are short of and ramps
+    // nothing — the land still has to be played, off your one land drop. Ruled
+    // 2026-09-18; tagged on 28 of the 30 reviewed cards of this shape.
+    [InlineData("Abzan Monument", "Artifact",
+        "When this artifact enters, search your library for a basic Plains, Swamp, or Forest card, reveal it, put it into your hand, then shuffle.")]
+    [InlineData("Spineseeker Centipede", "Creature — Insect",
+        "When this creature enters, search your library for a basic land card, reveal it, put it into your hand, then shuffle.")]
+    [InlineData("Spider-Bot", "Artifact Creature — Spider Robot Scout",
+        "When this creature enters, you may search your library for a basic land card, reveal it, then shuffle and put that card on top.")]
+    public void Classify_LandSearchToHand_IsManaFixing(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
+    }
+
+    [Fact]
+    public void Classify_LandSearchToTheBattlefield_IsRampNotManaFixing()
+    {
+        // The other half of the same ruling: putting the land straight onto the
+        // battlefield is the extra mana, not the colour. Tagged ManaFixing on
+        // only 8 of the 51 reviewed cards of this shape.
+        CardEffect result = EffectClassifier.Classify(MakeCard("Rampant Growth", "Sorcery",
+            "Search your library for a basic land card, put it onto the battlefield tapped, then shuffle."));
+
+        Assert.True(result.HasFlag(CardEffect.Ramp));
+        Assert.False(result.HasFlag(CardEffect.ManaFixing));
     }
 
     [Fact]

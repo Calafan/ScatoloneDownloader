@@ -97,9 +97,9 @@ namespace ScatoloneDownloader.Mtg
                 "Searches the library for a specific nonland card. A land search is Ramp or ManaFixing.",
 
             [CardEffect.ManaFixing] =
-                "Fixes colours: mana of any colour, a choice between two, typecycling, or a land with two abilities "
-                + "in different colours. Mana you may only spend on one thing fixes nothing. Distinct from Ramp, "
-                + "and a card can be both.",
+                "Fixes colours: a choice of colour that COSTS you something, typecycling, a land with two abilities, "
+                + "a land fetched to HAND. Free for a tap is just Ramp (Birds), unless it's a land. Not a land put "
+                + "onto the battlefield, not mana you may only spend on one thing.",
 
             [CardEffect.Pacify] =
                 "Neutralises somebody else's creature without killing it: can't attack or block, tapped down, "

@@ -481,6 +481,39 @@ namespace ScatoloneDownloader.Cube
 
         private static readonly Regex RestrictedMana = Rx(@"spend this mana only");
 
+        private static readonly Regex TypeCycling = Rx(@"\b(?:plains|island|swamp|mountain|forest)cycling\b");
+
+        // See the ManaFixing rule-table entry for the ruling these two carry.
+        private static readonly Regex LandSearchToHand = Rx(
+            @"search your library for[\w ,'-]{0,60}(?:land|plains|island|swamp|mountain|forest)"
+            + @"[\w ,'-]{0,40}card[\w ,'-]{0,40}put (?:it|that card|those cards|them) into your hand");
+        private static readonly Regex LandSearchToTop = Rx(
+            @"search your library for[\w ,'-]{0,60}(?:land|plains|island|swamp|mountain|forest)"
+            + @"[\w ,'-]{0,60}put that card on top");
+
+        // A mana ability that costs nothing but the tap is a mana SOURCE: the
+        // card is Ramp, and the colour it happens to make is a property of the
+        // source rather than a service it performs for you. Pay something on top
+        // — mana, a life, the tap of another permanent — and it converts colour
+        // instead of making it, which IS the job: Celestial Prism, Mana Prism,
+        // Standing Stones, Gene Pollinator. Measured 2026-09-18 over the 5,035
+        // reviewed cards: a bare {T} for any colour was tagged 2 of 28 (7.1%),
+        // the same line behind a cost 11 of 12 (91.7%); for a choice of two
+        // colours, 0 of 3 against 6 of 6. Worth 21 on its own.
+        //
+        // LANDS are exempt and never asked — "{T}: Add one mana of any color" on
+        // a land was tagged 17 of 17, because a land makes no mana you did not
+        // already have and the colour is the only thing it gives you.
+        private static readonly Regex FixesColourOnThisLine = Rx(
+            @"mana of any (?:one )?color|add \{[wubrg]\} or \{[wubrg]\}|add \{[wubrg]\}, \{[wubrg]\}");
+
+        // Anchored at the start of the line, or at the start of a QUOTED ability
+        // granted to something else ("Other permanents you control have \"{T}:
+        // Add one mana of any color.\"") — which is the same bare tap, one step
+        // removed. A cost in front of the tap defeats both, which is the point:
+        // "{1}, {T}: Add one mana of any color" contains no such opening.
+        private static readonly Regex BareTapAdds = Rx("^\\{t\\}: add |\"\\{t\\}: add ");
+
         // The untap lock written about the card itself. "Target creature doesn't
         // untap during its controller's next untap step" (Frozen Solid) does NOT
         // match, so a real lock keeps the tag.
@@ -771,7 +804,14 @@ namespace ScatoloneDownloader.Cube
                 Rx(@"add \{[wubrg]\} or \{[wubrg]\}"), Rx(@"add \{[wubrg]\}, \{[wubrg]\}"),
                 // Typecycling fetches the colour you are short of, which is the
                 // whole job. Added 2026-09-15; worth 11 on its own.
-                Rx(@"\b(?:plains|island|swamp|mountain|forest)cycling\b"),
+                TypeCycling,
+                // A land fetched to HAND fixes the colour you are short of and
+                // ramps nothing — the land still has to be played, off your one
+                // land drop. The same search that puts it onto the BATTLEFIELD is
+                // Ramp instead, and deliberately stays out: measured 2026-09-18
+                // over the 5,035 reviewed cards, to-hand was tagged 28 of 30
+                // (93.3%) and to-battlefield 8 of 51 (15.7%). Worth 17 on its own.
+                LandSearchToHand, LandSearchToTop,
                 // A land with two mana abilities in different colours fixes even
                 // though no single line says "or" — Bleachbone Verge, and the
                 // whole modern "{T}: Add {B}. / {T}: Add {W}." cycle.
@@ -953,6 +993,15 @@ namespace ScatoloneDownloader.Cube
             // with one restricted ability and one free one (Hermitic Herbalist)
             // still fixes.
             if (result.HasFlag(CardEffect.ManaFixing) && AllManaIsRestricted(text))
+            {
+                result &= ~CardEffect.ManaFixing;
+            }
+
+            // …and neither is mana you get for nothing but a tap. See
+            // BareTapAdds above for the ruling and the numbers behind it.
+            if (result.HasFlag(CardEffect.ManaFixing)
+                && card.MacroType != MacroType.Land
+                && EveryFixerIsABareTap(text))
             {
                 result &= ~CardEffect.ManaFixing;
             }
@@ -1237,6 +1286,41 @@ namespace ScatoloneDownloader.Cube
             return !PlainPump.IsMatch(rest)
                 && !Rx(@"creatures you control get \+").IsMatch(rest)
                 && !(CounterOnSomebodyElse.IsMatch(rest) && !CounterForAnOpponent.IsMatch(rest));
+        }
+
+        /// <summary>True when EVERY line that fixes colour asks for nothing but a
+        /// tap, so the card is a mana source and not a fixer. Per line for the
+        /// same reason as <see cref="AllManaIsRestricted"/>: one paid ability is
+        /// enough to make the card fix, however many free ones sit next to it
+        /// (Mana Prism taps for {C} and pays {1} for the colour).
+        /// <para>
+        /// Typecycling backs out first: it vouches for the tag on its own, from a
+        /// line that mentions no mana at all, and the loop below would not see it.
+        /// </para>
+        /// </summary>
+        private static bool EveryFixerIsABareTap(string text)
+        {
+            if (TypeCycling.IsMatch(text))
+            {
+                return false;
+            }
+
+            bool sawFixer = false;
+            foreach (string line in text.Split('\n'))
+            {
+                if (!FixesColourOnThisLine.IsMatch(line))
+                {
+                    continue;
+                }
+
+                sawFixer = true;
+                if (!BareTapAdds.IsMatch(line))
+                {
+                    return false;
+                }
+            }
+
+            return sawFixer;
         }
 
         /// <summary>True when EVERY line that adds mana restricts what it may be
