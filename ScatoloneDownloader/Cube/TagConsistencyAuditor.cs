@@ -40,7 +40,15 @@ namespace ScatoloneDownloader.Cube
             new(pattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
         private static readonly Regex ReminderText = Rx(@"\([^)]*\)");
-        private static readonly Regex ManaSymbols = Rx(@"\{[^}]*\}");
+        // A tap and a mana payment are not the same cost, and since the
+        // 2026-09-18 ruling they decide the tag: Basal Thrull's "{T}, Sacrifice
+        // this creature: Add {B}{B}" is Ramp, Coal Golem's "{3}, Sacrifice this
+        // creature: Add {R}{R}{R}" pays mana for a colour and is ManaFixing too.
+        // Erasing both alike reported that correct pair as a contradiction.
+        // Runs collapse, so the COUNT of symbols still means nothing — that part
+        // was only ever noise.
+        private static readonly Regex TapSymbol = Rx(@"\{t\}");
+        private static readonly Regex ManaSymbols = Rx(@"(?:\{[^}]*\})+");
         private static readonly Regex Digits = Rx(@"\b\d+\b|\bX\b");
 
         // One CARD is a kind, one point of toughness is a size. The 2026-09-16
@@ -148,7 +156,8 @@ namespace ScatoloneDownloader.Cube
                 }
             }
 
-            text = ManaSymbols.Replace(text, " ");
+            text = TapSymbol.Replace(text, " tap ");
+            text = ManaSymbols.Replace(text, " mana ");
             text = Digits.Replace(text, Flatten);
             text = OneCard.Replace(text, "1");
             text = NumberWords.Replace(text, "#");

@@ -515,7 +515,7 @@ namespace ScatoloneDownloader.Cube
             + @"|tapped for mana[^\n]{0,40}adds?");
 
         private static readonly Regex LandFromHandToPlay = Rx(
-            @"lands? cards? from your hand[\w \/]{0,30}onto the battlefield");
+            @"(?<!non)lands? cards? from your hand[\w \/]{0,30}onto the battlefield");
 
         // (?<!non) because "untap all NONLAND permanents" ends in the same
         // letters — the same word-boundary trap as islandwalk and noncreature.
@@ -524,9 +524,12 @@ namespace ScatoloneDownloader.Cube
             + @"(?:lands?|forests?|islands?|swamps?|mountains?|plains)\b"
             + @"|untaps all basic lands");
 
+        // (?<!non) again, and for the third time this session: "search your
+        // library for a NONLAND permanent card, put it onto the battlefield" is
+        // Guardian Sunmare, and it is a tutor, not a fetch.
         private static readonly Regex LandOntoTheBattlefield = Rx(
-            @"lands? cards?[\w ,'\/]{0,60}onto the battlefield"
-            + @"|search your library for[\w ,'\/]{0,80}(?:land|forest|plains|island|swamp|mountain)"
+            @"(?<!non)lands? cards?[\w ,'\/]{0,60}onto the battlefield"
+            + @"|search your library for[\w ,'\/]{0,80}(?<!non)(?:land|forest|plains|island|swamp|mountain)"
             + @"[\w ,'\/]{0,60}onto the battlefield");
 
         // …but the land handed to the player a removal spell was aimed at is
