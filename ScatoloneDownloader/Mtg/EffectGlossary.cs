@@ -117,6 +117,11 @@ namespace ScatoloneDownloader.Mtg
             [CardEffect.Regrowth] =
                 "Returns a card from a graveyard to HAND. Straight to the battlefield is Reanimate instead.",
 
+            [CardEffect.Cheat] =
+                "Puts a NONLAND permanent onto the battlefield without casting it — from hand (Sneak Attack, "
+                + "Elvish Piper) or library (Natural Order) — or lets you cast free STANDING (Omniscience). Out of "
+                + "a graveyard is Reanimate; a land is Ramp; one free exiled card is CardAdvantage.",
+
             [CardEffect.Redirect] =
                 "Acts on a spell already on the stack WITHOUT countering it: changes its target, or copies it.",
         };

@@ -520,7 +520,11 @@ namespace ScatoloneDownloader.Cli.Cube
         // Where the initial is taken, the key is another letter from the name
         // (bUff, tOkens, cArdAdvantage, remoVal); the three rarest effects take the
         // leftovers. Filter selection is mouse-only, so no letter is spent on it.
-        internal const string EffectHotkeys = "ovy9wgrxdafkuiesz8mplqh-";
+        // Cheat (added 2026-09-18) gets "7": every letter in its name is gone —
+        // h, e and a are spent, and c and t are the reserved ones — so it takes
+        // a leftover, which is exactly what the paragraph above predicted would
+        // happen to the next effect added.
+        internal const string EffectHotkeys = "ovy9wgrxdafkuiesz8mplqh-7";
 
         // The tagger's single-page UI lives in the embedded resource
         // Cli/TaggerPage.html (so editors/linters see the HTML/JS). It is loaded and

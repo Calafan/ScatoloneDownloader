@@ -1134,6 +1134,60 @@ public sealed class EffectClassifierTests
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
     }
 
+    [Theory]
+    // Cheat, ruled 2026-09-18: the permanent arrives without being cast.
+    [InlineData("Sneak Attack", "Enchantment",
+        "{R}: You may put a creature card from your hand onto the battlefield. That creature gains haste. "
+        + "Sacrifice the creature at the beginning of the next end step.")]
+    [InlineData("Elvish Piper", "Creature — Elf Shaman",
+        "{G}, {T}: You may put a creature card from your hand onto the battlefield.")]
+    [InlineData("Show and Tell", "Sorcery",
+        "Each player may put an artifact, creature, enchantment, or land card from their hand onto the battlefield.")]
+    [InlineData("Natural Order", "Sorcery",
+        "As an additional cost to cast this spell, sacrifice a green creature.\n"
+        + "Search your library for a green creature card, put it onto the battlefield, then shuffle.")]
+    [InlineData("Omniscience", "Enchantment",
+        "You may cast spells from your hand without paying their mana costs.")]
+    public void Classify_APermanentThatArrivesWithoutBeingCast_IsCheat(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
+    }
+
+    [Theory]
+    // Three edges of the same ruling. A LAND put onto the battlefield is Ramp —
+    // that is the mana, not the cheat.
+    [InlineData("Skyshroud Ranger", "Creature — Elf Scout",
+        "{T}: You may put a land card from your hand onto the battlefield. Activate only as a sorcery.")]
+    // A GRAVEYARD is Reanimate, which keeps its own tag.
+    [InlineData("Reanimate", "Sorcery",
+        "Put target creature card from a graveyard onto the battlefield under your control. "
+        + "You lose life equal to that card's mana value.")]
+    // And casting the cards THIS card just exiled is the impulse rider, which is
+    // CardAdvantage. Ugin says "those cards … their mana costs", so the plural
+    // alone does not separate it — the object phrase has to be read too.
+    [InlineData("Ugin, Eye of the Storms", "Legendary Planeswalker — Ugin",
+        "−11: Search your library for any number of colorless nonland cards, exile them, then shuffle. "
+        + "Until end of turn, you may cast those cards without paying their mana costs.")]
+    public void Classify_TheOtherWaysAPermanentArrives_AreNotCheat(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
+    }
+
+    [Fact]
+    public void Classify_TriassicEgg_IsBothCheatAndReanimate()
+    {
+        // The card that shows the two tags are one trick from two zones, and
+        // why they are not merged: it offers you the choice.
+        CardEffect result = EffectClassifier.Classify(MakeCard("Triassic Egg", "Artifact",
+            "{3}, {T}: Put a hatchling counter on this artifact.\n"
+            + "Sacrifice this artifact: Choose one. Activate only if there are two or more hatchling counters "
+            + "on this artifact.\n• You may put a creature card from your hand onto the battlefield.\n"
+            + "• Return target creature card from your graveyard to the battlefield."));
+
+        Assert.True(result.HasFlag(CardEffect.Cheat));
+        Assert.True(result.HasFlag(CardEffect.Reanimate));
+    }
+
     [Fact]
     public void Classify_CyclingThatFetchesACreature_IsNotManaFixing()
     {

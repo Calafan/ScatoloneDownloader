@@ -943,6 +943,43 @@ namespace ScatoloneDownloader.Cube
             (CardEffect.Ramp, [Rx(@"\{t\}: add ")]),
 
             (CardEffect.Pacify, PacifyPatterns),
+
+            // Cheat: the permanent arrives without being cast. Ruled 2026-09-18;
+            // see CardEffect.Cheat for the three edges and the numbers.
+            (CardEffect.Cheat, [
+                // Out of hand. The lookahead keeps LANDS out — "put a basic
+                // Forest card from your hand onto the battlefield" is Gaea's
+                // Touch and is Ramp — and "their hand" is in because Show and
+                // Tell is the card the whole family is named after.
+                // The window is 60 and not 40 because Show and Tell lists four
+                // card types before it gets to the noun. The land lookahead is
+                // narrower on purpose: it uses [\w ], which stops at the first
+                // comma, so a LIST that happens to mention lands (Show and Tell
+                // again) still counts while "put a basic Forest card" does not.
+                Rx(@"put an? (?![\w ]{0,25}(?:land|forest|island|swamp|mountain|plains) card)"
+                    + @"[\w ,]{0,60}card from (?:your|their) hand onto the battlefield"),
+                // Out of the library. Natural Order, Eldritch Evolution's cousins.
+                Rx(@"search your library for an? [\w ]{0,30}creature card"
+                    + @"[\w ,']{0,40}put (?:it|that card|them) onto the battlefield"),
+                // A STANDING permission to cast free, and the discriminator is
+                // GRAMMATICAL NUMBER. A standing permission covers a class of
+                // spells, so its wording is plural — "Dragon spells … without
+                // paying THEIR MANA COSTS" (Dracogenesis), "creature spells with
+                // mana value 3 or less" (Aluren), "spells from your hand"
+                // (Omniscience). The impulse rider covers the one card this card
+                // just exiled and is always singular: "you may cast a spell from
+                // among them without paying ITS MANA COST". Reading the object
+                // phrase instead was tried first and let ten riders through,
+                // because they name the card ten different ways.
+                // The plural alone still let the MULTI-card rider through — Ugin
+                // and Arcane Bombardment exile several and say "cast them
+                // without paying their mana costs" — so the object phrase is
+                // tempered as well: anything pointing back at cards this card
+                // exiled is the rider, not a permission.
+                Rx(@"(?:you|any player|each player|players) may cast "
+                    + @"(?!this card\b|this spell\b)"
+                    + @"(?:(?!among them|those cards|exiled|from exile|\bthem\b)[\w ,'-]){0,60}"
+                    + @"without paying their mana costs")]),
         ];
 
         /// <summary>Keyword abilities that map directly to an effect regardless of
