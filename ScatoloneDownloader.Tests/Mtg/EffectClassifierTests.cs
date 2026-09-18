@@ -1086,8 +1086,9 @@ public sealed class EffectClassifierTests
         "When this creature enters, create a Treasure token.", false)]
     [InlineData("Gilded Ghoda", "Creature — Frog Mount",
         "Whenever this creature attacks while saddled, create a Treasure token.", true)]
-    [InlineData("Goldvein Pick-Axe", "Artifact — Equipment",
-        "Whenever equipped creature deals combat damage to a player, create two Treasure tokens.", true)]
+    [InlineData("Unexpected Windfall", "Instant",
+        "As an additional cost to cast this spell, discard a card.\n"
+        + "Draw two cards and create two Treasure tokens.", true)]
     public void Classify_Treasure_AlwaysFixes_AndRampsWhenThereAreSeveral(
         string name, string typeLine, string oracle, bool ramps)
     {
@@ -1100,9 +1101,9 @@ public sealed class EffectClassifierTests
     [Theory]
     // Every LAND flavour of cycling fixes. "Basic landcycling" is printed on 125
     // cards, more than all five named types together, and was missed until now.
-    [InlineData("Sylvan Reclamation", "Instant", "Basic landcycling {1}{W}{W}")]
-    [InlineData("Twisted Landscape", "Land", "Landcycling {2}")]
-    [InlineData("Sheltering Ancient", "Creature — Treefolk", "Forestcycling {2}")]
+    [InlineData("Sylvan Reclamation", "Instant",
+        "Exile up to two target artifacts and/or enchantments.\nBasic landcycling {2}")]
+    [InlineData("Valley Rannet", "Creature — Beast", "Mountaincycling {2}, forestcycling {2}")]
     public void Classify_Landcycling_IsManaFixing(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
@@ -1114,7 +1115,8 @@ public sealed class EffectClassifierTests
         // Slivercycling, wizardcycling and halflingcycling fetch a body, not a
         // colour. Note "islandcycling" contains "landcycling" with no word
         // boundary in front of it, which is why \b keeps the two apart.
-        Assert.False(EffectClassifier.Classify(MakeCard("Gemhide Sliver", "Creature — Sliver", "Slivercycling {2}"))
+        Assert.False(EffectClassifier.Classify(MakeCard("Homing Sliver", "Creature — Sliver",
+            "Each Sliver card in each player's hand has slivercycling {3}.\nSlivercycling {3}"))
             .HasFlag(CardEffect.ManaFixing));
     }
 
