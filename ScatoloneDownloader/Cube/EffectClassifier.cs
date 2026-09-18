@@ -291,6 +291,15 @@ namespace ScatoloneDownloader.Cube
             // gets +1/+0 for each artifact you control") and only the beneficiary
             // guard below can tell those apart. Added 2026-09-18.
             Rx(@"gets? \+[xX]/\+[xX\d]|gets? \+\d+/\+[xX]|gets? \+[xX]/\+\d|gets? \+\d+/\+\d+ for each"),
+            // DOUBLE STRIKE is the one keyword that is a pump: it doubles the
+            // damage, which is doubling power by another name. Ruled 2026-09-18,
+            // and it is the ONLY exception — granting flying, deathtouch,
+            // lifelink or even first strike is not Buff, because none of them
+            // changes what the numbers are. Measured: any double-strike grant
+            // scores 117, this one 107 before the five cards it disagreed with
+            // were realigned to match.
+            Rx(@"target [\w -]{0,25}creature[\w ' -]{0,25}gains? [\w ,]{0,30}double strike"
+                + @"|(?:creatures you control|equipped creature|enchanted creature)[\w ,]{0,30}(?:gains?|have|has) [\w ,]{0,30}double strike"),
         ];
 
         // A +1/+1 COUNTER is Buff, ruled 2026-09-15. It is the second vocabulary

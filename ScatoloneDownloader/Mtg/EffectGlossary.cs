@@ -71,9 +71,9 @@ namespace ScatoloneDownloader.Mtg
                 "Returns a creature from a graveyard straight to the BATTLEFIELD, cheating its cost.",
 
             [CardEffect.Buff] =
-                "Raises power and/or toughness for something OTHER than the card itself, in either vocabulary: "
-                + "+2/+2 until end of turn, or a +1/+1 counter. Not a card that pumps only ITSELF, not counters on "
-                + "THEIR creatures, and not a lord for one TRIBE — though a colour or a state still counts.",
+                "Raises POWER and/or TOUGHNESS for something other than the card itself: +2/+2, a +1/+1 counter, "
+                + "+X/+X. A granted keyword is NOT Buff — flying, deathtouch, first strike — except DOUBLE STRIKE, "
+                + "which doubles the damage. Not a self-pump, not counters on THEIR creatures, not a tribal lord.",
 
             [CardEffect.Protection] =
                 "Keeps something ELSE alive, and can be held up in response. Two vocabularies count equally: a granted "

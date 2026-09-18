@@ -321,6 +321,36 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // Buff acts on power and/or toughness, ruled 2026-09-18 — and DOUBLE STRIKE
+    // is the one keyword that does, because doubling the damage is doubling the
+    // power by another name.
+    [InlineData("Dual-Sun Technique", "Instant",
+        "Target creature you control gains double strike until end of turn. If it has a +1/+1 counter on it, draw a card.")]
+    [InlineData("Genji Glove", "Artifact — Equipment",
+        "Equipped creature has double strike.\nEquip {3}")]
+    public void Classify_GrantingDoubleStrike_IsBuff(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // Every other keyword is not. None of them changes what the numbers are, and
+    // the hand-tagging says so 49 cards to 5 — Jump and Cloak of Feathers are the
+    // same sentence, and only one of them used to be tagged.
+    [InlineData("Jump", "Instant", "Target creature gains flying until end of turn.")]
+    [InlineData("Toxin Analysis", "Instant",
+        "Target creature gains deathtouch and lifelink until end of turn. Investigate.")]
+    [InlineData("Flying Carpet", "Artifact",
+        "{2}, {T}: Target creature gains flying until end of turn.")]
+    // First strike hits first; it does not hit harder.
+    [InlineData("Fyndhorn Bow", "Artifact",
+        "{3}, {T}: Target creature gains first strike until end of turn.")]
+    public void Classify_GrantingAnyOtherKeyword_IsNotBuff(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
     // Half the cards that scaling reaches pump only THEMSELVES, and the same
     // guard that handles "+2/+2" has to handle these.
     [InlineData("Rabid Wombat", "Creature — Beast",
