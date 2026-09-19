@@ -392,7 +392,16 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex Loot = Rx(
             @"draws? [\w]+ cards?, then discards?"
             + @"|discards? [\w]+ cards?[^\n.]{0,20}(?:if you do, )?draws? [\w]+ cards?"
-            + @"|you may discard a card\. if you do, draw");
+            + @"|you may discard a card\. if you do, draw"
+            // The same loot with the halves in a sentence each, which the two
+            // patterns above cannot cross because neither lets a full stop
+            // through. Confirmed as parity on 2026-09-20 by the ruling that put
+            // Brainstorm back in Filter: Rook Turret and Oblivious Bookworm say
+            // "you may draw a card. If you do, discard a card" and neither is
+            // tagged, and Reckless Detective charges the card with a "sacrifice
+            // an artifact or" in front of it.
+            + @"|draws? \w+ cards?\. if you do, discards?"
+            + @"|discards? \w+ cards?\. if you do, draws?");
 
         //   Cycling pays a card to replace itself: exactly parity. It fired only
         //   because its REMINDER text spells out an activated ability that draws.
@@ -422,9 +431,25 @@ namespace ScatoloneDownloader.Cube
         // The negative lookahead is what keeps warp and flashback REMINDER text
         // out: those say "you may cast THIS CARD", and from your hand at that.
         private static readonly Regex CastsAStreamFromElsewhere = Rx(
-            @"you may cast (?!this card|it\b)[\w ,'-]{0,40}(?:spells?|cards?) from your graveyard"
+            // "From AMONG CARDS IN your graveyard" is the same permission with
+            // three more words in it, and the Regrowth patterns already read it
+            // that way. Banon, the Returners' Leader casts one creature out of
+            // the graveyard on each of your turns and was missing the tag for
+            // no better reason than the wording (2026-09-20).
+            @"you may cast (?!this card|it\b)[\w ,'-]{0,40}(?:spells?|cards?) "
+            + @"from (?:among )?(?:cards in )?your graveyard"
             + @"|you may (?:cast|play) (?!this card|it\b)[\w ,'-]{0,40}(?:spells?|cards?) from exile"
-            + @"|(?:spells?|cards?)[\w ,'-]{0,20}(?:can be cast|may be cast) from your graveyard");
+            + @"|(?:spells?|cards?)[\w ,'-]{0,20}(?:can be cast|may be cast) from your graveyard"
+            // The same stream written as an impulse out of the graveyard rather
+            // than a permission to cast from it: Tersa Lightshatter exiles a
+            // card at random from your graveyard on every attack and lets you
+            // play it. Ruled 2026-09-20 with Tersa's own reason — the loot half
+            // of that card nets nothing and it is this attack trigger that
+            // earns the tag. One reviewed card is written this way and it is
+            // tagged; the shape is kept narrow on purpose, because "exile cards
+            // from your graveyard" is also how escape and delve charge a cost.
+            + @"|exiles? [\w ,'-]{0,30}cards? [\w ,'-]{0,20}from your graveyard"
+            + @"[^\n]{0,60}you may play (?:that card|it)\b");
 
         // "Once during each of your turns" and "During your turn, you may" are
         // permissions that keep standing, so they are repeatable with no trigger
@@ -451,11 +476,14 @@ namespace ScatoloneDownloader.Cube
         //   stop between the two halves stopped the match dead (Waterbending
         //   Lesson, Alpharael). Both now parse; an unreadable count still stays
         //   parity, which is what keeps "any number of cards" out.
+        //   "If you do," is a third way of joining the two halves, and it comes
+        //   after a full stop, so both counters have to be told about it (added
+        //   2026-09-20 alongside the Loot patterns that read the same shape).
         private static readonly Regex DrawsThenDiscards = Rx(
-            @"draws? (\w+) cards?[.,]? (?:then |and )?(?:you may )?discards? (\w+)(?: of them| cards?)");
+            @"draws? (\w+) cards?[.,]? (?:then |and |if you do, )?(?:you may )?discards? (\w+)(?: of them| cards?)");
 
         private static readonly Regex DiscardsThenDraws = Rx(
-            @"discards? (\w+) cards?[^\n.]{0,30}draws? (\w+) cards?");
+            @"discards? (\w+) cards?[.,]?(?: if you do,)?[^\n.]{0,30}draws? (\w+) cards?");
 
         // Hoisted for the same reason as MillPatterns: the guard below re-runs
         // them against the card with the un-aimable recursion blanked out.
@@ -716,6 +744,80 @@ namespace ScatoloneDownloader.Cube
         // once an impulse has already matched, so the looseness costs nothing.
         private static readonly Regex RepeatableWording = Rx(
             @"\bwhenever\b|at the beginning of|^[^\n:]{1,70}:", RegexOptions.Multiline);
+
+        // …and the reason the looseness is no longer free, found 2026-09-20.
+        // Asked of the WHOLE CARD it reads repeatability off whichever ability
+        // happens to carry a trigger word, and that is a different ability:
+        // Equilibrium Adept exiles one card off an ENTERS trigger and has a
+        // "Flurry — Whenever you cast your second spell" line underneath that
+        // has nothing to do with it. Guru Pathik does the same thing to the
+        // put-into-hand rule below. So the question is asked of ONE ABILITY.
+        //
+        // An ability is a line, except that a modal bullet belongs to the
+        // trigger that introduced it — Parapet Thrasher puts "Whenever one or
+        // more Dragons you control deal combat damage" on one line and the
+        // impulse three lines down as "• Exile the top card of your library".
+        // Splitting on newlines alone would read that as a one-shot, which is
+        // the very failure the comment above warns about, so the bullets are
+        // stitched back on.
+        private static IEnumerable<string> Abilities(string text)
+        {
+            List<string> abilities = [];
+            foreach (string line in text.Split('\n'))
+            {
+                if (line.TrimStart().StartsWith('•') && abilities.Count > 0)
+                {
+                    abilities[^1] += "\n" + line;
+                }
+                else
+                {
+                    abilities.Add(line);
+                }
+            }
+
+            return abilities;
+        }
+
+        // A Saga chapter that names more than one number fires more than once:
+        // Rediscover the Way's "I, II — Look at the top three cards of your
+        // library" looks at six cards over two turns and keeps two of them.
+        private static readonly Regex ChapterFiresTwice = Rx(@"^[ivx]+, [ivx]+ ", RegexOptions.Multiline);
+
+        private static bool AbilityRepeats(string ability) =>
+            RepeatableWording.IsMatch(ability) || ChapterFiresTwice.IsMatch(ability);
+
+        // The same question with the two self-consuming costs subtracted. An
+        // ability that spends the card to pay for itself runs once however it
+        // is worded — Morbius the Living Vampire exiles itself out of the
+        // graveyard, Lupinflower Village sacrifices itself — and the impulse
+        // family deliberately does NOT ask this, because there the cost is
+        // often paid by something else: Junktown makes three Junk tokens and
+        // each token sacrifices ITSELF for a card, which is three cards.
+        private static bool AbilityRepeatsAtNoCostToItself(string ability) =>
+            AbilityRepeats(ability)
+            && !DrawBySacrificingItself.IsMatch(ability)
+            && !DrawByExilingItselfFromGraveyard.IsMatch(ability);
+
+        // "Look at the top few cards of your library and put one INTO YOUR
+        // HAND." Ruled 2026-09-20, and the ruling is the repeatable one again:
+        // the one-shot version pays a card to move a card and nets nothing, so
+        // it is Filter, while the ability you can use every turn bought the
+        // card once and hands you one more each time. The four cards asked
+        // about split exactly on that line — Browse and Beastrider Vanguard and
+        // Water Tribe Rallier all have a cost and a colon, and Morbius the
+        // Living Vampire prints the same words behind "Exile this card from
+        // your graveyard", which is once.
+        //
+        // This was measured and REJECTED a day earlier, on 8 tagged against 9
+        // untagged, and the ruling is what changed: asked of one ability rather
+        // than of the whole card, the split stops being 8/9 and becomes 9 cards
+        // that repeat — 5 of them already tagged — against 11 one-shots, 10 of
+        // them untagged. The only card the rule still misses is Memories
+        // Returning, which is a one-shot that puts THREE cards in your hand and
+        // is therefore advantage by the count, not by repetition.
+        private static readonly Regex TopFewIntoYourHand = Rx(
+            @"(?:look at|reveal) the top \w+ cards? of your library"
+            + @"[^\n]{0,120}put (?:one of them|it|that card) into your hand");
 
         // The one land shape that IS Ramp, ruled 2026-09-15. A land tapping for
         // its own single mana is just a land, but Ancient Tomb and Mishra's
@@ -2064,16 +2166,13 @@ namespace ScatoloneDownloader.Cube
             // from every profitable loot; that was wrong and is recorded here
             // so it is not re-derived.
 
-            // Measured and rejected 2026-09-20: "look at or reveal the top few of
-            // your library and put one INTO YOUR HAND", when repeatable, as
-            // CardAdvantage. It is the same card a draw would have given you, and
-            // the rule is clean — but the hand tags split 8 to 9 on wording that
-            // is word for word the same. Browse and Morbius the Living Vampire
-            // both say "put one of them into your hand" and only Browse is
-            // tagged; Beastrider Vanguard and Water Tribe Rallier both "reveal a
-            // <type> card from among them and put it into your hand" and only
-            // Beastrider Vanguard is. Nothing in the text tells them apart, so
-            // the rule waits on a ruling rather than guessing.
+            // The top few of your library, one of them into your hand, over and
+            // over. See TopFewIntoYourHand for the ruling and the measurement,
+            // and note that nothing withdraws Filter: the card really did select.
+            if (Abilities(text).Any(a => TopFewIntoYourHand.IsMatch(a) && AbilityRepeatsAtNoCostToItself(a)))
+            {
+                result |= CardEffect.CardAdvantage;
+            }
 
             // A stream of cards out of the graveyard or exile, and only when you
             // can go back to it. Added here rather than in the table so a loot
@@ -2088,7 +2187,8 @@ namespace ScatoloneDownloader.Cube
             // Added AFTER the parity guard, because neither is a draw and neither
             // should be withdrawn by a loot or a cycling cost elsewhere on the card.
             bool impulseIsACard = ImpulseDraw.IsMatch(text)
-                && (ImpulseOfSeveralCards.IsMatch(text) || RepeatableWording.IsMatch(text));
+                && (ImpulseOfSeveralCards.IsMatch(text)
+                    || Abilities(text).Any(a => ImpulseDraw.IsMatch(a) && AbilityRepeats(a)));
 
             if (impulseIsACard || ExileSeveralAndPlayThem.IsMatch(text) || DrawThatMany.IsMatch(text)
                 || (ClueWording.IsMatch(text) && (RepeatableClue.IsMatch(text) || SeveralClues.IsMatch(text))))

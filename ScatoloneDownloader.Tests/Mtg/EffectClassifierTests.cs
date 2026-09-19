@@ -1055,6 +1055,87 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // Ruled 2026-09-20. Every one of these hands you a card you would otherwise
+    // have had to draw, and hands you another one next turn: the ability has a
+    // cost you can pay again, or a trigger that comes round again, so the card
+    // it cost was paid once. Browse and Water Tribe Rallier take one off the top
+    // of the library, Rediscover the Way does it on two Saga chapters, Elkin
+    // Bottle and Parapet Thrasher exile the top card and let you play it, Tersa
+    // Lightshatter does the same out of the graveyard, and Banon casts one
+    // creature out of it on each of your turns.
+    [InlineData("Browse", "Enchantment",
+        "{2}{U}{U}: Look at the top five cards of your library, put one of them into your hand, "
+        + "and exile the rest.")]
+    [InlineData("Water Tribe Rallier", "Creature — Human Soldier Ally",
+        "Waterbend {5}: Look at the top four cards of your library. You may reveal a creature card "
+        + "with power 3 or less from among them and put it into your hand. Put the rest on the bottom "
+        + "of your library in a random order.")]
+    [InlineData("Rediscover the Way", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\n"
+        + "I, II — Look at the top three cards of your library. Put one of them into your hand and the "
+        + "rest on the bottom of your library in any order.\n"
+        + "III — Whenever you cast a noncreature spell this turn, target creature you control gains "
+        + "double strike until end of turn.")]
+    [InlineData("Elkin Bottle", "Artifact",
+        "{3}, {T}: Exile the top card of your library. Until the beginning of your next upkeep, "
+        + "you may play that card.")]
+    [InlineData("Parapet Thrasher", "Creature — Dragon",
+        "Flying\nWhenever one or more Dragons you control deal combat damage to an opponent, choose "
+        + "one that hasn't been chosen this turn —\n• Destroy target artifact that opponent controls.\n"
+        + "• This creature deals 4 damage to each other opponent.\n"
+        + "• Exile the top card of your library. You may play it this turn.")]
+    [InlineData("Tersa Lightshatter", "Legendary Creature — Orc Wizard",
+        "Haste\nWhen Tersa Lightshatter enters, discard up to two cards, then draw that many cards.\n"
+        + "Whenever Tersa Lightshatter attacks, if there are seven or more cards in your graveyard, "
+        + "exile a card at random from your graveyard. You may play that card this turn.")]
+    [InlineData("Banon, the Returners' Leader", "Legendary Creature — Human Rebel",
+        "Pray — Once during each of your turns, you may cast a creature spell from among cards in your "
+        + "graveyard that were put there from anywhere other than the battlefield this turn.\n"
+        + "Whenever you attack, you may pay {1} and discard a card. If you do, draw a card.")]
+    public void Classify_ACardYouCanGoBackForEveryTurn_IsCardAdvantage(
+        string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // And the one-shots that print the same words. Repeatability belongs to ONE
+    // ABILITY: Morbius the Living Vampire and Lupinflower Village spend
+    // themselves to pay for theirs, and Guru Pathik and Equilibrium Adept run
+    // off an ENTERS trigger while carrying an unrelated "Whenever" underneath —
+    // reading the card as a whole billed them for somebody else's repetition.
+    // Rook Turret and Brainstorm hand back exactly what they took.
+    [InlineData("Morbius the Living Vampire", "Legendary Creature — Vampire Scientist Villain",
+        "Flying, vigilance, lifelink\n{U}{B}, Exile this card from your graveyard: Look at the top "
+        + "three cards of your library. Put one of them into your hand and the rest on the bottom of "
+        + "your library in any order.")]
+    [InlineData("Lupinflower Village", "Land",
+        "{T}: Add {C}.\n{T}: Add {W}. Spend this mana only to cast a creature spell.\n"
+        + "{1}{W}, {T}, Sacrifice this land: Look at the top six cards of your library. You may reveal "
+        + "a Bat, Bird, Mouse, or Rabbit card from among them and put it into your hand. Put the rest "
+        + "on the bottom of your library in a random order.")]
+    [InlineData("Guru Pathik", "Legendary Creature — Human Monk Ally",
+        "When Guru Pathik enters, look at the top five cards of your library. You may reveal a Lesson, "
+        + "Saga, or Shrine card from among them and put it into your hand. Put the rest on the bottom "
+        + "of your library in a random order.\n"
+        + "Whenever you cast a Lesson, Saga, or Shrine spell, put a +1/+1 counter on another target "
+        + "creature you control.")]
+    [InlineData("Equilibrium Adept", "Creature — Dog Monk",
+        "When this creature enters, exile the top card of your library. Until the end of your next "
+        + "turn, you may play that card.\n"
+        + "Flurry — Whenever you cast your second spell each turn, this creature gains double strike "
+        + "until end of turn.")]
+    [InlineData("Rook Turret", "Artifact Creature — Construct",
+        "Flying\nWhenever another artifact you control enters, you may draw a card. If you do, "
+        + "discard a card.")]
+    [InlineData("Brainstorm", "Instant",
+        "Draw three cards, then put two cards from your hand on top of your library in any order.")]
+    public void Classify_TheSameWordsRunOnce_IsNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
     // The carve-out that keeps the rule above honest: "TARGET player" and
     // "EACH player" are NOT somebody else's draw, because you point these at
     // yourself. 12 of the 21 cards written that way are tagged.
@@ -1127,10 +1208,13 @@ public sealed class EffectClassifierTests
     // The edges of those three. One card out of the graveyard is one card, and
     // warp and flashback reminder text says "cast THIS CARD" — from your hand at
     // that, which is why the rule refuses the pronoun.
+    //
+    // Browse used to stand here, on the reading that taking ONE card off the top
+    // is selection and not a card gained. The 2026-09-20 ruling overturned that
+    // for the repeatable case and Browse is the card it was ruled on, so it has
+    // moved to Classify_ACardYouCanGoBackForEveryTurn_IsCardAdvantage.
     [InlineData("Bygone Colossus", "Creature — Giant",
         "Warp {3} (You may cast this card from your hand for its warp cost. Exile it as it resolves.)")]
-    [InlineData("Browse", "Enchantment",
-        "{2}{U}{U}: Look at the top five cards of your library, put one of them into your hand, then exile the rest.")]
     public void Classify_OneCardFromElsewhere_IsNotCardAdvantage(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));

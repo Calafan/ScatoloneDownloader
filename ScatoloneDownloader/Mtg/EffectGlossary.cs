@@ -68,15 +68,15 @@
 
             [CardEffect.CardAdvantage] =
                 "A card the opponent does not get. COUNT IT, and the card ITSELF counts: Ponder is -1 +1 = 0. A "
-                + "one-shot must draw two more than it pays; a repeatable ability bought the card once, so one is "
-                + "enough. Draws you can go back to, \"for each X\", the top of your library as a second hand. Not a "
-                + "draw for THEM, not a trigger off drawing.",
+                + "one-shot must draw two more than it pays; a REPEATABLE ability bought the card once, so one is "
+                + "enough — even when it costs a card, even when it only takes one off the top. The top of your "
+                + "library as a second hand. Not a draw for THEM.",
 
             [CardEffect.Filter] =
                 "Cards changing places. ANY scry or surveil counts, however small and whatever else the card does; so "
                 + "does looking at the top few and taking one, and every rummage — draw and hand one back, either "
-                + "order, cost line included. One that ALSO comes out ahead keeps this AND CardAdvantage. Cycling is "
-                + "neither: it replaces itself.",
+                + "order, cost line included. One that ALSO comes out ahead, or repeats, keeps this AND CardAdvantage. "
+                + "Cycling is neither: it replaces itself.",
 
             [CardEffect.Reanimate] =
                 "A creature back from the dead and straight onto the BATTLEFIELD, cheating its cost. A card this card "
