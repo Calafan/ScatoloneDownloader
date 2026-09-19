@@ -770,6 +770,59 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // The [\w ] runs in the recursion rules could not cross a COMMA or a SLASH,
+    // and that is exactly where modern cards put their card-type lists. Widened
+    // 2026-09-19; worth 4 Regrowth and 2 Reanimate at no cost.
+    [InlineData("Archenemy's Charm", "Instant",
+        "Choose one —\n• Exile target creature or planeswalker.\n"
+        + "• Return one or two target creature and/or planeswalker cards from your graveyard to your hand.\n"
+        + "• Put two +1/+1 counters on target creature you control. It gains lifelink until end of turn.")]
+    [InlineData("Elena, Turk Recruit", "Legendary Creature — Human Assassin",
+        "When Elena enters, return target non-Assassin historic card from your graveyard to your hand. "
+        + "(Artifacts, legendaries, and Sagas are historic.)\n"
+        + "Whenever you cast a historic spell, put a +1/+1 counter on Elena.")]
+    public void Classify_RecursionWithACardTypeList_IsRegrowth(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Regrowth));
+    }
+
+    [Theory]
+    // The same effect written PUT instead of RETURN, with the graveyard named
+    // any of the ways the game names it. All six reviewed cards written this
+    // way are tagged, and none of them read before 2026-09-19.
+    [InlineData("Ashen Powder", "Sorcery",
+        "Put target creature card from an opponent's graveyard onto the battlefield under your control.")]
+    [InlineData("Chorale of the Void", "Enchantment — Aura",
+        "Enchant creature you control\n"
+        + "Whenever enchanted creature attacks, put target creature card from defending player's graveyard "
+        + "onto the battlefield under your control tapped and attacking.\n"
+        + "Void — At the beginning of your end step, sacrifice this Aura unless a nonland permanent left the "
+        + "battlefield this turn or a spell was warped this turn.")]
+    public void Classify_PuttingACreatureCardOntoTheBattlefield_IsReanimate(
+        string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
+    }
+
+    [Theory]
+    // A LAND out of the graveyard rebuilds a mana base; it reanimates nothing.
+    // Follows the 2026-09-18 Ramp ruling and was read here 2026-09-19: 7
+    // reviewed cards put one back and only 1 carries Reanimate.
+    [InlineData("Summon: Titan", "Enchantment Creature — Saga Giant",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\n"
+        + "I — Mill five cards.\n"
+        + "II — Return all land cards from your graveyard to the battlefield tapped.\n"
+        + "III — Until end of turn, another target creature you control gains trample and gets +X/+X, where X "
+        + "is the number of lands you control.\nReach, trample")]
+    [InlineData("Floral Evoker", "Creature — Snake Druid",
+        "Landfall — Whenever a land you control enters, put a +1/+1 counter on this creature.\n"
+        + "{G}, Discard a creature card: Return target land card from your graveyard to the battlefield tapped.")]
+    public void Classify_ALandOutOfTheGraveyard_IsNotReanimate(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
+    }
+
+    [Theory]
     // EMPOWER JACE N makes a Jace planeswalker token whose whole job is
     // "[-1]: Surveil 1" and "[-3]: Draw a card", so the keyword filters by
     // itself. Ruled 2026-09-19. Thirty-five cards print it; 31 carry reminder

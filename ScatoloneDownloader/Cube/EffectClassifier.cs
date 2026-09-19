@@ -187,6 +187,44 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex DiscardsThenDraws = Rx(
             @"discards? (\w+) cards?[^\n.]{0,30}draws? (\w+) cards?");
 
+        // Hoisted for the same reason as MillPatterns: the guard below re-runs
+        // them against the card with the un-aimable recursion blanked out.
+        private static readonly Regex[] ReanimatePatterns =
+        [
+            Rx(@"return[\w ,'\-/]{0,70}from[\w ,'\-/]{0,30}graveyard to the battlefield"),
+            // The same effect written PUT instead of RETURN, with the graveyard
+            // named any of the ways the game names it — "from a graveyard", "in
+            // that player's graveyard", "from an opponent's graveyard". All six
+            // reviewed cards written this way are tagged.
+            Rx(@"put[\w ,'\-/]{0,60}creature cards? (?:from|in)[\w ,'\-/]{0,40}graveyard"
+                + @"[\w ,'\-/]{0,40}onto the battlefield"),
+        ];
+
+        private static readonly Regex[] RegrowthPatterns =
+        [
+            Rx(@"return[\w ,'\-/]{0,70}from[\w ,'\-/]{0,30}graveyard to[\w ',]{0,20}hand"),
+            Rx(@"put[\w ,'\-/]{0,60}cards? from[\w ,'\-/]{0,30}graveyard into[\w ]{0,20}hand"),
+        ];
+
+        // MEASURED AND REJECTED 2026-09-19, recorded so it is not tried again.
+        // A card that claws ITSELF back out of the graveyard — unearth, "{B}:
+        // Return this card from your graveyard to the battlefield", the
+        // discard-me-and-I-come-back cycle — looks like the self-pump that Buff
+        // refuses and the self-shield that Protection refuses, and 16 of the 21
+        // reviewed cards written that way carry no recursion tag. Vetoing them
+        // anyway makes things WORSE: it buys 9 false positives for 5 true ones
+        // but costs 7 points of recall across the two tags, and the exact
+        // tag-set match falls. Hammer of Bogardan is tagged Regrowth and the
+        // veto would have taken it. The split is a ruling nobody has made, not
+        // a rule waiting to be written.
+
+        // A land out of the graveyard is Ramp, ruled 2026-09-18 and read here
+        // 2026-09-19: 7 reviewed cards put one back and only 1 is tagged
+        // Reanimate. Summon: Titan and Will of the Sultai rebuild a mana base;
+        // they do not reanimate anything.
+        private static readonly Regex LandOutOfTheGraveyard = Rx(
+            @"land cards? (?:from|in)[\w ,'\-/]{0,30}graveyard[\w ,'\-/]{0,20}(?:on)?to the battlefield[^\n.]{0,40}");
+
         // THE CARD ITSELF IS A CARD. Ruled 2026-09-19 and it completes the
         // count: Ponder is -1 for the Ponder and +1 for the draw, which is
         // zero, and Grab the Prize is -1 for the spell, -1 for the discard it
@@ -1041,16 +1079,19 @@ namespace ScatoloneDownloader.Cube
                 Rx(@"as an additional cost to cast this spell,[^\n.]{0,60}discard"
                     + @"[\s\S]{0,120}draws? (?:a|one|two|three|four|five|x|\d+) cards?")]),
 
-            (CardEffect.Reanimate, [Rx(@"return target[\w ]*creature card from[\w ]*graveyard to the battlefield"),
-                Rx(@"return[\w ]*from (your|a) graveyard to the battlefield"),
-                Rx(@"put[\w ]*creature card from[\w ]*graveyard onto the battlefield")]),
+            // The [\w ] runs still cannot cross a FULL STOP, which is what keeps
+            // a card that exiles from a graveyard in one sentence and bounces a
+            // creature in the next from reading as recursion. But they could not
+            // cross a COMMA or a SLASH either, and that is where modern cards
+            // put their card-type lists: "one or two target creature AND/OR
+            // planeswalker cards", "non-Assassin historic card", "up to one
+            // target creature card, up to one target Mount card, …". Widened
+            // 2026-09-19 to allow punctuation inside the run but not a stop —
+            // worth 4 more Regrowth and 2 more Reanimate, at no cost.
+            (CardEffect.Reanimate, ReanimatePatterns),
 
-            // The sibling of Reanimate: same origin, different destination. The
-            // [\w ] runs cannot cross a full stop, so a card that exiles from a
-            // graveyard in one sentence and bounces a creature in the next does
-            // not accidentally read as recursion.
-            (CardEffect.Regrowth, [Rx(@"return[\w ]*from[\w ]*graveyard to[\w ']*hand"),
-                Rx(@"put[\w ]*card from[\w ]*graveyard into[\w ]*hand")]),
+            // The sibling of Reanimate: same origin, different destination.
+            (CardEffect.Regrowth, RegrowthPatterns),
 
             (CardEffect.Mill, MillPatterns),
 
@@ -1424,6 +1465,20 @@ namespace ScatoloneDownloader.Cube
                 && EveryFixerIsABareTap(text))
             {
                 result &= ~CardEffect.ManaFixing;
+            }
+
+            // A land out of the graveyard rebuilds a mana base; it reanimates
+            // nothing. Done by BLANKING the phrase and asking whether the rule
+            // still matches, so a card that returns a creature AND a land keeps
+            // its tag. See LandOutOfTheGraveyard, and the note above it for the
+            // self-recursion veto that was measured here and rejected.
+            if (result.HasFlag(CardEffect.Reanimate) || result.HasFlag(CardEffect.Regrowth))
+            {
+                string aimed = LandOutOfTheGraveyard.Replace(text, " ");
+
+                if (!ReanimatePatterns.Any(p => p.IsMatch(aimed))) { result &= ~CardEffect.Reanimate; }
+
+                if (!RegrowthPatterns.Any(p => p.IsMatch(aimed))) { result &= ~CardEffect.Regrowth; }
             }
 
             // Card parity dressed as card advantage. See the three patterns above
