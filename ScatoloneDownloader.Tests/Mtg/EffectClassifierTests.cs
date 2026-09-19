@@ -2297,6 +2297,15 @@ public sealed class EffectClassifierTests
     [InlineData("Noble Benefactor", "Creature — Human",
         "When this creature dies, each player may search their library for a card and put that card "
         + "into their hand. Then each player who searched their library this way shuffles.")]
+    // Naming the card you want is the purest form of this tag, ruled 2026-09-19
+    // — whether it finds another copy of itself or somebody else's payoff.
+    [InlineData("Llanowar Sentinel", "Creature — Elf",
+        "When this creature enters, you may pay {1}{G}. If you do, search your library for a card "
+        + "named Llanowar Sentinel, put that card onto the battlefield, then shuffle.")]
+    [InlineData("Tower Winder", "Creature — Snake",
+        "Reach, deathtouch\nWhen this creature enters, search your library and/or graveyard for a "
+        + "card named Command Tower, reveal it, and put it into your hand. If you search your library "
+        + "this way, shuffle.")]
     // Demonic Consultation never searches — it names a card and digs for the NAME.
     [InlineData("Demonic Consultation", "Instant",
         "Choose a card name. Exile the top six cards of your library, then reveal cards from the top "
@@ -2312,12 +2321,8 @@ public sealed class EffectClassifierTests
     [InlineData("Rampant Growth", "Sorcery",
         "Search your library for a basic land card, put that card onto the battlefield tapped, "
         + "then shuffle.")]
-    // Fetching another copy of itself is the old pack-filler cycle.
-    [InlineData("Llanowar Sentinel", "Creature — Elf",
-        "When this creature enters, you may pay {1}{G}. If you do, search your library for a card "
-        + "named Llanowar Sentinel, put that card onto the battlefield, then shuffle.")]
-    // And digging until a TYPE turns up hands you whichever one was nearest the
-    // top, which is not choosing a card.
+    // Digging until a TYPE turns up hands you whichever one was nearest the top,
+    // which is not choosing a card.
     [InlineData("The Regalia", "Artifact — Vehicle",
         "Haste\nWhenever The Regalia attacks, reveal cards from the top of your library until you "
         + "reveal a land card. Put that card onto the battlefield tapped and the rest on the bottom "
@@ -2331,35 +2336,40 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
-    // Redirect, widened 2026-09-19. Meddle puts the spell in the possessive, and
-    // the copy half is almost never aimed with the word "target".
+    // Redirect, widened 2026-09-19 for the possessive: Meddle says "change THAT
+    // SPELL'S TARGET" where Deflection says "change the target of".
     [InlineData("Meddle", "Instant",
         "If target spell has only one target and that target is a creature, change that spell's "
         + "target to another creature.")]
-    [InlineData("Ether", "Artifact",
-        "{T}, Exile this artifact: Add {U}. When you next cast an instant or sorcery spell this turn, "
-        + "copy that spell. You may choose new targets for the copy.")]
-    [InlineData("Adaptive Training Post", "Artifact",
-        "Whenever you cast an instant or sorcery spell, if this artifact has fewer than three charge "
-        + "counters on it, put a charge counter on it.\nRemove three charge counters from this "
-        + "artifact: When you next cast an instant or sorcery spell this turn, copy it and you may "
-        + "choose new targets for the copy.")]
+    [InlineData("Reflecting Mirror", "Artifact",
+        "{X}, {T}: Change the target of target spell with a single target if that target is you. "
+        + "The new target must be a player. X is twice the mana value of that spell.")]
+    [InlineData("Twincast", "Instant", "Copy target instant or sorcery spell. You may choose new targets "
+        + "for the copy.")]
     public void Classify_ActingOnASpellWithoutCounteringIt_IsRedirect(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Redirect));
     }
 
-    [Fact]
-    // Storm spells out its own rules, and a keyword's reminder text is not an
-    // effect the card has — otherwise every Storm card carries this tag.
-    public void Classify_StormReminderText_IsNotRedirect()
+    [Theory]
+    // A DELAYED COPY doubles a spell of your own rather than acting on somebody
+    // else's on the stack. Ruled out 2026-09-19: it matched 8 reviewed cards, 4
+    // tagged and 4 not, on wording that is word for word the same.
+    [InlineData("Ether", "Artifact",
+        "{T}, Exile this artifact: Add {U}. When you next cast an instant or sorcery spell this turn, "
+        + "copy that spell. You may choose new targets for the copy.")]
+    [InlineData("Jeong Jeong, the Deserter", "Legendary Creature — Human",
+        "Exhaust — {3}: Put a +1/+1 counter on Jeong Jeong. When you next cast a Lesson spell this "
+        + "turn, copy it and you may choose new targets for the copy.")]
+    // Storm spells out its own rules, and a keyword's reminder text is never an
+    // effect the card has.
+    [InlineData("Tempest Technique", "Enchantment — Aura",
+        "Storm (When you cast this spell, copy it for each spell cast before it this turn. "
+        + "You may choose new targets for the copies. Copies become tokens.)\n"
+        + "Enchant creature you control\nEnchanted creature gets +1/+1 for each enchantment you control.")]
+    public void Classify_DoublingYourOwnNextSpell_IsNotRedirect(string name, string typeLine, string oracle)
     {
-        Card card = MakeCard("Tempest Technique", "Enchantment — Aura",
-            "Storm (When you cast this spell, copy it for each spell cast before it this turn. "
-            + "You may choose new targets for the copies. Copies become tokens.)\n"
-            + "Enchant creature you control\nEnchanted creature gets +1/+1 for each enchantment you control.");
-
-        Assert.False(EffectClassifier.Classify(card).HasFlag(CardEffect.Redirect));
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Redirect));
     }
 
     private static Card MakeCard(string name, string typeLine, string oracleText, List<string>? keywords = null)

@@ -108,10 +108,9 @@
                 + "\"from A graveyard\" names no victim: that is Reanimate alone.",
 
             [CardEffect.Tutor] =
-                "Searches a library for a card you CHOOSE — by type, subtype, colour, count, or just \"a card\" "
-                + "— to hand, battlefield, top or graveyard. A land search is Ramp or ManaFixing. Fetching "
-                + "another copy of ITSELF is not this, and neither is revealing until a type turns up: that "
-                + "picks for you.",
+                "Searches a library for a card you CHOOSE — by type, subtype, colour, count, by NAME, or just "
+                + "\"a card\" — to hand, battlefield, top, graveyard or exile. A land search is Ramp or "
+                + "ManaFixing. Revealing until a type turns up is not this: that picks for you.",
 
             [CardEffect.ManaFixing] =
                 "Fixes colours: a choice that COSTS you something, any landcycling, a land with two abilities, a "
@@ -145,9 +144,10 @@
                 + "a graveyard is Reanimate; a land is Ramp; one free exiled card is CardAdvantage.",
 
             [CardEffect.Redirect] =
-                "Acts on a spell already on the stack WITHOUT countering it: changes its target — \"the target "
-                + "of\", or \"that spell's target\" — or copies it, including the delayed \"copy it, you may "
-                + "choose new targets for the copy\". Storm's reminder text says those words and is not this.",
+                "Acts on SOMEBODY ELSE'S spell, already on the stack, without countering it: changes its "
+                + "target (\"the target of\", or \"that spell's target\"), or copies it by aiming at it "
+                + "(\"copy TARGET instant or sorcery spell\"). Doubling your own next spell is not this, and "
+                + "neither is Storm spelling out its own reminder text.",
         };
 
         /// <summary>The line for one effect, or an empty string when a member has

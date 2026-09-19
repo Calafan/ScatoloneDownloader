@@ -137,11 +137,14 @@ namespace ScatoloneDownloader.Cube
             @"\b(?:creature|artifact|enchantment|instant|sorcery|planeswalker|equipment|battle"
             + @"|legendary|nonland permanent) cards?\b");
 
-        /// <summary>"Search your library for a card NAMED Llanowar Sentinel" is the
-        /// old pack-filler cycle fetching another of itself, or a combo piece that
-        /// does nothing without its partners (Kyscu Drake, Urborg Panther). Five
-        /// reviewed cards say it and the human tags none of them.</summary>
-        private static readonly Regex SearchesForACardNamed = Rx(@"for a card named");
+        // "Search your library for a card NAMED Llanowar Sentinel" was vetoed for
+        // half a day, on the evidence that five reviewed cards said it and none
+        // was tagged. Ruled the other way on 2026-09-19: naming the card you want
+        // is the purest form of this tag, whether it finds another copy of itself
+        // (Llanowar Sentinel, Magitek Infantry, Tempest Hawk), a combo piece
+        // (Kyscu Drake, Urborg Panther) or one of two payoffs (Dragonstorm
+        // Forecaster, which was tagged and which the veto was costing). The five
+        // were slips, and the veto is gone.
 
         // Hoisted for the same reason as MillPatterns: the guard below re-runs
         // them one line at a time, so a modal card is judged mode by mode.
@@ -1285,23 +1288,22 @@ namespace ScatoloneDownloader.Cube
             // The other way to answer something on the stack. "copy target" is
             // required rather than the bare word "copy": a token that enters "as a
             // copy OF target creature" is Tokens, not stack interaction.
-            // Widened 2026-09-19 for the two wordings that carried 5 of its 11
-            // hand-tagged cards. Meddle puts the spell in the possessive —
-            // "change THAT SPELL'S TARGET to another creature" — where Deflection
-            // says "change the target of". And the copy half is almost never
-            // aimed with the word "target": a delayed trigger says "when you next
-            // cast an instant or sorcery spell this turn, COPY IT", and what
-            // makes it stack interaction rather than a token is the line that
-            // follows, "you may choose new targets for the copy" (Ether, Alania,
-            // Adaptive Training Post, Summon: G.F. Cerberus).
+            // Widened 2026-09-19 for the possessive: Meddle says "change THAT
+            // SPELL'S TARGET to another creature" where Deflection says "change
+            // the target of", and no rule reading the second could see the first.
+            //
+            // The DELAYED COPY was tried the same day and ruled out: "when you
+            // next cast an instant or sorcery spell this turn, copy it … you may
+            // choose new targets for the copy" is a card doubling a spell of YOUR
+            // OWN, which is not acting on somebody else's spell on the stack. It
+            // matched 8 reviewed cards, 4 tagged and 4 not, and Ether reads word
+            // for word like Jeong Jeong; the ruling took the tag off all eight
+            // rather than keep a rule that could not tell them apart. What stays
+            // is the aimed copy — "copy TARGET instant or sorcery spell" — which
+            // is Fork, Reverberate and Twincast.
             (CardEffect.Redirect, [Rx(@"change the targets? of"),
                 Rx(@"change (?:that|target) spell's targets?"),
-                Rx(@"cop(?:y|ies) target[\w ]*(?:spell|ability)"),
-                // STORM's reminder text is the one place these words are not an
-                // effect the card has — every Storm card would otherwise carry
-                // this tag for a keyword it spells out (Tempest Technique).
-                Rx(@"cop(?:y|ies) (?:it|that spell)(?: twice)?(?! for each spell cast before it)"
-                    + @"[^\n]{0,80}new targets for the cop")]),
+                Rx(@"cop(?:y|ies) target[\w ]*(?:spell|ability)")]),
 
             // Bounce has to say WHICH permanent goes back, because the bare
             // sentence is just as often the price the card pays: Ovinomancer's
@@ -2090,8 +2092,7 @@ namespace ScatoloneDownloader.Cube
                     continue;
                 }
 
-                if ((SearchesOnlyForALand.IsMatch(line) && !SearchesForSomethingElseToo.IsMatch(line))
-                    || SearchesForACardNamed.IsMatch(line))
+                if (SearchesOnlyForALand.IsMatch(line) && !SearchesForSomethingElseToo.IsMatch(line))
                 {
                     continue;
                 }
