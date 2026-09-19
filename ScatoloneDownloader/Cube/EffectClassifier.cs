@@ -219,6 +219,34 @@ namespace ScatoloneDownloader.Cube
             // for you.
             Rx(@"put (?:up to |any number of )?(?:\w+ )?target[\w ,'\-/]{0,40}cards? (?:from|in)"
                 + @"[\w ,'\-/]{0,30}(?<!an opponent's )graveyard[\w ,'\-/]{0,20}on top of"),
+            // CASTING ANOTHER CARD out of a graveyard, ruled 2026-09-19. It is
+            // reanimation for spells: the card never reaches your hand, but it
+            // is bought back from the same place and for the same reason.
+            //
+            // The card that gives ITSELF a second cast is NOT this, which is
+            // what splits a family that first measured at 10% and looked like
+            // noise. Flashback, escape, harmonize, unearth and the rest are
+            // printed ON the card they apply to: 54 reviewed cards carry one
+            // and exactly one is tagged Regrowth — Sorceress's Schemes, which
+            // earns it on a different line by returning a card to hand. Read
+            // apart from that, the aimed family is 12 cards and 5 were tagged.
+            //
+            // Three shapes wrecked earlier drafts and each is excluded here.
+            // "Costs {1} less to cast FOR EACH creature card IN your graveyard"
+            // is cost reduction, so the cast must say FROM. "As an additional
+            // cost to cast THIS SPELL, exile X cards from your graveyard" is a
+            // price, so the pronoun list refuses "this spell" too. And
+            // "WHENEVER YOU CAST a spell from your graveyard" only watches one
+            // happen, the shape that keeps "whenever you draw a card" out of
+            // CardAdvantage.
+            Rx(@"(?<!whenever you )(?:may )?cast (?!this card\b|this spell\b|it\b)"
+                + @"(?!(?:[\w ,'\-/]{0,40})?for each)[\w ,'\-/]{0,50}(?:spells?|cards?) "
+                + @"from (?:among )?(?:cards in )?(?:your|a|their|that player's) graveyard"),
+            Rx(@"target[\w ,'\-/]{0,50}cards? in (?:your|a) graveyard gains? "
+                + @"(?:flashback|escape|harmonize|jump-start)"),
+            Rx(@"(?:each|all|any number of) [\w ,'\-/]{0,40}cards? in your graveyard ha(?:s|ve) "
+                + @"(?:flashback|escape|harmonize|mayhem)"),
+            Rx(@"(?:spells?|cards?)[\w ,'\-/]{0,20}(?:can be cast|may be cast) from your graveyard"),
         ];
 
         // MEASURED AND REJECTED 2026-09-19, recorded so it is not tried again.

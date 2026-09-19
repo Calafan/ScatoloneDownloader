@@ -851,6 +851,62 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // CASTING ANOTHER CARD out of a graveyard is reanimation for spells: the
+    // card never reaches your hand, but it is bought back from the same place
+    // and for the same reason. Ruled 2026-09-19. 12 reviewed cards do it and 5
+    // were already tagged.
+    [InlineData("Edgar, Master Machinist", "Legendary Creature — Human Artificer Noble",
+        "Once during each of your turns, you may cast an artifact spell from your graveyard. If you cast a "
+        + "spell this way, that artifact enters tapped.\n"
+        + "Tools — Whenever Edgar attacks, it gets +X/+0 until end of turn, where X is the greatest mana value "
+        + "among artifacts you control.")]
+    [InlineData("Noctis, Prince of Lucis", "Legendary Creature — Human Noble",
+        "Lifelink\nYou may cast artifact spells from your graveyard by paying 3 life in addition to paying "
+        + "their other costs. If you cast a spell this way, that artifact enters with a finality counter on it.")]
+    // …including handing another card one of the keywords rather than casting
+    // it yourself.
+    [InlineData("Iroh, Grand Lotus", "Legendary Creature — Human Noble Ally",
+        "Firebending 2\nDuring your turn, each non-Lesson instant and sorcery card in your graveyard has "
+        + "flashback. The flashback cost is equal to that card's mana cost.")]
+    [InlineData("Songcrafter Mage", "Creature — Human Bard",
+        "Flash\nWhen this creature enters, target instant or sorcery card in your graveyard gains harmonize "
+        + "until end of turn. Its harmonize cost is equal to its mana cost.")]
+    public void Classify_CastingAnotherCardOutOfAGraveyard_IsRegrowth(
+        string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Regrowth));
+    }
+
+    [Theory]
+    // The card that gives ITSELF a second cast is not. That split is what
+    // rescued a family which first measured at 10% and looked like noise: 54
+    // reviewed cards carry flashback, escape, harmonize, unearth or a cousin,
+    // and exactly one is tagged Regrowth — Sorceress's Schemes, which earns it
+    // on a different line by returning a card to HAND.
+    [InlineData("Roamer's Routine", "Sorcery",
+        "Target player mills three cards. You gain 3 life.\nFlashback {3}{W}")]
+    [InlineData("Undead Sprinter", "Creature — Zombie",
+        "Trample, haste\nYou may cast this card from your graveyard if a non-Zombie creature died this turn. "
+        + "If you do, this creature enters with a +1/+1 counter on it.")]
+    // Three shapes that read like casting from a graveyard and are not: cost
+    // reduction COUNTING cards there, a card exiled from there as a COST, and a
+    // trigger that only watches a cast happen.
+    [InlineData("Cyan, Vengeful Samurai", "Legendary Creature — Human Samurai",
+        "This spell costs {1} less to cast for each creature card in your graveyard.\nDouble strike\n"
+        + "Whenever one or more creature cards leave your graveyard, put a +1/+1 counter on Cyan.")]
+    [InlineData("Haunting Misery", "Sorcery",
+        "As an additional cost to cast this spell, exile X creature cards from your graveyard.\n"
+        + "Haunting Misery deals X damage to target player or planeswalker.")]
+    [InlineData("Neerdiv, Devious Diver", "Legendary Creature — Merfolk Rogue",
+        "Whenever Neerdiv becomes tapped, target player mills cards equal to its power.\n"
+        + "Whenever you cast a spell from your graveyard or activate an ability of a card in your graveyard, "
+        + "draw a card and put a +1/+1 counter on Neerdiv.")]
+    public void Classify_ASecondCastForItself_IsNotRegrowth(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Regrowth));
+    }
+
+    [Theory]
     // The graveyard is not the only place a creature comes back from. A card
     // THIS CARD exiled, put onto the battlefield under your control, is a
     // reanimation by another route. Ruled 2026-09-19.
