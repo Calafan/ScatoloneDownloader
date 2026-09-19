@@ -158,6 +158,14 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex DiscardsThenDraws = Rx(
             @"discards? (\w+) cards?[^\n.]{0,30}draws? (\w+) cards?");
 
+        // The ways a card filters that have nothing to do with a loot. Used
+        // only to refuse to WITHDRAW Filter from a card that also scries: the
+        // net-count ruling is about the loot, and scry and surveil are Filter
+        // unconditionally.
+        private static readonly Regex FiltersWithoutALoot = Rx(
+            @"\b(?:scry|scries|surveil|surveils) (?:\d+|x)\b"
+            + @"|look at the top \w+ cards? of your library");
+
         // Whose draw is it? A card that only ever draws for somebody ELSE gives
         // nothing away for free — Sibilant Spirit and Harbor Guardian pay the
         // defending player for the privilege of attacking, and Lord of
@@ -913,7 +921,14 @@ namespace ScatoloneDownloader.Cube
             // card"); the lookahead is what keeps CYCLING reminder text out,
             // because cycling pays a card to replace itself and attacks nobody.
             // Added 2026-09-19.
-            (CardEffect.Filter, [Rx(@"scry \d"), Rx(@"surveil \d"),
+            // Scry and surveil ARE Filter, unconditionally, ruled 2026-09-19 —
+            // it does not matter what else the card does or how small the
+            // number is. Read across every printed form, which "scry \d" was
+            // not: the bulk carries "scry X" on 17 cards and "surveil X" on 6,
+            // and a handful say "scries"/"surveils" because the subject is a
+            // player. The count is required so that "whenever you scry OR
+            // surveil" — a trigger that watches one happen — stays out.
+            (CardEffect.Filter, [Rx(@"\b(?:scry|scries|surveil|surveils) (?:\d+|x)\b"),
                 Rx(@"look at the top \w+ cards? of your library"),
                 Rx(@"discard[\w ]* then draw"), Rx(@"draws? [\w ]{0,20}cards?[.,] ?(?:then |and )?(?:you may )?discards?"),
                 Rx(@"you may discard (?:a|one|up to \w+|any number of) cards?\.? ?(?:if you do, )?draws?"),
@@ -1354,7 +1369,13 @@ namespace ScatoloneDownloader.Cube
             // net gain, so the moment the count is provably positive the card
             // belongs to CardAdvantage alone — Casting of Bones and Emmessi Tome
             // were carrying both.
-            if (result.HasFlag(CardEffect.Filter) && LootDrawsMoreThanItPays(text))
+            // …but only when the loot is the ONLY filtering on the card. Scry
+            // and surveil are Filter unconditionally (ruled 2026-09-19), so a
+            // card that scries and also loots for profit keeps both tags; the
+            // withdrawal is about the loot, not about everything else the card
+            // happens to do.
+            if (result.HasFlag(CardEffect.Filter) && LootDrawsMoreThanItPays(text)
+                && !FiltersWithoutALoot.IsMatch(text))
             {
                 result &= ~CardEffect.Filter;
             }

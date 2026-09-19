@@ -708,6 +708,50 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // Scry and surveil ARE Filter, unconditionally, ruled 2026-09-19: it does
+    // not matter how small the number is or what else the card does. Measured
+    // first — the "rider" theory was that a surveil 1 tacked onto a bounce spell
+    // should not count, and it does not distinguish anything: Filter is tagged
+    // on 88 of the ~103 reviewed cards that scry or surveil, whether or not the
+    // card does something else.
+    [InlineData("Unauthorized Exit", "Instant",
+        "Return target nonland permanent to its owner's hand. Surveil 1. "
+        + "(Look at the top card of your library. You may put it into your graveyard.)")]
+    [InlineData("Voyager Glidecar", "Artifact — Vehicle",
+        "When this Vehicle enters, scry 1.\nTap three other untapped creatures you control: Until end of turn, "
+        + "this Vehicle becomes an artifact creature and gains flying. Put a +1/+1 counter on it.\nCrew 1")]
+    // Every printed form, which "scry \\d" was not: the bulk carries "scry X" on
+    // 17 cards and a handful say "scries" because the subject is a player.
+    [InlineData("Cascade Seer", "Creature — Merfolk Wizard",
+        "When this creature enters, scry X, where X is the number of creatures in your party. "
+        + "(Your party consists of up to one each of Cleric, Rogue, Warrior, and Wizard.)")]
+    [InlineData("Kozilek's Command", "Kindred Instant — Eldrazi",
+        "Choose two —\n"
+        + "• Target player creates X 0/1 colorless Eldrazi Spawn creature tokens with \"Sacrifice this token: Add {C}.\"\n"
+        + "• Target player scries X, then draws a card.\n"
+        + "• Exile target creature with mana value X or less.\n"
+        + "• Exile up to X target cards from graveyards.")]
+    public void Classify_ScryAndSurveil_AreAlwaysFilter(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Fact]
+    // The one shape the count keeps out: a trigger that WATCHES a scry happen
+    // is not a scry, the same reading that keeps "whenever you draw a card" out
+    // of CardAdvantage. Planetarium of Wan Shi Tong still filters — it has its
+    // own "{1}, {T}: Scry 2" — so the card is checked without that line.
+    public void Classify_ATriggerThatWatchesAScry_IsNotItselfFilter()
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(
+            "Planetarium of Wan Shi Tong", "Legendary Artifact",
+            "Whenever you scry or surveil, look at the top card of your library. You may cast that card without "
+            + "paying its mana cost. Do this only once each turn. (Look at the card after you scry or surveil.)"));
+
+        Assert.False(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
     // Whose draw is it? A card that only ever draws for somebody ELSE gives
     // nothing away for free. Ruled 2026-09-19 over 10 cards, 8 untagged. The
     // test is done by STRIPPING rather than a lookbehind, because "defending

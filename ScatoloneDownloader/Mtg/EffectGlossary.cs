@@ -66,9 +66,10 @@ namespace ScatoloneDownloader.Mtg
                 + "top, one cycle, one ETB cantrip: riders.",
 
             [CardEffect.Filter] =
-                "Selection at NO net gain: scry, surveil, look at the top few and take one, or hand back what you drew "
-                + "— discard two draw two, and every rummage (\"you may discard a card. If you do, draw a card\"). The "
-                + "moment the loot comes out ahead it is CardAdvantage instead. A discard paid as a COST is neither.",
+                "Selection at NO net gain. ANY scry or surveil counts, however small and whatever else the card does. "
+                + "So does looking at the top few and taking one, and handing back what you drew — discard two draw "
+                + "two, every rummage. The moment a loot comes out ahead it is CardAdvantage instead. A discard paid "
+                + "as a COST is neither.",
 
             [CardEffect.Reanimate] =
                 "Returns a creature from a graveyard straight to the BATTLEFIELD, cheating its cost.",
