@@ -64,9 +64,38 @@ namespace ScatoloneDownloader.Cube
         [
             Rx(@"create[s]?\b.*\btoken"),
             Rx(@"put[s]?\b.*\btoken.*onto the battlefield"),
+            // The same sentence with the verb at the END, which the two rules
+            // above cannot read: Stridehangar Automaton says "those tokens plus
+            // an additional 1/1 Thopter … ARE CREATED instead".
+            Rx(@"tokens?[\w ,'\-/]{0,80}(?:are|is) created"),
         ];
 
-        private static readonly Regex CreatureTokenWording = Rx(@"creature token|token that's a copy|token copy");
+        // A token names a CREATURE in one of three ways, and only the first was
+        // being read. The second is a token with a proper name whose creature
+        // type lives in the reminder text — "Create a Spellgorger Weird token.
+        // (It's a {2}{R} 2/2 Weird creature with …)" never says "creature
+        // token" anywhere. The third is a COPY.
+        private static readonly Regex CreatureTokenWording = Rx(@"creature token");
+
+        private static readonly Regex NamedTokenIsACreature = Rx(
+            @"create[s]? (?:a|an|two|three|four|five|x|\d+)[\w ,'\-]{0,30} tokens?\. "
+            + @"\(it'?s? [\w ,'\-{}/]{0,40}\d+/\d+[\w ,'\-]{0,30}creature");
+
+        private static readonly Regex AnyTokenCopy = Rx(
+            @"token that's a copy|token cop(?:y|ies)|tokens that are copies");
+
+        private static readonly Regex NoncreatureBeingCopied = Rx(
+            @"\b(?:artifact|equipment|enchantment|land|vehicle|clue|treasure|food)\b");
+
+        // Four keywords that put a BODY on the board and never say "token" in a
+        // shape the rules above can read. Ruled 2026-09-19. Cloak and manifest
+        // dread turn a card face down as a 2/2; living weapon and job select
+        // hand the Equipment a Germ or a Hero to carry it. 29 reviewed cards
+        // carry one of these and 24 were already tagged by hand; plain MANIFEST
+        // is deliberately not among them, being one card and untagged.
+        private static readonly Regex MakesABodyByKeyword = Rx(
+            @"\bcloaks? (?:the|two|three|four|\w+ of them|up to)|manifest dread"
+            + @"|\bliving weapon\b|\bjob select\b");
 
         // Diabolic Edict and Flare of Malice make the OTHER player sacrifice,
         // which empties their board rather than giving you a place to put yours.
@@ -1290,15 +1319,20 @@ namespace ScatoloneDownloader.Cube
             // a guard rather than as more regexes because the evidence sits
             // anywhere on the card, not next to the verb.
             if (result.HasFlag(CardEffect.Tokens)
-                && (!CreatureTokenWording.IsMatch(text) || SomebodyElseCreates.IsMatch(text)))
+                && (!MakesACreatureBody(text) || SomebodyElseCreates.IsMatch(text)))
             {
                 result &= ~CardEffect.Tokens;
             }
 
             // Added after the guard, not inside TokenPatterns, because these
             // wordings never say "token" at all and so have nothing for the
-            // creature-token check to read.
-            if (Earthbend.IsMatch(text) || LandsBecomeCreatures.IsMatch(text))
+            // creature-token check to read. Earthbend and the animated land are
+            // here by the 2026-09-15 ruling, reaffirmed 2026-09-19 after the
+            // hand tags were found split 21 to 14 on the identical wording —
+            // none of the tagged ones makes a real token, so the split was an
+            // inconsistency rather than a distinction, and the ruling settles it.
+            if (Earthbend.IsMatch(text) || LandsBecomeCreatures.IsMatch(text)
+                || MakesABodyByKeyword.IsMatch(text))
             {
                 result |= CardEffect.Tokens;
             }
@@ -1722,6 +1756,46 @@ namespace ScatoloneDownloader.Cube
         /// on a repeating trigger or an activated ability. The reminder text is
         /// blanked first, because it carries a colon and would make every
         /// Treasure card read as repeatable.</summary>
+        /// <summary>True when what the card makes is a CREATURE — said outright,
+        /// said in a named token's reminder text, or made as a copy of one.
+        /// </summary>
+        private static bool MakesACreatureBody(string text) =>
+            CreatureTokenWording.IsMatch(text)
+            || NamedTokenIsACreature.IsMatch(text)
+            || TokenCopiesACreature(text);
+
+        /// <summary>A token copy is a body unless the thing being copied is a
+        /// noncreature permanent, ruled 2026-09-19: Esoteric Duplicator copies
+        /// an artifact and Firion an Equipment, and neither puts anything on the
+        /// board to attack with. Asked of the LINE that makes the copy, because
+        /// the type word that answers it sits in the trigger beside the verb.
+        /// </summary>
+        private static bool TokenCopiesACreature(string text)
+        {
+            foreach (string line in text.Split('\n'))
+            {
+                if (!AnyTokenCopy.IsMatch(line))
+                {
+                    continue;
+                }
+
+                if (line.Contains("creature", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                // No type word at all means a copy of something unspecified,
+                // which is read as a creature; a noncreature type named on the
+                // line rules this line out and the next one is tried.
+                if (!NoncreatureBeingCopied.IsMatch(line))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private static bool TreasureAlsoRamps(string text)
         {
             if (!MakesATreasure.IsMatch(text))

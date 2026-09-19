@@ -23,8 +23,10 @@ namespace ScatoloneDownloader.Mtg
         private static readonly Dictionary<CardEffect, string> Descriptions = new()
         {
             [CardEffect.Tokens] =
-                "Puts CREATURE bodies on the board, and yours. A Treasure, Clue, Food or Lander is a resource, not a body; "
-                + "a token an opponent creates is not yours. Earthbend and \"all lands are 1/1 creatures\" do count.",
+                "Puts CREATURE bodies on the board, and yours — however worded. Earthbend, an animated land, cloak, "
+                + "manifest dread, living weapon and job select all count, and so does a token copy OF A CREATURE. "
+                + "A Treasure, Clue, Food or Lander is a resource, not a body; a copy of an artifact is not a body "
+                + "either; a token an opponent creates is not yours.",
 
             [CardEffect.Removal] =
                 "Answers ONE creature: destroy, exile, damage, fight, an edict aimed at THEM, or shrink its toughness "

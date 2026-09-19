@@ -954,13 +954,94 @@ public sealed class EffectClassifierTests
 
     [Theory]
     // A creature body does not have to arrive as a token: the deck cares about
-    // the creatures, not the wording that made them. Ruled 2026-09-15.
+    // the creatures, not the wording that made them. Ruled 2026-09-15 and
+    // REAFFIRMED 2026-09-19, when the hand tags were found split 21 to 14 on
+    // the identical earthbend wording. None of the 21 tagged ones makes a real
+    // token, so the split was an inconsistency rather than a distinction.
     [InlineData("Nature's Revolt", "Enchantment", "All lands are 2/2 creatures that are still lands.")]
-    [InlineData("Earthbending Lesson", "Sorcery — Lesson",
-        "Earthbend 4. (Target land you control becomes a 0/0 creature with haste that's still a land.)")]
+    [InlineData("Badgermole Cub", "Creature — Badger Mole",
+        "When this creature enters, earthbend 1. (Target land you control becomes a 0/0 creature with haste "
+        + "that's still a land. Put a +1/+1 counter on it. When it dies or is exiled, return it to the "
+        + "battlefield tapped.)\nWhenever you tap a creature for mana, add an additional {G}.")]
+    // The animated land written without the keyword. The pattern reads the
+    // "2/2" and so cannot be spelled with [\w ], which is the bug that made
+    // the first realignment pass miss all five of these.
+    [InlineData("Quirion Druid", "Creature — Elf Druid",
+        "{G}, {T}: Target land becomes a 2/2 green creature that's still a land. (This effect lasts indefinitely.)")]
+    // Four keywords that put a body on the board and never say "token" in a
+    // shape the rules can read. Ruled 2026-09-19; 29 reviewed cards carry one
+    // and 24 were already tagged by hand.
+    [InlineData("Cryptic Coat", "Artifact — Equipment",
+        "When this Equipment enters, cloak the top card of your library, then attach this Equipment to it. "
+        + "(To cloak a card, put it onto the battlefield face down as a 2/2 creature with ward {2}. Turn it "
+        + "face up any time for its mana cost if it's a creature card.)\n"
+        + "Equipped creature gets +1/+0 and can't be blocked.\n{1}{U}: Return this Equipment to its owner's hand.")]
+    [InlineData("Curator Beastie", "Creature — Beast",
+        "Reach\nColorless creatures you control enter with two additional +1/+1 counters on them.\n"
+        + "Whenever this creature enters or attacks, manifest dread. (Look at the top two cards of your library. "
+        + "Put one onto the battlefield face down as a 2/2 creature and the other into your graveyard. Turn it "
+        + "face up any time for its mana cost if it's a creature card.)")]
+    // A token with a PROPER NAME, whose creature type lives only in the
+    // reminder text: this never says "creature token" anywhere.
+    [InlineData("Ral and the Implicit Maze", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\n"
+        + "I — This Saga deals 2 damage to each creature and planeswalker your opponents control.\n"
+        + "II — You may discard a card. If you do, exile the top two cards of your library. You may play them "
+        + "until the end of your next turn.\n"
+        + "III — Create a Spellgorger Weird token. (It's a {2}{R} 2/2 Weird creature with \"Whenever you cast a "
+        + "noncreature spell, put a +1/+1 counter on Spellgorger Weird.\")")]
+    // And the same sentence with the verb at the end.
+    [InlineData("Stridehangar Automaton", "Artifact Creature — Construct",
+        "Thopters you control get +1/+1.\n"
+        + "If one or more artifact tokens would be created under your control, those tokens plus an additional "
+        + "1/1 colorless Thopter artifact creature token with flying are created instead.")]
     public void Classify_MakingCreaturesWithoutTokens_IsTokens(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    // Living weapon and job select say "creature token" in their reminder text,
+    // so they already read — pinned because the RULING is about the keyword and
+    // a card printed without reminder text must still count.
+    [InlineData("Mandibular Kite", "Artifact — Equipment",
+        "Living weapon (When this Equipment enters, create a 0/0 black Phyrexian Germ creature token, then "
+        + "attach this to it.)\nEquipped creature gets +1/+1 and has flying.\nEquip {3}{W}")]
+    [InlineData("Thief's Knife", "Artifact — Equipment", "Job select\nEquip {4}")]
+    public void Classify_EquipmentThatBringsItsOwnBody_IsTokens(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    // A TOKEN COPY is a body only when what it copies is a creature, ruled
+    // 2026-09-19. Asked of the LINE that makes the copy, because the type word
+    // that answers it sits in the trigger beside the verb.
+    [InlineData("Ran and Shaw", "Legendary Creature — Dragon",
+        "Flying, firebending 2\n"
+        + "When Ran and Shaw enter, if you cast them and there are three or more Dragon and/or Lesson cards in "
+        + "your graveyard, create a token that's a copy of Ran and Shaw, except it's not legendary.\n"
+        + "{3}{R}: Dragons you control get +2/+0 until end of turn.")]
+    public void Classify_ATokenCopyOfACreature_IsTokens(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    // …and the other side: Esoteric Duplicator copies an artifact and Firion an
+    // Equipment, and neither puts anything on the board to attack with.
+    [InlineData("Esoteric Duplicator", "Artifact — Clue",
+        "Whenever you sacrifice this artifact or another artifact, you may pay {2}. If you do, at the beginning "
+        + "of the next end step, create a token that's a copy of that artifact.\n"
+        + "{2}, Sacrifice this artifact: Draw a card.")]
+    [InlineData("Firion, Wild Rose Warrior", "Legendary Creature — Human Rebel Warrior",
+        "Equipped creatures you control have haste.\n"
+        + "Whenever a nontoken Equipment you control enters, create a token that's a copy of it, except it has "
+        + "\"This Equipment's equip abilities cost {2} less to activate.\" Sacrifice that token at the beginning "
+        + "of the next upkeep.")]
+    public void Classify_ATokenCopyOfSomethingElse_IsNotTokens(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
     }
 
     [Theory]
