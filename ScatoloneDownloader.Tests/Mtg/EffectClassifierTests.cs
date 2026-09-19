@@ -2372,6 +2372,85 @@ public sealed class EffectClassifierTests
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Redirect));
     }
 
+    [Theory]
+    // Removal, widened 2026-09-19. "Equal to" is how the game writes a creature
+    // hitting another creature, and the rule read one word order, one length of
+    // filler and four destinations.
+    [InlineData("Repentance", "Instant", "Target creature deals damage to itself equal to its power.")]
+    [InlineData("Allies at Last", "Sorcery",
+        "Affinity for Allies (This spell costs {1} less to cast for each Ally you control.)\n"
+        + "Up to two target creatures you control each deal damage equal to their power to target "
+        + "creature an opponent controls.")]
+    [InlineData("Betrayal at the Vault", "Sorcery",
+        "Target creature you control deals damage equal to its power to each of two other target creatures.")]
+    [InlineData("Slash of Light", "Instant",
+        "Slash of Light deals damage equal to the number of creatures you control plus the number of "
+        + "Equipment you control to target creature.")]
+    // The amount is written as freely as the target.
+    [InlineData("Banshee", "Creature — Spirit",
+        "{X}, {T}: This creature deals half X damage, rounded down, to any target, and half X damage, "
+        + "rounded up, to you.")]
+    [InlineData("Firestorm", "Instant",
+        "As an additional cost to cast this spell, discard X cards.\n"
+        + "Firestorm deals X damage to each of X targets.")]
+    // "Destroy UP TO ONE OTHER target creature" is sixteen characters of filler.
+    [InlineData("Faller's Faithful", "Creature — Human",
+        "When this creature enters, destroy up to one other target creature. If that creature wasn't "
+        + "dealt damage this turn, its controller draws two cards.")]
+    // An Aura shrinks without ever saying "target", and the counter can land on
+    // the victim after one has landed on the card itself.
+    [InlineData("Weakness", "Enchantment — Aura", "Enchant creature\nEnchanted creature gets -2/-1.")]
+    [InlineData("Immolation", "Enchantment — Aura", "Enchant creature\nEnchanted creature gets +2/-2.")]
+    [InlineData("Serrated Biskelion", "Artifact Creature — Construct",
+        "{T}: Put a -1/-1 counter on this creature and a -1/-1 counter on target creature.")]
+    // A creature that ends up on the BOTTOM of a library is as answered as one
+    // that is destroyed.
+    [InlineData("The Spot's Portal", "Instant",
+        "Put target creature on the bottom of its owner's library. You lose 2 life unless you control "
+        + "a Villain.")]
+    [InlineData("Dramatic Accusation", "Enchantment — Aura",
+        "Enchant creature\nWhen this Aura enters, tap enchanted creature.\n"
+        + "Enchanted creature doesn't untap during its controller's untap step.\n"
+        + "{U}{U}: Shuffle enchanted creature into its owner's library.")]
+    public void Classify_AnswersOneCreature_IsRemoval(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
+    // Your OWN creature is a blink, an outlet or a way to hide it from a Wrath.
+    [InlineData("Cold Storage", "Artifact",
+        "{3}: Exile target creature you control.\n"
+        + "Sacrifice this artifact: Return each creature card exiled with this artifact to the "
+        + "battlefield under your control.")]
+    // A creature CARD IN A GRAVEYARD is already dead.
+    [InlineData("Eater of the Dead", "Creature — Horror",
+        "{0}: If this creature is tapped, exile target creature card from a graveyard and untap this creature.")]
+    // An answer that can only touch what it is already fighting is a combat
+    // trick, in the active voice as much as the passive.
+    [InlineData("Wall of Corpses", "Creature — Wall",
+        "Defender (This creature can't attack.)\n"
+        + "{B}, Sacrifice this creature: Destroy target creature this creature is blocking.")]
+    [InlineData("Elite Javelineer", "Creature — Human Soldier",
+        "Whenever this creature blocks, it deals 1 damage to target attacking creature.")]
+    // An Aura has to take real power or two whole points of toughness.
+    [InlineData("Coils of the Medusa", "Enchantment — Aura",
+        "Enchant creature\nEnchanted creature gets +1/-1.\n"
+        + "Sacrifice this Aura: Destroy all non-Wall creatures blocking enchanted creature.")]
+    [InlineData("Ironclaw Curse", "Enchantment — Aura",
+        "Enchant creature\nEnchanted creature gets -0/-1.\n"
+        + "Enchanted creature can't block creatures with power equal to or greater than the enchanted "
+        + "creature's toughness.")]
+    // "That creature's CONTROLLER" is a face, not the creature.
+    [InlineData("Dingus Staff", "Artifact",
+        "Whenever a creature dies, this artifact deals 2 damage to that creature's controller.")]
+    // And the TOP of a library hands the card straight back.
+    [InlineData("Time Ebb", "Sorcery", "Put target creature on top of its owner's library.")]
+    public void Classify_WhatOnlyReadsLikeAnAnswer_IsNotRemoval(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
+    }
+
     private static Card MakeCard(string name, string typeLine, string oracleText, List<string>? keywords = null)
     {
         JsonCard json = new()

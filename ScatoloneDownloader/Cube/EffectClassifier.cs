@@ -742,9 +742,26 @@ namespace ScatoloneDownloader.Cube
         // and so did every "exile UP TO ONE target creature" O-ring, where the
         // filler sits in front of "target". That was 49 of the 189 misses, and
         // repairing it cost no precision at all once two families are kept out.
+        // Widened to {0,20} on 2026-09-19: "destroy UP TO ONE OTHER target
+        // creature" is 16 characters of filler, and Faller's Faithful and Koh
+        // both fell one word past the old limit.
         private static readonly Regex KillsAcrossCommas = Rx(
-            @"(?:destroy|exile) (?:[\w -]{0,15})?target[\w ,-]{0,45}(?<!non)creature");
+            @"(?:destroy|exile) (?:[\w -]{0,20})?target[\w ,-]{0,45}(?<!non)creature");
 
+
+        // Every clause that points a destroy or an exile at a creature, with
+        // enough of the tail to see WHOSE creature it is and WHERE it is. Used by
+        // the guard below, which asks whether any of them is a real answer.
+        private static readonly Regex AimedAtACreature = Rx(
+            @"(?:destroy|exile) (?:[\w -]{0,20})?target[\w ,'-]{0,45}(?<!non)creature[\w ,'-]{0,30}");
+
+        // Two ways a clause that reads like a kill answers nothing. YOUR OWN
+        // creature is a blink, a sacrifice outlet or a way to hide it from a
+        // Wrath — Cold Storage, Safe Haven, Niko and Y'shtola all exile one and
+        // hand it back. And a creature CARD IN A GRAVEYARD is already dead, so
+        // Eater of the Dead and Summoner's Sending are graveyard hate.
+        private static readonly Regex AnswersNobody = Rx(
+            @"you control|cards? (?:from|in)[\w ']{0,25}graveyard");
 
         // It comes back: a blink is not an answer.
         private static readonly Regex ReturnsItToPlay = Rx(
@@ -756,8 +773,26 @@ namespace ScatoloneDownloader.Cube
 
         // "Deals damage equal to the number of Swamps you control to any target"
         // kills exactly like a fixed number does; the rule only read digits.
+        // Widened 2026-09-19, and it was the single largest family of misses.
+        // "Equal to" is how the game writes a creature hitting another creature,
+        // and the rule read one word order, one length of filler and four
+        // destinations. All three were short:
+        //   the ORDER reverses — "target creature deals damage TO ITSELF EQUAL TO
+        //     its power" (Repentance, Cut Propulsion, Wisecrack);
+        //   the FILLER runs long — "damage equal to the number of creatures you
+        //     control plus the number of Equipment you control to target creature"
+        //     (Slash of Light) is 99 characters of it;
+        //   and the DESTINATION is qualified as freely as any other target —
+        //     "to target creature AN OPPONENT CONTROLS" (Allies at Last, Terrific
+        //     Team-Up), "to UP TO ONE OTHER target creature" (Venom Blast), "to
+        //     EACH OF TWO OTHER target creatures" (Betrayal at the Vault), "to ANY
+        //     OTHER target" (Screaming Nemesis), or back at itself.
         private static readonly Regex DamageEqualTo = Rx(
-            @"deals damage equal to [\w' ]{0,45}to (?:any target|target creature|that creature|another target creature)");
+            @"deals? damage equal to [\w' ,\-]{0,110}to (?:any (?:other )?target|itself"
+            + @"|(?:each of )?(?:two |three )?(?:any |another |other |up to \w+ )*target[\w ,'-]{0,30}creature"
+            + @"|that creature(?!'s))"
+            + @"|deals? damage to (?:itself|any (?:other )?target|that creature(?!'s)"
+            + @"|target[\w ,'-]{0,30}creature) equal to");
 
         // A shrink is an answer: a creature whose toughness reaches zero dies just
         // as surely as one that is destroyed, and the two vocabularies for it are
@@ -771,11 +806,28 @@ namespace ScatoloneDownloader.Cube
         // The qualifier sits in two places and both had to be allowed for: before
         // the noun ("target ATTACKING creature") and after it ("target creature
         // AN OPPONENT CONTROLS gets -X/-X"). Widened 2026-09-17.
+        // An AURA is the third place the shrink lives, and it was invisible to
+        // both rules because an Aura never says "target": it says "ENCHANTED
+        // CREATURE gets -2/-2" (Weakness, Enfeeblement, Swampsnare Trap) or "gets
+        // +2/-2" (Immolation, Phyrexian Boon), which kills a two-toughness
+        // creature exactly as a spell would. Added 2026-09-19.
+        //
+        // An Aura has to take real power or two whole points of toughness, which
+        // is the line the hand tags draw: Weakness (-2/-1), Immolation (+2/-2) and
+        // Phyrexian Boon (-1/-2) are tagged, Coils of the Medusa (+1/-1) and
+        // Ironclaw Curse (-0/-1) are not. One point off a creature that keeps its
+        // power is a nuisance; the spell version keeps the looser reading because
+        // a spell is aimed and an Aura is a permanent that sits there.
         private static readonly Regex ShrinksOneCreature = Rx(
-            @"target [\w -]{0,28}(?<!non)creature[\w ' -]{0,28}gets? -[\dX]+/-[1-9X]");
+            @"target [\w -]{0,28}(?<!non)creature[\w ' -]{0,28}gets? -[\dX]+/-[1-9X]"
+            + @"|enchanted creature gets (?:-[1-9X]\d*/-[1-9X]|[+-][\dX]+/-(?:[2-9X]|\d\d))");
 
+        // ...and the counter version has the same blind spot, plus one of its own:
+        // Serrated Biskelion puts the first counter on ITSELF and the second on
+        // the victim, so the victim is no longer the word after "on".
         private static readonly Regex ShrinkCounters = Rx(
-            @"put(?:s)? (?:a|an|two|three|four|\d+|x) -1/-1 counters? on (?:target|another target|up to)");
+            @"put(?:s)? (?:a|an|two|three|four|\d+|x) -1/-1 counters? on "
+            + @"(?:[\w ,'\-/]{0,40}(?:target|up to)|enchanted creature)");
 
         // Pacify's own version of the self-versus-other question, and the largest
         // single source of noise on the board: "this creature can't attack" is
@@ -1008,8 +1060,17 @@ namespace ScatoloneDownloader.Cube
         // the Glyph cycle) and "destroy target creature blocking it" reads like a
         // kill (Knight of Dusk, Flowstone Salamander, Urborg Panther). Neither
         // answers anything you were not already in combat with.
+        // Widened 2026-09-19 for the active voice. The rule read the victim's
+        // side of the sentence ("target creature BLOCKING IT") and the game just
+        // as often writes the card's ("target creature IT'S BLOCKING" — Goblin
+        // Snowman, Tinder Wall; "this creature is blocking" — Wall of Corpses),
+        // or puts the restriction in the trigger instead ("WHENEVER THIS CREATURE
+        // BLOCKS, it deals 1 damage to target attacking creature" — Elite
+        // Javelineer, Sawtooth Ogre).
         private static readonly Regex OnlyWhatIsInCombatWithIt = Rx(
-            @"blocking or blocked by|blocking (?:this creature|it)\b|blocked by (?:this creature|it)\b");
+            @"blocking or blocked by|blocking (?:this creature|it)\b|blocked by (?:this creature|it)\b"
+            + @"|it'?s blocking\b|this creature is blocking\b"
+            + @"|whenever this creature blocks\b|whenever this creature becomes blocked\b");
 
         private static readonly Regex RestrictedMana = Rx(@"spend this mana only");
 
@@ -1268,7 +1329,12 @@ namespace ScatoloneDownloader.Cube
             (CardEffect.Removal, [
                 Rx(@"destroy target[\w ]*(?<!non)creature"), Rx(@"exile target[\w ]*(?<!non)creature"),
                 Rx(@"destroy target[\w ]*((?<!non)creature|planeswalker)"),
-                Rx(@"deals? [\dX]+ damage to any target"),
+                // The AMOUNT is written as freely as the target: "half X damage,
+                // rounded down" (Banshee), "X plus 1 damage" (Meteor Shower). And
+                // "any target" has two more spellings — "any OTHER target"
+                // (Self-Destruct) and "EACH OF X targets" (Firestorm).
+                Rx(@"deals? (?:half )?[\dX]+(?: plus \d+)? damage(?:, rounded (?:down|up),)? "
+                    + @"to (?:any (?:other )?target|that creature(?!'s)|each of [\dX]+ targets)"),
                 // The damage rules could not read a QUALIFIED target — "damage to
                 // target ATTACKING creature", "to target creature AN OPPONENT
                 // CONTROLS" — which was 23 of the misses on its own, and the
@@ -1276,12 +1342,25 @@ namespace ScatoloneDownloader.Cube
                 Rx(@"deals? [\dX]+ damage to [\w ]{0,20}target [\w -]{0,28}(?<!non)creature"),
                 Rx(@"deals damage to [\w ]{0,20}target [\w -]{0,28}(?<!non)creature equal to"),
                 // A fireball split between several things still kills one of them.
-                Rx(@"deals? [\dX]+ damage divided (?:evenly, rounded down, |as you choose )?among"),
+                Rx(@"deals? (?:half )?[\dX]+(?: plus \d+)? damage divided "
+                    + @"(?:evenly, rounded down, |as you choose )?among"),
                 Rx(@"\bfights?\b"),
                 // An edict, in every wording — but aimed at THEM. "Each player
                 // sacrifices" costs you a creature too, and the hand-tagging
                 // declines those (Abyssal Gatekeeper, Pillar Tombs of Aku).
-                Rx(@"(?:target player|target opponent|each opponent)[\w ,]{0,30}sacrifices? (?:a|an|one|two|\d+)[\w ]{0,25}(?<!non)creature")]),
+                Rx(@"(?:target player|target opponent|each opponent)[\w ,]{0,30}sacrifices? (?:a|an|one|two|\d+)[\w ]{0,25}(?<!non)creature"),
+                // A COLOUR-restricted permanent kill is aimed at a creature in
+                // practice, and the hand tags say so: Active Volcano, Flash Flood
+                // and Southern Paladin all destroy "target <colour> permanent"
+                // and all three are tagged here as well as RemovePermanent.
+                // A creature that ends up in a LIBRARY is as answered as one that
+                // is destroyed, and the Auras are the only place this wording
+                // appears: The Spot's Portal puts it on the bottom, Dramatic
+                // Accusation, Stay Hidden Stay Silent and Watery Grasp shuffle it
+                // in. Added 2026-09-19.
+                Rx(@"put target[\w ,'-]{0,30}(?<!non)creature[\w ,'-]{0,25}on the bottom of[\w ']{0,25}library"),
+                Rx(@"shuffles? enchanted creature into[\w ']{0,25}library"
+                    + @"|enchanted creature'?s owner shuffles it into")]),
 
             (CardEffect.Counter, [Rx(@"counter target[\w ]*spell")]),
 
@@ -1822,6 +1901,15 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Removal;
             }
 
+            // …and the same question asked of whose creature it is. Every aimed
+            // clause on the card is read, and the tag only comes off when ALL of
+            // them point at your own creature or at a graveyard — a card that
+            // kills one of theirs and blinks one of yours keeps it.
+            if (result.HasFlag(CardEffect.Removal) && OnlyAnswersNobody(text))
+            {
+                result &= ~CardEffect.Removal;
+            }
+
             // A Wall is not a Pacify effect. See the patterns above.
             if (result.HasFlag(CardEffect.Pacify) && SelfCantAttack.IsMatch(text) && !OutwardCantAttack.IsMatch(text))
             {
@@ -2079,6 +2167,26 @@ namespace ScatoloneDownloader.Cube
         /// should be able to excuse or condemn the other. See
         /// <see cref="SweepsCreaturesToo"/>, <see cref="ExileThatComesBack"/> and
         /// <see cref="DisenchantsYourOwn"/> for what each veto costs and buys.</summary>
+        /// <summary>Whether every destroy-or-exile clause on the card points at
+        /// something that answers nobody. Returns false when the card has no such
+        /// clause at all, because then the tag came from damage, a fight, a shrink
+        /// or an edict and this question does not apply to it.</summary>
+        private static bool OnlyAnswersNobody(string text)
+        {
+            bool sawOne = false;
+
+            foreach (Match match in AimedAtACreature.Matches(text))
+            {
+                sawOne = true;
+                if (!AnswersNobody.IsMatch(match.Value))
+                {
+                    return false;
+                }
+            }
+
+            return sawOne;
+        }
+
         /// <summary>Whether some ONE line of the card searches for a card that is
         /// not a land and not another copy of itself. See
         /// <see cref="SearchesOnlyForALand"/> and

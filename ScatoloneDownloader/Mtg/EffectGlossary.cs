@@ -29,9 +29,10 @@
                 + "either; a token an opponent creates is not yours.",
 
             [CardEffect.Removal] =
-                "Answers ONE creature: destroy, exile, damage, fight, an edict aimed at THEM, or shrink its toughness "
-                + "to nothing. Not \"-2/-0\" (Pacify), not \"each creature\" (Wipe), not \"each player sacrifices\", "
-                + "and not what only answers a creature already blocking you.",
+                "Answers ONE creature: destroy, exile, damage however counted, fight, an edict aimed at THEM, "
+                + "the BOTTOM of a library, or a shrink that takes real toughness. Not YOUR OWN creature, not a "
+                + "card in a GRAVEYARD, not \"-2/-0\" (Pacify), not \"each creature\" (Wipe), and not what can "
+                + "only touch what it is already blocking.",
 
             [CardEffect.Counter] =
                 "Answers a spell on the stack by countering it.",
