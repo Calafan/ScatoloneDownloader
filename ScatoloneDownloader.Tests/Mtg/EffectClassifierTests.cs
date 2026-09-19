@@ -1173,6 +1173,12 @@ public sealed class EffectClassifierTests
     [InlineData("Unyielding Gatekeeper", "Creature — Elephant Cleric",
         "When this creature is turned face up, exile another target nonland permanent.")]
     [InlineData("Hide in Plain Sight", "Instant", "Exile up to one target nonland permanent.")]
+    // A COLOUR-restricted permanent kill is the same reading: the breadth is the
+    // point. Ruled 2026-09-20, having spent a day on Removal instead.
+    [InlineData("Northern Paladin", "Creature — Human Knight",
+        "{W}{W}, {T}: Destroy target black permanent.")]
+    [InlineData("Active Volcano", "Instant",
+        "Choose one —\n• Destroy target blue permanent.\n• Return target Island to its owner's hand.")]
     public void Classify_AnsweringAnyPermanent_IsRemovePermanent(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.RemovePermanent));
@@ -2418,9 +2424,6 @@ public sealed class EffectClassifierTests
     [InlineData("Contagion", "Instant",
         "You may pay 1 life and exile a black card from your hand rather than pay this spell's mana cost.\n"
         + "Distribute two -2/-1 counters among one or two target creatures.")]
-    // A colour-restricted permanent kill is aimed at a creature in practice.
-    [InlineData("Northern Paladin", "Creature — Human Knight",
-        "{W}{W}, {T}: Destroy target black permanent.")]
     // A creature that ends up on the BOTTOM of a library is as answered as one
     // that is destroyed.
     [InlineData("The Spot's Portal", "Instant",
@@ -2458,6 +2461,11 @@ public sealed class EffectClassifierTests
     // A fight has to name what it fights: "Fight Crime" is the name of a mode.
     [InlineData("School Daze", "Instant",
         "Choose one —\n• Do Homework — Draw three cards.\n• Fight Crime — Counter target spell. Draw a card.")]
+    // A COLOUR-restricted permanent kill is RemovePermanent, not this: the
+    // breadth is the point, exactly as it is for Vindicate. Ruled 2026-09-20,
+    // reversing the reading of the day before.
+    [InlineData("Northern Paladin", "Creature — Human Knight",
+        "{W}{W}, {T}: Destroy target black permanent.")]
     // "That creature's CONTROLLER" is a face, not the creature.
     [InlineData("Dingus Staff", "Artifact",
         "Whenever a creature dies, this artifact deals 2 damage to that creature's controller.")]

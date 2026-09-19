@@ -1283,7 +1283,21 @@ namespace ScatoloneDownloader.Cube
             // Recall 29.0% -> 83.9%, 24 wrong -> 12.
             (CardEffect.RemovePermanent, [
                 Rx(@"(?:destroy|exile) (?:[\w ]{0,15})?target nonland permanent"),
-                Rx(@"(?:destroy|exile) (?:[\w ]{0,15})?target permanent")]),
+                Rx(@"(?:destroy|exile) (?:[\w ]{0,15})?target permanent"),
+                // A COLOUR-restricted permanent kill belongs here rather than to
+                // Removal, ruled 2026-09-20. It was tried as Removal the day
+                // before, on the reading that "destroy target red permanent" is
+                // aimed at a creature in practice — but the BREADTH is what this
+                // tag is for, and it is the same reading that keeps Vindicate
+                // here even though you usually point it at a creature. Active
+                // Volcano, Flash Flood and both Paladins.
+                //
+                // NB the colours are listed one by one on purpose. A "non\w+"
+                // alternation written to catch "nonblack permanent" also catches
+                // "NONLAND permanent", which the first rule above already reads —
+                // 26 false positives in one measurement while it sat on Removal.
+                Rx(@"(?:destroy|exile) target (?:white|blue|black|red|green|colorless|multicolored"
+                    + @"|nonwhite|nonblue|nonblack|nonred|nongreen)[\w ]{0,15}permanent")]),
 
             // Three deliberate tightenings, each from a card that fooled a looser
             // version of these rules:
@@ -1365,22 +1379,6 @@ namespace ScatoloneDownloader.Cube
                 // sacrifices" costs you a creature too, and the hand-tagging
                 // declines those (Abyssal Gatekeeper, Pillar Tombs of Aku).
                 Rx(@"(?:target player|target opponent|each opponent)[\w ,]{0,30}sacrifices? (?:a|an|one|two|\d+)[\w ]{0,25}(?<!non)creature"),
-                // A COLOUR-restricted permanent kill is aimed at a creature in
-                // practice, and the hand tags say so: Active Volcano, Flash Flood
-                // and Southern Paladin all destroy "target <colour> permanent"
-                // and all three are tagged here as well as RemovePermanent.
-                // A COLOUR-restricted permanent kill is aimed at a creature in
-                // practice, and the hand tags say so once the slips are out of the
-                // way: Active Volcano, Flash Flood, Southern Paladin and Northern
-                // Paladin all destroy "target <colour> permanent".
-                //
-                // NB the colours are listed one by one on purpose. A "non\w+"
-                // alternation written to catch "nonblack permanent" also catches
-                // "NONLAND permanent", which is the entire O-ring family and
-                // RemovePermanent's whole job: 26 false positives in one
-                // measurement.
-                Rx(@"(?:destroy|exile) target (?:white|blue|black|red|green|colorless|multicolored"
-                    + @"|nonwhite|nonblue|nonblack|nonred|nongreen)[\w ]{0,15}permanent"),
                 // A creature that ends up in a LIBRARY is as answered as one that
                 // is destroyed, and the Auras are the only place this wording
                 // appears: The Spot's Portal puts it on the bottom, Dramatic

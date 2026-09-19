@@ -38,8 +38,9 @@
                 "Answers a spell on the stack by countering it.",
 
             [CardEffect.RemovePermanent] =
-                "Answers ANY permanent — \"destroy/exile target (nonland) permanent\", including the O-ring family. The "
-                + "breadth is the point, so it stays this tag even when you would usually aim it at a creature.",
+                "Answers ANY permanent — \"destroy/exile target (nonland) permanent\", the O-ring family, and a kill "
+                + "narrowed only by COLOUR (\"destroy target red permanent\"). The breadth is the point, so it stays "
+                + "this tag even when you would usually aim it at a creature.",
 
             [CardEffect.Wipe] =
                 "Mass removal: the board is emptied, by any verb — destroyed, exiled, damaged, shrunk, or all "
