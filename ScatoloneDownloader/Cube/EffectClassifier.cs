@@ -68,6 +68,10 @@ namespace ScatoloneDownloader.Cube
             // and Gaius van Baelsar both read "each opponent sacrifices an
             // artifact of their choice" and the human tags both here.
             Rx(OtherPlayer + @" sacrifices?[\w ]{0,20}" + DisenchantNoun),
+            // Ultimate Magic: Meteor names no target at all — "for each opponent,
+            // choose an artifact or land that player controls. Destroy the chosen
+            // permanents." The same clause is LandDestruction's last miss.
+            Rx(@"choose an? [\w ,'\-]{0,30}\bartifacts?\b[^\n]{0,40}destroy the chosen"),
         ];
 
         /// <summary>A sweeper that happens to name artifacts is Wipe: Jokulhaups,
@@ -99,6 +103,105 @@ namespace ScatoloneDownloader.Cube
         /// "destroy target artifact, creature, or land you control".</summary>
         private static readonly Regex DisenchantsYourOwn = Rx(
             @"(?:destroy|exile) (?:up to \w+ |another |x |\d+ )?target[\w ,'\-]{0,40}you control");
+
+        private const string BasicLandType = @"\b(?:plains|islands?|swamps?|mountains?|forests?)\b";
+
+        // Hoisted for the same reason as MillPatterns: the guard below re-runs
+        // them one line at a time, so a card that fetches a land on one mode and a
+        // creature on another is judged mode by mode.
+        private static readonly Regex[] TutorPatterns =
+        [
+            Rx(@"search (?:your|their) library[\w /]{0,25}for (?:up to \w+ |two |three |four |five |\d+ )?"
+                + @"[\w ,'\-/]{0,50}cards?\b"),
+            // Demonic Consultation never searches: it names a card and then digs
+            // until the NAME turns up. The name is the whole point — "reveal cards
+            // until you reveal a LAND card" (The Regalia, House Cartographer) or
+            // "a creature card" (Yuna's Whistle) or "a white card" (Sacred Guide)
+            // hands you whichever one happened to be nearest the top, and the
+            // human tags none of those five.
+            Rx(@"reveal cards? from the top of your library until you reveal[^\n]{0,30}chosen name"),
+            // Ring of Ma'ruf fetches from the sideboard, which is a library the
+            // rules text has no other word for.
+            Rx(@"card you own from outside the game"),
+        ];
+
+        /// <summary>A land search is Ramp or ManaFixing — the ruling this tag was
+        /// written around, and the only reason the wide rule above is safe. The
+        /// word boundary is what keeps "a NONLAND permanent card" out, and
+        /// <see cref="SearchesForSomethingElseToo"/> is what keeps Starfield
+        /// Shepherd's "a basic Plains card OR a creature card" in.</summary>
+        private static readonly Regex SearchesOnlyForALand = Rx(
+            @"library[^.\n]{0,40}for [^.\n]{0,25}(?:basic |snow |nonbasic )*(?:\blands?\b|" + BasicLandType + ")");
+
+        private static readonly Regex SearchesForSomethingElseToo = Rx(
+            @"\b(?:creature|artifact|enchantment|instant|sorcery|planeswalker|equipment|battle"
+            + @"|legendary|nonland permanent) cards?\b");
+
+        /// <summary>"Search your library for a card NAMED Llanowar Sentinel" is the
+        /// old pack-filler cycle fetching another of itself, or a combo piece that
+        /// does nothing without its partners (Kyscu Drake, Urborg Panther). Five
+        /// reviewed cards say it and the human tags none of them.</summary>
+        private static readonly Regex SearchesForACardNamed = Rx(@"for a card named");
+
+        // Hoisted for the same reason as MillPatterns: the guard below re-runs
+        // them one line at a time, so a modal card is judged mode by mode.
+        private static readonly Regex[] LandDestructionPatterns =
+        [
+            Rx(@"(?:destroy|exile)[^\n]{0,80}target [\w ,'\-]{0,30}\blands?\b"),
+            Rx(@"(?:destroy|exile) (?:all|each)[\w ,'\-]{0,30}\blands?\b"),
+            Rx(@"(?:destroy|exile) (?:up to \w+ |x |two |three |four |\d+ )?(?:all|each|target) "
+                + @"[\w ,'\-]{0,20}" + BasicLandType),
+            // "Each player chooses six lands they control, then sacrifices the
+            // rest" (Planetary Annihilation) names no victim at all.
+            Rx(@"chooses? [\w ]{0,15}\blands?\b[\w ,'\-]{0,30}sacrifices? the rest"),
+            // "FOR EACH LAND, destroy that land unless any player pays 1 life"
+            // (Cleansing) names its victim with a pronoun. Anchored on the "each
+            // land" in front of it, because Erosion says "destroy that land" of
+            // the single land it enchants and the human does not tag it.
+            Rx(@"for each land[\w ,'\-]{0,20}destroy that land"),
+            // A land edict, with the clause that picks the victim in between:
+            // "each player WHO TAPPED A LAND FOR MANA THIS TURN sacrifices a land
+            // of their choice" (Desolation). Nature's Wrath names a basic type
+            // where Desolation says "land".
+            Rx(@"(?:target (?:player|opponent)|each player|that player|each opponent)"
+                + @"[\w ,'\-]{0,60}sacrifices? (?:[\w-]+ ){0,3}(?:lands?\b|" + BasicLandType + @")"),
+            // Fallow Earth answers a land without destroying it — but the
+            // destination has to be a library or a graveyard, because Tato Farmer
+            // puts one ONTO THE BATTLEFIELD with almost the same words.
+            Rx(@"put target land[\w ,'\-]{0,40}(?:on top of|into)[\w ,'\-]{0,25}(?:library|graveyard)"),
+            // Ultimate Magic: Meteor names no target at all — "for each opponent,
+            // choose an artifact or land that player controls. Destroy the chosen
+            // permanents." The same clause is the last Disenchant miss.
+            Rx(@"choose an? [\w ,'\-]{0,30}\blands?\b[^\n]{0,40}destroy the chosen"),
+        ];
+
+        /// <summary>A land card in a GRAVEYARD is fuel, not a target: Steward of
+        /// the Harvest exiles three of them out of yours.</summary>
+        private static readonly Regex LandAlreadyInAGraveyard = Rx(
+            @"land cards? (?:from|in)[\w ,'\-]{0,25}graveyard");
+
+        /// <summary>"Destroy target Aura attached to a land" PROTECTS the land —
+        /// Savaen Elves and Pyramids, the same pair that fooled Disenchant.</summary>
+        private static readonly Regex AuraOnALand = Rx(@"aura attached to");
+
+        /// <summary>Rats of Rath destroys "target artifact, creature, or land YOU
+        /// CONTROL", which denies nobody anything.</summary>
+        private static readonly Regex DestroysYourOwnLand = Rx(
+            @"(?:destroy|exile)[^\n]{0,60}target[\w ,'\-]{0,40}you control");
+
+        /// <summary>Natural Balance takes the lands off whoever has six and hands
+        /// basics to whoever has four, which is a rebalance rather than denial.
+        /// <para>
+        /// It only excuses a line that DESTROYS nothing. Sandworm, Price of
+        /// Freedom and Magmatic Hellkite all kill a land and offer a basic back as
+        /// consolation, and the human tags all three; what makes Natural Balance
+        /// different is that the only thing done to the lands is their own
+        /// controller sacrificing them.
+        /// </para></summary>
+        private static readonly Regex HandsTheLandsBack = Rx(
+            @"search[\w ']{0,20}library for[\w ,'\-]{0,25}basic land");
+
+        private static readonly Regex AnyDestroyOrExile = Rx(@"\b(?:destroy|exile)s?\b");
 
         // Hoisted for the same reason as MillPatterns: the donation guard below
         // strips the clause that gives a permanent AWAY and then re-runs these,
@@ -1122,11 +1225,24 @@ namespace ScatoloneDownloader.Cube
             //   a named victim     — "at the beginning of your upkeep, sacrifice
             //                        a land" (Serendib Djinn) is a drawback you
             //                        pay, not an effect you aim at someone.
-            (CardEffect.LandDestruction, [
-                Rx(@"destroy (?:[\w-]+ ){0,2}target (?:[\w-]+ ){0,2}lands?\b"),
-                Rx(@"exile (?:[\w-]+ ){0,2}target (?:[\w-]+ ){0,2}lands?\b"),
-                Rx(@"destroy all \blands?\b"),
-                Rx(@"(?:target (?:player|opponent)|each player|that player) sacrifices? (?:[\w-]+ ){0,3}lands?\b")]),
+            //
+            // Widened 2026-09-19, where all 23 of the misses were: the land is
+            // almost never alone in the sentence. It sits in a TYPE LIST
+            // ("destroy target artifact, creature, or land" — Aftershock, Creeping
+            // Mold, Amulet of Unmaking), or behind a count ("destroy UP TO ONE
+            // target artifact, up to one target creature, and up to one target
+            // land" — Boom Box), or beside a second target ("destroy target
+            // creature AND target land" — Fumarole), and the {0,2} filler words
+            // could not cross a comma to reach any of them. The mass form has the
+            // same problem: "destroy all CREATURES AND lands" (Devastation).
+            //
+            // A BASIC LAND TYPE is a land by another name, and the only wording
+            // Boil, Boiling Seas, Acid Rain and Reign of Chaos ever use. The \b
+            // that keeps "islandwalk" out is still doing its job — the letters of
+            // "land" inside "Island" have a word character in front of them.
+            // Four shapes match the words and are not this tag; they are read line
+            // by line in AnswersALand below.
+            (CardEffect.LandDestruction, LandDestructionPatterns),
 
             // Damage pointed at something is how most of the game kills a
             // creature, and reading it as Burn alone left 231 of 291 human-tagged
@@ -1169,8 +1285,23 @@ namespace ScatoloneDownloader.Cube
             // The other way to answer something on the stack. "copy target" is
             // required rather than the bare word "copy": a token that enters "as a
             // copy OF target creature" is Tokens, not stack interaction.
+            // Widened 2026-09-19 for the two wordings that carried 5 of its 11
+            // hand-tagged cards. Meddle puts the spell in the possessive —
+            // "change THAT SPELL'S TARGET to another creature" — where Deflection
+            // says "change the target of". And the copy half is almost never
+            // aimed with the word "target": a delayed trigger says "when you next
+            // cast an instant or sorcery spell this turn, COPY IT", and what
+            // makes it stack interaction rather than a token is the line that
+            // follows, "you may choose new targets for the copy" (Ether, Alania,
+            // Adaptive Training Post, Summon: G.F. Cerberus).
             (CardEffect.Redirect, [Rx(@"change the targets? of"),
-                Rx(@"cop(?:y|ies) target[\w ]*(?:spell|ability)")]),
+                Rx(@"change (?:that|target) spell's targets?"),
+                Rx(@"cop(?:y|ies) target[\w ]*(?:spell|ability)"),
+                // STORM's reminder text is the one place these words are not an
+                // effect the card has — every Storm card would otherwise carry
+                // this tag for a keyword it spells out (Tempest Technique).
+                Rx(@"cop(?:y|ies) (?:it|that spell)(?: twice)?(?! for each spell cast before it)"
+                    + @"[^\n]{0,80}new targets for the cop")]),
 
             // Bounce has to say WHICH permanent goes back, because the bare
             // sentence is just as often the price the card pays: Ovinomancer's
@@ -1424,10 +1555,20 @@ namespace ScatoloneDownloader.Cube
             // Helm of Obedience and Desertion say it.
             (CardEffect.Steal, StealPatterns),
 
-            // "a card" (Demonic) or a typed non-land card (creature/instant/...);
-            // deliberately NOT land searches, which are Ramp/ManaFixing, not Tutor.
-            (CardEffect.Tutor, [Rx(@"search your library for an? card"),
-                Rx(@"search your library for[\w ]*(creature|instant|sorcery|artifact|enchantment|planeswalker) card")]),
+            // Widened 2026-09-19. The old pair read "search your library for a
+            // card" and a list of five card TYPES, and the game names what it
+            // fetches in every other way there is: a SUBTYPE (Equipment, Demon,
+            // Vehicle, Dragon), a COLOUR ("a black card, a green card, and a blue
+            // card"), a COUNT ("three cards", "five cards"), a NEGATION ("a
+            // nonland permanent card"), a second ZONE ("your library and/or
+            // graveyard"), and every one of those behind an optional "up to two".
+            // Twenty-one of the 48 hand-tagged cards went untouched.
+            //
+            // Still deliberately NOT a land search, which is Ramp or ManaFixing —
+            // that reading costs Elemental Teachings, whose four land cards end up
+            // split between a graveyard and the battlefield by an opponent, and it
+            // is one card against the family.
+            (CardEffect.Tutor, TutorPatterns),
 
             (CardEffect.ManaFixing, [Rx(@"add one mana of any color"), Rx(@"mana of any (one )?color"),
                 Rx(@"add \{[wubrg]\} or \{[wubrg]\}"), Rx(@"add \{[wubrg]\}, \{[wubrg]\}"),
@@ -1898,6 +2039,16 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Disenchant;
             }
 
+            if (result.HasFlag(CardEffect.LandDestruction) && !AnswersALand(text))
+            {
+                result &= ~CardEffect.LandDestruction;
+            }
+
+            if (result.HasFlag(CardEffect.Tutor) && !FetchesSomethingWorthFetching(text))
+            {
+                result &= ~CardEffect.Tutor;
+            }
+
             // Stripping the donation and re-asking, rather than a lookbehind: the
             // subject and the verb are not adjacent ("that player MAY gain control
             // of this artifact"), which is the same trap TheirDraw fell into.
@@ -1926,6 +2077,58 @@ namespace ScatoloneDownloader.Cube
         /// should be able to excuse or condemn the other. See
         /// <see cref="SweepsCreaturesToo"/>, <see cref="ExileThatComesBack"/> and
         /// <see cref="DisenchantsYourOwn"/> for what each veto costs and buys.</summary>
+        /// <summary>Whether some ONE line of the card searches for a card that is
+        /// not a land and not another copy of itself. See
+        /// <see cref="SearchesOnlyForALand"/> and
+        /// <see cref="SearchesForACardNamed"/> for what each veto costs.</summary>
+        private static bool FetchesSomethingWorthFetching(string text)
+        {
+            foreach (string line in text.Split('\n'))
+            {
+                if (!TutorPatterns.Any(p => p.IsMatch(line)))
+                {
+                    continue;
+                }
+
+                if ((SearchesOnlyForALand.IsMatch(line) && !SearchesForSomethingElseToo.IsMatch(line))
+                    || SearchesForACardNamed.IsMatch(line))
+                {
+                    continue;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>Whether some ONE line of the card really takes a land off the
+        /// battlefield. Read line by line for the same reason Disenchant is. See
+        /// <see cref="LandAlreadyInAGraveyard"/>, <see cref="AuraOnALand"/>,
+        /// <see cref="DestroysYourOwnLand"/> and <see cref="HandsTheLandsBack"/>
+        /// for the card behind each veto.</summary>
+        private static bool AnswersALand(string text)
+        {
+            foreach (string line in text.Split('\n'))
+            {
+                if (!LandDestructionPatterns.Any(p => p.IsMatch(line)))
+                {
+                    continue;
+                }
+
+                if (LandAlreadyInAGraveyard.IsMatch(line) || AuraOnALand.IsMatch(line)
+                    || DestroysYourOwnLand.IsMatch(line)
+                    || (HandsTheLandsBack.IsMatch(line) && !AnyDestroyOrExile.IsMatch(line)))
+                {
+                    continue;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
         private static bool AnswersAnArtifactOrEnchantment(string text)
         {
             foreach (string line in text.Split('\n'))

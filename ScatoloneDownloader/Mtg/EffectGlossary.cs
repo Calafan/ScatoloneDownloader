@@ -108,7 +108,10 @@
                 + "\"from A graveyard\" names no victim: that is Reanimate alone.",
 
             [CardEffect.Tutor] =
-                "Searches the library for a specific nonland card. A land search is Ramp or ManaFixing.",
+                "Searches a library for a card you CHOOSE — by type, subtype, colour, count, or just \"a card\" "
+                + "— to hand, battlefield, top or graveyard. A land search is Ramp or ManaFixing. Fetching "
+                + "another copy of ITSELF is not this, and neither is revealing until a type turns up: that "
+                + "picks for you.",
 
             [CardEffect.ManaFixing] =
                 "Fixes colours: a choice that COSTS you something, any landcycling, a land with two abilities, a "
@@ -121,8 +124,10 @@
                 + "Nor is tapping one of yours as a cost, or a card that only taxes ITSELF.",
 
             [CardEffect.LandDestruction] =
-                "Destroys or exiles lands. Deliberately narrow: the wider mana-denial family (Winter Orb, Blood Moon, "
-                + "Spheres) stays untagged.",
+                "Takes a land off the battlefield, however worded: in a type list, behind a count, beside a "
+                + "second target, in a sweeper, or named by basic type (\"destroy all Islands\"). A land edict "
+                + "counts. Not a land in a GRAVEYARD, not an Aura ATTACHED to one (that protects it), not your "
+                + "own, and not the wider mana-denial family.",
 
             [CardEffect.Mill] =
                 "Puts cards from ANOTHER player's library into their graveyard. Filling your own graveyard is fuel for "
@@ -140,7 +145,9 @@
                 + "a graveyard is Reanimate; a land is Ramp; one free exiled card is CardAdvantage.",
 
             [CardEffect.Redirect] =
-                "Acts on a spell already on the stack WITHOUT countering it: changes its target, or copies it.",
+                "Acts on a spell already on the stack WITHOUT countering it: changes its target — \"the target "
+                + "of\", or \"that spell's target\" — or copies it, including the delayed \"copy it, you may "
+                + "choose new targets for the copy\". Storm's reminder text says those words and is not this.",
         };
 
         /// <summary>The line for one effect, or an empty string when a member has

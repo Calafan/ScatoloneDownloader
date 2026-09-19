@@ -2205,6 +2205,163 @@ public sealed class EffectClassifierTests
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Steal));
     }
 
+    [Theory]
+    // LandDestruction, widened 2026-09-19. The land is almost never alone in the
+    // sentence: it sits in a type list, behind a count, or beside a second target,
+    // and the old {0,2} filler words could not cross a comma to reach it.
+    [InlineData("Aftershock", "Sorcery",
+        "Destroy target artifact, creature, or land. Aftershock deals 3 damage to you.")]
+    [InlineData("Creeping Mold", "Sorcery", "Destroy target artifact, enchantment, or land.")]
+    [InlineData("Boom Box", "Artifact",
+        "{6}, {T}, Sacrifice this artifact: Destroy up to one target artifact, up to one target "
+        + "creature, and up to one target land.")]
+    [InlineData("Fumarole", "Instant",
+        "As an additional cost to cast this spell, pay 3 life.\nDestroy target creature and target land.")]
+    [InlineData("Devastation", "Sorcery", "Destroy all creatures and lands.")]
+    // A basic land type is a land by another name.
+    [InlineData("Boil", "Instant", "Destroy all Islands.")]
+    [InlineData("Volcanic Eruption", "Sorcery",
+        "Destroy X target Mountains. Volcanic Eruption deals damage to each creature and each player "
+        + "equal to the number of Mountains put into a graveyard this way.")]
+    // Three wordings that name the victim without ever saying "target land".
+    [InlineData("Cleansing", "Sorcery", "For each land, destroy that land unless any player pays 1 life.")]
+    [InlineData("Desolation", "Enchantment",
+        "At the beginning of each end step, each player who tapped a land for mana this turn "
+        + "sacrifices a land of their choice. This enchantment deals 2 damage to each player who "
+        + "sacrificed a Plains this way.")]
+    [InlineData("Planetary Annihilation", "Sorcery",
+        "Each player chooses six lands they control, then sacrifices the rest. Planetary Annihilation "
+        + "deals 6 damage to each creature.")]
+    // Fallow Earth answers a land without destroying it.
+    [InlineData("Fallow Earth", "Sorcery", "Put target land on top of its owner's library.")]
+    // Offering a basic back is consolation, not a reprieve.
+    [InlineData("Sandworm", "Creature — Worm",
+        "Haste\nWhen this creature enters, destroy target land. Its controller may search their "
+        + "library for a basic land card, put it onto the battlefield tapped, then shuffle.")]
+    public void Classify_TakingALandOffTheBoard_IsLandDestruction(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle))
+            .HasFlag(CardEffect.LandDestruction));
+    }
+
+    [Theory]
+    // "NONland permanent" has no word boundary in front of "land", which is the
+    // only thing keeping the whole O-ring family out of this tag.
+    [InlineData("Web Up", "Enchantment",
+        "When this enchantment enters, exile target nonland permanent an opponent controls until this "
+        + "enchantment leaves the battlefield.")]
+    // An Aura attached to a land PROTECTS it.
+    [InlineData("Savaen Elves", "Creature — Elf", "{G}{G}, {T}: Destroy target Aura attached to a land.")]
+    // A land card in a graveyard is fuel, not a target.
+    [InlineData("Steward of the Harvest", "Creature — Elemental",
+        "When this creature enters, exile up to three target land cards from your graveyard.\n"
+        + "Creatures you control have all activated abilities of all land cards exiled with this creature.")]
+    // Your own denies nobody anything.
+    [InlineData("Rats of Rath", "Creature — Rat", "{B}: Destroy target artifact, creature, or land you control.")]
+    // And a rebalance that destroys nothing and hands basics back is not denial.
+    [InlineData("Natural Balance", "Sorcery",
+        "Each player who controls six or more lands chooses five lands they control and sacrifices "
+        + "the rest. Each player who controls four or fewer lands may search their library for up to "
+        + "X basic land cards and put them onto the battlefield, where X is five minus the number of "
+        + "lands they control. Then each player who searched their library this way shuffles.")]
+    public void Classify_WhatOnlyReadsLikeLandDestruction_IsNot(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle))
+            .HasFlag(CardEffect.LandDestruction));
+    }
+
+    [Theory]
+    // Tutor, widened 2026-09-19. The game names what it fetches in every way there
+    // is, and the old rule knew only "a card" and five card types.
+    [InlineData("Cloud, Midgar Mercenary", "Legendary Creature — Human Soldier",
+        "When Cloud enters, search your library for an Equipment card, reveal it, put it into your "
+        + "hand, then shuffle.")]
+    [InlineData("Demonic Counsel", "Sorcery",
+        "Search your library for a Demon card, reveal it, put it into your hand, then shuffle.")]
+    [InlineData("Intuition", "Instant",
+        "Search your library for three cards and reveal them. Target opponent chooses one. Put that "
+        + "card into your hand and the rest into your graveyard. Then shuffle.")]
+    [InlineData("Brightglass Gearhulk", "Artifact Creature — Construct",
+        "First strike, trample\nWhen this creature enters, you may search your library for up to two "
+        + "artifact, creature, and/or enchantment cards with mana value 1 or less, reveal them, put "
+        + "them into your hand, then shuffle.")]
+    [InlineData("Delivery Moogle", "Creature — Moogle",
+        "Flying\nWhen this creature enters, search your library and/or graveyard for an artifact card "
+        + "with mana value 2 or less, reveal it, and put it into your hand. If you search your library "
+        + "this way, shuffle.")]
+    // A land on one side of the "or" does not make the whole search a land search.
+    [InlineData("Starfield Shepherd", "Creature — Bird Cleric",
+        "Flying\nWhen this creature enters, search your library for a basic Plains card or a creature "
+        + "card with mana value 1 or less, reveal it, put it into your hand, then shuffle.")]
+    // Somebody else's own search of their own library still counts.
+    [InlineData("Noble Benefactor", "Creature — Human",
+        "When this creature dies, each player may search their library for a card and put that card "
+        + "into their hand. Then each player who searched their library this way shuffles.")]
+    // Demonic Consultation never searches — it names a card and digs for the NAME.
+    [InlineData("Demonic Consultation", "Instant",
+        "Choose a card name. Exile the top six cards of your library, then reveal cards from the top "
+        + "of your library until you reveal a card with the chosen name. Put that card into your hand "
+        + "and exile all other cards revealed this way.")]
+    public void Classify_FetchingANamedCardOutOfYourLibrary_IsTutor(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tutor));
+    }
+
+    [Theory]
+    // A land search is Ramp or ManaFixing, the ruling this tag was written around.
+    [InlineData("Rampant Growth", "Sorcery",
+        "Search your library for a basic land card, put that card onto the battlefield tapped, "
+        + "then shuffle.")]
+    // Fetching another copy of itself is the old pack-filler cycle.
+    [InlineData("Llanowar Sentinel", "Creature — Elf",
+        "When this creature enters, you may pay {1}{G}. If you do, search your library for a card "
+        + "named Llanowar Sentinel, put that card onto the battlefield, then shuffle.")]
+    // And digging until a TYPE turns up hands you whichever one was nearest the
+    // top, which is not choosing a card.
+    [InlineData("The Regalia", "Artifact — Vehicle",
+        "Haste\nWhenever The Regalia attacks, reveal cards from the top of your library until you "
+        + "reveal a land card. Put that card onto the battlefield tapped and the rest on the bottom "
+        + "of your library in a random order.\nCrew 1")]
+    [InlineData("Yuna's Whistle", "Sorcery",
+        "Reveal cards from the top of your library until you reveal a creature card. Put that card "
+        + "into your hand and the rest on the bottom of your library in a random order.")]
+    public void Classify_ASearchThatChoosesNothing_IsNotTutor(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tutor));
+    }
+
+    [Theory]
+    // Redirect, widened 2026-09-19. Meddle puts the spell in the possessive, and
+    // the copy half is almost never aimed with the word "target".
+    [InlineData("Meddle", "Instant",
+        "If target spell has only one target and that target is a creature, change that spell's "
+        + "target to another creature.")]
+    [InlineData("Ether", "Artifact",
+        "{T}, Exile this artifact: Add {U}. When you next cast an instant or sorcery spell this turn, "
+        + "copy that spell. You may choose new targets for the copy.")]
+    [InlineData("Adaptive Training Post", "Artifact",
+        "Whenever you cast an instant or sorcery spell, if this artifact has fewer than three charge "
+        + "counters on it, put a charge counter on it.\nRemove three charge counters from this "
+        + "artifact: When you next cast an instant or sorcery spell this turn, copy it and you may "
+        + "choose new targets for the copy.")]
+    public void Classify_ActingOnASpellWithoutCounteringIt_IsRedirect(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Redirect));
+    }
+
+    [Fact]
+    // Storm spells out its own rules, and a keyword's reminder text is not an
+    // effect the card has — otherwise every Storm card carries this tag.
+    public void Classify_StormReminderText_IsNotRedirect()
+    {
+        Card card = MakeCard("Tempest Technique", "Enchantment — Aura",
+            "Storm (When you cast this spell, copy it for each spell cast before it this turn. "
+            + "You may choose new targets for the copies. Copies become tokens.)\n"
+            + "Enchant creature you control\nEnchanted creature gets +1/+1 for each enchantment you control.");
+
+        Assert.False(EffectClassifier.Classify(card).HasFlag(CardEffect.Redirect));
+    }
+
     private static Card MakeCard(string name, string typeLine, string oracleText, List<string>? keywords = null)
     {
         JsonCard json = new()
