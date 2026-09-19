@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 using ScatoloneDownloader.Mtg;
 
@@ -45,6 +45,115 @@ namespace ScatoloneDownloader.Cube
         private const string OtherPlayer =
             @"(?:target player|target opponent|each opponent|an opponent|that player|each player"
             + @"|defending player|its controller|opponents?)";
+
+        /// <summary>The noun Disenchant answers, with the traps built in: the
+        /// filler in front of it is short enough that it cannot reach across a
+        /// sentence, "non"/"non-" may not be crossed to get to it, an artifact
+        /// CREATURE is a creature rather than an artifact, and an Aura ATTACHED TO
+        /// a named thing is about that thing rather than about the Aura. See the
+        /// rule table and <see cref="AnswersAnArtifactOrEnchantment"/> for the
+        /// cards that taught each clause.</summary>
+        private const string DisenchantNoun =
+            @"[\w '\-]{0,14}(?<!non)(?<!non-)(?:artifact|enchantment|aura)s?\b(?! creature)(?! attached to)";
+
+        // Hoisted for the same reason as MillPatterns: the guard below re-runs
+        // them one line at a time, so a card with two modes is judged mode by
+        // mode rather than on the words its whole text happens to contain.
+        private static readonly Regex[] DisenchantPatterns =
+        [
+            Rx(@"(?:destroy|exile) (?:up to \w+ |another |x |two |three |four |\d+ )?target " + DisenchantNoun),
+            Rx(@"(?:destroy|exile) (?:all|each) " + DisenchantNoun),
+            // An edict aimed at an artifact answers one all the same, and unlike
+            // the creature edict it cannot be blanked by a token: Pick Your Poison
+            // and Gaius van Baelsar both read "each opponent sacrifices an
+            // artifact of their choice" and the human tags both here.
+            Rx(OtherPlayer + @" sacrifices?[\w ]{0,20}" + DisenchantNoun),
+        ];
+
+        /// <summary>A sweeper that happens to name artifacts is Wipe: Jokulhaups,
+        /// Nevinyrral's Disk, Ultima and Death Begets Life all take the creatures
+        /// in the same breath and the human tags none of them Disenchant, while
+        /// every mass Disenchant that IS tagged — Shatterstorm, Tranquility,
+        /// Serenity, Seeds of Innocence — leaves creatures alone.</summary>
+        private static readonly Regex SweepsCreaturesToo = Rx(
+            @"(?:destroy|exile) (?:all|each)[\w ,'\-]{0,40}creatures?\b");
+
+        /// <summary>Exile that hands the card straight back is a blink, not an
+        /// answer: Hide on the Ceiling and Explosive Getaway both "return … to the
+        /// battlefield … at the beginning of the next end step".
+        /// <para>
+        /// "Exile … UNTIL THIS LEAVES THE BATTLEFIELD" deliberately does NOT
+        /// appear here, although it was tried. The O-ring family splits on what it
+        /// names, not on the exile coming back: Mystical Tether, Detention Chariot
+        /// and Trapped in the Screen all say "exile target ARTIFACT or creature"
+        /// and the human tags all three, while Web Up, Seam Rip, White Auracite
+        /// and Perilous Snare say "target nonland permanent" and are tagged
+        /// RemovePermanent instead — and the noun above already refuses to reach a
+        /// generic permanent. Vetoing the wording cost those three and bought only
+        /// Earth Kingdom Jailer, which names an artifact and reads like a slip.
+        /// </para></summary>
+        private static readonly Regex ExileThatComesBack = Rx(
+            @"return (?:it|them|the exiled cards?|that card)[\w ,'\-]{0,40}to the battlefield");
+
+        /// <summary>Destroying your own is never an answer: Rats of Rath reads
+        /// "destroy target artifact, creature, or land you control".</summary>
+        private static readonly Regex DisenchantsYourOwn = Rx(
+            @"(?:destroy|exile) (?:up to \w+ |another |x |\d+ )?target[\w ,'\-]{0,40}you control");
+
+        // Hoisted for the same reason as MillPatterns: the donation guard below
+        // strips the clause that gives a permanent AWAY and then re-runs these,
+        // so a card that steals and donates in the same text keeps the tag.
+        private static readonly Regex[] StealPatterns =
+        [
+            Rx(@"gains? control of"),
+            Rx(@"you control (enchanted|target)"),
+            Rx(@"untap target creature[\w ]*gain control"),
+            // An exchange is a theft you paid for. Five cards, and the only way
+            // any of them was ever going to be found.
+            Rx(@"exchange control of"),
+            // Word of Command takes the player rather than the permanent.
+            Rx(@"you control that player"),
+        ];
+
+        /// <summary>Taking a CARD rather than a permanent — the other half of this
+        /// tag, and 15 of the 28 cards it used to miss. It reads as two halves
+        /// because either half alone is something else entirely: the zone alone is
+        /// Mill, and "you may play" alone is your own impulse draw.</summary>
+        private static readonly Regex SomebodyElsesZone = Rx(
+            @"(?:target opponent|an opponent|each opponent|that opponent|target player|that player"
+            + @"|defending player|another player|each player|opponent'?s|player'?s)"
+            + @"[\w ,'\-]{0,60}(?:library|hand|graveyard)"
+            + @"|(?:library|hand|graveyard) of (?:target |an |each |that )?(?:opponent|player)"
+            + @"|\btheir (?:library|hand|graveyard)\b");
+
+        /// <summary>…and then YOU play it. Everything excluded here is a card of
+        /// your own that happens to share a text with somebody else's zone: an
+        /// extra land drop (Ramp), a card giving ITSELF a second cast (Regrowth),
+        /// the back face Jidoor plays out of exile, and the "cards you own" that
+        /// Triple Triad and Wheel of Potential hand back after a symmetric exile.
+        /// "They may cast" is excluded for the same reason — Transforming Flourish
+        /// makes the OPPONENT cast the card it dug up.</summary>
+        private static readonly Regex AndPlaysThem = Rx(
+            @"you may (?:look at and )?(?:play|cast) (?!an additional land|this spell|this card|the land\b)");
+
+        private static readonly Regex PlaysACardYouOwn = Rx(@"(?:cards?|spells?) you own");
+
+        /// <summary>The mirror image of Steal, and 12 of its 14 false positives:
+        /// the card hands a permanent to somebody ELSE. It is the price Jinxed
+        /// Idol, Rainbow Vale, Chaos Lord and Stiltzkin pay, or the drawback
+        /// Rohgahh and Emberwilde Djinn suffer for not paying upkeep, and Guardian
+        /// Beast is the negation ("other players CAN'T gain control").
+        /// <para>
+        /// The subject sits IMMEDIATELY in front of the verb — all twelve read
+        /// "&lt;somebody&gt; gains control", with nothing between but an optional
+        /// "may" or "can't". Letting any filler in cost Ray of Command and Magus
+        /// of the Unseen, where "untap target creature AN OPPONENT CONTROLS and
+        /// gain control of it" puts the victim in front of a verb that is yours.
+        /// </para></summary>
+        private static readonly Regex GivesControlAway = Rx(
+            @"(?:target opponent|an opponent|each opponent|that opponent|another player|target player"
+            + @"|that player|other players|they|the player with the most life"
+            + @"|that permanent's controller) (?:may |can't )?gains? control");
 
         private static readonly Regex[] MillPatterns =
         [
@@ -1022,8 +1131,41 @@ namespace ScatoloneDownloader.Cube
                 Rx(@"return (?:[\w' ]{0,30})?target[\w ,']*to (?:its|their) owner(?:'s|s'|s)? hands?"),
                 Rx(@"return (?:each|all|every)[\w ,']*to (?:its|their) owner(?:'s|s'|s)? hands?")]),
 
-            (CardEffect.Disenchant, [Rx(@"destroy target[\w ]*(artifact|enchantment)"),
-                Rx(@"exile target[\w ]*(artifact|enchantment)")]),
+            // The old rule was two lines of `destroy target[\w ]*(artifact|
+            // enchantment)`, and that `[\w ]*` was free to run the length of the
+            // sentence. It is where 11 of the 15 false positives came from, in two
+            // shapes: "destroy target NONartifact, nonblack creature" (Terror,
+            // Nekrataal, The Abyss) reaches the noun straight through "non", and
+            // "exile target nonland permanent an opponent controls until this
+            // ENCHANTMENT leaves the battlefield" (Web Up, Seam Rip, White
+            // Auracite) reaches it through the reminder of where the card comes
+            // back from. The filler is bounded now, and "non"/"non-" cannot be
+            // crossed to get to the noun.
+            //
+            // The misses were counting words. The rule wanted "destroy target
+            // <noun>" and nothing else, so "destroy UP TO ONE target artifact",
+            // "destroy X target artifacts", "exile TWO target artifacts",
+            // "destroy ANOTHER target artifact" and every mass "destroy all
+            // enchantments" walked past it — 20 of the 28 misses between them.
+            // AURA is the third noun: Serene Heart and Hope Charm answer the same
+            // cards this tag exists for.
+            //
+            // An ARTIFACT CREATURE is a creature, and the human tags it Removal:
+            // Chandler and Hearth Charm both read "destroy target artifact
+            // creature" and neither is tagged here, so the noun refuses to be
+            // followed by "creature".
+            //
+            // An AURA ATTACHED TO something named is about that thing, not about
+            // the Aura: Savaen Elves and Pyramids ("destroy target Aura attached
+            // to a land") are land protection, Miracle Worker pulls an Aura off
+            // your own creature, and Hakim and Gauntlets of Chaos strip the ones
+            // on a permanent the card itself just touched. A bare "destroy target
+            // Aura" (Hope Charm) or "destroy all Auras" (Serene Heart) still
+            // counts, which is why the noun tests only for the words that follow.
+            //
+            // Three more shapes match the words and are not this tag; they are
+            // read line by line in AnswersAnArtifactOrEnchantment below.
+            (CardEffect.Disenchant, DisenchantPatterns),
 
             // Same reading as Mill, and the same result. A bare "discard a card"
             // is overwhelmingly a COST — madness, blitz, cycling reminder text,
@@ -1217,8 +1359,15 @@ namespace ScatoloneDownloader.Cube
             // never says "permanent", so it simply does not match.
             (CardEffect.Sacrifice, [Rx(@"sacrifices? (?:a|an|another|two|three|\d+)[\w ]*(?:creature|artifact|permanent)")]),
 
-            (CardEffect.Steal, [Rx(@"gains? control of"), Rx(@"you control (enchanted|target)"),
-                Rx(@"untap target creature[\w ]*gain control")]),
+            // Three patterns of "gain control" saw one third of this tag. The rest
+            // is in StealPatterns above: an EXCHANGE is a theft you paid for
+            // (Juxtapose, Legerdemain, Political Trickery, Trade the Helm,
+            // Gauntlets of Chaos), a card taken out of somebody else's LIBRARY,
+            // HAND or GRAVEYARD and played is a theft of a card rather than of a
+            // permanent (15 of the 28 misses, from Outrageous Robbery to Gonti),
+            // and "onto the battlefield UNDER YOUR CONTROL" is how Bone Dancer,
+            // Helm of Obedience and Desertion say it.
+            (CardEffect.Steal, StealPatterns),
 
             // "a card" (Demonic) or a typed non-land card (creature/instant/...);
             // deliberately NOT land searches, which are Ramp/ManaFixing, not Tutor.
@@ -1689,7 +1838,54 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Pacify;
             }
 
+            if (result.HasFlag(CardEffect.Disenchant) && !AnswersAnArtifactOrEnchantment(text))
+            {
+                result &= ~CardEffect.Disenchant;
+            }
+
+            // Stripping the donation and re-asking, rather than a lookbehind: the
+            // subject and the verb are not adjacent ("that player MAY gain control
+            // of this artifact"), which is the same trap TheirDraw fell into.
+            if (result.HasFlag(CardEffect.Steal) && GivesControlAway.IsMatch(text)
+                && !StealPatterns.Any(p => p.IsMatch(GivesControlAway.Replace(text, " "))))
+            {
+                result &= ~CardEffect.Steal;
+            }
+
+            if (SomebodyElsesZone.IsMatch(text) && AndPlaysThem.IsMatch(text) && !PlaysACardYouOwn.IsMatch(text))
+            {
+                result |= CardEffect.Steal;
+            }
+
             return result;
+        }
+
+        /// <summary>Whether some ONE line of the card is a real answer to an
+        /// artifact or an enchantment. Read line by line rather than whole, so a
+        /// modal card is judged mode by mode: Pyramids offers "destroy target Aura
+        /// attached to a land" next to a damage-prevention mode, and neither
+        /// should be able to excuse or condemn the other. See
+        /// <see cref="SweepsCreaturesToo"/>, <see cref="ExileThatComesBack"/> and
+        /// <see cref="DisenchantsYourOwn"/> for what each veto costs and buys.</summary>
+        private static bool AnswersAnArtifactOrEnchantment(string text)
+        {
+            foreach (string line in text.Split('\n'))
+            {
+                if (!DisenchantPatterns.Any(p => p.IsMatch(line)))
+                {
+                    continue;
+                }
+
+                if (SweepsCreaturesToo.IsMatch(line) || ExileThatComesBack.IsMatch(line)
+                    || DisenchantsYourOwn.IsMatch(line))
+                {
+                    continue;
+                }
+
+                return true;
+            }
+
+            return false;
         }
 
         /// <summary>Whether the card prevents damage aimed at something other than

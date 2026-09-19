@@ -1991,6 +1991,155 @@ public sealed class EffectClassifierTests
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
     }
 
+    [Theory]
+    // Disenchant, ruled 2026-09-19. The old rule wanted "destroy target artifact"
+    // word for word, so every counting word in front of the noun walked past it.
+    [InlineData("Dust to Dust", "Sorcery", "Exile two target artifacts.")]
+    [InlineData("Builder's Bane", "Sorcery",
+        "Destroy X target artifacts. Builder's Bane deals damage to each player equal to the number of "
+        + "artifacts they controlled that were put into a graveyard this way.")]
+    [InlineData("Aetherjacket", "Artifact Creature — Equipment",
+        "Flying, vigilance\n{2}, {T}, Sacrifice this creature: Destroy another target artifact. "
+        + "Activate only as a sorcery.")]
+    [InlineData("Webstrike Elite", "Creature — Spider",
+        "Reach\nCycling {X}{G}{G}\nWhen you cycle this card, destroy up to one target artifact or "
+        + "enchantment with mana value X.")]
+    // A sweeper of artifacts alone is still this tag; the Wipe reading is only
+    // reached when creatures go with them.
+    [InlineData("Shatterstorm", "Sorcery", "Destroy all artifacts. They can't be regenerated.")]
+    [InlineData("Serenity", "Enchantment",
+        "At the beginning of your upkeep, destroy all artifacts and enchantments. "
+        + "They can't be regenerated.")]
+    [InlineData("Tranquility", "Sorcery", "Destroy all enchantments.")]
+    // An Aura is the third noun, bare.
+    [InlineData("Serene Heart", "Sorcery", "Destroy all Auras.")]
+    [InlineData("Hope Charm", "Instant",
+        "Choose one —\n• Target creature gains first strike until end of turn.\n"
+        + "• Target player gains 2 life.\n• Destroy target Aura.")]
+    // "non-" carries a hyphen, which the old filler could not cross either.
+    [InlineData("Emerald Charm", "Instant",
+        "Choose one —\n• Untap target permanent.\n• Destroy target non-Aura enchantment.\n"
+        + "• Target creature loses flying until end of turn.")]
+    // An edict aimed at an artifact answers one all the same.
+    [InlineData("Pick Your Poison", "Sorcery",
+        "Choose one —\n• Each opponent sacrifices an artifact of their choice.\n"
+        + "• Each opponent sacrifices an enchantment of their choice.\n"
+        + "• Each opponent sacrifices a creature with flying of their choice.")]
+    // The O-ring splits on what it NAMES, not on the exile coming back: this one
+    // says "artifact", so it counts.
+    [InlineData("Mystical Tether", "Enchantment",
+        "You may cast this spell as though it had flash if you pay {2} more to cast it.\n"
+        + "When this enchantment enters, exile target artifact or creature an opponent controls until "
+        + "this enchantment leaves the battlefield.")]
+    public void Classify_AnAnswerToAnArtifactOrEnchantment_IsDisenchant(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Disenchant));
+    }
+
+    [Theory]
+    // "NONartifact" and "NONland permanent … until this ENCHANTMENT leaves the
+    // battlefield" were 11 of the 15 cards the old unbounded filler caught.
+    [InlineData("Terror", "Instant", "Destroy target nonartifact, nonblack creature. It can't be regenerated.")]
+    [InlineData("Web Up", "Enchantment",
+        "When this enchantment enters, exile target nonland permanent an opponent controls until this "
+        + "enchantment leaves the battlefield.")]
+    // An artifact CREATURE is a creature.
+    [InlineData("Chandler", "Creature — Human", "{R}{R}{R}, {T}: Destroy target artifact creature.")]
+    // A sweeper that takes the creatures too is Wipe.
+    [InlineData("Jokulhaups", "Sorcery", "Destroy all artifacts, creatures, and lands. They can't be regenerated.")]
+    [InlineData("Death Begets Life", "Sorcery",
+        "Destroy all creatures and enchantments. Draw a card for each permanent destroyed this way.")]
+    // An Aura attached to a named thing is about that thing.
+    [InlineData("Savaen Elves", "Creature — Elf", "{G}{G}, {T}: Destroy target Aura attached to a land.")]
+    [InlineData("Miracle Worker", "Creature — Human Cleric",
+        "{T}: Destroy target Aura attached to a creature you control.")]
+    // Exile that hands the card straight back is a blink.
+    [InlineData("Hide on the Ceiling", "Instant",
+        "Exile X target artifacts and/or creatures. Return the exiled cards to the battlefield under "
+        + "their owners' control at the beginning of the next end step.")]
+    // And your own is never an answer.
+    [InlineData("Rats of Rath", "Creature — Rat", "{B}: Destroy target artifact, creature, or land you control.")]
+    public void Classify_WhatOnlyReadsLikeAnArtifactAnswer_IsNotDisenchant(
+        string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Disenchant));
+    }
+
+    [Theory]
+    // Steal, ruled 2026-09-19. Handing a permanent to somebody ELSE is the mirror
+    // image of this tag, and was 12 of its 14 false positives.
+    [InlineData("Jinxed Idol", "Artifact",
+        "At the beginning of your upkeep, this artifact deals 2 damage to you.\n"
+        + "Sacrifice a creature: Target opponent gains control of this artifact.")]
+    [InlineData("Rainbow Vale", "Land",
+        "{T}: Add one mana of any color. An opponent gains control of this land at the beginning of "
+        + "the next end step.")]
+    [InlineData("Guardian Beast", "Creature — Beast",
+        "As long as this creature is untapped, noncreature artifacts you control can't be enchanted, "
+        + "they have indestructible, and other players can't gain control of them. This effect doesn't "
+        + "remove Auras already attached to those artifacts.")]
+    [InlineData("Emberwilde Djinn", "Creature — Djinn",
+        "Flying\nAt the beginning of each player's upkeep, that player may pay {R}{R} or 2 life. "
+        + "If the player does, they gain control of this creature.")]
+    public void Classify_GivingAPermanentAway_IsNotSteal(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Steal));
+    }
+
+    [Theory]
+    // The veto above reads the subject IMMEDIATELY in front of the verb. These two
+    // put the victim in front of a verb that is yours — "untap target creature AN
+    // OPPONENT CONTROLS and gain control of it" — and any filler at all loses them.
+    [InlineData("Ray of Command", "Instant",
+        "Untap target creature an opponent controls and gain control of it until end of turn. "
+        + "That creature gains haste until end of turn. When you lose control of the creature, tap it.")]
+    [InlineData("Magus of the Unseen", "Creature — Human Wizard",
+        "{1}{U}, {T}: Untap target artifact an opponent controls and gain control of it until end of "
+        + "turn. It gains haste until end of turn. When you lose control of the artifact, tap it.")]
+    // An exchange is a theft you paid for.
+    [InlineData("Political Trickery", "Sorcery",
+        "Exchange control of target land you control and target land an opponent controls. "
+        + "(This effect lasts indefinitely.)")]
+    [InlineData("Legerdemain", "Sorcery",
+        "Exchange control of target artifact or creature and another target permanent that shares one "
+        + "of those types with it. (This effect lasts indefinitely.)")]
+    // Taking a CARD out of somebody else's library, hand or graveyard and playing
+    // it is a theft of a card rather than of a permanent.
+    [InlineData("Outrageous Robbery", "Sorcery",
+        "Target opponent exiles the top X cards of their library face down. You may look at and play "
+        + "those cards for as long as they remain exiled. If you cast a spell this way, you may spend "
+        + "mana as though it were mana of any type to cast it.")]
+    [InlineData("Laughing Jasper Flint", "Legendary Creature — Goblin Mercenary",
+        "Creatures you control but don't own are Mercenaries in addition to their other types.\n"
+        + "At the beginning of your upkeep, exile the top X cards of target opponent's library, where "
+        + "X is the number of outlaws you control. Until end of turn, you may cast spells from among "
+        + "those cards, and mana of any type can be spent to cast those spells.")]
+    // Word of Command takes the player rather than the permanent.
+    [InlineData("Word of Command", "Sorcery",
+        "Look at target opponent's hand and choose a card from it. You control that player until Word "
+        + "of Command finishes resolving. The player plays that card if able.")]
+    public void Classify_TakingWhatIsSomebodyElses_IsSteal(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Steal));
+    }
+
+    [Theory]
+    // A symmetric exile hands everyone their own cards back, and playing YOUR OWN
+    // is not theft however much of the opponent's library the text mentions.
+    [InlineData("Triple Triad", "Enchantment",
+        "At the beginning of your upkeep, each player exiles the top card of their library. Until end "
+        + "of turn, you may play the card you own exiled this way and each other card exiled this way "
+        + "with lesser mana value than it without paying their mana costs.")]
+    [InlineData("Wheel of Potential", "Sorcery",
+        "You get {E}{E}{E} (three energy counters), then you may pay any amount of {E}.\n"
+        + "Each player may exile their hand and draw a number of cards equal to the amount of {E} paid "
+        + "this way. If seven or more {E} was paid this way, you may play cards you own exiled this "
+        + "way until the end of your next turn.")]
+    public void Classify_PlayingYourOwnExiledCards_IsNotSteal(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Steal));
+    }
+
     private static Card MakeCard(string name, string typeLine, string oracleText, List<string>? keywords = null)
     {
         JsonCard json = new()

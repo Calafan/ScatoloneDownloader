@@ -55,7 +55,10 @@ namespace ScatoloneDownloader.Mtg
                 + "fixes colour instead. A land tapping for its own one mana is just a land.",
 
             [CardEffect.Disenchant] =
-                "Destroys or exiles a targeted artifact or enchantment.",
+                "Answers an artifact or enchantment, at any count — \"up to one\", \"X target\", \"another\", "
+                + "\"all\" — and an edict aimed at one counts too. A bare Aura counts; an Aura ATTACHED to a "
+                + "named thing does not. An artifact CREATURE is Removal, a sweeper that takes the creatures "
+                + "too is Wipe, and your own is never an answer.",
 
             [CardEffect.Discard] =
                 "Empties somebody ELSE'S hand. A bare \"discard a card\" is a cost you pay — madness, blitz, cycling, the "
@@ -99,7 +102,10 @@ namespace ScatoloneDownloader.Mtg
                 + "\"as an additional cost to cast\", which pays once.",
 
             [CardEffect.Steal] =
-                "Takes control of a permanent somebody else controls, for a turn or for good.",
+                "Takes what is somebody else's: control of a permanent, an EXCHANGE of two, the player, or a "
+                + "CARD out of their library, hand or graveyard that you then play. Giving a permanent AWAY is "
+                + "the mirror image, not this. Playing a card you OWN is not theft, and out of their graveyard "
+                + "onto the battlefield is Reanimate.",
 
             [CardEffect.Tutor] =
                 "Searches the library for a specific nonland card. A land search is Ramp or ManaFixing.",
