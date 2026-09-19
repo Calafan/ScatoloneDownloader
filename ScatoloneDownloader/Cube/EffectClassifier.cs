@@ -1345,7 +1345,14 @@ namespace ScatoloneDownloader.Cube
                 // target ATTACKING creature", "to target creature AN OPPONENT
                 // CONTROLS" — which was 23 of the misses on its own, and the
                 // amount is allowed to come after the target as well.
+                // NB the qualifier deliberately cannot cross a COMMA. Letting it
+                // reach "4 damage to target ATTACKING, BLOCKING, OR TAPPED
+                // creature" (Sonar Strike) also lets it run past a sentence into
+                // the next clause: measured 2026-09-19, two right for two wrong.
                 Rx(@"deals? [\dX]+ damage to [\w ]{0,20}target [\w -]{0,28}(?<!non)creature"),
+                // "That much damage" is an amount too — Screaming Nemesis hands
+                // back whatever it was dealt.
+                Rx(@"deals? that much damage to any (?:other )?target"),
                 Rx(@"deals damage to [\w ]{0,20}target [\w -]{0,28}(?<!non)creature equal to"),
                 // A fireball split between several things still kills one of them.
                 Rx(@"deals? (?:half )?[\dX]+(?: plus \d+)? damage divided "
