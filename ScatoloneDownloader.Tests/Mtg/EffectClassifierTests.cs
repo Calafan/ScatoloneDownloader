@@ -650,6 +650,141 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // The net is the whole answer, ruled 2026-09-19 and applied from BOTH
+    // sides for the first time: a loot that comes out ahead is CardAdvantage
+    // and has stopped filtering. Casting of Bones never parsed because
+    // "discard ONE OF THEM" does not repeat the word "card".
+    [InlineData("Casting of Bones", "Enchantment — Aura",
+        "Enchant creature\nWhen enchanted creature dies, draw three cards, then discard one of them.")]
+    [InlineData("Emmessi Tome", "Artifact — Book", "{5}, {T}: Draw two cards, then discard a card.")]
+    [InlineData("Focus the Mind", "Instant",
+        "This spell costs {2} less to cast if you've cast another spell this turn.\n"
+        + "Draw three cards, then discard a card.")]
+    public void Classify_ALootThatGains_IsCardAdvantageAndNotFilter(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.False(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // …and the other side of the same ruling. Measured over the reviewed set
+    // before it: of the 41 cards that net nothing, 38 were tagged Filter and 3
+    // advantage. A full stop between the halves used to stop the count dead.
+    [InlineData("Careful Study", "Sorcery", "Draw two cards, then discard two cards.")]
+    [InlineData("Alpharael, Dreaming Acolyte", "Legendary Creature — Human Cleric",
+        "When Alpharael enters, draw two cards. Then discard two cards unless you discard an artifact card.\n"
+        + "During your turn, Alpharael has deathtouch.")]
+    [InlineData("Anvil of Bogardan", "Artifact",
+        "Players have no maximum hand size.\n"
+        + "At the beginning of each player's draw step, that player draws an additional card, then discards a card.")]
+    public void Classify_ALootThatNetsNothing_IsFilterAndNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Filter));
+        Assert.False(result.HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // The rummage: "you may discard a card. If you do, draw a card". The
+    // plainest Filter shape printed and it had never been read — 14 cards fire
+    // on it and 12 were already tagged by hand. Ruled 2026-09-19.
+    [InlineData("Yuyan Archers", "Creature — Human Archer",
+        "Reach\nWhen this creature enters, you may discard a card. If you do, draw a card.")]
+    [InlineData("Rescue Leopard", "Creature — Cat",
+        "Whenever this creature becomes tapped, you may discard a card. If you do, draw a card.")]
+    // The activated version. The rule carries a lookahead for "this card"
+    // because cycling reminder text reads identically and pays a card to
+    // replace itself, which attacks nobody.
+    [InlineData("Mesmeric Trance", "Enchantment",
+        "Cumulative upkeep {1} (At the beginning of your upkeep, put an age counter on this permanent, "
+        + "then sacrifice it unless you pay its upkeep cost for each age counter on it.)\n"
+        + "{U}, Discard a card: Draw a card.")]
+    public void Classify_Rummage_IsFilter(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Whose draw is it? A card that only ever draws for somebody ELSE gives
+    // nothing away for free. Ruled 2026-09-19 over 10 cards, 8 untagged. The
+    // test is done by STRIPPING rather than a lookbehind, because "defending
+    // player MAY draw a card" puts a word between the subject and the verb.
+    [InlineData("Sibilant Spirit", "Creature — Spirit",
+        "Flying\nWhenever this creature attacks, defending player may draw a card.")]
+    [InlineData("Phelddagrif", "Legendary Creature — Phelddagrif",
+        "{G}: Phelddagrif gains trample until end of turn. Target opponent creates a 1/1 green Hippo creature token.\n"
+        + "{W}: Phelddagrif gains flying until end of turn. Target opponent gains 2 life.\n"
+        + "{U}: Return Phelddagrif to its owner's hand. Target opponent may draw a card.")]
+    // Triggering OFF a draw is not drawing: 9 of the 10 cards written this way
+    // carry no tag at all.
+    [InlineData("Underworld Dreams", "Enchantment",
+        "Whenever an opponent draws a card, this enchantment deals 1 damage to that player.")]
+    [InlineData("Clinquant Skymage", "Creature — Bird Wizard",
+        "Flying\nWhenever you draw a card, put a +1/+1 counter on this creature.")]
+    // And a draw that exiles the card ITSELF out of your graveyard runs once,
+    // the same reading that keeps a one-shot sacrifice out. Four of the fifty
+    // over-fires were identical Surveyors printed with this line.
+    [InlineData("Goblin Surveyor", "Creature — Goblin Scout",
+        "Trample\nStart your engines! (If you have no speed, it starts at 1. It increases once on each of your "
+        + "turns when an opponent loses life. Max speed is 4.)\n"
+        + "Max speed — {3}, Exile this card from your graveyard: Draw a card.")]
+    public void Classify_ADrawThatIsNotYoursOrRunsOnce_IsNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // The carve-out that keeps the rule above honest: "TARGET player" and
+    // "EACH player" are NOT somebody else's draw, because you point these at
+    // yourself. 12 of the 21 cards written that way are tagged.
+    [InlineData("Ancestral Recall", "Instant", "Target player draws three cards.")]
+    [InlineData("Braingeyser", "Sorcery", "Target player draws X cards.")]
+    public void Classify_TargetPlayerDraws_IsStillCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // The 2026-09-16 second-hand ruling, widened 2026-09-19 because its window
+    // was too short for the very cards it named: Glarb puts 44 characters
+    // between "play lands" and "from the top of your library" where 40 were
+    // allowed, and Assemble the Players never says "play" at all.
+    [InlineData("Glarb, Calamity's Augur", "Legendary Creature — Frog Wizard Noble",
+        "Deathtouch\nYou may look at the top card of your library any time.\n"
+        + "You may play lands and cast spells with mana value 4 or greater from the top of your library.\n"
+        + "{T}: Surveil 2.")]
+    [InlineData("Assemble the Players", "Enchantment",
+        "You may look at the top card of your library any time.\n"
+        + "Once each turn, you may cast a creature spell with power 2 or less from the top of your library.")]
+    // Several Clues in one breath, the reading the Treasure got on 2026-09-18:
+    // one has to be cashed for {2} and is a rider, X of them is a draw X.
+    [InlineData("Nyla, Shirshu Sleuth", "Legendary Creature — Mole Beast",
+        "When Nyla enters, exile up to one target creature card from your graveyard. If you do, you lose X life "
+        + "and create X Clue tokens, where X is that card's mana value. (A Clue token is an artifact with "
+        + "\"{2}, Sacrifice this token: Draw a card.\")\n"
+        + "At the beginning of your end step, if you control no Clues, return target card exiled with Nyla to "
+        + "its owner's hand.")]
+    [InlineData("Tamiyo Meets the Story Circle", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\n"
+        + "I — Until your next turn, whenever a creature attacks you or a planeswalker you control, it gets "
+        + "-2/-0 until end of turn.\n"
+        + "II — Discard any number of cards, then investigate twice for each card discarded this way.\n"
+        + "III — Shuffle up to three target cards from your graveyard into your library.")]
+    // "Draw that many cards" is a draw-for-each written the other way round,
+    // and the count is never one. Restricted to YOUR draw, because "each player
+    // draws that many" is a wheel and pays everybody.
+    [InlineData("Niv-Mizzet, Visionary", "Legendary Creature — Dragon Wizard",
+        "Flying\nYou have no maximum hand size.\n"
+        + "Whenever a source you control deals noncombat damage to an opponent, you draw that many cards.")]
+    public void Classify_MoreWaysToGetACard_AreCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
     // The top of your library is a second hand, ruled 2026-09-16: these never
     // run out of cards to play even though they never draw one.
     [InlineData("Fblthp, Lost on the Range", "Legendary Creature — Homunculus",

@@ -60,12 +60,15 @@ namespace ScatoloneDownloader.Mtg
                 + "back half of a loot — and paying it attacks nobody.",
 
             [CardEffect.CardAdvantage] =
-                "A card the opponent does not get: draw two or more, a draw you can go back to, \"draw for each X\", or "
-                + "the top of your library as a second hand. Count the loot — draw two discard one IS a card. One Clue, "
-                + "one card off the top, one flashback card, a cycle, an ETB cantrip: all riders.",
+                "A card the opponent does not get: draw two or more, a draw you can go back to, \"draw for each X\" or "
+                + "\"that many\", the top of your library as a second hand. COUNT the loot — any net gain is a card, and "
+                + "then it is not Filter. Not a draw for THEM, not a trigger off drawing. One Clue, one card off the "
+                + "top, one cycle, one ETB cantrip: riders.",
 
             [CardEffect.Filter] =
-                "Selection without net cards: scry, surveil, look at the top few, or a loot that draws and discards.",
+                "Selection at NO net gain: scry, surveil, look at the top few and take one, or hand back what you drew "
+                + "— discard two draw two, and every rummage (\"you may discard a card. If you do, draw a card\"). The "
+                + "moment the loot comes out ahead it is CardAdvantage instead. A discard paid as a COST is neither.",
 
             [CardEffect.Reanimate] =
                 "Returns a creature from a graveyard straight to the BATTLEFIELD, cheating its cost.",

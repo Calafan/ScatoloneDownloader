@@ -139,11 +139,79 @@ namespace ScatoloneDownloader.Cube
         //   Bones with it. Only a PROVABLE gain rescues the tag: both counts have
         //   to parse and the draw has to be the bigger one, so anything unreadable
         //   stays parity.
+        //   Ruled again 2026-09-19, and this time from BOTH sides: the net is
+        //   the whole answer. Any net gain is CardAdvantage and stops being
+        //   Filter; a net of zero — discard two draw two — is Filter and never
+        //   CardAdvantage. Measured over the reviewed set before the ruling: of
+        //   the 41 cards that net nothing, 38 are Filter and 3 are advantage,
+        //   and of the 4 that net two, 3 are advantage and 1 is Filter.
+        //
+        //   The counts have to be read more loosely than they were. "Draw three
+        //   cards, then discard ONE OF THEM" never parsed because it does not
+        //   repeat the word "card" (Casting of Bones, Soldevi Sage), and a full
+        //   stop between the two halves stopped the match dead (Waterbending
+        //   Lesson, Alpharael). Both now parse; an unreadable count still stays
+        //   parity, which is what keeps "any number of cards" out.
         private static readonly Regex DrawsThenDiscards = Rx(
-            @"draws? (\w+) cards?,? (?:then |and )?discards? (\w+) cards?");
+            @"draws? (\w+) cards?[.,]? (?:then |and )?(?:you may )?discards? (\w+)(?: of them| cards?)");
 
         private static readonly Regex DiscardsThenDraws = Rx(
             @"discards? (\w+) cards?[^\n.]{0,30}draws? (\w+) cards?");
+
+        // Whose draw is it? A card that only ever draws for somebody ELSE gives
+        // nothing away for free — Sibilant Spirit and Harbor Guardian pay the
+        // defending player for the privilege of attacking, and Lord of
+        // Tresserhorn hands two cards across the table. "TARGET player" and
+        // "EACH player" are deliberately NOT in this list: you point Ancestral
+        // Recall and Braingeyser at yourself, and 12 of the 21 cards written that
+        // way are tagged. Ruled 2026-09-19 over 10 cards, 8 of them untagged.
+        private static readonly Regex TheirDraw = Rx(
+            @"(?:defending player|its controller|an opponent|each opponent|target opponent|another player"
+            + @"|that player may)[\w ,']{0,20}(?:may )?draws? (?:a|one|two|three|four|five|x|\d+|that many|cards)");
+
+        // Asked by STRIPPING, not by a lookbehind. "Defending player may draw a
+        // card" puts "may " between the subject and the verb, so a lookbehind
+        // sees only "may " and lets the whole phrase through — which is how
+        // Sibilant Spirit and Harbor Guardian survived the first cut of this
+        // rule. Blank out every draw that belongs to somebody else first, then
+        // ask whether any draw is left standing.
+        private static readonly Regex YouDraw = Rx(
+            @"\bdraws? (?:a|one|two|three|four|five|six|seven|x|\d+|that many|cards)");
+
+        // Triggering OFF a draw is not drawing. Underworld Dreams and Clinquant
+        // Skymage wait for a card to be drawn and then do something else; 9 of
+        // the 10 cards written this way carry no tag.
+        private static readonly Regex TriggersOffDrawing = Rx(
+            @"whenever (?:you|an opponent|a player|another player|one or more players) draws?");
+
+        // The sibling of DrawBySacrificingItself, and the same reading: a card
+        // that exiles ITSELF out of your graveyard to draw runs exactly once.
+        // The five identical Surveyors ("Max speed — {3}, Exile this card from
+        // your graveyard: Draw a card") were four of the fifty over-fires.
+        // 27 cards, 25 of them untagged.
+        private static readonly Regex DrawByExilingItselfFromGraveyard = Rx(
+            @"exile this card from your graveyard[^\n:]{0,30}:");
+
+        // The top of your library as a second hand, ruled 2026-09-16 — the rule
+        // was written then and the window was too short for the very cards the
+        // ruling named. Glarb says "play lands AND CAST SPELLS WITH MANA VALUE 4
+        // OR GREATER from the top of your library", 44 characters where 40 were
+        // allowed, and Fblthp plots rather than plays. Widened 2026-09-19:
+        // 15 cards fire, 14 of them tagged.
+        private static readonly Regex SecondHandOnTop = Rx(
+            @"(?:play|cast|plot)[\w ,'\d]{0,60}from the top of your library"
+            + @"|look at the top card of your library any time"
+            + @"|you may (?:play|cast)[^\n]{0,60}top card of your library");
+
+        // Several cards off the top, or off THEIR top, that you may then play.
+        // The one-card version is the impulse rider and stays out; this is the
+        // draw-two wearing the same coat, which ImpulseOfSeveralCards already
+        // says, plus the version aimed at an opponent's library (Outrageous
+        // Robbery, Laughing Jasper Flint, Kotis). 15 cards, 14 tagged.
+        private static readonly Regex ExileSeveralAndPlayThem = Rx(
+            @"exiles? the top (?:two|three|four|five|six|seven|eight|nine|ten|x|\d+) cards?"
+            + @"[^\n]{0,80}(?:you may (?:play|cast)|may play|may cast)"
+            + @"|exiles? the top \w+ cards? of (?:target |that )?(?:opponent|player)");
 
         // A Clue and an impulse draw are both "a card the opponent does not get",
         // and neither is a draw, so both are asked the same question: is it one
@@ -154,10 +222,33 @@ namespace ScatoloneDownloader.Cube
         // two wearing a different coat. Ruled 2026-09-15.
         private static readonly Regex ClueWording = Rx(@"\binvestigates?\b|\bclue token");
 
+        // Read UNANCHORED, and measured that way 2026-09-19: the trigger word
+        // sits mid-line on half these cards (Obsessive Pursuit says "When this
+        // enchantment enters AND at the beginning of your upkeep"), and
+        // Sharp-Eyed Rookie puts 180 characters of condition between "Whenever"
+        // and "investigate". Loose costs one card — Sophia — and buys five.
+        // 15 fire, 14 tagged; the anchored version found 9.
         private static readonly Regex RepeatableClue = Rx(
             @"^[^\n:]{1,70}:[^\n]{0,120}(?:investigate|clue token)"
-            + @"|^(?:whenever|at the beginning of)[^\n]{0,160}(?:investigate|clue token)",
+            + @"|(?:whenever|at the beginning of)[^\n]{0,200}(?:investigate|clue token)",
             RegexOptions.Multiline);
+
+        // Several Clues in one breath, the same reading the Treasure got on
+        // 2026-09-18: one has to be cashed for {2} and is a rider, but X of them
+        // is a draw X wearing a different coat. Nyla and Tamiyo Meets the Story
+        // Circle, both tagged.
+        private static readonly Regex SeveralClues = Rx(
+            @"create (?:two|three|four|five|x|\d+) clue tokens"
+            + @"|investigates? (?:twice|three times|x times)"
+            + @"|clue tokens?,? where x|investigate for each|clue token for each");
+
+        // "Draw that many cards" is a draw-for-each written the other way round,
+        // and the count is never one: Niv-Mizzet, Starwinder, Voracious
+        // Bibliophile. Restricted to YOUR draw — "each player draws that many"
+        // is a wheel (Teferi's Puzzle Box, Winds of Change) and pays everybody.
+        // 12 fire, 9 tagged; without the restriction 20 fire and 11 tagged.
+        private static readonly Regex DrawThatMany = Rx(
+            @"you (?:may )?draw that many cards|, draw that many cards");
 
         private static readonly Regex ImpulseDraw = Rx(
             @"exiles? the top [\w ]{0,20}(?:card|cards) of your library"
@@ -807,11 +898,47 @@ namespace ScatoloneDownloader.Cube
                 // Looking at N and taking MORE THAN ONE is a draw with selection.
                 // Taking exactly one is Filter, which the Filter rules say and
                 // this deliberately does not contradict. Ruled 2026-09-16.
-                Rx(@"look at the top \w+ cards? of your library[^\n]{0,60}put (?:two|three|four|five|\d+) of them into your hand")]),
+                Rx(@"look at the top \w+ cards? of your library[^\n]{0,60}put (?:two|three|four|five|\d+) of them into your hand"),
+                // The top of your library kept as a second hand, and several
+                // cards off a top that you may then play. See SecondHandOnTop
+                // and ExileSeveralAndPlayThem for the measurements.
+                SecondHandOnTop]),
 
+            // Filter is selection at NO net gain: look at some and take one, or
+            // hand back exactly what you drew. The rummage family — "you may
+            // discard a card. If you do, draw a card" — is the plainest shape
+            // there is and had never been read: 14 cards fire on the first
+            // pattern below and 12 of them were already tagged by hand. The
+            // third pattern is the activated version ("Discard a card: Draw a
+            // card"); the lookahead is what keeps CYCLING reminder text out,
+            // because cycling pays a card to replace itself and attacks nobody.
+            // Added 2026-09-19.
             (CardEffect.Filter, [Rx(@"scry \d"), Rx(@"surveil \d"),
                 Rx(@"look at the top \w+ cards? of your library"),
-                Rx(@"discard[\w ]* then draw"), Rx(@"draw \w+ cards?, then discard")]),
+                Rx(@"discard[\w ]* then draw"), Rx(@"draws? [\w ]{0,20}cards?[.,] ?(?:then |and )?(?:you may )?discards?"),
+                Rx(@"you may discard (?:a|one|up to \w+|any number of) cards?\.? ?(?:if you do, )?draws?"),
+                Rx(@"discards? (?:a|one|up to \w+|any number of|that many) cards?, then draws? that many"),
+                Rx(@"^[^\n:]{0,50}discard (?!this card)(?:a|one|\w+) cards?[^\n:]{0,30}: ?draw",
+                    RegexOptions.Multiline),
+                // The two halves change hands without the word "discard": you may
+                // draw and then hand one back (Oblivious Bookworm, Rook Turret),
+                // or pay the card by some other verb — Brainstorm and Dream Cache
+                // put cards back on top, Lat-Nam's Legacy shuffles one in,
+                // Jandor's Ring hands back exactly what it just drew. Each is a
+                // card changing places at no net gain, which is Filter exactly.
+                //
+                // These are spelled out rather than reusing DrawPaidForWithACard
+                // and Loot wholesale, which was tried and measured: Loot's middle
+                // alternative reads CYCLING reminder text as a loot and fires on
+                // 45 cards of which 4 are tagged, costing 42 false positives on
+                // its own. The alternatives kept here fire on 3, 1, 1, 5 and 1.
+                Rx(@"(?:you may )?draws? (?:a|one|\w+) cards?\. if you do, discard"),
+                Rx(@"(?:sacrifice[\w ]{0,25}or )?discard (?:a|one|\w+) cards?\. if you do, draw"),
+                Rx(@"put \w+ cards? from your hand[^\n]{0,30}on top"),
+                Rx(@"shuffle (?:a|\w+) cards? from your hand into your library\. if you do, draw"),
+                Rx(@"discard the last card you drew"),
+                Rx(@"then discard \w+ cards? unless"),
+                Rx(@"discards? a card\. then draws? a card")]),
 
             (CardEffect.Reanimate, [Rx(@"return target[\w ]*creature card from[\w ]*graveyard to the battlefield"),
                 Rx(@"return[\w ]*from (your|a) graveyard to the battlefield"),
@@ -1197,7 +1324,19 @@ namespace ScatoloneDownloader.Cube
             // for which ruling each one follows from.
             if (result.HasFlag(CardEffect.CardAdvantage)
                 && (Loot.IsMatch(text) || Cycling.IsMatch(text) || DrawBySacrificingItself.IsMatch(text)
+                    || DrawByExilingItselfFromGraveyard.IsMatch(text)
                     || DrawPaidForWithACard.IsMatch(text)))
+            {
+                result &= ~CardEffect.CardAdvantage;
+            }
+
+            // A draw that is never YOURS, and a trigger that only watches one
+            // happen. See TheirDraw and TriggersOffDrawing for the numbers, and
+            // note that both are asked only once the card has no draw of its own.
+            bool somebodyElsesDraw = TheirDraw.IsMatch(text) || TriggersOffDrawing.IsMatch(text);
+
+            if (result.HasFlag(CardEffect.CardAdvantage) && somebodyElsesDraw
+                && !YouDraw.IsMatch(TriggersOffDrawing.Replace(TheirDraw.Replace(text, " "), " ")))
             {
                 result &= ~CardEffect.CardAdvantage;
             }
@@ -1208,6 +1347,16 @@ namespace ScatoloneDownloader.Cube
             if (LootDrawsMoreThanItPays(text))
             {
                 result |= CardEffect.CardAdvantage;
+            }
+
+            // And the other half of the same ruling, 2026-09-19: a loot that
+            // comes out ahead has stopped filtering. Filter is selection at no
+            // net gain, so the moment the count is provably positive the card
+            // belongs to CardAdvantage alone — Casting of Bones and Emmessi Tome
+            // were carrying both.
+            if (result.HasFlag(CardEffect.Filter) && LootDrawsMoreThanItPays(text))
+            {
+                result &= ~CardEffect.Filter;
             }
 
             // A stream of cards out of the graveyard or exile, and only when you
@@ -1225,7 +1374,8 @@ namespace ScatoloneDownloader.Cube
             bool impulseIsACard = ImpulseDraw.IsMatch(text)
                 && (ImpulseOfSeveralCards.IsMatch(text) || RepeatableWording.IsMatch(text));
 
-            if (impulseIsACard || (ClueWording.IsMatch(text) && RepeatableClue.IsMatch(text)))
+            if (impulseIsACard || ExileSeveralAndPlayThem.IsMatch(text) || DrawThatMany.IsMatch(text)
+                || (ClueWording.IsMatch(text) && (RepeatableClue.IsMatch(text) || SeveralClues.IsMatch(text))))
             {
                 result |= CardEffect.CardAdvantage;
             }
