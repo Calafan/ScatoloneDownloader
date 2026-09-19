@@ -47,18 +47,23 @@
      in one column overflowed the viewport, which is what pushed the help text
      off the bottom and forced the scrollbar. */
   #effects { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:6px; }
-  /* The meaning of the effect under the pointer, or the one just tapped. Kept to
-     a fixed block that is hidden when empty rather than reserved always: the
-     panel is already tight, and a permanently blank row costs a card's worth of
-     rules text on a phone. */
-  /* Rides the top of the scrolling panel, ABOVE the grid. The grid is two dozen
+  /* The meaning of the effect under the pointer, or the one just tapped.
+     Rides the top of the scrolling panel, ABOVE the grid. The grid is two dozen
      rows tall, so a hint underneath it would be off-screen exactly when the
      pointer is at the top of the list — and sticky needs content below it to
-     stick against, which a last child does not have. */
+     stick against, which a last child does not have.
+     ALWAYS PRESENT AND A FIXED HEIGHT, from 2026-09-19. It used to be hidden
+     when empty and sized to its own text, so appearing at all pushed the grid
+     down and every hover resized it again: the buttons moved under the pointer
+     while you were aiming at them, and the glossary lines run from 40 to 340
+     characters, so they moved by different amounts. The box now occupies the
+     same space whatever is in it and scrolls inside when a line is long. */
   #effhint { position:sticky; top:0; z-index:2; margin-bottom:6px; padding:6px 8px; border-radius:6px;
              background:#1d2733; border:1px solid #2b3947; box-shadow:0 6px 12px rgba(13,17,23,.85);
-             color:#b9c6d4; font-size:12px; line-height:1.4; }
+             color:#b9c6d4; font-size:12px; line-height:1.4;
+             height:84px; overflow-y:auto; }
   #effhint b { color:#e6edf3; }
+  #effhint.empty { color:var(--muted); font-style:italic; }
   .eff { display:flex; align-items:center; gap:9px; padding:7px 9px; border:1px solid var(--line); border-radius:8px; cursor:pointer; user-select:none; font-size:14px; }
   .eff.active { background:var(--on); border-color:var(--on); }
   .key { display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px; padding:0 5px; border-radius:5px; background:#0d0f14; color:var(--accent); font-weight:700; font-size:12px; }
@@ -139,6 +144,13 @@
     .star { font-size:34px; padding:2px 5px; }
     .stat, .eff { padding:12px; border-radius:10px; }
     #effects { grid-template-columns:repeat(auto-fill, minmax(148px,1fr)); gap:7px; }
+    /* The same text in a third of the width needs about twice the rows. 150px
+       is measured, not guessed: the longest line in the glossary (Tokens, 340
+       characters, the cap the glossary test enforces) wants 139px at 390px of
+       viewport, and everything else wants 130. Still a FIXED height — the whole
+       point is that the effect buttons never move while a thumb is over them,
+       and anything longer scrolls inside rather than pushing them. */
+    #effhint { height:150px; font-size:13px; }
 
     /* The six-column list row does not fit; keep what identifies a card. iOS
        zooms the whole page in when a focused field is under 16px, and never
@@ -192,7 +204,7 @@
     </div>
     <div id="rating"></div>
     <div id="status"></div>
-    <div id="effhint" hidden></div>
+    <div id="effhint" class="empty">Hover or tap an effect to see what it means.</div>
     <div id="effects"></div>
     <div id="help">
       <div><kbd>hotkey</kbd> toggle effect</div>
@@ -471,13 +483,15 @@ function render() {
     const div = document.createElement("div");
     div.className = "eff" + (active ? " active" : "");
     div.innerHTML = `<span class="key">${(EFFECT_KEYS[i]||"").toUpperCase()}</span><span>${name}</span>`;
-    // What the tag MEANS, at the moment it is about to be pressed. title covers
-    // the desktop hover; the hint line below covers the phone, where there is no
-    // hover at all — showing it on tap doubles as confirmation of what was just
-    // toggled.
+    // What the tag MEANS, at the moment it is about to be pressed. The hint box
+    // above is the only place it is shown: the native title tooltip used to
+    // cover the desktop, and once the box stopped moving it was saying the same
+    // thing twice — and saying it on a delay, in a floating panel that covers
+    // the very buttons you are reading about. On a phone there is no hover at
+    // all, so showing the meaning on TAP doubles as confirmation of what was
+    // just toggled.
     const meaning = glossary[i] || "";
     if (meaning) {
-      div.title = `${name} — ${meaning}`;
       div.onmouseenter = () => showMeaning(name, meaning);
       div.onmouseleave = () => showMeaning("", "");
     }
@@ -488,14 +502,21 @@ function render() {
   preload();
 }
 
-// Fills the hint line under the effect grid. Empty name clears and hides it.
+// Fills the hint box above the effect grid. An empty name puts the placeholder
+// back rather than hiding the box: see the CSS for why it must never change
+// size. Scroll position is reset so a long line does not open half-read.
 function showMeaning(name, text) {
   const el = document.getElementById("effhint");
-  if (!name) { el.hidden = true; el.textContent = ""; return; }
+  el.scrollTop = 0;
+  if (!name) {
+    el.className = "empty";
+    el.textContent = "Hover or tap an effect to see what it means.";
+    return;
+  }
+  el.className = "";
   el.innerHTML = `<b></b> `;
   el.firstChild.textContent = name;
   el.appendChild(document.createTextNode(text));
-  el.hidden = false;
 }
 
 function renderRating(c) {
