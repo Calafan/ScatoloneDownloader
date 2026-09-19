@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 using ScatoloneDownloader.Cube;
 using ScatoloneDownloader.Json.Cards;
@@ -2114,10 +2114,26 @@ public sealed class EffectClassifierTests
         + "At the beginning of your upkeep, exile the top X cards of target opponent's library, where "
         + "X is the number of outlaws you control. Until end of turn, you may cast spells from among "
         + "those cards, and mana of any type can be spent to cast those spells.")]
+    [InlineData("Vaan, Street Thief", "Legendary Creature — Human Rogue",
+        "Whenever one or more Scouts, Pirates, and/or Rogues you control deal combat damage to a "
+        + "player, exile the top card of that player's library. You may cast it. If you don't, create "
+        + "a Treasure token.")]
     // Word of Command takes the player rather than the permanent.
     [InlineData("Word of Command", "Sorcery",
         "Look at target opponent's hand and choose a card from it. You control that player until Word "
         + "of Command finishes resolving. The player plays that card if able.")]
+    // Reanimating out of an OPPONENT'S graveyard is both Reanimate and this,
+    // ruled 2026-09-19.
+    [InlineData("Ashen Powder", "Sorcery",
+        "Put target creature card from an opponent's graveyard onto the battlefield under your control.")]
+    [InlineData("Bone Dancer", "Creature — Zombie",
+        "Whenever this creature attacks and isn't blocked, you may put the top creature card of "
+        + "defending player's graveyard onto the battlefield under your control. If you do, this "
+        + "creature assigns no combat damage this turn.")]
+    // And the life total is a thing you can take.
+    [InlineData("Mirror Universe", "Artifact",
+        "{T}, Sacrifice this artifact: Exchange life totals with target opponent. "
+        + "Activate only during your upkeep.")]
     public void Classify_TakingWhatIsSomebodyElses_IsSteal(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Steal));
@@ -2135,7 +2151,15 @@ public sealed class EffectClassifierTests
         + "Each player may exile their hand and draw a number of cards equal to the amount of {E} paid "
         + "this way. If seven or more {E} was paid this way, you may play cards you own exiled this "
         + "way until the end of your next turn.")]
-    public void Classify_PlayingYourOwnExiledCards_IsNotSteal(string name, string typeLine, string oracle)
+    // Ordinary reanimation belongs to nobody in particular: "from A graveyard"
+    // names no victim, so it stays Reanimate alone.
+    [InlineData("Hymn of Rebirth", "Sorcery",
+        "Put target creature card from a graveyard onto the battlefield under your control.")]
+    [InlineData("Coffin Queen", "Creature — Zombie",
+        "You may choose not to untap this creature during your untap step.\n"
+        + "{2}{B}, {T}: Put target creature card from a graveyard onto the battlefield under your "
+        + "control. When this creature becomes tapped or you lose control of it, exile that card.")]
+    public void Classify_WhatIsAlreadyYours_IsNotSteal(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Steal));
     }

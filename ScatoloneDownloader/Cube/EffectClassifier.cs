@@ -113,7 +113,27 @@ namespace ScatoloneDownloader.Cube
             Rx(@"exchange control of"),
             // Word of Command takes the player rather than the permanent.
             Rx(@"you control that player"),
+            // And Mister Negative and Psychic Transfer take the life total.
+            // Ruled 2026-09-19.
+            Rx(@"exchange life totals"),
+            // Desertion takes the spell it just countered, which is the only place
+            // "under your control" appears without a zone to read it against.
+            Rx(@"counter target spell[\s\S]{0,180}onto the battlefield under your control"),
         ];
+
+        /// <summary>Reanimating out of an OPPONENT'S graveyard is both Reanimate
+        /// and Steal — ruled 2026-09-19, after the tags split on cards that share
+        /// a sentence: Bone Dancer and Helm of Obedience were tagged Steal against
+        /// Ashen Powder and Chorale of the Void, which were not.
+        /// <para>
+        /// It is read as two halves for the same reason the stolen-card family is.
+        /// "Under your control" alone is how ordinary reanimation is worded —
+        /// Reanimate, Hymn of Rebirth and Coffin Queen all say "from A graveyard"
+        /// and belong to nobody in particular — so the theft only exists once the
+        /// card names whose graveyard it is.
+        /// </para></summary>
+        private static readonly Regex OntoYourSideOfTheBoard = Rx(
+            @"onto the battlefield under your control");
 
         /// <summary>Taking a CARD rather than a permanent — the other half of this
         /// tag, and 15 of the 28 cards it used to miss. It reads as two halves
@@ -1852,7 +1872,9 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Steal;
             }
 
-            if (SomebodyElsesZone.IsMatch(text) && AndPlaysThem.IsMatch(text) && !PlaysACardYouOwn.IsMatch(text))
+            if (SomebodyElsesZone.IsMatch(text)
+                && ((AndPlaysThem.IsMatch(text) && !PlaysACardYouOwn.IsMatch(text))
+                    || OntoYourSideOfTheBoard.IsMatch(text)))
             {
                 result |= CardEffect.Steal;
             }

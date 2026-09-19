@@ -1,4 +1,4 @@
-namespace ScatoloneDownloader.Mtg
+﻿namespace ScatoloneDownloader.Mtg
 {
     /// <summary>
     /// One short line per <see cref="CardEffect"/>, shown as the tooltip on the
@@ -102,10 +102,10 @@ namespace ScatoloneDownloader.Mtg
                 + "\"as an additional cost to cast\", which pays once.",
 
             [CardEffect.Steal] =
-                "Takes what is somebody else's: control of a permanent, an EXCHANGE of two, the player, or a "
-                + "CARD out of their library, hand or graveyard that you then play. Giving a permanent AWAY is "
-                + "the mirror image, not this. Playing a card you OWN is not theft, and out of their graveyard "
-                + "onto the battlefield is Reanimate.",
+                "Takes what is somebody else's: control of a permanent, an EXCHANGE of two, the player, their "
+                + "life total, or a CARD out of their library, hand or graveyard — played, or reanimated onto "
+                + "your side. Giving one AWAY is the mirror image. \"From A graveyard\" names no victim: that "
+                + "is Reanimate alone.",
 
             [CardEffect.Tutor] =
                 "Searches the library for a specific nonland card. A land search is Ramp or ManaFixing.",
