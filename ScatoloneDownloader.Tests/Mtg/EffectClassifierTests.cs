@@ -2134,6 +2134,23 @@ public sealed class EffectClassifierTests
     [InlineData("Mirror Universe", "Artifact",
         "{T}, Sacrifice this artifact: Exchange life totals with target opponent. "
         + "Activate only during your upkeep.")]
+    // "THEY may play" against a NAMED zone: the creature's controller takes a card
+    // out of the opponent's library, so the two are different people.
+    [InlineData("Gonti, Night Minister", "Legendary Creature — Phyrexian Rogue",
+        "Whenever a player casts a spell they don't own, that player creates a Treasure token.\n"
+        + "Whenever a creature deals combat damage to one of your opponents, its controller looks at "
+        + "the top card of that opponent's library and exiles it face down. They may play that card "
+        + "for as long as it remains exiled. Mana of any type can be spent to cast a spell this way.")]
+    // A mill IS the zone — Locke never names a library at all.
+    [InlineData("Locke, Treasure Hunter", "Legendary Creature — Human Rogue",
+        "Locke can't be blocked by creatures with greater power.\n"
+        + "Mug — Whenever Locke attacks, each player mills a card. If a land card was milled this "
+        + "way, create a Treasure token. Until end of turn, you may cast a spell from among those cards.")]
+    // Moving somebody else's Aura is theft of its job if not of its control.
+    [InlineData("Enchantment Alteration", "Instant",
+        "Attach target Aura attached to a creature or land to another permanent of that type.")]
+    [InlineData("Crown of the Ages", "Artifact",
+        "{4}, {T}: Attach target Aura attached to a creature to another creature.")]
     public void Classify_TakingWhatIsSomebodyElses_IsSteal(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Steal));
@@ -2159,6 +2176,30 @@ public sealed class EffectClassifierTests
         "You may choose not to untap this creature during your untap step.\n"
         + "{2}{B}, {T}: Put target creature card from a graveyard onto the battlefield under your "
         + "control. When this creature becomes tapped or you lose control of it, exile that card.")]
+    // "THEY may cast" against a PRONOUN zone is one player doing both halves: the
+    // opponent digs through their own library and casts what they find.
+    [InlineData("Transforming Flourish", "Instant",
+        "Demonstrate (When you cast this spell, you may copy it.)\n"
+        + "Destroy target artifact or creature you don't control. If that permanent is destroyed this "
+        + "way, its controller exiles cards from the top of their library until they exile a nonland "
+        + "card, then they may cast that card without paying its mana cost.")]
+    // One half mills a player, the other plays lands out of YOUR graveyard; only a
+    // rule reading the whole card at once could join them into a theft.
+    [InlineData("Glacierwood Siege", "Enchantment",
+        "As this enchantment enters, choose Temur or Sultai.\n"
+        + "• Temur — Whenever you cast an instant or sorcery spell, target player mills four cards.\n"
+        + "• Sultai — You may play lands from your graveyard.")]
+    // A token copy of their creature is a body you made, not a card you took.
+    [InlineData("Echo Chamber", "Artifact",
+        "{4}, {T}: An opponent chooses target creature they control. Create a token that's a copy of "
+        + "that creature. That token gains haste until end of turn. Exile the token at the beginning "
+        + "of the next end step. Activate only as a sorcery.")]
+    // And a card pulled out of "that graveyard" at random names no victim.
+    [InlineData("Mysterious Stranger", "Creature — Human",
+        "Flash\nWhen this creature enters, for each graveyard with an instant or sorcery card in it, "
+        + "exile target instant or sorcery card from that graveyard. If two or more cards are exiled "
+        + "this way, choose one of them at random and copy it. You may cast the copy without paying "
+        + "its mana cost.")]
     public void Classify_WhatIsAlreadyYours_IsNotSteal(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Steal));

@@ -119,6 +119,10 @@ namespace ScatoloneDownloader.Cube
             // Desertion takes the spell it just countered, which is the only place
             // "under your control" appears without a zone to read it against.
             Rx(@"counter target spell[\s\S]{0,180}onto the battlefield under your control"),
+            // Enchantment Alteration moves somebody else's Aura onto a permanent
+            // of your choosing — theft of the Aura's job if not of its control.
+            // Ruled 2026-09-19.
+            Rx(@"attach (?:target|enchanted) aura"),
         ];
 
         /// <summary>Reanimating out of an OPPONENT'S graveyard is both Reanimate
@@ -135,6 +139,23 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex OntoYourSideOfTheBoard = Rx(
             @"onto the battlefield under your control");
 
+        /// <summary>Somebody else's zone, NAMED — "target opponent's library",
+        /// "defending player's graveyard". Kept apart from the pronoun form below
+        /// because it is the only one "THEY may cast" can be read against: in
+        /// Transforming Flourish the player who exiles from "THEIR library" and
+        /// the one who then casts are the same person, so no theft happens, while
+        /// Gonti exiles from "that OPPONENT'S library" and hands the card to the
+        /// creature's controller.</summary>
+        private static readonly Regex SomebodyElsesNamedZone = Rx(
+            @"(?:target opponent|an opponent|each opponent|that opponent|target player|that player"
+            + @"|defending player|another player|each player|opponent'?s|player'?s)"
+            + @"[\w ,'\-]{0,60}(?:library|hand|graveyard)"
+            + @"|(?:library|hand|graveyard) of (?:target |an |each |that )?(?:opponent|player)"
+            // A mill IS the zone, and the only way Locke could ever be found: "each
+            // player mills a card … you may cast a spell from among those cards"
+            // never names a library at all.
+            + @"|(?:each|target|an|another|that) (?:player|opponent)[\w ,'\-]{0,20}mills?\b");
+
         /// <summary>Taking a CARD rather than a permanent — the other half of this
         /// tag, and 15 of the 28 cards it used to miss. It reads as two halves
         /// because either half alone is something else entirely: the zone alone is
@@ -143,6 +164,7 @@ namespace ScatoloneDownloader.Cube
             @"(?:target opponent|an opponent|each opponent|that opponent|target player|that player"
             + @"|defending player|another player|each player|opponent'?s|player'?s)"
             + @"[\w ,'\-]{0,60}(?:library|hand|graveyard)"
+            + @"|(?:each|target|an|another|that) (?:player|opponent)[\w ,'\-]{0,20}mills?\b"
             + @"|(?:library|hand|graveyard) of (?:target |an |each |that )?(?:opponent|player)"
             + @"|\btheir (?:library|hand|graveyard)\b");
 
@@ -156,7 +178,20 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex AndPlaysThem = Rx(
             @"you may (?:look at and )?(?:play|cast) (?!an additional land|this spell|this card|the land\b)");
 
-        private static readonly Regex PlaysACardYouOwn = Rx(@"(?:cards?|spells?) you own");
+        /// <summary>The same clause with the thief named in the third person. It
+        /// only counts against a NAMED zone — see
+        /// <see cref="SomebodyElsesNamedZone"/> for why.</summary>
+        private static readonly Regex AndSomebodyPlaysThem = Rx(
+            @"they may (?:look at and )?(?:play|cast) (?!an additional land|this spell|this card|the land\b)");
+
+        /// <summary>Playing what was always yours. "Cards you own" is how a
+        /// symmetric exile hands everything back, and "from YOUR graveyard" is
+        /// Regrowth's business — Glacierwood Siege mills a player on one half and
+        /// plays your own lands on the other, and only a rule reading the whole
+        /// card could mistake that for a theft.</summary>
+        private static readonly Regex PlaysACardYouOwn = Rx(
+            @"(?:cards?|spells?) you own"
+            + @"|(?:play|cast)[\w ]{0,20}from your (?:graveyard|hand|library)");
 
         /// <summary>The mirror image of Steal, and 12 of its 14 false positives:
         /// the card hands a permanent to somebody ELSE. It is the price Jinxed
@@ -1872,9 +1907,11 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Steal;
             }
 
-            if (SomebodyElsesZone.IsMatch(text)
-                && ((AndPlaysThem.IsMatch(text) && !PlaysACardYouOwn.IsMatch(text))
-                    || OntoYourSideOfTheBoard.IsMatch(text)))
+            if ((SomebodyElsesZone.IsMatch(text)
+                    && ((AndPlaysThem.IsMatch(text) && !PlaysACardYouOwn.IsMatch(text))
+                        || OntoYourSideOfTheBoard.IsMatch(text)))
+                || (SomebodyElsesNamedZone.IsMatch(text) && AndSomebodyPlaysThem.IsMatch(text)
+                    && !PlaysACardYouOwn.IsMatch(text)))
             {
                 result |= CardEffect.Steal;
             }

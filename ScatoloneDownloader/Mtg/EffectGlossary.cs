@@ -103,9 +103,9 @@
 
             [CardEffect.Steal] =
                 "Takes what is somebody else's: control of a permanent, an EXCHANGE of two, the player, their "
-                + "life total, or a CARD out of their library, hand or graveyard — played, or reanimated onto "
-                + "your side. Giving one AWAY is the mirror image. \"From A graveyard\" names no victim: that "
-                + "is Reanimate alone.",
+                + "life total, an AURA moved off their permanent, or a CARD out of their library, hand or "
+                + "graveyard — played, or reanimated onto your side. Giving one AWAY is the mirror image, and "
+                + "\"from A graveyard\" names no victim: that is Reanimate alone.",
 
             [CardEffect.Tutor] =
                 "Searches the library for a specific nonland card. A land search is Ramp or ManaFixing.",
