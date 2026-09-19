@@ -650,41 +650,74 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
-    // The net is the whole answer, ruled 2026-09-19 and applied from BOTH
-    // sides for the first time: a loot that comes out ahead is CardAdvantage
-    // and has stopped filtering. Casting of Bones never parsed because
-    // "discard ONE OF THEM" does not repeat the word "card".
-    [InlineData("Casting of Bones", "Enchantment — Aura",
-        "Enchant creature\nWhen enchanted creature dies, draw three cards, then discard one of them.")]
-    [InlineData("Emmessi Tome", "Artifact — Book", "{5}, {T}: Draw two cards, then discard a card.")]
-    [InlineData("Focus the Mind", "Instant",
-        "This spell costs {2} less to cast if you've cast another spell this turn.\n"
-        + "Draw three cards, then discard a card.")]
-    public void Classify_ALootThatGains_IsCardAdvantageAndNotFilter(string name, string typeLine, string oracle)
-    {
-        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
-
-        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
-        Assert.False(result.HasFlag(CardEffect.Filter));
-    }
-
-    [Theory]
-    // …and the other side of the same ruling. Measured over the reviewed set
-    // before it: of the 41 cards that net nothing, 38 were tagged Filter and 3
-    // advantage. A full stop between the halves used to stop the count dead.
+    // THE CARD ITSELF IS A CARD, ruled 2026-09-19, and it completes a count
+    // that had been half-done since 2026-09-16. Ponder is -1 for the Ponder and
+    // +1 for the draw, which is nothing; Grab the Prize is -1 for the spell, -1
+    // for the discard it charges and +2, which is also nothing and makes it
+    // Abandon Attachments with the discard moved into the cost line. So a
+    // ONE-SHOT has to draw two more than it pays before it has gained anything.
+    //
+    // Racers' Scoreboard is the case that proves it: it prints the same words
+    // as Emmessi Tome ("draw two cards, then discard a card") on an ENTERS
+    // trigger instead of an activated ability, and nets nothing.
+    [InlineData("Ponder", "Sorcery",
+        "Look at the top three cards of your library, then put them back in any order. You may shuffle.\n"
+        + "Draw a card.")]
+    [InlineData("Grab the Prize", "Sorcery",
+        "As an additional cost to cast this spell, discard a card.\n"
+        + "Draw two cards. If the discarded card wasn't a land card, Grab the Prize deals 2 damage to each opponent.")]
+    [InlineData("Racers' Scoreboard", "Artifact",
+        "Start your engines! (If you have no speed, it starts at 1. It increases once on each of your turns when "
+        + "an opponent loses life. Max speed is 4.)\n"
+        + "When this artifact enters, draw two cards, then discard a card.\n"
+        + "Max speed — Spells you cast cost {1} less to cast.")]
+    [InlineData("Romantic Rendezvous", "Sorcery", "Discard a card, then draw two cards.")]
     [InlineData("Careful Study", "Sorcery", "Draw two cards, then discard two cards.")]
     [InlineData("Alpharael, Dreaming Acolyte", "Legendary Creature — Human Cleric",
         "When Alpharael enters, draw two cards. Then discard two cards unless you discard an artifact card.\n"
         + "During your turn, Alpharael has deathtouch.")]
+    public void Classify_AOneShotThatPaysForItself_IsNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // A REPEATABLE ability paid for the card once and never again, so one more
+    // than it hands back is already a card: that is the whole difference
+    // between Emmessi Tome and Racers' Scoreboard above. A one-shot qualifies
+    // at two, which Casting of Bones reaches — and which never parsed, because
+    // "discard ONE OF THEM" does not repeat the word "card".
+    [InlineData("Emmessi Tome", "Artifact — Book", "{5}, {T}: Draw two cards, then discard a card.")]
+    [InlineData("Casting of Bones", "Enchantment — Aura",
+        "Enchant creature\nWhen enchanted creature dies, draw three cards, then discard one of them.")]
+    [InlineData("Focus the Mind", "Instant",
+        "This spell costs {2} less to cast if you've cast another spell this turn.\n"
+        + "Draw three cards, then discard a card.")]
+    public void Classify_ALootThatGainsAfterPayingForTheCard_IsCardAdvantage(
+        string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // The two tags are NOT exclusive, ruled 2026-09-19. A card that selects AND
+    // comes out ahead carries both, because it really did both: Casting of
+    // Bones draws three and keeps two, which is a card gained and a choice
+    // made. An earlier cut of the net ruling read it as either/or and stripped
+    // Filter from every profitable loot; recorded here so it is not re-derived.
+    [InlineData("Casting of Bones", "Enchantment — Aura",
+        "Enchant creature\nWhen enchanted creature dies, draw three cards, then discard one of them.")]
+    [InlineData("Emmessi Tome", "Artifact — Book", "{5}, {T}: Draw two cards, then discard a card.")]
+    [InlineData("Grab the Prize", "Sorcery",
+        "As an additional cost to cast this spell, discard a card.\n"
+        + "Draw two cards. If the discarded card wasn't a land card, Grab the Prize deals 2 damage to each opponent.")]
+    [InlineData("Romantic Rendezvous", "Sorcery", "Discard a card, then draw two cards.")]
     [InlineData("Anvil of Bogardan", "Artifact",
         "Players have no maximum hand size.\n"
         + "At the beginning of each player's draw step, that player draws an additional card, then discards a card.")]
-    public void Classify_ALootThatNetsNothing_IsFilterAndNotCardAdvantage(string name, string typeLine, string oracle)
+    public void Classify_ACardChangingPlaces_IsAlwaysFilter(string name, string typeLine, string oracle)
     {
-        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
-
-        Assert.True(result.HasFlag(CardEffect.Filter));
-        Assert.False(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
     }
 
     [Theory]
@@ -860,19 +893,6 @@ public sealed class EffectClassifierTests
     public void Classify_OneCardFromElsewhere_IsNotCardAdvantage(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
-    }
-
-    [Theory]
-    // A loot that draws MORE than it hands back is not parity, and the guard was
-    // written for the 1-for-1 case. Ruled 2026-09-16 by counting.
-    [InlineData("Emmessi Tome", "Artifact", "{5}, {T}: Draw two cards, then discard a card.")]
-    [InlineData("Casting of Bones", "Enchantment — Aura",
-        "Enchant creature\nWhen enchanted creature dies, draw three cards, then discard a card.")]
-    [InlineData("Case of the Crimson Pulse", "Enchantment — Case",
-        "When this Case enters, discard a card, then draw two cards.")]
-    public void Classify_ALootThatComesOutAhead_IsCardAdvantage(string name, string typeLine, string oracle)
-    {
-        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
     }
 
     [Theory]

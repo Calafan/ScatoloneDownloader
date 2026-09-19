@@ -60,16 +60,16 @@ namespace ScatoloneDownloader.Mtg
                 + "back half of a loot — and paying it attacks nobody.",
 
             [CardEffect.CardAdvantage] =
-                "A card the opponent does not get: draw two or more, a draw you can go back to, \"draw for each X\" or "
-                + "\"that many\", the top of your library as a second hand. COUNT the loot — any net gain is a card, and "
-                + "then it is not Filter. Not a draw for THEM, not a trigger off drawing. One Clue, one card off the "
-                + "top, one cycle, one ETB cantrip: riders.",
+                "A card the opponent does not get. COUNT IT, and the card ITSELF counts: Ponder is -1 +1 = 0. A "
+                + "one-shot must draw two more than it pays; a repeatable ability bought the card once, so one is "
+                + "enough. Draws you can go back to, \"for each X\", the top of your library as a second hand. Not a "
+                + "draw for THEM, not a trigger off drawing.",
 
             [CardEffect.Filter] =
-                "Selection at NO net gain. ANY scry or surveil counts, however small and whatever else the card does. "
-                + "So does looking at the top few and taking one, and handing back what you drew — discard two draw "
-                + "two, every rummage. The moment a loot comes out ahead it is CardAdvantage instead. A discard paid "
-                + "as a COST is neither.",
+                "Cards changing places. ANY scry or surveil counts, however small and whatever else the card does; so "
+                + "does looking at the top few and taking one, and every rummage — draw and hand one back, either "
+                + "order, cost line included. One that ALSO comes out ahead keeps this AND CardAdvantage. Cycling is "
+                + "neither: it replaces itself.",
 
             [CardEffect.Reanimate] =
                 "Returns a creature from a graveyard straight to the BATTLEFIELD, cheating its cost.",

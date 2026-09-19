@@ -158,13 +158,47 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex DiscardsThenDraws = Rx(
             @"discards? (\w+) cards?[^\n.]{0,30}draws? (\w+) cards?");
 
-        // The ways a card filters that have nothing to do with a loot. Used
-        // only to refuse to WITHDRAW Filter from a card that also scries: the
-        // net-count ruling is about the loot, and scry and surveil are Filter
-        // unconditionally.
-        private static readonly Regex FiltersWithoutALoot = Rx(
-            @"\b(?:scry|scries|surveil|surveils) (?:\d+|x)\b"
-            + @"|look at the top \w+ cards? of your library");
+        // THE CARD ITSELF IS A CARD. Ruled 2026-09-19 and it completes the
+        // count: Ponder is -1 for the Ponder and +1 for the draw, which is
+        // zero, and Grab the Prize is -1 for the spell, -1 for the discard it
+        // charges and +2 for the draw, which is also zero. A one-shot therefore
+        // has to draw TWO more than it pays before it has gained anything,
+        // while a REPEATABLE ability paid for the card once and never again and
+        // needs only one. That is the whole difference between Emmessi Tome
+        // ("{5}, {T}: Draw two cards, then discard a card", a card every
+        // activation) and Racers' Scoreboard, which prints the same words on an
+        // enters trigger and nets nothing.
+        //
+        // Repeatable means an activated ability you can use again — so an
+        // ability that SACRIFICES the permanent does not count, which is why
+        // Starting Column is read as the one-shot it is.
+        private static bool TheLootRepeats(string text) =>
+            (AnyAbilityWithACost.IsMatch(text) && !DrawBySacrificingItself.IsMatch(text))
+            || RecurringTrigger.IsMatch(text);
+
+        private static readonly Regex AnyAbilityWithACost = Rx(@"^[^\n:]{1,70}:", RegexOptions.Multiline);
+
+        private static readonly Regex RecurringTrigger = Rx(@"\bwhenever\b|at the beginning of");
+
+        // Cards paid that the paired draw/discard patterns cannot see, because
+        // they are spent in a different sentence or by a different verb. A
+        // discard charged AS A COST is still a card (ruled 2026-09-19, the
+        // ruling that corrected Krovikan Sorcerer), and so are the lands
+        // Soldevi Sage feeds itself.
+        private static readonly Regex AdditionalCostDiscard = Rx(
+            @"as an additional cost to cast this spell,[^\n.]{0,60}discard");
+
+        // The same thing charged by an ACTIVATION cost rather than a casting
+        // one — "{T}, Discard a black card: Draw two cards, then discard one of
+        // them" pays two cards for two and gains nothing (Krovikan Sorcerer).
+        // Asked of the line, so a discard ability elsewhere on the card cannot
+        // be billed to this loot; the lookahead keeps cycling reminder text out.
+        private static readonly Regex ActivationCostDiscard = Rx(
+            @"^[^\n:]{0,50}discard (?!this card)(?:a|one|two|three|\w+) (?:\w+ )?cards?[^\n:]{0,30}:",
+            RegexOptions.Multiline);
+
+        private static readonly Regex SacrificedLands = Rx(
+            @"sacrifices? (a|one|two|three|four|five|\d+) lands?\b");
 
         // Whose draw is it? A card that only ever draws for somebody ELSE gives
         // nothing away for free — Sibilant Spirit and Harbor Guardian pay the
@@ -931,6 +965,14 @@ namespace ScatoloneDownloader.Cube
             (CardEffect.Filter, [Rx(@"\b(?:scry|scries|surveil|surveils) (?:\d+|x)\b"),
                 Rx(@"look at the top \w+ cards? of your library"),
                 Rx(@"discard[\w ]* then draw"), Rx(@"draws? [\w ]{0,20}cards?[.,] ?(?:then |and )?(?:you may )?discards?"),
+                // The same exchange written discard-first WITH a count:
+                // "Discard a card, then draw two cards" (Romantic Rendezvous,
+                // Summon: Kujata's third chapter), which the two patterns above
+                // both miss — one wants the draw first, the other cannot cross
+                // the comma. The lookahead keeps CYCLING out, which is what an
+                // earlier and looser version of this pattern swallowed: it fired
+                // on 45 cards of which only 4 were tagged.
+                Rx(@"discards? (?!this card)(?:a|one|two|three|four|five|x|\d+) cards?,? (?:then |and )(?:you )?draws?"),
                 Rx(@"you may discard (?:a|one|up to \w+|any number of) cards?\.? ?(?:if you do, )?draws?"),
                 Rx(@"discards? (?:a|one|up to \w+|any number of|that many) cards?, then draws? that many"),
                 Rx(@"^[^\n:]{0,50}discard (?!this card)(?:a|one|\w+) cards?[^\n:]{0,30}: ?draw",
@@ -953,7 +995,14 @@ namespace ScatoloneDownloader.Cube
                 Rx(@"shuffle (?:a|\w+) cards? from your hand into your library\. if you do, draw"),
                 Rx(@"discard the last card you drew"),
                 Rx(@"then discard \w+ cards? unless"),
-                Rx(@"discards? a card\. then draws? a card")]),
+                Rx(@"discards? a card\. then draws? a card"),
+                // A discard charged as an ADDITIONAL COST is still a card
+                // changing places — Grab the Prize pays one to draw two, which
+                // with the spell itself is exactly level, and is functionally
+                // Abandon Attachments with the discard moved into the cost line.
+                // Ruled 2026-09-19.
+                Rx(@"as an additional cost to cast this spell,[^\n.]{0,60}discard"
+                    + @"[\s\S]{0,120}draws? (?:a|one|two|three|four|five|x|\d+) cards?")]),
 
             (CardEffect.Reanimate, [Rx(@"return target[\w ]*creature card from[\w ]*graveyard to the battlefield"),
                 Rx(@"return[\w ]*from (your|a) graveyard to the battlefield"),
@@ -1340,6 +1389,7 @@ namespace ScatoloneDownloader.Cube
             if (result.HasFlag(CardEffect.CardAdvantage)
                 && (Loot.IsMatch(text) || Cycling.IsMatch(text) || DrawBySacrificingItself.IsMatch(text)
                     || DrawByExilingItselfFromGraveyard.IsMatch(text)
+                    || AdditionalCostDiscard.IsMatch(text) || ActivationCostDiscard.IsMatch(text)
                     || DrawPaidForWithACard.IsMatch(text)))
             {
                 result &= ~CardEffect.CardAdvantage;
@@ -1369,16 +1419,13 @@ namespace ScatoloneDownloader.Cube
             // net gain, so the moment the count is provably positive the card
             // belongs to CardAdvantage alone — Casting of Bones and Emmessi Tome
             // were carrying both.
-            // …but only when the loot is the ONLY filtering on the card. Scry
-            // and surveil are Filter unconditionally (ruled 2026-09-19), so a
-            // card that scries and also loots for profit keeps both tags; the
-            // withdrawal is about the loot, not about everything else the card
-            // happens to do.
-            if (result.HasFlag(CardEffect.Filter) && LootDrawsMoreThanItPays(text)
-                && !FiltersWithoutALoot.IsMatch(text))
-            {
-                result &= ~CardEffect.Filter;
-            }
+            // Nothing withdraws Filter. The two tags are NOT exclusive, ruled
+            // 2026-09-19: a card that selects AND comes out ahead carries both,
+            // because it really did both. Casting of Bones draws three and
+            // keeps two, which is a card gained and a choice made. An earlier
+            // cut of the net ruling read it as either/or and stripped Filter
+            // from every profitable loot; that was wrong and is recorded here
+            // so it is not re-derived.
 
             // A stream of cards out of the graveyard or exile, and only when you
             // can go back to it. Added here rather than in the table so a loot
@@ -1574,19 +1621,43 @@ namespace ScatoloneDownloader.Cube
         /// </summary>
         private static bool LootDrawsMoreThanItPays(string text)
         {
-            foreach (Match m in DrawsThenDiscards.Matches(text))
+            // Counted LINE BY LINE, because repeatability and cost belong to
+            // the ability that loots and not to the card as a whole. Uthros
+            // Scanship draws two and discards one on an ENTERS trigger and
+            // carries Station further down; reading the colon in "Station (Tap
+            // another creature you control:" as this loot's activation cost
+            // made a one-shot look repeatable and handed it a card it never got.
+            foreach (string line in text.Split('\n'))
             {
-                int drew = CardCount(m.Groups[1].Value), paid = CardCount(m.Groups[2].Value);
-                if (drew > 0 && paid > 0 && drew > paid)
-                {
-                    return true;
-                }
-            }
+                int net = int.MinValue;
 
-            foreach (Match m in DiscardsThenDraws.Matches(text))
-            {
-                int paid = CardCount(m.Groups[1].Value), drew = CardCount(m.Groups[2].Value);
-                if (drew > 0 && paid > 0 && drew > paid)
+                foreach (Match m in DrawsThenDiscards.Matches(line))
+                {
+                    int drew = CardCount(m.Groups[1].Value), paid = CardCount(m.Groups[2].Value);
+                    if (drew > 0 && paid > 0) { net = Math.Max(net, drew - paid); }
+                }
+
+                foreach (Match m in DiscardsThenDraws.Matches(line))
+                {
+                    int paid = CardCount(m.Groups[1].Value), drew = CardCount(m.Groups[2].Value);
+                    if (drew > 0 && paid > 0) { net = Math.Max(net, drew - paid); }
+                }
+
+                if (net == int.MinValue)
+                {
+                    continue;
+                }
+
+                // Everything else this line spends. See TheLootRepeats and
+                // AdditionalCostDiscard for the ruling behind each subtraction.
+                if (!TheLootRepeats(line)) { net -= 1; }
+
+                if (AdditionalCostDiscard.IsMatch(text) || ActivationCostDiscard.IsMatch(line)) { net -= 1; }
+
+                Match lands = SacrificedLands.Match(line);
+                if (lands.Success) { net -= CardCount(lands.Groups[1].Value); }
+
+                if (net > 0)
                 {
                     return true;
                 }
