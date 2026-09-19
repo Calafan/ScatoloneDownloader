@@ -769,6 +769,51 @@ public sealed class EffectClassifierTests
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
     }
 
+    [Theory]
+    // EMPOWER JACE N makes a Jace planeswalker token whose whole job is
+    // "[-1]: Surveil 1" and "[-3]: Draw a card", so the keyword filters by
+    // itself. Ruled 2026-09-19. Thirty-five cards print it; 31 carry reminder
+    // text that the surveil rule already reads, and these are the four that do
+    // not.
+    [InlineData("Sanctum Lurker", "Creature — Horror",
+        "When this creature enters, empower Jace 1.\n"
+        + "Planeswalkers you control aren't put into their owners' graveyards for having 0 loyalty.\n"
+        + "Planeswalkers you control have \"[+2]: This planeswalker deals 1 damage to each opponent and you "
+        + "gain 1 life.\"")]
+    [InlineData("Theorist's Sanctum", "Land — Island",
+        "({T}: Add {U}.)\n"
+        + "As this land enters, you may behold a Jace. If you don't, this land enters tapped. (To behold a "
+        + "Jace, choose a Jace you control or reveal a Jace card from your hand.)\n"
+        + "{2}{U}, {T}: Empower Jace 2.")]
+    [InlineData("Jace, Reality Sculptor", "Legendary Planeswalker — Jace",
+        "+1: Empower Jace X, where X is the number of Islands you control.\n"
+        + "−3: Until your next turn, whenever a creature attacks you or a planeswalker you control, it gets "
+        + "-5/-0 until end of turn.\n"
+        + "0: Exile all but the bottom card of each opponent's library. Activate only if there are twenty-five "
+        + "or more loyalty counters among Jaces you control.")]
+    [InlineData("Fatehold Charm", "Instant",
+        "Choose one —\n• Draw a card. Empower Jace 2.\n• Return target spell or creature to its owner's hand.\n"
+        + "• Creatures you control get +1/+2 until end of turn.")]
+    public void Classify_EmpowerJace_IsFilter(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Fact]
+    // …and the Jace it makes is a PLANESWALKER token, not a creature, so the
+    // keyword must not drag Tokens along with it.
+    public void Classify_EmpowerJace_IsNotTokens()
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(
+            "Arcane Amphisbaena", "Creature — Snake",
+            "Deathtouch\nWhen this creature enters, empower Jace 2. (Put two loyalty counters on a Jace token "
+            + "you control. If you don't control one, first create a blue Jace planeswalker token with "
+            + "\"[−1]: Surveil 1\" and \"[−3]: Draw a card.\")"));
+
+        Assert.True(result.HasFlag(CardEffect.Filter));
+        Assert.False(result.HasFlag(CardEffect.Tokens));
+    }
+
     [Fact]
     // The one shape the count keeps out: a trigger that WATCHES a scry happen
     // is not a scry, the same reading that keeps "whenever you draw a card" out

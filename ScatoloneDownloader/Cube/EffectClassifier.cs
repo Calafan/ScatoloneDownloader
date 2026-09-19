@@ -991,7 +991,15 @@ namespace ScatoloneDownloader.Cube
             // and a handful say "scries"/"surveils" because the subject is a
             // player. The count is required so that "whenever you scry OR
             // surveil" — a trigger that watches one happen — stays out.
-            (CardEffect.Filter, [Rx(@"\b(?:scry|scries|surveil|surveils) (?:\d+|x)\b"),
+            // EMPOWER JACE N makes a Jace planeswalker token whose whole job is
+            // "[-1]: Surveil 1" and "[-3]: Draw a card", so the keyword is a
+            // Filter by itself. Ruled 2026-09-19. Thirty-five cards print it and
+            // 31 carry the reminder text, which the surveil rule below already
+            // reads; this is for the four that do not — Sanctum Lurker,
+            // Theorist's Sanctum, Jace Reality Sculptor and Fatehold Charm.
+            // The token is a PLANESWALKER, so Tokens stays out of it.
+            (CardEffect.Filter, [Rx(@"\bempowers? jace\b"),
+                Rx(@"\b(?:scry|scries|surveil|surveils) (?:\d+|x)\b"),
                 Rx(@"look at the top \w+ cards? of your library"),
                 Rx(@"discard[\w ]* then draw"), Rx(@"draws? [\w ]{0,20}cards?[.,] ?(?:then |and )?(?:you may )?discards?"),
                 // The same exchange written discard-first WITH a count:
