@@ -2403,6 +2403,24 @@ public sealed class EffectClassifierTests
     [InlineData("Immolation", "Enchantment — Aura", "Enchant creature\nEnchanted creature gets +2/-2.")]
     [InlineData("Serrated Biskelion", "Artifact Creature — Construct",
         "{T}: Put a -1/-1 counter on this creature and a -1/-1 counter on target creature.")]
+    // ANY toughness malus counts, ruled 2026-09-19 — the size is not the question
+    // and neither is what happens to the power.
+    [InlineData("Funeral Charm", "Instant",
+        "Choose one —\n• Target player discards a card.\n• Target creature gets +2/-1 until end of turn.\n"
+        + "• Target creature gains swampwalk until end of turn.")]
+    [InlineData("Coils of the Medusa", "Enchantment — Aura",
+        "Enchant creature\nEnchanted creature gets +1/-1.\n"
+        + "Sacrifice this Aura: Destroy all non-Wall creatures blocking enchanted creature.")]
+    [InlineData("Ironclaw Curse", "Enchantment — Aura",
+        "Enchant creature\nEnchanted creature gets -0/-1.\n"
+        + "Enchanted creature can't block creatures with power equal to or greater than the enchanted "
+        + "creature's toughness.")]
+    [InlineData("Contagion", "Instant",
+        "You may pay 1 life and exile a black card from your hand rather than pay this spell's mana cost.\n"
+        + "Distribute two -2/-1 counters among one or two target creatures.")]
+    // A colour-restricted permanent kill is aimed at a creature in practice.
+    [InlineData("Northern Paladin", "Creature — Human Knight",
+        "{W}{W}, {T}: Destroy target black permanent.")]
     // A creature that ends up on the BOTTOM of a library is as answered as one
     // that is destroyed.
     [InlineData("The Spot's Portal", "Instant",
@@ -2433,14 +2451,13 @@ public sealed class EffectClassifierTests
         + "{B}, Sacrifice this creature: Destroy target creature this creature is blocking.")]
     [InlineData("Elite Javelineer", "Creature — Human Soldier",
         "Whenever this creature blocks, it deals 1 damage to target attacking creature.")]
-    // An Aura has to take real power or two whole points of toughness.
-    [InlineData("Coils of the Medusa", "Enchantment — Aura",
-        "Enchant creature\nEnchanted creature gets +1/-1.\n"
-        + "Sacrifice this Aura: Destroy all non-Wall creatures blocking enchanted creature.")]
-    [InlineData("Ironclaw Curse", "Enchantment — Aura",
-        "Enchant creature\nEnchanted creature gets -0/-1.\n"
-        + "Enchanted creature can't block creatures with power equal to or greater than the enchanted "
-        + "creature's toughness.")]
+    // A shrink aimed at YOUR OWN creature is a pump with a price.
+    [InlineData("Ashnod's Battle Gear", "Artifact",
+        "You may choose not to untap this artifact during your untap step.\n"
+        + "{2}, {T}: Target creature you control gets +2/-2 for as long as this artifact remains tapped.")]
+    // A fight has to name what it fights: "Fight Crime" is the name of a mode.
+    [InlineData("School Daze", "Instant",
+        "Choose one —\n• Do Homework — Draw three cards.\n• Fight Crime — Counter target spell. Draw a card.")]
     // "That creature's CONTROLLER" is a face, not the creature.
     [InlineData("Dingus Staff", "Artifact",
         "Whenever a creature dies, this artifact deals 2 damage to that creature's controller.")]

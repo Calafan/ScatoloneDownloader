@@ -812,22 +812,28 @@ namespace ScatoloneDownloader.Cube
         // +2/-2" (Immolation, Phyrexian Boon), which kills a two-toughness
         // creature exactly as a spell would. Added 2026-09-19.
         //
-        // An Aura has to take real power or two whole points of toughness, which
-        // is the line the hand tags draw: Weakness (-2/-1), Immolation (+2/-2) and
-        // Phyrexian Boon (-1/-2) are tagged, Coils of the Medusa (+1/-1) and
-        // Ironclaw Curse (-0/-1) are not. One point off a creature that keeps its
-        // power is a nuisance; the spell version keeps the looser reading because
-        // a spell is aimed and an Aura is a permanent that sits there.
+        // ANY toughness malus counts, ruled 2026-09-19 — the size of it is not the
+        // question, and neither is what happens to the power. "+2/-1" (Funeral
+        // Charm), "+1/-1" (Coils of the Medusa) and "-0/-1" (Ironclaw Curse) are
+        // all this tag; a threshold tried earlier, requiring real power loss or
+        // two whole points of toughness, was reading four hand tags as a rule and
+        // they were slips. "-2/-0" remains Pacify, which is the same ruling read
+        // from the other side: it is the TOUGHNESS that has to move.
         private static readonly Regex ShrinksOneCreature = Rx(
-            @"target [\w -]{0,28}(?<!non)creature[\w ' -]{0,28}gets? -[\dX]+/-[1-9X]"
-            + @"|enchanted creature gets (?:-[1-9X]\d*/-[1-9X]|[+-][\dX]+/-(?:[2-9X]|\d\d))");
+            @"target [\w -]{0,28}(?<!non)creature[\w ' -]{0,28}(?<!you control )gets? [+-][\dX]+/-[1-9X]"
+            + @"|(?:enchanted creature|otherwise, it) gets [+-][\dX]+/-[1-9X]");
 
         // ...and the counter version has the same blind spot, plus one of its own:
         // Serrated Biskelion puts the first counter on ITSELF and the second on
         // the victim, so the victim is no longer the word after "on".
+        // The counter is not always a -1/-1: Contagion distributes "-2/-1
+        // counters", and under the 2026-09-19 ruling the size does not matter, so
+        // the rule reads any counter that takes toughness. DISTRIBUTE is the other
+        // verb the game uses for the same thing.
         private static readonly Regex ShrinkCounters = Rx(
-            @"put(?:s)? (?:a|an|two|three|four|\d+|x) -1/-1 counters? on "
-            + @"(?:[\w ,'\-/]{0,40}(?:target|up to)|enchanted creature)");
+            @"put(?:s)? (?:a|an|two|three|four|\d+|x) -[\dX]+/-[1-9X] counters? on "
+            + @"(?:[\w ,'\-/]{0,40}(?:target|up to)|enchanted creature)"
+            + @"|distributes? (?:a|an|two|three|four|\d+|x) -[\dX]+/-[1-9X] counters? among");
 
         // Pacify's own version of the self-versus-other question, and the largest
         // single source of noise on the board: "this creature can't attack" is
@@ -1344,7 +1350,10 @@ namespace ScatoloneDownloader.Cube
                 // A fireball split between several things still kills one of them.
                 Rx(@"deals? (?:half )?[\dX]+(?: plus \d+)? damage divided "
                     + @"(?:evenly, rounded down, |as you choose )?among"),
-                Rx(@"\bfights?\b"),
+                // A fight has to name what it fights. The bare word also appears
+                // in the NAME of a mode — School Daze offers "Fight Crime", which
+                // counters a spell and draws a card.
+                Rx(@"\bfights? [\w ,'-]{0,30}target|\bfights? (?:each|it)\b"),
                 // An edict, in every wording — but aimed at THEM. "Each player
                 // sacrifices" costs you a creature too, and the hand-tagging
                 // declines those (Abyssal Gatekeeper, Pillar Tombs of Aku).
@@ -1353,6 +1362,18 @@ namespace ScatoloneDownloader.Cube
                 // practice, and the hand tags say so: Active Volcano, Flash Flood
                 // and Southern Paladin all destroy "target <colour> permanent"
                 // and all three are tagged here as well as RemovePermanent.
+                // A COLOUR-restricted permanent kill is aimed at a creature in
+                // practice, and the hand tags say so once the slips are out of the
+                // way: Active Volcano, Flash Flood, Southern Paladin and Northern
+                // Paladin all destroy "target <colour> permanent".
+                //
+                // NB the colours are listed one by one on purpose. A "non\w+"
+                // alternation written to catch "nonblack permanent" also catches
+                // "NONLAND permanent", which is the entire O-ring family and
+                // RemovePermanent's whole job: 26 false positives in one
+                // measurement.
+                Rx(@"(?:destroy|exile) target (?:white|blue|black|red|green|colorless|multicolored"
+                    + @"|nonwhite|nonblue|nonblack|nonred|nongreen)[\w ]{0,15}permanent"),
                 // A creature that ends up in a LIBRARY is as answered as one that
                 // is destroyed, and the Auras are the only place this wording
                 // appears: The Spot's Portal puts it on the bottom, Dramatic

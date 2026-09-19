@@ -30,9 +30,9 @@
 
             [CardEffect.Removal] =
                 "Answers ONE creature: destroy, exile, damage however counted, fight, an edict aimed at THEM, "
-                + "the BOTTOM of a library, or a shrink that takes real toughness. Not YOUR OWN creature, not a "
-                + "card in a GRAVEYARD, not \"-2/-0\" (Pacify), not \"each creature\" (Wipe), and not what can "
-                + "only touch what it is already blocking.",
+                + "the BOTTOM of a library, or ANY toughness malus — \"+2/-1\" counts, an Aura counts. Not "
+                + "YOUR OWN, not a card in a GRAVEYARD, not \"-2/-0\" (Pacify), not \"each creature\" (Wipe), "
+                + "not what can only touch what it is already blocking.",
 
             [CardEffect.Counter] =
                 "Answers a spell on the stack by countering it.",
