@@ -606,9 +606,19 @@ namespace ScatoloneDownloader.Cube
         // "EACH player" are deliberately NOT in this list: you point Ancestral
         // Recall and Braingeyser at yourself, and 12 of the 21 cards written that
         // way are tagged. Ruled 2026-09-19 over 10 cards, 8 of them untagged.
+        // The subject sits IMMEDIATELY in front of the verb, with nothing between
+        // but an optional "may". Twenty characters of filler let the rule read
+        // "a creature you control becomes the target of a spell AN OPPONENT
+        // CONTROLS, DRAW a card" (Surrak) as somebody else's draw, when "an
+        // opponent" there is a possessive clause and the drawing is yours —
+        // the same trap GivesControlAway fell into on 2026-09-19.
+        // NB "that player" keeps its "may". Without it the rule reads Howling
+        // Mine's "that player draws an additional card" as somebody else's draw,
+        // when the whole point of the card is that it draws for YOU too.
         private static readonly Regex TheirDraw = Rx(
-            @"(?:defending player|its controller|an opponent|each opponent|target opponent|another player"
-            + @"|that player may)[\w ,']{0,20}(?:may )?draws? (?:a|one|two|three|four|five|x|\d+|that many|cards)");
+            @"(?:(?:defending player|its controller|an opponent|each opponent|target opponent"
+            + @"|another player)(?: may)?|that player may) draws? "
+            + @"(?:a|one|two|three|four|five|x|\d+|that many|cards)");
 
         // Asked by STRIPPING, not by a lookbehind. "Defending player may draw a
         // card" puts "may " between the subject and the verb, so a lookbehind
@@ -2053,6 +2063,17 @@ namespace ScatoloneDownloader.Cube
             // cut of the net ruling read it as either/or and stripped Filter
             // from every profitable loot; that was wrong and is recorded here
             // so it is not re-derived.
+
+            // Measured and rejected 2026-09-20: "look at or reveal the top few of
+            // your library and put one INTO YOUR HAND", when repeatable, as
+            // CardAdvantage. It is the same card a draw would have given you, and
+            // the rule is clean — but the hand tags split 8 to 9 on wording that
+            // is word for word the same. Browse and Morbius the Living Vampire
+            // both say "put one of them into your hand" and only Browse is
+            // tagged; Beastrider Vanguard and Water Tribe Rallier both "reveal a
+            // <type> card from among them and put it into your hand" and only
+            // Beastrider Vanguard is. Nothing in the text tells them apart, so
+            // the rule waits on a ruling rather than guessing.
 
             // A stream of cards out of the graveyard or exile, and only when you
             // can go back to it. Added here rather than in the table so a loot

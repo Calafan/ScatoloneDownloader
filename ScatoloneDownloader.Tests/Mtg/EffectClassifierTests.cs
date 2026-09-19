@@ -1039,6 +1039,21 @@ public sealed class EffectClassifierTests
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
     }
 
+    [Fact]
+    // The victim has to be the one DRAWING. "A creature you control becomes the
+    // target of a spell AN OPPONENT CONTROLS, draw a card" names an opponent in a
+    // possessive clause and hands the card to you; twenty characters of filler
+    // between the subject and the verb read that as somebody else's draw. Ruled
+    // 2026-09-20 — the same trap GivesControlAway fell into the day before.
+    public void Classify_ADrawNamingAnOpponentInPassing_IsStillCardAdvantage()
+    {
+        Card card = MakeCard("Surrak, Elusive Hunter", "Legendary Creature — Human Warrior",
+            "This spell can't be countered.\nTrample\nWhenever a creature you control or a creature spell "
+            + "you control becomes the target of a spell or ability an opponent controls, draw a card.");
+
+        Assert.True(EffectClassifier.Classify(card).HasFlag(CardEffect.CardAdvantage));
+    }
+
     [Theory]
     // The carve-out that keeps the rule above honest: "TARGET player" and
     // "EACH player" are NOT somebody else's draw, because you point these at
