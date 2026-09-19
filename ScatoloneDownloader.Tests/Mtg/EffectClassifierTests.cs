@@ -823,6 +823,78 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // The TOP OF A LIBRARY is a hand you wait one turn for, so a card lifted
+    // out of a graveyard and put there is recursion. Ruled 2026-09-19, and all
+    // five reviewed cards written this way were already tagged by hand.
+    [InlineData("Reinforcements", "Instant",
+        "Put up to three target creature cards from your graveyard on top of your library.")]
+    [InlineData("Bone Harvest", "Instant",
+        "Put any number of target creature cards from your graveyard on top of your library.\n"
+        + "Draw a card at the beginning of the next turn's upkeep.")]
+    public void Classify_OutOfAGraveyardOntoALibrary_IsRegrowth(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Regrowth));
+    }
+
+    [Theory]
+    // The BOTTOM is not in it: putting a card on the bottom of a library is
+    // graveyard hate, not recursion. Nor is an OPPONENT'S graveyard, which is
+    // shuffling their answers back in rather than rebuying your own.
+    [InlineData("Barkform Harvester", "Artifact Creature — Shapeshifter",
+        "Changeling (This card is every creature type.)\nReach\n"
+        + "{2}: Put target card from your graveyard on the bottom of your library.")]
+    [InlineData("Misinformation", "Instant",
+        "Put up to three target cards from an opponent's graveyard on top of their library in any order.")]
+    public void Classify_GraveyardHate_IsNotRegrowth(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Regrowth));
+    }
+
+    [Theory]
+    // The graveyard is not the only place a creature comes back from. A card
+    // THIS CARD exiled, put onto the battlefield under your control, is a
+    // reanimation by another route. Ruled 2026-09-19.
+    [InlineData("Ghost Vacuum", "Artifact",
+        "{T}: Exile target card from a graveyard.\n"
+        + "{6}, {T}, Sacrifice this artifact: Put each creature card exiled with this artifact onto the "
+        + "battlefield under your control with a flying counter on it. Each of them is a 1/1 Spirit in "
+        + "addition to its other types. Activate only as a sorcery.")]
+    [InlineData("Purgatory", "Enchantment",
+        "Whenever a nontoken creature is put into your graveyard from the battlefield, exile that card.\n"
+        + "At the beginning of your upkeep, you may pay {4} and 2 life. If you do, return a card exiled with "
+        + "this enchantment to the battlefield.")]
+    // …and a token COPY of a creature card in a graveyard, which is not the
+    // card itself but puts the same thing on the table.
+    [InlineData("Cursecloth Wrappings", "Artifact",
+        "Zombies you control get +1/+1.\n"
+        + "{T}: Target creature card in your graveyard gains embalm until end of turn. The embalm cost is "
+        + "equal to its mana cost. (Exile that card and pay its embalm cost: Create a token that's a copy of "
+        + "it, except it's a white Zombie in addition to its other types and has no mana cost. Embalm only as "
+        + "a sorcery.)")]
+    public void Classify_ComingBackFromExileOrAsACopy_IsReanimate(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
+    }
+
+    [Theory]
+    // Exiling a creature YOU CONTROL and handing it back is a blink, and a
+    // strange kind of protection rather than a reanimation. Ruled 2026-09-19
+    // and deliberately left untagged — it is the guard that separates these
+    // two from Ghost Vacuum and Purgatory above.
+    [InlineData("Cold Storage", "Artifact",
+        "{3}: Exile target creature you control.\n"
+        + "Sacrifice this artifact: Return each creature card exiled with this artifact to the battlefield "
+        + "under your control.")]
+    [InlineData("Safe Haven", "Land",
+        "{2}, {T}: Exile target creature you control.\n"
+        + "At the beginning of your upkeep, you may sacrifice this land. If you do, return each card exiled "
+        + "with this land to the battlefield under its owner's control.")]
+    public void Classify_BlinkingYourOwnCreature_IsNotReanimate(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
+    }
+
+    [Theory]
     // EMPOWER JACE N makes a Jace planeswalker token whose whole job is
     // "[-1]: Surveil 1" and "[-3]: Draw a card", so the keyword filters by
     // itself. Ruled 2026-09-19. Thirty-five cards print it; 31 carry reminder

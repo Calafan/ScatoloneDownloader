@@ -74,7 +74,9 @@ namespace ScatoloneDownloader.Mtg
                 + "neither: it replaces itself.",
 
             [CardEffect.Reanimate] =
-                "Returns a creature from a graveyard straight to the BATTLEFIELD, cheating its cost.",
+                "A creature back from the dead and straight onto the BATTLEFIELD, cheating its cost. A card this card "
+                + "EXILED counts, and so does a token copy of a creature in a graveyard. Blinking your OWN creature "
+                + "does not — that is protection. A land coming back is Ramp.",
 
             [CardEffect.Buff] =
                 "Raises POWER and/or TOUGHNESS for something other than the card itself: +2/+2, a +1/+1 counter, "
@@ -121,7 +123,9 @@ namespace ScatoloneDownloader.Mtg
                 + "what the card does next, not an attack — dredge is a graveyard card, not a mill card.",
 
             [CardEffect.Regrowth] =
-                "Returns a card from a graveyard to HAND. Straight to the battlefield is Reanimate instead.",
+                "Returns a card from a graveyard to HAND, or to the TOP of a library, which is a hand you wait a turn "
+                + "for. The BOTTOM is graveyard hate, not recursion, and an opponent's graveyard is not yours to "
+                + "rebuy. Straight to the battlefield is Reanimate; casting it in place is neither.",
 
             [CardEffect.Cheat] =
                 "Puts a NONLAND permanent onto the battlefield without casting it — from hand (Sneak Attack, "

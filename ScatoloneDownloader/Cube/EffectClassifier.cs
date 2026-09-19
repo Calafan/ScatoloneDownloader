@@ -198,12 +198,27 @@ namespace ScatoloneDownloader.Cube
             // reviewed cards written this way are tagged.
             Rx(@"put[\w ,'\-/]{0,60}creature cards? (?:from|in)[\w ,'\-/]{0,40}graveyard"
                 + @"[\w ,'\-/]{0,40}onto the battlefield"),
+            // A token COPY of a creature card in a graveyard. Not the card
+            // itself, but what lands on the table is the same. Ruled
+            // 2026-09-19; 4 reviewed cards, 3 already tagged.
+            Rx(@"creature cards? (?:from|in)[\w ,'\-/]{0,40}graveyard"
+                + @"[\s\S]{0,140}(?:token that's a copy|token cop|tokens that are copies)"),
         ];
 
         private static readonly Regex[] RegrowthPatterns =
         [
             Rx(@"return[\w ,'\-/]{0,70}from[\w ,'\-/]{0,30}graveyard to[\w ',]{0,20}hand"),
             Rx(@"put[\w ,'\-/]{0,60}cards? from[\w ,'\-/]{0,30}graveyard into[\w ]{0,20}hand"),
+            // The TOP OF A LIBRARY is a hand you have to wait one turn for, so
+            // a card lifted out of a graveyard and put there is recursion.
+            // Ruled 2026-09-19; all 5 reviewed cards written this way are
+            // tagged. The BOTTOM is not in it — putting a card on the bottom of
+            // a library is graveyard hate, which is why Barkform Harvester and
+            // Chrome Companion stay out. Nor is an OPPONENT'S graveyard, which
+            // is Misinformation shuffling their answers back in, not recursion
+            // for you.
+            Rx(@"put (?:up to |any number of )?(?:\w+ )?target[\w ,'\-/]{0,40}cards? (?:from|in)"
+                + @"[\w ,'\-/]{0,30}(?<!an opponent's )graveyard[\w ,'\-/]{0,20}on top of"),
         ];
 
         // MEASURED AND REJECTED 2026-09-19, recorded so it is not tried again.
@@ -217,6 +232,25 @@ namespace ScatoloneDownloader.Cube
         // tag-set match falls. Hammer of Bogardan is tagged Regrowth and the
         // veto would have taken it. The split is a ruling nobody has made, not
         // a rule waiting to be written.
+
+        // A card THIS CARD exiled, put onto the battlefield under your control.
+        // Ruled 2026-09-19: the graveyard is not the only place a creature
+        // comes back from, and Purgatory, Sothera, The Darkness Crystal and
+        // Ghost Vacuum all take one that died or was already dead.
+        //
+        // Kept OUT of ReanimatePatterns and asked separately, because the two
+        // halves live on different lines and the strip-and-re-ask guard blanks
+        // the wrong one: what matches is the RETURN, and what disqualifies it is
+        // the EXILE a line earlier. Blinking your OWN creature is not a
+        // reanimation — Cold Storage and Safe Haven exile a creature you control
+        // and hand it back, which is a strange kind of protection and is
+        // deliberately left untagged. Without the guard the rule fires on 6
+        // cards and is right about 4.
+        private static readonly Regex ExiledCardOntoTheBattlefield = Rx(
+            @"(?:put|return)[\w ,'\-/]{0,50}exiled with[\w ,'\-/]{0,40}(?:on)?to the battlefield");
+
+        private static readonly Regex BlinksYourOwnCreature = Rx(
+            @"exiles? target creature you control|exiles? (?:it|them|that creature)[\w ,']{0,30}return");
 
         // A land out of the graveyard is Ramp, ruled 2026-09-18 and read here
         // 2026-09-19: 7 reviewed cards put one back and only 1 is tagged
@@ -1479,6 +1513,13 @@ namespace ScatoloneDownloader.Cube
                 if (!ReanimatePatterns.Any(p => p.IsMatch(aimed))) { result &= ~CardEffect.Reanimate; }
 
                 if (!RegrowthPatterns.Any(p => p.IsMatch(aimed))) { result &= ~CardEffect.Regrowth; }
+            }
+
+            // Added after that guard, and asked as a pair. See
+            // ExiledCardOntoTheBattlefield for why it cannot live in the table.
+            if (ExiledCardOntoTheBattlefield.IsMatch(text) && !BlinksYourOwnCreature.IsMatch(text))
+            {
+                result |= CardEffect.Reanimate;
             }
 
             // Card parity dressed as card advantage. See the three patterns above
