@@ -1181,6 +1181,14 @@ public sealed class EffectClassifierTests
         + "they put one on the bottom of your library. Put the other into your hand.\nFlashback {7}{U}{U}")]
     [InlineData("Mnemonic Sliver", "Creature — Sliver",
         "All Slivers have \"{2}, Sacrifice this permanent: Draw a card.\"")]
+    // Ruled 2026-09-20 after it was put to the human as the one card standing
+    // against the self-sacrifice rule: the sacrifice is refunded by the trigger
+    // above it, which hands back a token copy of the artifact just spent, so the
+    // ability is on the table again and the card was never really paid.
+    [InlineData("Esoteric Duplicator", "Artifact",
+        "Whenever you sacrifice this artifact or another artifact, you may pay {2}. If you do, at "
+        + "the beginning of the next end step, create a token that's a copy of that artifact.\n"
+        + "{2}, Sacrifice this artifact: Draw a card.")]
     public void Classify_TheOneOffsThatStillGainACard_AreCardAdvantage(
         string name, string typeLine, string oracle)
     {

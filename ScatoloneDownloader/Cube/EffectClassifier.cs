@@ -425,6 +425,15 @@ namespace ScatoloneDownloader.Cube
             @"(?:(?:all|each) [\w' -]{0,20}|[\w' -]{0,20} you control) ha(?:s|ve) "
             + @"""[^""]{0,40}sacrifice this [\w]+[^""\n:]{0,20}: ?draw");
 
+        //   …and when the card BUYS ITSELF BACK. Esoteric Duplicator's draw
+        //   sacrifices the artifact, and the trigger above it turns that
+        //   sacrifice into a token copy of the same artifact, so the ability is
+        //   on the table again and the card was never spent. Ruled 2026-09-20
+        //   after it was put to the human as the one card standing against the
+        //   self-sacrifice rule; it is the only reviewed card written this way.
+        private static readonly Regex SacrificeRefundedByACopy = Rx(
+            @"whenever you sacrifice this [\w]+[^\n]{0,120}create a token that's a copy of that");
+
         //   And four more ways the same card is handed back, which the loot
         //   pattern above does not cover because none of them says "discard":
         //   putting cards from your hand on top (Dream Cache), shuffling one in
@@ -2165,7 +2174,9 @@ namespace ScatoloneDownloader.Cube
             // for which ruling each one follows from.
             if (result.HasFlag(CardEffect.CardAdvantage)
                 && (Loot.IsMatch(text) || Cycling.IsMatch(text)
-                    || (DrawBySacrificingItself.IsMatch(text) && !DrawGrantedToOtherPermanents.IsMatch(text))
+                    || (DrawBySacrificingItself.IsMatch(text)
+                        && !DrawGrantedToOtherPermanents.IsMatch(text)
+                        && !SacrificeRefundedByACopy.IsMatch(text))
                     || DrawByExilingItselfFromGraveyard.IsMatch(text)
                     || AdditionalCostDiscard.IsMatch(text) || ActivationCostDiscard.IsMatch(text)
                     || DrawPaidForWithACard.IsMatch(text)))
