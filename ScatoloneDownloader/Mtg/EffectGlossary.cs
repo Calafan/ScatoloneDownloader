@@ -73,10 +73,10 @@
                 + "and ONE played is Filter. Not a draw for THEM.",
 
             [CardEffect.Filter] =
-                "Cards changing places at NO net gain. ANY scry or surveil counts, however small. Looking at the top "
-                + "few and taking one, exiling two and playing one, every rummage — draw and hand one back, either "
-                + "order, cost line included. One that ALSO comes out ahead, or repeats, keeps this AND CardAdvantage. "
-                + "Cycling is neither: it replaces itself.",
+                "Cards changing places at NO net gain: scry, surveil, hideaway, look at the top few and take one, "
+                + "exile two and play one, every rummage either way round. Not a card you CLOAK or manifest (Tokens), "
+                + "not a LAND off the top (Ramp), not somebody else's loot. One that also comes out ahead, or repeats, "
+                + "keeps this AND CardAdvantage.",
 
             [CardEffect.Reanimate] =
                 "A creature back from the dead and straight onto the BATTLEFIELD, cheating its cost. A card this card "

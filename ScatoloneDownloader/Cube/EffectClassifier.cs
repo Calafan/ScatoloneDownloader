@@ -1645,6 +1645,13 @@ namespace ScatoloneDownloader.Cube
                 // instead was measured and loses 11.
                 Rx(@"^(?:• )?[\w' ]{1,28}— ?(?:whenever|at the beginning of)[^\n]{0,160}draws? (?:a|one) card",
                     RegexOptions.Multiline),
+                // A Saga chapter that names TWO numbers fires twice, so the card
+                // it draws was bought once and drawn again — the same reading
+                // ChapterFiresTwice gives the put-into-hand rule. Found
+                // 2026-09-20 on Jecht, Reluctant Guardian, whose "I, II — Jecht
+                // Beam — Each opponent discards a card and you draw a card" is
+                // hand-tagged CardAdvantage and was being missed.
+                Rx(@"^[ivx]+, [ivx]+ [^\n]{0,140}\byou draw (?:a|one) card", RegexOptions.Multiline),
                 // The top of your library is a second hand, ruled 2026-09-16:
                 // Fblthp, Glarb and the Traveling Chocobo never run out of cards
                 // to play even though they never draw one.
@@ -1924,6 +1931,54 @@ namespace ScatoloneDownloader.Cube
                     + @"without paying their mana costs")]),
         ];
 
+        // Hoisted out of the table for the same reason as MillPatterns and
+        // ReanimatePatterns: the three vetoes below strip the shape that fired
+        // and re-ask, so that a card which selects on one line and makes bodies
+        // on another keeps the tag it earned. Declared after Rules because
+        // static initialisers run in declaration order.
+        private static readonly Regex[] FilterPatterns =
+            Rules.First(rule => rule.Effect == CardEffect.Filter).Patterns;
+
+        // Three shapes that look like selection and are not, all ruled
+        // 2026-09-20 off the nine cards where the classifier said Filter and the
+        // hand did not.
+        //
+        //   CLOAK AND MANIFEST DREAD turn what you picked FACE DOWN into a 2/2.
+        //   Nothing is selected as a card — what the ability gave you is a body,
+        //   which is why Curator Beastie and Hide in Plain Sight are Tokens
+        //   alone. Named by the keyword rather than by "onto the battlefield",
+        //   because a card put onto the battlefield AS ITSELF is still a choice
+        //   made: Aang, Gilgamesh, Jet, United Battlefront and Web of Life and
+        //   Destiny all do that and all five are tagged Filter.
+        //   Both this veto and the land one refuse to fire when the SAME LINE
+        //   also puts a card into your hand, because then the card really did
+        //   select: Planar Genesis looks at four, takes a land if there is one
+        //   and a CARD if there is not, and it is tagged Ramp and Filter both.
+        private static readonly Regex LooksAtTopAndMakesBodies = Rx(
+            @"look at the top [\w ,']{0,40} of your library(?![^\n]{0,200}into your hand)[^\n]{0,80}"
+            + @"(?:\bcloaks?\b|onto the battlefield face down)"
+            + @"|manifest dread\.? \(look at the top");
+
+        //   A LAND out of the top few is Ramp, ruled 2026-09-20 on Famished
+        //   Worldsire and Ignis Scientia — the same rail that makes a land
+        //   search Ramp or ManaFixing rather than Tutor. What you looked at
+        //   bought mana, not a choice.
+        private static readonly Regex LooksAtTopForALand = Rx(
+            @"look at the top [\w ,']{0,40} of your library(?![^\n]{0,200}into your hand)[^\n]{0,80}"
+            + @"put (?:a|any number of|up to \w+|\w+) (?:basic |snow )*land cards? from among them");
+
+        //   AND A LOOT THAT IS NOT YOURS. "Each opponent discards a card AND YOU
+        //   DRAW a card" is two different players doing two different things,
+        //   not one player trading. Jecht, Reluctant Guardian is Discard and
+        //   CardAdvantage and nothing else. The carve-out is deliberate and
+        //   matches the one CardAdvantage already makes: "TARGET player" and
+        //   "EACH player" stay in, because you can point Forget at yourself and
+        //   because Flux loots everybody including you — both were put to the
+        //   human on 2026-09-20 and both keep the tag.
+        private static readonly Regex TheirDiscardYourDraw = Rx(
+            @"(?:each opponent|target opponent|an opponent|each other player|each player other than you)"
+            + @"[\w ,'-]{0,30}discards?[\w ,'-]{0,40}(?:and|then) you draw");
+
         /// <summary>Keyword abilities that map directly to an effect regardless of
         /// oracle wording (e.g. an "Indestructible" creature with no rules text).</summary>
         private static readonly Dictionary<string, CardEffect> KeywordEffects = new(StringComparer.OrdinalIgnoreCase)
@@ -2170,10 +2225,34 @@ namespace ScatoloneDownloader.Cube
                 result |= CardEffect.Reanimate;
             }
 
+            // Three shapes that look like selection and are not. Asked by
+            // STRIPPING and re-asking, the same way the draw guard is, so that a
+            // card which cloaks on one line and surveils on another keeps the
+            // tag it earned on the second. See the three patterns for the
+            // rulings and the cards each was read from.
+            if (result.HasFlag(CardEffect.Filter))
+            {
+                string selecting = TheirDiscardYourDraw.Replace(
+                    LooksAtTopForALand.Replace(LooksAtTopAndMakesBodies.Replace(text, " "), " "), " ");
+
+                if (selecting != text && !FilterPatterns.Any(p => p.IsMatch(selecting)))
+                {
+                    result &= ~CardEffect.Filter;
+                }
+            }
+
             // Card parity dressed as card advantage. See the three patterns above
             // for which ruling each one follows from.
+            //
+            // The LOOT is asked of the card with somebody else's discard blanked
+            // out, because parity means ONE player trading: "each opponent
+            // discards a card AND YOU DRAW a card" reads as a loot to a pattern
+            // that does not check whose cards these are, and it is the same bug
+            // that had Jecht, Reluctant Guardian tagged Filter. Ruled 2026-09-20.
+            string oneSidedLoot = TheirDiscardYourDraw.Replace(text, " ");
+
             if (result.HasFlag(CardEffect.CardAdvantage)
-                && (Loot.IsMatch(text) || Cycling.IsMatch(text)
+                && (Loot.IsMatch(oneSidedLoot) || Cycling.IsMatch(text)
                     || (DrawBySacrificingItself.IsMatch(text)
                         && !DrawGrantedToOtherPermanents.IsMatch(text)
                         && !SacrificeRefundedByACopy.IsMatch(text))

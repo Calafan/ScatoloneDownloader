@@ -1164,6 +1164,83 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // Ruled 2026-09-20, from the nine cards where the classifier said Filter and
+    // the hand did not. Cloak and manifest dread turn what you picked FACE DOWN
+    // into a 2/2, so what the ability gave you is a body and not a choice. A
+    // LAND off the top is Ramp, the same rail that makes a land search Ramp
+    // rather than Tutor. And "each opponent discards a card AND YOU DRAW a card"
+    // is two players doing two different things, not one player trading.
+    [InlineData("Curator Beastie", "Creature — Beast",
+        "Reach\nColorless creatures you control enter with two additional +1/+1 counters on them.\n"
+        + "Whenever this creature enters or attacks, manifest dread. (Look at the top two cards of "
+        + "your library. Put one onto the battlefield face down as a 2/2 creature and the other into "
+        + "your graveyard. Turn it face up any time for its mana cost if it's a creature card.)")]
+    [InlineData("Hide in Plain Sight", "Sorcery",
+        "Look at the top five cards of your library, cloak two of them, and put the rest on the bottom "
+        + "of your library in a random order.")]
+    [InlineData("Ignis Scientia", "Legendary Creature — Human Advisor",
+        "When Ignis Scientia enters, look at the top six cards of your library. You may put a land card "
+        + "from among them onto the battlefield tapped. Put the rest on the bottom of your library in a "
+        + "random order.")]
+    [InlineData("Famished Worldsire", "Creature — Avatar",
+        "Ward {3}\nDevour land 3\nWhen this creature enters, look at the top X cards of your library, "
+        + "where X is this creature's power. Put any number of land cards from among them onto the "
+        + "battlefield tapped, then shuffle.")]
+    [InlineData("Jecht, Reluctant Guardian", "Legendary Enchantment Creature — Saga Human",
+        "Menace\n(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\n"
+        + "I, II — Jecht Beam — Each opponent discards a card and you draw a card.\n"
+        + "III — Ultimate Jecht Shot — Each opponent sacrifices two creatures of their choice.")]
+    public void Classify_ThreeShapesThatOnlyLookLikeSelection_AreNotFilter(
+        string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // The carve-outs those three vetoes have to leave standing, each ruled the
+    // same day. Planar Genesis takes a land if there is one and a CARD if there
+    // is not, so it selects after all; hideaway looks at four and exiles one you
+    // may play later, which is a hand you wait for; and "TARGET player" and
+    // "EACH player" keep the loot, because you can point Forget at yourself and
+    // because Flux loots everybody including you.
+    [InlineData("Planar Genesis", "Sorcery",
+        "Look at the top four cards of your library. You may put a land card from among them onto the "
+        + "battlefield tapped. If you don't, put a card from among them into your hand. Put the rest on "
+        + "the bottom of your library in a random order.")]
+    [InlineData("Clive's Hideaway", "Land",
+        "Hideaway 4 (When this land enters, look at the top four cards of your library, exile one face "
+        + "down, then put the rest on the bottom in a random order.)\n{T}: Add {C}.\n"
+        + "{2}, {T}: You may play the exiled card without paying its mana cost if you control four or "
+        + "more legendary creatures.")]
+    [InlineData("Forget", "Sorcery",
+        "Target player discards two cards, then draws as many cards as they discarded this way.")]
+    [InlineData("Flux", "Sorcery",
+        "Each player discards any number of cards, then draws that many cards.\nDraw a card.")]
+    public void Classify_WhatStillSelects_IsFilter(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Fact]
+    // The other half of the Jecht ruling: taking Filter away must not take the
+    // three tags it really has. The edict on chapter III is Removal, the
+    // opponents' discard is Discard, and the draw beside it is yours.
+    public void Classify_ALootSplitBetweenTwoPlayers_KeepsItsOtherTags()
+    {
+        Card card = MakeCard("Jecht, Reluctant Guardian", "Legendary Enchantment Creature — Saga Human",
+            "Menace\n(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\n"
+            + "I, II — Jecht Beam — Each opponent discards a card and you draw a card.\n"
+            + "III — Ultimate Jecht Shot — Each opponent sacrifices two creatures of their choice.");
+
+        CardEffect effects = EffectClassifier.Classify(card);
+
+        Assert.True(effects.HasFlag(CardEffect.Discard));
+        Assert.True(effects.HasFlag(CardEffect.CardAdvantage));
+        Assert.True(effects.HasFlag(CardEffect.Removal));
+        Assert.False(effects.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
     // Three one-offs, each recovered 2026-09-20 rather than left as a known
     // miss. Three Wishes puts 108 characters between exiling three cards and
     // letting you play them, where the rule allowed 80. Memories Returning
