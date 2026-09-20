@@ -413,6 +413,18 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex DrawBySacrificingItself = Rx(
             @"^[^\n:]{0,60}sacrifice this [\w]+[^\n:]{0,30}:", RegexOptions.Multiline);
 
+        //   …except when the ability is printed INSIDE QUOTES and handed to a
+        //   whole class of permanents, where "this permanent" is a different
+        //   body every time and the card spends none of itself. Mnemonic Sliver
+        //   gives every Sliver "{2}, Sacrifice this permanent: Draw a card" and
+        //   is the only reviewed card written that way; the Clue token's
+        //   identical reminder text is read by the Clue rules instead, which
+        //   already ask whether the card makes one Clue or many. Same reading
+        //   as OnlyPumpsInsideQuotes gives Buff. Added 2026-09-20.
+        private static readonly Regex DrawGrantedToOtherPermanents = Rx(
+            @"(?:(?:all|each) [\w' -]{0,20}|[\w' -]{0,20} you control) ha(?:s|ve) "
+            + @"""[^""]{0,40}sacrifice this [\w]+[^""\n:]{0,20}: ?draw");
+
         //   And four more ways the same card is handed back, which the loot
         //   pattern above does not cover because none of them says "discard":
         //   putting cards from your hand on top (Dream Cache), shuffling one in
@@ -687,10 +699,26 @@ namespace ScatoloneDownloader.Cube
         // draw-two wearing the same coat, which ImpulseOfSeveralCards already
         // says, plus the version aimed at an opponent's library (Outrageous
         // Robbery, Laughing Jasper Flint, Kotis). 15 cards, 14 tagged.
+        // The window was 80 characters and Three Wishes puts 108 between the two
+        // halves ("face down. You may look at those cards for as long as they
+        // remain exiled. Until your next turn, you may play those cards").
+        // Widened to 160 on 2026-09-20 and measured: 18 reviewed cards are
+        // written this way, 17 of them tagged, and the one that is not is
+        // Riverwheel Sweep, which ExileSeveralAndChooseOne takes out below.
         private static readonly Regex ExileSeveralAndPlayThem = Rx(
             @"exiles? the top (?:two|three|four|five|six|seven|eight|nine|ten|x|\d+) cards?"
-            + @"[^\n]{0,80}(?:you may (?:play|cast)|may play|may cast)"
+            + @"[^\n]{0,160}(?:you may (?:play|cast)|may play|may cast)"
             + @"|exiles? the top \w+ cards? of (?:target |that )?(?:opponent|player)");
+
+        // …and the shape that takes several off the top and lets you play only
+        // ONE of them. Ruled 2026-09-20: you looked at two and played one, which
+        // is the count of a Filter and not of a card gained — the same answer
+        // the repeatable put-into-hand rule gives for a one-shot. All three
+        // reviewed cards say it the same way: Riverwheel Sweep, Heroes' Hangout
+        // and Case of the Burning Masks, the last of which prints it behind
+        // "Sacrifice this Case" and so cannot repeat either.
+        private static readonly Regex ExileSeveralAndChooseOne = Rx(
+            @"exiles? the top \w+ cards? of your library[^\n]{0,60}choose one of them");
 
         // A Clue and an impulse draw are both "a card the opponent does not get",
         // and neither is a draw, so both are asked the same question: is it one
@@ -1617,6 +1645,16 @@ namespace ScatoloneDownloader.Cube
                 // Taking exactly one is Filter, which the Filter rules say and
                 // this deliberately does not contradict. Ruled 2026-09-16.
                 Rx(@"look at the top \w+ cards? of your library[^\n]{0,60}put (?:two|three|four|five|\d+) of them into your hand"),
+                // The same thing counted one card at a time. Memories Returning
+                // says "Put one of them into your hand", then "Then you put one
+                // into your hand", then "Put the other into your hand" — three
+                // cards for a spell, which is advantage by the count and not by
+                // repetition. Written narrowly against the second "Then YOU":
+                // every other reviewed card that reaches into its hand twice
+                // does it CONDITIONALLY ("put two of those cards into your hand
+                // INSTEAD if this spell was kicked" — Consult the Star Charts,
+                // Accumulate Wisdom), and those are Filter and stay Filter.
+                Rx(@"into your hand[^\n]{0,120}then you put one into your hand"),
                 // The top of your library kept as a second hand, and several
                 // cards off a top that you may then play. See SecondHandOnTop
                 // and ExileSeveralAndPlayThem for the measurements.
@@ -2126,7 +2164,8 @@ namespace ScatoloneDownloader.Cube
             // Card parity dressed as card advantage. See the three patterns above
             // for which ruling each one follows from.
             if (result.HasFlag(CardEffect.CardAdvantage)
-                && (Loot.IsMatch(text) || Cycling.IsMatch(text) || DrawBySacrificingItself.IsMatch(text)
+                && (Loot.IsMatch(text) || Cycling.IsMatch(text)
+                    || (DrawBySacrificingItself.IsMatch(text) && !DrawGrantedToOtherPermanents.IsMatch(text))
                     || DrawByExilingItselfFromGraveyard.IsMatch(text)
                     || AdditionalCostDiscard.IsMatch(text) || ActivationCostDiscard.IsMatch(text)
                     || DrawPaidForWithACard.IsMatch(text)))
@@ -2190,7 +2229,22 @@ namespace ScatoloneDownloader.Cube
                 && (ImpulseOfSeveralCards.IsMatch(text)
                     || Abilities(text).Any(a => ImpulseDraw.IsMatch(a) && AbilityRepeats(a)));
 
-            if (impulseIsACard || ExileSeveralAndPlayThem.IsMatch(text) || DrawThatMany.IsMatch(text)
+            // Exiling several and playing only one is a count of zero. Asked of
+            // the whole card rather than of the ability, because it has to
+            // withdraw the several-cards claim that ImpulseOfSeveralCards and
+            // ExileSeveralAndPlayThem both make on those same words; no reviewed
+            // card carries this shape and a real multi-card impulse as well.
+            bool onlyOneOfThem = ExileSeveralAndChooseOne.IsMatch(text);
+
+            if (onlyOneOfThem)
+            {
+                result &= ~CardEffect.CardAdvantage;
+                result |= CardEffect.Filter;
+            }
+
+            if ((!onlyOneOfThem
+                    && (impulseIsACard || ExileSeveralAndPlayThem.IsMatch(text)))
+                || DrawThatMany.IsMatch(text)
                 || (ClueWording.IsMatch(text) && (RepeatableClue.IsMatch(text) || SeveralClues.IsMatch(text))))
             {
                 result |= CardEffect.CardAdvantage;

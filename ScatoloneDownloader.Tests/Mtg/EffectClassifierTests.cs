@@ -1136,6 +1136,58 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // Ruled 2026-09-20: several cards off the top and only ONE of them playable
+    // is two seen and one played, which is the count of a Filter. All three
+    // reviewed cards say it in the same words, and the two that are not one-shot
+    // spells still cannot repeat — Case of the Burning Masks sacrifices itself.
+    [InlineData("Riverwheel Sweep", "Sorcery",
+        "Tap target creature. Put three stun counters on it.\n"
+        + "Exile the top two cards of your library. Choose one of them. Until the end of your next "
+        + "turn, you may play that card.")]
+    [InlineData("Heroes' Hangout", "Land",
+        "Choose one —\n• Date Night — Exile the top two cards of your library. Choose one of them. "
+        + "Until the end of your next turn, you may play that card.\n"
+        + "• Patrol Night — One or two target creatures each get +1/+0 and gain first strike until "
+        + "end of turn.")]
+    [InlineData("Case of the Burning Masks", "Enchantment — Case",
+        "When this Case enters, it deals 3 damage to target creature an opponent controls.\n"
+        + "To solve — Three or more sources you controlled dealt damage this turn.\n"
+        + "Solved — Sacrifice this Case: Exile the top three cards of your library. Choose one of "
+        + "them. You may play that card this turn.")]
+    public void Classify_SeveralOffTheTopAndOnePlayed_IsFilterNotCardAdvantage(
+        string name, string typeLine, string oracle)
+    {
+        CardEffect effects = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.False(effects.HasFlag(CardEffect.CardAdvantage));
+        Assert.True(effects.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Three one-offs, each recovered 2026-09-20 rather than left as a known
+    // miss. Three Wishes puts 108 characters between exiling three cards and
+    // letting you play them, where the rule allowed 80. Memories Returning
+    // reaches into your hand three times, one card at a time. And Mnemonic
+    // Sliver's draw sacrifices "this permanent" inside QUOTES, handed to every
+    // Sliver — the body that pays is a different one each time, so the card
+    // spends none of itself and the one-shot veto does not apply.
+    [InlineData("Three Wishes", "Instant",
+        "Exile the top three cards of your library face down. You may look at those cards for as long "
+        + "as they remain exiled. Until your next turn, you may play those cards. At the beginning of "
+        + "your next upkeep, put any of those cards you didn't play into your graveyard.")]
+    [InlineData("Memories Returning", "Sorcery",
+        "Reveal the top five cards of your library. Put one of them into your hand. Then choose an "
+        + "opponent. They put one on the bottom of your library. Then you put one into your hand. Then "
+        + "they put one on the bottom of your library. Put the other into your hand.\nFlashback {7}{U}{U}")]
+    [InlineData("Mnemonic Sliver", "Creature — Sliver",
+        "All Slivers have \"{2}, Sacrifice this permanent: Draw a card.\"")]
+    public void Classify_TheOneOffsThatStillGainACard_AreCardAdvantage(
+        string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
     // The carve-out that keeps the rule above honest: "TARGET player" and
     // "EACH player" are NOT somebody else's draw, because you point these at
     // yourself. 12 of the 21 cards written that way are tagged.

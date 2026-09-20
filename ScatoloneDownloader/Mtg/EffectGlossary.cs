@@ -69,12 +69,12 @@
             [CardEffect.CardAdvantage] =
                 "A card the opponent does not get. COUNT IT, and the card ITSELF counts: Ponder is -1 +1 = 0. A "
                 + "one-shot must draw two more than it pays; a REPEATABLE ability bought the card once, so one is "
-                + "enough — even when it costs a card, even when it only takes one off the top. The top of your "
-                + "library as a second hand. Not a draw for THEM.",
+                + "enough — even when it costs a card, even when it only takes one off the top. Two off the top "
+                + "and ONE played is Filter. Not a draw for THEM.",
 
             [CardEffect.Filter] =
-                "Cards changing places. ANY scry or surveil counts, however small and whatever else the card does; so "
-                + "does looking at the top few and taking one, and every rummage — draw and hand one back, either "
+                "Cards changing places at NO net gain. ANY scry or surveil counts, however small. Looking at the top "
+                + "few and taking one, exiling two and playing one, every rummage — draw and hand one back, either "
                 + "order, cost line included. One that ALSO comes out ahead, or repeats, keeps this AND CardAdvantage. "
                 + "Cycling is neither: it replaces itself.",
 
