@@ -2139,6 +2139,68 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // Seven rulings on 2026-09-20, each read off a family that had split in the
+    // hand tags. Damage divided among bare "TARGETS" can pick a face; the word
+    // order runs both ways and the rule could only read one of them; the old
+    // punishers name a face as "that permanent's controller"; life loss counts
+    // from TWO; "loses life equal to" is a burn when somebody else is losing it;
+    // the upkeep tax is a burn however slowly it burns; and life paid to stop a
+    // card is life lost.
+    [InlineData("Rolling Thunder", "Sorcery",
+        "Rolling Thunder deals X damage divided as you choose among any number of targets.")]
+    [InlineData("Storm Seeker", "Instant",
+        "Storm Seeker deals damage to target player equal to the number of cards in that player's hand.")]
+    [InlineData("Psychic Venom", "Enchantment — Aura",
+        "Enchant land\nWhenever enchanted land becomes tapped, this Aura deals 2 damage to that land's controller.")]
+    [InlineData("Vein Ripper", "Creature — Vampire Horror",
+        "Flying\nWard—Sacrifice a creature.\nWhenever a creature dies, target opponent loses 2 life and you gain 2 life.")]
+    [InlineData("Death Watch", "Enchantment — Aura",
+        "Enchant creature\nWhen enchanted creature dies, its controller loses life equal to its power and "
+        + "you gain life equal to its toughness.")]
+    [InlineData("Karma", "Enchantment",
+        "At the beginning of each player's upkeep, this enchantment deals damage to that player equal to "
+        + "the number of Swamps they control.")]
+    [InlineData("Breathstealer's Crypt", "Enchantment",
+        "If a player would draw a card, instead they draw a card and reveal it. If it's a creature card, "
+        + "that player discards it unless they pay 3 life.")]
+    public void Classify_TheSevenWaysACardBurnsAFace_AreBurn(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
+    // And the seven edges each of those rulings has to leave alone. Damage
+    // divided among "target CREATURES" can never reach a player; Fiery Justice
+    // hands the five life straight back, which the human ruled an exception on
+    // purpose; ONE point of life is a rider, in either direction; "YOU lose life
+    // equal to" is the price of the card; a charge attached to a kill is a
+    // removal spell with a bonus; and what a TOKEN does is the token's.
+    [InlineData("Pyrokinesis", "Instant",
+        "You may exile a red card from your hand rather than pay this spell's mana cost.\n"
+        + "Pyrokinesis deals 4 damage divided as you choose among any number of target creatures.")]
+    [InlineData("Fiery Justice", "Sorcery",
+        "Fiery Justice deals 5 damage divided as you choose among any number of targets. "
+        + "Target opponent gains 5 life.")]
+    [InlineData("Sanguine Syphoner", "Creature — Vampire",
+        "Whenever this creature attacks, each opponent loses 1 life and you gain 1 life.")]
+    [InlineData("Reanimate", "Sorcery",
+        "Put target creature card from a graveyard onto the battlefield under your control. "
+        + "You lose life equal to that card's mana value.")]
+    [InlineData("Reign of Terror", "Sorcery",
+        "Destroy all green creatures or all white creatures. They can't be regenerated. "
+        + "You lose 2 life for each creature that died this way.")]
+    [InlineData("Detonate", "Sorcery",
+        "Destroy target artifact with mana value X. It can't be regenerated. "
+        + "Detonate deals X damage to that artifact's controller.")]
+    [InlineData("Mysidian Elder", "Creature — Human Wizard",
+        "When this creature enters, create a 0/1 black Wizard creature token with \"Whenever you cast a "
+        + "noncreature spell, this token deals 1 damage to each opponent.\"")]
+    public void Classify_WhatOnlyLooksLikeBurn_IsNot(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
     // Sacrifice means an OUTLET for your own creatures — the half of the combo
     // that makes a stolen creature worth taking. An activation cost in front of a
     // colon is the canonical shape; a trigger that OFFERS the sacrifice counts too.

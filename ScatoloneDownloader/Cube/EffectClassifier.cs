@@ -46,6 +46,26 @@ namespace ScatoloneDownloader.Cube
             @"(?:target player|target opponent|each opponent|an opponent|that player|each player"
             + @"|defending player|its controller|opponents?)";
 
+        /// <summary>Every way the game names a FACE as the thing damage lands
+        /// on. "Any target" is in it because a card that may point at a player
+        /// is Burn as well as Removal, which is the ruling Burn has carried
+        /// since 2026-09-15.</summary>
+        private const string BurnTarget =
+            @"(?:any (?:other )?target|target player|target opponent|each player|each opponent"
+            + @"|each other (?:player|opponent)|that player|defending player|the player|them"
+            + @"|each of [\dX]+ targets|the controller of|its controller)";
+
+        /// <summary>The players a life-loss clause can name, with room for the
+        /// relative clause the modern templating puts between the subject and
+        /// the verb — "each opponent WHO DOESN'T loses 2 life" (Fandaniel),
+        /// "each opponent sacrifices a creature of their choice AND loses 3
+        /// life" (Summon: Anima), "each player WHO OWNS A SPELL YOU CAST THIS
+        /// WAY loses life equal to its mana value" (Kefka).</summary>
+        private const string LosesLifeSubject =
+            @"(?:each opponent|target opponent|target player|that player|that opponent|each player"
+            + @"|its controller|they|defending player|the chosen player|that spell's controller)"
+            + @"[\w ,'-]{0,45}\b";
+
         /// <summary>The noun Disenchant answers, with the traps built in: the
         /// filler in front of it is short enough that it cannot reach across a
         /// sentence, "non"/"non-" may not be crossed to get to it, an artifact
@@ -1787,18 +1807,81 @@ namespace ScatoloneDownloader.Cube
             // Juzam Djinn charge themselves, and self-damage is a price the same
             // way a self-mill or a sacrifice cost is. Precision 58.7% -> 86.3%.
             (CardEffect.Burn, [
-                Rx(@"deals? [\dX]+ damage to (?:any target|target player|target opponent|each player|each opponent|that player)\b"),
+                // The AMOUNT and the FACE, both read as widely as the game
+                // writes them. Every widening here was a card the rule already
+                // agreed with and simply could not read: "half X damage,
+                // rounded down" (Banshee), "each of X targets" (Firestorm),
+                // "any OTHER target" (Screaming Nemesis, Self-Destruct), "each
+                // OTHER opponent" (Parapet Thrasher), "defending player"
+                // (Ghost-Spider), "the player" (Monsoon), "them" (Vexing
+                // Arcanix) and "the controller of" (Suffocation).
+                Rx(@"deals? (?:half )?[\dX]+(?: plus \d+)? damage(?:, rounded (?:down|up),)? to " + BurnTarget + @"\b"),
+                Rx(@"deals? that much damage to " + BurnTarget + @"\b"),
                 Rx(@"deals? [\dX]+ damage to [\w ,]{0,45}each (?:player|opponent)"),
                 // "Each opponent loses 2 life" is a Lava Spike at every face at
                 // once; the game just declined to call it damage. 18 of the 27
                 // reviewed cards that say it are hand-tagged Burn, and every one
                 // of them was being missed. Ruled 2026-09-15.
-                Rx(@"each opponent loses [\dX]+ life"),
+                //
+                // ONE point of life is a rider, not a burn. Ruled 2026-09-20
+                // after measuring the family: eleven reviewed cards drain
+                // exactly one and carry no Burn tag (Agate-Blade Assassin,
+                // Al Bhed Salvagers, Ebony Charm, Nafs Asp, Sanguine Syphoner,
+                // Venerated Stormsinger and five more), against two that do —
+                // and one of those two, Susurian Voidborn, is word for word
+                // Al Bhed Salvagers. From TWO the tag stands, and X counts
+                // because X is not one (Northern Air Temple). The subject list
+                // is spelled out so that "you lose 2 life" stays a price.
+                Rx(LosesLifeSubject + @" ?loses? (?:[2-9]|\d\d+|x) life"),
+                // The same life loss sized by a COUNT. Ruled 2026-09-20 and it
+                // splits cleanly on WHOSE life it is: four reviewed cards say
+                // "YOU lose life equal to" (Reanimate, Lich, Teval, Darkstar
+                // Augur) and none is tagged, because that is the price the card
+                // charges; seven say somebody else does and six are tagged.
+                Rx(LosesLifeSubject + @" ?loses? life equal to"),
+                // Damage DIVIDED among "targets" — bare, so a face can be one of
+                // them. Ruled 2026-09-20: five of the six reviewed cards written
+                // that way are tagged (Fireball, Rolling Thunder, Pyrotechnics,
+                // Meteor Shower, Mogg Mob), while all seven that say "among
+                // target CREATURES" are not, because those can never reach a
+                // player. The lookahead is Fiery Justice, the sixth, which the
+                // human ruled an exception ON PURPOSE: it hands the opponent
+                // back exactly the five life it dealt, so the count is zero.
+                Rx(@"damage divided (?:evenly,? )?(?:rounded down,? )?(?:as you choose )?"
+                    + @"among (?:any number of|one, two, or three|\w+) targets\b"
+                    + @"(?![^\n]{0,40}gains? [\dX]+ life)"),
+                // The same damage with the word order the other way round —
+                // "deals damage TO that player EQUAL TO the number of artifacts
+                // they control" — which the rule below could not read at all.
+                // Twelve of the eighteen reviewed cards written this way were
+                // already tagged and the human ruled the other six in on
+                // 2026-09-20, the upkeep punishers among them.
+                Rx(@"deals? damage to [\w ,'-]{0,40}" + BurnTarget + @"[\w ,'-]{0,20} equal to"),
                 // Damage sized by a COUNT rather than a digit. The rule for this
                 // already existed and fed Removal alone, so Cat-Gator's "damage
                 // equal to the number of Swamps to any target" was read as a kill
-                // and not as a burn. 11 of 12 such cards are tagged.
-                Rx(@"deals damage equal to [\w' ]{0,45}to (?:any target|target player|target opponent|each opponent|each player)")]),
+                // and not as a burn. 11 of 12 such cards are tagged. The window
+                // was 45 characters and Summon: Bahamut puts 52 between the two
+                // halves ("the total mana value of other permanents you
+                // control"), and Cyclone names the creatures before the players.
+                Rx(@"deals damage equal to [\w' ,]{0,70}to [\w ,'-]{0,30}" + BurnTarget + @"\b"),
+                // Life paid to keep something from happening is life lost.
+                // Ruled 2026-09-20 with the rest of Burn: Breathstealer's Crypt,
+                // Sirocco and Cleansing all charge a player life to stop the
+                // card, and all three are tagged. Restricted to SOMEBODY ELSE
+                // paying, so an additional cost you pay stays a price.
+                // The threshold applies here too, with one escape: a single
+                // point charged FOR EACH of something is not one point at all
+                // (Cleansing charges one per land destroyed).
+                Rx(@"unless (?:that player|they|any player|its controller) pays? (?:[2-9]|\d\d+|x) life"
+                    + @"|for each[^\n.]{0,70}unless (?:that player|they|any player|its controller) pays? [\dX]+ life"),
+                // "Loses 1 life FOR EACH card type" is not the one-point rider
+                // the threshold above refuses — the count is what it is
+                // multiplied by (Polluted Cistern, Fandaniel). The subject is
+                // asked for the same reason as everywhere else in this tag:
+                // Reign of Terror charges YOU two life for each creature it
+                // killed, and that is the price of a Wrath.
+                Rx(LosesLifeSubject + @" ?loses? [\dX]+ life for each")]),
 
             // Sacrifice is a sacrifice OUTLET: somewhere to put your OWN permanents
             // on demand, which is what makes a stolen creature (see Steal) worth
@@ -1938,6 +2021,51 @@ namespace ScatoloneDownloader.Cube
         // static initialisers run in declaration order.
         private static readonly Regex[] FilterPatterns =
             Rules.First(rule => rule.Effect == CardEffect.Filter).Patterns;
+
+        private static readonly Regex[] BurnPatterns =
+            Rules.First(rule => rule.Effect == CardEffect.Burn).Patterns;
+
+        // Damage aimed at THAT PERMANENT'S CONTROLLER, which is how the old
+        // punishers name a face: Psychic Venom, Ankh of Mishra, Dingus Egg and
+        // Staff, Haunting Wind, Seizures, Orcish Mine, Artifact Possession,
+        // Stinging Licid. Ten of the seventeen reviewed cards written this way
+        // are tagged.
+        // "IS DEALT TO that spell's controller" is the passive voice of the
+        // same thing: Reverberation turns a sorcery round on the player who
+        // cast it, which is a Lava Spike they wrote themselves.
+        private static readonly Regex DamageToTheirController = Rx(
+            @"(?:deals?|is dealt) (?:[\dX]+|that much|half [\dX]+)? ?damage[\w ,'-]{0,40}to (?:that|the) "
+            + @"(?:creature|land|artifact|permanent|spell)'s controller"
+            + @"|damage[\w ,'-]{0,80}is dealt to that (?:creature|land|artifact|permanent|spell)'s controller");
+
+        // …and the other seven, which are the same words hanging off an ANSWER.
+        // Ruled 2026-09-20: a card that kills the permanent and then charges its
+        // controller for it is a removal spell with a bonus, not a burn spell —
+        // Detonate, Icequake, Cinder Cloud, Stench of Evil all destroy first,
+        // and Misthios's Fury and Wisecrack shoot the creature first. Read
+        // across sentences, because the kill and the charge are rarely in the
+        // same one.
+        // The verb is often ELIDED on the second half — Judgment Bolt says
+        // "deals 5 damage to target creature AND X damage to that creature's
+        // controller" with no second "deals" — so it is optional here. The
+        // opening alternative has already established that a kill came first.
+        private static readonly Regex ChargesForAKillItJustMade = Rx(
+            @"(?:destroy|exile|deals? [\dX]+ damage to target creature"
+            + @"|damage equal to [\w' ]{0,25}to itself)"
+            + @"[\s\S]{0,160}(?:deals? )?(?:[\dX]+|that much|half [\dX]+)? ?damage"
+            + @"[\w ,'-]{0,40}to (?:that|the) \w+'s controller");
+
+        // Damage a TOKEN does, printed inside the quotes the token is created
+        // with. Ruled 2026-09-20 with the opposite answer to the one Tokens
+        // gives: the card makes a body, and what the body then does is the
+        // body's. Eight reviewed cards create the 0/1 Wizard that pings on every
+        // noncreature spell and none of the eight carries Burn. Keyed on "THIS
+        // TOKEN" (and the emblem, which is the same thing a planeswalker makes),
+        // so an ability granted to a creature you already control keeps the tag:
+        // Black Mage's Rod says "this creature" and Fire Whip burns on a line of
+        // its own.
+        private static readonly Regex DamageFromSomethingItMade = Rx(
+            @"""[^""]{0,160}\bthis (?:token|emblem)[^""]{0,60}deals? [\dX]+ damage");
 
         // Three shapes that look like selection and are not, all ruled
         // 2026-09-20 off the nine cards where the classifier said Filter and the
@@ -2223,6 +2351,30 @@ namespace ScatoloneDownloader.Cube
             if (ExiledCardOntoTheBattlefield.IsMatch(text) && !BlinksYourOwnCreature.IsMatch(text))
             {
                 result |= CardEffect.Reanimate;
+            }
+
+            // Burn, both ways round. The old punishers name a face as "that
+            // permanent's controller", and a card that killed the permanent
+            // first is charging for the kill rather than burning. See the two
+            // patterns for the ruling and the seven cards it turns on.
+            if (DamageToTheirController.IsMatch(text) && !ChargesForAKillItJustMade.IsMatch(text))
+            {
+                result |= CardEffect.Burn;
+            }
+
+            // …and what a TOKEN does is the token's. Asked by stripping and
+            // re-asking, so a card that makes a pinging token AND burns on a
+            // line of its own keeps the tag it earned on the second.
+            if (result.HasFlag(CardEffect.Burn) && DamageFromSomethingItMade.IsMatch(text))
+            {
+                string itsOwnDamage = DamageFromSomethingItMade.Replace(text, " ");
+
+                if (!BurnPatterns.Any(p => p.IsMatch(itsOwnDamage))
+                    && !(DamageToTheirController.IsMatch(itsOwnDamage)
+                        && !ChargesForAKillItJustMade.IsMatch(itsOwnDamage)))
+                {
+                    result &= ~CardEffect.Burn;
+                }
             }
 
             // Three shapes that look like selection and are not. Asked by

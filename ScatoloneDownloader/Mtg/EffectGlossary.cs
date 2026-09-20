@@ -94,9 +94,10 @@
                 + "card puts on itself, and not preventing the damage a creature DEALS — that is Pacify.",
 
             [CardEffect.Burn] =
-                "Damage aimed at a FACE, however counted — \"damage equal to the number of Swamps\" burns, and so "
-                + "does \"each opponent loses 2 life\". Damage aimed at a creature is Removal; \"any target\" is "
-                + "both. A sweeper counts only if it catches the players. Damage to YOURSELF is a price.",
+                "Damage or life loss aimed at a FACE, however counted and however slow: \"damage equal to the number "
+                + "of Swamps\", an upkeep tax, life PAID to stop the card, and losing TWO or more (one point is a "
+                + "rider). Damage at a creature is Removal; \"any target\" is both. Not damage to YOURSELF, and not "
+                + "what a TOKEN you made deals.",
 
             [CardEffect.Sacrifice] =
                 "An outlet you can feed your OWN creatures, artifacts or permanents at will — the half of the combo that "
