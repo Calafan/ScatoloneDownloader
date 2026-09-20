@@ -2049,11 +2049,17 @@ namespace ScatoloneDownloader.Cube
         // "deals 5 damage to target creature AND X damage to that creature's
         // controller" with no second "deals" — so it is optional here. The
         // opening alternative has already established that a kill came first.
+        //
+        // A LAND is not in the list, ruled 2026-09-20: on the land-destroyers
+        // the human reads the damage as a second effect worth counting, which
+        // also settles the one split this family had — Orcish Mine charges the
+        // controller two for the land it just destroyed and is tagged, Icequake
+        // and Stench of Evil do the same and were not.
         private static readonly Regex ChargesForAKillItJustMade = Rx(
             @"(?:destroy|exile|deals? [\dX]+ damage to target creature"
             + @"|damage equal to [\w' ]{0,25}to itself)"
             + @"[\s\S]{0,160}(?:deals? )?(?:[\dX]+|that much|half [\dX]+)? ?damage"
-            + @"[\w ,'-]{0,40}to (?:that|the) \w+'s controller");
+            + @"[\w ,'-]{0,40}to (?:that|the) (?:creature|artifact|permanent|spell)'s controller");
 
         // Damage a TOKEN does, printed inside the quotes the token is created
         // with. Ruled 2026-09-20 with the opposite answer to the one Tokens
@@ -2066,6 +2072,30 @@ namespace ScatoloneDownloader.Cube
         // its own.
         private static readonly Regex DamageFromSomethingItMade = Rx(
             @"""[^""]{0,160}\bthis (?:token|emblem)[^""]{0,60}deals? [\dX]+ damage");
+
+        // A creature with HASTE that is gone at the end of the turn it arrived
+        // is a burn spell with legs. Ruled 2026-09-20: it attacks once and then
+        // it is not there any more, so what it really did was put its power on
+        // a face — Ball Lightning, Spark Elemental, Blistering Firecat,
+        // Groundbreaker, Lightning Skelemental. The human extended the ruling
+        // the same day to the ones that BOUNCE rather than die, which is the
+        // same turn and the same attack: Viashino Sandstalker, Archwing Dragon,
+        // Glitterfang and the rest of the Viashinos.
+        //
+        // NB the reviewed set can barely test this — Ball Lightning is tagged,
+        // Viashino Sandstalker was not and is realigned by the ruling, and the
+        // other thirteen cards written this way have not been reviewed yet. It
+        // is recorded here as a ruling applied forward rather than a rule
+        // measured against ground truth, which is unusual for this file.
+        //
+        // Asked of the card with QUOTED text blanked out, because Strago and
+        // Relm, Skirk Alarmist and Apprentice Necromancer all hand the drawback
+        // to somebody else's creature.
+        private static readonly Regex GoneAtEndOfTheTurn = Rx(
+            @"at the beginning of the (?:next )?end step, (?:sacrifice this creature"
+            + @"|return this creature to (?:its|their) owner'?s hand)");
+
+        private static readonly Regex Hasty = Rx(@"\bhaste\b");
 
         // Three shapes that look like selection and are not, all ruled
         // 2026-09-20 off the nine cards where the classifier said Filter and the
@@ -2360,6 +2390,17 @@ namespace ScatoloneDownloader.Cube
             if (DamageToTheirController.IsMatch(text) && !ChargesForAKillItJustMade.IsMatch(text))
             {
                 result |= CardEffect.Burn;
+            }
+
+            // The creature that is really a burn spell. See GoneAtEndOfTheTurn.
+            if (card.MacroType == MacroType.Creature)
+            {
+                string itsOwnText = Quoted.Replace(text, " ");
+
+                if (GoneAtEndOfTheTurn.IsMatch(itsOwnText) && Hasty.IsMatch(itsOwnText))
+                {
+                    result |= CardEffect.Burn;
+                }
             }
 
             // …and what a TOKEN does is the token's. Asked by stripping and

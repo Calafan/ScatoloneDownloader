@@ -2169,6 +2169,41 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // Two more the same day. A creature with HASTE that is gone at the end of
+    // the turn it arrived attacks once and then is not there any more, so what
+    // it really did was put its power on a face — whether it dies (Ball
+    // Lightning) or bounces (Viashino Sandstalker). And on a LAND-DESTROYER the
+    // damage is a second effect worth counting, which settles the split this
+    // family had: Orcish Mine was tagged and Icequake, printing the same
+    // sentence, was not.
+    [InlineData("Ball Lightning", "Creature — Elemental",
+        "Trample\nHaste\nAt the beginning of the end step, sacrifice this creature.")]
+    [InlineData("Viashino Sandstalker", "Creature — Viashino Warrior",
+        "Haste\nAt the beginning of the end step, return this creature to its owner's hand.")]
+    [InlineData("Icequake", "Sorcery",
+        "Destroy target land. If that land was a snow land, Icequake deals 1 damage to that land's controller.")]
+    public void Classify_AShotWearingLegsOrALand_IsBurn(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
+
+    [Fact]
+    // …and the drawback handed to SOMEBODY ELSE'S creature is not the card
+    // shooting anything. Strago and Relm, Skirk Alarmist and Apprentice
+    // Necromancer all print those words inside quotes, about a creature they
+    // just gave you.
+    public void Classify_AnEndOfTurnDrawbackGrantedAway_IsNotBurn()
+    {
+        Card card = MakeCard("Strago and Relm", "Legendary Creature — Human Wizard",
+            "Sketch and Lore — {2}{R}, {T}: Target opponent exiles cards from the top of their library "
+            + "until they exile an instant, sorcery, or creature card. You may cast that card without "
+            + "paying its mana cost. If you cast a creature spell this way, it gains haste and \"At the "
+            + "beginning of the end step, sacrifice this creature.\" Activate only as a sorcery.");
+
+        Assert.False(EffectClassifier.Classify(card).HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
     // And the seven edges each of those rulings has to leave alone. Damage
     // divided among "target CREATURES" can never reach a player; Fiery Justice
     // hands the five life straight back, which the human ruled an exception on
