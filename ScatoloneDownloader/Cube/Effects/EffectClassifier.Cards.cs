@@ -70,6 +70,52 @@ namespace ScatoloneDownloader.Cube
             + @"|become the target of an activated ability, draws? (?:a|one) card"
             + @"|(?:opponent|player) gains? control of[^\n]{0,80}draws? (?:a|one) card");
 
+        // EXILE AND PLAY IT FROM THERE, in the five wordings the tag could not
+        // read. Ruled 2026-09-21: the human confirmed the whole family is
+        // CardAdvantage, and it was the single biggest hole left — twenty
+        // reviewed cards, every one tagged, every one missed, because each
+        // writes the same idea differently.
+        //
+        //   1. Dig until a nonland card turns up and play it. This is what
+        //      DISCOVER spells out in its reminder text, so the keyword joins it
+        //      (Territorial Bruntar, Solstice Revelations, Breaching
+        //      Dragonstorm, Long-Range Sensor).
+        //   2. A standing permission over a growing pile: "you may play cards
+        //      exiled with this creature" (Evendo Brushrazer, Urianger, Wheel of
+        //      Potential, Triple Triad).
+        //   3. The pile going to your HAND instead (Necropotence, Duplicity,
+        //      Knowledge Vault).
+        //   4. Casting from among the exiled cards for free (Kefka, Portent of
+        //      Calamity, Etrata).
+        //   5. The top of SOMEBODY ELSE'S library, which the several-cards rule
+        //      already read for a count but not for one card (Vaan).
+        private static readonly Regex ExileAndPlayFromThere = Rx(
+            @"exiles? cards? from the top of your library until you exile a nonland card|\bdiscover \d"
+            + @"|(?:play|cast) (?:any number of |all )?(?:cards?|spells?|them)"
+            + @"[\w ,'-]{0,30}exiled (?:with|this way|by)"
+            + @"|exiles? the top card of your library face down[^\n]{0,90}(?:put )?that card into your hand"
+            + @"|cards?[\w ]{0,12}exiled with this [\w]+ into (?:your|their owner'?s?) hand"
+            + @"|(?:cast|play) (?:a |any number of )?(?:spells?|cards?)[\w ,'-]{0,40}"
+            + @"from among (?:the |cards )?exiled"
+            + @"|exiles? the top \w+ cards? of (?:that|target|each) (?:player|opponent)'?s library"
+            + @"[^\n]{0,80}(?:you may (?:cast|play)|may play|may cast)");
+
+        // A one-card draw on a spell that can be CAST TWICE is two cards for
+        // one, which is the same count Welcome the Dead's flashback makes.
+        // Unending Whisper is "Draw a card." plus harmonize and nothing else.
+        private static readonly Regex OneDrawButTwoCasts = Rx(@"^draw a card\.", RegexOptions.Multiline);
+
+        // …unless the pile is THEIRS. The second wording above reads "you may
+        // cast cards exiled with Azula", and Azula exiles a creature an
+        // opponent controls and a card from their graveyard — which is Steal
+        // and Removal, and is hand-tagged as exactly that. Crabomination is the
+        // same card with three zones. What separates them from Vaan and
+        // Outrageous Robbery, which ARE tagged CardAdvantage, is that those two
+        // take the top of an opponent's LIBRARY: cards nobody had yet.
+        private static readonly Regex ThePileIsTheirsAlready = Rx(
+            @"exiles? an? [\w ]{0,20}(?:creature|permanent) they control"
+            + @"|exiles? [\w ,]{0,25}card at random from their graveyard");
+
         //   An ability that sacrifices the permanent runs once, so it is not the
         //   repeatable draw the 2026-09-11 ruling asked for — the same reading
         //   that keeps a one-shot sacrifice out of the Sacrifice tag.

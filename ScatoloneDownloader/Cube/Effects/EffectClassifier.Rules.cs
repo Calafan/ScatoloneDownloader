@@ -310,7 +310,14 @@ namespace ScatoloneDownloader.Cube
                     // Looking at N and taking MORE THAN ONE is a draw with selection.
                     // Taking exactly one is Filter, which the Filter rules say and
                     // this deliberately does not contradict. Ruled 2026-09-16.
-                    Rx(@"look at the top \w+ cards? of your library[^\n]{0,60}put (?:two|three|four|five|\d+) of them into your hand"),
+                    // Widened 2026-09-21: the count can be X, the cards can be
+                    // named "from among them", and the look can be written the
+                    // other way round — Stargaze says "Look at TWICE X cards
+                    // FROM THE TOP of your library. Put X cards from among them
+                    // into your hand".
+                    Rx(@"look at (?:the top \w+ cards?|twice \w+ cards?) (?:of|from the top of) your library"
+                        + @"[^\n]{0,60}put (?:two|three|four|five|x|\d+) "
+                        + @"(?:of them|of those cards|cards? from among them) into your hand"),
                     // The same thing counted one card at a time. Memories Returning
                     // says "Put one of them into your hand", then "Then you put one
                     // into your hand", then "Put the other into your hand" — three

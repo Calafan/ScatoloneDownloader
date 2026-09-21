@@ -501,6 +501,8 @@ namespace ScatoloneDownloader.Cube
             if ((!onlyOneOfThem
                     && (impulseIsACard || ExileSeveralAndPlayThem.IsMatch(text)))
                 || DrawThatMany.IsMatch(text)
+                || (ExileAndPlayFromThere.IsMatch(text) && !ThePileIsTheirsAlready.IsMatch(text))
+                || (OneDrawButTwoCasts.IsMatch(text) && CastsItselfASecondTime.IsMatch(text))
                 || (ClueWording.IsMatch(text) && (RepeatableClue.IsMatch(text) || SeveralClues.IsMatch(text))))
             {
                 result |= CardEffect.CardAdvantage;
