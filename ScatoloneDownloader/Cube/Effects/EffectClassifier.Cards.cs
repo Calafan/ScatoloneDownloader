@@ -822,17 +822,32 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex PhasingLoot = Rx(
             @"phases (?:out|in), discards? a card[\s\S]{0,120}phases (?:in|out), draws? a card");
 
-        // MEASURED AND REJECTED, 2026-09-21. A trigger whose draw is printed as
-        // a MODAL BULLET further down reads as a bare draw to the anchored
-        // rules, because the bullet is a line of its own with no trigger word
-        // on it — Teval's Judgment says "Whenever one or more cards leave your
-        // graveyard, choose one … • Draw a card". Asked of the stitched
-        // ability (which is what Abilities() rejoins bullets for) it buys that
-        // one card and costs two: Monument to Endurance offers the same bullet
-        // off a discard and is Filter, and Zuko, Conflicted charges 2 life for
-        // each mode and carries no tag at all. One modal draw per turn splits
-        // 1 to 2 in the reviewed set, so the shape decides nothing and the rule
-        // is not written. Recorded so it is not re-derived.
+        // MEASURED AND REJECTED, 2026-09-21, and the human explained the split
+        // on 2026-09-22. A trigger whose draw is printed as a MODAL BULLET
+        // further down reads as a bare draw to the anchored rules, because the
+        // bullet is a line of its own with no trigger word on it — Teval's
+        // Judgment says "Whenever one or more cards leave your graveyard,
+        // choose one … • Draw a card". Asked of the stitched ability (which is
+        // what Abilities() rejoins bullets for) it buys that one card and
+        // costs two.
+        //
+        // The three cards do not disagree, and none of them turns on the
+        // bullet. Each falls to a rule this tag ALREADY has:
+        //
+        //   Teval's Judgment  — "hasn't been chosen THIS TURN", so the choice
+        //                       comes back every turn and the second iteration
+        //                       is a card. Tagged, and it stays a known miss.
+        //   Monument to End.  — the trigger IS a discard, so the draw is paid
+        //                       for with a card. Parity, and it is Filter.
+        //   Zuko, Conflicted  — "hasn't been chosen", full stop: the mode runs
+        //                       once in the game and then you must pick
+        //                       another. Not repeatable, and untagged.
+        //
+        // So the distinction is readable — "this turn" is right there in the
+        // words — but the human ruled the family too card-specific to encode
+        // ("sono super specifiche"), and no rule is written. Recorded with its
+        // reasons rather than as a bare count, so the option is not re-derived
+        // from scratch and is not mistaken for an inconsistency.
 
         private static readonly Regex GrantedTriggeredDraw = Rx(
             "\"[^\"\n]{0,80}(?:whenever|at the beginning of)[^\"\n]{0,140}"
