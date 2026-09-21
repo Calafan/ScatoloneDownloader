@@ -1182,8 +1182,12 @@ namespace ScatoloneDownloader.Cube
             // listed (The Swarmweaver's "Insects and Spiders", Spider-Ham's
             // eighteen), or the "tribe" can be one card NAME (Rohgahh's Kobolds
             // of Kher Keep, Gary Clone's other Gary Clones).
+            // NB every letter of these is case-SENSITIVE like the rest of this
+            // pattern, so the leading noun needs both spellings: the phrase is
+            // capitalised when it opens a line and lower-case mid-sentence.
             + @"|[Cc]reatures you control of the chosen type (?:get|have)\b"
-            + @"|creatures? you control named [\w' ,-]{1,40} gets? \+"
+            + @"|[Cc]reatures? you control named [\w' ,-]{1,40} gets? \+"
+            + @"|each creature you control named [\w' ,-]{1,40} gets? \+"
             + @"|" + ClauseStart + @"(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + NotATribe
             + @"[A-Z][\w']+s?(?:, [A-Z][\w']+s?){0,20},? and [A-Z][\w']+s? you control (?:get|have)\b",
             RegexOptions.CultureInvariant | RegexOptions.Multiline);
