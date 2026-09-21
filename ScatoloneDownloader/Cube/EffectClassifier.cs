@@ -1059,6 +1059,30 @@ namespace ScatoloneDownloader.Cube
             // were realigned to match.
             Rx(@"target [\w -]{0,25}creature[\w ' -]{0,25}gains? [\w ,]{0,30}double strike"
                 + @"|(?:creatures you control|equipped creature|enchanted creature)[\w ,]{0,30}(?:gains?|have|has) [\w ,]{0,30}double strike"),
+            // SETTING base power and toughness is the third vocabulary for
+            // raising them, ruled 2026-09-21. Written narrowly: an Aura or an
+            // Equipment setting the body of the thing it is attached to, or a
+            // card setting somebody's base to X/X. The BARE phrase is not here
+            // and was measured — of the 30 reviewed cards that say "base power
+            // and toughness", only 6 are tagged, because most of them SHRINK
+            // (Turn to Frog, Sorceress Queen, Humility) or animate a land. The
+            // two halves split on the NUMBER, and a threshold on the number is
+            // exactly the shape this project has refused before, so Sephiroth
+            // and Atomic Microsizer stay misses rather than get a guessed rule.
+            // NB the second alternative is written as a LOOKBEHIND so the match
+            // starts after the beneficiary. The guard below reads the text in
+            // FRONT of a match for its subject, and "the base power and
+            // toughness OF ANOTHER TARGET CREATURE YOU CONTROL become X/X" puts
+            // that subject in the middle — matching from the start of the phrase
+            // leaves the guard looking at the trigger and calling it a self-buff.
+            Rx(@"(?:enchanted|equipped) creature has base power and toughness"
+                + @"|(?<=base power and toughness of [\w ,'-]{0,60})becomes? [xX]/[xX]"),
+            // DOUBLING is multiplication where the rest of this tag is addition,
+            // and it lands in the same place. Ruled 2026-09-21: Bulk Up doubles
+            // a creature's power, Double Trouble doubles everyone's, and Seismic
+            // Tutelage doubles the counters already on the enchanted creature.
+            Rx(@"double (?:target creature's|that creature's|the) power"
+                + @"|double the number of \+1/\+1 counters"),
         ];
 
         // A +1/+1 COUNTER is Buff, ruled 2026-09-15. It is the second vocabulary
@@ -1077,10 +1101,45 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex PumpInsideQuotes = Rx("\"[^\"\\n]{0,120}gets? \\+[\\dXx]");
         private static readonly Regex PlainPump = Rx(@"gets? \+[\dXx]+/\+[\dXx]+");
 
+        // Reminder text, and the three rulings of 2026-09-21 that read it. A
+        // pump printed inside PARENTHESES is explaining a keyword, not doing
+        // anything: rampage, melee and prowess all say "it gets +N/+N" in their
+        // reminder and none of the four cards carrying one is tagged Buff
+        // (Gabriel Angelfire, Depthshaker Titan, Aligned Heart, Otterball
+        // Antics).
+        private static readonly Regex Parenthetical = Rx(@"\([^)\n]*\)");
+
+        // An AURA that pumps the creature it just stole or reanimated is paying
+        // for that creature, not buffing one of yours: Dance of the Dead gives
+        // +1/+1 and takes the untap step away, Binding Grasp gives +0/+1 and
+        // takes the creature. The pump is the contour of the effect.
+        private static readonly Regex PumpsWhatItTook = Rx(
+            @"enchanted creature gets \+[\dXx]+/\+[\dXx]+");
+
+        private static readonly Regex TookThatCreature = Rx(
+            @"you control enchanted creature|put enchanted creature card onto the battlefield"
+            + @"|enchant creature card in a graveyard|gain control of enchanted creature");
+
+        // And a pump bundled with an ANSWER or a SHIELD is a rider on that, not
+        // a Buff of its own. Ruled 2026-09-21, the same reading the damage rider
+        // on a removal spell got the day before: Gurmag Rakshasa shrinks one of
+        // theirs and pumps one of yours, Magic Damper and Octopus Form pump and
+        // grant hexproof, Rhino's Rampage pumps and fights. Asked of the LINE,
+        // so a card that pumps on one ability and kills on another keeps both.
+        private static readonly Regex AnswerOrShieldOnTheSameLine = Rx(
+            // "OTHERWISE, IT GETS -1/-2" is the same creature under a condition,
+            // not a second victim: Phyrexian Boon and Tahngarth's Rage pump or
+            // shrink the one thing they enchant and are hand-tagged both Removal
+            // and Buff, so the shrink must not blank the pump beside it.
+            @"(?<!otherwise, it )gets? -[\dXx]+/-[\dXx]|\bfights?\b|prevent all (?:combat )?damage");
+
         private static readonly Regex CounterOnSomebodyElse = Rx(
             @"\+1/\+1 counters? on (?:target|another|each|up to|one or more)"
             + @"|distribute [\w ]{0,20}\+1/\+1 counters"
-            + @"|\bsupport \d");
+            // "Support X" as readily as "support 2" — Blitzball Stadium says the
+            // X form, and once reminder text stopped vouching for a pump
+            // (2026-09-21) the keyword itself is all that is left to read.
+            + @"|\bsupport [\dxX]");
 
         // Same question Buff always asks, in the one place this wording can point
         // the wrong way: a counter on THEIR creatures helps them, not you.
@@ -1116,7 +1175,17 @@ namespace ScatoloneDownloader.Cube
             ClauseStart + @"(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + NotATribe + @"[A-Z][\w']+s? creatures? (?:you control )?(?:get|have)\b"
             + @"|" + ClauseStart + @"(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + NotATribe + @"[A-Z][\w']+s? (?:you control )?(?:get|have)\b"
             + @"|[Tt]arget " + NotATribe + @"[A-Z][\w']+ creature gets"
-            + @"|" + ClauseStart + @"(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + NotATribe + @"[A-Z][\w']+s? creatures? get \+",
+            + @"|" + ClauseStart + @"(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + NotATribe + @"[A-Z][\w']+s? creatures? get \+"
+            // Four more ways a card names a tribe, found 2026-09-21 when the
+            // human ruled that a lord is never this tag: the type can be CHOSEN
+            // rather than printed (Patchwork Banner), several types can be
+            // listed (The Swarmweaver's "Insects and Spiders", Spider-Ham's
+            // eighteen), or the "tribe" can be one card NAME (Rohgahh's Kobolds
+            // of Kher Keep, Gary Clone's other Gary Clones).
+            + @"|[Cc]reatures you control of the chosen type (?:get|have)\b"
+            + @"|creatures? you control named [\w' ,-]{1,40} gets? \+"
+            + @"|" + ClauseStart + @"(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + NotATribe
+            + @"[A-Z][\w']+s?(?:, [A-Z][\w']+s?){0,20},? and [A-Z][\w']+s? you control (?:get|have)\b",
             RegexOptions.CultureInvariant | RegexOptions.Multiline);
 
         // NB: no bare "regenerate" — "can't be regenerated" (Wrath) would false-positive.
@@ -2591,6 +2660,29 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Buff;
             }
 
+            // Three more ways a pump belongs to something other than this tag,
+            // all ruled 2026-09-21. Each is asked by BLANKING the shape and
+            // seeing whether any pump is left standing, so a card that explains
+            // rampage on one line and pumps on another keeps the tag.
+            if (result.HasFlag(CardEffect.Buff))
+            {
+                string realPump = Parenthetical.Replace(text, " ");
+
+                if (TookThatCreature.IsMatch(text))
+                {
+                    realPump = PumpsWhatItTook.Replace(realPump, " ");
+                }
+
+                realPump = string.Join('\n', realPump.Split('\n')
+                    .Select(line => AnswerOrShieldOnTheSameLine.IsMatch(line) ? " " : line));
+
+                if (realPump != text && !BuffPatterns.Any(p => p.IsMatch(realPump))
+                    && !(CounterOnSomebodyElse.IsMatch(realPump) && !CounterForAnOpponent.IsMatch(realPump)))
+                {
+                    result &= ~CardEffect.Buff;
+                }
+            }
+
             if (result.HasFlag(CardEffect.Protection) && AimsOnlyAtItself(text, ProtectionPatterns, card, bareIsSelf: true))
             {
                 result &= ~CardEffect.Protection;
@@ -2901,29 +2993,16 @@ namespace ScatoloneDownloader.Cube
         /// Slivers). What the card does is make the token or grant the ability;
         /// the pump belongs to whatever received it.
         /// <para>
-        /// A quoted ability that pumps a TARGET is the exception and keeps the
-        /// tag: Forbidden Lore's enchanted land taps to pump any creature, which
-        /// is a Buff the card handed you. Costs 2 against the hand-tagging to say
-        /// so, and it is said anyway — those two cards are right.
+        /// A quoted ability that pumps a TARGET used to be the exception and keep
+        /// the tag. That exception was REMOVED on 2026-09-21, by the same ruling
+        /// Burn got the day before: what a token does is the token's, whoever it
+        /// points at. Seven reviewed cards hand a Mercenary or an Equipment a
+        /// "{T}: Target creature you control gets +1/+0" and not one of them is
+        /// tagged Buff — Mabel, At Knifepoint, Rakish Crew, Nezumi Linkbreaker,
+        /// Wanted Griffin and two more.
         /// </para></summary>
-        private static bool OnlyPumpsInsideQuotes(string text)
-        {
-            if (!PumpInsideQuotes.IsMatch(text) || PlainPump.IsMatch(Quoted.Replace(text, " ")))
-            {
-                return false;
-            }
-
-            foreach (Match quote in Quoted.Matches(text))
-            {
-                if (PlainPump.IsMatch(quote.Value)
-                    && quote.Value.Contains("target", StringComparison.OrdinalIgnoreCase))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
+        private static bool OnlyPumpsInsideQuotes(string text) =>
+            PumpInsideQuotes.IsMatch(text) && !PlainPump.IsMatch(Quoted.Replace(text, " "));
 
         /// <summary>True when every Buff wording on the card sits inside a pump
         /// restricted to one creature type. Blank the tribal phrases out and ask

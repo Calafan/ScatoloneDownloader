@@ -389,14 +389,65 @@ public sealed class EffectClassifierTests
     }
 
     [Fact]
-    public void Classify_AQuotedAbilityThatPumpsATarget_StaysBuff()
+    public void Classify_AQuotedAbilityThatPumpsATarget_IsNotBuff()
     {
-        // The exception to the quotes rule: the granted ability pumps ANY
-        // creature, so the card handed you a Buff.
+        // This used to be the exception to the quotes rule, on the reading that
+        // a granted ability pumping ANY creature is a Buff the card handed you.
+        // Overturned 2026-09-21 by the same ruling Burn got the day before: what
+        // a token or a granted ability does belongs to whatever received it,
+        // whoever it then points at. Seven reviewed cards hand out a "{T}:
+        // Target creature you control gets +1/+0" and none is tagged Buff.
         CardEffect result = EffectClassifier.Classify(MakeCard("Forbidden Lore", "Enchantment — Aura",
             "Enchant land\nEnchanted land has \"{T}: Target creature gets +2/+1 until end of turn.\""));
 
-        Assert.True(result.HasFlag(CardEffect.Buff));
+        Assert.False(result.HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // Ruled 2026-09-21, four families at once. A pump inside PARENTHESES is a
+    // keyword's reminder text and does nothing; an Aura that pumps the creature
+    // it just took is paying for it; a pump bundled with a shrink or a fight is
+    // a rider on the answer; and a lord is not this tag however the tribe is
+    // named — chosen, listed, or named as a card.
+    [InlineData("Gabriel Angelfire", "Legendary Creature — Angel",
+        "At the beginning of your upkeep, choose flying, first strike, trample, or rampage 3. Gabriel "
+        + "Angelfire gains that ability until your next upkeep. (Whenever a creature with rampage 3 "
+        + "becomes blocked, it gets +3/+3 until end of turn for each creature blocking it beyond the first.)")]
+    [InlineData("Binding Grasp", "Enchantment — Aura",
+        "Enchant creature\nAt the beginning of your upkeep, sacrifice this Aura unless you pay {1}{U}.\n"
+        + "You control enchanted creature.\nEnchanted creature gets +0/+1.")]
+    [InlineData("Gurmag Rakshasa", "Creature — Cat Demon",
+        "Menace\nWhen this creature enters, target creature an opponent controls gets -2/-2 until end of "
+        + "turn and target creature you control gets +2/+2 until end of turn.")]
+    [InlineData("Patchwork Banner", "Artifact",
+        "As this artifact enters, choose a creature type.\nCreatures you control of the chosen type get "
+        + "+1/+1.\n{T}: Add one mana of any color.")]
+    [InlineData("The Swarmweaver", "Legendary Creature — Spider",
+        "When The Swarmweaver enters, create two 1/1 black and green Insect creature tokens with flying.\n"
+        + "Delirium — As long as there are four or more card types among cards in your graveyard, Insects "
+        + "and Spiders you control get +1/+1 and have deathtouch.")]
+    public void Classify_APumpThatBelongsToSomethingElse_IsNotBuff(
+        string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // And the two vocabularies the tag was blind to, both ruled the same day.
+    // Setting a base power and toughness raises it just as an addition does, and
+    // DOUBLING is multiplication landing in the same place.
+    [InlineData("Wrecking Ball Arm", "Artifact — Equipment",
+        "Equipped creature has base power and toughness 7/7 and can't be blocked by creatures with power "
+        + "2 or less.\nEquip legendary creature {3}\nEquip {7}")]
+    [InlineData("Unruly Krasis", "Creature — Fish Beast",
+        "Trample\nWhenever this creature attacks, you may have the base power and toughness of another "
+        + "target creature you control become X/X until end of turn, where X is the number of creatures "
+        + "you control.")]
+    [InlineData("Bulk Up", "Instant", "Double target creature's power until end of turn.")]
+    [InlineData("Double Trouble", "Sorcery", "Double the power of each creature you control until end of turn.")]
+    public void Classify_ABaseOrADoubling_IsBuff(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
     }
 
     [Fact]
