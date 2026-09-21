@@ -262,7 +262,11 @@ namespace ScatoloneDownloader.Cube
                 (CardEffect.CardAdvantage, [
                     Rx(@"draws? (?:two|three|four|five|six|seven|eight|nine|ten|x|\d+) cards"),
                     Rx(@"^[^\n:]{1,70}:[^\n]{0,100}draws? (?:a|one) card", RegexOptions.Multiline),
-                    Rx(@"^(?:whenever|at the beginning of)[^\n]{0,160}draws? (?:a|one) card", RegexOptions.Multiline),
+                    // The station prefix is part of the anchor: a Spacecraft
+                    // prints its abilities behind "3+ | " and "12+ | ", and the
+                    // trigger word is no longer first on the line. Uthros
+                    // Research Craft draws on every artifact you cast.
+                    Rx(@"^(?:\d+\+ \| )?(?:whenever|at the beginning of)[^\n]{0,160}draws? (?:a|one) card", RegexOptions.Multiline),
                     // The same trigger with ONE SENTENCE in front of it. Rowen
                     // says "Reveal the first card you draw each turn. Whenever
                     // you reveal a basic land card this way, draw a card", and
@@ -287,6 +291,17 @@ namespace ScatoloneDownloader.Cube
                     // missed entirely: Balance of Power, Baleful Stare, Become the
                     // Avalanche. Worth 24 recovered for 2 wrongly fired.
                     Rx(@"draws? a card for each|draws? cards equal to"),
+                    // …and the count-first version of the same sentence, where
+                    // the "for each" opens it and the draw closes it: Mob
+                    // Verdict pays a card per vote you took, Tempt with Bunnies
+                    // one per opponent who accepted. Both tagged, and they are
+                    // the only two reviewed cards written this way.
+                    Rx(@"for each [\w ']{0,40}, (?:you )?draws? (?:a|one) card"),
+                    // ONE trigger word covering TWO events is two cards, not
+                    // one: Cryogen Relic draws when it enters and again when it
+                    // leaves, so the artifact replaces itself and pays a card
+                    // on the way out. One reviewed card says it, tagged.
+                    Rx(@"enters or leaves the battlefield, draws? (?:a|one) card"),
                     // A trigger hiding behind a LABEL. The anchored rule above wants
                     // "whenever" at the start of the line, and modern cards put an
                     // ability word or a Siege bullet in front of it — "Eerie —
@@ -301,7 +316,31 @@ namespace ScatoloneDownloader.Cube
                     // 2026-09-20 on Jecht, Reluctant Guardian, whose "I, II — Jecht
                     // Beam — Each opponent discards a card and you draw a card" is
                     // hand-tagged CardAdvantage and was being missed.
-                    Rx(@"^[ivx]+, [ivx]+ [^\n]{0,140}\byou draw (?:a|one) card", RegexOptions.Multiline),
+                    // Widened 2026-09-21 to ANY number of numbers and to the draw
+                    // written without "you": "I, II, III — Pain — You draw a card"
+                    // (Summon: Anima), "I, II — Scry 2, then draw a card" (The
+                    // Legend of Kuruk), "II, III — Until end of turn, whenever a
+                    // Kraken ... attacks, draw a card" (Summon: Leviathan).
+                    //
+                    // A chapter naming ONE number stays out. "A Saga chapter that
+                    // draws is CardAdvantage" was measured whole on 2026-09-21 and
+                    // REJECTED at 7 tagged out of 13 — Founding of Omashu, Leaves
+                    // from the Vine, Summon: G.F. Ifrit, The Clone Saga, The Tale
+                    // of Tamiyo and Vault 11 all draw a chapter's worth and none is
+                    // tagged. So it is the REPETITION that earns the tag here, the
+                    // same as everywhere else, and not the chapter.
+                    //
+                    // And the draw has to be UNCONDITIONAL, which is why the
+                    // window forbids the word "if" rather than allowing any
+                    // character. A chapter that draws only when something else
+                    // went its way is the conditional rider the tag has no
+                    // ruling on yet, and both reviewed cards written that way
+                    // are untagged: The Tale of Tamiyo draws when two milled
+                    // cards happen to share a type, and Vault 11 draws only
+                    // when a vote produced no creature — and pays every player
+                    // when it does.
+                    Rx(@"^[ivx]+(?:, [ivx]+)+ (?:(?!\bif\b)[^\n]){0,140}\b(?:you )?draws? (?:a|one) card",
+                        RegexOptions.Multiline),
                     // The top of your library is a second hand, ruled 2026-09-16:
                     // Fblthp, Glarb and the Traveling Chocobo never run out of cards
                     // to play even though they never draw one.

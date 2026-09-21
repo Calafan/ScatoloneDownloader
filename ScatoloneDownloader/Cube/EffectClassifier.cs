@@ -121,6 +121,10 @@ namespace ScatoloneDownloader.Cube
             ["detain"] = CardEffect.Pacify,
         };
 
+        /// <summary>The line every ante card opens with. See the veto at the top
+        /// of <see cref="Classify"/> for why it answers for the whole card.</summary>
+        private static readonly Regex PlayedForAnte = Rx(@"if you're not playing for ante");
+
         /// <summary>Proposes the effect flags for a card from its
         /// <see cref="Card.OracleText"/> and <see cref="Card.Keywords"/>. Returns
         /// <see cref="CardEffect.None"/> when nothing matches (leave it untagged).</summary>
@@ -129,6 +133,18 @@ namespace ScatoloneDownloader.Cube
             CardEffect result = CardEffect.None;
 
             string text = card.OracleText ?? string.Empty;
+
+            // An ANTE card carries no tags at all. This is not a reading of what
+            // the card does — Contract from Below really does draw seven — but of
+            // what the cube is: the first line of every one of them says to take
+            // it out of the deck before playing, so none of them is ever cast and
+            // none of their effects ever happens. Measured 2026-09-21 and it is
+            // unanimous: nine of them are reviewed, and all nine are untagged.
+            if (PlayedForAnte.IsMatch(text))
+            {
+                return CardEffect.None;
+            }
+
             if (text.Length > 0)
             {
                 foreach ((CardEffect effect, Regex[] patterns) in Rules)
@@ -418,11 +434,12 @@ namespace ScatoloneDownloader.Cube
 
             if (result.HasFlag(CardEffect.CardAdvantage)
                 && (Loot.IsMatch(oneSidedLoot) || Cycling.IsMatch(text) || ReplacesTheDraw.IsMatch(text)
-                    || ADrawYouCannotCount.IsMatch(text)
+                    || ADrawYouCannotCount.IsMatch(text) || EverybodyDrawsTheSame.IsMatch(text)
                     || (DrawBySacrificingItself.IsMatch(text)
                         && !DrawGrantedToOtherPermanents.IsMatch(text)
                         && !SacrificeRefundedByACopy.IsMatch(text))
-                    || DrawByExilingItselfFromGraveyard.IsMatch(text)
+                    || SpendsItselfOutOfTheGraveyard(text)
+                    || SpendsItselfWithoutAColon.IsMatch(text)
                     || AdditionalCostDiscard.IsMatch(text) || ActivationCostDiscard.IsMatch(text)
                     || DrawPaidForWithACard.IsMatch(text)))
             {
@@ -464,7 +481,9 @@ namespace ScatoloneDownloader.Cube
             // The top few of your library, one of them into your hand, over and
             // over. See TopFewIntoYourHand for the ruling and the measurement,
             // and note that nothing withdraws Filter: the card really did select.
-            if (Abilities(text).Any(a => TopFewIntoYourHand.IsMatch(a) && AbilityRepeatsAtNoCostToItself(a)))
+            if (Abilities(text).Any(a =>
+                    (TopFewIntoYourHand.IsMatch(a) || SearchesSeveralIntoYourHand.IsMatch(a))
+                    && AbilityRepeatsAtNoCostToItself(a)))
             {
                 result |= CardEffect.CardAdvantage;
             }
@@ -500,9 +519,17 @@ namespace ScatoloneDownloader.Cube
 
             if ((!onlyOneOfThem
                     && (impulseIsACard || ExileSeveralAndPlayThem.IsMatch(text)))
-                || DrawThatMany.IsMatch(text)
+                // "Draw that many cards" is added back after the guards, so it
+                // has to ask the guard that reads WHOSE misfortune it counts:
+                // Kain hands himself to the player he hit and pays you a card
+                // per point, which is a draw you cannot ask for.
+                || (DrawThatMany.IsMatch(text) && !ADrawYouCannotCount.IsMatch(text))
                 || (ExileAndPlayFromThere.IsMatch(text) && !ThePileIsTheirsAlready.IsMatch(text))
                 || (OneDrawButTwoCasts.IsMatch(text) && CastsItselfASecondTime.IsMatch(text))
+                || SelfSacrificeBuysSeveral.IsMatch(text)
+                || DiscardYourHandThenDrawSeveral.IsMatch(text)
+                || GrantedTriggeredDraw.IsMatch(text)
+                || BecomesTheMonarch.IsMatch(text)
                 || (ClueWording.IsMatch(text) && (RepeatableClue.IsMatch(text) || SeveralClues.IsMatch(text))))
             {
                 result |= CardEffect.CardAdvantage;

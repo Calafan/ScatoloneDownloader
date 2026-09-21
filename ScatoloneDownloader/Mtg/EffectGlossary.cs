@@ -67,10 +67,10 @@
                 + "back half of a loot — and paying it attacks nobody.",
 
             [CardEffect.CardAdvantage] =
-                "A card the opponent does not get. COUNT IT, and the card ITSELF counts: Ponder is -1 +1 = 0. A "
-                + "one-shot must draw two more than it pays; a REPEATABLE ability bought the card once, so one is "
-                + "enough — even when it costs a card, even when it only takes one off the top. Two off the top "
-                + "and ONE played is Filter. Not a draw for THEM.",
+                "A card the opponent does not get. COUNT IT — the card ITSELF counts, so Ponder nets 0. A one-shot "
+                + "must draw two more than it pays; a REPEATABLE ability bought the card once, so one is enough — even "
+                + "when it costs a card or itself, even one at a time off the top. Two off and ONE played is Filter. "
+                + "Not a draw for THEM, nor one you both get.",
 
             [CardEffect.Filter] =
                 "Cards changing places at NO net gain: scry, surveil, hideaway, look at the top few and take one, "

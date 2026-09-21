@@ -2911,6 +2911,169 @@ public sealed class EffectClassifierTests
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
     }
 
+    [Theory]
+    // An ANTE card carries no tags at all, ruled by measurement 2026-09-21: the
+    // first line takes it out of the deck, so none of what it says ever
+    // happens. Nine reviewed cards say it and all nine are untagged, which is
+    // why this is a veto on the whole classifier rather than on one effect.
+    [InlineData("Contract from Below", "Sorcery",
+        "Remove this card from your deck before playing if you're not playing for ante.\n"
+        + "Discard your hand, ante the top card of your library, then draw seven cards.")]
+    [InlineData("Jeweled Bird", "Artifact",
+        "Remove this card from your deck before playing if you're not playing for ante.\n"
+        + "{T}: Ante this artifact. If you do, put all other cards you own from the ante into your "
+        + "graveyard, then draw a card.")]
+    public void Classify_AnAnteCard_CarriesNothingAtAll(string name, string typeLine, string oracle)
+    {
+        Assert.Equal(CardEffect.None, EffectClassifier.Classify(MakeCard(name, typeLine, oracle)));
+    }
+
+    [Theory]
+    // ONE card off the top, into your hand, every turn. The put-into-hand rule
+    // wanted a count where these cards write none, and it is the same second
+    // hand either way (2026-09-21). 13 reviewed cards, 11 tagged.
+    [InlineData("Darkstar Augur", "Token Creature — Bat Warlock",
+        "Flying\nAt the beginning of your upkeep, reveal the top card of your library and put that card "
+        + "into your hand. You lose life equal to its mana value.")]
+    [InlineData("Traveling Botanist", "Creature — Dog Scout",
+        "Whenever this creature becomes tapped, look at the top card of your library. If it's a land card, "
+        + "you may reveal it and put it into your hand. If you don't put the card into your hand, you may "
+        + "put it into your graveyard.")]
+    // …and the same hand dug for with a SEARCH, which only counts when the
+    // ability repeats: Gift of Estates says the identical words on a one-shot
+    // sorcery and is Ramp alone.
+    [InlineData("Land Tax", "Enchantment",
+        "At the beginning of your upkeep, if an opponent controls more lands than you, you may search your "
+        + "library for up to three basic land cards, reveal them, put them into your hand, then shuffle.")]
+    // The opponent may be the one doing the looking.
+    [InlineData("Phyrexian Portal", "Artifact",
+        "{3}: If your library has ten or more cards in it, target opponent looks at the top ten cards of "
+        + "your library and separates them into two face-down piles. Exile one of those piles. Search the "
+        + "other pile for a card, put it into your hand, then shuffle the rest of that pile into your library.")]
+    // A permanent sold for MORE THAN ONE card is a trade it wins. The one-shot
+    // sacrifice rule was written for the one-card case and still reads that.
+    [InlineData("Blitzball", "Artifact",
+        "{T}: Add one mana of any color.\n"
+        + "GOOOOAAAALLL! — {T}, Sacrifice this artifact: Draw two cards. Activate only if an opponent was "
+        + "dealt combat damage by a legendary creature this turn.")]
+    // Emptying your hand for a fixed number back is not a loot: the hand you
+    // paid can be empty, which is what the Case solves itself on.
+    [InlineData("Case of the Crimson Pulse", "Enchantment — Case",
+        "When this Case enters, discard a card, then draw two cards.\n"
+        + "To solve — You have no cards in hand. (If unsolved, solve at the beginning of your end step.)\n"
+        + "Solved — At the beginning of your upkeep, discard your hand, then draw two cards.")]
+    // A triggered draw printed INSIDE QUOTES was handed to a body that keeps
+    // it, the reading Mnemonic Sliver already got.
+    [InlineData("Thief's Knife", "Artifact — Equipment",
+        "Job select (When this Equipment enters, create a 1/1 colorless Hero creature token, then attach "
+        + "this to it.)\nEquipped creature gets +1/+1, has \"Whenever this creature deals combat damage to "
+        + "a player, draw a card,\" and is a Rogue in addition to its other types.\nEquip {4}")]
+    // The monarchy is a card every turn with no draw written down, and it
+    // outlives the permanent that handed it over.
+    [InlineData("Coin of Fate", "Artifact",
+        "When this artifact enters, surveil 1.\n"
+        + "{3}{W}, {T}, Exile two creature cards from your graveyard, Sacrifice this artifact: An opponent "
+        + "chooses one of the exiled cards. You put that card on the bottom of your library and return the "
+        + "other to the battlefield tapped. You become the monarch.")]
+    // One trigger word covering TWO events is two cards. The stun ability is a
+    // different line and may not be billed for this draw.
+    [InlineData("Cryogen Relic", "Artifact",
+        "When this artifact enters or leaves the battlefield, draw a card.\n"
+        + "{1}{U}, Sacrifice this artifact: Put a stun counter on up to one target tapped creature.")]
+    // The count-first sentence, and a graveyard handed flashback wholesale.
+    [InlineData("Mob Verdict", "Sorcery",
+        "Secret council — Each player secretly votes for another player, then those votes are revealed. "
+        + "For each vote an opponent received, Mob Verdict deals 2 damage to that player and each creature "
+        + "that player controls. For each vote you received, draw a card.")]
+    [InlineData("Iroh, Grand Lotus", "Legendary Creature — Human Noble Ally",
+        "Firebending 2\nDuring your turn, each non-Lesson instant and sorcery card in your graveyard has "
+        + "flashback. The flashback cost is equal to that card's mana cost.\n"
+        + "During your turn, each Lesson card in your graveyard has flashback {1}.")]
+    // A Saga chapter naming more than one number fires more than once. Any
+    // number of numbers, and the draw need not say "you".
+    [InlineData("Summon: Anima", "Enchantment Creature — Saga Horror",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after IV.)\n"
+        + "I, II, III — Pain — You draw a card and you lose 1 life.\n"
+        + "IV — Oblivion — Each opponent sacrifices a creature of their choice and loses 3 life.\nMenace")]
+    [InlineData("Summon: Leviathan", "Enchantment Creature — Saga Leviathan",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\n"
+        + "I — Return each creature that isn't a Kraken, Leviathan, Merfolk, Octopus, or Serpent to its "
+        + "owner's hand.\n"
+        + "II, III — Until end of turn, whenever a Kraken, Leviathan, Merfolk, Octopus, or Serpent attacks, "
+        + "draw a card.\nWard {2}")]
+    // One card off SOMEBODY ELSE'S top, cast from where it lies.
+    [InlineData("Vaan, Street Thief", "Legendary Creature — Human Scout",
+        "Whenever one or more Scouts, Pirates, and/or Rogues you control deal combat damage to a player, "
+        + "exile the top card of that player's library. You may cast it. If you don't, create a Treasure "
+        + "token.\nWhenever you cast a spell you don't own, put a +1/+1 counter on each Scout, Pirate, and "
+        + "Rogue you control.")]
+    public void Classify_TheSecondPassWordings_AreCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // PARITY ACROSS THE TABLE. The 2026-09-20 parity ruling was about one
+    // player trading a card for a card; this is the two-player version, where
+    // the count is level and nobody has gained on anybody.
+    [InlineData("Tataru Taru", "Legendary Creature — Dwarf Advisor",
+        "When Tataru Taru enters, you draw a card and target opponent may draw a card.\n"
+        + "Scions' Secretary — Whenever an opponent draws a card, if it isn't that player's turn, create a "
+        + "tapped Treasure token. This ability triggers only once each turn.")]
+    [InlineData("Mog, Moogle Warrior", "Legendary Creature — Moogle Warrior",
+        "Lifelink\nDance — At the beginning of your end step, each player may discard a card. Each player "
+        + "who discarded a card this way draws a card. If a creature card was discarded this way, you "
+        + "create a 1/2 white Moogle creature token with lifelink.")]
+    // The self-sacrifice trade only wins when the count is READABLE and the
+    // line hands nothing back. All-Fates Scroll draws "X cards, where X is …"
+    // and Conch Horn puts one from your hand back on top; both are untagged.
+    [InlineData("All-Fates Scroll", "Artifact",
+        "{T}: Add one mana of any color.\n"
+        + "{7}, {T}, Sacrifice this artifact: Draw X cards, where X is the number of differently named "
+        + "lands you control.")]
+    [InlineData("Conch Horn", "Artifact",
+        "{1}, {T}, Sacrifice this artifact: Draw two cards, then put a card from your hand on top of your "
+        + "library.")]
+    // A quoted draw that is a LOOT is parity wherever it is printed.
+    [InlineData("Ninja's Blades", "Artifact — Equipment",
+        "Job select\nEquipped creature gets +1/+1, is a Ninja in addition to its other types, and has "
+        + "\"Whenever this creature deals combat damage to a player, draw a card, then discard a card. "
+        + "That player loses life equal to the discarded card's mana value.\"\nMutsunokami — Equip {2}")]
+    // THE PILE IS THEIRS reaches their graveyard too: six reviewed cards exile
+    // from a named opponent's graveyard and none is CardAdvantage.
+    [InlineData("Hama, the Bloodbender", "Legendary Creature — Human Warlock",
+        "When Hama enters, target opponent mills three cards. Exile up to one noncreature, nonland card "
+        + "from that player's graveyard. For as long as you control Hama, you may cast the exiled card "
+        + "during your turn by waterbending {X} rather than paying its mana cost, where X is its mana value.")]
+    // A chapter that draws only when something else went its way is the
+    // conditional rider this tag has no ruling on.
+    [InlineData("The Tale of Tamiyo", "Legendary Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after IV.)\n"
+        + "I, II, III — Mill two cards. If two cards that share a card type were milled this way, draw a "
+        + "card and repeat this process.\n"
+        + "IV — Exile any number of target instant, sorcery, and/or Tamiyo planeswalker cards from your "
+        + "graveyard. Copy them. You may cast any number of the copies.")]
+    // "Exile the top card, you may play it" is the one-card impulse, which is a
+    // rider — the second-hand rule has to say LOOK or REVEAL, never EXILE.
+    [InlineData("Haste Magic", "Instant",
+        "Target creature gets +3/+1 and gains haste until end of turn. Exile the top card of your library. "
+        + "You may play it until your next end step.")]
+    // A draw you cannot ask for, counted the other way round: Kain pays a card
+    // per point only once he has changed sides.
+    [InlineData("Kain, Traitorous Dragoon", "Legendary Creature — Human Knight",
+        "Jump — During your turn, Kain has flying.\n"
+        + "Whenever Kain deals combat damage to a player, that player gains control of Kain. If they do, "
+        + "you draw that many cards, create that many tapped Treasure tokens, then lose that much life.")]
+    // A draw the card spends ITSELF on, written without a colon.
+    [InlineData("Lim-Dûl's Paladin", "Creature — Human Knight",
+        "Trample\nAt the beginning of your upkeep, you may discard a card. If you don't, sacrifice this "
+        + "creature and draw a card.\n"
+        + "Whenever this creature becomes blocked, it gets +6/+3 until end of turn.")]
+    public void Classify_TheSecondPassNonWordings_AreNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
     private static Card MakeCard(string name, string typeLine, string oracleText, List<string>? keywords = null)
     {
         JsonCard json = new()
