@@ -437,7 +437,42 @@ namespace ScatoloneDownloader.Cube
             Rx(@"\btap target[\w ,]*creature"),
             Rx(@"detain"),
             PreventsWhatACreatureDeals,
+            // A STUN COUNTER is an untap lock that travels with the creature,
+            // and it is how every card printed since 2021 writes one. 24
+            // reviewed cards carry the word and 18 are tagged; of the six that
+            // are not, three put the counter on THEMSELVES as a drawback
+            // (Tonberry, Baloth Prime, Ambling Stormshell — see
+            // StunsItselfAsADrawback), one is an attack trigger (Vengeful
+            // Villagers, read by TapsOnItsOwnAttack), and two hang it off a
+            // bigger effect as a rider (Kitnap steals the creature it stuns,
+            // Magmatic Hellkite stuns the land it just made an opponent fetch).
+            Rx(@"stun counters? on (?!it\b|this )"),
         ];
+
+        // …and the drawback version, which is the same counter aimed inward:
+        // the card enters already stunned, or stuns itself to pay for
+        // something. Nothing is neutralised but the card itself.
+        private static readonly Regex StunsItselfAsADrawback = Rx(
+            @"enters tapped with [\w ]{0,12}stun counter"
+            + @"|attacks, put [\w ]{0,10}stun counters? on it\b");
+
+        // Tapping a creature as an ATTACK TRIGGER is a combat trick, not a
+        // lock: it pushes one blocker out of the way for the swing that is
+        // already happening, and by the defender's next untap step it is gone.
+        // Seven reviewed cards do exactly this — Seasoned Marshal, Sidar
+        // Jabari, Conformer Shuriken, Thunder Lasso, Web-Shooters, Vengeful
+        // Villagers, Wayspeaker Bodyguard — and not one of them is tagged.
+        private static readonly Regex TapsOnItsOwnAttack = Rx(
+            @"(?:whenever|when)[^\n]{0,60}attacks?,[^\n]{0,40}tap target[\w ,'-]{0,40}creature");
+
+        // "This creature can't attack or block UNLESS <condition>" is a price
+        // the card pays for its own statline, which is the same reading
+        // SelfCantAttack already gives a Wall — it just could not see this
+        // wording, because the sentence names the card and then goes on for
+        // another forty characters before the verb. Six reviewed cards say it
+        // (Hazoret Godseeker, Ketramose, Sab-Sunen, Patchwork Beastie,
+        // Tiger-Dillo, The Lion-Turtle) and none is tagged.
+        private static readonly Regex CantAttackOrBlockUnless = Rx(@"can'?t attack or block unless");
 
         // Tapping a creature YOU control is a cost — Energy Tap and Arena buy
         // something with it. Same question as everywhere else: whose creature?

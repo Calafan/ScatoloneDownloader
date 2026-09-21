@@ -168,6 +168,64 @@ namespace ScatoloneDownloader.Cube
             return SelfUntapClause.IsMatch(text);
         }
 
+        /// <summary>True when every "can't attack or block unless" on the card
+        /// names the CARD ITSELF as the thing being held back. That is a price
+        /// paid for a statline, the same reading <see cref="SelfCantAttack"/>
+        /// gives a Wall — it just could not see this wording, because
+        /// <c>OutwardCantAttack</c> matches "can't attack or block" first and
+        /// vouches for the sentence before anyone asks whose creature it is.
+        /// The subject is read per line, and older cards write their own name
+        /// where a modern one says "this creature".</summary>
+        private static bool CantAttackIsItsOwnPrice(Card card)
+        {
+            string text = card.OracleText ?? string.Empty;
+            if (!CantAttackOrBlockUnless.IsMatch(text))
+            {
+                return false;
+            }
+
+            string name = ShortName(card);
+
+            foreach (Match match in CantAttackOrBlockUnless.Matches(text))
+            {
+                int lineStart = text.LastIndexOf('\n', Math.Max(match.Index - 1, 0)) + 1;
+                string before = text[lineStart..match.Index];
+
+                if (!SelfReference.IsMatch(before)
+                    && (name.Length == 0 || !before.Contains(name, StringComparison.OrdinalIgnoreCase)))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>True when everything that read as Pacify is the card paying
+        /// its own way or swinging for one turn: a stun counter it puts on
+        /// itself, a tap on its own attack trigger, or a "can't attack or block
+        /// unless" about itself. Written by blanking those shapes and asking
+        /// the Pacify patterns again, so a card that taps on attack AND locks
+        /// somebody down elsewhere keeps the tag.</summary>
+        private static bool OnlyACombatTrickOrItsOwnPrice(Card card)
+        {
+            string text = card.OracleText ?? string.Empty;
+            bool ownPrice = CantAttackIsItsOwnPrice(card);
+
+            if (!ownPrice && !TapsOnItsOwnAttack.IsMatch(text) && !StunsItselfAsADrawback.IsMatch(text))
+            {
+                return false;
+            }
+
+            string rest = StunsItselfAsADrawback.Replace(TapsOnItsOwnAttack.Replace(text, " "), " ");
+            if (ownPrice)
+            {
+                rest = CantAttackOrBlockUnless.Replace(rest, " ");
+            }
+
+            return !PacifyPatterns.Any(p => p.IsMatch(rest));
+        }
+
         /// <summary>True when the only thing that read as Pacify restrains the
         /// player's OWN board — tapping a creature you control as a cost, or a
         /// card that stops your own creatures attacking. Written by blanking those

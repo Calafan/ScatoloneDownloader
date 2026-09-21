@@ -309,6 +309,13 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Pacify;
             }
 
+            // …and the three shapes where the card is paying its own way or
+            // swinging for one turn. See OnlyACombatTrickOrItsOwnPrice.
+            if (result.HasFlag(CardEffect.Pacify) && OnlyACombatTrickOrItsOwnPrice(card))
+            {
+                result &= ~CardEffect.Pacify;
+            }
+
             // Prevention aimed at one of your own, asked the same way: blank the
             // prevention out and see whether anything else on the card locks
             // somebody down. See PreventionAimedAtYourOwn above.
