@@ -234,7 +234,7 @@ namespace ScatoloneDownloader.Cube
 
                 // Everything else this line spends. See TheLootRepeats and
                 // AdditionalCostDiscard for the ruling behind each subtraction.
-                if (!TheLootRepeats(line)) { net -= 1; }
+                if (!TheLootRepeats(line) && !CastsItselfASecondTime.IsMatch(text)) { net -= 1; }
 
                 if (AdditionalCostDiscard.IsMatch(text) || ActivationCostDiscard.IsMatch(line)) { net -= 1; }
 

@@ -1324,6 +1324,57 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // Ruled 2026-09-21. A REPLACEMENT draw adds nothing — it spends the draw you
+    // were going to have anyway (0 of 3 reviewed cards tagged). A repeatable
+    // draw whose trigger names something NARROW is not one you can count on: a
+    // coin flip, or becoming the target of an Aura spell or an activated
+    // ability, or paying an opponent a permanent for it. The line this does not
+    // cross is Surrak, whose trigger is any spell an opponent aims at your
+    // creatures — that happens by itself, and Surrak keeps the tag.
+    [InlineData("Aladdin's Lamp", "Artifact",
+        "{X}, {T}: The next time you would draw a card this turn, instead look at the top X cards of "
+        + "your library, put all but one of them on the bottom of your library in a random order, then "
+        + "draw a card. X can't be 0.")]
+    [InlineData("Goblin Artisans", "Creature — Goblin Artificer",
+        "{T}: Flip a coin. If you win the flip, draw a card. If you lose the flip, counter target "
+        + "artifact spell you control.")]
+    [InlineData("Fugitive Druid", "Creature — Human Druid",
+        "Whenever this creature becomes the target of an Aura spell, you draw a card.")]
+    [InlineData("Stiltzkin, Moogle Merchant", "Legendary Creature — Moogle",
+        "Lifelink\n{2}, {T}: Target opponent gains control of another target permanent you control. "
+        + "If they do, you draw a card.")]
+    public void Classify_ADrawYouCannotCountOn_IsNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // And the four wordings the tag could not read, all ruled the same day. An
+    // ADDITIONAL card is a card (Howling Mine, Sylvan Library). A trigger can
+    // have one sentence in front of it (Rowen). "That many cards FROM THE TOP"
+    // is the same look with the count carried in from the trigger (Symbiote
+    // Spider-Man). And a card that gives ITSELF a second cast is not one card,
+    // so the loot that nets zero on the first cast comes out ahead over both —
+    // Welcome the Dead is -3 +4 with its flashback, which is how the human read
+    // it.
+    [InlineData("Howling Mine", "Artifact",
+        "At the beginning of each player's draw step, if this artifact is untapped, that player draws "
+        + "an additional card.")]
+    [InlineData("Rowen", "Enchantment",
+        "Reveal the first card you draw each turn. Whenever you reveal a basic land card this way, "
+        + "draw a card.")]
+    [InlineData("Symbiote Spider-Man", "Legendary Creature — Symbiote Human Hero",
+        "Whenever this creature deals combat damage to a player, look at that many cards from the top "
+        + "of your library. Put one of them into your hand and the rest into your graveyard.")]
+    [InlineData("Welcome the Dead", "Sorcery",
+        "Draw two cards, then discard a card and you lose 2 life.\nFlashback {4}{B}")]
+    public void Classify_TheWordingsTheTagCouldNotRead_AreCardAdvantage(
+        string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
     // The carve-out that keeps the rule above honest: "TARGET player" and
     // "EACH player" are NOT somebody else's draw, because you point these at
     // yourself. 12 of the 21 cards written that way are tagged.

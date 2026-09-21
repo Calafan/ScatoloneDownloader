@@ -417,7 +417,8 @@ namespace ScatoloneDownloader.Cube
             string oneSidedLoot = TheirDiscardYourDraw.Replace(text, " ");
 
             if (result.HasFlag(CardEffect.CardAdvantage)
-                && (Loot.IsMatch(oneSidedLoot) || Cycling.IsMatch(text)
+                && (Loot.IsMatch(oneSidedLoot) || Cycling.IsMatch(text) || ReplacesTheDraw.IsMatch(text)
+                    || ADrawYouCannotCount.IsMatch(text)
                     || (DrawBySacrificingItself.IsMatch(text)
                         && !DrawGrantedToOtherPermanents.IsMatch(text)
                         && !SacrificeRefundedByACopy.IsMatch(text))

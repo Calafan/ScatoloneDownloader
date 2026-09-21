@@ -20,7 +20,7 @@ namespace ScatoloneDownloader.Cube
         //   so Bazaar of Baghdad and every "draw a card, then discard a card"
         //   vehicle counted as advantage.
         private static readonly Regex Loot = Rx(
-            @"draws? [\w]+ cards?, then discards?"
+            @"draws? [\w]+ (?:additional )?cards?, then discards?"
             + @"|discards? [\w]+ cards?[^\n.]{0,20}(?:if you do, )?draws? [\w]+ cards?"
             + @"|you may discard a card\. if you do, draw"
             // The same loot with the halves in a sentence each, which the two
@@ -36,6 +36,39 @@ namespace ScatoloneDownloader.Cube
         //   Cycling pays a card to replace itself: exactly parity. It fired only
         //   because its REMINDER text spells out an activated ability that draws.
         private static readonly Regex Cycling = Rx(@"discard this card: draw a card");
+
+        //   And a REPLACEMENT draw adds nothing at all — it spends the draw you
+        //   were going to have anyway on something else. Ruled 2026-09-21: all
+        //   three reviewed cards written this way are untagged, and each is
+        //   tagged for what it swaps the draw FOR instead (Aladdin's Lamp
+        //   Filter, Mangara's Tome and Ring of Ma'rûf Tutor).
+        private static readonly Regex ReplacesTheDraw = Rx(
+            @"the next time you would draw a card");
+
+        //   A REPEATABLE draw whose trigger you cannot actually repeat. The
+        //   human put it as "il punto è proprio la difficoltà di trigger", and
+        //   asked how hard that is to make readable: in general it is not —
+        //   there is no wording that means "this rarely happens". But the four
+        //   cards it was asked about each NAME their own difficulty, and each
+        //   naming has no counterexample in the reviewed set.
+        //
+        //   A COIN FLIP is chance said outright (Goblin Artisans). Becoming the
+        //   target of an AURA SPELL or of an ACTIVATED ABILITY means you must
+        //   supply a second card before the draw happens at all (Fugitive Druid,
+        //   Professor Hojo). And a draw bought by handing an opponent one of
+        //   your permanents is paid for, not free (Stiltzkin).
+        //
+        //   The line this does NOT cross is Surrak, Elusive Hunter, which is
+        //   tagged: it triggers on ANY spell or ability an opponent controls
+        //   touching your creatures, which happens by itself. So the test is
+        //   whether the trigger names something narrow, not whether it is a
+        //   trigger. Ruled 2026-09-21, and it is four cards read one at a time
+        //   rather than a principle — recorded as such.
+        private static readonly Regex ADrawYouCannotCount = Rx(
+            @"flip a coin[^\n]{0,80}draws? (?:a|one) card"
+            + @"|becomes? the target of an (?:aura spell|activated ability)[^\n]{0,80}draws? (?:a|one) card"
+            + @"|become the target of an activated ability, draws? (?:a|one) card"
+            + @"|(?:opponent|player) gains? control of[^\n]{0,80}draws? (?:a|one) card");
 
         //   An ability that sacrifices the permanent runs once, so it is not the
         //   repeatable draw the 2026-09-11 ruling asked for — the same reading
@@ -254,6 +287,22 @@ namespace ScatoloneDownloader.Cube
             (AnyAbilityWithACost.IsMatch(text) && !DrawBySacrificingItself.IsMatch(text))
             || RecurringTrigger.IsMatch(text);
 
+        // …and a card that gives ITSELF a second cast is not one card either.
+        // Ruled 2026-09-21, and it is the count again rather than a new idea:
+        // Welcome the Dead draws two and discards one, which is nothing once
+        // the spell is paid for, but with flashback it is cast twice for one
+        // card and the sum is -3 +4. Winternight Stories does the same behind
+        // harmonize, Whispers of the Muse behind buyback.
+        //
+        // This is the OPPOSITE of the Regrowth ruling on the same keywords,
+        // deliberately: there, a card that rebuys itself is not recursion
+        // because nothing was fetched; here, it really is a second helping of
+        // the same draw, so it stops the "the card itself is a card"
+        // subtraction from being charged twice.
+        private static readonly Regex CastsItselfASecondTime = Rx(
+            @"\b(?:flashback|harmonize|escape|jump-start|aftermath|buyback|rebound|retrace|encore)\b"
+            + @"|shuffles? this card into its owner'?s library");
+
         private static readonly Regex AnyAbilityWithACost = Rx(@"^[^\n:]{1,70}:", RegexOptions.Multiline);
 
         private static readonly Regex RecurringTrigger = Rx(@"\bwhenever\b|at the beginning of");
@@ -297,7 +346,13 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex TheirDraw = Rx(
             @"(?:(?:defending player|its controller|an opponent|each opponent|target opponent"
             + @"|another player)(?: may)?|that player may) draws? "
-            + @"(?:a|one|two|three|four|five|x|\d+|that many|cards)");
+            + @"(?:a|one|two|three|four|five|x|\d+|that many|cards)"
+            // "At the beginning of each OPPONENT'S draw step, that player
+            // draws an additional card" is Malignant Growth handing the
+            // cards to them. Howling Mine prints the same clause behind
+            // "each PLAYER's draw step" and deals you in, which is why the
+            // step's owner is what this reads rather than the pronoun.
+            + @"|at the beginning of each opponent'?s [\w ]{0,20}step, that player draws");
 
         // Asked by STRIPPING, not by a lookbehind. "Defending player may draw a
         // card" puts "may " between the subject and the verb, so a lookbehind
@@ -463,7 +518,16 @@ namespace ScatoloneDownloader.Cube
         private static bool AbilityRepeatsAtNoCostToItself(string ability) =>
             AbilityRepeats(ability)
             && !DrawBySacrificingItself.IsMatch(ability)
+            && !SpendsItselfWithoutACostLine.IsMatch(ability)
             && !DrawByExilingItselfFromGraveyard.IsMatch(ability);
+
+        // The self-sacrifice written as an EFFECT rather than as a cost, so
+        // there is no colon for DrawBySacrificingItself to find: Preferred
+        // Selection looks at two cards every upkeep but only keeps one by
+        // saying "You may sacrifice this enchantment and pay {2}{G}{G}",
+        // which it can do exactly once. Added 2026-09-21.
+        private static readonly Regex SpendsItselfWithoutACostLine = Rx(
+            @"sacrifice this (?:creature|permanent|artifact|enchantment|land|token|card)");
 
         // "Look at the top few cards of your library and put one INTO YOUR
         // HAND." Ruled 2026-09-20, and the ruling is the repeatable one again:
@@ -482,8 +546,13 @@ namespace ScatoloneDownloader.Cube
         // them untagged. The only card the rule still misses is Memories
         // Returning, which is a one-shot that puts THREE cards in your hand and
         // is therefore advantage by the count, not by repetition.
+        // "THAT MANY CARDS FROM THE TOP of your library" is the same look with
+        // the count carried in from the trigger, and the rule could not read it:
+        // Symbiote Spider-Man, Choco and Stargaze all say it. Added 2026-09-21.
         private static readonly Regex TopFewIntoYourHand = Rx(
-            @"(?:look at|reveal) the top \w+ cards? of your library"
-            + @"[^\n]{0,120}put (?:one of them|it|that card) into your hand");
+            @"(?:look at|reveal) (?:the top \w+ cards?|that many cards|twice \w+ cards) "
+            + @"(?:of|from the top of) your library"
+            + @"[^\n]{0,120}put (?:one of them|it|that card|\w+ cards? from among them|\w+ of those cards) "
+            + @"into your hand");
     }
 }

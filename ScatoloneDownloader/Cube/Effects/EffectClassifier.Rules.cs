@@ -263,6 +263,25 @@ namespace ScatoloneDownloader.Cube
                     Rx(@"draws? (?:two|three|four|five|six|seven|eight|nine|ten|x|\d+) cards"),
                     Rx(@"^[^\n:]{1,70}:[^\n]{0,100}draws? (?:a|one) card", RegexOptions.Multiline),
                     Rx(@"^(?:whenever|at the beginning of)[^\n]{0,160}draws? (?:a|one) card", RegexOptions.Multiline),
+                    // The same trigger with ONE SENTENCE in front of it. Rowen
+                    // says "Reveal the first card you draw each turn. Whenever
+                    // you reveal a basic land card this way, draw a card", and
+                    // the anchor above wants the trigger word first. Reading the
+                    // trigger word ANYWHERE was measured on 2026-09-18 and loses
+                    // 11, so this allows exactly one short sentence and no more.
+                    Rx(@"^[^\n]{0,70}\. (?:whenever|at the beginning of)[^\n]{0,160}draws? (?:a|one) card",
+                        RegexOptions.Multiline),
+                    // "An ADDITIONAL card" is a card, ruled 2026-09-21. Howling
+                    // Mine and Sylvan Library say it and are tagged; the one
+                    // card that says it and is not — Anvil of Bogardan — takes
+                    // the card straight back ("then discards a card") and the
+                    // parity guard already reads that.
+                    //
+                    // "Draws UP TO n cards" joins it without the "may": that
+                    // word is what separates Diminishing Returns, which is
+                    // tagged, from Truce and Temporary Truce, where every player
+                    // MAY decline and the two of them are not.
+                    Rx(@"draws? (?:an|\w+) additional cards?|(?<!may )draws? up to \w+ cards"),
                     // "Draw a card for each creature you control" is multi-card draw
                     // written the other way round, and the count-first wording was
                     // missed entirely: Balance of Power, Baleful Stare, Become the
