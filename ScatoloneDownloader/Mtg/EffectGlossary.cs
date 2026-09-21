@@ -69,8 +69,8 @@
             [CardEffect.CardAdvantage] =
                 "A card the opponent does not get. COUNT IT — the card ITSELF counts, so Ponder nets 0. A one-shot "
                 + "must draw two more than it pays; a REPEATABLE ability bought the card once, so one is enough — even "
-                + "when it costs a card or itself, even one at a time off the top. Two off and ONE played is Filter. "
-                + "Not a draw for THEM, nor one you both get.",
+                + "when it costs a card, itself or another permanent. Two off and ONE played is Filter. Not a draw for "
+                + "THEM, nor a trigger you can't reach.",
 
             [CardEffect.Filter] =
                 "Cards changing places at NO net gain: scry, surveil, hideaway, look at the top few and take one, "

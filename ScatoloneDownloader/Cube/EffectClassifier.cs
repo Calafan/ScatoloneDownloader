@@ -530,9 +530,22 @@ namespace ScatoloneDownloader.Cube
                 || DiscardYourHandThenDrawSeveral.IsMatch(text)
                 || GrantedTriggeredDraw.IsMatch(text)
                 || BecomesTheMonarch.IsMatch(text)
+                || SeveralTokensThatDraw.IsMatch(text)
+                || WarpPaysOnTheWayOutTwice.IsMatch(text)
+                || CopiesYourOwnSpell.IsMatch(text)
                 || (ClueWording.IsMatch(text) && (RepeatableClue.IsMatch(text) || SeveralClues.IsMatch(text))))
             {
                 result |= CardEffect.CardAdvantage;
+            }
+
+            // A loot the card spreads over TWO TRIGGERS is still one card for
+            // one card. Asked last, after everything that could add the draw
+            // back, because the two halves are on different lines and every
+            // rule that reads them reads only one.
+            if (PhasingLoot.IsMatch(text))
+            {
+                result &= ~CardEffect.CardAdvantage;
+                result |= CardEffect.Filter;
             }
 
             // Sacrifice, asked the same way: whose creature, and can you do it

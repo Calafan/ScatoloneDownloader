@@ -3074,6 +3074,118 @@ public sealed class EffectClassifierTests
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
     }
 
+    [Theory]
+    // CUMULATIVE UPKEEP paid in CARDS draws one more every turn it survives,
+    // and it is written where a cost goes, so no rule was looking there.
+    [InlineData("Psychic Vortex", "Enchantment",
+        "Cumulative upkeep—Draw a card. (At the beginning of your upkeep, put an age counter on this "
+        + "permanent, then sacrifice it unless you pay its upkeep cost for each age counter on it.)\n"
+        + "At the beginning of your end step, sacrifice a land and discard your hand.")]
+    // Symmetry is not parity when EVERYBODY gains — Howling Mine's reading,
+    // given by name on 2026-09-22.
+    [InlineData("Parker Luck", "Enchantment",
+        "At the beginning of your end step, two target players each reveal the top card of their library. "
+        + "They each lose life equal to the mana value of the card revealed by the other player. Then they "
+        + "each put the card they revealed into their hand.")]
+    // Several tokens that EACH draw: one card spent, two bought. "-1 +2 = +1".
+    [InlineData("Niko, Light of Hope", "Legendary Creature — Human Wizard",
+        "When Niko enters, create two Shard tokens. (They're enchantments with \"{2}, Sacrifice this "
+        + "token: Scry 1, then draw a card.\")\n"
+        + "{2}, {T}: Exile target nonlegendary creature you control. Shards you control become copies of "
+        + "it until the next end step. Return it to the battlefield under its owner's control at the "
+        + "beginning of the next end step.")]
+    // WARP is a second cast, so a card that pays you on the way OUT pays twice.
+    [InlineData("Anticausal Vestige", "Creature — Eldrazi",
+        "When this creature leaves the battlefield, draw a card, then you may put a permanent card with "
+        + "mana value less than or equal to the number of lands you control from your hand onto the "
+        + "battlefield tapped.\n"
+        + "Warp {4} (You may cast this card from your hand for its warp cost. Exile this creature at the "
+        + "beginning of the next end step, then you may cast it from exile on a later turn.)")]
+    // Copying your own spell is a second copy of a card you paid for once.
+    [InlineData("Taigam, Master Opportunist", "Legendary Creature — Human Monk",
+        "Flurry — Whenever you cast your second spell each turn, copy it, then exile the spell you cast "
+        + "with four time counters on it. If it doesn't have suspend, it gains suspend.")]
+    // Casting from the top of your library is the second hand, whatever you
+    // pay for the card — ruled 2026-09-22, overturning the hand tag.
+    [InlineData("Madame Web, Clairvoyant", "Legendary Creature — Mutant Advisor",
+        "You may look at the top card of your library any time.\n"
+        + "You may cast Spider spells and noncreature spells from the top of your library.\n"
+        + "Whenever you attack, you may mill a card.")]
+    public void Classify_TheThirdPassWordings_AreCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // The copy has to follow the trigger IMMEDIATELY. Mendicant Core puts Max
+    // speed and a further {1} in front of its copy and carries no tag; Max
+    // speed is NOT a blanket difficulty, since 34 reviewed cards print it and
+    // 4 are tagged.
+    [InlineData("Mendicant Core, Guidelight", "Legendary Artifact Creature — Robot",
+        "Mendicant Core's power is equal to the number of artifacts you control.\n"
+        + "Start your engines!\n"
+        + "Max speed — Whenever you cast an artifact spell, you may pay {1}. If you do, copy it. "
+        + "(The copy becomes a token.)")]
+    // Two more triggers that NAME their own difficulty, confirmed 2026-09-22.
+    // Bending is a keyword action a deck has to be built to perform…
+    [InlineData("Avatar Aang", "Legendary Creature — Human Avatar Ally",
+        "Flying, firebending 2\n"
+        + "Whenever you waterbend, earthbend, firebend, or airbend, draw a card. Then if you've done all "
+        + "four this turn, transform Avatar Aang.")]
+    // …and a CHOSEN CARD NAME asks you to name a card and then meet it, that
+    // same turn.
+    [InlineData("The Clone Saga", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\n"
+        + "I — Surveil 3.\n"
+        + "II — When you next cast a creature spell this turn, copy it, except the copy isn't legendary.\n"
+        + "III — Choose a card name. Whenever a creature with the chosen name deals combat damage to a "
+        + "player this turn, draw a card.")]
+    // An ability that TRANSFORMS the permanent the moment it succeeds runs
+    // once. This is the whole difference between the Sidequest and Traveling
+    // Botanist, which print the same sentence word for word.
+    [InlineData("Sidequest: Catch a Fish", "Enchantment",
+        "At the beginning of your upkeep, look at the top card of your library. If it's an artifact or "
+        + "creature card, you may reveal it and put it into your hand. If you put a card into your hand "
+        + "this way, create a Food token and transform this enchantment.")]
+    // A discard charged as an ADDITIONAL COST, with the spell itself counted,
+    // is parity however many the card draws: Grab the Prize's reading, applied
+    // 2026-09-22 to the two cards that were hand-tagged the other way.
+    [InlineData("Laughing Mad", "Instant",
+        "As an additional cost to cast this spell, discard a card.\nDraw two cards.\n"
+        + "Flashback {3}{R}")]
+    [InlineData("Sazacap's Brew", "Instant",
+        "Gift a tapped Fish\nAs an additional cost to cast this spell, discard a card.\n"
+        + "Target player draws two cards. If the gift was promised, target creature you control gets "
+        + "+2/+0 until end of turn.")]
+    // A draw for one card handed straight back is parity even when the discard
+    // is conditional: the COUNT is the answer, not the condition.
+    [InlineData("Chakra Meditation", "Enchantment",
+        "When this enchantment enters, return up to one target instant or sorcery card from your "
+        + "graveyard to your hand.\n"
+        + "Whenever you cast an instant or sorcery spell, draw a card. Then discard a card unless there "
+        + "are three or more Lesson cards in your graveyard.")]
+    public void Classify_TheThirdPassNonWordings_AreNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Fact]
+    // A loot the card spreads over TWO TRIGGERS is still one card for one card
+    // on a timer, ruled 2026-09-22: Filter, and not CardAdvantage.
+    public void Classify_ALootSpreadOverTwoTriggers_IsFilterAndNotCardAdvantage()
+    {
+        CardEffect effects = EffectClassifier.Classify(MakeCard(
+            "Teferi's Imp", "Creature — Imp",
+            "Flying\n"
+            + "Phasing (This phases in or out before you untap during each of your untap steps. While it's "
+            + "phased out, it's treated as though it doesn't exist.)\n"
+            + "Whenever this creature phases out, discard a card.\n"
+            + "Whenever this creature phases in, draw a card."));
+
+        Assert.True(effects.HasFlag(CardEffect.Filter));
+        Assert.False(effects.HasFlag(CardEffect.CardAdvantage));
+    }
+
     private static Card MakeCard(string name, string typeLine, string oracleText, List<string>? keywords = null)
     {
         JsonCard json = new()

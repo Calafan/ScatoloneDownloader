@@ -302,6 +302,21 @@ namespace ScatoloneDownloader.Cube
                     // leaves, so the artifact replaces itself and pays a card
                     // on the way out. One reviewed card says it, tagged.
                     Rx(@"enters or leaves the battlefield, draws? (?:a|one) card"),
+                    // CUMULATIVE UPKEEP paid in CARDS draws one more every turn
+                    // it survives, and the draw is written where a cost goes so
+                    // no rule was looking there. Psychic Vortex is the only
+                    // reviewed card that charges cards this way and it is
+                    // tagged (ruled 2026-09-22).
+                    Rx(@"cumulative upkeep—draws? "),
+                    // BOTH PLAYERS reveal the top of their library and BOTH
+                    // take it, every end step. Symmetry is not parity when
+                    // everybody gains — this is Howling Mine's reading, which
+                    // the human gave by name on 2026-09-22, and the guard that
+                    // reads a draw for somebody else has nothing to withdraw
+                    // because you are one of the somebodies. Parker Luck is the
+                    // one reviewed card written this way and it is tagged.
+                    Rx(@"each reveal the top card of their library"
+                        + @"[^\n]{0,140}each put the card they revealed into their hand"),
                     // A trigger hiding behind a LABEL. The anchored rule above wants
                     // "whenever" at the start of the line, and modern cards put an
                     // ability word or a Siege bullet in front of it — "Eerie —

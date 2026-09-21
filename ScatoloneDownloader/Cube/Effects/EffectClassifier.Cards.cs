@@ -77,7 +77,20 @@ namespace ScatoloneDownloader.Cube
             + @"|exchange life totals[^\n]{0,80}draws? that many cards"
             + @"|becomes? the target of an (?:aura spell|activated ability)[^\n]{0,80}draws? (?:a|one) card"
             + @"|become the target of an activated ability, draws? (?:a|one) card"
-            + @"|(?:opponent|player) gains? control of[^\n]{0,80}\bdraws? ");
+            + @"|(?:opponent|player) gains? control of[^\n]{0,80}\bdraws? "
+            // Two more named difficulties, confirmed by the human on
+            // 2026-09-22 ("Confermo la difficoltà di trigger"). BENDING is a
+            // keyword action only a handful of cards in one set can perform, so
+            // "whenever you waterbend, earthbend, firebend, or airbend, draw a
+            // card" is a draw your deck has to be built to reach (Avatar Aang,
+            // the only reviewed card that says it, untagged). And a CHOSEN CARD
+            // NAME asks you to name a card and then meet it: The Clone Saga
+            // draws only if a creature with the name you picked connects, and
+            // that same turn. Two reviewed cards name a card this way and
+            // neither is tagged. Still four-plus-two cards read one at a time
+            // rather than a principle.
+            + @"|whenever you waterbend, earthbend, firebend, or airbend"
+            + @"|choose a card name\.[^\n]{0,120}with the chosen name");
 
         //   And a draw the OTHER SIDE gets in the same breath and the same
         //   number. The parity ruling of 2026-09-20 was written for one player
@@ -658,7 +671,21 @@ namespace ScatoloneDownloader.Cube
             AbilityRepeats(ability)
             && !DrawBySacrificingItself.IsMatch(ability)
             && !SpendsItselfWithoutACostLine.IsMatch(ability)
+            && !TransformsItselfAway.IsMatch(ability)
             && !SpendsItselfOutOfTheGraveyard(ability);
+
+        // A third way an ability runs exactly once: it TRANSFORMS the permanent
+        // the moment it succeeds, and the other face does something else
+        // entirely. This is the whole difference between Sidequest: Catch a
+        // Fish and Traveling Botanist, which print the same sentence word for
+        // word — the Botanist looks at the top every time it taps, while the
+        // Sidequest turns into a land the first time it finds something. The
+        // human ruled the pair Filter on 2026-09-22, which is what the
+        // Sidequest is already tagged and what the repeat gate has to say for
+        // itself. Six reviewed cards transform themselves this way and five are
+        // untagged.
+        private static readonly Regex TransformsItselfAway = Rx(
+            @"transforms? this (?:enchantment|artifact|creature|permanent|land)");
 
         // The self-sacrifice written as an EFFECT rather than as a cost, so
         // there is no colon for DrawBySacrificingItself to find: Preferred
@@ -757,6 +784,43 @@ namespace ScatoloneDownloader.Cube
         // reading that as an ability spent once. One reviewed card grants it
         // and it is tagged.
         private static readonly Regex BecomesTheMonarch = Rx(@"you become the monarch");
+
+        // SEVERAL TOKENS THAT EACH DRAW, which is the Clue count in a costume
+        // the Clue rules cannot read: Niko makes two Shards and each one cashes
+        // for a card, so the card spent is one and the cards bought are two.
+        // The human put the arithmetic exactly that way on 2026-09-22, "-1 +2 =
+        // +1". Two reviewed cards are written this way and both are tagged.
+        private static readonly Regex SeveralTokensThatDraw = Rx(
+            "create (?:two|three|four|five|x|\\d+) [\\w ]{0,25}tokens[^\n]{0,80}"
+            + "\"[^\"\n]{0,90}draws? (?:a|one) card");
+
+        // WARP is a second cast, so a card that pays you on its way OUT pays you
+        // twice: Anticausal Vestige draws when it leaves, and warp exiles it at
+        // the end of the turn only to let you cast it again later. Ruled
+        // 2026-09-22 with the human's own reason, "utilizzabile due volte, warp
+        // prima e poi cast". Deliberately NOT folded into
+        // CastsItselfASecondTime, which would hand the same reprieve to the 32
+        // reviewed warp cards of which only 5 are tagged; this asks for the
+        // leaves-trigger as well, and one card matches.
+        private static readonly Regex WarpPaysOnTheWayOutTwice = Rx(
+            @"leaves the battlefield, draws?[\s\S]{0,300}\bwarp \{");
+
+        // COPYING YOUR OWN SPELL is a second copy of a card you only paid for
+        // once — "è CA perché raddoppia la spell" (2026-09-22). Written to
+        // require the copy IMMEDIATELY after the trigger, which is what
+        // separates Taigam, whose second spell each turn is copied outright,
+        // from Mendicant Core, Guidelight, where the copy is behind Max speed
+        // and a further {1} and the card carries no tag. Max speed is NOT a
+        // blanket difficulty: 34 reviewed cards print it and 4 are tagged.
+        private static readonly Regex CopiesYourOwnSpell = Rx(
+            @"whenever you cast (?:your |a |an )?[\w' ]{0,40}, copy it");
+
+        // A LOOT SPLIT ACROSS TWO TRIGGERS is still a loot, ruled 2026-09-22:
+        // Teferi's Imp discards when it phases out and draws when it phases
+        // back in, which is one card for one card on a timer. Filter, and not
+        // CardAdvantage. One reviewed card is written this way.
+        private static readonly Regex PhasingLoot = Rx(
+            @"phases (?:out|in), discards? a card[\s\S]{0,120}phases (?:in|out), draws? a card");
 
         // MEASURED AND REJECTED, 2026-09-21. A trigger whose draw is printed as
         // a MODAL BULLET further down reads as a bare draw to the anchored
