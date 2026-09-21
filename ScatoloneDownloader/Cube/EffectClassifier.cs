@@ -1134,7 +1134,22 @@ namespace ScatoloneDownloader.Cube
             @"(?<!otherwise, it )gets? -[\dXx]+/-[\dXx]|\bfights?\b|prevent all (?:combat )?damage");
 
         private static readonly Regex CounterOnSomebodyElse = Rx(
-            @"\+1/\+1 counters? on (?:target|another|each|up to|one or more)"
+            // Widened 2026-09-21 under the human's ruling on counters — "i put
+            // se il target non è se stesso sì". Four wordings were unreadable:
+            // the count can be spelled out between the counter and its
+            // destination ("put a number of +1/+1 counters EQUAL TO JENOVA'S
+            // POWER on up to one other target creature"), the counter need not
+            // be a +1/+1 (Living Armor puts +0/+1), the destination can be the
+            // enchanted or the just-named creature (Sadistic Glee, Sphere Grid),
+            // and a card can hand the counter over at ENTRY rather than put it
+            // (Thunderous Velocipede, Tromell). The last is restricted to OTHER
+            // creatures, because "this creature enters with an additional +1/+1
+            // counter" is the self-pump this tag has always refused.
+            @"\+[\dX]+/\+[\dX]+ counters?(?:, a [\w ]{0,20}counter,? (?:and a [\w ]{0,20}counter )?)?"
+            + @" ?(?:equal to [\w' ]{0,30} )?on "
+            + @"(?:target|another|each|up to|one or more|enchanted)"
+            + @"|(?:each other|other|another) [\w ,'-]{0,40}enters? with "
+            + @"(?:an additional|\w+ additional) \+1/\+1 counter"
             + @"|distribute [\w ]{0,20}\+1/\+1 counters"
             // "Support X" as readily as "support 2" — Blitzball Stadium says the
             // X form, and once reminder text stopped vouching for a pump
