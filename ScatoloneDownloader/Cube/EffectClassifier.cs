@@ -1409,11 +1409,23 @@ namespace ScatoloneDownloader.Cube
         // to keep the tag even when the subject is not vocabulary we recognise.
         private static readonly Regex GrantVerb = Rx(@"\b(?:gains?|have|has|becomes?)\b");
 
+        // A triggered ability's condition, up to the comma that ends it. What
+        // the trigger WATCHES is never what the effect lands on, however much
+        // it reads like a beneficiary. See AimsOnlyAtItself for why this is
+        // stripped for one of that method's two questions and not the other.
+        private static readonly Regex TriggerClause = Rx(
+            @"(?:whenever|when|at the beginning of)\b[^,\n]{0,160},");
+
         private static readonly Regex Beneficiary = Rx(
             @"\b(?:target|another|other|each|all|enchanted|equipped|chosen|"
             // "that creature" is the beneficiary a second sentence refers back to:
             // "Gain control of target creature ... that creature gets +2/+0".
-            + @"that (?:creature|permanent|player|token|card)|"
+            // …and the TYPE the card just named, which the four nouns above do
+            // not cover: Reckless Velocitaur pumps "that Mount or Vehicle", and
+            // its own trigger says "this creature", so without this the trigger
+            // vouches for an effect that lands somewhere else. Added 2026-09-21.
+            + @"that (?:creature|permanent|player|token|card|mount|vehicle|equipment|aura|land"
+            + @"|artifact|enchantment|planeswalker|\w+ or \w+)|"
             // "attacking" has to MODIFY the beneficiary ("attacking red creatures
             // get +2/+0") — bare, it is just as often the card's own state, as in
             // "As long as this creature is attacking, it gets +2/+0".
@@ -3089,7 +3101,15 @@ namespace ScatoloneDownloader.Cube
                 foreach (Match match in pattern.Matches(text))
                 {
                     int lineStart = text.LastIndexOf('\n', Math.Max(0, match.Index - 1)) + 1;
-                    int from = Math.Max(lineStart, match.Index - 80);
+                    // The window was 80 characters and that truncated the trigger
+                    // word itself on the longer abilities, which turned the strip
+                    // below into a no-op exactly where it was needed: Angelic
+                    // Protector's second pattern matched at "+0/+3" and looked
+                    // back on "…ever this creature becomes the TARGET of a spell
+                    // or ability, this creature gets". The clause cut and the
+                    // trigger strip are the real bounds; 240 only stops a window
+                    // running off into a neighbouring sentence that has neither.
+                    int from = Math.Max(lineStart, match.Index - 240);
                     string before = text.Substring(from, match.Index - from);
 
                     // The subject of an effect is in its OWN clause, so cut the
@@ -3105,7 +3125,25 @@ namespace ScatoloneDownloader.Cube
                         before = before[(clause + 1)..];
                     }
 
-                    if (Beneficiary.IsMatch(before) || Beneficiary.IsMatch(AfterCounterClause(text, match)))
+                    // The TRIGGER supplies a false beneficiary the same way the
+                    // cost does, and that was the single biggest source of wrong
+                    // Buff tags (found 2026-09-21): "Landfall — Whenever A LAND
+                    // YOU CONTROL enters, Ambrosia Whiteheart gets +1/+0" pumps
+                    // nobody but Ambrosia, and a dozen more trigger off "ANOTHER
+                    // creature you control" or off something happening "EACH
+                    // turn".
+                    //
+                    // It is stripped for the BENEFICIARY question only, not for
+                    // the SELF question, and that asymmetry is the whole point:
+                    // "Whenever THIS CREATURE attacks, IT gets +1/+1" keeps its
+                    // self-reference in the trigger and nowhere else, so cutting
+                    // the window for both questions reads it as a gift to
+                    // somebody. Measured both ways — cutting for both is 22
+                    // false positives worse than doing nothing.
+                    string effectOnly = TriggerClause.Replace(before, " ");
+
+                    if (Beneficiary.IsMatch(effectOnly)
+                        || Beneficiary.IsMatch(AfterCounterClause(text, match)))
                     {
                         return false;
                     }
@@ -3117,7 +3155,7 @@ namespace ScatoloneDownloader.Cube
                         continue;
                     }
 
-                    if (GrantVerb.IsMatch(before) || !bareIsSelf)
+                    if (GrantVerb.IsMatch(effectOnly) || !bareIsSelf)
                     {
                         return false;
                     }
