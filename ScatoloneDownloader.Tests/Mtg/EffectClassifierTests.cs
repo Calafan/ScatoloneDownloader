@@ -3186,6 +3186,129 @@ public sealed class EffectClassifierTests
         Assert.False(effects.HasFlag(CardEffect.CardAdvantage));
     }
 
+    [Theory]
+    // A TAP, in every shape the game prints it. Ruled 2026-09-22 after the hand
+    // tags were found contradicting themselves on identical wording; the human
+    // resolved six pairs the same way and rejected both proposed lines — the
+    // lock need not LAST ("altrimenti saltano il punto e tutti i tappini") and
+    // tapping need not be the card's main job.
+    [InlineData("Twiddle", "Instant", "You may tap or untap target artifact, creature, or land.")]
+    [InlineData("Riptide", "Instant", "Tap all blue creatures.")]
+    [InlineData("Word of Binding", "Sorcery", "Tap X target creatures.")]
+    [InlineData("Tidal Surge", "Sorcery", "Tap up to three target creatures without flying.")]
+    [InlineData("Starport Security", "Artifact Creature — Robot Soldier",
+        "{3}{W}, {T}: Tap another target creature. This ability costs {2} less to activate if you control "
+        + "a creature with a +1/+1 counter on it.")]
+    // A hyphen in the type line is not a reason to stop reading.
+    [InlineData("Sterling Keykeeper", "Creature — Human Mercenary", "{2}, {T}: Tap target non-Mount creature.")]
+    // A PERMANENT counts as much as a creature.
+    [InlineData("Ring of the Lucii", "Legendary Artifact",
+        "{T}: Add {C}{C}.\n{2}, {T}, Pay 1 life: Tap target nonland permanent.")]
+    // The PLURAL untap lock, which is how every classic one is written and
+    // which the rule only knew in the singular.
+    [InlineData("Meekstone", "Artifact",
+        "Creatures with power 3 or greater don't untap during their controllers' untap steps.")]
+    // Nobody untaps at all.
+    [InlineData("Stasis", "Enchantment",
+        "Players skip their untap steps.\n"
+        + "At the beginning of your upkeep, sacrifice this enchantment unless you pay {U}.")]
+    // The Propaganda tax: the rule wanted punctuation straight after the verb.
+    [InlineData("Propaganda", "Enchantment",
+        "Creatures can't attack you unless their controller pays {2} for each creature they control "
+        + "that's attacking you.")]
+    // NEUTRALISING WITHOUT KILLING, ruled 2026-09-22 — the creature stays on
+    // the board and stops mattering.
+    [InlineData("Island of Wak-Wak", "Land", "{T}: Target creature with flying has base power 0 until end of turn.")]
+    [InlineData("Spider-Man No More", "Enchantment — Aura",
+        "Enchant creature\nEnchanted creature is a Citizen with base power and toughness 1/1. It has "
+        + "defender and loses all other abilities.")]
+    [InlineData("Weakstone", "Artifact", "Attacking creatures get -1/-0.")]
+    [InlineData("Fresh Start", "Enchantment — Aura",
+        "Flash\nEnchant creature\nEnchanted creature gets -5/-0 and loses all abilities.")]
+    // PHASING OUT, which earns this tag and Protection both.
+    [InlineData("Vodalian Illusionist", "Creature — Merfolk Wizard",
+        "{U}{U}, {T}: Target creature phases out.")]
+    // Preventing damage to the PLAYER ALONE: nothing of yours is saved, the
+    // attack simply stops mattering.
+    [InlineData("Conservator", "Artifact",
+        "{3}, {T}: Prevent the next 2 damage that would be dealt to you this turn.")]
+    // An Aura's untap lock names neither a creature nor a land, and the land
+    // veto must not swallow it.
+    [InlineData("Flood the Engine", "Enchantment — Aura",
+        "Enchant creature or Vehicle\nWhen this Aura enters, tap enchanted permanent.\n"
+        + "Enchanted permanent loses all abilities and doesn't untap during its controller's untap step.")]
+    public void Classify_TheWaysACreatureIsNeutralised_ArePacify(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
+    }
+
+    [Theory]
+    // The tap must be able to land on a CREATURE. "Tap target artifact" is mana
+    // denial and neutralises nobody.
+    [InlineData("Relic Barrier", "Artifact", "{T}: Tap target artifact.")]
+    [InlineData("Hyperion Blacksmith", "Creature — Human Artificer",
+        "{T}: You may tap or untap target artifact an opponent controls.")]
+    // Tapping on your own ATTACK TRIGGER is a combat trick: it clears one
+    // blocker for a swing that is already happening. Seven reviewed cards do
+    // it and none is tagged.
+    [InlineData("Seasoned Marshal", "Creature — Human Soldier",
+        "Whenever this creature attacks, you may tap target creature.")]
+    [InlineData("Kimahri, Valiant Guardian", "Legendary Creature — Cat Warrior",
+        "Vigilance\nRonso Rage — At the beginning of combat on your turn, put a +1/+1 counter on Kimahri "
+        + "and tap target creature an opponent controls.")]
+    // "<this creature> can't attack or block UNLESS …" is the price of a
+    // statline, read per line, and an older card writes its own name.
+    [InlineData("Tiger-Dillo", "Creature — Cat Armadillo",
+        "This creature can't attack or block unless you control another creature with power 4 or greater.")]
+    [InlineData("The Lion-Turtle", "Legendary Creature — Elder Cat Turtle",
+        "Reach, vigilance\nWhen The Lion-Turtle enters, you gain 3 life.\n"
+        + "The Lion-Turtle can't attack or block unless there are three or more Lesson cards in your "
+        + "graveyard.\n{T}: Add one mana of any color.")]
+    // A stun counter the card puts on ITSELF is a drawback, not a lock.
+    [InlineData("Tonberry", "Creature — Salamander Horror",
+        "This creature enters tapped with a stun counter on it.\n"
+        + "Chef's Knife — During your turn, this creature has first strike and deathtouch.")]
+    // An untap lock on LANDS is mana denial: "per le terre niente Pacify".
+    [InlineData("Choke", "Enchantment", "Islands don't untap during their controllers' untap steps.")]
+    [InlineData("Curse of Marit Lage", "Enchantment",
+        "When this enchantment enters, tap all Islands.\n"
+        + "Islands don't untap during their controllers' untap steps.")]
+    // REMINDER TEXT and a worked EXAMPLE lock nobody down.
+    [InlineData("Primal Clay", "Artifact Creature — Shapeshifter",
+        "As this creature enters, it becomes your choice of a 3/3 artifact creature, a 2/2 artifact "
+        + "creature with flying, or a 1/6 Wall artifact creature with defender in addition to its other "
+        + "types. (A creature with defender can't attack.)")]
+    public void Classify_WhatOnlyLooksLikeALock_IsNotPacify(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
+    }
+
+    [Fact]
+    // Phasing out is BOTH tags, ruled 2026-09-22: the same words buy time
+    // against a threat and save something of yours from an answer.
+    public void Classify_PhasingSomethingOut_IsPacifyAndProtection()
+    {
+        CardEffect effects = EffectClassifier.Classify(MakeCard(
+            "Reality Ripple", "Instant",
+            "Target artifact, creature, or land phases out."));
+
+        Assert.True(effects.HasFlag(CardEffect.Pacify));
+        Assert.True(effects.HasFlag(CardEffect.Protection));
+    }
+
+    [Fact]
+    // …and a prevention aimed at the PLAYER ALONE is Pacify and NOT Protection.
+    public void Classify_PreventingDamageToYouAlone_IsPacifyAndNotProtection()
+    {
+        CardEffect effects = EffectClassifier.Classify(MakeCard(
+            "Deep Wood", "Instant",
+            "Cast this spell only during the declare attackers step and only if you've been attacked "
+            + "this step.\nPrevent all damage that would be dealt to you this turn by attacking creatures."));
+
+        Assert.True(effects.HasFlag(CardEffect.Pacify));
+        Assert.False(effects.HasFlag(CardEffect.Protection));
+    }
+
     private static Card MakeCard(string name, string typeLine, string oracleText, List<string>? keywords = null)
     {
         JsonCard json = new()

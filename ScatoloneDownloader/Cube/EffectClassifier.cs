@@ -296,6 +296,22 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Removal;
             }
 
+            // REMINDER TEXT does not lock anybody down. Primal Clay explains
+            // defender with "(A creature with defender can't attack.)" and
+            // Balduvian Shaman prints a worked EXAMPLE of text-changing that
+            // quotes "black creatures can't attack" twice. Asked by stripping
+            // the brackets and re-asking, the way the Filter and Burn guards
+            // are, so a card that detains on one line keeps what it earned.
+            if (result.HasFlag(CardEffect.Pacify))
+            {
+                string plain = Parenthetical.Replace(text, " ");
+
+                if (plain != text && !PacifyPatterns.Any(p => p.IsMatch(plain)))
+                {
+                    result &= ~CardEffect.Pacify;
+                }
+            }
+
             // A Wall is not a Pacify effect. See the patterns above.
             if (result.HasFlag(CardEffect.Pacify) && SelfCantAttack.IsMatch(text) && !OutwardCantAttack.IsMatch(text))
             {
@@ -638,6 +654,17 @@ namespace ScatoloneDownloader.Cube
             // requiring an instant, flash or an activated ability withdrew five
             // false positives at no cost in recall.
             if (PreventsDamageForSomebodyElse(card) && IsInstantSpeed(card))
+            {
+                result |= CardEffect.Protection;
+            }
+
+            // PHASING OUT earns BOTH tags, ruled 2026-09-22 — "puoi usarlo sia
+            // sull'opponent per prendere tempo che su di te per salvare
+            // qualcosa". Added here for the same reason prevention is: the
+            // clause names its victim INSIDE the match ("TARGET creature
+            // phases out"), so there is nothing in front of it for the
+            // self-versus-other gate to inspect and that gate was stripping it.
+            if (PhasesSomethingOut.IsMatch(text))
             {
                 result |= CardEffect.Protection;
             }

@@ -342,6 +342,22 @@ namespace ScatoloneDownloader.Cube
             + @"[A-Z][\w']+s?(?:, [A-Z][\w']+s?){0,20},? and [A-Z][\w']+s? you control (?:get|have)\b",
             RegexOptions.CultureInvariant | RegexOptions.Multiline);
 
+        // PHASING OUT is both tags at once, ruled 2026-09-22: "puoi usarlo sia
+        // sull'opponent per prendere tempo che su di te per salvare qualcosa".
+        // The permanent has to be a CREATURE — Vision Charm phases an artifact
+        // and is Mill and Protection — and an O-RING phase-out that lasts until
+        // the enchantment leaves is the temporary-exile family instead, which
+        // has no ruling yet (Oubliette, hand-tagged Removal).
+        //
+        // DECLARED HERE, above ProtectionPatterns, and that placement is load
+        // bearing: field initialisers run in textual order within a file, so a
+        // pattern array that reads this one further down the file is built from
+        // a null. The same hazard the static constructor in the Rules file
+        // exists to avoid, and it threw the moment it was written the other way
+        // round.
+        private static readonly Regex PhasesSomethingOut = Rx(
+            @"target [\w ,]{0,35}creature[\w ,]{0,25} phases out(?![^\n]{0,20}until)");
+
         // NB: no bare "regenerate" — "can't be regenerated" (Wrath) would false-positive.
         private static readonly Regex[] ProtectionPatterns =
         [
@@ -391,7 +407,60 @@ namespace ScatoloneDownloader.Cube
         // doesn't untap during your untap step", which is a price they pay, not a
         // lock on anybody. Everything in PacifyOutward names a victim by
         // construction and needs no such check.
-        private static readonly Regex AnyUntapLock = Rx(@"does(n'?t| not) untap");
+        // The PLURAL was missing, and with it the whole classic lock: "CreatureS
+        // don't untap during their controllerS' untap steps" is how Meekstone,
+        // Marble Titan, Mudslide, Dream Tides, Magnetic Mountain, Thelon's
+        // Curse, An-Zerrin Ruins and Wrath of Marit Lage all write it, and the
+        // rule only knew the singular "doesn't". Found 2026-09-22.
+        private static readonly Regex AnyUntapLock = Rx(@"do(?:es)?(n'?t| not) untap");
+
+        // …and the lock must not be on LANDS ALONE. Ruled 2026-09-22, "per le
+        // terre niente Pacify": Choke and Curse of Marit Lage stop Islands
+        // untapping and Winter's Night stops a snow land, and none of the three
+        // is tagged — a mana lock denies a resource, it does not neutralise a
+        // threat. Asked per LINE and phrased as "names a land and nothing
+        // else", not as "fails to name a creature", because an Aura says
+        // "enchanted PERMANENT doesn't untap" and names neither (Flood the
+        // Engine, Tractor Beam, Stuck in Summoner's Sanctum). Exhaustion stops
+        // "creatures and lands" and keeps the tag on the creatures.
+        private static readonly Regex UntapLockNamesALand = Rx(
+            @"\b(?:lands?|islands?|swamps?|mountains?|forests?|plains)\b");
+
+        private static readonly Regex UntapLockNamesAVictim = Rx(@"\b(?:creature|permanent)s?\b");
+
+        // NEUTRALISING WITHOUT KILLING is this tag's other half, ruled
+        // 2026-09-22 ("inseriscila"): the creature stays on the board and stops
+        // mattering. Four wordings, each measured. BASE POWER 0 is the oldest
+        // (Island of Wak-Wak, Singing Tree, Sorceress Queen). Becoming a small
+        // NAMED BODY is the modern one — Spider-Man No More turns it into a 1/1
+        // Citizen with defender, Honest Work into a 1/1 Humble Merchant, Unable
+        // to Scream into a 0/2 Toy; 2 fire and 2 are tagged, and the [0-2] is
+        // what keeps Lizard, Connors's Curse (a 4/4) and Titania's Song out.
+        // A shrink that also strips the abilities is Fresh Start. And
+        // "ATTACKING CREATURES GET -1/-0" is Weakstone, the only card in the
+        // reviewed set that taxes the swing itself.
+        //
+        // A bare "-5/-0" is NOT here and was measured and rejected at 2 tagged
+        // out of 12 — Cryoshatter is the one card this costs.
+        private static readonly Regex NeutralisesWithoutKilling = Rx(
+            @"base power (?:and toughness )?0"
+            + @"|is an? [\w ]{0,25}with base power and toughness [0-2]/"
+            + @"|attacking creatures get -"
+            + @"|gets? -[\dX]+/-0 and loses all abilities"
+            + @"|loses all abilities and (?:doesn'?t untap|can'?t attack)");
+
+        // PREVENTING DAMAGE TO THE PLAYER ALONE is this tag and not Protection,
+        // ruled 2026-09-22: "le prevenzioni al solo giocatore mettiamole come
+        // solo Pacify" — nothing of yours is being saved, the attack simply
+        // stops mattering. A prevention that also covers permanents keeps
+        // Protection as well (Ultimate Magic: Holy).
+        private static readonly Regex PreventsDamageToYouAlone = Rx(
+            @"prevent (?:all|the next)[\w \d]{0,25}damage that would be dealt to you");
+
+        // Nobody untaps at all, which is the mass version of the untap lock and
+        // says neither "doesn't" nor "don't" (Stasis, Sands of Time).
+        private static readonly Regex NobodyUntaps = Rx(
+            @"(?:players|each player) skips? their untap step");
 
         // Preventing what a creature DEALS neutralises it without killing it,
         // which is this tag's whole job. The reading was ruled on 2026-09-05 and
@@ -433,9 +502,51 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex[] PacifyOutward =
         [
             Rx(@"can'?t attack or block"),
-            Rx(@"can'?t attack(\.|,| unless)"),
-            Rx(@"\btap target[\w ,]*creature"),
+            // "Creatures can't attack YOU unless their controller pays" is the
+            // Propaganda tax, and the rule could not read it because it wanted
+            // the punctuation immediately after the verb. Propaganda, Koskun
+            // Falls and Elephant Grass all say it, and all three are tagged
+            // (2026-09-22).
+            Rx(@"can'?t attack(?: you)?(\.|,| unless)"),
+            // A TAP, in every shape the game prints it. Ruled 2026-09-22 after
+            // the hand tags were found contradicting themselves on identical
+            // wording — Twiddle against Twitch, Riptide against Blinding Light,
+            // Word of Binding against Crashing Wave, Storm Elemental against
+            // Sterling Keykeeper. The human resolved all six pairs the same
+            // way and rejected both proposed lines: it does not matter how long
+            // the lock lasts ("altrimenti saltano il punto e tutti i tappini"),
+            // and it does not matter whether tapping is the card's main job.
+            // What matters is only that it points at somebody else, which the
+            // guards below already ask. 25 reviewed entries were realigned onto
+            // the tag the same day.
+            //
+            // The shapes, in order: a counted or qualified target ("tap up to
+            // three target creatures", "tap X target creatures", "tap another
+            // target creature"), a bare target, a mass tap, and the tap-or-
+            // untap twiddle. A PERMANENT or an ARTIFACT counts as much as a
+            // creature — Ring of the Lucii taps a nonland permanent and Sunstar
+            // Chaplain an artifact or creature, and both are tagged.
+            // The tap has to be able to land on a CREATURE. "Tap target
+            // artifact" alone is mana denial and neutralises nobody: Relic
+            // Barrier, Touchstone and Phyrexian Gremlins all say it and none is
+            // tagged, while Sunstar Chaplain says "artifact OR creature" and
+            // Ring of the Lucii "nonland permanent", and both are.
+            Rx(@"\btaps? (?:up to [\w ]{0,12}|another|each|[\dXx]+|\w+) target[\w ,'-]{0,35}"
+                + @"(?:creature|permanent)"),
+            Rx(@"\btaps? target[\w ,'-]{0,35}(?:creature|permanent)"),
+            // The mass tap names CREATURES on purpose: "tap all Islands" is the
+            // land lock of ruling 7, which is not this tag.
+            Rx(@"\btaps? all [\w ,'-]{0,35}creatures"),
+            // The twiddle has to reach a creature too: Hyperion Blacksmith taps
+            // or untaps an ARTIFACT an opponent controls and is untagged, while
+            // Twiddle, Twitch, Jolt and Elder Druid all say "artifact,
+            // creature, or land".
+            Rx(@"\btap or untap target[\w ,'-]{0,35}(?:creature|permanent|land)"),
             Rx(@"detain"),
+            NeutralisesWithoutKilling,
+            PhasesSomethingOut,
+            PreventsDamageToYouAlone,
+            NobodyUntaps,
             PreventsWhatACreatureDeals,
             // A STUN COUNTER is an untap lock that travels with the creature,
             // and it is how every card printed since 2021 writes one. 24
@@ -462,8 +573,16 @@ namespace ScatoloneDownloader.Cube
         // Seven reviewed cards do exactly this — Seasoned Marshal, Sidar
         // Jabari, Conformer Shuriken, Thunder Lasso, Web-Shooters, Vengeful
         // Villagers, Wayspeaker Bodyguard — and not one of them is tagged.
+        //
+        // "At the beginning of combat on your turn" is the same trigger written
+        // from the other side (Kimahri), and a card may name the victim first
+        // and tap it in the next sentence (Vengeful Villagers: "choose target
+        // creature an opponent controls. Tap it").
         private static readonly Regex TapsOnItsOwnAttack = Rx(
-            @"(?:whenever|when)[^\n]{0,60}attacks?,[^\n]{0,40}tap target[\w ,'-]{0,40}creature");
+            @"(?:whenever|when)[^\n]{0,60}attacks?,[^\n]{0,40}tap target[\w ,'-]{0,40}creature"
+            + @"|at the beginning of combat on your turn,[^\n]{0,90}tap target[\w ,'-]{0,40}creature"
+            + @"|(?:whenever|when)[^\n]{0,60}attacks?, choose target[\w ,'-]{0,40}creature"
+            + @"[^\n]{0,20}tap it\b");
 
         // "This creature can't attack or block UNLESS <condition>" is a price
         // the card pays for its own statline, which is the same reading
@@ -477,7 +596,8 @@ namespace ScatoloneDownloader.Cube
         // Tapping a creature YOU control is a cost — Energy Tap and Arena buy
         // something with it. Same question as everywhere else: whose creature?
         private static readonly Regex TapsACreatureYouControl = Rx(
-            @"\btap target[\w ,]{0,25}creature you control");
+            @"\btaps? (?:up to [\w ]{0,12}|another|each|[\dXx]+|\w+ )?target[\w ,'-]{0,30}"
+            + @"(?:creature|permanent|artifact)s? you control");
 
         // And "creatures you control can't attack" (Akron Legionnaire, Evil Eye of
         // Orms-by-Gore) is a drawback the card charges you, not a lock on them.

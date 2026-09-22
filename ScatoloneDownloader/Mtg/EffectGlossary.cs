@@ -89,9 +89,9 @@
                 + "which doubles the damage. Not a self-pump, not counters on THEIR creatures, not a tribal lord.",
 
             [CardEffect.Protection] =
-                "Keeps something ELSE alive, and can be held up in response. Two vocabularies count equally: a granted "
-                + "keyword shield (hexproof, indestructible, ward), and damage prevention. Not a fog, not a shield the "
-                + "card puts on itself, and not preventing the damage a creature DEALS — that is Pacify.",
+                "Keeps something ELSE alive, and can be held up in response. A granted keyword shield (hexproof, "
+                + "indestructible, ward), damage prevention, or phasing it out. Not a fog, not a shield the card puts on "
+                + "itself, not preventing the damage a creature DEALS, and not prevention aimed at YOU alone — those are Pacify.",
 
             [CardEffect.Burn] =
                 "Damage or life loss aimed at a FACE, however counted and however slow: \"damage equal to the number "
@@ -121,9 +121,10 @@
                 + "land put onto the battlefield, not mana you may only spend on one thing.",
 
             [CardEffect.Pacify] =
-                "Neutralises somebody else's creature without killing it: can't attack or block, tapped down, "
-                + "detained, locked from untapping, or the damage it DEALS prevented. UNTAPPING one is not this. "
-                + "Nor is tapping one of yours as a cost, or a card that only taxes ITSELF.",
+                "Neutralises somebody else's creature without killing it: tapped, stunned, phased out, locked from "
+                + "untapping, can't attack or block, shrunk to base power 0, or the damage it DEALS prevented. "
+                + "HOW LONG does not matter. Not a LAND that won't untap, not an artifact tap, not a tap on your own "
+                + "attack, not a price the card pays itself.",
 
             [CardEffect.LandDestruction] =
                 "Takes a land off the battlefield, however worded: in a type list, behind a count, beside a "

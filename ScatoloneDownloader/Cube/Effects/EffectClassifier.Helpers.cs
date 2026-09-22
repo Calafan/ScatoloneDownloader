@@ -122,6 +122,24 @@ namespace ScatoloneDownloader.Cube
                 return false;
             }
 
+            // A prevention aimed at the PLAYER ALONE is Pacify and not this,
+            // ruled 2026-09-22. Nothing of yours is being saved — the attack
+            // simply stops mattering, which is what a Propaganda does. Asked by
+            // blanking it and seeing whether the card still shields anything:
+            // Ultimate Magic: Holy hands your permanents indestructible on the
+            // same line and keeps both tags, while Deep Wood, Shield of the
+            // Ages and Thought Lash do nothing else and were realigned.
+            if (PreventsDamageToYouAlone.IsMatch(text))
+            {
+                string rest = PreventsDamageToYouAlone.Replace(text, " ");
+
+                if (!PreventDamageTo.IsMatch(rest) && !PreventFromChosenSource.IsMatch(rest)
+                    && !ProtectionPatterns.Any(p => p.IsMatch(rest)))
+                {
+                    return false;
+                }
+            }
+
             return !PreventForItself.IsMatch(text)
                 && !PreventDealtBy.IsMatch(text)
                 && !PreventsItsOwnDamage.IsMatch(text)
@@ -165,7 +183,33 @@ namespace ScatoloneDownloader.Cube
                 }
             }
 
-            return SelfUntapClause.IsMatch(text);
+            return SelfUntapClause.IsMatch(text) || OnlyLocksLands(text);
+        }
+
+        /// <summary>True when every untap lock on the card holds down a LAND and
+        /// no line locks a creature. See <see cref="UntapLockNamesACreature"/>
+        /// for the ruling; asked per line so a card that stops both keeps the
+        /// tag on the creatures.</summary>
+        private static bool OnlyLocksLands(string text)
+        {
+            bool sawLock = false;
+
+            foreach (string line in text.Split('\n'))
+            {
+                if (!AnyUntapLock.IsMatch(line))
+                {
+                    continue;
+                }
+
+                if (UntapLockNamesAVictim.IsMatch(line) || !UntapLockNamesALand.IsMatch(line))
+                {
+                    return false;
+                }
+
+                sawLock = true;
+            }
+
+            return sawLock;
         }
 
         /// <summary>True when every "can't attack or block unless" on the card
