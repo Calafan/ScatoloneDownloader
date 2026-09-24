@@ -396,3 +396,10 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# Ontology-pass probes: copied in, run by filter, never committed.
+# See .claude/skills/ontology-pass/SKILL.md
+ScatoloneDownloader.Tests/Cube/
+
+# Per-machine Claude Code settings; the skills beside it are shared.
+.claude/settings.local.json
