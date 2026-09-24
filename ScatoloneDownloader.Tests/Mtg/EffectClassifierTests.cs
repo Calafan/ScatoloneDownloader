@@ -1529,10 +1529,12 @@ public sealed class EffectClassifierTests
     // the identical earthbend wording. None of the 21 tagged ones makes a real
     // token, so the split was an inconsistency rather than a distinction.
     [InlineData("Nature's Revolt", "Enchantment", "All lands are 2/2 creatures that are still lands.")]
-    [InlineData("Badgermole Cub", "Creature — Badger Mole",
-        "When this creature enters, earthbend 1. (Target land you control becomes a 0/0 creature with haste "
-        + "that's still a land. Put a +1/+1 counter on it. When it dies or is exiled, return it to the "
-        + "battlefield tapped.)\nWhenever you tap a creature for mana, add an additional {G}.")]
+    // This case was Badgermole Cub until 2026-09-24, when a CREATURE that
+    // earthbends once stopped being Tokens (see the ruling test below); the
+    // keyword still counts, and a sorcery is where it is pinned now.
+    [InlineData("Earthbending Lesson", "Sorcery — Lesson",
+        "Earthbend 4. (Target land you control becomes a 0/0 creature with haste that's still a land. Put four "
+        + "+1/+1 counters on it. When it dies or is exiled, return it to the battlefield tapped.)")]
     // The animated land written without the keyword. The pattern reads the
     // "2/2" and so cannot be spelled with [\w ], which is the bug that made
     // the first realignment pass miss all five of these.
@@ -1586,12 +1588,14 @@ public sealed class EffectClassifierTests
     [Theory]
     // A TOKEN COPY is a body only when what it copies is a creature, ruled
     // 2026-09-19. Asked of the LINE that makes the copy, because the type word
-    // that answers it sits in the trigger beside the verb.
-    [InlineData("Ran and Shaw", "Legendary Creature — Dragon",
-        "Flying, firebending 2\n"
-        + "When Ran and Shaw enter, if you cast them and there are three or more Dragon and/or Lesson cards in "
-        + "your graveyard, create a token that's a copy of Ran and Shaw, except it's not legendary.\n"
-        + "{3}{R}: Dragons you control get +2/+0 until end of turn.")]
+    // that answers it sits in the trigger beside the verb. The case was Ran and
+    // Shaw until 2026-09-24, when a creature copying itself ONCE stopped being
+    // Tokens; it moved to the ruling test below, and a copy made on every
+    // attack (exert) is pinned here instead.
+    [InlineData("Sandstorm Crasher", "Creature — Minotaur Berserker Wizard",
+        "Trample\nYou may exert this creature as it attacks. When you do, create a tapped and attacking token "
+        + "that's a copy of target creature you control. Sacrifice the token at the beginning of the next end "
+        + "step. (An exerted creature won't untap during your next untap step.)")]
     public void Classify_ATokenCopyOfACreature_IsTokens(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
@@ -1612,6 +1616,100 @@ public sealed class EffectClassifierTests
     public void Classify_ATokenCopyOfSomethingElse_IsNotTokens(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    // A CREATURE that makes one or two bodies, ONCE, is not Tokens. Ruled
+    // 2026-09-24: a creature is already a creature, and the tag marks the
+    // noncreature cards the cube files among them. It settled a split — the
+    // Ally sentence on Katara was tagged, the same sentence on Kyoshi Warriors
+    // was not.
+    [InlineData("Katara, Water Tribe's Hope", "Legendary Creature — Human Warrior Ally",
+        "Vigilance\nWhen Katara enters, create a 1/1 white Ally creature token.\n"
+        + "Waterbend {X}: Creatures you control have base power and toughness X/X until end of turn. X can't be "
+        + "0. Activate only during your turn. (While paying a waterbend cost, you can tap your artifacts and "
+        + "creatures to help. Each one pays for {1}.)")]
+    [InlineData("Head of the Homestead", "Creature — Rabbit Citizen",
+        "When this creature enters, create two 1/1 white Rabbit creature tokens.")]
+    // Offspring keeps its body in the reminder text, which is read.
+    [InlineData("Manifold Mouse", "Creature — Mouse Soldier",
+        "Offspring {2} (You may pay an additional {2} as you cast this spell. If you do, when this creature "
+        + "enters, create a 1/1 token copy of it.)\nAt the beginning of combat on your turn, target Mouse you "
+        + "control gains your choice of double strike or trample until end of turn.")]
+    // A copy of ITSELF, once — overturned from Tokens by this ruling.
+    [InlineData("Ran and Shaw", "Legendary Creature — Dragon",
+        "Flying, firebending 2\n"
+        + "When Ran and Shaw enter, if you cast them and there are three or more Dragon and/or Lesson cards in "
+        + "your graveyard, create a token that's a copy of Ran and Shaw, except it's not legendary.\n"
+        + "{3}{R}: Dragons you control get +2/+0 until end of turn.")]
+    // A DELAYED trigger fires once, however much it reads like an upkeep.
+    [InlineData("Rukh Egg", "Creature — Bird Egg",
+        "When this creature dies, create a 4/4 red Bird creature token with flying at the beginning of the next "
+        + "end step.")]
+    // Two earthbends are two bodies: the keyword is counted OUTSIDE its own
+    // reminder text, which names it a third time.
+    [InlineData("Dai Li Agents", "Creature — Human Soldier",
+        "When this creature enters, earthbend 1, then earthbend 1. (To earthbend 1, target land you control "
+        + "becomes a 0/0 creature with haste that's still a land. Put a +1/+1 counter on it. When it dies or is "
+        + "exiled, return it to the battlefield tapped.)\nWhenever this creature attacks, each opponent loses X "
+        + "life and you gain X life, where X is the number of creatures you control with +1/+1 counters on them.")]
+    // An ability that pays with the card itself runs once.
+    [InlineData("Leering Onlooker", "Creature — Vampire",
+        "Flying\n{2}{B}{B}, Exile this card from your graveyard: Create two tapped 1/1 black Bat creature tokens "
+        + "with flying.")]
+    public void Classify_ACreatureMakingOneOrTwoBodiesOnce_IsNotTokens(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    // …and the creatures that keep it: THREE at once, counted across a list.
+    [InlineData("Somberwald Beastmaster", "Creature — Human Ranger",
+        "When this creature enters, create a 2/2 green Wolf creature token, a 3/3 green Beast creature token, "
+        + "and a 4/4 green Beast creature token.\nCreature tokens you control have deathtouch. (Any amount of "
+        + "damage they deal to a creature is enough to destroy it.)")]
+    // A count that comes before the verb.
+    [InlineData("Tobias, Doomed Conqueror", "Legendary Creature — Human Soldier",
+        "Flash\nWhen Tobias dies, for each nontoken creature you controlled that died this turn, create a 2/2 "
+        + "black Zombie creature token.")]
+    // A trigger behind an ability word, which repeats.
+    [InlineData("Barret, Avalanche Leader", "Legendary Creature — Human Rebel",
+        "Reach\nAvalanche! — Whenever an Equipment you control enters, create a 2/2 red Rebel creature token.\n"
+        + "At the beginning of combat on your turn, attach up to one target Equipment you control to target "
+        + "Rebel you control.")]
+    // Myriad printed BARE, with no reminder text to read a trigger from.
+    [InlineData("Chittering Dispatcher", "Creature — Eldrazi Drone",
+        "Devoid (This card has no color.)\nMyriad\nWhen this creature leaves the battlefield, create a 0/1 "
+        + "colorless Eldrazi Spawn creature token with \"Sacrifice this token: Add {C}.\"")]
+    // A replacement that answers every death.
+    [InlineData("Valentin, Dean of the Vein // Lisette, Dean of the Root",
+        "Legendary Creature — Vampire Warlock // Legendary Creature — Human Druid",
+        "Menace, lifelink\nIf a nontoken creature an opponent controls would die, exile it instead. When you do, "
+        + "you may pay {2}. If you do, create a 1/1 black and green Pest creature token with \"When this token "
+        + "dies, you gain 1 life.\"\nWhenever you gain life, you may pay {1}. If you do, put a +1/+1 counter on "
+        + "each creature you control and those creatures gain trample until end of turn.")]
+    public void Classify_ACreatureMakingManyOrRepeatedBodies_IsTokens(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    // A NONCREATURE card is Tokens for a single body — the other half of the
+    // 2026-09-24 ruling. The FRONT face decides: this Sidequest transforms into
+    // a creature, and the card you cast is an enchantment.
+    [InlineData("Sarcomancy", "Enchantment",
+        "When this enchantment enters, create a 2/2 black Zombie creature token.\nAt the beginning of your "
+        + "upkeep, if there are no Zombies on the battlefield, this enchantment deals 1 damage to you.")]
+    [InlineData("Sidequest: Raise a Chocobo // Black Chocobo", "Enchantment // Creature — Bird",
+        "When this enchantment enters, create a 2/2 green Bird creature token with \"Whenever a land you "
+        + "control enters, this token gets +1/+0 until end of turn.\"\nAt the beginning of your first main "
+        + "phase, if you control four or more Birds, transform this enchantment.\nWhen this permanent "
+        + "transforms into Black Chocobo, search your library for a land card, put it onto the battlefield "
+        + "tapped, then shuffle.\nLandfall — Whenever a land you control enters, Birds you control get +1/+0 "
+        + "until end of turn.")]
+    public void Classify_ANoncreatureMakingOneBody_IsTokens(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
     }
 
     [Theory]
@@ -2571,6 +2669,13 @@ public sealed class EffectClassifierTests
         "Whenever this creature attacks and isn't blocked, you may put the top creature card of "
         + "defending player's graveyard onto the battlefield under your control. If you do, this "
         + "creature assigns no combat damage this turn.")]
+    // "TAPPED" inside the phrase: an Oracle update in September 2026 rewrote
+    // Geth from "under your control tapped" to this, and the card quietly lost
+    // the tag.
+    [InlineData("Geth, Lord of the Vault", "Legendary Creature — Phyrexian Zombie",
+        "Intimidate (This creature can't be blocked except by artifact creatures and/or creatures that share a "
+        + "color with it.)\n{X}{B}: Put target artifact or creature card with mana value X from an opponent's "
+        + "graveyard onto the battlefield tapped under your control. Then that player mills X cards.")]
     // And the life total is a thing you can take.
     [InlineData("Mirror Universe", "Artifact",
         "{T}, Sacrifice this artifact: Exchange life totals with target opponent. "

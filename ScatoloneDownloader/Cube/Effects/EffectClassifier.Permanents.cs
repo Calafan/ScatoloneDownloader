@@ -190,7 +190,7 @@ namespace ScatoloneDownloader.Cube
             Rx(@"exchange life totals"),
             // Desertion takes the spell it just countered, which is the only place
             // "under your control" appears without a zone to read it against.
-            Rx(@"counter target spell[\s\S]{0,180}onto the battlefield under your control"),
+            Rx(@"counter target spell[\s\S]{0,180}onto the battlefield (?:tapped )?under your control"),
             // Enchantment Alteration moves somebody else's Aura onto a permanent
             // of your choosing — theft of the Aura's job if not of its control.
             // Ruled 2026-09-19.
@@ -208,8 +208,12 @@ namespace ScatoloneDownloader.Cube
         /// and belong to nobody in particular — so the theft only exists once the
         /// card names whose graveyard it is.
         /// </para></summary>
+        // "tapped" may sit INSIDE the phrase: an Oracle update between 22 and 24
+        // Sep 2026 rewrote Geth, Lord of the Vault from "onto the battlefield
+        // under your control tapped" to "onto the battlefield tapped under your
+        // control", and the card lost Steal with no change to this file.
         private static readonly Regex OntoYourSideOfTheBoard = Rx(
-            @"onto the battlefield under your control");
+            @"onto the battlefield (?:tapped )?under your control");
 
         /// <summary>Somebody else's zone, NAMED — "target opponent's library",
         /// "defending player's graveyard". Kept apart from the pronoun form below
@@ -332,6 +336,210 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex MakesABodyByKeyword = Rx(
             @"\bcloaks? (?:the|two|three|four|\w+ of them|up to)|manifest dread"
             + @"|\bliving weapon\b|\bjob select\b");
+
+        // ---- A CREATURE that makes one or two bodies, once ------------------
+        //
+        // Ruled 2026-09-24: a NONCREATURE card that puts creature bodies on the
+        // board is Tokens, always, and a CREATURE card is Tokens only when it
+        // makes THREE OR MORE at once or the effect REPEATS. The reason is how
+        // the cube is built rather than how the card plays: a spell that makes
+        // bodies is filed among the creatures, and a creature already is one,
+        // so one Ally or one Spirit on the way in or the way out adds nothing
+        // the card was not already counted for.
+        //
+        // It also settled a split nobody had ruled on. "When this creature
+        // enters, create a 1/1 white Ally creature token" was tagged on Katara
+        // and Invasion Reinforcements and not on Kyoshi Warriors or Treetop
+        // Freedom Fighters — the identical sentence, 2 to 4 among the reviewed
+        // cards printing it.
+        //
+        // Read per ability, and WITH reminder text, because that is where half
+        // of these keywords keep their body: offspring, afterlife, fabricate,
+        // mobilize, myriad, squad and encore all say "create" only inside the
+        // brackets. Quoted text is blanked instead, since it is what the TOKEN
+        // does ("with 'Whenever a land you control enters, this token gets
+        // +1/+0'"), and a trigger the token carries does not make the card
+        // repeat. A card on which nothing here can be read keeps the tag —
+        // Stridehangar Automaton and Quina add a body to every token made and
+        // say so as a replacement, which this reading has no count for.
+        private static readonly Regex CreatesBodies = Rx(
+            @"\bcreates? (?<n>a|an|one|two|three|four|five|six|seven|eight|nine|ten|x|\d+|that many|twice that many|a number of)\b"
+            + @"(?<rest>[^.\n]{0,160})");
+
+        // A token with a proper name: "create Beau, a legendary blue Ox creature
+        // token", "create Primo, the Indivisible, a legendary 0/0 … creature
+        // token". Always exactly one.
+        private static readonly Regex CreatesANamedBody = Rx(
+            @"\bcreates? [^.\n]{1,40}?, a legendary [^.\n]{0,80}creature token");
+
+        // Bodies that never say "create": each mention is ONE body — earthbend
+        // animates one land, manifest dread turns one card face down, and to
+        // endure is to take the counters or one Spirit.
+        private static readonly Regex OneBodyByKeyword = Rx(
+            @"\bearthbends?\b|\bmanifest dread\b|\bendures? (?:\d+|x)\b|\bcloaks? (?:the|a)\b");
+
+        private static readonly Regex CloaksSeveral = Rx(@"\bcloaks? (?:two|three|four|\w+ of them)\b");
+
+        // The count sits right after the token when it is a count at all:
+        // "create a 1/1 green Insect creature token FOR EACH artifact" (Aatchik).
+        // Asked of the FIRST token word only, because Outlaw Stitcher makes ONE
+        // Zombie and then puts counters "on that token for each spell".
+        private static readonly Regex CountFollowsTheToken = Rx(
+            @"^[^.\n]*?\btokens?(?: [\w ,'-]{0,40})? (?:for each|equal to)\b(?! opponent)");
+
+        private static readonly Regex CountComesFirst = Rx(@"\bfor each\b(?! opponent\b)");
+
+        // What makes an ability run more than once, on top of AbilityRepeats:
+        // "at end of combat" (Kjeldoran Home Guard), a trigger on entering OR
+        // attacking (Inspirited Vanguard), and exert, which is asked "as it
+        // attacks" (Sandstorm Crasher).
+        private static readonly Regex BodyEveryCombat = Rx(
+            @"\bat end of combat\b|\benters or attacks\b|\bas it attacks\b"
+            // …and a REPLACEMENT that answers every death: "If a nontoken
+            // creature an opponent controls would die, exile it instead. When
+            // you do … create a 1/1 Pest" (Valentin, Dean of the Vein).
+            + @"|\bif (?:a|an|another) [\w ,-]{0,40} would die\b");
+
+        // Two keywords that make bodies on EVERY attack and are often printed
+        // bare, with no reminder text for the rule above to read: Chittering
+        // Dispatcher says only "Myriad".
+        private static readonly Regex BodiesOnEveryAttack = Rx(@"\b(?:myriad|mobilize)\b");
+
+        // …and what makes a cost line run ONCE: the card pays with itself.
+        // "{2}{B}{B}, Exile this card from your graveyard: Create two tapped 1/1
+        // Bats" (Leering Onlooker), and encore, which says the same inside its
+        // reminder text.
+        private static readonly Regex BodyCostSpendsItself = Rx(
+            @"(?:sacrifice this (?:creature|permanent|artifact|card)|exile this card from your graveyard)[^:\n]{0,40}:");
+
+        /// <summary>How many creature bodies one ability makes: null when it
+        /// makes none, <see cref="int.MaxValue"/> when the count is X or "for
+        /// each", which can always reach three.</summary>
+        private static int? BodiesMadeBy(string ability)
+        {
+            int? bodies = null;
+
+            foreach (Match m in CreatesBodies.Matches(ability))
+            {
+                string rest = m.Groups["rest"].Value;
+                bool isBody = rest.Contains("creature token", StringComparison.OrdinalIgnoreCase)
+                    || AnyTokenCopy.IsMatch(rest);
+
+                if (!isBody)
+                {
+                    continue;
+                }
+
+                int n = m.Groups["n"].Value.ToLowerInvariant() switch
+                {
+                    "a" or "an" or "one" => 1,
+                    "two" => 2,
+                    "three" => 3,
+                    "four" => 4,
+                    "five" => 5,
+                    "six" => 6,
+                    "seven" => 7,
+                    "eight" => 8,
+                    "nine" => 9,
+                    "ten" => 10,
+                    string digits when int.TryParse(digits, out int d) => d,
+                    _ => int.MaxValue,
+                };
+
+                if (CountFollowsTheToken.IsMatch(rest))
+                {
+                    n = int.MaxValue;
+                }
+
+                // …or the count comes FIRST, earlier in the same sentence:
+                // "for each nontoken creature you controlled that died this
+                // turn, create a 2/2 black Zombie" (Tobias). Encore's "for each
+                // opponent, create a token copy" is one body at a two-player
+                // table, and stays one.
+                int sentenceStart = Math.Max(
+                    ability.LastIndexOfAny(['.', '\n', '•'], Math.Max(m.Index - 1, 0)) + 1, 0);
+                if (CountComesFirst.IsMatch(ability[sentenceStart..m.Index]))
+                {
+                    n = int.MaxValue;
+                }
+
+                // A LIST of bodies in one sentence is each of them: Somberwald
+                // Beastmaster makes "a 2/2 green Wolf creature token, a 3/3 green
+                // Beast creature token, and a 4/4 green Beast creature token".
+                n = Math.Max(n, CreatureTokenWording.Matches(rest).Count);
+
+                bodies = Math.Max(bodies ?? 0, n);
+            }
+
+            if (CreatesANamedBody.IsMatch(ability))
+            {
+                bodies = Math.Max(bodies ?? 0, 1);
+            }
+
+            // Counted OUTSIDE the brackets: earthbend's reminder text names the
+            // keyword again ("(To earthbend 1, target land …)"), which made Dai
+            // Li Agents' two earthbends three.
+            int keywordBodies = OneBodyByKeyword.Matches(Parenthetical.Replace(ability, " ")).Count;
+            if (keywordBodies > 0)
+            {
+                bodies = Math.Max(bodies ?? 0, keywordBodies);
+            }
+
+            if (CloaksSeveral.IsMatch(ability))
+            {
+                bodies = Math.Max(bodies ?? 0, 2);
+            }
+
+            return bodies;
+        }
+
+        // A DELAYED trigger fires once: Rukh Egg dies and makes its Bird "at the
+        // beginning of THE NEXT end step", which the repeat rule would read as
+        // an upkeep engine.
+        private static readonly Regex DelayedOnce = Rx(@"at the beginning of (?:the|your) next [\w ]{0,20}");
+
+        private static bool BodyAbilityRepeats(string ability)
+        {
+            string asked = DelayedOnce.Replace(ability, " ");
+
+            return (AbilityRepeats(asked) || BodyEveryCombat.IsMatch(asked))
+                && !BodyCostSpendsItself.IsMatch(asked);
+        }
+
+        private static bool FrontFaceIsACreature(Card card) =>
+            (card.TypeLine ?? string.Empty).Split("//")[0]
+                .Contains("Creature", StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>True when the card makes creature bodies and EVERY ability
+        /// that does makes one or two of them, once. Asked only of a card whose
+        /// FRONT face is a creature — see the call site for why the whole type
+        /// line will not do.</summary>
+        private static bool OnlyAFewBodiesOnce(string text)
+        {
+            bool makesAny = false;
+            string own = Quoted.Replace(text, " ");
+
+            if (BodiesOnEveryAttack.IsMatch(own))
+            {
+                return false;
+            }
+
+            foreach (string ability in Abilities(own))
+            {
+                if (BodiesMadeBy(ability) is not int bodies)
+                {
+                    continue;
+                }
+
+                makesAny = true;
+                if (bodies >= 3 || BodyAbilityRepeats(ability))
+                {
+                    return false;
+                }
+            }
+
+            return makesAny;
+        }
 
         // Diabolic Edict and Flare of Malice make the OTHER player sacrifice,
         // which empties their board rather than giving you a place to put yours.

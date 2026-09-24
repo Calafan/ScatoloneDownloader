@@ -260,6 +260,18 @@ namespace ScatoloneDownloader.Cube
                 result |= CardEffect.Tokens;
             }
 
+            // …and taken back off a CREATURE that makes one or two bodies,
+            // once. Ruled 2026-09-24; see OnlyAFewBodiesOnce. Last among the
+            // Tokens rules so it can withdraw whichever of them granted the tag.
+            // The FRONT face is asked, not MacroType: MacroType reads the whole
+            // type line, so a Saga or a Sidequest that transforms into a
+            // creature ("Enchantment // Creature — Bird") would count as one,
+            // and the card you cast is the enchantment.
+            if (result.HasFlag(CardEffect.Tokens) && FrontFaceIsACreature(card) && OnlyAFewBodiesOnce(text))
+            {
+                result &= ~CardEffect.Tokens;
+            }
+
             // Removal's two blind spots, added after the table because both need
             // to look at the whole card rather than one sentence.
             if (KillsAcrossCommas.IsMatch(text) && !ReturnsItToPlay.IsMatch(text) && !TargetsAGraveyard.IsMatch(text))
