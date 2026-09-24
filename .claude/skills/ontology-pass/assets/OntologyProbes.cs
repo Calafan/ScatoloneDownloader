@@ -304,7 +304,7 @@ public sealed class OntologyProbes
                 continue;
             }
 
-            var hits = rows.Where(r => rx.IsMatch(r.Card.OracleText ?? string.Empty)).ToList();
+            var hits = rows.Where(r => rx.IsMatch(Haystack(r.Card))).ToList();
             int tagged = hits.Count(h => h.Human.HasFlag(effect));
 
             sb.AppendLine();
@@ -443,6 +443,110 @@ public sealed class OntologyProbes
         }
 
         Write("text.txt", sb.ToString());
+    }
+
+    /// <summary>What a hypothesis is matched against: the oracle text, plus the
+    /// type line and keywords on trailer lines so a clause can ask about them.
+    /// An ontology rule often turns on the CARD rather than on its text — "only
+    /// if it is an instant or has flash" cannot be seen in the rules text at all
+    /// — so a hypothesis may say <c>&lt;&lt;TYPE&gt;&gt;[^\n]*Instant</c> or
+    /// <c>&lt;&lt;KEYWORDS&gt;&gt;[^\n]*Flash</c>.</summary>
+    private static string Haystack(Card card) =>
+        (card.OracleText ?? string.Empty)
+        + "\n<<TYPE>> " + (card.TypeLine ?? string.Empty)
+        + "\n<<KEYWORDS>> " + string.Join(' ', card.Keywords ?? []);
+
+    /// <summary>THE BLAST RADIUS OF AN ONTOLOGY CHANGE. Written for the case the
+    /// pass had not met before: the human does not correct the classifier, they
+    /// move the DEFINITION. Then the question is not "what does the classifier
+    /// miss" but "how many hand tags does the new definition invalidate", and
+    /// that has to be known before a line of code is written.
+    ///
+    /// For every reviewed card CARRYING the tag, which of the hypotheses match?
+    /// The cards matching NONE are the ones the new definition drops. The mirror
+    /// — untagged cards that DO match — is what it pulls in.
+    ///
+    /// So hypotheses.txt here holds one line per QUALIFYING CLAUSE of the new
+    /// definition, not one per wording family.</summary>
+    [Fact]
+    public async Task Matrix()
+    {
+        List<string> lines = ReadLines("hypotheses.txt");
+        List<string> tagNames = ReadLines("tag.txt");
+
+        if (lines.Count == 0 || tagNames.Count == 0
+            || !Enum.TryParse(tagNames[0], ignoreCase: true, out CardEffect effect))
+        {
+            Write("matrix.txt", "need hypotheses.txt (name<TAB>regex) and tag.txt (one effect).");
+            return;
+        }
+
+        List<(string Name, Regex Rx)> clauses = [];
+        foreach (string line in lines)
+        {
+            string[] parts = line.Split('\t', 2);
+            if (parts.Length != 2)
+            {
+                continue;
+            }
+
+            try
+            {
+                clauses.Add((parts[0].Trim(), new Regex(parts[1].Trim(),
+                    RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline)));
+            }
+            catch (ArgumentException ex)
+            {
+                Write("matrix.txt", $"bad regex on {parts[0]}: {ex.Message}");
+                return;
+            }
+        }
+
+        var rows = await Ground();
+        StringBuilder sb = new();
+
+        var tagged = rows.Where(r => r.Human.HasFlag(effect)).ToList();
+        var untagged = rows.Where(r => !r.Human.HasFlag(effect)).ToList();
+
+        sb.AppendLine($"{effect}: {tagged.Count} reviewed cards carry the tag, {untagged.Count} do not.");
+        sb.AppendLine();
+        sb.AppendLine("How many TAGGED cards each clause covers (a card may match several):");
+        foreach ((string name, Regex rx) in clauses)
+        {
+            int hit = tagged.Count(r => rx.IsMatch(Haystack(r.Card)));
+            sb.AppendLine($"  {name,-28} {hit,5}  ({100.0 * hit / Math.Max(tagged.Count, 1):F1}% of tagged)");
+        }
+
+        var orphans = tagged.Where(r => !clauses.Any(c => c.Rx.IsMatch(Haystack(r.Card)))).ToList();
+        var pulled = untagged.Where(r => clauses.Any(c => c.Rx.IsMatch(Haystack(r.Card)))).ToList();
+
+        sb.AppendLine();
+        sb.AppendLine($"WOULD LOSE THE TAG (tagged, matches no clause): {orphans.Count}");
+        sb.AppendLine($"WOULD GAIN THE TAG (untagged, matches a clause): {pulled.Count}");
+
+        sb.AppendLine();
+        sb.AppendLine(new string('=', 78));
+        sb.AppendLine($"WOULD LOSE THE TAG — {orphans.Count} cards");
+        sb.AppendLine(new string('=', 78));
+        foreach (var r in orphans.OrderBy(r => r.Card.Name))
+        {
+            sb.AppendLine();
+            sb.AppendLine($"### {r.Card.Name}   [{r.Card.TypeLine}]   human: {r.Human}");
+            sb.AppendLine("    " + (r.Card.OracleText ?? string.Empty).Replace("\n", "\n    "));
+        }
+
+        sb.AppendLine();
+        sb.AppendLine(new string('=', 78));
+        sb.AppendLine($"WOULD GAIN THE TAG — {pulled.Count} cards (first 40)");
+        sb.AppendLine(new string('=', 78));
+        foreach (var r in pulled.OrderBy(r => r.Card.Name).Take(40))
+        {
+            sb.AppendLine();
+            sb.AppendLine($"### {r.Card.Name}   [{r.Card.TypeLine}]   human: {r.Human}");
+            sb.AppendLine("    " + (r.Card.OracleText ?? string.Empty).Replace("\n", "\n    "));
+        }
+
+        Write("matrix.txt", sb.ToString());
     }
 
     private static Card? Find(List<Card> all, string name) =>
