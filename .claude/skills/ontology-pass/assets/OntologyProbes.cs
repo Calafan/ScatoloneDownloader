@@ -549,6 +549,128 @@ public sealed class OntologyProbes
         Write("matrix.txt", sb.ToString());
     }
 
+    /// <summary>EVERYTHING, ONCE, AS DATA. One JSON line per store entry that
+    /// resolves to a card: text, type, what the store holds, what the classifier
+    /// says NOW, and whether a human reviewed it. For the questions the reports
+    /// above were not shaped for — joining against review-log.jsonl, comparing
+    /// the store with the current rules, counting across tags — without paying a
+    /// build for every question. Written 2026-09-24, the day this found the store
+    /// holding proposals from a classifier five days old.</summary>
+    [Fact]
+    public async Task Dump()
+    {
+        CubeMetadata store = CubeMetadataStore.Load(StorePath);
+
+        List<Card> all;
+        using (GetManager manager = new())
+        {
+            all = await manager.GetDefaultCards();
+        }
+
+        Dictionary<string, Card> byOracle = [];
+        foreach (Card card in all)
+        {
+            if (!string.IsNullOrEmpty(card.OracleId))
+            {
+                byOracle.TryAdd(card.OracleId, card);
+            }
+        }
+
+        StringBuilder sb = new();
+        foreach ((string oracleId, CardMetadataEntry entry) in store.Cards)
+        {
+            if (!byOracle.TryGetValue(oracleId, out Card? card))
+            {
+                continue;
+            }
+
+            sb.AppendLine(System.Text.Json.JsonSerializer.Serialize(new
+            {
+                oracleId,
+                name = card.Name,
+                type = card.TypeLine,
+                macro = card.MacroType.ToString(),
+                keywords = card.Keywords ?? [],
+                text = card.OracleText ?? string.Empty,
+                stored = EffectResolver.ToNames(entry.EffectFlags),
+                auto = EffectResolver.ToNames(EffectClassifier.Classify(card)),
+                reviewedAt = entry.ReviewedAt,
+            }));
+        }
+
+        Write("dump.jsonl", sb.ToString());
+    }
+
+    /// <summary>WHAT DOES THIS PHRASE CONTRIBUTE. Blanks every match of the
+    /// regex in blank.txt out of each reviewed card's text, classifies again,
+    /// and records every card whose proposal moves. The answer to "which of
+    /// these cards earn the tag ONLY from the scry" — a question no regex over
+    /// the text can answer, because the rest of the card may earn the same tag
+    /// some other way. One JSON line per card that changed, in blank.jsonl.</summary>
+    [Fact]
+    public async Task Blank()
+    {
+        List<string> lines = ReadLines("blank.txt");
+        if (lines.Count == 0)
+        {
+            Write("blank.jsonl", string.Empty);
+            return;
+        }
+
+        Regex blank = new(lines[0], RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        CubeMetadata store = CubeMetadataStore.Load(StorePath);
+
+        List<Card> all;
+        using (GetManager manager = new())
+        {
+            all = await manager.GetDefaultCards();
+        }
+
+        StringBuilder sb = new();
+        HashSet<string> seen = [];
+        foreach (Card card in all)
+        {
+            if (string.IsNullOrEmpty(card.OracleId) || !seen.Add(card.OracleId)
+                || !store.Cards.TryGetValue(card.OracleId, out CardMetadataEntry? entry)
+                || entry.ReviewedAt == null)
+            {
+                continue;
+            }
+
+            string text = card.OracleText ?? string.Empty;
+            if (!blank.IsMatch(text))
+            {
+                continue;
+            }
+
+            // OracleText is init-only; reflection may still call the setter, and
+            // the card is a throwaway copy from this run's bulk load.
+            CardEffect before = EffectClassifier.Classify(card);
+            OracleTextProperty.SetValue(card, blank.Replace(text, " "));
+            CardEffect after = EffectClassifier.Classify(card);
+            OracleTextProperty.SetValue(card, text);
+
+            if (before != after)
+            {
+                sb.AppendLine(System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    oracleId = card.OracleId,
+                    name = card.Name,
+                    human = EffectResolver.ToNames(entry.EffectFlags),
+                    before = EffectResolver.ToNames(before),
+                    after = EffectResolver.ToNames(after),
+                }));
+            }
+        }
+
+        Write("blank.jsonl", sb.ToString());
+    }
+
+    private static readonly PropertyInfo OracleTextProperty =
+        typeof(Card).GetProperty(nameof(Card.OracleText),
+            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+        ?? throw new InvalidOperationException("Card.OracleText not found by reflection");
+
     private static Card? Find(List<Card> all, string name) =>
         all.FirstOrDefault(c => string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase))
         ?? all.FirstOrDefault(c => c.Name.StartsWith(name + " //", StringComparison.OrdinalIgnoreCase))

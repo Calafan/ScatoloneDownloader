@@ -49,9 +49,16 @@ def load_head(repo, name):
     return json.loads(raw)
 
 
-def apply(data_by_file, rulings):
-    """Add or remove each ruling's tag, keeping enum declaration order."""
-    touched = 0
+def apply(data_by_file, rulings, reviewed_only=False):
+    """Add or remove each ruling's tag, keeping enum declaration order.
+
+    reviewed_only is for --mode head. A card the human reviewed only in the
+    working tree is still an UNREVIEWED proposal in HEAD, and changing it there
+    would commit a classifier proposal under a ruling's name — and a ruling on
+    it belongs to the human's own uncommitted pass, which they commit. Such
+    cards are skipped here and counted; --mode tree gives them the ruling.
+    """
+    touched = skipped = 0
 
     for edit in rulings:
         oracle, effect = edit["oracleId"], edit["effect"]
@@ -64,6 +71,10 @@ def apply(data_by_file, rulings):
             entry = data.get("cards", {}).get(oracle)
             if entry is None:
                 continue
+
+            if reviewed_only and not entry.get("reviewedAt"):
+                skipped += 1
+                break
 
             effects = entry.get("effects") or []
 
@@ -79,7 +90,7 @@ def apply(data_by_file, rulings):
         else:
             raise SystemExit(f"not found in any tier file: {edit.get('name')} ({oracle})")
 
-    return touched
+    return touched, skipped
 
 
 def main():
@@ -98,7 +109,7 @@ def main():
     else:
         data_by_file = {name: json.loads((meta / name).read_text(encoding="utf-8")) for name in FILES}
 
-    touched = apply(data_by_file, rulings)
+    touched, skipped = apply(data_by_file, rulings, reviewed_only=args.mode == "head")
 
     for name, data in data_by_file.items():
         (meta / name).write_bytes(dump(data).encode("utf-8"))
@@ -125,7 +136,8 @@ def main():
                 if key != "effects" and after[oracle].get(key) != before[oracle].get(key):
                     bad_field += 1
 
-    print(f"mode={args.mode} rulings applied={touched} of {len(rulings)}")
+    print(f"mode={args.mode} rulings applied={touched} of {len(rulings)}"
+          + (f" | {skipped} not reviewed in HEAD, left for --mode tree" if skipped else ""))
     print(f"vs HEAD: {changed} entries changed | non-effects fields: {bad_field} "
           f"| entry-set changed in {entry_sets} files")
 

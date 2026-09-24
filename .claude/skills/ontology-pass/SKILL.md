@@ -59,8 +59,23 @@ $env:ONTOLOGY_DIR = "<scratchpad>\ontology"
 | `names.txt` — one card name per line | `acc-detail.txt` — a sample of each tag's misses |
 | `hypotheses.txt` — `name<TAB>regex` | `tag-detail.txt` — **every** disagreement on `tag.txt`, full text |
 | `store.txt` — optional store path | `counts.txt` — each hypothesis counted |
-| | `text.txt` — oracle text, ids and current tags |
+| `blank.txt` — one regex to blank out | `text.txt` — oracle text, ids and current tags |
 | | `why.txt` — which regex field fired, by reflection |
+| | `matrix.txt` — which hand tags a NEW definition keeps |
+| | `blank.jsonl` — every card whose proposal moves without the phrase |
+| | `dump.jsonl` — every store card: text, type, stored and current tags |
+
+`dump.jsonl` is for the questions the reports were not shaped for — joining with
+`review-log.jsonl`, counting across tags, comparing the store with the current
+rules — answered in Python against one file instead of a build per question.
+`Blank` answers "which cards earn this tag ONLY from this phrase", which no regex
+over the text can, because the rest of the card may earn the same tag otherwise.
+
+When the human MOVES A DEFINITION rather than correcting the classifier, measure
+the definition before any code: which hand tags it drops, which it adds, and
+whether the human's own recent tags already follow it. Read the cards, not only
+the counts — a clause regex that is too generous (every +1/+1 counter counted as
+"permanent") reports a two-card blast radius for a rule that drops forty-six.
 
 Copy `assets/OntologyProbes.cs` into `ScatoloneDownloader.Tests/Cube/` and run by
 filter. That folder is gitignored, so the probes cannot reach a commit; delete it
@@ -72,7 +87,8 @@ dotnet test ScatoloneDownloader.Tests --filter "FullyQualifiedName~OntologyProbe
 ```
 
 Filter by method for one report (`.Score`, `.TagDetail`, `.Count`, `.Why`,
-`.Text`) or by `~OntologyProbes` for all five. A full run is ~30s and costs no
+`.Text`, `.Matrix`, `.Blank`, `.Dump`) or by `~OntologyProbes` for all eight. A
+full run is ~30s and costs no
 tokens, which is the point: the searching is deterministic, and the thinking is
 the expensive part. Never grep the store's JSON by hand to answer a question one
 of these already answers exactly.

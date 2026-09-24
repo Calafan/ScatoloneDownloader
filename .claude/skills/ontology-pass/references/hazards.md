@@ -101,6 +101,38 @@ matches.
 
 **Fix:** spell both cases (`[Cc]reatures`) and check with `Why` that it fires.
 
+## The human reviewed against proposals days old
+
+**Symptom:** the human reports an "ontology error" the classifier already fixed —
+"all the Dread cards had Filter" when the rule taking it off shipped days earlier —
+or `split_unreviewed.py` moves thousands of proposals when the code barely changed.
+
+**Cause:** the proposals in the WORKING TREE are not HEAD's. Only `classify`
+rewrites them wholesale, so something ran `classify` with an OLD BUILD: the tagger
+launcher (`tagger.cmd`) starts `bin\Release`, which is rebuilt only by hand, and a
+`classify` from that build rewrites every unreviewed proposal with the rules of the
+day it was compiled. The reviewed entries survive, so nothing looks wrong. On
+2026-09-24 the tree held the proposals of 2026-09-19 on 24,091 of 24,092
+unreviewed cards, and all 1,017 first reviews of the three days before had been
+shown them.
+
+**Fix:** `review-log.jsonl` records what the reviewer was shown (`before`), so the
+check is exact: compare `before` on first reviews with HEAD's proposals. Then
+rebuild (`dotnet build -c Release`) and re-run `classify --overwrite` through the
+normal two-commit split, which puts HEAD's proposals back in the tree. The
+`NOT reviewed: 0` check at the end of every split is what proves it.
+
+## Python rewrote a CRLF file as LF
+
+**Symptom:** git warns "LF will be replaced by CRLF" on a file you edited.
+
+**Cause:** `open(p).read()` translates CRLF to LF, and writing it back with
+`newline=""` keeps the LF. Git normalises the blob, so nothing reaches a commit,
+but the working tree is left inconsistent.
+
+**Fix:** edit with the Edit tool; or read and write bytes. To repair:
+`b.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")`.
+
 ## Numbers that drift out of a report
 
 **Symptom:** a commit message or an answer quotes a figure that no longer holds.
