@@ -308,6 +308,13 @@ namespace ScatoloneDownloader.Cube
         // stand there. Scored against a version built from every creature subtype
         // in the Scryfall bulk: this one agrees everywhere and does better on the
         // irregular plurals the type list cannot form (Elves, Allies).
+        // A STATE may stand in front of the tribe without making it any less
+        // one: Gornog's "Attacking Warriors you control get +X/+0" pumps
+        // Warriors. Ruled not Buff 2026-09-25. The state alone is still not a
+        // tribe — Weakstone's "attacking creatures" keeps the tag, because
+        // NotATribe refuses the word when it is the only one there.
+        private const string StateBeforeATribe = @"(?:[Aa]ttacking |[Bb]locking |[Uu]ntapped |[Tt]apped )?";
+
         private const string NotATribe =
             @"(?!(?:All|Each|Other|Those|These|Target|Attacking|Blocking|Untapped|Tapped|Enchanted|Equipped"
             + @"|Then|When|Whenever|If|And|But|Your|Their|Creature|Permanent|Token|Legendary|Multicolored"
@@ -322,10 +329,10 @@ namespace ScatoloneDownloader.Cube
         private const string ClauseStart = @"(?:^|\n|\. |: |, )";
 
         private static readonly Regex TribalPump = new(
-            ClauseStart + @"(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + NotATribe + @"[A-Z][\w']+s? creatures? (?:you control )?(?:get|have)\b"
-            + @"|" + ClauseStart + @"(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + NotATribe + @"[A-Z][\w']+s? (?:you control )?(?:get|have)\b"
+            ClauseStart + @"(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + StateBeforeATribe + NotATribe + @"[A-Z][\w']+s? creatures? (?:you control )?(?:get|have)\b"
+            + @"|" + ClauseStart + @"(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + StateBeforeATribe + NotATribe + @"[A-Z][\w']+s? (?:you control )?(?:get|have)\b"
             + @"|[Tt]arget " + NotATribe + @"[A-Z][\w']+ creature gets"
-            + @"|" + ClauseStart + @"(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + NotATribe + @"[A-Z][\w']+s? creatures? get \+"
+            + @"|" + ClauseStart + @"(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + StateBeforeATribe + NotATribe + @"[A-Z][\w']+s? creatures? get \+"
             // Four more ways a card names a tribe, found 2026-09-21 when the
             // human ruled that a lord is never this tag: the type can be CHOSEN
             // rather than printed (Patchwork Banner), several types can be
@@ -338,7 +345,7 @@ namespace ScatoloneDownloader.Cube
             + @"|[Cc]reatures you control of the chosen type (?:get|have)\b"
             + @"|[Cc]reatures? you control named [\w' ,-]{1,40} gets? \+"
             + @"|each creature you control named [\w' ,-]{1,40} gets? \+"
-            + @"|" + ClauseStart + @"(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + NotATribe
+            + @"|" + ClauseStart + @"(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + StateBeforeATribe + NotATribe
             + @"[A-Z][\w']+s?(?:, [A-Z][\w']+s?){0,20},? and [A-Z][\w']+s? you control (?:get|have)\b",
             RegexOptions.CultureInvariant | RegexOptions.Multiline);
 
@@ -859,6 +866,18 @@ namespace ScatoloneDownloader.Cube
         // to target creature", "then it fights".
         private static readonly Regex Bite = Rx(@"deals? damage equal to (?:its|their|that creature's) power|\bfights?\b");
 
+        // Counters that ARE a body rather than a pump on one, ruled Tokens and
+        // not Buff on 2026-09-25: Case of the Filched Falcon puts four on a
+        // noncreature artifact that "becomes a 0/0 Bird creature", and
+        // Valgavoth's Onslaught puts X on the bodies it has just manifested.
+        // "Those creatures" has to be bodies the same sentence MADE: the bare
+        // phrase also ends Biogenic Upgrade and Omnivorous Flytrap ("distribute
+        // … then double the counters on those creatures") and Smile at Death,
+        // which returns two creatures and pumps them — all three Buff.
+        private static readonly Regex CountersMakeTheBody = Rx(
+            @"(?:manifest dread|\bcloak|\bcreate)[^.\n]{0,80}counters? on (?:each of )?(?:those|these) (?:creatures|tokens)\b"
+            + @"|counters? on target noncreature [\w ]{0,20}\. it becomes an? 0/0\b");
+
         private static readonly Regex AbilityWordPrefix = Rx(@"^[^—\n]{1,40}— ");
         private static readonly Regex OwnTrigger = Rx(@"^(?:when|whenever|at the beginning|at end of combat)|^[^:\n]{1,60}:");
         private static readonly Regex SeveralChapters = Rx(@"^[ivx]+(?:, [ivx]+)+ —");
@@ -968,7 +987,7 @@ namespace ScatoloneDownloader.Cube
                 return false;
             }
 
-            if (TribalPump.IsMatch(piece))
+            if (TribalPump.IsMatch(piece) || CountersMakeTheBody.IsMatch(piece))
             {
                 return false;
             }

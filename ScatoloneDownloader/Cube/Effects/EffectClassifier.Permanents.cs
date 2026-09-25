@@ -337,6 +337,13 @@ namespace ScatoloneDownloader.Cube
             @"\bcloaks? (?:the|two|three|four|\w+ of them|up to)|manifest dread"
             + @"|\bliving weapon\b|\bjob select\b");
 
+        // A NONCREATURE permanent turned into a 0/0 creature and sized with
+        // counters is a body made, the same shape as earthbend: Case of the
+        // Filched Falcon "put four +1/+1 counters on target noncreature
+        // artifact. It becomes a 0/0 Bird creature". Ruled Tokens 2026-09-25.
+        private static readonly Regex AnimatesANoncreature = Rx(
+            @"counters? on target noncreature [\w ]{0,20}\. it becomes an? 0/0\b[\w ,]{0,40}creature");
+
         // ---- A CREATURE that makes one or two bodies, once ------------------
         //
         // Ruled 2026-09-24: a NONCREATURE card that puts creature bodies on the

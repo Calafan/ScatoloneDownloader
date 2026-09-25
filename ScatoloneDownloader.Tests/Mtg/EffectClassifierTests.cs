@@ -1845,6 +1845,77 @@ public sealed class EffectClassifierTests
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
     }
 
+    [Theory]
+    // Three cards the human ruled by name on 2026-09-25, each for a reason the
+    // size rule does not cover. A STATE in front of a tribe is still a tribe.
+    [InlineData("Gornog, the Red Reaper", "Legendary Creature — Minotaur Warrior",
+        "Haste\nCowards can't block Warriors.\nWhenever one or more Warriors you control attack a player, target "
+        + "creature that player controls becomes a Coward.\nAttacking Warriors you control get +X/+0, where X is the "
+        + "number of Cowards your opponents control.")]
+    // Counters that ARE the body: on the creatures the sentence just made…
+    [InlineData("Valgavoth's Onslaught", "Sorcery",
+        "Manifest dread X times, then put X +1/+1 counters on each of those creatures. (To manifest dread, look at "
+        + "the top two cards of your library, then put one onto the battlefield face down as a 2/2 creature and the "
+        + "other into your graveyard. Turn it face up any time for its mana cost if it's a creature card.)")]
+    // …and on a noncreature that becomes a 0/0.
+    [InlineData("Case of the Filched Falcon", "Enchantment — Case",
+        "When this Case enters, investigate. (Create a Clue token. It's an artifact with \"{2}, Sacrifice this "
+        + "token: Draw a card.\")\nTo solve — You control three or more artifacts. (If unsolved, solve at the "
+        + "beginning of your end step.)\nSolved — {2}{U}, Sacrifice this Case: Put four +1/+1 counters on target "
+        + "noncreature artifact. It becomes a 0/0 Bird creature with flying in addition to its other types.")]
+    public void Classify_ATribeOrABodyBeingMade_IsNotBuff(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // The two bodies above are Tokens instead.
+    [InlineData("Valgavoth's Onslaught", "Sorcery",
+        "Manifest dread X times, then put X +1/+1 counters on each of those creatures. (To manifest dread, look at "
+        + "the top two cards of your library, then put one onto the battlefield face down as a 2/2 creature and the "
+        + "other into your graveyard. Turn it face up any time for its mana cost if it's a creature card.)")]
+    [InlineData("Case of the Filched Falcon", "Enchantment — Case",
+        "When this Case enters, investigate. (Create a Clue token. It's an artifact with \"{2}, Sacrifice this "
+        + "token: Draw a card.\")\nTo solve — You control three or more artifacts. (If unsolved, solve at the "
+        + "beginning of your end step.)\nSolved — {2}{U}, Sacrifice this Case: Put four +1/+1 counters on target "
+        + "noncreature artifact. It becomes a 0/0 Bird creature with flying in addition to its other types.")]
+    public void Classify_CountersThatMakeABody_AreTokens(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    // Ruled Buff by name on 2026-09-25: a big pump that repeats…
+    [InlineData("Hurska Sweet-Tooth", "Legendary Creature — Bear",
+        "Whenever Hurska attacks, create a Food token. (It's an artifact with \"{2}, {T}, Sacrifice this token: "
+        + "You gain 3 life.\")\nWhenever you gain life, you may pay {G/W}. When you do, target creature gets +X/+X "
+        + "until end of turn, where X is the amount of life you gained.")]
+    // …and a big one at instant speed, whatever it costs afterwards.
+    [InlineData("Soulshriek", "Instant",
+        "Target creature you control gets +X/+0 until end of turn, where X is the number of creature cards in your "
+        + "graveyard. Sacrifice that creature at the beginning of the next end step.")]
+    // "Those creatures" that were TARGETED, not made, are still pumped.
+    [InlineData("Biogenic Upgrade", "Sorcery",
+        "Distribute three +1/+1 counters among one, two, or three target creatures, then double the number of +1/+1 "
+        + "counters on each of those creatures.")]
+    public void Classify_ABigPumpTheHumanNamed_IsBuff(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Fact]
+    // Several targets and a shield: Buff and Protection, ruled 2026-09-25.
+    public void Classify_EnduranceBobblehead_IsBuffAndProtection()
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard("Endurance Bobblehead", "Artifact — Bobblehead",
+            "{T}: Add one mana of any color.\n{3}, {T}: Up to X target creatures you control get +1/+0 and gain "
+            + "indestructible until end of turn, where X is the number of Bobbleheads you control as you activate "
+            + "this ability. Activate only as a sorcery."));
+
+        Assert.True(result.HasFlag(CardEffect.Buff));
+        Assert.True(result.HasFlag(CardEffect.Protection));
+    }
+
     [Fact]
     // +5/+5 AND a shield: both tags, named by the human on 2026-09-25.
     public void Classify_StonewoodInvocation_IsBuffAndProtection()

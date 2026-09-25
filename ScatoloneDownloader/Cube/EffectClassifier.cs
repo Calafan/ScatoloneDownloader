@@ -255,7 +255,7 @@ namespace ScatoloneDownloader.Cube
             // none of the tagged ones makes a real token, so the split was an
             // inconsistency rather than a distinction, and the ruling settles it.
             if (Earthbend.IsMatch(text) || LandsBecomeCreatures.IsMatch(text)
-                || MakesABodyByKeyword.IsMatch(text))
+                || MakesABodyByKeyword.IsMatch(text) || AnimatesANoncreature.IsMatch(text))
             {
                 result |= CardEffect.Tokens;
             }
