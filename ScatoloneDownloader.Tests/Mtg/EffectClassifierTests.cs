@@ -1727,7 +1727,12 @@ public sealed class EffectClassifierTests
     [InlineData("Keen-Eyed Raven", "Creature — Bird",
         "Flying (This creature can't be blocked except by creatures with flying or reach.)\nWhen this creature "
         + "enters, put a +1/+1 counter on another target creature you control.")]
-    [InlineData("Honor", "Sorcery", "Put a +1/+1 counter on target creature.\nDraw a card.")]
+    // Honor stood here until the same day's re-review overturned it: a spell
+    // that is ONLY the pump is Buff. See Classify_APumpRuledIn_IsBuff.
+    // B1 now covers a sorcery that does something else as well.
+    [InlineData("Aggressive Negotiations", "Sorcery",
+        "Target opponent reveals their hand. You choose a nonland card from it and exile that card. Put a "
+        + "+1/+1 counter on up to one target creature you control.")]
     // …and from the graveyard, which runs once because the card exiles itself.
     [InlineData("Wither and Bloom", "Instant",
         "Target creature gets -3/-3 until end of turn.\n{1}{B}, Exile this card from your graveyard: Put a +1/+1 "
@@ -2046,13 +2051,68 @@ public sealed class EffectClassifierTests
             + "library.\nCycling {2} ({2}, Discard this card: Draw a card.)")).HasFlag(CardEffect.Bounce));
     }
 
-    [Fact]
-    // Taking a card out of their revealed hand into exile is Discard (2026-09-25).
-    public void Classify_ExilingFromTheirRevealedHand_IsDiscard()
+    [Theory]
+    // Taking a card out of their revealed hand into exile is Discard (2026-09-25),
+    // Intimidation Tactics by name the same day.
+    [InlineData("Aggressive Negotiations", "Sorcery",
+        "Target opponent reveals their hand. You choose a nonland card from it and exile that card. Put a "
+        + "+1/+1 counter on up to one target creature you control.")]
+    [InlineData("Intimidation Tactics", "Sorcery",
+        "Target opponent reveals their hand. You choose an artifact or creature card from it. Exile that "
+        + "card.\nCycling {3} ({3}, Discard this card: Draw a card.)")]
+    public void Classify_ExilingFromTheirRevealedHand_IsDiscard(string name, string typeLine, string oracle)
     {
-        Assert.True(EffectClassifier.Classify(MakeCard("Aggressive Negotiations", "Sorcery",
-            "Target opponent reveals their hand. You choose a nonland card from it and exile that card. Put a "
-            + "+1/+1 counter on up to one target creature you control.")).HasFlag(CardEffect.Discard));
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Discard));
+    }
+
+    [Theory]
+    // Four rulings of 2026-09-25, Buff side. A spell that is ONLY the pump is
+    // Buff however small, at sorcery speed too — "anche se fa schifo".
+    [InlineData("Honor", "Sorcery",
+        "Put a +1/+1 counter on target creature.\nDraw a card.")]
+    // The raised bar is for COUNTERS a creature hands out as it enters: a
+    // temporary pump on entry is a trick and still counts…
+    [InlineData("Toucan-Puffin", "Creature — Bird",
+        "Flying\nWhen this creature enters, target creature you control gets +2/+0 until end of turn.")]
+    // …and so do counters that come from the graveyard rather than the entry.
+    [InlineData("Agent of Kotis", "Creature — Human Rogue",
+        "Renew — {3}{U}, Exile this card from your graveyard: Put two +1/+1 counters on target creature. "
+        + "Activate only as a sorcery.")]
+    // A sorcery-speed COUNTER is not the irrelevant kind: it stays.
+    [InlineData("Perilous Snare", "Artifact",
+        "Start your engines! (If you have no speed, it starts at 1. It increases once on each of your turns "
+        + "when an opponent loses life. Max speed is 4.)\nWhen this artifact enters, exile target nonland "
+        + "permanent an opponent controls until this artifact leaves the battlefield.\nMax speed — {T}: Put a "
+        + "+1/+1 counter on target creature or Vehicle you control. Activate only as a sorcery.")]
+    public void Classify_APumpRuledIn_IsBuff(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // Two counters as the creature enters are "come se fosse un 6/6".
+    [InlineData("Apothecary Stomper", "Creature — Elephant",
+        "Vigilance (Attacking doesn't cause this creature to tap.)\nWhen this creature enters, choose one —\n• "
+        + "Put two +1/+1 counters on target creature you control.\n• You gain 4 life.")]
+    // "+1/+1 a velocità sorcery è irrilevante come effetto. La carta fa altro."
+    [InlineData("Starnheim Memento", "Artifact",
+        "{T}: Add {W}.\n{1}{W}, {T}: Target creature gets +1/+1 and gains flying until end of turn. Activate "
+        + "only as a sorcery.")]
+    // "Colorless" counts as a tribe, as a lord and as counters.
+    [InlineData("Kozilek, the Broken Reality", "Legendary Creature — Eldrazi",
+        "When you cast this spell, up to two target players each manifest two cards from their hands. For "
+        + "each card manifested this way, you draw a card. (To manifest a card, put it onto the battlefield "
+        + "face down as a 2/2 creature. Turn it face up any time for its mana cost if it's a creature "
+        + "card.)\nOther colorless creatures you control get +3/+2.")]
+    [InlineData("It That Heralds the End", "Creature — Eldrazi Drone",
+        "Colorless spells you cast with mana value 7 or greater cost {1} less to cast.\nOther colorless "
+        + "creatures you control get +1/+1.")]
+    [InlineData("Titans' Vanguard", "Creature — Eldrazi",
+        "Devoid (This card has no color.)\nWhen you cast this spell and whenever this creature attacks, put a "
+        + "+1/+1 counter on each colorless creature you control.\nTrample")]
+    public void Classify_APumpRuledOut_IsNotBuff(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
     }
 
     [Theory]

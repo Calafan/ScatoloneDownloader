@@ -311,7 +311,8 @@ namespace ScatoloneDownloader.Cube
         // A pump restricted to one creature TYPE is not Buff, ruled 2026-09-15:
         // "Minotaur creatures get +1/+0" helps a Minotaur deck, and this cube has
         // none, so the tag would promise a payoff the card cannot deliver. A
-        // COLOUR is not a tribe — Crusade and Bad Moon keep the tag — and neither
+        // COLOUR is not a tribe — Crusade and Bad Moon keep the tag; COLORLESS is,
+        // ruled 2026-09-25, and is read at the end of TribalPump — and neither
         // is a state, which is why Castle's "untapped creatures you control" and
         // Weakstone's "attacking creatures" stay in.
         //
@@ -377,7 +378,15 @@ namespace ScatoloneDownloader.Cube
             // +1/+1", Sandstorm Salvager's counter "on each creature token you
             // control").
             + @"|[Cc]reature tokens you control (?:get|have)\b"
-            + @"|\+1/\+1 counters? on each (?:creature )?token you control\b",
+            + @"|\+1/\+1 counters? on each (?:creature )?token you control\b"
+            // COLORLESS is the one colour that IS a tribe — the Eldrazi deck's
+            // word for itself. Ruled 2026-09-25 on Kozilek, the Broken Reality
+            // ("other colorless creatures you control get +3/+2"), which took
+            // It That Heralds the End's older Buff with it. Crusade and Bad
+            // Moon's colours still are not.
+            + @"|" + ClauseStart + @"(?:[Aa]ll |[Oo]ther |[Ee]ach )?(?:other )?[Cc]olorless creatures? (?:you control )?(?:gets?|have|has|enters? with)\b"
+            + @"|\+1/\+1 counters? on (?:each |target |up to one target |another target )(?:other )?colorless creatures?\b"
+            + @"|[Tt]arget colorless creature (?:you control )?gets\b",
             RegexOptions.CultureInvariant | RegexOptions.Multiline);
 
         // PHASING OUT is both tags at once, ruled 2026-09-22: "puoi usarlo sia
@@ -922,6 +931,12 @@ namespace ScatoloneDownloader.Cube
 
         private static readonly Regex ModeChosenAgain = Rx(@"choose the same mode more than once");
 
+        private static readonly Regex TemporaryAtSorcerySpeed = Rx(@"until end of turn[^\n]{0,40}activate only as a sorcery");
+
+        private static readonly Regex EntersTrigger = Rx(@"^when [^,\n]{1,60}\benters\b");
+
+        private const int CreatureOneShotEnough = 3;
+
         private static readonly Regex ConnectsToGrowAnother = Rx(
             @"deals combat damage to (?:a player|an opponent), put [^.]{0,30}counters? on (?:another |up to one (?:other )?)?target creature");
 
@@ -1024,7 +1039,7 @@ namespace ScatoloneDownloader.Cube
 
         /// <summary>Does this one pump earn Buff under the 2026-09-25 rule? See
         /// the block comment above for B1, B2, B3 and the bite.</summary>
-        private static bool PumpCounts(Card card, string piece, PumpTiming timing, CardEffect otherTags)
+        private static bool PumpCounts(Card card, string head, string piece, PumpTiming timing, CardEffect otherTags)
         {
             bool single = !PumpOverAnArea.IsMatch(piece) && !PumpOnSeveral.IsMatch(piece);
             int size = SizeOfPump(piece);
@@ -1057,21 +1072,47 @@ namespace ScatoloneDownloader.Cube
             // Strike with a scry 1 on it — the pump is still the card.
             bool pumpIsTheCard = (otherTags & ~CardEffect.Filter) == CardEffect.None;
 
+            bool creature = FrontFaceIsACreature(card);
+
             if (timing == PumpTiming.Repeat)
             {
+                if (size >= 2)
+                {
+                    return true;
+                }
+
                 // A creature that grows another every time it CONNECTS is the
                 // one repeated small pump on a creature the human tagged:
                 // Prowler and Scurry of Squirrels, 2 of 2, against 61 other B3
                 // creatures confirmed without it (2026-09-25).
-                return size >= 2 || !FrontFaceIsACreature(card) || ConnectsToGrowAnother.IsMatch(piece);
+                if (creature)
+                {
+                    return ConnectsToGrowAnother.IsMatch(piece);
+                }
+
+                // "+1/+1 a velocità sorcery è irrilevante come effetto": a
+                // noncreature engine whose small pump lasts one turn and can
+                // only be made at sorcery speed is not Buff when the card does
+                // anything else — Starnheim Memento is Ramp (2026-09-25).
+                return !TemporaryAtSorcerySpeed.IsMatch(piece) || pumpIsTheCard;
             }
 
-            if (size >= 2)
+            // COUNTERS a creature hands out as it ENTERS have to be bigger:
+            // Apothecary Stomper's two are "come se fosse un 6/6", the body's
+            // stats parked on another creature (2026-09-25).
+            bool countersOnEntry = creature && PutsCounters.IsMatch(piece)
+                && EntersTrigger.IsMatch(head.Trim());
+            if (size >= (countersOnEntry ? CreatureOneShotEnough : 2))
             {
                 return true;
             }
 
-            return timing == PumpTiming.Instant && pumpIsTheCard;
+            // B2 at either speed: a SPELL that is only the pump is Buff however
+            // small — "se la carta fa solo quello … che diventi Buff anche se fa
+            // schifo" (Honor, 2026-09-25).
+            bool spell = timing == PumpTiming.Instant
+                || (card.TypeLine ?? string.Empty).Split("//")[0].Contains("Sorcery", StringComparison.OrdinalIgnoreCase);
+            return spell && pumpIsTheCard;
         }
 
         /// <summary>True when every pump this reading recognises fails the rule,
@@ -1139,7 +1180,7 @@ namespace ScatoloneDownloader.Cube
                             timing = PumpTiming.Static;
                         }
 
-                        if (PumpCounts(card, piece, timing, otherTags))
+                        if (PumpCounts(card, head, piece, timing, otherTags))
                         {
                             return false;
                         }
