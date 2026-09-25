@@ -24,6 +24,11 @@ Python heredoc. `SourceHygieneTests.EverySourceFile_IsFreeOfControlCharacters`
 fails the build if it happens again; when that test goes red, look for the escape
 that was meant to be `\b`, `\w` or `\d`.
 
+It is not only regex source. On 2026-09-25 a heredoc script meaning to count the
+literal text `\r\n` (`b'\\r\\n'`) counted real CRLFs instead, and its "repair"
+rewrote a whole file as LF. Any Python that holds a backslash goes in a file
+written with Write and is run from there.
+
 ## A pattern array built from nulls
 
 **Symptom:** `NullReferenceException` from the classifier, or `Why` reporting
@@ -132,6 +137,20 @@ but the working tree is left inconsistent.
 
 **Fix:** edit with the Edit tool; or read and write bytes. To repair:
 `b.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")`.
+
+## Neutralisation that proves nothing
+
+**Symptom:** every fix, neutralised in turn, reports that no test went red.
+
+**Cause:** the harness is not reading the failures. `dotnet test -v q` prints each
+one as `[xUnit.net …] …Tests.Method(name: "Card", …) [FAIL]` and ends with
+`Non superato! - Non superati: N`; a parser looking for anything else, or reading
+stdout without stderr, sees a clean run every time. A neutralisation that
+breaks the BUILD reports the same silence.
+
+**Fix:** capture stdout and stderr together, match `[FAIL]` lines, and treat a run
+with no `Superati:` summary as a failed build. Then neutralise ONE fix by hand
+first and check the harness reports it red before trusting the rest.
 
 ## Numbers that drift out of a report
 

@@ -1863,6 +1863,42 @@ public sealed class EffectClassifierTests
         + "token: Draw a card.\")\nTo solve — You control three or more artifacts. (If unsolved, solve at the "
         + "beginning of your end step.)\nSolved — {2}{U}, Sacrifice this Case: Put four +1/+1 counters on target "
         + "noncreature artifact. It becomes a 0/0 Bird creature with flying in addition to its other types.")]
+    // …and on a land the next sentence turns into a creature (2026-09-25).
+    [InlineData("Rootwise Survivor", "Creature — Human Survivor",
+        "Haste\nSurvival — At the beginning of your second main phase, if this creature is tapped, put three "
+        + "+1/+1 counters on up to one target land you control. That land becomes a 0/0 Elemental creature in "
+        + "addition to its other types. It gains haste until your next turn.")]
+    // A tribe in the other vocabularies, ruled on the 2024 re-review of
+    // 2026-09-25: counters on each of a tribe…
+    [InlineData("Camellia, the Seedmiser", "Legendary Creature — Squirrel Warlock",
+        "Menace\nOther Squirrels you control have menace.\nWhenever you sacrifice one or more Foods, create a "
+        + "1/1 green Squirrel creature token.\n{2}, Forage: Put a +1/+1 counter on each other Squirrel you "
+        + "control. (To forage, exile three cards from your graveyard or sacrifice a Food.)")]
+    [InlineData("Kastral, the Windcrested", "Legendary Creature — Bird Scout",
+        "Flying\nWhenever one or more Birds you control deal combat damage to a player, choose one —\n• You may "
+        + "put a Bird creature card from your hand or graveyard onto the battlefield with a finality counter on "
+        + "it.\n• Put a +1/+1 counter on each Bird you control.\n• Draw a card.")]
+    // …a counter the tribe enters with…
+    [InlineData("Slinza, the Spiked Stampede", "Legendary Creature — Beast",
+        "Beast spells you cast cost {2} less to cast.\nEach other Beast creature you control enters with an "
+        + "additional +1/+1 counter on it.\nWhenever Slinza or another creature with power 4 or greater enters, "
+        + "you may pay {1}{R/G}. When you do, Slinza fights target creature you don't control.")]
+    // …a target that has to belong to the tribe, one type or a list…
+    [InlineData("Inside Source", "Creature — Human Citizen",
+        "When this creature enters, create a 2/2 white and blue Detective creature token.\n{3}, {T}: Target "
+        + "Detective you control gets +2/+0 and gains vigilance until end of turn. Activate only as a sorcery.")]
+    [InlineData("Rockface Village", "Land",
+        "{T}: Add {C}.\n{T}: Add {R}. Spend this mana only to cast a creature spell.\n{R}, {T}: Target Lizard, "
+        + "Mouse, Otter, or Raccoon you control gets +1/+0 and gains haste until end of turn. Activate only as "
+        + "a sorcery.")]
+    // …and TOKENS, a tribe by another name, in both vocabularies.
+    [InlineData("Hildibrand Manderville // Gentleman's Rise", "Legendary Creature — Human Detective // Instant — Adventure",
+        "Creature tokens you control get +1/+1.\nWhen Hildibrand Manderville dies, you may cast it from your "
+        + "graveyard as an Adventure until the end of your next turn.\nCreate a 2/2 black Zombie creature token. "
+        + "(Then exile this card. You may cast the creature later from exile.)")]
+    [InlineData("Sandstorm Salvager", "Creature — Human Artificer",
+        "When this creature enters, create a 3/3 colorless Golem artifact creature token.\n{2}, {T}: Put a "
+        + "+1/+1 counter on each creature token you control. They gain trample until end of turn.")]
     public void Classify_ATribeOrABodyBeingMade_IsNotBuff(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
@@ -1879,6 +1915,10 @@ public sealed class EffectClassifierTests
         + "token: Draw a card.\")\nTo solve — You control three or more artifacts. (If unsolved, solve at the "
         + "beginning of your end step.)\nSolved — {2}{U}, Sacrifice this Case: Put four +1/+1 counters on target "
         + "noncreature artifact. It becomes a 0/0 Bird creature with flying in addition to its other types.")]
+    [InlineData("Rootwise Survivor", "Creature — Human Survivor",
+        "Haste\nSurvival — At the beginning of your second main phase, if this creature is tapped, put three "
+        + "+1/+1 counters on up to one target land you control. That land becomes a 0/0 Elemental creature in "
+        + "addition to its other types. It gains haste until your next turn.")]
     public void Classify_CountersThatMakeABody_AreTokens(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
@@ -1927,6 +1967,92 @@ public sealed class EffectClassifierTests
 
         Assert.True(result.HasFlag(CardEffect.Buff));
         Assert.True(result.HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // Buff the human tagged on the 2024 re-review of 2026-09-25 and the
+    // classifier could not read. Double strike outside the quotes that pump a
+    // token:
+    [InlineData("Blacksmith's Talent", "Enchantment — Class",
+        "(Gain the next level as a sorcery to add its ability.)\nWhen this Class enters, create a colorless "
+        + "Equipment artifact token named Sword with \"Equipped creature gets +1/+1\" and equip {2}.\n{2}{R}: "
+        + "Level 2\nAt the beginning of combat on your turn, attach target Equipment you control to up to one "
+        + "target creature you control.\n{3}{R}: Level 3\nDuring your turn, equipped creatures you control have "
+        + "double strike and haste.")]
+    // The creature just CAST entering with counters, which is not the card:
+    [InlineData("Communal Brewing", "Enchantment",
+        "When this enchantment enters, any number of target opponents each draw a card. Put an ingredient "
+        + "counter on this enchantment, then put an ingredient counter on it for each card drawn this "
+        + "way.\nWhenever you cast a creature spell, that creature enters with X additional +1/+1 counters on "
+        + "it, where X is the number of ingredient counters on this enchantment.")]
+    // Scavenge handed to a whole graveyard:
+    [InlineData("Young Deathclaws", "Creature — Lizard Mutant",
+        "Menace (This creature can't be blocked except by two or more creatures.)\nEach creature card in your "
+        + "graveyard has scavenge. The scavenge cost is equal to its mana cost. (Exile a creature card from "
+        + "your graveyard and pay its mana cost: Put a number of +1/+1 counters equal to that card's power on "
+        + "target creature. Scavenge only as a sorcery.)")]
+    // A counter "on a creature you control", in a mode bought up to five times:
+    [InlineData("Season of Gathering", "Sorcery",
+        "Choose up to five {P} worth of modes. You may choose the same mode more than once.\n{P} — Put a +1/+1 "
+        + "counter on a creature you control. It gains vigilance and trample until end of turn.\n{P}{P} — Choose "
+        + "artifact or enchantment. Destroy all permanents of the chosen type.\n{P}{P}{P} — Draw cards equal to "
+        + "the greatest power among creatures you control.")]
+    // A creature that grows another each time it connects — the B3 exception:
+    [InlineData("Prowler, Misguided Mentor", "Legendary Creature — Human Rogue Villain",
+        "Prowler can't be blocked by creatures with power 2 or less.\nWhenever Prowler deals combat damage to "
+        + "a player, put a +1/+1 counter on another target creature you control.")]
+    [InlineData("Scurry of Squirrels", "Creature — Squirrel Scout",
+        "Myriad, myriad (Whenever this creature attacks, for each opponent other than defending player, you "
+        + "may create a token that's a copy of this creature that's tapped and attacking that player or a "
+        + "planeswalker they control. Then do it again. Exile the tokens at end of combat.)\nWhenever this "
+        + "creature deals combat damage to a player, put a +1/+1 counter on target creature you control.")]
+    // And two sizes the reading got wrong: a count behind "until end of turn",
+    // and counters spread over a third target.
+    [InlineData("Hunger of the Nim", "Sorcery",
+        "Target creature gets +1/+0 until end of turn for each artifact you control.")]
+    [InlineData("Incremental Growth", "Sorcery",
+        "Put a +1/+1 counter on target creature, two +1/+1 counters on another target creature, and three "
+        + "+1/+1 counters on a third target creature.")]
+    public void Classify_APumpTheReadingMissed_IsBuff(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // B3 still holds for every other repeated small counter a creature hands out.
+    [InlineData("Loxodon Battle Priest", "Creature — Elephant Cleric",
+        "At the beginning of combat on your turn, put a +1/+1 counter on another target creature you control.")]
+    // A new base on the creature an Aura stole is the contour of the theft.
+    [InlineData("Coerced to Kill", "Enchantment — Aura",
+        "Enchant creature\nYou control enchanted creature.\nEnchanted creature has base power and toughness "
+        + "1/1, has deathtouch, and is an Assassin in addition to its other types.")]
+    // "That creature" is the one reanimated here, not one being cast.
+    [InlineData("Necromantic Summons", "Sorcery",
+        "Put target creature card from a graveyard onto the battlefield under your control.\nSpell mastery — "
+        + "If there are two or more instant and/or sorcery cards in your graveyard, that creature enters with "
+        + "two additional +1/+1 counters on it.")]
+    public void Classify_APumpThatIsNotThePoint_IsNotBuff(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Fact]
+    // The owner's choice of top or bottom of the library: 9 of 9 reviewed
+    // cards are tagged Bounce (2026-09-25).
+    public void Classify_TopOrBottomOfTheLibrary_IsBounce()
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard("Trip Up", "Instant",
+            "Target nonland permanent's owner puts it on their choice of the top or bottom of their "
+            + "library.\nCycling {2} ({2}, Discard this card: Draw a card.)")).HasFlag(CardEffect.Bounce));
+    }
+
+    [Fact]
+    // Taking a card out of their revealed hand into exile is Discard (2026-09-25).
+    public void Classify_ExilingFromTheirRevealedHand_IsDiscard()
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard("Aggressive Negotiations", "Sorcery",
+            "Target opponent reveals their hand. You choose a nonland card from it and exile that card. Put a "
+            + "+1/+1 counter on up to one target creature you control.")).HasFlag(CardEffect.Discard));
     }
 
     [Theory]

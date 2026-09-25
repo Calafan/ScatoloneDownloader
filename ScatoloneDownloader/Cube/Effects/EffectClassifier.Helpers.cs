@@ -365,9 +365,15 @@ namespace ScatoloneDownloader.Cube
         /// "{T}: Target creature you control gets +1/+0" and not one of them is
         /// tagged Buff — Mabel, At Knifepoint, Rakish Crew, Nezumi Linkbreaker,
         /// Wanted Griffin and two more.
+        /// </para>
+        /// <para>
+        /// "Every pump" means every Buff wording, not only a +N/+N: Blacksmith's
+        /// Talent hands its Sword token "+1/+1" in quotes and grants double
+        /// strike outside them, and the double strike is the Buff (2026-09-25).
         /// </para></summary>
         private static bool OnlyPumpsInsideQuotes(string text) =>
-            PumpInsideQuotes.IsMatch(text) && !PlainPump.IsMatch(Quoted.Replace(text, " "));
+            PumpInsideQuotes.IsMatch(text) && !PlainPump.IsMatch(Quoted.Replace(text, " "))
+            && !BuffPatterns.Any(p => p.IsMatch(Quoted.Replace(text, " ")));
 
         /// <summary>True when every Buff wording on the card sits inside a pump
         /// restricted to one creature type. Blank the tribal phrases out and ask

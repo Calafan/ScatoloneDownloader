@@ -202,7 +202,12 @@ namespace ScatoloneDownloader.Cube
                 // admits the plural "to their owners' hands".
                 (CardEffect.Bounce, [
                     Rx(@"return (?:[\w' ]{0,30})?target[\w ,']*to (?:its|their) owner(?:'s|s'|s)? hands?"),
-                    Rx(@"return (?:each|all|every)[\w ,']*to (?:its|their) owner(?:'s|s'|s)? hands?")]),
+                    Rx(@"return (?:each|all|every)[\w ,']*to (?:its|their) owner(?:'s|s'|s)? hands?"),
+                    // The owner's choice of TOP OR BOTTOM of the library is the
+                    // same tempo answer as a return to hand: 9 of 9 reviewed
+                    // cards that say it are tagged Bounce (Trip Up, Ice Magic,
+                    // Jailbreak Scheme), and none was read before 2026-09-25.
+                    Rx(@"owner puts it on their choice of the top or bottom of their library")]),
 
                 // The old rule was two lines of `destroy target[\w ]*(artifact|
                 // enchantment)`, and that `[\w ]*` was free to run the length of the
@@ -245,7 +250,14 @@ namespace ScatoloneDownloader.Cube
                 // the second half of looting — rather than an attack on a hand.
                 // Naming the victim took Discard from 129 wrong out of 188 fired to
                 // 16 wrong out of 69, the largest precision gain on the board.
-                (CardEffect.Discard, [Rx(OtherPlayer + @"[\w ,]{0,30}discards?\b")]),
+                // And the hand attack that EXILES rather than discards: "target
+                // opponent reveals their hand. You choose a nonland card from it
+                // and exile that card" — 4 of 5 reviewed cards tagged (Aggressive
+                // Negotiations, Severance Priest, Soul Search, Cruelclaw's Heist;
+                // Intimidation Tactics is not). Added 2026-09-25.
+                (CardEffect.Discard, [
+                    Rx(OtherPlayer + @"[\w ,]{0,30}discards?\b"),
+                    Rx(@"reveals? their hand[^\n]{0,60}choose [^\n]{0,60}(?:from it|from among)[^\n]{0,40}exile")]),
 
                 // Drawing ONE card off a spell you cast replaces the spell — that is
                 // card parity, not advantage, which is why Eject and Broadside

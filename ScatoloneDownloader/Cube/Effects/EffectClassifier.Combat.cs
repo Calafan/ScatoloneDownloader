@@ -248,8 +248,10 @@ namespace ScatoloneDownloader.Cube
         // for that creature, not buffing one of yours: Dance of the Dead gives
         // +1/+1 and takes the untap step away, Binding Grasp gives +0/+1 and
         // takes the creature. The pump is the contour of the effect.
+        // A new BASE on the creature it took is the same contour, and usually a
+        // shrink: Coerced to Kill steals and makes it a 1/1 deathtouch Assassin.
         private static readonly Regex PumpsWhatItTook = Rx(
-            @"enchanted creature gets \+[\dXx]+/\+[\dXx]+");
+            @"enchanted creature gets \+[\dXx]+/\+[\dXx]+|enchanted creature has base power and toughness");
 
         private static readonly Regex TookThatCreature = Rx(
             @"you control enchanted creature|put enchanted creature card onto the battlefield"
@@ -283,13 +285,23 @@ namespace ScatoloneDownloader.Cube
             @"\+[\dX]+/\+[\dX]+ counters?(?:, a [\w ]{0,20}counter,? (?:and a [\w ]{0,20}counter )?)?"
             + @" ?(?:equal to [\w' ]{0,30} )?on "
             + @"(?:target|another|each|up to|one or more|enchanted)"
-            + @"|(?:each other|other|another) [\w ,'-]{0,40}enters? with "
+            // "That creature" when it is the one just CAST (Communal Brewing,
+            // Yuna) — not the one a reanimation spell brought back (Necromantic
+            // Summons), which is the contour of the reanimation.
+            + @"|(?:(?:each other|other|another) [\w ,'-]{0,40}|\bcast\b[^\n]{0,120}that creature )enters? with "
             + @"(?:an additional|\w+ additional) \+1/\+1 counter"
             + @"|distribute [\w ]{0,20}\+1/\+1 counters"
             // "Support X" as readily as "support 2" — Blitzball Stadium says the
             // X form, and once reminder text stopped vouching for a pump
             // (2026-09-21) the keyword itself is all that is left to read.
-            + @"|\bsupport [\dxX]");
+            + @"|\bsupport [\dxX]"
+            // SCAVENGE handed to a whole graveyard (Young Deathclaws) is a
+            // counter engine the human tagged Buff on 2026-09-25; only the
+            // GRANT is here, because a creature's own scavenge is one use.
+            + @"|\b(?:has|have) scavenge\b"
+            // "On A creature you control" is the same counter without a target
+            // (Season of Gathering), written as an effect and not a trigger.
+            + @"|\bput (?:a|an|one|two|three) \+1/\+1 counters? on a creature you control");
 
         // Same question Buff always asks, in the one place this wording can point
         // the wrong way: a counter on THEIR creatures helps them, not you.
@@ -346,7 +358,26 @@ namespace ScatoloneDownloader.Cube
             + @"|[Cc]reatures? you control named [\w' ,-]{1,40} gets? \+"
             + @"|each creature you control named [\w' ,-]{1,40} gets? \+"
             + @"|" + ClauseStart + @"(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + StateBeforeATribe + NotATribe
-            + @"[A-Z][\w']+s?(?:, [A-Z][\w']+s?){0,20},? and [A-Z][\w']+s? you control (?:get|have)\b",
+            + @"[A-Z][\w']+s?(?:, [A-Z][\w']+s?){0,20},? and [A-Z][\w']+s? you control (?:get|have)\b"
+            // The same lord in the two other vocabularies, ruled not Buff when
+            // the human re-reviewed 2024 on 2026-09-25: COUNTERS on a tribe
+            // (Camellia's "a +1/+1 counter on each other Squirrel you control",
+            // Kastral's Birds, Sophia's Dogs, Good King Mog's "two … on each
+            // other Moogle"), a counter the tribe ENTERS with (Slinza's Beasts,
+            // Dragonstorm Globe's Dragons), and a TARGET that must belong to
+            // the tribe (Inside Source's "target Detective you control gets",
+            // Rockface Village's "target Lizard, Mouse, Otter, or Raccoon").
+            + @"|\+1/\+1 counters? on (?:each |target |up to one target |another target )(?:other )?" + NotATribe
+            + @"[A-Z][\w']+s?(?: creatures?)? you control\b"
+            + @"|" + ClauseStart + @"[Ee]ach (?:other )?" + NotATribe + @"[A-Z][\w']+ (?:creature )?you control enters? with\b"
+            + @"|[Tt]arget " + NotATribe + @"[A-Z][\w']+(?:, [A-Z][\w']+)*,?(?: or [A-Z][\w']+)? you control gets\b"
+            // And TOKENS are a tribe by another name, ruled the same day: a
+            // pump only tokens get is a payoff for the go-wide deck, already
+            // named by Tokens (Hildibrand's "creature tokens you control get
+            // +1/+1", Sandstorm Salvager's counter "on each creature token you
+            // control").
+            + @"|[Cc]reature tokens you control (?:get|have)\b"
+            + @"|\+1/\+1 counters? on each (?:creature )?token you control\b",
             RegexOptions.CultureInvariant | RegexOptions.Multiline);
 
         // PHASING OUT is both tags at once, ruled 2026-09-22: "puoi usarlo sia
@@ -808,7 +839,11 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex PumpNumbers = Rx(
             @"\bgets? \+(?<a>\d+|x)/\+(?<b>\d+|x)|\bgets? \+(?<a>\d+|x)/[-+]0\b|\bgets? [-+]0/\+(?<b>\d+|x)");
 
-        private static readonly Regex PumpForEach = Rx(@"\bgets? \+\d+/\+\d+ for each|\bgets? \+\d+/\+0 for each");
+        // "Until end of turn" can stand between the pump and its count: Hunger
+        // of the Nim's "gets +1/+0 until end of turn for each artifact you
+        // control" read as a lone +1/+0 until 2026-09-25. No reviewed card moved
+        // with it; five unreviewed proposals did.
+        private static readonly Regex PumpForEach = Rx(@"\bgets? \+\d+/\+(?:\d+|0)(?: until end of turn)? for each");
 
         private static readonly Regex PumpCounters = Rx(
             @"\b(?:put|puts|distribute|with)(?: an additional| additional)? "
@@ -820,9 +855,13 @@ namespace ScatoloneDownloader.Cube
         // "Enters with" is bare on purpose: the card's own counters are written
         // "Ghave enters with five +1/+1 counters on it" as often as "this
         // creature enters with", and the area form ("each other creature …
-        // enters with") never reaches here as a single-target pump.
+        // enters with") never reaches here as a single-target pump. The one
+        // subject it must refuse is the creature just CAST: Communal Brewing's
+        // "whenever you cast a creature spell, THAT CREATURE enters with X
+        // additional +1/+1 counters" is the whole card, and was blanked as a
+        // self-pump until 2026-09-25.
         private static readonly Regex PumpOnItself = Rx(
-            @"\bthis (?:creature|permanent|vehicle|spacecraft) gets\b|\+1/\+1 counters? on this\b|\benters with");
+            @"\bthis (?:creature|permanent|vehicle|spacecraft) gets\b|\+1/\+1 counters? on this\b|(?<!\bthat creature )\benters with");
 
         // "It gets" is the card only when the CLAUSE in front of it is about the
         // card: Slimy Piper's "whenever THIS CREATURE attacks, it gets +1/+1",
@@ -855,7 +894,7 @@ namespace ScatoloneDownloader.Cube
             + @"|\ball creatures\b");
 
         private static readonly Regex PumpOnSeveral = Rx(
-            @"\b(?:two|three|one or two|up to two|up to three|up to x|any number of|x|each of up to \w+) (?:other )?target"
+            @"\b(?:two|three|one or two|up to two|up to three|up to x|any number of|x|each of up to \w+) (?:other )?target|\ba third target"
             + @"|\beach of up to\b|\bdistribute\b");
 
         private static readonly Regex PumpIsPermanent = Rx(@"\b(?:enchanted|equipped) (?:creature|permanent)s? (?:gets?|has)\b");
@@ -876,7 +915,15 @@ namespace ScatoloneDownloader.Cube
         // which returns two creatures and pumps them — all three Buff.
         private static readonly Regex CountersMakeTheBody = Rx(
             @"(?:manifest dread|\bcloak|\bcreate)[^.\n]{0,80}counters? on (?:each of )?(?:those|these) (?:creatures|tokens)\b"
-            + @"|counters? on target noncreature [\w ]{0,20}\. it becomes an? 0/0\b");
+            + @"|counters? on target noncreature [\w ]{0,20}\. it becomes an? 0/0\b"
+            // …and on a LAND that the next sentence turns into the body
+            // (Rootwise Survivor, 2026-09-25).
+            + @"|counters? on (?:up to one )?target land you control\. (?:it|that land) becomes an? 0/0\b");
+
+        private static readonly Regex ModeChosenAgain = Rx(@"choose the same mode more than once");
+
+        private static readonly Regex ConnectsToGrowAnother = Rx(
+            @"deals combat damage to (?:a player|an opponent), put [^.]{0,30}counters? on (?:another |up to one (?:other )?)?target creature");
 
         private static readonly Regex AbilityWordPrefix = Rx(@"^[^—\n]{1,40}— ");
         private static readonly Regex OwnTrigger = Rx(@"^(?:when|whenever|at the beginning|at end of combat)|^[^:\n]{1,60}:");
@@ -997,9 +1044,26 @@ namespace ScatoloneDownloader.Cube
                 return true;
             }
 
+            // A mode the card lets you pick again is a pump at least twice over:
+            // Season of Gathering's "{P} — put a +1/+1 counter" can be bought
+            // five times. Put back by the human on 2026-09-25.
+            if (ModeChosenAgain.IsMatch(card.OracleText ?? string.Empty))
+            {
+                size *= 2;
+            }
+
+            // Filter does not count as "something else": a scry or a surveil is
+            // the rider the human called saturating, and Storm Strike is Guided
+            // Strike with a scry 1 on it — the pump is still the card.
+            bool pumpIsTheCard = (otherTags & ~CardEffect.Filter) == CardEffect.None;
+
             if (timing == PumpTiming.Repeat)
             {
-                return size >= 2 || !FrontFaceIsACreature(card);
+                // A creature that grows another every time it CONNECTS is the
+                // one repeated small pump on a creature the human tagged:
+                // Prowler and Scurry of Squirrels, 2 of 2, against 61 other B3
+                // creatures confirmed without it (2026-09-25).
+                return size >= 2 || !FrontFaceIsACreature(card) || ConnectsToGrowAnother.IsMatch(piece);
             }
 
             if (size >= 2)
@@ -1007,10 +1071,7 @@ namespace ScatoloneDownloader.Cube
                 return true;
             }
 
-            // Filter does not count as "something else": a scry or a surveil is
-            // the rider the human called saturating, and Storm Strike is Guided
-            // Strike with a scry 1 on it — the pump is still the card.
-            return timing == PumpTiming.Instant && (otherTags & ~CardEffect.Filter) == CardEffect.None;
+            return timing == PumpTiming.Instant && pumpIsTheCard;
         }
 
         /// <summary>True when every pump this reading recognises fails the rule,
