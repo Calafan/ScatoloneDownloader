@@ -38,6 +38,15 @@ still uncommitted: N entries | NOT reviewed: 0
 tree after the split, a classifier proposal was left uncommitted and the next pass
 will measure against a store that does not match the code.
 
+The one sanctioned exception is a card HANDED BACK for review (`op: "unreview"`
+in `apply_ruling.py`, first asked for on 2026-09-25): the human's own card, from
+their uncommitted pass, that keeps its ruled tags and loses `reviewedAt`. It
+shows as NOT reviewed and differs from HEAD's proposal, and it stays uncommitted
+with the rest of that pass. Count them before and after, and say so in the
+report. Unreview only AFTER `classify --overwrite` and the split — an unreviewed
+entry is overwritten by the next classify, which is also why the human should
+review these before the next pass runs one.
+
 ## Byte format
 
 Round-trips exactly, and anything else produces a diff of the whole file:
