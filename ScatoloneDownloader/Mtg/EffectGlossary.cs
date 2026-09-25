@@ -84,9 +84,10 @@
                 + "does not — that is protection. A land coming back is Ramp.",
 
             [CardEffect.Buff] =
-                "Raises POWER and/or TOUGHNESS for something other than the card itself: +2/+2, a +1/+1 counter, "
-                + "+X/+X. A granted keyword is NOT Buff — flying, deathtouch, first strike — except DOUBLE STRIKE, "
-                + "which doubles the damage. Not a self-pump, not counters on THEIR creatures, not a tribal lord.",
+                "Raises POWER/TOUGHNESS for something else, when that is what the card is FOR: permanent, over an "
+                + "area, or bigger than +1/+1. A lone +1/+1 or one counter counts only on a pump spell or a "
+                + "noncreature engine. Not a bite (Removal), a self-pump, a tribal lord, or a keyword but double "
+                + "strike.",
 
             [CardEffect.Protection] =
                 "Keeps something ELSE alive, and can be held up in response. A granted keyword shield (hexproof, "

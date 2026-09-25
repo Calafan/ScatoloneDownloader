@@ -725,6 +725,14 @@ namespace ScatoloneDownloader.Cube
                 result |= CardEffect.Steal;
             }
 
+            // LAST of all, because B2 asks whether the card does anything else:
+            // a small pump at instant speed is Buff only when it IS the card.
+            // Ruled 2026-09-25; see EveryPumpIsBesideThePoint.
+            if (result.HasFlag(CardEffect.Buff) && EveryPumpIsBesideThePoint(card, result & ~CardEffect.Buff))
+            {
+                result &= ~CardEffect.Buff;
+            }
+
             return result;
         }
     }

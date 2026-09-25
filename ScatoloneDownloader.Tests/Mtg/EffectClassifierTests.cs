@@ -277,10 +277,16 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
-    // A +1/+1 counter is Buff in the other vocabulary, ruled 2026-09-15. One
-    // counter on one creature counts, and so do support and distribute.
-    [InlineData("Cloudbound Moogle", "Creature — Moogle",
-        "Flying\nWhen this creature enters, put a +1/+1 counter on target creature.")]
+    // A +1/+1 counter is Buff in the other vocabulary, ruled 2026-09-15, and so
+    // are support and distribute. "One counter on one creature counts" was
+    // OVERTURNED for one-shots on 2026-09-25 — Cloudbound Moogle moved to the
+    // size-and-purpose tests below — so a counter every combat on a
+    // noncreature stands here instead.
+    [InlineData("Innkeeper's Talent", "Enchantment — Class",
+        "(Gain the next level as a sorcery to add its ability.)\nAt the beginning of combat on your turn, put a "
+        + "+1/+1 counter on target creature you control.\n{G}: Level 2\nPermanents you control with counters on "
+        + "them have ward {1}.\n{3}{G}: Level 3\nIf you would put one or more counters on a permanent or player, "
+        + "put twice that many of each of those kinds of counters on that permanent or player instead.")]
     [InlineData("Blitzball Stadium", "Artifact",
         "When this artifact enters, support X. (Put a +1/+1 counter on each of up to X target creatures.)")]
     [InlineData("Cloudspire Skycycle", "Artifact — Vehicle",
@@ -1710,6 +1716,146 @@ public sealed class EffectClassifierTests
     public void Classify_ANoncreatureMakingOneBody_IsTokens(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    // A SMALL pump that is not what the card is for, ruled 2026-09-25.
+    // B1 — one-shot at sorcery speed: "1 segnalino o un +1/+1 a sorcery non fa
+    // niente". This was Buff under the 2026-09-15 counter ruling.
+    [InlineData("Cloudbound Moogle", "Creature — Moogle",
+        "Flying\nWhen this creature enters, put a +1/+1 counter on target creature.")]
+    [InlineData("Keen-Eyed Raven", "Creature — Bird",
+        "Flying (This creature can't be blocked except by creatures with flying or reach.)\nWhen this creature "
+        + "enters, put a +1/+1 counter on another target creature you control.")]
+    [InlineData("Honor", "Sorcery", "Put a +1/+1 counter on target creature.\nDraw a card.")]
+    // …and from the graveyard, which runs once because the card exiles itself.
+    [InlineData("Wither and Bloom", "Instant",
+        "Target creature gets -3/-3 until end of turn.\n{1}{B}, Exile this card from your graveyard: Put a +1/+1 "
+        + "counter on target creature you control. Activate only as a sorcery.")]
+    // B2 — at instant speed, beside something the card is really for:
+    // Protection with a rider.
+    [InlineData("Magic Damper", "Instant",
+        "Target creature you control gets +1/+1 and gains hexproof until end of turn. Untap it.")]
+    [InlineData("Lightfoot Technique", "Instant",
+        "Put a +1/+1 counter on target creature. It gains flying and indestructible until end of turn. (Damage "
+        + "and effects that say \"destroy\" don't destroy it.)")]
+    // B3 — repeated, but a small extra on a CREATURE judged as a whole.
+    [InlineData("Expanding Ooze", "Creature — Ooze",
+        "{B}{G}: Adapt 1. (If this creature has no +1/+1 counters on it, put a +1/+1 counter on it.)\nWhenever "
+        + "this creature attacks, put a +1/+1 counter on target modified creature you control. (Equipment, Auras "
+        + "you control, and counters are modifications.)")]
+    // A BITE is Removal alone, whatever the size: the pump aims it.
+    [InlineData("Felling Blow", "Sorcery",
+        "Put a +1/+1 counter on target creature you control. Then that creature deals damage equal to its power "
+        + "to target creature an opponent controls.")]
+    [InlineData("Bite Down on Crime", "Sorcery",
+        "As an additional cost to cast this spell, you may collect evidence 6. This spell costs {2} less to cast "
+        + "if evidence was collected. (To collect evidence 6, exile cards with total mana value 6 or greater from "
+        + "your graveyard.)\nTarget creature you control gets +2/+0 until end of turn. It deals damage equal to its "
+        + "power to target creature you don't control.")]
+    public void Classify_ASmallPumpBesideThePoint_IsNotBuff(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // A pump on ITSELF, refused since 2026-09-18, in the three wordings the
+    // earlier gate could not see — found in the 2026-09-25 pass.
+    // "It gets", when the card is what the sentence is about.
+    [InlineData("Slimy Piper", "Creature — Fungus Bard",
+        "Whenever this creature attacks, it gets +1/+1 until end of turn. If you control four or more creatures, "
+        + "it gets +2/+2 and gains indestructible until end of turn instead. (Damage and effects that say "
+        + "\"destroy\" don't destroy it.)")]
+    // Counters doubled on "this creature".
+    [InlineData("Mossborn Hydra", "Creature — Elemental Hydra",
+        "Trample (This creature can deal excess combat damage to the player or planeswalker it's attacking.)\n"
+        + "This creature enters with a +1/+1 counter on it.\nLandfall — Whenever a land you control enters, double "
+        + "the number of +1/+1 counters on this creature.")]
+    // The card's own first name.
+    [InlineData("Rashka the Slayer", "Legendary Creature — Human Archer",
+        "Reach (This creature can block creatures with flying.)\nWhenever Rashka blocks one or more black "
+        + "creatures, Rashka gets +1/+2 until end of turn.")]
+    // "Equipped" is the CONDITION, and the card is still the one that gets it.
+    [InlineData("Leonin Den-Guard", "Creature — Cat Soldier",
+        "As long as this creature is equipped, it gets +1/+1 and has vigilance.")]
+    // A condition that names creatures you control is not who gets the pump.
+    [InlineData("Hundred-Battle Veteran", "Creature — Zombie Warrior",
+        "As long as there are three or more different kinds of counters among creatures you control, this "
+        + "creature gets +2/+4.\nYou may cast this card from your graveyard. If you do, it enters with a finality "
+        + "counter on it. (If a creature with a finality counter on it would die, exile it instead.)")]
+    public void Classify_APumpOnItselfInAnotherWording_IsNotBuff(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // …and the same pronoun about SOMEBODY ELSE keeps the tag.
+    [InlineData("Team Avatar", "Enchantment",
+        "Whenever a creature you control attacks alone, it gets +X/+X until end of turn, where X is the number of "
+        + "creatures you control.\n{2}{W}, Discard this card: It deals damage equal to the number of creatures you "
+        + "control to target creature.")]
+    [InlineData("Bestial Fury", "Enchantment — Aura",
+        "Enchant creature\nWhen this Aura enters, draw a card at the beginning of the next turn's upkeep.\nWhenever "
+        + "enchanted creature becomes blocked, it gets +4/+0 and gains trample until end of turn.")]
+    // "It" is the TARGET, even though the card names itself in the sentence.
+    [InlineData("Growth Cycle", "Instant",
+        "Target creature gets +3/+3 until end of turn. It gets an additional +2/+2 until end of turn for each card "
+        + "named Growth Cycle in your graveyard.")]
+    // One counter on entry is B1, but DOUBLING them on every attack is a
+    // repeated, big pump, and keeps it.
+    [InlineData("Seismic Tutelage", "Enchantment — Aura",
+        "Enchant creature\nWhen this Aura enters, put a +1/+1 counter on enchanted creature.\nWhenever enchanted "
+        + "creature attacks, double the number of +1/+1 counters on it.")]
+    public void Classify_ItGetsAboutSomebodyElse_IsBuff(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // …and the pumps that keep it. B2's other half: the pump IS the card.
+    [InlineData("Gift of the Viper", "Instant",
+        "Put a +1/+1 counter, a reach counter, and a deathtouch counter on target creature. Untap it.")]
+    [InlineData("Guided Strike", "Instant",
+        "Target creature gets +1/+0 and gains first strike until end of turn.\nDraw a card.")]
+    // A scry beside it is a rider, not a second purpose.
+    [InlineData("Storm Strike", "Instant",
+        "Target creature gets +1/+0 and gains first strike until end of turn. Scry 1.")]
+    // Repeated on a NONCREATURE: the pump is the card.
+    [InlineData("Firebreathing", "Enchantment — Aura", "Enchant creature\n{R}: Enchanted creature gets +1/+0 until end of turn.")]
+    // A modal bullet with its own trigger repeats, whatever its head says.
+    [InlineData("Hollowmurk Siege", "Enchantment",
+        "As this enchantment enters, choose Sultai or Abzan.\n• Sultai — Whenever a counter is put on a creature "
+        + "you control, draw a card. This ability triggers only once each turn.\n• Abzan — Whenever you attack, "
+        + "put a +1/+1 counter on target attacking creature. It gains menace until end of turn.")]
+    // Bigger than +1/+1, once, on a creature entering.
+    [InlineData("Friendly Ghost", "Creature — Spirit",
+        "Flying\nWhen this creature enters, target creature gets +2/+4 until end of turn.")]
+    // Repeated AND big on a creature.
+    [InlineData("Ashroot Animist", "Creature — Lizard Druid",
+        "Trample\nWhenever this creature attacks, another target creature you control gains trample and gets "
+        + "+X/+X until end of turn, where X is this creature's power.")]
+    // A double strike grant is not judged by size at all (ruled 2026-09-18).
+    [InlineData("Origin of Spider-Man", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Create a 2/1 "
+        + "green Spider creature token with reach.\nII — Put a +1/+1 counter on target creature you control. It "
+        + "becomes a legendary Spider Hero in addition to its other types.\nIII — Target creature you control gains "
+        + "double strike until end of turn.")]
+    public void Classify_APumpThatIsThePoint_IsBuff(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Fact]
+    // +5/+5 AND a shield: both tags, named by the human on 2026-09-25.
+    public void Classify_StonewoodInvocation_IsBuffAndProtection()
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard("Stonewood Invocation", "Instant",
+            "Split second (As long as this spell is on the stack, players can't cast spells or activate abilities "
+            + "that aren't mana abilities.)\nTarget creature gets +5/+5 and gains shroud until end of turn. (It can't "
+            + "be the target of spells or abilities.)"));
+
+        Assert.True(result.HasFlag(CardEffect.Buff));
+        Assert.True(result.HasFlag(CardEffect.Protection));
     }
 
     [Theory]

@@ -766,5 +766,319 @@ namespace ScatoloneDownloader.Cube
             @"th(?:is|e) (?:artifact|creature|permanent|enchantment|land|vehicle)[\w ]{0,25}does(?:n'?t| not) untap"
             + @"|\bit does(?:n'?t| not) untap"
             + @"|does(?:n'?t| not) untap during your (?:next )?untap step");
+
+        // ---- Buff: how big, how often, and whether it is the point ----------
+        //
+        // Ruled 2026-09-25, from the human's own rule of the day before: "Buff
+        // only if repeated, or static/permanent (not tribal), or at instant
+        // speed, or over an area, or +5/+5 or more; a single one has to be
+        // bigger than +1/+1 or have more than one target." The last clause
+        // meant ONE-SHOT, not one target — the human's re-review of Buff that
+        // day kept Expanding Ooze and Sample Collector (one counter, one target,
+        // every attack) and Fae Flight (+1/+0, permanent). Three rulings then
+        // settled what "small" covers, all of them asking what the card is FOR:
+        //
+        //   B1  a one-shot at sorcery speed, +1/+1 or one counter, is never Buff.
+        //       "La carta non ha quello scopo" — most are creatures entering.
+        //   B2  at instant speed it is Buff only when the pump IS the card:
+        //       Gift of the Viper and Guided Strike, but not Magic Damper or
+        //       Lightfoot Technique, which are Protection with a rider. Read as
+        //       "the card carries no other effect tag".
+        //   B3  a small REPEATED pump on a CREATURE is not Buff either — "an
+        //       extra of a creature you judge as a whole". On a noncreature the
+        //       pump is the card (Firebreathing, Innkeeper's Talent) and stays.
+        //
+        // And a BITE is Removal alone at any size: the pump in Felling Blow and
+        // Bite Down on Crime is how the removal is aimed, not a Buff of its own.
+        //
+        // 105 hand tags moved with the ruling (64 B3, 27 B1, 8 B2, 5 bites, and
+        // one self-pump found on the way).
+        // Asked per ability, with modal bullets read on their own when they
+        // carry their own trigger (Hollowmurk Siege's "Abzan — Whenever you
+        // attack"). Only the pumps THIS reading recognises are judged: a double
+        // strike grant, a base P/T or a doubling is left standing, and the
+        // strip-and-re-ask at the end lets it keep the tag.
+        private static readonly Regex PumpNumbers = Rx(
+            @"\bgets? \+(?<a>\d+|x)/\+(?<b>\d+|x)|\bgets? \+(?<a>\d+|x)/[-+]0\b|\bgets? [-+]0/\+(?<b>\d+|x)");
+
+        private static readonly Regex PumpForEach = Rx(@"\bgets? \+\d+/\+\d+ for each|\bgets? \+\d+/\+0 for each");
+
+        private static readonly Regex PumpCounters = Rx(
+            @"\b(?:put|puts|distribute|with)(?: an additional| additional)? "
+            + @"(?<n>a|an|one|two|three|four|five|six|seven|x|that many|\d+)(?: additional)? \+1/\+1 counters?");
+
+        private static readonly Regex PumpDoubles = Rx(
+            @"double (?:target creature's|that creature's|the) power|double the number of \+1/\+1 counters");
+
+        // "Enters with" is bare on purpose: the card's own counters are written
+        // "Ghave enters with five +1/+1 counters on it" as often as "this
+        // creature enters with", and the area form ("each other creature …
+        // enters with") never reaches here as a single-target pump.
+        private static readonly Regex PumpOnItself = Rx(
+            @"\bthis (?:creature|permanent|vehicle|spacecraft) gets\b|\+1/\+1 counters? on this\b|\benters with");
+
+        // "It gets" is the card only when the CLAUSE in front of it is about the
+        // card: Slimy Piper's "whenever THIS CREATURE attacks, it gets +1/+1",
+        // Leonin Den-Guard's "as long as this creature is equipped, it gets",
+        // valiant's "whenever this creature becomes the target …, put a +1/+1
+        // counter on it", and exert's "when you do, it gets". The same pronoun
+        // is somebody else in "whenever ENCHANTED CREATURE becomes blocked, it
+        // gets +4/+0" (Bestial Fury), "whenever A CREATURE you control attacks
+        // alone" (Team Avatar) and "target creature gets +3/+3 … It gets an
+        // additional +2/+2" (Growth Cycle). Read by clause because two looser
+        // tries each broke a different set: the bare pronoun took the tag off
+        // seven reviewed cards, and "the card is mentioned and nobody else is"
+        // gave it to every equipped-only self-pump in the store.
+        // Also "… you may pay {E}. IF YOU DO, it gets +2/+2" (Riparian Tiger)
+        // and a cost paid out of the card itself: "Remove two +1/+1 counters
+        // FROM THIS CREATURE: It gets +4/+4" (Sawtooth Thresher). The same cost
+        // written with the card's NAME is asked in EveryPumpIsBesideThePoint.
+        private static readonly Regex PronounIsTheCard = Rx(
+            @"(?:whenever|when|as long as|if) this (?:creature|permanent|vehicle|spacecraft)(?! or )[^.,]{0,120},\s*"
+            + @"(?:you may [^.]{0,60}\.\s*if you do,\s*)?(?:it gets|put [^.]{0,40}counters? on it\b)"
+            + @"|exert this (?:creature|vehicle)[^.]{0,60}\.\s*when you do, it gets"
+            + @"|from this (?:creature|permanent|vehicle|spacecraft)[^:\n]{0,20}:\s*it gets");
+
+        // The area has to be what GETS the pump. A bare "creatures you control"
+        // was in here and read Hundred-Battle Veteran's condition ("three kinds
+        // of counters among creatures you control") as the beneficiary of the
+        // +2/+4 it gives itself.
+        private static readonly Regex PumpOverAnArea = Rx(
+            @"\b(?:[\w-]+ )?creatures(?: [\w' ,-]{0,40})? get\b|\beach (?:other )?[\w -]{0,25}creature\b|\bon each\b"
+            + @"|\ball creatures\b");
+
+        private static readonly Regex PumpOnSeveral = Rx(
+            @"\b(?:two|three|one or two|up to two|up to three|up to x|any number of|x|each of up to \w+) (?:other )?target"
+            + @"|\beach of up to\b|\bdistribute\b");
+
+        private static readonly Regex PumpIsPermanent = Rx(@"\b(?:enchanted|equipped) (?:creature|permanent)s? (?:gets?|has)\b");
+
+        private static readonly Regex PumpNamesSomebody = Rx(@"target|another|other");
+
+        // The pump that aims a removal spell: "it deals damage equal to its power
+        // to target creature", "then it fights".
+        private static readonly Regex Bite = Rx(@"deals? damage equal to (?:its|their|that creature's) power|\bfights?\b");
+
+        private static readonly Regex AbilityWordPrefix = Rx(@"^[^—\n]{1,40}— ");
+        private static readonly Regex OwnTrigger = Rx(@"^(?:when|whenever|at the beginning|at end of combat)|^[^:\n]{1,60}:");
+        private static readonly Regex SeveralChapters = Rx(@"^[ivx]+(?:, [ivx]+)+ —");
+        private static readonly Regex OneChapter = Rx(@"^[ivx]+ —");
+        private static readonly Regex LoyaltyCost = Rx(@"^\[?[+−-]?[\dx]+\]?:");
+        private static readonly Regex PaidCost = Rx(@"\{|\btap\b|sacrifice|discard|pay|exile|remove|equip");
+        private static readonly Regex CostSpendsTheCard = Rx(@"sacrifice this|exile this card from your graveyard");
+        private static readonly Regex RepeatingTrigger = Rx(@"^(?:whenever|at the beginning|at end of combat)|\band whenever\b|\benters or attacks\b");
+        private static readonly Regex UntilEndOfTurn = Rx(@"until end of turn");
+        private static readonly Regex PutsCounters = Rx(@"\bput\b|\bdistribute\b");
+        private static readonly Regex GetsPlus = Rx(@"\bgets? \+|\bget \+");
+
+        private enum PumpTiming { Once, Instant, Repeat, Static }
+
+        private static PumpTiming TimingOfPump(Card card, string head, string? bullet)
+        {
+            foreach (string raw in bullet != null ? [bullet, head] : new[] { head })
+            {
+                string line = raw.Trim().TrimStart('•').Trim().ToLowerInvariant();
+                if (!line.StartsWith("when") && !line.StartsWith("at "))
+                {
+                    line = AbilityWordPrefix.Replace(line, string.Empty);
+                }
+
+                // A bullet without a trigger of its own takes its head's.
+                if (ReferenceEquals(raw, bullet) && !OwnTrigger.IsMatch(line))
+                {
+                    continue;
+                }
+
+                if (SeveralChapters.IsMatch(line) || LoyaltyCost.IsMatch(line)) { return PumpTiming.Repeat; }
+                if (OneChapter.IsMatch(line)) { return PumpTiming.Once; }
+
+                int colon = line.IndexOf(':');
+                if (colon > 0 && !line.StartsWith("when") && !line.StartsWith("at the")
+                    && PaidCost.IsMatch(line[..colon]))
+                {
+                    return CostSpendsTheCard.IsMatch(line[..colon]) ? PumpTiming.Once : PumpTiming.Repeat;
+                }
+
+                if (RepeatingTrigger.IsMatch(line)) { return PumpTiming.Repeat; }
+                if (line.StartsWith("when")) { return PumpTiming.Once; }
+
+                string whole = (head + " " + bullet).ToLowerInvariant();
+                if (!UntilEndOfTurn.IsMatch(whole) && !PutsCounters.IsMatch(whole) && GetsPlus.IsMatch(whole))
+                {
+                    return PumpTiming.Static;
+                }
+
+                string front = (card.TypeLine ?? string.Empty).Split("//")[0];
+                bool flash = card.Keywords?.Contains("Flash", StringComparer.OrdinalIgnoreCase) == true;
+                return front.Contains("Instant", StringComparison.OrdinalIgnoreCase) || (flash && !FrontFaceIsACreature(card))
+                    ? PumpTiming.Instant
+                    : PumpTiming.Once;
+            }
+
+            return PumpTiming.Once;
+        }
+
+        private static int SizeOfPump(string piece)
+        {
+            int best = 0;
+            foreach (Match m in PumpNumbers.Matches(piece))
+            {
+                foreach (Group g in new[] { m.Groups["a"], m.Groups["b"] })
+                {
+                    if (g.Success)
+                    {
+                        best = Math.Max(best, int.TryParse(g.Value, out int v) ? v : 9);
+                    }
+                }
+            }
+
+            foreach (Match m in PumpCounters.Matches(piece))
+            {
+                best = Math.Max(best, m.Groups["n"].Value.ToLowerInvariant() switch
+                {
+                    "a" or "an" or "one" => 1,
+                    "two" => 2,
+                    "three" => 3,
+                    "four" => 4,
+                    "five" => 5,
+                    "six" => 6,
+                    "seven" => 7,
+                    string d when int.TryParse(d, out int v) => v,
+                    _ => 9,
+                });
+            }
+
+            if (PumpForEach.IsMatch(piece) || PumpDoubles.IsMatch(piece))
+            {
+                best = Math.Max(best, 9);
+            }
+
+            return best;
+        }
+
+        /// <summary>Does this one pump earn Buff under the 2026-09-25 rule? See
+        /// the block comment above for B1, B2, B3 and the bite.</summary>
+        private static bool PumpCounts(Card card, string piece, PumpTiming timing, CardEffect otherTags)
+        {
+            bool single = !PumpOverAnArea.IsMatch(piece) && !PumpOnSeveral.IsMatch(piece);
+            int size = SizeOfPump(piece);
+
+            if (Bite.IsMatch(piece) && timing is PumpTiming.Once or PumpTiming.Instant)
+            {
+                return false;
+            }
+
+            if (TribalPump.IsMatch(piece))
+            {
+                return false;
+            }
+
+            if (!single || timing == PumpTiming.Static)
+            {
+                return true;
+            }
+
+            if (timing == PumpTiming.Repeat)
+            {
+                return size >= 2 || !FrontFaceIsACreature(card);
+            }
+
+            if (size >= 2)
+            {
+                return true;
+            }
+
+            // Filter does not count as "something else": a scry or a surveil is
+            // the rider the human called saturating, and Storm Strike is Guided
+            // Strike with a scry 1 on it — the pump is still the card.
+            return timing == PumpTiming.Instant && (otherTags & ~CardEffect.Filter) == CardEffect.None;
+        }
+
+        /// <summary>True when every pump this reading recognises fails the rule,
+        /// and nothing else on the card still reads as one once they are gone.
+        /// </summary>
+        private static bool EveryPumpIsBesideThePoint(Card card, CardEffect otherTags)
+        {
+            string own = Quoted.Replace(Parenthetical.Replace(card.OracleText ?? string.Empty, " "), " ");
+            string rest = own;
+            bool judged = false;
+            bool sawItself = false;
+
+            // Older printings call the card by NAME where newer ones say "this
+            // creature": "Rashka gets +1/+2", "counters on Lily Bowen".
+            string shortName = (card.Name ?? string.Empty).Split(" //")[0].Split(',')[0].Trim();
+
+            // …and a legendary goes by its FIRST name as often as its full one:
+            // Rashka the Slayer says "Rashka gets +1/+2".
+            List<string> ownNames = [shortName];
+            if ((card.TypeLine ?? string.Empty).Contains("Legendary", StringComparison.OrdinalIgnoreCase)
+                && shortName.Split(' ')[0] is { Length: >= 3 } firstName && firstName != shortName)
+            {
+                ownNames.Add(firstName);
+            }
+
+            List<(string Head, List<string> Bullets)> blocks = [];
+            foreach (string line in own.Split('\n'))
+            {
+                if (line.TrimStart().StartsWith('•') && blocks.Count > 0)
+                {
+                    blocks[^1].Bullets.Add(line);
+                }
+                else
+                {
+                    blocks.Add((line, []));
+                }
+            }
+
+            foreach ((string head, List<string> bullets) in blocks)
+            {
+                foreach ((string piece, string? bullet) in bullets.Select(b => (b, (string?)b)).Prepend((head, null)))
+                {
+                    if (!PumpNumbers.IsMatch(piece) && !PumpCounters.IsMatch(piece) && !PumpDoubles.IsMatch(piece))
+                    {
+                        continue;
+                    }
+
+                    bool single = !PumpOverAnArea.IsMatch(piece) && !PumpOnSeveral.IsMatch(piece);
+                    bool namesItself = ownNames.Any(n => n.Length > 2
+                        && (piece.Contains(n + " gets", StringComparison.OrdinalIgnoreCase)
+                            || piece.Contains("counters on " + n, StringComparison.OrdinalIgnoreCase)
+                            || piece.Contains(n + ": it gets", StringComparison.OrdinalIgnoreCase)));
+                    bool pronounIsItself = PronounIsTheCard.IsMatch(piece);
+                    bool onItself = single && !PumpIsPermanent.IsMatch(piece)
+                        && (((PumpOnItself.IsMatch(piece) || namesItself) && !PumpNamesSomebody.IsMatch(piece))
+                            || pronounIsItself);
+
+                    sawItself |= onItself;
+
+                    if (!onItself)
+                    {
+                        PumpTiming timing = TimingOfPump(card, head, bullet);
+                        if (PumpIsPermanent.IsMatch(piece) && timing != PumpTiming.Repeat)
+                        {
+                            timing = PumpTiming.Static;
+                        }
+
+                        if (PumpCounts(card, piece, timing, otherTags))
+                        {
+                            return false;
+                        }
+
+                        judged = true;
+                    }
+
+                    rest = rest.Replace(piece, " ");
+                }
+            }
+
+            // A pump on ITSELF was refused long before this rule (2026-09-18);
+            // the gate that asks it earlier reads the subject in front of the
+            // numbers and misses "it gets", a name, and "counters on this
+            // creature". Blanked here with the rest, so a card whose only pumps
+            // were on itself is left with nothing that reads as one.
+            return (judged || sawItself)
+                && !BuffPatterns.Any(p => p.IsMatch(rest))
+                && !(CounterOnSomebodyElse.IsMatch(rest) && !CounterForAnOpponent.IsMatch(rest));
+        }
     }
 }
