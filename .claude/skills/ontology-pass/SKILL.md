@@ -10,9 +10,12 @@ description: >-
   metadata store, precision/recall of the auto-tagger, or a disagreement between a
   hand tag and an automatic one — and use it even when the request names only a tag
   ("vediamo CardAdvantage", "procedi con Pacify", "prossima ontologia", "let's do
-  Burn"), or asks why a card is or is not getting some effect. Also use it before
-  writing any regex into EffectClassifier, because the rule here is that nothing is
-  written before it is counted.
+  Burn"), or asks why a card is or is not getting some effect. Use it too when the
+  human comes back from a review sitting reporting errors ("ho finito la review,
+  errori trovati: buff ai tribali"), answers a list of ruling questions, or asks
+  for the ontology to be shown in a README. Also use it before writing any regex
+  into EffectClassifier, because the rule here is that nothing is written before it
+  is counted.
 ---
 
 # Ontology pass
@@ -23,7 +26,7 @@ the only ground truth there is, and every number in this skill is measured again
 them.
 
 A pass takes one tag from "wrong a lot" to "wrong on a handful, and each one
-recorded". Four tags have gone through it; the shape below is what worked, and the
+recorded". Most tags have been through it; the shape below is what worked, and the
 parts that look fussy are each there because skipping them cost a day.
 
 ## Three laws
@@ -93,6 +96,48 @@ tokens, which is the point: the searching is deterministic, and the thinking is
 the expensive part. Never grep the store's JSON by hand to answer a question one
 of these already answers exactly.
 
+The scripts in `scripts/` do the rest of the deterministic work. Every Python
+script that holds a backslash lives in a file and is run from there — never a
+heredoc, which rewrites escapes (`references/hazards.md`).
+
+| script | answers |
+|---|---|
+| `review_changes.py` | what the human changed in their last sitting, per tag, from `review-log.jsonl` |
+| `blast_radius.py` | what a code change moved: reviewed cards RIGHT/WRONG, unreviewed proposals |
+| `gen_inline.py` | `[InlineData]` lines with the exact oracle text, from `dump.jsonl` |
+| `neutralise.py` | which test goes red when each fix is undone alone |
+| `find_cards.py` | name → oracle id, tier, tags; builds ruling files |
+| `apply_ruling.py` | a ruling or a hand-back applied to HEAD or to the tree |
+| `split_unreviewed.py` | the classifier's proposals committed without the human's pass |
+| `restore_handed_back.py` | handed-back entries put back after a classify |
+| `verify_tree.py` | the tree against HEAD, and against a backup |
+| `readme_ontology.py` | the ontology table in the ScatoloneQuintet README, checked or rewritten |
+
+## When the human comes back from a review
+
+"Ho finito la review, errori trovati: buff ai tribali" names a family, not the
+cards. The cards are in the review log: `before` is what the reviewer was shown,
+`after` what they left, so every tag they added or removed is a disagreement
+with the rules, recorded exactly.
+
+```powershell
+python scripts\review_changes.py --tag Buff      # since the store's last commit
+```
+
+Read every changed card's text (`Text`), not only the family the human named:
+on 2026-09-25 "buff ai tribali, buff ai token" came with fourteen other Buff
+changes in the same log — a quoted token pump hiding a double strike, a
+cast-creature engine, a scavenge grant — each a rule that could not read a
+wording. Then look for the OLDER reviewed cards the reported family also
+covers (`Count`): twelve Krenko-style tribal counters were still tagged Buff
+from before the human had settled the question.
+
+Bring back as questions only what the log cannot settle: a card changed
+against an explicit earlier ruling (Honor put back to Buff against B1), or two
+cards with the same words tagged both ways on the same day (Kozilek and It That
+Heralds the End). The human clears the log after committing a pass, so it covers
+the latest sitting only.
+
 ## The pass
 
 **1. Score, and pick the tag.** `Score` prints every tag worst-first. Take the top
@@ -118,23 +163,49 @@ but is NOT tagged, because those are the evidence. Then:
 list, each with the two cards that contradict each other and the count. Keep doing
 the mechanical work while waiting; do not guess a ruling to keep moving.
 
-**6. Apply.** A ruling lands in up to four places, and missing one leaves the
+**6. Apply.** A ruling lands in up to five places, and missing one leaves the
 ontology lying to the next reader:
 
 - **the hand tags**, when the human's own tags were the thing that was wrong →
   `scripts/apply_ruling.py`, see `references/store.md`
 - **the code** → `EffectClassifier.*`, with the ruling and its count in the comment
 - **the tests** → one `[InlineData]` per ruling, with real oracle text from
-  `text.txt`; never invented text
+  `scripts/gen_inline.py`; never invented or retyped text. A test pinning the
+  ruling that was just overturned is moved, with a comment saying so and when
 - **the ontology** → the `CardEffect` member comment, which is the canonical
   record, and the `EffectGlossary` tooltip (40–340 characters, enforced by a test)
+- **the README** of ScatoloneQuintet, whose ontology table copies the tooltips
+  → `scripts/readme_ontology.py --write` whenever a tooltip changed
+
+The hand tags move in two different ways, and the difference is the human's:
+
+- a card the human **named** in the ruling ("It That Heralds the End vecchio,
+  correggilo") is applied and stays reviewed — they have already looked at it;
+- a card the rule **reaches** but the human did not name, and that was tagged the
+  other way, is applied and **handed back** (`op: "unreview"`), so they confirm
+  it in the tagger. Asked for on 2026-09-25 ("togli anche reviewed così le
+  riguardo direttamente io"), and it applies to every realignment since.
 
 **7. Re-measure after each change**, not after all of them. When two edits go in
 together and the score drops, the run has to be repeated to find which one did it.
+`Dump` before the change and after it, then `scripts/blast_radius.py`: the score
+says how much moved, the WRONG list says which reviewed cards, and each one is
+either a rule that overreaches or an older tag the ruling overturns.
 
-**8. Finish.** Full suite green, probes deleted, then the two commits described in
-`references/store.md`. Report the before/after numbers, what was ruled, and what
-measurement rejected.
+When the rule as the human worded it breaks reviewed cards, find the narrower
+rule they meant before asking. "Alziamo la soglia per le creature" applied to
+every creature one-shot took Buff from eight cards the human had tagged
+(Toucan-Puffin's temporary pump on entry, Agent of Kotis's counters from the
+graveyard); the reason they gave — "come se fosse un 6/6" — was about counters
+a creature hands out AS IT ENTERS, and that narrower rule moved none of the
+eight. Say in the report which one shipped and why.
+
+**8. Finish.** Full suite green, then **verification by neutralisation**: one case
+per fix in a JSON file, `scripts/neutralise.py cases.json`, and every case must
+turn its own test red (run one by hand first to prove the harness reads
+failures). Probes deleted, `readme_ontology.py --check` clean, then the commits
+described in `references/store.md`. Report the before/after numbers, what was
+ruled, and what measurement rejected.
 
 ## When a card disagrees and the reason is not obvious
 
@@ -186,5 +257,5 @@ re-reads the repo instructions cold and returns unstructured text. Model names a
   the rule that the human's in-progress reviewed entries are never committed
 - `references/hazards.md` — the traps that have cost real time, each with the
   symptom that identifies it
-- `scripts/find_cards.py` — name → oracle id, tier, current tags; builds ruling
-  files so ids are never pasted by hand
+- `scripts/` — the table under "The work directory"; each script's docstring
+  says how to call it

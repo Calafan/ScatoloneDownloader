@@ -149,8 +149,11 @@ stdout without stderr, sees a clean run every time. A neutralisation that
 breaks the BUILD reports the same silence.
 
 **Fix:** capture stdout and stderr together, match `[FAIL]` lines, and treat a run
-with no `Superati:` summary as a failed build. Then neutralise ONE fix by hand
-first and check the harness reports it red before trusting the rest.
+with no `Superati:` summary as a failed build. Take the test name as the LAST
+dotted segment after whitespace: a looser pattern returns `xUnit.net` or the
+namespace `Mtg` for every failure. `scripts/neutralise.py` does all of this.
+Then neutralise ONE fix by hand first and check the harness reports it red
+before trusting the rest.
 
 ## Numbers that drift out of a report
 

@@ -54,13 +54,19 @@ refused, because a card from the human's pass carries their rating too. So:
 ```powershell
 Copy-Item $META\*.json $WORK\pre-classify\          # the handed-back tags live here
 dotnet run --project ScatoloneDownloader -- classify -m $META --overwrite
-# rebuild post-classify with the handed-back entries copied back from pre-classify
-python scripts\split_unreviewed.py $WORK\post-classify-fixed --keep-head $WORK\unreview.json
+Copy-Item $META\*.json $WORK\post-classify\
+python scripts\restore_handed_back.py $WORK\pre-classify $WORK\post-classify $WORK\unreview.json
+python scripts\split_unreviewed.py $WORK\post-classify --keep-head $WORK\unreview.json
+git -C $REPO add metadata/ ; git -C $REPO commit -F msg.txt
+Copy-Item $WORK\post-classify\*.json $META\
+python scripts\verify_tree.py --handed-back $WORK\unreview.json --compare $WORK\pre-classify
 ```
 
-and check afterwards that every handed-back entry is byte-for-byte what it was
-before the classify. The list of handed-back cards is the `unreview` ruling file;
-keep it until the human has reviewed them all.
+The last line must say every handed-back entry is identical to the backup. The
+list of handed-back cards is the `unreview` ruling file; keep it until the human
+has reviewed them all. They do that in the tagger and commit the result with
+their own pass — `verify_tree.py --handed-back` then reports none of them still
+unreviewed, and the protection is no longer needed.
 
 ## Byte format
 
@@ -129,10 +135,14 @@ Copy-Item $WORK\post-classify\*.json $META\         # restore the human's tree
 Then verify, every time:
 
 ```powershell
-git -C $REPO diff -U0 -- metadata/ | Select-String 'reviewedAt'   # must be empty
+git -C $REPO diff -U0 -- metadata/ | Select-String 'reviewedAt'   # before the commit: must be empty
+python scripts\verify_tree.py                                      # after the restore
 ```
 
-and the `still uncommitted: N | NOT reviewed: 0` check above.
+`verify_tree.py` prints the `still uncommitted: N | NOT reviewed: 0` line above.
+After applying a ruling or a hand-back to the tree, add `--compare` with the
+backup taken before it: exactly the ruled cards, and exactly the ruled fields,
+should differ.
 
 ## Data-quality note
 

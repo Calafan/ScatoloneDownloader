@@ -15,8 +15,9 @@ Usage:
     python apply_ruling.py rulings.json --mode head
     python apply_ruling.py rulings.json --mode tree --store E:\\path\\to\\metadata
 
-rulings.json is a list of {name, oracleId, effect, op} where op is add|remove.
-`name` is for the human reading the diff; `oracleId` is what is matched.
+rulings.json is a list of {name, oracleId, effect, op} where op is
+add|remove|unreview (an unreview needs no effect). `name` is for the human
+reading the diff; `oracleId` is what is matched.
 
 Byte format of the store, which must round-trip exactly: no BOM, 2-space
 indent, CRLF in the working tree, NO trailing newline.
@@ -61,8 +62,9 @@ def apply(data_by_file, rulings, reviewed_only=False):
     touched = skipped = 0
 
     for edit in rulings:
-        oracle, effect = edit["oracleId"], edit["effect"]
-        if effect not in RANK:
+        oracle, effect = edit["oracleId"], edit.get("effect", "")
+        # An "unreview" names no effect: it moves reviewedAt, not a tag.
+        if edit.get("op") != "unreview" and effect not in RANK:
             raise SystemExit(f"not a CardEffect: {effect} ({edit.get('name')})")
 
         removing = edit.get("op") == "remove"
