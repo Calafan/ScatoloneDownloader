@@ -1,169 +1,210 @@
 # ScatoloneDownloader
 
-CLI per scaricare le immagini delle carte di *Magic: The Gathering* da
-[Scryfall](https://scryfall.com), organizzandole in cartelle pronte per la stampa.
-Le carte fronte‑retro vengono composte in un'unica immagine.
+Command-line tool behind the **Scatolone**, our club's *Magic: The Gathering*
+cube. It does two jobs:
 
-## Requisiti
+- **Downloads card images** from [Scryfall](https://scryfall.com) into folders
+  ready to print. A double-faced card is composed into a single image, both
+  faces side by side.
+- **Manages the cube**: a rating, a status and effect tags for every card, kept
+  as JSON in the [ScatoloneQuintet](https://github.com/Calafan/ScatoloneQuintet)
+  repository, with a web tagger to edit them, a classifier that proposes effect
+  tags from the rules text, and the folders and report used to browse the cube.
 
-- [.NET 10 runtime](https://dotnet.microsoft.com/download/dotnet/10.0) (per
-  l'eseguibile pubblicato) oppure l'SDK .NET 10 per compilare dai sorgenti.
-- Connessione a Internet (l'app rispetta il rate limit di Scryfall, ~10 richieste/s,
-  con retry automatico su 429/5xx).
+## Requirements
 
-## Compilazione
+- [.NET 10](https://dotnet.microsoft.com/download/dotnet/10.0): the runtime for
+  the published executable, or the SDK to build from source.
+- An internet connection. The tool keeps to Scryfall's rate limit (about 10
+  requests a second) and retries on 429 and 5xx responses.
+
+## Building
 
 ```powershell
-# Eseguire dai sorgenti
-dotnet run --project ScatoloneDownloader -- <comando> [opzioni]
+# Run from source
+dotnet run --project ScatoloneDownloader -- <command> [options]
 
-# Pubblicare un singolo eseguibile (framework-dependent, Windows x64)
+# Run the tests
+dotnet test
+
+# Publish a single executable (framework-dependent, Windows x64)
 dotnet publish -c Release -r win-x64
-# → ScatoloneDownloader/bin/Release/net10.0/win-x64/publish/ScatoloneDownloader.exe
+# -> ScatoloneDownloader/bin/Release/net10.0/win-x64/publish/ScatoloneDownloader.exe
 ```
 
-Il `publish` produce **un solo** `ScatoloneDownloader.exe` (~43 MB, librerie native
-SkiaSharp incluse). Richiede il runtime .NET 10 installato.
+The publish produces **one** `ScatoloneDownloader.exe`, with SkiaSharp's native
+libraries inside. It needs the .NET 10 runtime installed.
 
-## Uso
+## Downloading images
 
 ```
-ScatoloneDownloader <comando> [argomenti] [opzioni]
+ScatoloneDownloader <command> [arguments] [options]
 ```
 
-### Comandi
+| Command | What it downloads | Argument |
+|---|---|---|
+| `all` | Every unique-artwork card, grouped by year and set | — |
+| `set <SETS>` | The given sets | one or more set codes (e.g. `neo dmu`) |
+| `years <YEARS>` | Cards released in the given years (1993–2050) | one or more years |
+| `files <FILES>` | Cards from hand-written lists, plus a stats file | one or more files |
+| `lands` | **Every** basic land artwork, split by land type | — |
+| `analyze <FILES>` | Analyses the lists **without** downloading images | one or more files |
 
-| Comando | Descrizione | Argomento |
-|---------|-------------|-----------|
-| `all` | Scarica tutte le carte unique‑artwork, raggruppate per anno e set | — |
-| `set <SETS>` | Scarica i set indicati per codice | uno o più codici set (es. `neo dmu`) |
-| `years <YEARS>` | Scarica le carte uscite negli anni indicati (1993–2050) | uno o più anni |
-| `files <FILES>` | Scarica dalle liste scritte a mano e genera un file di statistiche | uno o più file |
-| `lands` | Scarica **tutti** gli artwork delle terre base, divisi per tipo | — |
-| `analyze <FILES>` | Analizza le liste **senza** scaricare immagini | uno o più file |
+### Common options
 
-### Opzioni comuni
+| Option | Effect |
+|---|---|
+| `-o, --output <DIR>` | Output root (default `./Output`) |
+| `-c, --clear` | Empty the output folders before starting |
+| `-r, --reprints` | Include reprints (left out by default) |
+| `-t, --tokens` | Include tokens (left out by default) |
+| `-l, --lands` | Include basic lands (left out by default) |
+| `-p, --print-only` | Write the card list only, without downloading images |
+| `-h, --help` | Help, also per command (e.g. `years --help`) |
 
-| Opzione | Effetto |
-|---------|---------|
-| `-o, --output <DIR>` | Cartella radice di output (default: `./Output`) |
-| `-c, --clear` | Cancella le cartelle di output prima di partire |
-| `-r, --reprints` | Include i reprint (esclusi di default) |
-| `-t, --tokens` | Include i token (esclusi di default) |
-| `-l, --lands` | Include le terre base (escluse di default) |
-| `-p, --print-only` | Scrive solo la lista delle carte, senza scaricare immagini |
-| `-h, --help` | Aiuto (anche per singolo comando, es. `years --help`) |
+Command-specific options:
 
-Opzioni specifiche:
+- `all` — `-e, --exclude <FILE>` leaves out the cards listed in the file.
+- `lands` — takes only `-o/--output`, `-c/--clear` and `-p/--print-only`. The
+  reprint, token and land filters do not apply: it downloads every basic land
+  artwork.
 
-- `all` — `-e, --exclude <FILE>`: esclude le carte elencate nel file.
-- `lands` — usa solo le opzioni generali `-o/--output`, `-c/--clear`, `-p/--print-only`
-  (i filtri reprint/token/lands non si applicano: scarica ogni artwork di terra base).
-
-### Esempi
+### Examples
 
 ```powershell
-# Carte del 2026
+# Cards from 2026
 ScatoloneDownloader years 2026
 
-# Più anni su un disco esterno
+# Several years, onto an external disk
 ScatoloneDownloader years 2024 2025 2026 --output D:\Scryfall
 
-# Un paio di set, ripulendo prima la destinazione
+# Two sets, emptying the destination first
 ScatoloneDownloader set neo dmu --clear
 
-# Carte del 2026, terre base incluse
+# Cards from 2026, basic lands included
 ScatoloneDownloader years 2026 --lands
 
-# Da lista scritta a mano, incluse le terre base
-ScatoloneDownloader files mazzo.txt --lands
+# From a hand-written list, basic lands included
+ScatoloneDownloader files deck.txt --lands
 
-# Tutte le terre base stampate, divise per tipo
+# Every basic land ever printed, split by type
 ScatoloneDownloader lands
 
-# Solo analisi, nessun download
-ScatoloneDownloader analyze mazzo.txt
+# Analysis only, no download
+ScatoloneDownloader analyze deck.txt
 ```
 
-## Gestione del cubo (rating, status, effetti)
+### Output layout
 
-Oltre al download, il tool gestisce la valutazione del cubo: rating, status
-(Banned/Token/Jolly) ed effetti funzionali delle carte, salvati nella cartella
-`metadata/` (tracciata da git — è la fonte di verità: git + Scryfall bastano a
-ricostruire tutto). La cartella è partizionata per fascia di rating —
-`pool.json` (3-5), `fringe.json` (1-2), `unrated.json` (0, l'intera libreria
-non ancora valutata) — così il file da editare a mano resta piccolo anche con
-30k+ carte. Dettagli completi, schema JSON e struttura delle viste in
-[`docs/cube-metadata.md`](docs/cube-metadata.md).
-
-| Comando | Descrizione | Esempio |
-|---------|-------------|---------|
-| `tag <DIR>` | Avvia il tagger web locale (da tastiera) per assegnare rating, status ed effetti; salva automaticamente su `metadata/` a ogni modifica. Apre sulla coda da revisionare (carte non taggate + auto-taggate non ancora confermate), in ordine casuale. Filtri combinabili per stato (`f`), livello (`,`: pool 3-5 / fringe 1-2 / non valutate / stelle esatte) e cartella (anno + set); `/` apre la lista carte con ricerca per nome. Ogni pulsante effetto porta il **significato tassonomico** del tag (tooltip al passaggio del mouse, e una riga fissa in cima alla lista su telefono) | `ScatoloneDownloader tag .\Master` |
-| `import <DIR>` | Porta dentro `metadata/` i rating/label XMP scritti da Adobe Bridge (unico comando che legge ancora XMP). Da rilanciare dopo ogni sessione di Bridge; `--incremental` rilegge solo i file modificati dall'ultimo import | `ScatoloneDownloader import .\Master --overwrite --incremental` |
-| `build-views <DIR>` | Rigenera l'albero `Views/` (symlink/hardlink, multi-radice) e il report `Cubo_Analysis.md` leggendo rating/status/effetti da `metadata/` | `ScatoloneDownloader build-views .\Master -v .\Views` |
-| `restore --images <DIR>` | Recovery: ricostruisce la cartella immagini dall'unione di tutti i file di `metadata/` + bulk-data Scryfall (nessuna XMP scritta) | `ScatoloneDownloader restore --images .\Master -m metadata` |
-| `make-list -o <FILE>` | Genera (offline) una lista di download per il comando `files` con il solo pool (rating 3-5); i card con status finiscono in sezioni `-- Banned`/`-- Token`/`-- Jolly` così `files` li smista in sotto-cartelle | `ScatoloneDownloader make-list -m metadata -o pool.txt` |
-| `classify` | Auto-propone gli effetti dal testo regole Scryfall dentro `metadata/` (solo suggerimenti: scrive `effects` ma non marca `reviewedAt`, non tocca le carte già revisionate; confermali nel tagger) | `ScatoloneDownloader classify -m metadata --dry-run` |
-| `audit` | Segnala le carte **già revisionate** che dicono la stessa cosa ma hanno tag diversi: le sviste che il tagging ripetitivo produce. Sola lettura, non modifica niente. `--since` limita il report alle sedute recenti, `--limit` a quanti gruppi stampare | `ScatoloneDownloader audit -m metadata --since 2026-09-12` |
-
-Tutti accettano `-m, --metadata <DIR>` per la cartella dei metadati. Se omesso,
-il default e una cartella `metadata` **accanto alla libreria master** (la sorella
-di `SOURCE_DIR`, stessa regola con cui `build-views` colloca `Views/`), cosi i
-metadati stanno vicino alle immagini che descrivono invece di seguire la
-directory da cui lanci il comando. `classify`, `audit`, `make-list` e `restore`
-non ricevono `SOURCE_DIR`: non hanno un master accanto a cui stare e ricadono su
-`./metadata`, stampando all'avvio il percorso risolto.
-
-### Lavorare ancora con Adobe Bridge
-
-Il tagger e `metadata/` sono la fonte di verità, ma si può continuare a mettere
-rating e label da Adobe Bridge sui PNG della libreria master e riportarli dentro
-con `import --overwrite`. Il round-trip non perde lavoro nelle due direzioni:
-`import` non declassa mai un rating già salvato a 0, non riscrive lo status di
-una carta già revisionata nel tagger, e lascia intatti effetti, `scryfallId` e
-`reviewedAt`. A fine run stampa `Changed: n ratings, n labels, n statuses`, così
-si vede subito se la sessione di Bridge è arrivata davvero a destinazione.
-
-La libreria è su un disco meccanico e la scansione XMP completa è vincolata dai
-seek (circa 15 minuti su 30k file): dopo il primo import usa `--incremental`, che
-rilegge solo i file toccati dall'ultima esecuzione (watermark in
-`metadata/import-state.json`) e chiude in pochi secondi. Le carte non ancora
-presenti nello store vengono comunque sempre lette.
-
-## Struttura dell'output
-
-Tutto finisce sotto la radice scelta (`./Output` di default):
+Everything goes under the chosen root (`./Output` by default):
 
 ```
 <root>/
-├─ All/        <anno>/<set>/<carta>.png
-├─ Sets/       <set>/<carta>.png
-├─ Years/      <anno>/<set>/<carta>.png
-├─ Lists/      <nome-lista>/<tag>/<carta>.png
-└─ BasicLands/ <tipo>/<carta>.png        (comando lands: Plains/, Island/, ...)
+├─ All/        <year>/<set>/<card>.png
+├─ Sets/       <set>/<card>.png
+├─ Years/      <year>/<set>/<card>.png
+├─ Lists/      <list name>/<tag>/<card>.png
+└─ BasicLands/ <type>/<card>.png        (lands command: Plains/, Island/, …)
 ```
 
-## Formato dei file di lista (`files` / `analyze`)
+### List files (`files` / `analyze`)
 
-Un file di testo, una carta per riga. Il tag (opzionale) dopo `--` determina la
-sotto‑cartella in cui finisce l'immagine:
+A text file, one card per line. The optional tag after `--` names the
+sub-folder the image goes into:
 
 ```
-Sol Ring -- artefatti
-Lightning Bolt -- rosse
+Sol Ring -- artifacts
+Lightning Bolt -- red
 Counterspell
--- questa riga è un commento (le righe che iniziano con -- vengono ignorate)
+-- a comment (lines starting with -- are ignored)
 ```
 
-- `Nome -- tag` → immagine in `Lists/<lista>/<tag>/`.
-- `Nome` senza tag → immagine direttamente in `Lists/<lista>/`.
-- Le terre base sono trattate a parte e incluse solo con `--lands`.
+- `Name -- tag` puts the image in `Lists/<list>/<tag>/`.
+- A bare `Name` puts it straight in `Lists/<list>/`.
+- Basic lands are handled apart and included only with `--lands`.
 
-## Note
+## Managing the cube
 
-- Le immagini sono recuperate da Scryfall nel formato di stampa; le carte a doppia
-  faccia vengono affiancate in un'unica immagine.
-- Il download è sequenziale e regolato per rispettare il rate limit di Scryfall;
-  a fine run viene stampato il throughput (carte totali, ms/carta, carte/s).
-- I dati delle carte provengono dall'API e dai bulk‑data di Scryfall. Per favore,
-  rispetta i [termini d'uso](https://scryfall.com/docs/api) di Scryfall.
+Every evaluation lives in a `metadata/` folder tracked by git, which is the
+source of truth: git plus Scryfall is enough to rebuild everything, images
+included. The folder is split by rating so the file edited day to day stays
+small even with 30k+ cards:
+
+| File | Rating | Contents |
+|---|---|---|
+| `pool.json` | 3–5 | the cube |
+| `fringe.json` | 1–2 | evaluated and cut |
+| `unrated.json` | 0 | the rest of the library, not yet evaluated |
+
+The rating scale, the statuses (Banned, Token, Jolly), the entry schema and the
+full effect ontology are described in the
+[ScatoloneQuintet README](https://github.com/Calafan/ScatoloneQuintet#readme).
+The technical reference — tier files, save behaviour, recovery, the `Views/`
+tree — is [`docs/cube-metadata.md`](docs/cube-metadata.md).
+
+| Command | What it does | Example |
+|---|---|---|
+| `tag <DIR>` | Starts the local web tagger (keyboard-driven) to set rating, status and effects; every change is saved to `metadata/` at once. It opens on the review queue (untagged cards plus classifier proposals not yet confirmed), shuffled. Filters combine by review state (`f`), rating (`,`: pool 3–5 / fringe 1–2 / unrated / exact stars), effect and folder (year, then set); `/` opens the card list with a name search. Each effect button carries the tag's **definition** as a tooltip (and as a fixed line above the list on a phone). `-p, --port` sets the port (default 8765); `--host` adds a host name to answer to besides localhost, e.g. a Tailscale name | `ScatoloneDownloader tag .\Source` |
+| `classify` | Proposes effect tags from each card's Scryfall rules text. Proposals only: it writes `effects` but never `reviewedAt`, and never touches a reviewed card. `--overwrite` re-proposes over unreviewed entries, `--dry-run` reports without writing | `ScatoloneDownloader classify -m metadata --overwrite` |
+| `audit` | Lists **reviewed** cards that say the same thing but were tagged differently — the slips repetitive tagging produces. Read-only. `--since` limits the report to recent sittings, `--limit` the number of groups | `ScatoloneDownloader audit -m metadata --since 2026-09-12` |
+| `build-views <DIR>` | Rebuilds the `Views/` tree (symlinks and hardlinks, several roots) and the `Cubo_Analysis.md` report from `metadata/` | `ScatoloneDownloader build-views .\Source -v .\Views` |
+| `make-list` | Writes, offline, a download list for `files` with the pool only (rating 3–5). Cards with a status go in `-- Banned` / `-- Token` / `-- Jolly` sections, so `files` sorts them into sub-folders | `ScatoloneDownloader make-list -m metadata -o pool.txt` |
+| `restore --images <DIR>` | Recovery: rebuilds the image folder from every file in `metadata/` plus Scryfall's bulk data. Writes no XMP | `ScatoloneDownloader restore --images .\Source -m metadata` |
+| `import <DIR>` | Brings the ratings and labels written by Adobe Bridge into `metadata/` (the only command that still reads XMP). `--incremental` re-reads only the files changed since the last import | `ScatoloneDownloader import .\Source --overwrite --incremental` |
+
+All of them take `-m, --metadata <DIR>`. Left out, it defaults to a `metadata`
+folder **beside the image library** (the sibling of `SOURCE_DIR`, the same rule
+`build-views` uses to place `Views/`), so the metadata stays next to the images
+it describes instead of following the directory the command runs from.
+`classify`, `audit`, `make-list` and `restore` take no `SOURCE_DIR`, so they
+fall back to `./metadata` and print the path they resolved at start-up.
+
+### Starting the tagger: `tagger.cmd`
+
+`tagger.cmd` builds the Release executable and then starts the tagger so that
+both this PC and a phone on the same Tailscale network can reach it. The build
+comes first on purpose: `classify` run from an old build writes that build's
+rules over every unreviewed proposal. Edit the paths and host names at the top
+of the file if the library or the network changes; the tagger's start-up error
+prints the `netsh http add urlacl` reservations a new host name needs.
+
+### The effect classifier
+
+`classify` reads the rules text and proposes tags from the 25-effect ontology in
+[`Mtg/CardEffect.cs`](ScatoloneDownloader/Mtg/CardEffect.cs). The comments on
+each member are the rulings: every boundary, when it was decided, the cards
+that settled it and how many reviewed cards it moved. The one-line definitions
+shown as tooltips in the tagger are in
+[`Mtg/EffectGlossary.cs`](ScatoloneDownloader/Mtg/EffectGlossary.cs), and the
+rules themselves in [`Cube/Effects/`](ScatoloneDownloader/Cube/Effects).
+
+It is rule-based and only proposes: a person confirms every card in the tagger,
+and those reviewed cards are the ground truth each rule is measured against.
+How a ruling is measured and applied is written up in the Claude Code skill
+[`.claude/skills/ontology-pass`](.claude/skills/ontology-pass/SKILL.md).
+
+### Still using Adobe Bridge
+
+The tagger and `metadata/` are the source of truth, but ratings and labels can
+still be set in Adobe Bridge on the library's PNGs and brought in with
+`import --overwrite`. The round trip loses nothing in either direction: `import`
+never lowers a saved rating to 0, never rewrites the status of a card already
+reviewed in the tagger, and leaves effects, `scryfallId` and `reviewedAt` alone.
+At the end it prints `Changed: n ratings, n labels, n statuses`, so it is plain
+at once whether the Bridge session actually landed.
+
+The library sits on a mechanical disk and a full XMP scan is seek-bound (about
+15 minutes for 30k files). After the first import use `--incremental`, which
+re-reads only the files touched since the previous run (watermark in
+`metadata/import-state.json`) and finishes in seconds. Cards not yet in the
+store are always read.
+
+## Notes
+
+- Images come from Scryfall at print size; the faces of a double-faced card are
+  placed side by side in one image.
+- Downloads are sequential and paced to Scryfall's rate limit; each run ends by
+  printing the throughput (total cards, ms per card, cards per second).
+- Card data comes from Scryfall's API and bulk data. Please respect Scryfall's
+  [terms of use](https://scryfall.com/docs/api). *Magic: The Gathering* is a
+  trademark of Wizards of the Coast; this is an unofficial fan project.
