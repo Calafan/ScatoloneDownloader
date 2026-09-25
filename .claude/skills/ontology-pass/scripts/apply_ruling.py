@@ -76,6 +76,17 @@ def apply(data_by_file, rulings, reviewed_only=False):
                 skipped += 1
                 break
 
+            # op "unreview" hands the card BACK to the human: its tags stay as
+            # they are, and dropping reviewedAt puts it in the tagger's pending
+            # queue. Asked for on 2026-09-25, for a ruling the human had only
+            # settled on in the last part of a sitting and wanted to see applied
+            # card by card. NB a later `classify --overwrite` will replace these
+            # tags with proposals, so run it BEFORE unreviewing, not after.
+            if edit.get("op") == "unreview":
+                if entry.pop("reviewedAt", None) is not None:
+                    touched += 1
+                break
+
             effects = entry.get("effects") or []
 
             # Already in the wanted state: nothing to do, and not an error —
@@ -118,7 +129,8 @@ def main():
     # OTHER than `effects` changed. In --mode tree the counts include the
     # human's own uncommitted work, so only the `non-effects` line is a signal.
     head = {name: load_head(repo, name) for name in FILES}
-    changed = bad_field = entry_sets = 0
+    changed = bad_field = entry_sets = unreviewed = 0
+    unreviewing = {e["oracleId"] for e in rulings if e.get("op") == "unreview"}
 
     for name in FILES:
         after = json.loads((meta / name).read_text(encoding="utf-8")).get("cards", {})
@@ -133,13 +145,19 @@ def main():
 
             changed += 1
             for key in set(after[oracle]) | set(before[oracle]):
-                if key != "effects" and after[oracle].get(key) != before[oracle].get(key):
+                if key == "effects" or after[oracle].get(key) == before[oracle].get(key):
+                    continue
+                # A reviewedAt that went AWAY on a card this file unreviews is the
+                # one non-effects change that is asked for; count it apart.
+                if key == "reviewedAt" and oracle in unreviewing and key not in after[oracle]:
+                    unreviewed += 1
+                else:
                     bad_field += 1
 
     print(f"mode={args.mode} rulings applied={touched} of {len(rulings)}"
           + (f" | {skipped} not reviewed in HEAD, left for --mode tree" if skipped else ""))
     print(f"vs HEAD: {changed} entries changed | non-effects fields: {bad_field} "
-          f"| entry-set changed in {entry_sets} files")
+          f"| reviewedAt cleared as asked: {unreviewed} | entry-set changed in {entry_sets} files")
 
     if args.mode == "head" and bad_field:
         print("!! a field other than effects moved — do NOT commit this", file=sys.stderr)
