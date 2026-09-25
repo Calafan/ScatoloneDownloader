@@ -44,8 +44,23 @@ their uncommitted pass, that keeps its ruled tags and loses `reviewedAt`. It
 shows as NOT reviewed and differs from HEAD's proposal, and it stays uncommitted
 with the rest of that pass. Count them before and after, and say so in the
 report. Unreview only AFTER `classify --overwrite` and the split — an unreviewed
-entry is overwritten by the next classify, which is also why the human should
-review these before the next pass runs one.
+entry is overwritten by the next classify.
+
+**While handed-back cards are outstanding, every later classify has to protect
+them.** This bit on the very next run of 2026-09-25: classify rewrote them as the
+unreviewed entries they are (7 of 105 actually changed), and `split_unreviewed.py`
+refused, because a card from the human's pass carries their rating too. So:
+
+```powershell
+Copy-Item $META\*.json $WORK\pre-classify\          # the handed-back tags live here
+dotnet run --project ScatoloneDownloader -- classify -m $META --overwrite
+# rebuild post-classify with the handed-back entries copied back from pre-classify
+python scripts\split_unreviewed.py $WORK\post-classify-fixed --keep-head $WORK\unreview.json
+```
+
+and check afterwards that every handed-back entry is byte-for-byte what it was
+before the classify. The list of handed-back cards is the `unreview` ruling file;
+keep it until the human has reviewed them all.
 
 ## Byte format
 

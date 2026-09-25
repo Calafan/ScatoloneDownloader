@@ -33,7 +33,18 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("source", help="directory holding the post-classify tier files")
     ap.add_argument("--store", default=str(DEFAULT_STORE))
+    # Cards HANDED BACK for review (apply_ruling.py op "unreview") are the
+    # human's, not the classifier's: unreviewed, so classify rewrites them, and
+    # often carrying the human's own rating, which makes this script refuse.
+    # Their HEAD version is kept here, and the caller puts the human's tags back
+    # in the working tree from the pre-classify backup.
+    ap.add_argument("--keep-head", action="append", default=[],
+                    help="JSON list of {oracleId, ...}: entries left exactly as HEAD has them")
     args = ap.parse_args()
+
+    keep_head = set()
+    for path in args.keep_head:
+        keep_head |= {e["oracleId"] for e in json.loads(Path(path).read_text(encoding="utf-8"))}
 
     meta = Path(args.store)
     repo = meta.parent
@@ -46,7 +57,7 @@ def main():
     for name in FILES:
         source_cards.update(json.loads((source_dir / name).read_text(encoding="utf-8")).get("cards", {}))
 
-    moved = touched_reviewed = 0
+    moved = touched_reviewed = kept = 0
 
     for name in FILES:
         head = load_head(repo, name)
@@ -55,6 +66,10 @@ def main():
         for key in list(head_cards):
             entry = source_cards.get(key)
             if entry is None:
+                continue
+
+            if key in keep_head:
+                kept += 1
                 continue
 
             if entry == head_cards[key]:
@@ -75,7 +90,8 @@ def main():
         text = json.dumps(head, indent=2, ensure_ascii=False).replace("\n", "\r\n")
         (meta / name).write_text(text, encoding="utf-8", newline="")
 
-    print(f"moved onto HEAD: {moved} | reviewed left untouched: {touched_reviewed}")
+    print(f"moved onto HEAD: {moved} | reviewed left untouched: {touched_reviewed}"
+          + (f" | handed-back kept as HEAD: {kept}" if keep_head else ""))
     return 0
 
 
