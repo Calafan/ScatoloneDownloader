@@ -607,7 +607,10 @@ namespace ScatoloneDownloader.Cube
             // one you fire: losing life is the opponent's doing, so Oath of
             // Lim-Dûl's "whenever you lose life, … sacrifice a permanent" is a
             // price the card makes you pay, not an outlet — "è un effetto extra
-            // non è a comando", ruled 2026-09-25. Lich's Tomb is the same card.
+            // non è a comando", ruled 2026-09-25. Lich's Tomb is the same card,
+            // and damage is the same price (Phyrexian Negator, Lich, Phyrexian
+            // Totem: "whenever … is dealt damage, sacrifice that many") — not
+            // guarded here only because "that many" is not read at all yet.
             + @"|^(?:[^—\n]{1,40}— )?(?:whenever(?! you lose life\b)|at the beginning of)[^,\n]*,[^\n]*?"
             + @"(?<!\b(?:they|player|players|opponent|opponents|controller) )\b" + WhatAnOutletEats
             // A LOYALTY ability is used again every turn (Chandra, Spark Hunter),

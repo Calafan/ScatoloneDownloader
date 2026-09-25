@@ -2966,6 +2966,17 @@ public sealed class EffectClassifierTests
     [InlineData("Oath of Lim-Dûl", "Enchantment",
         "Whenever you lose life, for each 1 life you lost, sacrifice a permanent other than this enchantment "
         + "unless you discard a card. (Damage dealt to you causes you to lose life.)\n{B}{B}: Draw a card.")]
+    // Damage is the same price as lost life (Phyrexian Negator, named by the
+    // human the same day). Both are held out today because "sacrifice THAT
+    // MANY" is not read at all; teach the base pattern that count and the
+    // trigger guard in SacrificeOutlet has to learn "is dealt damage" too.
+    [InlineData("Phyrexian Negator", "Creature — Phyrexian Horror",
+        "Trample\nWhenever this creature is dealt damage, sacrifice that many permanents.")]
+    [InlineData("Lich", "Enchantment",
+        "As this enchantment enters, you lose life equal to your life total.\nYou don't lose the game for "
+        + "having 0 or less life.\nIf you would gain life, draw that many cards instead.\nWhenever you're dealt "
+        + "damage, sacrifice that many nontoken permanents. If you can't, you lose the game.\nWhen this "
+        + "enchantment is put into a graveyard from the battlefield, you lose the game.")]
     // Destroying an Aura on your creature saves it, and a harness is paid once.
     [InlineData("Miracle Worker", "Creature — Human Cleric",
         "{T}: Destroy target Aura attached to a creature you control.")]
