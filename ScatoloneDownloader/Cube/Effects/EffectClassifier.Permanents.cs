@@ -552,13 +552,81 @@ namespace ScatoloneDownloader.Cube
         // which empties their board rather than giving you a place to put yours.
         private static readonly Regex SomebodyElseSacrifices = Rx(OtherPlayer + @"[\w ,]{0,40}sacrifices?\b");
 
-        // An outlet has to be usable at will: a cost in front of a colon
-        // ("Sacrifice a creature: ..."), or an optional sacrifice a trigger
-        // offers you. "As an additional cost to cast this spell" is neither — it
-        // is a price paid once, on the way to a different effect.
+        // Destroying or exiling your OWN permanent at will is an outlet by
+        // another verb, ruled 2026-09-25: Despotic Scepter's "{T}: Destroy target
+        // permanent you own", Rats of Rath's "… you control", City of Shadows'
+        // "{T}, Exile a creature you control:" — all three hand-tagged, none read.
+        // Not an Aura ATTACHED to your creature (Miracle Worker saves it), and not
+        // the price of a HARNESS, which is paid once (The Soul Stone).
+        private const string SacrificesYourOwnByAnotherVerb =
+            @"^[^\n:]{0,40}:\s*destroy target (?![\w ]*attached)[\w ,]{0,40}(?:you control|you own)"
+            + @"|^[^\n:]{0,40}exile (?:a|another) (?:creature|artifact)[\w ]{0,20}you control[^\n:]{0,20}:(?!\s*harness)";
+
+        // Exploit, casualty, devour and bargain sacrifice ONCE, as the card is
+        // cast or enters — and their reminder text is all the classifier sees
+        // of them, which is blanked. HANDED ON, the same keyword comes round
+        // again: Colonel Autumn gives exploit to every other legendary creature,
+        // Anhelo gives casualty to the first spell of each turn, Dragon
+        // Broodmother's upkeep token arrives with devour.
+        private const string SacrificeKeywordGranted = @"\b(?:have|has|gains?|with) (?:exploit|casualty|devour|bargain)\b";
+
+        private const string WhatAnOutletEats =
+            @"sacrifices? (?:a|an|another|two|three|\d+|x|any number of|one or more) [\w ]*(?:creature|artifact|permanent)";
+
+        // Only a REPEATABLE outlet is this tag, ruled 2026-09-25: "sì, togliamo
+        // Sacrifice alle carte una tantum". The human had tagged one-shots 36
+        // times up to 2026-09-23 and none of the 50 they met on the 25th. So a
+        // sacrifice counts only in one of these shapes, and the one-shots —
+        // an additional cost to cast, kicker, "rather than pay", an entering
+        // "you may sacrifice another creature", a sorcery's "sacrifice a
+        // creature. If you do" — do not:
+        //   - a COST in front of a colon, including one usable only in your
+        //     upkeep (Ebon Praetor, Marjhan: "anche se c'è un sacrificio ad ogni
+        //     mantenimento"). What it eats is a creature or an ARTIFACT
+        //     ("Sacrifice = creature o artefatti": Orcish Mechanics, Ezrim), but
+        //     not an artifact TOKEN, which is Sophia cashing in her own Clues —
+        //     the resource tokens are never tagged (0 of 5);
+        //   - a REPEATING trigger that sacrifices in its effect, optional or
+        //     forced: Shadow's "whenever … you may sacrifice", Kylox's "whenever
+        //     Kylox attacks, sacrifice any number", Lord of the Pit's upkeep.
+        //     The trigger's own condition is not it — "whenever you sacrifice a
+        //     creature, draw" is a payoff, so the sacrifice has to follow the
+        //     comma;
+        //   - a card that can be CAST AGAIN for it: buyback on an additional cost
+        //     (Worthy Cause), "cast … by sacrificing" (Wickerfolk Indomitable,
+        //     Into the Pit);
+        //   - an EQUIP cost (Dissection Tools), exploit handed to other creatures
+        //     (Colonel Autumn), and the other verbs above.
+        // Asked of the text with reminder text blanked: exploit's and kicker's
+        // reminders both say "you may sacrifice".
         private static readonly Regex SacrificeOutlet = Rx(
-            @"^[^\n:]{0,60}sacrifices? (?:a|an|another|two|three|\d+)[\w ]*(?:creature|artifact|permanent)[^\n:]{0,40}:"
-            + @"|you may sacrifice (?:a|an|another|two|three|\d+)[\w ]*(?:creature|artifact|permanent)",
+            @"^(?!\W*(?:when|whenever|at the|as an additional|kicker))[^\n:]{0,60}" + WhatAnOutletEats + @"(?! token)[^\n:]{0,60}:"
+            // In a trigger the sacrifice must be YOURS: Grave Pact's "each other
+            // player sacrifices" and Tomb Blade's "unless they sacrifice" are
+            // edicts the card-wide guard does not reach.
+            + @"|^(?:[^—\n]{1,40}— )?(?:whenever|at the beginning of)[^,\n]*,[^\n]*?"
+            + @"(?<!\b(?:they|player|players|opponent|opponents|controller) )\b" + WhatAnOutletEats
+            // A LOYALTY ability is used again every turn (Chandra, Spark Hunter),
+            // and so is an activated ability whose EFFECT sacrifices (Joo Dee:
+            // "{B}, {T}: … then sacrifice an artifact or creature").
+            + @"|^\[?[+−-]?[\dx]+\]?:[^\n]*?\b" + WhatAnOutletEats
+            + @"|^[^\n:]{0,40}\{[^\n:]{0,40}:[^\n]*?\bthen sacrifice (?:a|an|another) [\w ]*(?:creature|artifact)"
+            + @"|\bequip\W{1,3}sacrifice (?:a|an) (?:creature|artifact)"
+            + @"|" + SacrificeKeywordGranted + @"|\bcast [^\n.]{0,60}\bby [^\n.]{0,30}sacrificing (?:a|an|another)[\w ]*(?:creature|artifact|permanent)"
+            + @"|" + SacrificesYourOwnByAnotherVerb,
             RegexOptions.Multiline);
+
+        private static readonly Regex Buyback = Rx(@"^buyback\b", RegexOptions.Multiline);
+
+        private static readonly Regex SacrificeAsAdditionalCost = Rx(@"as an additional cost to cast this spell,[^\n]{0,40}sacrifice");
+
+        /// <summary>Can you feed your own creatures or artifacts to this card
+        /// again and again? See <see cref="SacrificeOutlet"/>.</summary>
+        private static bool IsSacrificeOutlet(string text)
+        {
+            string own = Parenthetical.Replace(text, " ");
+            return SacrificeOutlet.IsMatch(own)
+                || (Buyback.IsMatch(own) && SacrificeAsAdditionalCost.IsMatch(own));
+        }
     }
 }

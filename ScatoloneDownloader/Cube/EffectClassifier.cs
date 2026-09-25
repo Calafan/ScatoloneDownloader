@@ -584,11 +584,11 @@ namespace ScatoloneDownloader.Cube
             }
 
             // Sacrifice, asked the same way: whose creature, and can you do it
-            // when you want to? A card that only lets an OPPONENT sacrifice is an
-            // edict, and one that charges a creature as an additional cost to cast
-            // pays once and is gone — neither is an outlet.
+            // again? A card that only lets an OPPONENT sacrifice is an edict, and
+            // one that sacrifices once — to cast, as it enters, as a spell —
+            // pays and is gone. Neither is an outlet.
             if (result.HasFlag(CardEffect.Sacrifice)
-                && (SomebodyElseSacrifices.IsMatch(text) || !SacrificeOutlet.IsMatch(text)))
+                && (SomebodyElseSacrifices.IsMatch(text) || !IsSacrificeOutlet(text)))
             {
                 result &= ~CardEffect.Sacrifice;
             }

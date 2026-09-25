@@ -602,7 +602,20 @@ namespace ScatoloneDownloader.Cube
                 // A LAND is deliberately not on the list, and does not need to be
                 // excluded either: "sacrifice a land" is Harrow paying for a fetch and
                 // never says "permanent", so it simply does not match.
-                (CardEffect.Sacrifice, [Rx(@"sacrifices? (?:a|an|another|two|three|\d+)[\w ]*(?:creature|artifact|permanent)")]),
+                //
+                // Only a REPEATABLE outlet counts, ruled 2026-09-25 (see
+                // IsSacrificeOutlet for the shapes). The candidates below read every
+                // way a card lets you feed your own creatures and artifacts ("any
+                // number of" needs nothing: the unbounded "a" already takes the "a"
+                // of "any" — measured), exploit handed to others (Colonel Autumn), a
+                // card cast again by sacrificing (Wickerfolk Indomitable), an equip
+                // cost (Dissection Tools), and destroying or exiling your OWN
+                // permanent at will, which the human ruled an outlet by another name
+                // (Despotic Scepter, Rats of Rath, City of Shadows).
+                (CardEffect.Sacrifice, [
+                    Rx(@"sacrifices? (?:a|an|another|two|three|\d+)[\w ]*(?:creature|artifact|permanent)"),
+                    Rx(SacrificeKeywordGranted + @"|\bsacrificing (?:a|an|another)[\w ]*(?:creature|artifact|permanent)"),
+                    Rx(SacrificesYourOwnByAnotherVerb, RegexOptions.Multiline)]),
 
                 // Three patterns of "gain control" saw one third of this tag. The rest
                 // is in StealPatterns above: an EXCHANGE is a theft you paid for

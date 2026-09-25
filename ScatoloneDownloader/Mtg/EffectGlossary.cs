@@ -101,9 +101,9 @@
                 + "what a TOKEN you made deals.",
 
             [CardEffect.Sacrifice] =
-                "An outlet you can feed your OWN creatures, artifacts or permanents at will — the half of the combo that "
-                + "makes a stolen creature worth taking. Not an edict (that empties their board), not a land, and not "
-                + "\"as an additional cost to cast\", which pays once.",
+                "An outlet you can feed your OWN creatures or artifacts AGAIN AND AGAIN — a cost, a repeating trigger, "
+                + "every upkeep, or a card you recast. Destroying or exiling your own counts. Not once: entering, as "
+                + "you cast it, kicker, exploit. Not an edict, not a land, not an artifact token.",
 
             [CardEffect.Steal] =
                 "Takes what is somebody else's: control of a permanent, an EXCHANGE of two, the player, their "
