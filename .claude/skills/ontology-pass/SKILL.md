@@ -186,6 +186,12 @@ The hand tags move in two different ways, and the difference is the human's:
   it in the tagger. Asked for on 2026-09-25 ("togli anche reviewed così le
   riguardo direttamente io"), and it applies to every realignment since.
 
+Score the realigned cards BEFORE handing them back: once unreviewed they drop
+out of `Score`, so a tag the ruling put on by hand that the code does not
+propose stays invisible until the human re-reviews it. The Sacrifice pass
+reported 100% with Radiant Lotus's "Sacrifice one or more artifacts:" unread —
+the ruling had tagged it, the base pattern never asked.
+
 **7. Re-measure after each change**, not after all of them. When two edits go in
 together and the score drops, the run has to be repeated to find which one did it.
 `Dump` before the change and after it, then `scripts/blast_radius.py`: the score
