@@ -21,6 +21,29 @@ set "TAILNET_PORT=8080"
 set "EXE=%~dp0ScatoloneDownloader\bin\Release\net10.0\ScatoloneDownloader.exe"
 set "TS=C:\Program Files\Tailscale\tailscale.exe"
 
+REM Build first. Everything this exe does -- the tagger here, and a classify
+REM run from it later -- uses the rules compiled into it, and dotnet run and
+REM dotnet test only ever refresh Debug. On 2026-09-24 a classify from a
+REM five-day-old Release build rewrote every unreviewed proposal with rules
+REM that had since been fixed, and three days of review were shown them.
+REM A failed build is not fatal -- the previous exe still tags -- but it is
+REM said loudly, because that exe is exactly the stale one.
+where dotnet >nul 2>nul
+if errorlevel 1 goto :nodotnet
+echo Building Release...
+dotnet build "%~dp0ScatoloneDownloader" -c Release -v q --nologo >"%TEMP%\tagger-build.log" 2>&1
+if errorlevel 1 goto :buildfailed
+goto :checks
+
+:nodotnet
+echo [!] dotnet is not on PATH - starting the existing build, which may be stale.
+goto :checks
+
+:buildfailed
+echo [!] Build FAILED - starting the previous build. Its rules may be stale:
+echo     do not run classify from it until this is fixed. Log: %TEMP%\tagger-build.log
+
+:checks
 if not exist "%EXE%" goto :nobuild
 if not exist "%SOURCE%" goto :nosource
 if not exist "%TS%" goto :run
