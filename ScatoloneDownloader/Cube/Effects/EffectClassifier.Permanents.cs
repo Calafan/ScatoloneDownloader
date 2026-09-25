@@ -603,8 +603,12 @@ namespace ScatoloneDownloader.Cube
             @"^(?!\W*(?:when|whenever|at the|as an additional|kicker))[^\n:]{0,60}" + WhatAnOutletEats + @"(?! token)[^\n:]{0,60}:"
             // In a trigger the sacrifice must be YOURS: Grave Pact's "each other
             // player sacrifices" and Tomb Blade's "unless they sacrifice" are
-            // edicts the card-wide guard does not reach.
-            + @"|^(?:[^—\n]{1,40}— )?(?:whenever|at the beginning of)[^,\n]*,[^\n]*?"
+            // edicts the card-wide guard does not reach. And the trigger must be
+            // one you fire: losing life is the opponent's doing, so Oath of
+            // Lim-Dûl's "whenever you lose life, … sacrifice a permanent" is a
+            // price the card makes you pay, not an outlet — "è un effetto extra
+            // non è a comando", ruled 2026-09-25. Lich's Tomb is the same card.
+            + @"|^(?:[^—\n]{1,40}— )?(?:whenever(?! you lose life\b)|at the beginning of)[^,\n]*,[^\n]*?"
             + @"(?<!\b(?:they|player|players|opponent|opponents|controller) )\b" + WhatAnOutletEats
             // A LOYALTY ability is used again every turn (Chandra, Spark Hunter),
             // and so is an activated ability whose EFFECT sacrifices (Joo Dee:

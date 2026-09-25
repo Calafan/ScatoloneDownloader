@@ -607,13 +607,15 @@ namespace ScatoloneDownloader.Cube
                 // IsSacrificeOutlet for the shapes). The candidates below read every
                 // way a card lets you feed your own creatures and artifacts ("any
                 // number of" needs nothing: the unbounded "a" already takes the "a"
-                // of "any" — measured), exploit handed to others (Colonel Autumn), a
+                // of "any" — measured; "one or more" and "X" do, or Radiant Lotus's
+                // "Sacrifice one or more artifacts:" is never asked about), exploit
+                // handed to others (Colonel Autumn), a
                 // card cast again by sacrificing (Wickerfolk Indomitable), an equip
                 // cost (Dissection Tools), and destroying or exiling your OWN
                 // permanent at will, which the human ruled an outlet by another name
                 // (Despotic Scepter, Rats of Rath, City of Shadows).
                 (CardEffect.Sacrifice, [
-                    Rx(@"sacrifices? (?:a|an|another|two|three|\d+)[\w ]*(?:creature|artifact|permanent)"),
+                    Rx(@"sacrifices? (?:a|an|another|two|three|\d+|x\b|one or more\b)[\w ]*(?:creature|artifact|permanent)"),
                     Rx(SacrificeKeywordGranted + @"|\bsacrificing (?:a|an|another)[\w ]*(?:creature|artifact|permanent)"),
                     Rx(SacrificesYourOwnByAnotherVerb, RegexOptions.Multiline)]),
 

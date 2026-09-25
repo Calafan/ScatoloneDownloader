@@ -2896,6 +2896,10 @@ public sealed class EffectClassifierTests
         "{B}, {T}: Surveil 1. Create a token that's a copy of this creature, then sacrifice an artifact or "
         + "creature. Activate only as a sorcery. (To surveil 1, look at the top card of your library. You may "
         + "put it into your graveyard.)")]
+    // "One or more" is a count like "two" — the base pattern once missed it.
+    [InlineData("Radiant Lotus", "Artifact",
+        "{T}, Sacrifice one or more artifacts: Choose a color. Target player adds three mana of the chosen "
+        + "color for each artifact sacrificed this way. (Activate only as an instant.)")]
     // …and destroying or exiling your own at will, an outlet by another verb.
     [InlineData("Despotic Scepter", "Artifact",
         "{T}: Destroy target permanent you own. It can't be regenerated.")]
@@ -2957,6 +2961,11 @@ public sealed class EffectClassifierTests
         + "Dog you control deals combat damage to a player, create a Food token, then investigate.")]
     [InlineData("Grave Pact", "Enchantment",
         "Whenever a creature you control dies, each other player sacrifices a creature of their choice.")]
+    // A trigger the OPPONENT fires is a price, not an outlet: ruled 2026-09-25,
+    // "un effetto extra non è a comando".
+    [InlineData("Oath of Lim-Dûl", "Enchantment",
+        "Whenever you lose life, for each 1 life you lost, sacrifice a permanent other than this enchantment "
+        + "unless you discard a card. (Damage dealt to you causes you to lose life.)\n{B}{B}: Draw a card.")]
     // Destroying an Aura on your creature saves it, and a harness is paid once.
     [InlineData("Miracle Worker", "Creature — Human Cleric",
         "{T}: Destroy target Aura attached to a creature you control.")]
