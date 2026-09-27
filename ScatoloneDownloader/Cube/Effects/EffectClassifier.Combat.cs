@@ -672,6 +672,43 @@ namespace ScatoloneDownloader.Cube
             + @"|it'?s blocking\b|this creature is blocking\b"
             + @"|whenever this creature blocks\b|whenever this creature becomes blocked\b");
 
+        // Wipe's side of the same question, read a SENTENCE at a time because
+        // the sweeper names the combat in words OnlyWhatIsInCombatWithIt does not
+        // know: the creatures that DIDN'T ATTACK (Season of the Witch, Total War,
+        // Siren's Call, Maddening Imp), the ones BLOCKED BY THAT Wall (Glyph of
+        // Doom, Glyph of Reincarnation), the ones BLOCKING ENCHANTED CREATURE
+        // (Coils of the Medusa), and the ones that BLOCKED OR WERE BLOCKED (Heat
+        // Stroke). Measured 2026-09-27: 0 of the 26 reviewed cards written this
+        // way carry Wipe. Blanked rather than vetoed, so a card that also sweeps
+        // in another sentence keeps the tag. "X target creatures … damage to EACH
+        // OF THOSE creatures" (Choking Vines, Winter Blast) needs no entry here:
+        // the damage rule reads the SINGULAR "each creature" only, and the plural
+        // is several aimed kills, not a board — an alternative for it was written,
+        // and neutralising it turned nothing red. NB damage to EACH attacking or
+        // EACH blocking creature is NOT here either: it is a whole side of the
+        // combat, and the human tags it Wipe (Lava Storm, Hail Storm).
+        private static readonly Regex SweepsOnlyWhatIsInCombat = Rx(
+            @"[^.\n]*\b(?:didn't attack|(?:were|was) blocked by (?:that|target)\b|blocking enchanted creature"
+            + @"|blocked or was blocked)[^.\n]*");
+
+        // A sweeper of ONE CREATURE TYPE is a tribal card's business, not a
+        // board: Goblin Shrine pings each GOBLIN creature, ruled 2026-09-27
+        // ("è tribale quindi niente"). Read CASE-SENSITIVELY, which is the only
+        // thing that tells a type from an adjective — the game capitalises
+        // "Goblin" and never "white" — and so deliberately built without Rx.
+        // "Non-Dragon" and "non-Elf" start lower-case and stay sweepers
+        // (Crux of Fate's other mode, Eyeblight Massacre). Only the PHRASE is
+        // blanked, not the sentence around it: Genesis of the Daleks offers
+        // "destroy all Dalek creatures … or destroy all non-Dalek creatures" in
+        // one sentence, and the second half is a Wrath.
+        private static readonly Regex SweepsOneCreatureType = new(
+            @"\b(?:each|all) [A-Z][a-z]+ creatures?\b", RegexOptions.CultureInvariant);
+
+        // A DEXTERITY card sweeps whatever it lands on, which is one or two
+        // things on a real table: Chaos Orb and Falling Star, both reviewed and
+        // neither tagged.
+        private static readonly Regex FlippedOntoTheTable = Rx(@"from a height of at least one foot");
+
         private static readonly Regex RestrictedMana = Rx(@"spend this mana only");
 
         // Every LAND flavour of cycling, ruled 2026-09-18. "Basic landcycling" is

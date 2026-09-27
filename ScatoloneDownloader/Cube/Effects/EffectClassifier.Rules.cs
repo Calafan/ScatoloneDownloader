@@ -14,7 +14,7 @@ namespace ScatoloneDownloader.Cube
         // One entry per effect; a card gets the effect if ANY of its patterns hit.
         private static readonly (CardEffect Effect, Regex[] Patterns)[] Rules;
 
-        // Both of these are the SAME ARRAY the table holds, looked up once —
+        // All three are the SAME ARRAY the table holds, looked up once —
         // hoisted out of it for the same reason as MillPatterns and
         // ReanimatePatterns: the vetoes that strip a tag re-ask its own patterns
         // against the text with the offending shape blanked out, so a card that
@@ -22,6 +22,8 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex[] FilterPatterns;
 
         private static readonly Regex[] BurnPatterns;
+
+        private static readonly Regex[] WipePatterns;
 
         // A STATIC CONSTRUCTOR rather than three field initialisers, and that is
         // forced by the split: initialisers run in textual order within a file but
@@ -47,12 +49,80 @@ namespace ScatoloneDownloader.Cube
                 // "1 damage to each WHITE AND/OR BLUE creature" (Evaporate). Widened
                 // 2026-09-15, together with the two other ways a board gets emptied —
                 // returning it all to hand, and making everybody sacrifice.
+                //
+                // Widened again 2026-09-27, where 46 of the 73 disagreements on
+                // 6,321 reviewed cards were: the sweeper was there and the words
+                // around it were one more than the rules allowed.
+                //   a TYPE LIST     — "destroy all artifacts, CREATURES, and
+                //                     lands" (Jokulhaups, Nevinyrral's Disk) put a
+                //                     comma before the noun;
+                //   EACH            — "destroy EACH creature with mana value X or
+                //                     less" (Wave of Terror, Wrath of the Skies,
+                //                     Selective Obliteration) is "all" by another
+                //                     word, and so is "destroy THOSE creatures";
+                //   a BARE PLURAL   — "white creatures get -1/-1" (Dread of Night),
+                //                     "creatures your opponents control get -1/-1"
+                //                     (Seeker's Folly, Sephiroth, Wail of War) and
+                //                     "other creatures get -2/-2" (Harvester of
+                //                     Misery) never say all or each, and the
+                //                     singular "each non-Dragon creature GETS -X/-X"
+                //                     (Exude Toxin, Nuclear Fallout) nor the -1/-1
+                //                     COUNTER on each creature (Harbinger of Night);
+                //   the AMOUNT      — "damage EQUAL TO ITS POWER to each other
+                //                     creature" (Showstopping Surprise, Waltz of
+                //                     Rage), "THAT MUCH damage" (Territorial
+                //                     Aetherkite), "damage to each creature ... equal
+                //                     to" (Volcanic Eruption), X "DIVIDED among all
+                //                     creatures" (Dwarven Catapult), and a player
+                //                     hit "AND EACH CREATURE THAT PLAYER CONTROLS"
+                //                     (Mob Verdict, Heart of Bogardan);
+                //   AIRBEND ALL     — Avatar's Wrath;
+                //   the SACRIFICE   — "sacrifices ALL creatures they control"
+                //                     (Living Death, Destined Confrontation), "HALF"
+                //                     or "A THIRD" of them (Zodiark, Pox), Balance's
+                //                     "sacrifice creatures THE SAME WAY".
+                // Four shapes match the words and are not this tag, each read where
+                // it is asked: the plural shrink stops at "target creatures" (that
+                // is Miasma Demon's Removal), at "creatures YOU CONTROL" (Vampirism,
+                // Vibrating Sphere) and at ATTACKING creatures (Wind Shear); damage
+                // to each other creature YOU CONTROL is Cinder Giant's price; CARDS
+                // in a graveyard are not the board (Yggdrasil, Zombie Mob); and
+                // "sacrifices the rest" must be about CREATURES — Natural Balance
+                // keeps five lands and is untagged. The combat-only and the
+                // dexterity sweepers are read after the table, in Classify.
                 (CardEffect.Wipe, [
-                    Rx(@"(?:destroy|exile) all(?: [\w-]{1,15}){0,3} (?:creature|permanent|nonland)"),
-                    Rx(@"(?:all|each)(?: [\w-]{1,15}){0,3} creatures get -[\dX]+/-[1-9X]"),
-                    Rx(@"deals? [\dX]+ damage to each(?: [\w/-]{1,20}){0,4} creature"),
-                    Rx(@"return (?:all|each)[\w -]{0,30}(?:permanent|creature)s?[\w ,'-]{0,40}to (?:their owners'|its owner's) hands?"),
-                    Rx(@"each player[\w ,'-]{0,80}sacrifices the rest|each player sacrifices[\w ]{0,20}(?:creature|permanent)")]),
+                    Rx(@"(?:destroy|exile) (?:all|each)(?: (?!attached\b)[\w-]{1,15},?){0,4}(?: and| or)? (?:creature|permanent)"
+                        + @"(?![\w ]{0,12}\bcards?\b)(?!s? (?:of the chosen type|you control|chosen this way))"
+                        + @"(?!s? with (?:the same name|that name|the most votes))"),
+                    Rx(@"(?<!don't )destroy those creatures|airbend all(?: [\w-]{1,15}){0,3} creatures"),
+                    Rx(@"(?<!target |attacking |blocking )\bcreatures\b(?:(?! you control\b| with the same name\b)[^.\n]){0,60}? get -[\dX]+/-[1-9X]"),
+                    Rx(@"\beach(?: [\w-]{1,15}){0,3} creature\b(?:(?! you control\b)[^.\n]){0,60}? gets (?:twice )?-[\dX]+/-[1-9X]"),
+                    Rx(@"-1/-1 counters? on each(?: [\w-]{1,15}){0,3} creature\b(?! you control)"),
+                    Rx(@"deals? (?:[\dX]+ |that much )?damage (?:equal to [^.\n]{1,60}? )?to each(?: [\w/-]{1,20}){0,4} creature\b(?!s? you control)"),
+                    Rx(@"damage to [^.\n]{1,60}\band each creature (?:that player|they)\b[^.\n]{0,40}controls?"
+                        + @"|damage divided [^.\n]{0,30}among all creatures"),
+                    Rx(@"return (?:all|each)(?![\w ,-]{0,30}attached to)[\w ,-]{0,30}(?:permanent|creature)s?[\w ,'-]{0,40}to (?:their owners'|its owner's) hands?"),
+                    // ONE creature each is an edict and is Removal, ruled 2026-09-27
+                    // after the hand tags split three to two on the same sentence
+                    // (Abyssal Gatekeeper against Accursed Marauder): "un singolo
+                    // sacrifice lo mettiamo removal". Two or more each, or all, or
+                    // the rest, empties the board.
+                    Rx(@"each player[^.\n]{0,120}\b(?:creatures?|permanents?)\b[^.\n]{0,120}sacrifices the rest"
+                        + @"|sacrifice creatures the same way"
+                        + @"|each player[^.\n]{0,160}\bsacrifices? (?:all|half|a third of) (?:the |other )?(?:[\w-]+ )?creatures"
+                        + @"|each player sacrifices (?!(?:a|an|one|the)\b)[\w ]{0,20}(?:creature|permanent)"
+                        + @"|each player chooses (?:two|three|\d+|x)\b[^.\n]{0,40}creatures they control\. (?:exile|destroy) them"),
+                    // …but the SAME edict every turn, for every player, grinds the
+                    // board away and is Wipe: Dystopia, The Abyss, Nature's Wrath,
+                    // ruled 2026-09-27. A LAND or an ARTIFACT alone (Mana Vortex,
+                    // Destructive Flow, Molder Slug) is the other tags' business.
+                    Rx(@"at the beginning of each (?:player's )?upkeep, (?:that player sacrifices [\w ,-]{0,40}(?:creature|permanent)"
+                        + @"|destroy target[^.\n]{0,40}creature that player controls)"
+                        + @"|whenever a player puts [^.\n]{0,60}onto the battlefield, that player sacrifices [^.\n]{0,40}permanent"),
+                    // The old-set sweepers take everything printed in one expansion,
+                    // however they word the kill — Golgothian Sylex and City in a
+                    // Bottle make the controllers sacrifice. Ruled 2026-09-27.
+                    Rx(@"permanents? with a name originally printed in the")]),
 
                 // "Nonland permanent" is how the whole modern O-ring family is worded
                 // (Stormplain Detainment, Web Up, Emergency Eject), and reading only
@@ -155,10 +225,14 @@ namespace ScatoloneDownloader.Cube
                     // in the NAME of a mode — School Daze offers "Fight Crime", which
                     // counters a spell and draws a card.
                     Rx(@"\bfights? [\w ,'-]{0,30}target|\bfights? (?:each|it)\b"),
-                    // An edict, in every wording — but aimed at THEM. "Each player
-                    // sacrifices" costs you a creature too, and the hand-tagging
-                    // declines those (Abyssal Gatekeeper, Pillar Tombs of Aku).
-                    Rx(@"(?:target player|target opponent|each opponent)[\w ,]{0,30}sacrifices? (?:a|an|one|two|\d+)[\w ]{0,25}(?<!non)creature"),
+                    // An edict, in every wording. "EACH PLAYER sacrifices A creature"
+                    // costs you one too, and was declined here until 2026-09-27, when
+                    // the hand tags were found split three to two between this and
+                    // Wipe on the identical sentence: ONE creature each is an edict,
+                    // ruled Removal (Fleshbag Marauder, Plaguecrafter, Tariff). Two or
+                    // more each is Wipe's.
+                    Rx(@"(?:target player|target opponent|each opponent)[\w ,]{0,30}sacrifices? (?:a|an|one|two|\d+)[\w ]{0,25}(?<!non)creature"
+                        + @"|each player sacrifices (?:a|an|one|the) [\w ]{0,25}(?<!non)creature"),
                     // A creature that ends up in a LIBRARY is as answered as one that
                     // is destroyed, and the Auras are the only place this wording
                     // appears: The Spot's Portal puts it on the bottom, Dramatic
@@ -618,7 +692,12 @@ namespace ScatoloneDownloader.Cube
                     // was 45 characters and Summon: Bahamut puts 52 between the two
                     // halves ("the total mana value of other permanents you
                     // control"), and Cyclone names the creatures before the players.
-                    Rx(@"deals damage equal to [\w' ,]{0,70}to [\w ,'-]{0,30}" + BurnTarget + @"\b"),
+                    // The count may be of +1/+1 COUNTERS, whose signs and slash the
+                    // window did not admit, and the creatures may be qualified before
+                    // the players — "to each creature WITHOUT FLYING and each player"
+                    // runs to 33 characters (Magmasaur, ruled Wipe and Burn with the
+                    // rest of the symmetric sweepers on 2026-09-27).
+                    Rx(@"deals damage equal to [\w' ,+/]{0,70}to [\w ,'-]{0,40}" + BurnTarget + @"\b"),
                     // Life paid to keep something from happening is life lost.
                     // Ruled 2026-09-20 with the rest of Burn: Breathstealer's Crypt,
                     // Sirocco and Cleansing all charge a player life to stop the
@@ -792,6 +871,7 @@ namespace ScatoloneDownloader.Cube
 
             FilterPatterns = Rules.First(rule => rule.Effect == CardEffect.Filter).Patterns;
             BurnPatterns = Rules.First(rule => rule.Effect == CardEffect.Burn).Patterns;
+            WipePatterns = Rules.First(rule => rule.Effect == CardEffect.Wipe).Patterns;
         }
 
         // Damage aimed at THAT PERMANENT'S CONTROLLER, which is how the old

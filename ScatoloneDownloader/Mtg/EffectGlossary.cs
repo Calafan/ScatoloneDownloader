@@ -29,7 +29,7 @@
                 + "body.",
 
             [CardEffect.Removal] =
-                "Answers ONE creature: destroy, exile, damage however counted, fight, an edict aimed at THEM, "
+                "Answers ONE creature: destroy, exile, damage however counted, fight, an edict (one each counts), "
                 + "the BOTTOM of a library, or ANY toughness malus — \"+2/-1\" counts, an Aura counts. Not "
                 + "YOUR OWN, not a card in a GRAVEYARD, not \"-2/-0\" (Pacify), not \"each creature\" (Wipe), "
                 + "not what can only touch what it is already blocking.",
@@ -43,9 +43,10 @@
                 + "this tag even when you would usually aim it at a creature.",
 
             [CardEffect.Wipe] =
-                "Mass removal: the board is emptied, by any verb — destroyed, exiled, damaged, shrunk, or all "
-                + "returned to hand. An adjective does not narrow it: \"all white permanents\" still counts. "
-                + "\"Destroy all creatures blocking or blocked by this creature\" is a combat trick.",
+                "Mass removal: the board emptied — destroyed, exiled, damaged (players too), shrunk, airbent, "
+                + "returned, two or more sacrificed each, or an edict every turn. An adjective does not narrow it "
+                + "(\"white creatures get -1/-1\"); a creature TYPE does. Not what fights it or didn't attack, "
+                + "your own, a graveyard, lands alone.",
 
             [CardEffect.Bounce] =
                 "Returns a NAMED permanent to its owner's hand (\"return target …\", or a mass \"return each/all\"). "

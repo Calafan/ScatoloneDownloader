@@ -367,6 +367,17 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Wipe;
             }
 
+            // …and the sentences that sweep only what attacked or blocked, or
+            // only one creature type, plus the dexterity cards. See the three
+            // patterns above.
+            if (result.HasFlag(CardEffect.Wipe)
+                && (FlippedOntoTheTable.IsMatch(text)
+                    || !WipePatterns.Any(p => p.IsMatch(
+                        SweepsOneCreatureType.Replace(SweepsOnlyWhatIsInCombat.Replace(text, " "), " ")))))
+            {
+                result &= ~CardEffect.Wipe;
+            }
+
             // Mana you may only spend on one thing is not fixing — it buys the one
             // card the designer had in mind. The test is per LINE, because a card
             // with one restricted ability and one free one (Hermitic Herbalist)
