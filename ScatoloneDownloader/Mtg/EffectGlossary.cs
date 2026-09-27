@@ -74,7 +74,7 @@
 
             [CardEffect.Filter] =
                 "Cards changing places at NO net gain: look at, mill or reveal a few and keep one, rearrange ANY "
-                + "player's top, every rummage, a wheel, hideaway, a scry or Blood that comes AGAIN. Not a scry, "
+                + "player's top, every rummage, a wheel, hideaway, a scry LAND, a scry or Blood that comes AGAIN. Not a scry, "
                 + "surveil or Blood made ONCE beside the card's purpose, not a LAND kept (ManaFixing), not a CLOAK. "
                 + "Never beside CardAdvantage.",
 

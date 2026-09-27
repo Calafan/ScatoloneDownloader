@@ -816,11 +816,7 @@ public sealed class EffectClassifierTests
     // A scry or surveil made ONCE beside what the card is for is not Filter,
     // ruled 2026-09-27 — "non li voglio come Filter, generano troppo rumore" —
     // which overturns the "unconditionally" these four pinned from 2026-09-19:
-    // a bounce spell, a Vehicle, a creature and a Command's mode. A surveil
-    // land is the same, the land being what the card is for.
-    [InlineData("Undercity Sewers", "Land — Island Swamp",
-        "({T}: Add {U} or {B}.)\nThis land enters tapped.\nWhen this land enters, surveil 1. (Look at the top "
-        + "card of your library. You may put it into your graveyard.)")]
+    // a bounce spell, a Vehicle, a creature and a Command's mode.
     [InlineData("Unauthorized Exit", "Instant",
         "Return target nonland permanent to its owner's hand. Surveil 1. "
         + "(Look at the top card of your library. You may put it into your graveyard.)")]
@@ -862,6 +858,11 @@ public sealed class EffectClassifierTests
         "Surveil 1, then draw a card. (To surveil 1, look at the top card of your library. You may put it "
         + "into your graveyard.)\nFlashback {3}{U} (You may cast this card from your graveyard for its flashback "
         + "cost. Then exile it.)")]
+    // A LAND's scry or surveil keeps the tag, ruled later the same day: "mi
+    // serve come filtro sulle terre doppie".
+    [InlineData("Undercity Sewers", "Land — Island Swamp",
+        "({T}: Add {U} or {B}.)\nThis land enters tapped.\nWhen this land enters, surveil 1. (Look at the top "
+        + "card of your library. You may put it into your graveyard.)")]
     [InlineData("Veteran Guardmouse", "Creature — Mouse Soldier",
         "Valiant — Whenever this creature becomes the target of a spell or ability you control for the first "
         + "time each turn, it gets +1/+0 and gains first strike until end of turn. Scry 1. (Look at the top "

@@ -697,15 +697,19 @@ namespace ScatoloneDownloader.Cube
         // 2026-09-19: "Scry o Surveil come effetto secondario non li voglio come
         // Filter, generano troppo rumore". The hand tags had followed the old
         // ruling to the letter — every one of the 39 reviewed cards whose Filter
-        // came from nothing but a one-shot scry or surveil carried it, and so did
-        // the 21 surveil lands — which is exactly the noise the human meant.
+        // came from nothing but a one-shot scry or surveil carried it — which is
+        // exactly the noise the human meant.
         //
         // ONCE is asked per ability, the way the repeatable draw is: Veteran
         // Guardmouse's valiant trigger and Clandestine Meddler's attack trigger
         // scry again and again and keep the tag (both named as slips the same
-        // day). SECONDARY means a permanent — the body, the land or the Saga is
-        // what the card is for — or a spell that earns another tag; Opt and
-        // Dreams of Laguna select and do nothing else, and keep it.
+        // day). SECONDARY means a creature, artifact or enchantment — the body or
+        // the Saga is what the card is for — or a spell that earns another tag;
+        // Opt and Dreams of Laguna select and do nothing else, and keep it.
+        // A LAND keeps it too, ruled the same day after the first cut had taken
+        // it off the 20 surveil lands: "Surveil e scry land, teniamole. Mi serve
+        // come filtro sulle terre doppie" — the tag is how the dual lands that
+        // select are told apart from the ones that do not.
         // The reminder text goes with the keyword, because "(To scry 2, look at
         // the top two cards of your library …)" is itself a look at the top.
         private static readonly Regex OneScryOrSurveil = Rx(
@@ -713,7 +717,8 @@ namespace ScatoloneDownloader.Cube
 
         private static bool SelectsOnlyInPassing(Card card, string text, CardEffect others)
         {
-            if (card.MacroType == MacroType.Spell && others == CardEffect.None)
+            if (card.MacroType == MacroType.Land
+                || (card.MacroType == MacroType.Spell && others == CardEffect.None))
             {
                 return false;
             }
