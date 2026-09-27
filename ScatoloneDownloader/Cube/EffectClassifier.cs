@@ -448,8 +448,7 @@ namespace ScatoloneDownloader.Cube
             // rulings and the cards each was read from.
             if (result.HasFlag(CardEffect.Filter))
             {
-                string selecting = TheirDiscardYourDraw.Replace(
-                    LooksAtTopForALand.Replace(LooksAtTopAndMakesBodies.Replace(text, " "), " "), " ");
+                string selecting = WithoutFalseSelection(text);
 
                 if (selecting != text && !FilterPatterns.Any(p => p.IsMatch(selecting)))
                 {
@@ -476,7 +475,8 @@ namespace ScatoloneDownloader.Cube
                     || SpendsItselfOutOfTheGraveyard(text)
                     || SpendsItselfWithoutAColon.IsMatch(text)
                     || AdditionalCostDiscard.IsMatch(text) || ActivationCostDiscard.IsMatch(text)
-                    || DrawPaidForWithACard.IsMatch(text)))
+                    || DrawPaidForWithACard.IsMatch(text)
+                    || (BloodReminder.IsMatch(text) && !YouDraw.IsMatch(BloodReminder.Replace(text, " ")))))
             {
                 result &= ~CardEffect.CardAdvantage;
             }
@@ -565,7 +565,10 @@ namespace ScatoloneDownloader.Cube
                 || DiscardYourHandThenDrawSeveral.IsMatch(text)
                 || GrantedTriggeredDraw.IsMatch(text)
                 || BecomesTheMonarch.IsMatch(text)
-                || SeveralTokensThatDraw.IsMatch(text)
+                || SeveralTokensThatDraw.IsMatch(BloodReminder.Replace(text, " "))
+                || SacrificesAPileForCards.IsMatch(text)
+                || DrawModeEveryTurn.IsMatch(text)
+                || LooksAndKeepsTheRest.IsMatch(text)
                 || WarpPaysOnTheWayOutTwice.IsMatch(text)
                 || CopiesYourOwnSpell.IsMatch(text)
                 || (ClueWording.IsMatch(text) && (RepeatableClue.IsMatch(text) || SeveralClues.IsMatch(text))))
@@ -723,6 +726,41 @@ namespace ScatoloneDownloader.Cube
                     && !PlaysACardYouOwn.IsMatch(text)))
             {
                 result |= CardEffect.Steal;
+            }
+
+            // Blood made again and again is a stream of rummages. See MakesBlood.
+            if (MakesBloodAgainAndAgain(text))
+            {
+                result |= CardEffect.Filter;
+            }
+
+            // A land kept out of the few you looked at fixes the mana base. Added
+            // here, after the bare-tap guard, because nothing on the card taps.
+            if (LandFromAmongThemToHand.IsMatch(text))
+            {
+                result |= CardEffect.ManaFixing;
+            }
+
+            // A scry or surveil made once, beside what the card is for, is noise.
+            // Asked once every other tag is known, because a spell is judged by
+            // whether it does anything else. See SelectsOnlyInPassing.
+            if (result.HasFlag(CardEffect.Filter)
+                && SelectsOnlyInPassing(card, text, result & ~CardEffect.Filter & ~CardEffect.CardAdvantage))
+            {
+                result &= ~CardEffect.Filter;
+            }
+
+            // The two tags are EXCLUSIVE, ruled 2026-09-27 — "se ha CardAdvantage
+            // non ha Filter" — overturning 2026-09-19, which had a card that
+            // selects AND comes out ahead carry both. The hand tags had split on
+            // it: every such card was tagged both up to 09-22, and on 09-23 the
+            // human moved eight of them to CardAdvantage alone (Meat Locker,
+            // Overlord of the Floodpits, Polygraph Orb, Star Charter …) while
+            // Focus the Mind still carried both on the same words. Asked last,
+            // after every rule that adds the draw.
+            if (result.HasFlag(CardEffect.CardAdvantage))
+            {
+                result &= ~CardEffect.Filter;
             }
 
             // LAST of all, because B2 asks whether the card does anything else:

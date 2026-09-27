@@ -69,14 +69,14 @@
             [CardEffect.CardAdvantage] =
                 "A card the opponent does not get. COUNT IT — the card ITSELF counts, so Ponder nets 0. A one-shot "
                 + "must draw two more than it pays; a REPEATABLE ability bought the card once, so one is enough — even "
-                + "when it costs a card, itself or another permanent. Two off and ONE played is Filter. Not a draw for "
-                + "THEM, nor a trigger you can't reach.",
+                + "paid with a card, itself or another permanent. Two off and ONE played is Filter; never "
+                + "both. Not a draw for THEM, nor an unreachable trigger.",
 
             [CardEffect.Filter] =
-                "Cards changing places at NO net gain: scry, surveil, hideaway, look at the top few and take one, "
-                + "exile two and play one, every rummage either way round. Not a card you CLOAK or manifest (Tokens), "
-                + "not a LAND off the top (Ramp), not somebody else's loot. One that also comes out ahead, or repeats, "
-                + "keeps this AND CardAdvantage.",
+                "Cards changing places at NO net gain: look at, mill or reveal a few and keep one, rearrange ANY "
+                + "player's top, every rummage, a wheel, hideaway, a scry or Blood that comes AGAIN. Not a scry, "
+                + "surveil or Blood made ONCE beside the card's purpose, not a LAND kept (ManaFixing), not a CLOAK. "
+                + "Never beside CardAdvantage.",
 
             [CardEffect.Reanimate] =
                 "A creature back from the dead and straight onto the BATTLEFIELD, cheating its cost. A card this card "
@@ -119,7 +119,7 @@
 
             [CardEffect.ManaFixing] =
                 "Fixes colours: a choice that COSTS you something, any landcycling, a land with two abilities, a "
-                + "land fetched to HAND, a Treasure. Free for a tap is just Ramp (Birds), unless it's a land. Not a "
+                + "land fetched to HAND or kept from a few milled, a Treasure. Free for a tap is just Ramp (Birds), unless it's a land. Not a "
                 + "land put onto the battlefield, not mana you may only spend on one thing.",
 
             [CardEffect.Pacify] =

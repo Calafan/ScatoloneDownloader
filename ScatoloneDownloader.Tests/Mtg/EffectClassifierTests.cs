@@ -757,14 +757,29 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
-    // The two tags are NOT exclusive, ruled 2026-09-19. A card that selects AND
-    // comes out ahead carries both, because it really did both: Casting of
-    // Bones draws three and keeps two, which is a card gained and a choice
-    // made. An earlier cut of the net ruling read it as either/or and stripped
-    // Filter from every profitable loot; recorded here so it is not re-derived.
+    // The two tags ARE exclusive, ruled 2026-09-27 — "se ha CardAdvantage non ha
+    // Filter" — which overturns 2026-09-19. These three had pinned "both" until
+    // then: Casting of Bones draws three and keeps two, Emmessi Tome loots two
+    // for one every turn, and Plan the Heist surveils beside a draw three.
     [InlineData("Casting of Bones", "Enchantment — Aura",
         "Enchant creature\nWhen enchanted creature dies, draw three cards, then discard one of them.")]
     [InlineData("Emmessi Tome", "Artifact — Book", "{5}, {T}: Draw two cards, then discard a card.")]
+    [InlineData("Plan the Heist", "Sorcery",
+        "Surveil 3 if you have no cards in hand. Then draw three cards. (To surveil 3, look at the top three "
+        + "cards of your library, then put any number of them into your graveyard and the rest on top of your "
+        + "library in any order.)\nPlot {3}{U} (You may pay {3}{U} and exile this card from your hand. Cast it "
+        + "as a sorcery on a later turn without paying its mana cost. Plot only as a sorcery.)")]
+    public void Classify_ASelectionThatComesOutAhead_IsCardAdvantageAndNotFilter(
+        string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.False(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // A card changing places at exactly no net gain, however the halves are
+    // worded, is Filter and nothing else.
     [InlineData("Grab the Prize", "Sorcery",
         "As an additional cost to cast this spell, discard a card.\n"
         + "Draw two cards. If the discarded card wasn't a land card, Grab the Prize deals 2 damage to each opponent.")]
@@ -798,20 +813,22 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
-    // Scry and surveil ARE Filter, unconditionally, ruled 2026-09-19: it does
-    // not matter how small the number is or what else the card does. Measured
-    // first — the "rider" theory was that a surveil 1 tacked onto a bounce spell
-    // should not count, and it does not distinguish anything: Filter is tagged
-    // on 88 of the ~103 reviewed cards that scry or surveil, whether or not the
-    // card does something else.
+    // A scry or surveil made ONCE beside what the card is for is not Filter,
+    // ruled 2026-09-27 — "non li voglio come Filter, generano troppo rumore" —
+    // which overturns the "unconditionally" these four pinned from 2026-09-19:
+    // a bounce spell, a Vehicle, a creature and a Command's mode. A surveil
+    // land is the same, the land being what the card is for.
+    [InlineData("Undercity Sewers", "Land — Island Swamp",
+        "({T}: Add {U} or {B}.)\nThis land enters tapped.\nWhen this land enters, surveil 1. (Look at the top "
+        + "card of your library. You may put it into your graveyard.)")]
     [InlineData("Unauthorized Exit", "Instant",
         "Return target nonland permanent to its owner's hand. Surveil 1. "
         + "(Look at the top card of your library. You may put it into your graveyard.)")]
     [InlineData("Voyager Glidecar", "Artifact — Vehicle",
         "When this Vehicle enters, scry 1.\nTap three other untapped creatures you control: Until end of turn, "
         + "this Vehicle becomes an artifact creature and gains flying. Put a +1/+1 counter on it.\nCrew 1")]
-    // Every printed form, which "scry \\d" was not: the bulk carries "scry X" on
-    // 17 cards and a handful say "scries" because the subject is a player.
+    // Read in every printed form, "scry X" and "scries" included, so the veto
+    // reaches every card the tag used to.
     [InlineData("Cascade Seer", "Creature — Merfolk Wizard",
         "When this creature enters, scry X, where X is the number of creatures in your party. "
         + "(Your party consists of up to one each of Cleric, Rogue, Warrior, and Wizard.)")]
@@ -821,9 +838,217 @@ public sealed class EffectClassifierTests
         + "• Target player scries X, then draws a card.\n"
         + "• Exile target creature with mana value X or less.\n"
         + "• Exile up to X target cards from graveyards.")]
-    public void Classify_ScryAndSurveil_AreAlwaysFilter(string name, string typeLine, string oracle)
+    // The reminder text goes with the keyword: "(Look at the top two cards of
+    // your library …)" is a look at the top in its own right.
+    [InlineData("Consuming Ashes", "Instant",
+        "Exile target creature. If it had mana value 3 or less, surveil 2. (Look at the top two cards of your "
+        + "library, then put any number of them into your graveyard and the rest on top of your library in any "
+        + "order.)")]
+    // …and a Blood token is the same rider: "se singoli no".
+    [InlineData("Blood Servitor", "Artifact Creature — Construct",
+        "When this creature enters, create a Blood token. (It's an artifact with \"{1}, {T}, Discard a card, "
+        + "Sacrifice this token: Draw a card.\")")]
+    public void Classify_ASelectionMadeOnceInPassing_IsNotFilter(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // What keeps the tag: a spell that selects and does nothing else (Dreams of
+    // Laguna), a scry that comes again (Veteran Guardmouse's valiant, Clandestine
+    // Meddler's attacks — both named as slips on 2026-09-27), and Blood made
+    // again and again ("se ripetuti sì").
+    [InlineData("Dreams of Laguna", "Instant",
+        "Surveil 1, then draw a card. (To surveil 1, look at the top card of your library. You may put it "
+        + "into your graveyard.)\nFlashback {3}{U} (You may cast this card from your graveyard for its flashback "
+        + "cost. Then exile it.)")]
+    [InlineData("Veteran Guardmouse", "Creature — Mouse Soldier",
+        "Valiant — Whenever this creature becomes the target of a spell or ability you control for the first "
+        + "time each turn, it gets +1/+0 and gains first strike until end of turn. Scry 1. (Look at the top "
+        + "card of your library. You may put that card on the bottom.)")]
+    [InlineData("Clandestine Meddler", "Creature — Vampire Rogue",
+        "When this creature enters, suspect up to one other target creature you control. (A suspected "
+        + "creature has menace and can't block.)\nWhenever one or more suspected creatures you control attack, "
+        + "surveil 1. (Look at the top card of your library. You may put it into your graveyard.)")]
+    [InlineData("Ivora, Insatiable Heir", "Legendary Creature — Vampire Warrior",
+        "Trample\nWhen Ivora enters and whenever it deals combat damage to a player, create a Blood token. "
+        + "(It's an artifact with \"{1}, {T}, Discard a card, Sacrifice this token: Draw a card.\")\nWhenever you "
+        + "discard a card, put a +1/+1 counter on Ivora.")]
+    public void Classify_ASelectionThatIsTheCardOrComesAgain_IsFilter(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Fact]
+    public void Classify_BloodAgainAndAgain_IsARummageNotACard()
+    {
+        // The Blood reminder's "Draw a card" is half of a rummage, and had been
+        // read as a repeatable draw. Ruled 2026-09-27 with the Blood token.
+        CardEffect result = EffectClassifier.Classify(MakeCard("Moonstone Eulogist", "Creature — Bat Warlock",
+            "Flying\nWhenever a creature an opponent controls dies, you create a Blood token. (It's an artifact "
+            + "with \"{1}, {T}, Discard a card, Sacrifice this token: Draw a card.\")\nWhenever you sacrifice an "
+            + "artifact, put a +1/+1 counter on this creature and you gain 1 life."));
+        Assert.True(result.HasFlag(CardEffect.Filter));
+        Assert.False(result.HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Fact]
+    public void Classify_TwoBloodAtOnce_IsNeitherACardNorASelection()
+    {
+        // Two made once are two rummages made once: no card, and no stream.
+        // The plural reminder ("They're artifacts with") had read as two cards.
+        CardEffect result = EffectClassifier.Classify(MakeCard("Falkenrath Celebrants", "Creature — Vampire",
+            "Menace (This creature can't be blocked except by two or more creatures.)\nWhen this creature enters, "
+            + "create two Blood tokens. (They're artifacts with \"{1}, {T}, Discard a card, Sacrifice this token: "
+            + "Draw a card.\")"));
+        Assert.False(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.False(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // SOMEBODY ELSE'S TOP, rearranged or trimmed, ruled 2026-09-27: "sì,
+    // guardare e basta no". Elemental Augury and Cruel Fate were untagged, Eye
+    // Spy tagged, on the same act.
+    [InlineData("Elemental Augury", "Enchantment",
+        "{3}: Look at the top three cards of target player's library, then put them back in any order.")]
+    [InlineData("Cruel Fate", "Sorcery",
+        "Look at the top five cards of target opponent's library. Put one of those cards into that player's "
+        + "graveyard and the rest on top of their library in any order.")]
+    [InlineData("Eye Spy", "Sorcery",
+        "Look at the top card of target player's library. You may put that card into their graveyard.")]
+    // MILL OR REVEAL A FEW AND KEEP ONE, the same day; Eerie Gravestone was the
+    // human's slip.
+    [InlineData("Cache Grab", "Instant",
+        "Mill four cards. You may put a permanent card from among the cards milled this way into your hand. "
+        + "If you control a Squirrel or returned a Squirrel card to your hand this way, create a Food token. "
+        + "(To mill four cards, put the top four cards of your library into your graveyard. A Food token is an "
+        + "artifact with \"{2}, {T}, Sacrifice this token: You gain 3 life.\")")]
+    [InlineData("Eerie Gravestone", "Artifact",
+        "When this artifact enters, draw a card.\n{1}{B}, Sacrifice this artifact: Mill four cards. You may "
+        + "put a creature card from among them into your hand. (To mill four cards, put the top four cards of "
+        + "your library into your graveyard.)")]
+    [InlineData("Wood Sage", "Creature — Human Druid",
+        "{T}: Choose a creature card name. Reveal the top four cards of your library and put all of them with "
+        + "that name into your hand. Put the rest into your graveyard.")]
+    // Five more named Filter by the human the same day.
+    [InlineData("Winds of Change", "Sorcery",
+        "Each player shuffles the cards from their hand into their library, then draws that many cards.")]
+    [InlineData("Foresight", "Sorcery",
+        "Search your library for three cards, exile them, then shuffle.\nDraw a card at the beginning of the "
+        + "next turn's upkeep.")]
+    [InlineData("Mana Severance", "Sorcery",
+        "Search your library for any number of land cards, exile them, then shuffle.")]
+    [InlineData("Scroll Rack", "Artifact",
+        "{1}, {T}: Exile any number of cards from your hand face down. Put that many cards from the top of "
+        + "your library into your hand. Then look at the exiled cards and put them on top of your library in "
+        + "any order.")]
+    public void Classify_SelectionRuledIn_IsFilter(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Only LOOKING at somebody's top is nothing, and manifest dread's reminder
+    // has the victim look at their own.
+    [InlineData("Orcish Spy", "Creature — Orc Rogue",
+        "{T}: Look at the top three cards of target player's library.")]
+    [InlineData("Fear of Impostors", "Enchantment Creature — Nightmare",
+        "Flash\nWhen this creature enters, counter target spell. Its controller manifests dread. (That player "
+        + "looks at the top two cards of their library, then puts one onto the battlefield face down as a 2/2 "
+        + "creature and the other into their graveyard. If it's a creature card, it can be turned face up any "
+        + "time for its mana cost.)")]
+    // A pile you then PLAY from is Steal, however it was trimmed.
+    [InlineData("Black Cat, Cunning Thief", "Legendary Creature — Human Rogue Villain",
+        "When Black Cat enters, look at the top nine cards of target opponent's library, exile two of them "
+        + "face down, then put the rest on the bottom of their library in a random order. You may play the "
+        + "exiled cards for as long as they remain exiled. Mana of any type can be spent to cast spells this "
+        + "way.")]
+    // A card looked at and cast for free was cheated in, not chosen between.
+    [InlineData("Perception Bobblehead", "Artifact — Bobblehead",
+        "{T}: Add one mana of any color.\n{3}, {T}: Look at the top X cards of your library, where X is the "
+        + "number of Bobbleheads you control. You may cast a spell with mana value 3 or less from among them "
+        + "without paying its mana cost. Put the rest on the bottom of your library in a random order.")]
+    public void Classify_SelectionRuledOut_IsNotFilter(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // A LAND kept out of the few is ManaFixing, ruled 2026-09-27: "in caso di
+    // terre è ManaFix".
+    [InlineData("Ainok Wayfarer", "Creature — Dog Scout",
+        "When this creature enters, mill three cards. You may put a land card from among them into your hand. "
+        + "If you don't, put a +1/+1 counter on this creature. (To mill three cards, put the top three cards of "
+        + "your library into your graveyard.)")]
+    [InlineData("Satyr Wayfinder", "Creature — Satyr",
+        "When this creature enters, reveal the top four cards of your library. You may put a land card from "
+        + "among them into your hand. Put the rest into your graveyard.")]
+    [InlineData("Contagious Vorrac", "Creature — Phyrexian Boar Beast",
+        "When this creature enters, look at the top four cards of your library. You may reveal a land card "
+        + "from among them and put it into your hand. Put the rest on the bottom of your library in a random "
+        + "order. If you didn't put a card into your hand this way, proliferate. (Choose any number of "
+        + "permanents and/or players, then give each another counter of each kind already there.)")]
+    public void Classify_ALandKeptFromTheFew_IsManaFixingAndNotFilter(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+        Assert.True(result.HasFlag(CardEffect.ManaFixing));
+        Assert.False(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Parity however it is worded, named Filter by the human on 2026-09-27:
+    // a land may stand in for the discard, and N for N is still a rummage.
+    [InlineData("Highway Robbery", "Sorcery",
+        "You may discard a card or sacrifice a land. If you do, draw two cards.\nPlot {1}{R} (You may pay "
+        + "{1}{R} and exile this card from your hand. Cast it as a sorcery on a later turn without paying its "
+        + "mana cost. Plot only as a sorcery.)")]
+    [InlineData("Horrid Shadowspinner", "Creature — Horror",
+        "Lifelink\nWhenever this creature attacks, you may draw cards equal to its power. If you do, discard "
+        + "that many cards.")]
+    public void Classify_AnExchangeAtParity_IsFilterAndNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+        Assert.True(result.HasFlag(CardEffect.Filter));
+        Assert.False(result.HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Named CardAdvantage by the human on 2026-09-27: a pile of permanents
+    // traded for as many cards, a draw mode back every turn, and a look that
+    // keeps every card it saw.
+    [InlineData("Pitiless Carnage", "Sorcery",
+        "Sacrifice any number of permanents you control, then draw that many cards.\nPlot {1}{B}{B} (You may "
+        + "pay {1}{B}{B} and exile this card from your hand. Cast it as a sorcery on a later turn without "
+        + "paying its mana cost. Plot only as a sorcery.)")]
+    [InlineData("Monument to Endurance", "Artifact",
+        "Whenever you discard a card, choose one that hasn't been chosen this turn —\n• Draw a card.\n• Create "
+        + "a Treasure token.\n• Each opponent loses 3 life.")]
+    [InlineData("Make Your Own Luck", "Sorcery",
+        "Look at the top three cards of your library. You may exile a nonland card from among them. If you "
+        + "do, it becomes plotted. Put the rest into your hand. (You may cast it as a sorcery on a later turn "
+        + "without paying its mana cost.)")]
+    // Keeping ALL of a kind, and milling to keep one over and over, are the
+    // several-cards reading — both hand-tagged CardAdvantage and read once
+    // keeping one became Filter.
+    [InlineData("Marina Vendrell", "Legendary Creature — Human Warlock",
+        "When Marina Vendrell enters, reveal the top seven cards of your library. Put all enchantment cards "
+        + "from among them into your hand and the rest on the bottom of your library in a random order.\n{T}: "
+        + "Lock or unlock a door of target Room you control. Activate only as a sorcery.")]
+    [InlineData("Sludge Titan", "Creature — Zombie Giant",
+        "Trample\nWhenever this creature enters or attacks, mill five cards. You may put a creature card "
+        + "and/or a land card from among them into your hand.")]
+    [InlineData("Szarekh, the Silent King", "Legendary Artifact Creature — Necron",
+        "Flying\nMy Will Be Done — Whenever Szarekh attacks, mill three cards. You may put an artifact "
+        + "creature card or Vehicle card from among the cards milled this way into your hand.")]
+    // "Up to two", revealed: more than one, whatever the verb.
+    [InlineData("Pieces of the Puzzle", "Sorcery",
+        "Reveal the top five cards of your library. Put up to two instant and/or sorcery cards from among "
+        + "them into your hand and the rest into your graveyard.")]
+    public void Classify_ADrawRuledIn_IsCardAdvantageAndNotFilter(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.False(result.HasFlag(CardEffect.Filter));
     }
 
     [Theory]

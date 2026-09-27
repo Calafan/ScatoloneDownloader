@@ -36,7 +36,12 @@ namespace ScatoloneDownloader.Cube
             // same sentence pair with the condition left out. Ill-Timed
             // Explosion draws two and hands two back, and was reading as
             // advantage on top of the Filter it already had.
-            + @"|draws? \w+ cards?\. then you may discards? \w+ cards?");
+            + @"|draws? \w+ cards?\. then you may discards? \w+ cards?"
+            // Two more named Filter by the human on 2026-09-27: a LAND may stand
+            // in for the card (Highway Robbery), and N for N is still level
+            // (Horrid Shadowspinner draws its power and discards as many).
+            + @"|discards? a card or sacrifice (?:a|an) \w+\. if you do, draws?"
+            + @"|draw cards equal to [^.\n]{1,40}\. if you do, discard that many cards");
 
         //   Cycling pays a card to replace itself: exactly parity. It fired only
         //   because its REMINDER text spells out an activated ability that draws.
@@ -687,6 +692,85 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex TransformsItselfAway = Rx(
             @"transforms? this (?:enchantment|artifact|creature|permanent|land)");
 
+        // A scry or a surveil made ONCE, beside what the card is really for, is
+        // not selection — ruled 2026-09-27, overturning the "unconditionally" of
+        // 2026-09-19: "Scry o Surveil come effetto secondario non li voglio come
+        // Filter, generano troppo rumore". The hand tags had followed the old
+        // ruling to the letter — every one of the 39 reviewed cards whose Filter
+        // came from nothing but a one-shot scry or surveil carried it, and so did
+        // the 21 surveil lands — which is exactly the noise the human meant.
+        //
+        // ONCE is asked per ability, the way the repeatable draw is: Veteran
+        // Guardmouse's valiant trigger and Clandestine Meddler's attack trigger
+        // scry again and again and keep the tag (both named as slips the same
+        // day). SECONDARY means a permanent — the body, the land or the Saga is
+        // what the card is for — or a spell that earns another tag; Opt and
+        // Dreams of Laguna select and do nothing else, and keep it.
+        // The reminder text goes with the keyword, because "(To scry 2, look at
+        // the top two cards of your library …)" is itself a look at the top.
+        private static readonly Regex OneScryOrSurveil = Rx(
+            @"\b(?:scry|scries|surveil|surveils) (?:\d+|x)\b\.?(?: ?\((?:to (?:scry|surveil) \w+, )?look at the top[^()]*\))?");
+
+        private static bool SelectsOnlyInPassing(Card card, string text, CardEffect others)
+        {
+            if (card.MacroType == MacroType.Spell && others == CardEffect.None)
+            {
+                return false;
+            }
+
+            string repeating = string.Join('\n', Abilities(text).Select(a =>
+                AbilityRepeats(Parenthetical.Replace(a, " ")) ? a : OneScryOrSurveil.Replace(a, " ")));
+
+            if (repeating == text)
+            {
+                return false;
+            }
+
+            // Re-asked through the same vetoes the tag already passed.
+            string selecting = WithoutFalseSelection(repeating);
+
+            return !FilterPatterns.Any(p => p.IsMatch(selecting))
+                && !ExileSeveralAndChooseOne.IsMatch(selecting)
+                && !PhasingLoot.IsMatch(selecting);
+        }
+
+        // BLOOD, ruled 2026-09-27 under the scry ruling: "Blood Token rientra
+        // nel punto F1, se ripetuti sì se singoli no". The token is a rummage —
+        // discard a card, draw a card — so one is a rider and a stream of them
+        // is selection. Both reviewed cards that make Blood again and again carry
+        // the tag (Ivora, Moonstone Eulogist). And being a rummage it is never a
+        // CARD: the reminder's "Draw a card" had been read as a repeatable draw,
+        // which is what handed Moonstone Eulogist CardAdvantage.
+        private static readonly Regex MakesBlood = Rx(@"\bcreate (?:a|one|two|three|x|\d+) blood tokens?");
+
+        // Singular or plural: two made at once say "They're artifacts with",
+        // and Falkenrath Celebrants was still reading as two cards.
+        private static readonly Regex BloodReminder = Rx(
+            @"\((?:it's an artifact|they're artifacts) with ""\{1\}, \{t\}, discard a card, sacrifice this token: draw a card\.""\)");
+
+        private static bool MakesBloodAgainAndAgain(string text) =>
+            Abilities(text).Any(a => MakesBlood.IsMatch(a) && AbilityRepeats(Parenthetical.Replace(a, " ")));
+
+        // Three draws named CardAdvantage by the human on 2026-09-27, each
+        // against a reading that had them as selection or as nothing:
+        //   SACRIFICING a pile of permanents for as many cards turns board into
+        //   hand (Pitiless Carnage) — the "sacrificing another permanent to draw
+        //   is advantage" of 2026-09-22, counted;
+        //   a DRAW MODE that comes back EVERY TURN, which overturns the "too
+        //   card-specific to encode" of 2026-09-22: Monument to Endurance and
+        //   Teval's Judgment both say "hasn't been chosen THIS TURN", Zuko,
+        //   Conflicted has no reset and stays out;
+        //   and looking at a few and KEEPING THEM ALL (Make Your Own Luck plots
+        //   one and puts the rest into your hand), which chose nothing.
+        private static readonly Regex SacrificesAPileForCards = Rx(
+            @"sacrifice (?:any number of|x) [^.\n]{1,40}, then draw that many cards");
+
+        private static readonly Regex DrawModeEveryTurn = Rx(
+            @"hasn't been chosen this turn[\s\S]{0,200}^\W*draw (?:a|one|two) cards?", RegexOptions.Multiline);
+
+        private static readonly Regex LooksAndKeepsTheRest = Rx(
+            @"look at the top \w+ cards? of your library[^\n]{0,200}put the rest into your hand");
+
         // The self-sacrifice written as an EFFECT rather than as a cost, so
         // there is no colon for DrawBySacrificingItself to find: Preferred
         // Selection looks at two cards every upkeep but only keeps one by
@@ -726,11 +810,16 @@ namespace ScatoloneDownloader.Cube
         // exile-from-graveyard guard already takes out, and Sidequest: Catch a
         // Fish, which is Traveling Botanist word for word and is the human's
         // own one card of drift.
+        // MILLING the few instead of looking at them is the same second hand,
+        // added 2026-09-27 once milling and keeping one was ruled selection:
+        // Ballad of the Black Flag's three chapters and Sludge Titan's attacks
+        // mill and keep one again and again, and all three reviewed cards that
+        // say it that way (Six too) are hand-tagged CardAdvantage.
         private static readonly Regex TopFewIntoYourHand = Rx(
-            @"(?:looks? at|reveals?) (?:the top (?:\w+ )?cards?|that many cards|twice \w+ cards) "
-            + @"(?:of|from the top of) your library"
-            + @"[^\n]{0,160}put (?:one of them|it|that card|[\w /,'-]{0,80}from among them|\w+ of those cards) "
-            + @"into your hand");
+            @"(?:(?:looks? at|reveals?) (?:the top (?:\w+ )?cards?|that many cards|twice \w+ cards) "
+            + @"(?:of|from the top of) your library|\bmills? (?:\w+|x) cards)"
+            + @"[^\n]{0,160}put (?:one of them|it|that card|[\w /,'-]{0,80}from among (?:them|the cards milled this way)"
+            + @"|\w+ of those cards) into your hand");
 
         // The same second hand reached with a SEARCH rather than a look, and
         // only when the ability repeats. Land Tax puts three basic lands in

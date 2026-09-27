@@ -384,6 +384,19 @@ namespace ScatoloneDownloader.Cube
                     Rx(@"look at (?:the top \w+ cards?|twice \w+ cards?) (?:of|from the top of) your library"
                         + @"[^\n]{0,60}put (?:two|three|four|five|x|\d+) "
                         + @"(?:of them|of those cards|cards? from among them) into your hand"),
+                    // …and taking ALL of a kind is more than one too, however many
+                    // that turns out to be: Marina Vendrell reveals seven and keeps
+                    // every enchantment. Added 2026-09-27, when milling and
+                    // revealing to keep one became Filter and this card with it.
+                    Rx(@"(?:look at|reveal) the top \w+ cards of your library[^\n]{0,60}"
+                        + @"put all [\w ]{1,30}cards from among them into your hand"),
+                    // So is "up to two" or "any number of", revealed rather than
+                    // looked at (Torsten, Pieces of the Puzzle, Kruphix's Insight):
+                    // no reviewed card says it, and without this they would read
+                    // as the keep-one shape the same day made Filter.
+                    Rx(@"(?:look at|reveal) the top \w+ cards of your library[^\n]{0,80}"
+                        + @"put (?:up to (?:two|three|four|five|x|\d+)|any number of) [\w /,'-]{0,60}cards? "
+                        + @"from among them into your hand"),
                     // The same thing counted one card at a time. Memories Returning
                     // says "Put one of them into your hand", then "Then you put one
                     // into your hand", then "Put the other into your hand" — three
@@ -451,7 +464,14 @@ namespace ScatoloneDownloader.Cube
                     // 45 cards of which 4 are tagged, costing 42 false positives on
                     // its own. The alternatives kept here fire on 3, 1, 1, 5 and 1.
                     Rx(@"(?:you may )?draws? (?:a|one|\w+) cards?\. if you do, discard"),
-                    Rx(@"(?:sacrifice[\w ]{0,25}or )?discard (?:a|one|\w+) cards?\. if you do, draw"),
+                    // The card can be a LAND instead, either way round: Highway
+                    // Robbery's "discard a card or sacrifice a land. If you do,
+                    // draw two cards" is level with the spell counted, and was
+                    // read as a draw two. Named Filter by the human 2026-09-27.
+                    Rx(@"(?:sacrifice[\w ]{0,25}or )?discard (?:a|one|\w+) cards?(?: or sacrifice (?:a|an) \w+)?\. if you do, draw"),
+                    // N for N: Horrid Shadowspinner draws its power and hands the
+                    // same number back, which is a rummage however big.
+                    Rx(@"draw cards equal to [^.\n]{1,40}\. if you do, discard that many cards"),
                     Rx(@"put \w+ cards? from your hand[^\n]{0,30}on top"),
                     Rx(@"shuffle (?:a|\w+) cards? from your hand into your library\. if you do, draw"),
                     Rx(@"discard the last card you drew"),
@@ -463,7 +483,38 @@ namespace ScatoloneDownloader.Cube
                     // Abandon Attachments with the discard moved into the cost line.
                     // Ruled 2026-09-19.
                     Rx(@"as an additional cost to cast this spell,[^\n.]{0,60}discard"
-                        + @"[\s\S]{0,120}draws? (?:a|one|two|three|four|five|x|\d+) cards?")]),
+                        + @"[\s\S]{0,120}draws? (?:a|one|two|three|four|five|x|\d+) cards?"),
+                    // SOMEBODY ELSE'S TOP, rearranged or trimmed, ruled 2026-09-27
+                    // ("sì, guardare e basta no"), overturning the 2026-09-19
+                    // measurement that had it out at 2 of 8. What counts is doing
+                    // something to the cards — back in any order, one into their
+                    // graveyard, one to the bottom, one exiled: Natural Selection
+                    // and Elemental Augury print the same words and were tagged
+                    // both ways. Only LOOKING is not this (Orcish Spy, Visions).
+                    // A card that then lets you CAST from that pile is Steal (Black
+                    // Cat, Laughing Jasper Flint). Not inside brackets: manifest
+                    // dread's reminder has the victim look at their own library.
+                    Rx(@"(?<!\([^()\n]*)looks? at the top (?:\w+ )?cards? of "
+                        + @"(?:target (?:player|opponent)'s|their|that player's|each opponent's) library"
+                        + @"(?![^\n]{0,300}\byou may (?:play|cast))[^\n]{0,200}"
+                        + @"(?:in any order|into (?:their|that player's) graveyard|on the bottom of (?:their|that player's) library"
+                        + @"|exile (?:one|any number) of (?:them|those cards)|puts? one of them back)"),
+                    // MILL OR REVEAL N AND KEEP ONE is the look-at-N shape, ruled
+                    // 2026-09-27: "sì, ma in caso di terre è ManaFix". Cache Grab,
+                    // Malevolent Rumble, Rosheen and Wood Sage were tagged, Eerie
+                    // Gravestone was the human's slip. A LAND kept this way is
+                    // ManaFixing instead — see LandFromAmongThemToHand.
+                    Rx(@"(?:\bmill|reveal the top) (?:\w+|x) cards?[^\n]{0,120}?"
+                        + @"(?:put [^\n]{0,60}from among (?:them|the cards milled this way) into your hand"
+                        + @"|put all of them with that name into your hand)"),
+                    // Four more shapes named Filter by the human on 2026-09-27, one
+                    // card each in the reviewed set: a WHEEL that gives back what
+                    // it took (Winds of Change), a search that EXILES what it finds
+                    // to thin the library (Foresight, Mana Severance), and Scroll
+                    // Rack trading cards from hand with the top.
+                    Rx(@"shuffles? (?:the cards from )?(?:their|your) hand into (?:their|your) library, then draws? that many cards"),
+                    Rx(@"search your library for [^.\n]{0,40}cards?, exile them, then shuffle"),
+                    Rx(@"put that many cards from the top of your library into your hand")]),
 
                 // The [\w ] runs still cannot cross a FULL STOP, which is what keeps
                 // a card that exiles from a graveyard in one sentence and bounces a
@@ -835,6 +886,25 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex LooksAtTopForALand = Rx(
             @"look at the top [\w ,']{0,40} of your library(?![^\n]{0,200}into your hand)[^\n]{0,80}"
             + @"put (?:a|any number of|up to \w+|\w+) (?:basic |snow )*land cards? from among them");
+
+        //   A LAND KEPT IN HAND out of the few milled, revealed or looked at is
+        //   ManaFixing, ruled 2026-09-27 — "in caso di terre è ManaFix". Ainok
+        //   Wayfarer, Ostrich-Horse and Town Greeter mill a few and keep a land,
+        //   the land fetched to hand the ManaFixing ruling already names.
+        private static readonly Regex LandFromAmongThemToHand = Rx(
+            @"(?:\bmill|reveal the top|look at the top) (?:\w+|x) cards?[^\n]{0,120}?"
+            + @"(?:put|reveal) (?:a|up to \w+|any number of) (?:basic )?land cards? from among (?:them|the cards milled this way)"
+            + @"(?: and put (?:it|them))? into your hand");
+
+        //   And a card looked at and CAST FOR FREE was put into play, not chosen
+        //   between: Perception Bobblehead is Ramp and Cheat by hand.
+        private static readonly Regex LooksAtTopAndCastsFree = Rx(
+            @"look at the top [\w ]{1,20} of your library[^\n]{0,200}cast [^\n]{0,60}without paying its mana cost");
+
+        // Every shape above blanked, for the tag to be asked again.
+        private static string WithoutFalseSelection(string text) =>
+            LooksAtTopAndCastsFree.Replace(LandFromAmongThemToHand.Replace(TheirDiscardYourDraw.Replace(
+                LooksAtTopForALand.Replace(LooksAtTopAndMakesBodies.Replace(text, " "), " "), " "), " "), " ");
 
         //   AND A LOOT THAT IS NOT YOURS. "Each opponent discards a card AND YOU
         //   DRAW a card" is two different players doing two different things,
