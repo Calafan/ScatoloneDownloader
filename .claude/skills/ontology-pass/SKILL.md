@@ -192,6 +192,19 @@ propose stays invisible until the human re-reviews it. The Sacrifice pass
 reported 100% with Radiant Lotus's "Sacrifice one or more artifacts:" unread —
 the ruling had tagged it, the base pattern never asked.
 
+Sort the WRONG list by REASON before building the realignment, not by tag. A
+ruling that makes two tags exclusive ("se ha CardAdvantage non ha Filter",
+2026-09-27) also surfaces cards where the hand had one tag and the rules the
+other — Arcade Gannon was Filter by hand and CardAdvantage by the rules, and
+dropping Filter would have realigned it on a question nobody had asked. Group:
+the hand already has both (the ruling reaches it), the ruling's own shape (69
+one-shot scries), and "hand says X, rules say Y" — the last is a question.
+
+When the review log is gone, a store snapshot from before the sitting still says
+what the tagger SHOWED. On 2026-09-27 it proved the human's 09-23 edits active
+(22 of 25 differed from the stale proposals on screen), which is what made them
+evidence rather than noise.
+
 **7. Re-measure after each change**, not after all of them. When two edits go in
 together and the score drops, the run has to be repeated to find which one did it.
 `Dump` before the change and after it, then `scripts/blast_radius.py`: the score
