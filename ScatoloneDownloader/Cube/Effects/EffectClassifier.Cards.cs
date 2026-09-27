@@ -730,6 +730,9 @@ namespace ScatoloneDownloader.Cube
 
         private static readonly Regex QuotedOrOneScryOrLoot = Rx("\"[^\"\n]*\"|" + OneScryOrSurveil + "|" + OneLoot);
 
+        private static string BlankOutsideQuotes(Regex quotedOrPhrase, string text) =>
+            quotedOrPhrase.Replace(text, m => m.Value.StartsWith('"') ? m.Value : " ");
+
         private static bool SelectsOnlyInPassing(Card card, string text, CardEffect others)
         {
             bool spell = card.MacroType == MacroType.Spell;
@@ -739,10 +742,16 @@ namespace ScatoloneDownloader.Cube
                 return false;
             }
 
+            // A SPELL's MODE is an effect of its own and not a rider on the
+            // others, ruled 2026-09-27 on Kozilek's Command — "è una spell,
+            // quindi conta l'effetto secco (come Ponder)": its "scries X, then
+            // draws a card" is a Ponder you can choose, so a bullet line of a
+            // spell is left alone.
             string repeating = string.Join('\n', Abilities(text).Select(a =>
                 AbilityRepeats(Quoted.Replace(Parenthetical.Replace(a, " "), " ")) ? a
-                : (spell ? QuotedOrOneScryOrLoot : QuotedOrOneScry)
-                    .Replace(a, m => m.Value.StartsWith('"') ? m.Value : " ")));
+                : spell ? string.Join('\n', a.Split('\n').Select(line =>
+                    line.TrimStart().StartsWith('•') ? line : BlankOutsideQuotes(QuotedOrOneScryOrLoot, line)))
+                : BlankOutsideQuotes(QuotedOrOneScry, a)));
 
             if (repeating == text)
             {

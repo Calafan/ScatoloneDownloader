@@ -815,8 +815,9 @@ public sealed class EffectClassifierTests
     [Theory]
     // A scry or surveil made ONCE beside what the card is for is not Filter,
     // ruled 2026-09-27 — "non li voglio come Filter, generano troppo rumore" —
-    // which overturns the "unconditionally" these four pinned from 2026-09-19:
-    // a bounce spell, a Vehicle, a creature and a Command's mode.
+    // which overturns the "unconditionally" these three pinned from 2026-09-19:
+    // a bounce spell, a Vehicle and a creature. (Kozilek's Command was the
+    // fourth, and moved out the same evening — a spell's MODE is its own effect.)
     [InlineData("Unauthorized Exit", "Instant",
         "Return target nonland permanent to its owner's hand. Surveil 1. "
         + "(Look at the top card of your library. You may put it into your graveyard.)")]
@@ -828,12 +829,6 @@ public sealed class EffectClassifierTests
     [InlineData("Cascade Seer", "Creature — Merfolk Wizard",
         "When this creature enters, scry X, where X is the number of creatures in your party. "
         + "(Your party consists of up to one each of Cleric, Rogue, Warrior, and Wizard.)")]
-    [InlineData("Kozilek's Command", "Kindred Instant — Eldrazi",
-        "Choose two —\n"
-        + "• Target player creates X 0/1 colorless Eldrazi Spawn creature tokens with \"Sacrifice this token: Add {C}.\"\n"
-        + "• Target player scries X, then draws a card.\n"
-        + "• Exile target creature with mana value X or less.\n"
-        + "• Exile up to X target cards from graveyards.")]
     // The reminder text goes with the keyword: "(Look at the top two cards of
     // your library …)" is a look at the top in its own right.
     [InlineData("Consuming Ashes", "Instant",
@@ -886,6 +881,18 @@ public sealed class EffectClassifierTests
         "Trample\nWhen Ivora enters and whenever it deals combat damage to a player, create a Blood token. "
         + "(It's an artifact with \"{1}, {T}, Discard a card, Sacrifice this token: Draw a card.\")\nWhenever you "
         + "discard a card, put a +1/+1 counter on Ivora.")]
+    // A spell's MODE is an effect of its own — "è una spell, quindi conta
+    // l'effetto secco (come Ponder)" — so a Command's scry-and-draw and a
+    // Charm's loot are selections you chose, not riders.
+    [InlineData("Kozilek's Command", "Kindred Instant — Eldrazi",
+        "Choose two —\n"
+        + "• Target player creates X 0/1 colorless Eldrazi Spawn creature tokens with \"Sacrifice this token: Add {C}.\"\n"
+        + "• Target player scries X, then draws a card.\n"
+        + "• Exile target creature with mana value X or less.\n"
+        + "• Exile up to X target cards from graveyards.")]
+    [InlineData("Treva's Charm", "Instant",
+        "Choose one —\n• Destroy target enchantment.\n• Exile target attacking creature.\n• Draw a card, then "
+        + "discard a card.")]
     // A scry HANDED to something that repeats it keeps the tag even when the
     // hand-over is once: the Sorcerer Role scries on every attack.
     [InlineData("Unassuming Sage", "Creature — Human Peasant Wizard",
