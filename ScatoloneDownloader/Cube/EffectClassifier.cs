@@ -518,7 +518,7 @@ namespace ScatoloneDownloader.Cube
             // and note that nothing withdraws Filter: the card really did select.
             if (Abilities(text).Any(a =>
                     (TopFewIntoYourHand.IsMatch(a) || SearchesSeveralIntoYourHand.IsMatch(a))
-                    && AbilityRepeatsAtNoCostToItself(a)))
+                    && (AbilityRepeatsAtNoCostToItself(a) || EntersTwiceWithOffspring(text, a))))
             {
                 result |= CardEffect.CardAdvantage;
             }

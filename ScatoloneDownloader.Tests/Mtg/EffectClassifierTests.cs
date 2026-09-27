@@ -840,6 +840,17 @@ public sealed class EffectClassifierTests
         "Exile target creature. If it had mana value 3 or less, surveil 2. (Look at the top two cards of your "
         + "library, then put any number of them into your graveyard and the rest on top of your library in any "
         + "order.)")]
+    // A LOOT tacked onto a spell that does something else is the same rider,
+    // ruled on Refute: "non ha Filter, solo counter". Transpose's token carries
+    // a quoted trigger of its own, which does not make the loot repeat.
+    [InlineData("Refute", "Instant",
+        "Counter target spell. Draw a card, then discard a card.")]
+    [InlineData("Transpose", "Instant",
+        "Draw a card, then discard a card. You lose 1 life. If this spell was cast from your hand, create a "
+        + "0/1 black Wizard creature token with \"Whenever you cast a noncreature spell, this token deals 1 "
+        + "damage to each opponent.\"\nRebound (If you cast this spell from your hand, exile it as it resolves. "
+        + "At the beginning of your next upkeep, you may cast this card from exile without paying its mana "
+        + "cost.)")]
     // …and a Blood token is the same rider: "se singoli no".
     [InlineData("Blood Servitor", "Artifact Creature — Construct",
         "When this creature enters, create a Blood token. (It's an artifact with \"{1}, {T}, Discard a card, "
@@ -875,6 +886,11 @@ public sealed class EffectClassifierTests
         "Trample\nWhen Ivora enters and whenever it deals combat damage to a player, create a Blood token. "
         + "(It's an artifact with \"{1}, {T}, Discard a card, Sacrifice this token: Draw a card.\")\nWhenever you "
         + "discard a card, put a +1/+1 counter on Ivora.")]
+    // A scry HANDED to something that repeats it keeps the tag even when the
+    // hand-over is once: the Sorcerer Role scries on every attack.
+    [InlineData("Unassuming Sage", "Creature — Human Peasant Wizard",
+        "When this creature enters, you may pay {2}. If you do, create a Sorcerer Role token attached to it. "
+        + "(Enchanted creature gets +1/+1 and has \"Whenever this creature attacks, scry 1.\")")]
     public void Classify_ASelectionThatIsTheCardOrComesAgain_IsFilter(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
@@ -975,6 +991,22 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // LOOKING at the top few and casting one free is Cheat, named on Perception
+    // Bobblehead on 2026-09-27; Aetherworks Marvel is the same card.
+    [InlineData("Perception Bobblehead", "Artifact — Bobblehead",
+        "{T}: Add one mana of any color.\n{3}, {T}: Look at the top X cards of your library, where X is the "
+        + "number of Bobbleheads you control. You may cast a spell with mana value 3 or less from among them "
+        + "without paying its mana cost. Put the rest on the bottom of your library in a random order.")]
+    [InlineData("Aetherworks Marvel", "Legendary Artifact",
+        "Whenever a permanent you control is put into a graveyard, you get {E} (an energy counter).\n{T}, Pay "
+        + "six {E}: Look at the top six cards of your library. You may cast a spell from among them without "
+        + "paying its mana cost. Put the rest on the bottom of your library in a random order.")]
+    public void Classify_LookAndCastOneFree_IsCheat(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
+    }
+
+    [Theory]
     // A LAND kept out of the few is ManaFixing, ruled 2026-09-27: "in caso di
     // terre è ManaFix".
     [InlineData("Ainok Wayfarer", "Creature — Dog Scout",
@@ -1045,6 +1077,12 @@ public sealed class EffectClassifierTests
     [InlineData("Pieces of the Puzzle", "Sorcery",
         "Reveal the top five cards of your library. Put up to two instant and/or sorcery cards from among "
         + "them into your hand and the rest into your graveyard.")]
+    // OFFSPRING makes the enters trigger fire twice: "solo CA", ruled the same day.
+    [InlineData("Thundertrap Trainer", "Creature — Otter Wizard",
+        "Offspring {4} (You may pay an additional {4} as you cast this spell. If you do, when this creature "
+        + "enters, create a 1/1 token copy of it.)\nWhen this creature enters, look at the top four cards of "
+        + "your library. You may reveal a noncreature, nonland card from among them and put it into your hand. "
+        + "Put the rest on the bottom of your library in a random order.")]
     public void Classify_ADrawRuledIn_IsCardAdvantageAndNotFilter(string name, string typeLine, string oracle)
     {
         CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));

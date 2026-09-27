@@ -712,19 +712,37 @@ namespace ScatoloneDownloader.Cube
         // select are told apart from the ones that do not.
         // The reminder text goes with the keyword, because "(To scry 2, look at
         // the top two cards of your library …)" is itself a look at the top.
-        private static readonly Regex OneScryOrSurveil = Rx(
-            @"\b(?:scry|scries|surveil|surveils) (?:\d+|x)\b\.?(?: ?\((?:to (?:scry|surveil) \w+, )?look at the top[^()]*\))?");
+        private const string OneScryOrSurveil =
+            @"\b(?:scry|scries|surveil|surveils) (?:\d+|x)\b\.?(?: ?\((?:to (?:scry|surveil) \w+, )?look at the top[^()]*\))?";
+
+        // A LOOT tacked onto a SPELL that does something else is the same rider,
+        // ruled 2026-09-27 on Refute — "non ha Filter, solo counter" — which is
+        // Deny Entry, Broadside Barrage and Transpose written the same way. Asked
+        // of spells only: a creature that loots as it enters was not asked about.
+        private const string OneLoot =
+            @"draw (?:a|one) card,? then discard a card\.?|discard a card, then draw a card\.?";
+
+        // Whatever sits in QUOTES belongs to something else — Transpose's Wizard
+        // token carries its own "Whenever you cast …" — so it neither makes the
+        // line repeatable nor gets blanked: the quoted alternative is matched
+        // first and handed back untouched.
+        private static readonly Regex QuotedOrOneScry = Rx("\"[^\"\n]*\"|" + OneScryOrSurveil);
+
+        private static readonly Regex QuotedOrOneScryOrLoot = Rx("\"[^\"\n]*\"|" + OneScryOrSurveil + "|" + OneLoot);
 
         private static bool SelectsOnlyInPassing(Card card, string text, CardEffect others)
         {
-            if (card.MacroType == MacroType.Land
-                || (card.MacroType == MacroType.Spell && others == CardEffect.None))
+            bool spell = card.MacroType == MacroType.Spell;
+
+            if (card.MacroType == MacroType.Land || (spell && others == CardEffect.None))
             {
                 return false;
             }
 
             string repeating = string.Join('\n', Abilities(text).Select(a =>
-                AbilityRepeats(Parenthetical.Replace(a, " ")) ? a : OneScryOrSurveil.Replace(a, " ")));
+                AbilityRepeats(Quoted.Replace(Parenthetical.Replace(a, " "), " ")) ? a
+                : (spell ? QuotedOrOneScryOrLoot : QuotedOrOneScry)
+                    .Replace(a, m => m.Value.StartsWith('"') ? m.Value : " ")));
 
             if (repeating == text)
             {
@@ -767,6 +785,15 @@ namespace ScatoloneDownloader.Cube
         //   Conflicted has no reset and stays out;
         //   and looking at a few and KEEPING THEM ALL (Make Your Own Luck plots
         //   one and puts the rest into your hand), which chose nothing.
+        // OFFSPRING makes a token copy that enters too, so an enters trigger
+        // fires twice — the "one trigger, two events" of Cryogen Relic. Thundertrap
+        // Trainer looks at four and keeps one each time, and the human ruled it
+        // CardAdvantage alone on 2026-09-27.
+        private static readonly Regex Offspring = Rx(@"^offspring\b", RegexOptions.Multiline);
+
+        private static bool EntersTwiceWithOffspring(string text, string ability) =>
+            Offspring.IsMatch(text) && EntersTrigger.IsMatch(ability);
+
         private static readonly Regex SacrificesAPileForCards = Rx(
             @"sacrifice (?:any number of|x) [^.\n]{1,40}, then draw that many cards");
 

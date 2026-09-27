@@ -780,7 +780,14 @@ namespace ScatoloneDownloader.Cube
                     Rx(@"(?:you|any player|each player|players) may cast "
                         + @"(?!this card\b|this spell\b)"
                         + @"(?:(?!among them|those cards|exiled|from exile|\bthem\b)[\w ,'-]){0,60}"
-                        + @"without paying their mana costs")]),
+                        + @"without paying their mana costs"),
+                    // LOOKING at the top few and casting one of them free puts a
+                    // card into play at no cost, named Cheat by the human on
+                    // 2026-09-27 (Perception Bobblehead) — Aetherworks Marvel is
+                    // the same card. Asked of a LOOK or a REVEAL only: the EXILE
+                    // version is the impulse rider above, which is a card.
+                    Rx(@"(?:look at|reveal) the top [\w ]{1,20} of your library[^\n]{0,200}"
+                        + @"cast [^\n]{0,80}from among them without paying")]),
             ];
 
             FilterPatterns = Rules.First(rule => rule.Effect == CardEffect.Filter).Patterns;
