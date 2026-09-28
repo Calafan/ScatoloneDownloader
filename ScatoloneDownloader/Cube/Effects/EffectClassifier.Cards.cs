@@ -475,7 +475,11 @@ namespace ScatoloneDownloader.Cube
         //     (Mind Bomb, Snort, Mog, Will of the Jeskai, and The Death of Gwen
         //     Stacy, whose hand tag the ruling corrected): everybody picks, you
         //     included, and nobody's hand is attacked. The mandatory "each player
-        //     discards" of Wheel of Fortune stays Discard.
+        //     discards" of Wheel of Fortune stays Discard. Confirmed 2026-09-29
+        //     for the SYMMETRIC PUNISHER too — "each player loses 2 life unless
+        //     they discard a card" (Tomb of Annihilation, Possessed Portal) and
+        //     Doom Foretold's "each player's upkeep … if that player can't, they
+        //     discard" — while the one aimed at opponents only is Discard.
         // Blanked and the Discard patterns asked again, so a card that also
         // attacks a hand elsewhere keeps the tag.
         private static readonly Regex NotAnAttackOnAHand = Rx(
@@ -483,7 +487,9 @@ namespace ScatoloneDownloader.Cube
             + @"|(?:target player|defending player|each player|that player)[^.\n]{0,30}draws? [^.\n]{0,20}cards?,? then discards? (?:a|two) cards?"
             + @"|whenever (?:an opponent|a player|one or more (?:of your )?opponents?) discards? [^,\n]*,"
             + @"|its controller may discard[^.\n]*"
-            + @"|each player may discard[^.\n]*");
+            + @"|each player may discard[^.\n]*"
+            + @"|each player [^.\n]{0,60}\bunless they discard (?:a|two) cards?"
+            + @"|at the beginning of each player's upkeep, that player [^\n]{0,200}?\bthey discard (?:a|two) cards?");
 
         private static readonly Regex SacrificedLands = Rx(
             @"sacrifices? (a|one|two|three|four|five|\d+) lands?\b");

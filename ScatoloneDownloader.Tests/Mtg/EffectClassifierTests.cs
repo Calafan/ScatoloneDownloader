@@ -2753,6 +2753,13 @@ public sealed class EffectClassifierTests
     [InlineData("Nicol Bolas", "Legendary Creature — Elder Dragon",
         "Flying\nAt the beginning of your upkeep, sacrifice Nicol Bolas unless you pay {U}{B}{R}.\nWhenever "
         + "Nicol Bolas deals damage to an opponent, that player discards their hand.")]
+    // Confirmed 2026-09-29: a punisher that offers the OPPONENTS the choice
+    // outright, "each opponent may sacrifice … or discard a card".
+    [InlineData("Osseous Sticktwister", "Artifact Creature — Scarecrow",
+        "Lifelink\nDelirium — At the beginning of your end step, if there are four or more card types among "
+        + "cards in your graveyard, each opponent may sacrifice a nonland permanent of their choice or discard "
+        + "a card. Then this creature deals damage equal to its power to each opponent who didn't sacrifice a "
+        + "permanent or discard a card this way.")]
     public void Classify_AHandAttackRuledIn_IsDiscard(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Discard));
@@ -2792,6 +2799,16 @@ public sealed class EffectClassifierTests
     [InlineData("Summon: G.F. Ifrit", "Enchantment Creature — Saga Demon",
         "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after IV.)\nI, II — You "
         + "may discard a card. If you do, draw a card.\nIII, IV — Add {R}.")]
+    // Confirmed 2026-09-29: a SYMMETRIC punisher follows "each player may
+    // discard" — everybody chooses, you included.
+    [InlineData("Possessed Portal", "Artifact",
+        "If a player would draw a card, that player skips that draw instead.\nAt the beginning of each end "
+        + "step, each player sacrifices a permanent of their choice unless they discard a card.")]
+    [InlineData("Doom Foretold", "Enchantment",
+        "At the beginning of each player's upkeep, that player sacrifices a nonland, nontoken permanent of "
+        + "their choice. If that player can't, they discard a card, they lose 2 life, you draw a card, you gain "
+        + "2 life, you create a 2/2 white Knight creature token with vigilance, then you sacrifice this "
+        + "enchantment.")]
     public void Classify_AHandAttackRuledOut_IsNotDiscard(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Discard));

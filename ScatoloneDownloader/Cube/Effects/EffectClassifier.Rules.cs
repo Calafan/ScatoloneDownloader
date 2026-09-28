@@ -393,7 +393,13 @@ namespace ScatoloneDownloader.Cube
                 (CardEffect.Discard, [
                     Rx(OtherPlayer + @"[\w ,]{0,30}discards?\b"),
                     Rx(@"reveals? their hand[^\n]{0,60}choose [^\n]{0,60}(?:from it|from among)[^\n]{0,40}exile"),
-                    Rx(@"unless (?:that player|they|he or she)[^.\n]{0,80}\bdiscards? (?:a|two) cards?"),
+                    // …and the punisher that offers the OPPONENTS the choice outright,
+                    // "each opponent MAY sacrifice a nonland permanent or discard a
+                    // card", then punishes who did neither (Osseous Sticktwister).
+                    // Confirmed 2026-09-29 against "each player may discard", which
+                    // is not this: there everybody chooses, you included.
+                    Rx(@"unless (?:that player|they|he or she)[^.\n]{0,80}\bdiscards? (?:a|two) cards?"
+                        + @"|(?:each|target) opponent may [^.\n]{0,80}\bor discard (?:a|two) cards?"),
                     Rx(@"choose (?:a|an|one|two|up to \w+)[^.\n]{0,60}from it[^\n]{0,60}\b(?:they|the player) discards?\b"
                         + @"|\bthey discard (?:a|two|that|their)\b"),
                     Rx(@"(?:target opponent|each opponent|target player)[^.\n]{0,50}, discards? a card"),
