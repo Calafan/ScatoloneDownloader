@@ -271,7 +271,39 @@ namespace ScatoloneDownloader.Cube
                 // is Fork, Reverberate and Twincast.
                 (CardEffect.Redirect, [Rx(@"change the targets? of"),
                     Rx(@"change (?:that|target) spell's targets?"),
-                    Rx(@"cop(?:y|ies) target[\w ]*(?:spell|ability)")]),
+                    Rx(@"cop(?:y|ies) target[\w ]*(?:spell|ability)"),
+                    // Two more ways to act on a spell already on the stack, both
+                    // tagged and neither read before 2026-09-28: choosing NEW
+                    // TARGETS for other spells outright (Boltbender), and taking
+                    // CONTROL of the spell (Invert Polarity), which is not Steal —
+                    // a spell is not a permanent.
+                    Rx(@"choose new targets for (?:any number of )?(?:other |target )?spells?"
+                        + @"|gains? control of (?:target|that) spell"),
+                    // Copying a spell of YOUR OWN is this tag too, ruled 2026-09-28,
+                    // which OVERTURNS the 2026-09-19 ruling that took it off: every
+                    // such card reviewed since 09-23 had been tagged (Sword of Wealth
+                    // and Power, Cursed Recording, Breeches, Jace Reawakened, Leyline
+                    // of Resonance, Sunken Palace), and Ether reads word for word like
+                    // Sword. Read two ways — the copy that gets NEW TARGETS, and the
+                    // trigger that copies "your second spell" without saying so
+                    // (Taigam). A spell that copies ITSELF is not this: a keyword's
+                    // own reminder says "when you cast THIS SPELL, copy it" (Storm on
+                    // Tempest Technique) and so do Mentor's Guidance, Show of
+                    // Confidence and Banish into Fable. A keyword GIVEN to your other
+                    // spells is the same copy and is read through its reminder, which
+                    // says "that spell" or "it" instead — storm (Crackling
+                    // Spellslinger), replicate (Djinn Illuminatus), conspire (Wort).
+                    // A bracket guard and a dedicated storm rule were both tried and
+                    // removed: the first kept those grants out, the second never fired
+                    // once the reminder was read. A copy counted by COMMANDER casts is
+                    // none at all in the cube (Thunderclap Drake). A copy of a
+                    // CREATURE spell is a token and is Tokens, not this — see
+                    // CopiesYourCreatureSpell.
+                    Rx(@"(?<!\bcast this spell\b[^.\n]{0,80})\bcop(?:y|ies) (?:it|that spell(?: or ability)?|them)\b"
+                        + @"[^.\n]{0,60}?(?:\.|,| and) you may choose new targets for the cop(?:y|ies)"),
+                    Rx(@"\b(?:whenever|when) you (?:next )?cast "
+                        + @"(?!this spell\b)(?![^.\n,]{0,60}\b(?:creature|outlaw|permanent) spell)[^.\n,]{0,60}\bspells?\b[^.\n,]{0,40}, "
+                        + @"copy (?:it|that spell)\b(?! for each time you've cast your commander)")]),
 
                 // Bounce has to say WHICH permanent goes back, because the bare
                 // sentence is just as often the price the card pays: Ovinomancer's

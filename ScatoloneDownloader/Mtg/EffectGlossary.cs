@@ -24,7 +24,8 @@
         {
             [CardEffect.Tokens] =
                 "Puts CREATURE bodies on your side, however worded — earthbend, cloak, manifest dread, living "
-                + "weapon, a token copy of a creature. A noncreature card counts for a single body; a CREATURE only "
+                + "weapon, a token copy of a creature or of a creature SPELL. A noncreature card counts for a single "
+                + "body; a CREATURE only "
                 + "when it makes three at once or the effect repeats. A Treasure, Clue or Food is a resource, not a "
                 + "body.",
 
@@ -152,10 +153,10 @@
                 + "a graveyard is Reanimate; a land is Ramp; one free exiled card is CardAdvantage.",
 
             [CardEffect.Redirect] =
-                "Acts on SOMEBODY ELSE'S spell, already on the stack, without countering it: changes its "
-                + "target (\"the target of\", or \"that spell's target\"), or copies it by aiming at it "
-                + "(\"copy TARGET instant or sorcery spell\"). Doubling your own next spell is not this, and "
-                + "neither is Storm spelling out its own reminder text.",
+                "Acts on a spell without countering it: changes its targets, takes control of it, or copies it — "
+                + "anybody's (\"copy TARGET spell\") or YOUR OWN (\"when you next cast… copy that spell\", or "
+                + "storm or replicate given to your spells). Not a card copying only itself, and not a copied "
+                + "CREATURE spell, which is Tokens.",
         };
 
         /// <summary>The line for one effect, or an empty string when a member has

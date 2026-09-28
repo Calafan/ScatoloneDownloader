@@ -177,7 +177,8 @@ namespace ScatoloneDownloader.Cube
         // so a card that steals and donates in the same text keeps the tag.
         private static readonly Regex[] StealPatterns =
         [
-            Rx(@"gains? control of"),
+            // …but not of a SPELL, which is Redirect's (Invert Polarity).
+            Rx(@"gains? control of(?! (?:target|that) spell)"),
             Rx(@"you control (enchanted|target)"),
             Rx(@"untap target creature[\w ]*gain control"),
             // An exchange is a theft you paid for. Five cards, and the only way
@@ -343,6 +344,15 @@ namespace ScatoloneDownloader.Cube
         // artifact. It becomes a 0/0 Bird creature". Ruled Tokens 2026-09-25.
         private static readonly Regex AnimatesANoncreature = Rx(
             @"counters? on target noncreature [\w ]{0,20}\. it becomes an? 0/0\b[\w ,]{0,40}creature");
+
+        // A copy of a CREATURE spell becomes a token, and that is how the human
+        // tags it, ruled 2026-09-28: "copia una magia creature è Token" (Case of
+        // the Shifting Visage, Double Down's outlaws, Thurid, Jackal). Never says
+        // "create", so the token wording above cannot see it. Copying any OTHER
+        // spell of yours is Redirect.
+        private static readonly Regex CopiesYourCreatureSpell = Rx(
+            @"(?:whenever|when) you (?:next )?cast [^.\n]{0,60}\b(?:creature|outlaw) spells?\b[^.\n]{0,60}, "
+            + @"copy (?:it|that spell)\b");
 
         // ---- A CREATURE that makes one or two bodies, once ------------------
         //
