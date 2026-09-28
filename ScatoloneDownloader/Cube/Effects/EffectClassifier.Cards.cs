@@ -458,6 +458,27 @@ namespace ScatoloneDownloader.Cube
             @"^[^\n:]{0,50}discard (?!this card)(?:a|one|two|three|\w+) (?:\w+ )?cards?[^\n:]{0,30}:",
             RegexOptions.Multiline);
 
+        // Four shapes that name a player beside "discard" and attack nobody's
+        // hand, found 2026-09-28, each untagged on every reviewed card:
+        //   the MADNESS-style punishment — "when a spell or ability an opponent
+        //     controls CAUSES YOU TO DISCARD THIS CARD" (Guerrilla Tactics, Psychic
+        //     Purge, Mangara's Blessing, Sand Golem — 0 of 4);
+        //   a LOOT handed to a player — "target player draws two cards, then
+        //     discards a card" (Depth Defiler, Whirlwind Technique, Cait, Anvil of
+        //     Bogardan — 0 of 4), which is Filter;
+        //   a CONDITION — "whenever an opponent discards a card, …" (Lo and Li)
+        //     watches a discard and causes none; Tinybones and Entropic
+        //     Battlecruiser keep the tag through the discard they DO cause;
+        //   an ALTERNATIVE COST — "its controller may discard a card that shares
+        //     a color" (Dream Halls).
+        // Blanked and the Discard patterns asked again, so a card that also
+        // attacks a hand elsewhere keeps the tag.
+        private static readonly Regex NotAnAttackOnAHand = Rx(
+            @"[^.\n]*causes? you to discard this card[^.\n]*"
+            + @"|(?:target player|defending player|each player|that player)[^.\n]{0,30}draws? [^.\n]{0,20}cards?,? then discards? (?:a|two) cards?"
+            + @"|whenever (?:an opponent|a player|one or more (?:of your )?opponents?) discards? [^,\n]*,"
+            + @"|its controller may discard[^.\n]*");
+
         private static readonly Regex SacrificedLands = Rx(
             @"sacrifices? (a|one|two|three|four|five|\d+) lands?\b");
 

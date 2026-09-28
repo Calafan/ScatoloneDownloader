@@ -66,8 +66,9 @@
                 + "too is Wipe, and your own is never an answer.",
 
             [CardEffect.Discard] =
-                "Empties somebody ELSE'S hand. A bare \"discard a card\" is a cost you pay — madness, blitz, cycling, the "
-                + "back half of a loot — and paying it attacks nobody.",
+                "Empties somebody ELSE'S hand: they discard, you pick it, they pay it to dodge a punisher, or it is "
+                + "exiled by name. A bare \"discard a card\" is a cost you pay — madness, blitz, cycling, a loot, even "
+                + "one handed to a player — and so is a card that only WATCHES a discard.",
 
             [CardEffect.CardAdvantage] =
                 "A card the opponent does not get. COUNT IT — the card ITSELF counts, so Ponder nets 0. A one-shot "

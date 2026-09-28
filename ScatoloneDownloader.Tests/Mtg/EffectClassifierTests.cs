@@ -2658,6 +2658,72 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // Five wordings read 2026-09-28, each tagged on every reviewed card using
+    // it: the punisher's "unless that player … discards a card", the chosen card
+    // discarded by a pronoun ("they discard it", "the player discards that
+    // card"), "they discard a card" after a player is named, a list ("sacrifices
+    // a creature, discards a card"), and the name search through a hand. Tinybones
+    // pins that a card watching a discard AND causing one keeps the tag.
+    [InlineData("Perforating Artist", "Creature — Devil",
+        "Deathtouch (Any amount of damage this deals to a creature is enough to destroy it.)\nRaid — At the "
+        + "beginning of your end step, if you attacked this turn, each opponent loses 3 life unless that player "
+        + "sacrifices a nonland permanent of their choice or discards a card.")]
+    [InlineData("Binding Negotiation", "Sorcery",
+        "Target opponent reveals their hand. You may choose a nonland card from it. If you do, they discard "
+        + "it. Otherwise, you may put a face-up exiled card they own into their graveyard.")]
+    [InlineData("Leshrac's Sigil", "Enchantment",
+        "Whenever an opponent casts a green spell, you may pay {B}{B}. If you do, look at that player's hand "
+        + "and choose a card from it. The player discards that card.\n{B}{B}: Return this enchantment to its "
+        + "owner's hand.")]
+    [InlineData("Sonic Shrieker", "Creature — Dragon",
+        "Flying\nWhen this creature enters, it deals 2 damage to any target and you gain 2 life. If a player "
+        + "is dealt damage this way, they discard a card.")]
+    [InlineData("Scarring Memories", "Sorcery — Lesson",
+        "You may cast this spell as though it had flash if you control an attacking legendary "
+        + "creature.\nTarget opponent sacrifices a creature of their choice, discards a card, and loses 3 life.")]
+    [InlineData("Lobotomy", "Sorcery",
+        "Target player reveals their hand, then you choose a card other than a basic land card from it. "
+        + "Search that player's graveyard, hand, and library for all cards with the same name as the chosen "
+        + "card and exile them. Then that player shuffles.")]
+    [InlineData("Tinybones, Bauble Burglar", "Legendary Creature — Skeleton Rogue",
+        "Whenever an opponent discards a card, exile it from their graveyard with a stash counter on "
+        + "it.\nDuring your turn, you may play cards you don't own with stash counters on them from exile, and "
+        + "mana of any type can be spent to cast those spells.\n{3}{B}, {T}: Each opponent discards a card. "
+        + "Activate only as a sorcery.")]
+    public void Classify_AnAttackOnAHandInAnyWording_IsDiscard(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Discard));
+    }
+
+    [Theory]
+    // Four shapes that name a player beside "discard" and attack nobody's hand,
+    // each untagged on every reviewed card: the madness-style punishment, a loot
+    // handed to a player (Filter), a condition that watches a discard, and an
+    // alternative cost.
+    [InlineData("Guerrilla Tactics", "Instant",
+        "Guerrilla Tactics deals 2 damage to any target.\nWhen a spell or ability an opponent controls causes "
+        + "you to discard this card, it deals 4 damage to any target.")]
+    [InlineData("Depth Defiler", "Creature — Eldrazi",
+        "Devoid (This card has no color.)\nKicker {C} (You may pay an additional {C} as you cast this "
+        + "spell.)\nWhen you cast this spell, choose one. If it was kicked, choose both instead.\n• Return target "
+        + "creature to its owner's hand.\n• Target player draws two cards, then discards a card.")]
+    [InlineData("Cait, Cage Brawler", "Legendary Creature — Human Warrior",
+        "During your turn, Cait has indestructible.\nWhenever Cait attacks, you and defending player each draw "
+        + "a card, then discard a card. Put two +1/+1 counters on Cait if you discarded the card with the "
+        + "greatest mana value among those cards or tied for greatest.")]
+    [InlineData("Lo and Li, Royal Advisors", "Legendary Creature — Human Advisor",
+        "Whenever an opponent discards a card or mills one or more cards, put a +1/+1 counter on each Advisor "
+        + "you control.\n{2}{U/B}: Target player mills four cards. (They put the top four cards of their library "
+        + "into their graveyard.)")]
+    [InlineData("Dream Halls", "Enchantment",
+        "Rather than pay the mana cost for a spell, its controller may discard a card that shares a color "
+        + "with that spell.")]
+    public void Classify_DiscardWordsThatAttackNoHand_AreNotDiscard(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Discard));
+    }
+
+    [Theory]
     // Four rulings of 2026-09-25, Buff side. A spell that is ONLY the pump is
     // Buff however small, at sorcery speed too — "anche se fa schifo".
     [InlineData("Honor", "Sorcery",

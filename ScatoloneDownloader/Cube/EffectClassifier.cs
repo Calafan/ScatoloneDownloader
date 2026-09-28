@@ -393,6 +393,18 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Wipe;
             }
 
+            // Four shapes that name a player beside "discard" and attack nobody's
+            // hand. See NotAnAttackOnAHand.
+            if (result.HasFlag(CardEffect.Discard))
+            {
+                string hand = NotAnAttackOnAHand.Replace(text, " ");
+
+                if (hand != text && !DiscardPatterns.Any(p => p.IsMatch(hand)))
+                {
+                    result &= ~CardEffect.Discard;
+                }
+            }
+
             // Mana you may only spend on one thing is not fixing — it buys the one
             // card the designer had in mind. The test is per LINE, because a card
             // with one restricted ability and one free one (Hermitic Herbalist)

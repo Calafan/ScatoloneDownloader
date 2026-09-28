@@ -14,7 +14,7 @@ namespace ScatoloneDownloader.Cube
         // One entry per effect; a card gets the effect if ANY of its patterns hit.
         private static readonly (CardEffect Effect, Regex[] Patterns)[] Rules;
 
-        // All three are the SAME ARRAY the table holds, looked up once —
+        // All four are the SAME ARRAY the table holds, looked up once —
         // hoisted out of it for the same reason as MillPatterns and
         // ReanimatePatterns: the vetoes that strip a tag re-ask its own patterns
         // against the text with the offending shape blanked out, so a card that
@@ -24,6 +24,8 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex[] BurnPatterns;
 
         private static readonly Regex[] WipePatterns;
+
+        private static readonly Regex[] DiscardPatterns;
 
         // A STATIC CONSTRUCTOR rather than three field initialisers, and that is
         // forced by the split: initialisers run in textual order within a file but
@@ -373,9 +375,29 @@ namespace ScatoloneDownloader.Cube
                 // and exile that card" — 4 of 5 reviewed cards tagged (Aggressive
                 // Negotiations, Severance Priest, Soul Search, Cruelclaw's Heist;
                 // Intimidation Tactics is not). Added 2026-09-25.
+                //
+                // Widened 2026-09-28 for five wordings, each tagged on every
+                // reviewed card that uses it and none read: the PUNISHER, "loses 3
+                // life unless that player sacrifices a nonland permanent or
+                // DISCARDS A CARD" (Perforating Artist, Starseer Mentor, Forbidden
+                // Ritual — 6 of 6); the chosen card discarded by a PRONOUN, "you
+                // choose a nonland card from it … THEY discard that card" (Binding
+                // Negotiation, Leshrac's Sigil, Thought-Stalker Warlock — 11 of 11);
+                // "they discard" after a player was named (Sonic Shrieker, 4 of 4);
+                // a LIST, "target opponent sacrifices a creature, DISCARDS A CARD,
+                // and loses 3 life" (Scarring Memories); and the name SEARCH through
+                // a hand, "search target opponent's graveyard, HAND, and library …
+                // exile them" (Lobotomy, Ancient Vendetta, The Rise of Sozin).
+                // Four shapes match the words and are not this tag; they are
+                // blanked and the question asked again in Classify.
                 (CardEffect.Discard, [
                     Rx(OtherPlayer + @"[\w ,]{0,30}discards?\b"),
-                    Rx(@"reveals? their hand[^\n]{0,60}choose [^\n]{0,60}(?:from it|from among)[^\n]{0,40}exile")]),
+                    Rx(@"reveals? their hand[^\n]{0,60}choose [^\n]{0,60}(?:from it|from among)[^\n]{0,40}exile"),
+                    Rx(@"unless (?:that player|they|he or she)[^.\n]{0,80}\bdiscards? (?:a|two) cards?"),
+                    Rx(@"choose (?:a|an|one|two|up to \w+)[^.\n]{0,60}from it[^\n]{0,60}\b(?:they|the player) discards?\b"
+                        + @"|\bthey discard (?:a|two|that|their)\b"),
+                    Rx(@"(?:target opponent|each opponent|target player)[^.\n]{0,50}, discards? a card"),
+                    Rx(@"search (?:target (?:player|opponent)'s|that player's) [\w ,]{0,30}\bhand\b[^.\n]{0,100}\bexile")]),
 
                 // Drawing ONE card off a spell you cast replaces the spell — that is
                 // card parity, not advantage, which is why Eject and Broadside
@@ -916,6 +938,7 @@ namespace ScatoloneDownloader.Cube
             FilterPatterns = Rules.First(rule => rule.Effect == CardEffect.Filter).Patterns;
             BurnPatterns = Rules.First(rule => rule.Effect == CardEffect.Burn).Patterns;
             WipePatterns = Rules.First(rule => rule.Effect == CardEffect.Wipe).Patterns;
+            DiscardPatterns = Rules.First(rule => rule.Effect == CardEffect.Discard).Patterns;
         }
 
         // Damage aimed at THAT PERMANENT'S CONTROLLER, which is how the old
