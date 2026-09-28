@@ -93,9 +93,10 @@
                 + "tokens get, or a keyword but double strike.",
 
             [CardEffect.Protection] =
-                "Keeps something ELSE alive, and can be held up in response. A granted keyword shield (hexproof, "
-                + "indestructible, ward), damage prevention, or phasing it out. Not a fog, not a shield the card puts on "
-                + "itself, not preventing the damage a creature DEALS, and not prevention aimed at YOU alone — those are Pacify.",
+                "Keeps something ELSE alive, held up in response: a keyword shield, damage prevented or redirected, "
+                + "regeneration, a blink or a bounce that saves, a shield counter, phasing out. Not a static shield, "
+                + "not one for a tribe, not a fog, not the card's own, not damage a creature DEALS or aimed at YOU "
+                + "alone (Pacify).",
 
             [CardEffect.Burn] =
                 "Damage or life loss aimed at a FACE, however counted and however slow: \"damage equal to the number "

@@ -2751,15 +2751,243 @@ public sealed class EffectClassifierTests
         Assert.False(result.HasFlag(CardEffect.Protection));
     }
 
-    [Fact]
-    public void Classify_TargetedRegeneration_IsNotProtection()
+    [Theory]
+    // REGENERATION of somebody else is Protection, ruled 2026-09-28 ("sì"). This
+    // OVERTURNS Classify_TargetedRegeneration_IsNotProtection, which pinned Death
+    // Ward as a deliberate miss on the 2026-09-05 measurement; it was removed the
+    // same day and Death Ward is pinned here instead.
+    [InlineData("Death Ward", "Instant",
+        "Regenerate target creature.")]
+    [InlineData("Village Elder", "Creature — Human Druid",
+        "{G}, {T}, Sacrifice a Forest: Regenerate target creature.")]
+    [InlineData("Life Matrix", "Artifact",
+        "{4}, {T}: Put a matrix counter on target creature and that creature gains \"Remove a matrix counter "
+        + "from this creature: Regenerate this creature.\" Activate only during your upkeep.")]
+    [InlineData("Broken Fall", "Enchantment",
+        "Return this enchantment to its owner's hand: Regenerate target creature.")]
+    // A BLINK that saves is Protection, ruled the same day: your own exiled and
+    // returned, anybody's until the next end step, your own returned to hand in
+    // response, your own airbent when targeted, your own cloaked.
+    [InlineData("Salvation Swan", "Creature — Bird Cleric",
+        "Flash\nFlying\nWhenever this creature or another Bird you control enters, exile up to one target "
+        + "creature you control without flying. Return it to the battlefield under its owner's control with a "
+        + "flying counter on it at the beginning of the next end step.")]
+    [InlineData("Waterbender's Restoration", "Instant — Lesson",
+        "As an additional cost to cast this spell, waterbend {X}. (While paying a waterbend cost, you can tap "
+        + "your artifacts and creatures to help. Each one pays for {1}.)\nExile X target creatures you control. "
+        + "Return those cards to the battlefield under their owner's control at the beginning of the next end "
+        + "step.")]
+    [InlineData("Getaway Glamer", "Instant",
+        "Spree (Choose one or more additional costs.)\n+ {1} — Exile target nontoken creature. Return it to "
+        + "the battlefield under its owner's control at the beginning of the next end step.\n+ {2} — Destroy "
+        + "target creature if no other creature has greater power.")]
+    [InlineData("Safe Haven", "Land",
+        "{2}, {T}: Exile target creature you control.\nAt the beginning of your upkeep, you may sacrifice this "
+        + "land. If you do, return each card exiled with this land to the battlefield under its owner's "
+        + "control.")]
+    [InlineData("Hide on the Ceiling", "Instant",
+        "Exile X target artifacts and/or creatures. Return the exiled cards to the battlefield under their "
+        + "owners' control at the beginning of the next end step.")]
+    [InlineData("Parting Gust", "Instant",
+        "Gift a tapped Fish (You may promise an opponent a gift as you cast this spell. If you do, they "
+        + "create a tapped 1/1 blue Fish creature token before its other effects.)\nExile target nontoken "
+        + "creature. If the gift wasn't promised, return that card to the battlefield under its owner's control "
+        + "with a +1/+1 counter on it at the beginning of the next end step.")]
+    [InlineData("Ambrosia Whiteheart", "Legendary Creature — Bird",
+        "Flash\nWhen Ambrosia Whiteheart enters, you may return another permanent you control to its owner's "
+        + "hand.\nLandfall — Whenever a land you control enters, Ambrosia Whiteheart gets +1/+0 until end of "
+        + "turn.")]
+    [InlineData("Sunpearl Kirin", "Creature — Kirin",
+        "Flash\nFlying\nWhen this creature enters, return up to one other target nonland permanent you control "
+        + "to its owner's hand. If it was a token, draw a card.")]
+    [InlineData("Forum Familiar", "Creature — Cat",
+        "Disguise {1}{W} (You may cast this card face down for {3} as a 2/2 creature with ward {2}. Turn it "
+        + "face up any time for its disguise cost.)\nWhen this creature is turned face up, return another target "
+        + "permanent you control to its owner's hand and put a +1/+1 counter on this creature.")]
+    [InlineData("Monk Gyatso", "Legendary Creature — Human Monk",
+        "Whenever another creature you control becomes the target of a spell or ability, you may airbend that "
+        + "creature. (Exile it. While it's exiled, its owner may cast it for {2} rather than its mana cost.)")]
+    [InlineData("Expose the Culprit", "Instant",
+        "Choose one or both —\n• Turn target face-down creature face up.\n• Exile any number of face-up "
+        + "creatures you control with disguise in a face-down pile, shuffle that pile, then cloak them. (To "
+        + "cloak a card, put it onto the battlefield face down as a 2/2 creature with ward {2}. Turn it face up "
+        + "any time for its mana cost if it's a creature card.)")]
+    // A SHIELD COUNTER (ruled the same day), a creature handed a return from
+    // death, damage redirected away from a creature, umbra armor cast with
+    // flash, and an artifact phased out.
+    [InlineData("Protection Magic", "Instant",
+        "Put a shield counter on each of up to three target creatures. (If a creature with a shield counter "
+        + "would be dealt damage or destroyed, remove a shield counter from it instead.)")]
+    [InlineData("Presumed Dead", "Instant",
+        "Until end of turn, target creature gets +2/+0 and gains \"When this creature dies, return it to the "
+        + "battlefield under its owner's control and suspect it.\" (A suspected creature has menace and can't "
+        + "block.)")]
+    [InlineData("Vincent's Limit Break", "Instant",
+        "Tiered (Choose one additional cost.)\nUntil end of turn, target creature you control gains \"When this "
+        + "creature dies, return it to the battlefield tapped under its owner's control\" and has the chosen "
+        + "base power and toughness.\n• Galian Beast — {0} — 3/2.\n• Death Gigas — {1} — 5/2.\n• Hellmasker — {3} "
+        + "— 7/2.")]
+    [InlineData("Blood of the Martyr", "Instant",
+        "Until end of turn, if damage would be dealt to any creature, you may have that damage dealt to you "
+        + "instead.")]
+    [InlineData("Reflect Damage", "Instant",
+        "The next time a source of your choice would deal damage this turn, that damage is dealt to that "
+        + "source's controller instead.")]
+    [InlineData("Reverberation", "Instant",
+        "All damage that would be dealt this turn by target sorcery spell is dealt to that spell's controller "
+        + "instead.")]
+    [InlineData("Dog Umbra", "Enchantment — Aura",
+        "Flash\nEnchant creature\nAs long as another player controls enchanted creature, it can't attack or "
+        + "block. Otherwise, this Aura has umbra armor. (If enchanted creature would be destroyed, instead "
+        + "remove all damage from it and destroy this Aura.)")]
+    [InlineData("Martyrdom", "Instant",
+        "Until end of turn, target creature you control gains \"{0}: The next 1 damage that would be dealt to "
+        + "target creature, planeswalker, or player this turn is dealt to this creature instead.\" Only you may "
+        + "activate this ability.")]
+    [InlineData("Vision Charm", "Instant",
+        "Choose one —\n• Target player mills four cards.\n• Choose a land type and a basic land type. Each land "
+        + "of the first chosen type becomes the second chosen type until end of turn.\n• Target artifact phases "
+        + "out. (While it's phased out, it's treated as though it doesn't exist. It phases in before its "
+        + "controller untaps during their next untap step.)")]
+    // Readings the hand tags already had: prevention "dealt THIS TURN to", in
+    // the passive, to "you and/or creatures you control", or to IT when IT is a
+    // target; "as though it had flash"; a card turned face up and a card cycled
+    // are held up; and "It gains" is a pronoun, not a tribe.
+    [InlineData("Remedy", "Instant",
+        "Prevent the next 5 damage that would be dealt this turn to any number of targets, divided as you "
+        + "choose.")]
+    [InlineData("Samite Alchemist", "Creature — Human Cleric",
+        "{W}{W}, {T}: Prevent the next 4 damage that would be dealt this turn to target creature you control. "
+        + "Tap that creature. It doesn't untap during your next untap step.")]
+    [InlineData("Gatta and Luzzu", "Legendary Creature — Human Soldier",
+        "Flash\nWhen Gatta and Luzzu enters, choose target creature you control. If damage would be dealt to "
+        + "that creature this turn, prevent that damage and put that many +1/+1 counters on it.")]
+    [InlineData("Silhouette", "Instant",
+        "Choose target creature. If a spell or ability that targets that creature would cause a source to "
+        + "deal damage to that creature this turn, prevent that damage.")]
+    [InlineData("Fleeting Flight", "Instant",
+        "Put a +1/+1 counter on target creature. It gains flying until end of turn. Prevent all combat damage "
+        + "that would be dealt to it this turn.")]
+    [InlineData("Shadowbane", "Instant",
+        "The next time a source of your choice would deal damage to you and/or creatures you control this "
+        + "turn, prevent that damage. If damage from a black source is prevented this way, you gain that much "
+        + "life.")]
+    [InlineData("Mystic Veil", "Enchantment — Aura",
+        "You may cast this spell as though it had flash. If you cast it any time a sorcery couldn't have been "
+        + "cast, the controller of the permanent it becomes sacrifices it at the beginning of the next cleanup "
+        + "step.\nEnchant creature\nEnchanted creature has shroud. (It can't be the target of spells or "
+        + "abilities.)")]
+    [InlineData("Ward of Lights", "Enchantment — Aura",
+        "You may cast this spell as though it had flash. If you cast it any time a sorcery couldn't have been "
+        + "cast, the controller of the permanent it becomes sacrifices it at the beginning of the next cleanup "
+        + "step.\nEnchant creature\nAs this Aura enters, choose a color.\nEnchanted creature has protection from "
+        + "the chosen color. This effect doesn't remove this Aura.")]
+    [InlineData("Essence of Antiquity", "Artifact Creature — Golem",
+        "Disguise {2}{W} (You may cast this card face down for {3} as a 2/2 creature with ward {2}. Turn it "
+        + "face up any time for its disguise cost.)\nWhen this creature is turned face up, creatures you control "
+        + "gain hexproof until end of turn. Untap them.")]
+    [InlineData("Agonasaur Rex", "Creature — Dinosaur",
+        "Trample\nCycling {2}{G} ({2}{G}, Discard this card: Draw a card.)\nWhen you cycle this card, put two "
+        + "+1/+1 counters on up to one target creature or Vehicle. It gains trample and indestructible until "
+        + "end of turn.")]
+    [InlineData("Revitalizing Repast // Old-Growth Grove", "Instant // Land",
+        "Put a +1/+1 counter on target creature. It gains indestructible until end of turn.\nThis land enters "
+        + "tapped.\n{T}: Add {B} or {G}.")]
+    public void Classify_ASaveHeldUpForSomethingElse_IsProtection(string name, string typeLine, string oracle)
     {
-        // Measured on the reviewed set: "regenerate target" caught 4 and wrongly
-        // fired on 12, so it stayed out and Death Ward is a deliberate miss.
-        CardEffect result = EffectClassifier.Classify(
-            MakeCard("Death Ward", "Instant", "Regenerate target creature."));
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
+    }
 
-        Assert.False(result.HasFlag(CardEffect.Protection));
+    [Theory]
+    // The gate asked of the LINE since 2026-09-28: an unrelated activation no
+    // longer vouches for a static shield (Flickering Ward's return, Paladin's
+    // Arms' equip, Cathedral Acolyte's counter, Redemption Arc's exile).
+    [InlineData("Flickering Ward", "Enchantment — Aura",
+        "Enchant creature\nAs this Aura enters, choose a color.\nEnchanted creature has protection from the "
+        + "chosen color. This effect doesn't remove this Aura.\n{W}: Return this Aura to its owner's hand.")]
+    [InlineData("Paladin's Arms", "Artifact — Equipment",
+        "Job select (When this Equipment enters, create a 1/1 colorless Hero creature token, then attach this "
+        + "to it.)\nEquipped creature gets +2/+1, has ward {1}, and is a Knight in addition to its other "
+        + "types.\nLightbringer and Hero's Shield — Equip {4} ({4}: Attach to target creature you control. Equip "
+        + "only as a sorcery.)")]
+    [InlineData("Cathedral Acolyte", "Creature — Human Cleric",
+        "Each creature you control with a counter on it has ward {1}. (Whenever it becomes the target of a "
+        + "spell or ability an opponent controls, counter it unless that player pays {1}.)\n{T}: Put a +1/+1 "
+        + "counter on target creature that entered this turn.")]
+    [InlineData("Redemption Arc", "Enchantment — Aura",
+        "Enchant creature\nEnchanted creature has indestructible and is goaded. (It attacks each combat if "
+        + "able and attacks a player other than you if able.)\n{1}{W}: Exile enchanted creature.")]
+    [InlineData("Codsworth, Handy Helper", "Legendary Artifact Creature — Robot",
+        "Commanders you control have ward {2}.\n{T}: Add {W}{W}. Spend this mana only to cast Aura and/or "
+        + "Equipment spells.\n{T}: Attach target Aura or Equipment you control to target creature you control. "
+        + "Activate only as a sorcery.")]
+    // A shield for ONE TRIBE or for TOKENS (0 of 4 tagged, the Buff reading of
+    // 2026-09-21), a tribe's regeneration, and a shield being TAKEN AWAY (0 of
+    // 5). Ainok Strike Leader was pinned as Protection by
+    // Classify_EffectsAimedAtSomethingElse_Survive until that day.
+    [InlineData("Ainok Strike Leader", "Creature — Dog Warrior",
+        "Whenever you attack with this creature and/or your commander, for each opponent, create a 1/1 red "
+        + "Goblin creature token that's tapped and attacking that player.\nSacrifice this creature: Creature "
+        + "tokens you control gain indestructible until end of turn.")]
+    [InlineData("Azlask, the Swelling Scourge", "Legendary Creature — Eldrazi",
+        "Whenever Azlask or another colorless creature you control dies, you get an experience "
+        + "counter.\n{W}{U}{B}{R}{G}: Creatures you control get +X/+X until end of turn, where X is the number "
+        + "of experience counters you have. Scions and Spawns you control gain indestructible and annihilator 1 "
+        + "until end of turn.")]
+    [InlineData("Basri, Tomorrow's Champion", "Legendary Creature — Human Knight",
+        "{W}, {T}, Exert Basri: Create a 1/1 white Cat creature token with lifelink. (An exerted creature "
+        + "won't untap during your next untap step.)\nCycling {2}{W} ({2}{W}, Discard this card: Draw a "
+        + "card.)\nWhen you cycle this card, Cats you control gain hexproof and indestructible until end of "
+        + "turn.")]
+    [InlineData("Goblin Wizard", "Creature — Goblin Wizard",
+        "{T}: You may put a Goblin permanent card from your hand onto the battlefield.\n{R}: Target Goblin "
+        + "gains protection from white until end of turn.")]
+    [InlineData("Baron Sengir", "Legendary Creature — Vampire Noble",
+        "Flying\nWhenever a creature dealt damage by Baron Sengir this turn dies, put a +2/+2 counter on Baron "
+        + "Sengir.\n{T}: Regenerate another target Vampire.")]
+    [InlineData("Nowhere to Run", "Enchantment",
+        "Flash\nWhen this enchantment enters, target creature an opponent controls gets -3/-3 until end of "
+        + "turn.\nCreatures your opponents control can be the targets of spells and abilities as though they "
+        + "didn't have hexproof. Ward abilities of those creatures don't trigger.")]
+    [InlineData("Spectacular Pileup", "Sorcery",
+        "All creatures and Vehicles lose indestructible until end of turn, then destroy all creatures and "
+        + "Vehicles.\nCycling {2} ({2}, Discard this card: Draw a card.)")]
+    [InlineData("Autumn Willow", "Legendary Creature — Avatar",
+        "Shroud (This creature can't be the target of spells or abilities.)\n{G}: Until end of turn, Autumn "
+        + "Willow can be the target of spells and abilities controlled by target player as though it didn't "
+        + "have shroud.")]
+    // A creature regenerating ITSELF; a blink or a bounce that cannot be held
+    // up, or is paid as a cost; prevention for YOU alone or for the card
+    // itself; flash only for a commander; umbra armor without flash.
+    [InlineData("River Boa", "Creature — Snake",
+        "Islandwalk (This creature can't be blocked as long as defending player controls an Island.)\n{G}: "
+        + "Regenerate this creature.")]
+    [InlineData("Skyskipper Duo", "Creature — Bird Frog",
+        "Flying\nWhen this creature enters, exile up to one other target creature you control. Return it to "
+        + "the battlefield under its owner's control at the beginning of the next end step.")]
+    [InlineData("Familiar's Ruse", "Instant",
+        "As an additional cost to cast this spell, return a creature you control to its owner's hand.\nCounter "
+        + "target spell.")]
+    [InlineData("Shrieking Drake", "Creature — Drake",
+        "Flying\nWhen this creature enters, return a creature you control to its owner's hand.")]
+    [InlineData("Immortal Coil", "Artifact",
+        "{T}, Exile two cards from your graveyard: Draw a card.\nIf damage would be dealt to you, prevent that "
+        + "damage. Exile a card from your graveyard for each 1 damage prevented this way.\nWhen there are no "
+        + "cards in your graveyard, you lose the game.")]
+    [InlineData("Phantom Nantuko", "Creature — Insect Spirit",
+        "Trample\nThis creature enters with two +1/+1 counters on it.\nIf damage would be dealt to this "
+        + "creature, prevent that damage. Remove a +1/+1 counter from this creature.\n{T}: Put a +1/+1 counter "
+        + "on this creature.")]
+    [InlineData("Timely Ward", "Enchantment — Aura",
+        "You may cast this spell as though it had flash if it targets a commander.\nEnchant creature\nEnchanted "
+        + "creature has indestructible.")]
+    [InlineData("Lion Umbra", "Enchantment — Aura",
+        "Enchant modified creature (Equipment, Auras its controller controls, and counters are "
+        + "modifications.)\nEnchanted creature gets +3/+3 and has reach and vigilance.\nUmbra armor (If enchanted "
+        + "creature would be destroyed, instead remove all damage from it and destroy this Aura.)")]
+    public void Classify_NotASaveHeldUpForSomethingElse_IsNotProtection(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
     }
 
     [Theory]
@@ -3219,8 +3447,6 @@ public sealed class EffectClassifierTests
     // tribal rule wanted the phrase at the start of a line, and Adeliz puts it
     // after a trigger comma. Widening the clause openers on 2026-09-17 made the
     // classifier agree with the ruling, so the case moved to the tribal tests.
-    [InlineData("Ainok Strike Leader", "Creature — Hound Soldier",
-        "Sacrifice this creature: Creature tokens you control gain indestructible until end of turn.", CardEffect.Protection)]
     [InlineData("Agrus Kos, Wojek Veteran", "Legendary Creature — Human Soldier",
         "Whenever Agrus Kos attacks, attacking red creatures get +2/+0 and attacking white creatures get +0/+2 until end of turn.", CardEffect.Buff)]
     public void Classify_EffectsAimedAtSomethingElse_Survive(string name, string typeLine, string oracle, CardEffect expected)

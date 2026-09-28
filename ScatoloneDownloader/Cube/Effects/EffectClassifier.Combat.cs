@@ -421,11 +421,22 @@ namespace ScatoloneDownloader.Cube
         // damage that would be dealt to target creature") and the source first
         // ("the next time a source of your choice would deal damage to you this
         // turn, prevent that damage").
+        // Widened 2026-09-28 for the word order "dealt THIS TURN to" (Remedy,
+        // Samite Alchemist), which puts the clock before the recipient.
         private static readonly Regex PreventDamageTo = Rx(
-            @"prevent (?:the next|all)[\w ]{0,30}damage that would be dealt to");
+            @"prevent (?:the next|all)[\w ]{0,30}damage that would be dealt (?:this turn )?to");
 
+        // …and the source-first wording, which the same day was found to name
+        // "you AND/OR creatures you control" with a slash (Shadowbane), to say
+        // "would cause a source TO deal damage" (Silhouette), or to put the
+        // damage in the passive, "damage WOULD BE DEALT to that creature"
+        // (Gatta and Luzzu).
         private static readonly Regex PreventFromChosenSource = Rx(
-            @"would deal damage to [\w ,]{0,25}prevent (?:that|all)");
+            @"\b(?:would|to) deal damage to [\w ,/]{0,50}prevent (?:that|all)"
+            // The passive must name a CREATURE that is not the card: "if damage
+            // would be dealt to YOU, prevent that damage" is player-only (Immortal
+            // Coil) and "to THIS creature" a self-shield (Phantom Nantuko).
+            + @"|damage would be dealt to (?:that|target) creature[\w ,/]{0,25}prevent (?:that|all)");
 
         // Three exclusions, each drawn from how the user already tags:
         //   - a shield the card puts on ITSELF is a stat line, as with Buff.
@@ -435,8 +446,115 @@ namespace ScatoloneDownloader.Cube
         //   - preventing what a creature DEALS neutralises it, which is Pacify:
         //     Maze of Ith, Gaseous Form and Demonic Torment are hand-tagged that
         //     way. The "dealt to and dealt by" wording is the same act.
+        // "IT" is the card itself only when nothing was TARGETED before it on
+        // the line: Fleeting Flight's "put a +1/+1 counter on target creature …
+        // prevent all combat damage that would be dealt to it" shields the
+        // target, and is tagged. Found 2026-09-28.
         private static readonly Regex PreventForItself = Rx(
-            @"dealt to (?:this creature|this permanent|it|enchanted creature) ");
+            @"dealt to (?:this creature|this permanent|enchanted creature) |(?<!\btarget\b[^\n]{0,160})dealt to it ");
+
+        // ---- Protection, the families ruled 2026-09-28 --------------------
+        // Asked of the card the way prevention is — added after the self gate,
+        // because each names its beneficiary inside the match — and held to the
+        // same test of being usable in response, asked of the LINE that carries
+        // it (see HeldUp). "Sì, sì e sì" to the three shapes left open since
+        // 2026-09-11:
+        //
+        // REGENERATION of somebody else is Protection, which OVERTURNS the
+        // 2026-09-05 measurement that kept it out ("regenerate target" then cost
+        // 12 wrong for 4 right, against hand tags the ruling now realigns).
+        // Death Ward, Village Elder, Broken Fall, Life Matrix's granted
+        // "regenerate this creature". A creature regenerating ITSELF is a stat
+        // line and stays out — nothing here says "this creature" except inside
+        // a quoted grant.
+        private static readonly Regex RegeneratesSomebody = Rx(
+            @"regenerate (?:another |each |all |up to \w+ )?(?:other )?target\b|regenerate (?:enchanted|equipped) creature\b"
+            + @"|gains? ""[^""\n]*regenerate this creature");
+
+        // …but not a TRIBE's (Baron Sengir's Vampires, Elephant Graveyard), for
+        // the reason a tribal shield below is not. Case-SENSITIVE: the type is
+        // what is capitalised.
+        private static readonly Regex RegeneratesATribe = new(
+            @"[Rr]egenerate (?:another )?target " + NotATribe + @"[A-Z][\w']+", RegexOptions.CultureInvariant);
+
+        // A BLINK that saves is Protection: exiling your own and bringing it
+        // back (Salvation Swan, Waterbender's Restoration, Safe Haven, and
+        // Expose the Culprit's cloak), exiling anybody's until the next end step
+        // (Getaway Glamer, Hide on the Ceiling, Parting Gust), returning your own
+        // permanent to hand in response (Ambrosia Whiteheart, Sunpearl Kirin,
+        // Forum Familiar) and airbending your own creature when it is targeted
+        // (Monk Gyatso). A return to hand paid as a COST is not — the colon of
+        // an activation, or the ADDITIONAL COST of a counterspell (Familiar's
+        // Ruse, Disappearing Act).
+        private static readonly Regex BlinksToSave = Rx(
+            @"exile (?:up to \w+ |x |any number of |another )?(?:other )?target [\w ,]{0,30}?(?:creatures?|permanents?)(?: [\w ]{0,20})? you (?:control|own)\b[\s\S]{0,120}?\breturn"
+            + @"|exile (?:any number of|each|all) [\w ,-]{0,30}creatures? you control[^\n]{0,120}\b(?:return|cloak)"
+            + @"|exile (?:up to \w+ |x |another )?(?:other )?target [\w ,/]{0,40}\.[^.\n]{0,60}\breturn (?:it|that card|the exiled cards?|those cards)"
+            + @"[^.\n]{0,80}at the beginning of the next end step"
+            + @"|(?<!additional cost to cast this spell, )\breturn (?:up to one |another |an? )?(?:other )?(?:target )?(?:nonland )?(?:permanent|creature)s? you control to (?:its|their) owner'?s? hands?(?!:)"
+            + @"|you may airbend that creature");
+
+        // A SHIELD COUNTER put on something is Protection (Protection Magic).
+        private static readonly Regex ShieldCounterOnSomebody = Rx(
+            @"shield counters? on (?:each of )?(?:up to \w+ )?(?:another |other )?(?:target|each|a creature|any number)");
+
+        // Two shapes the hand tags were already giving the tag, read the same
+        // day: a creature handed "when this creature dies, RETURN IT to the
+        // battlefield" (Presumed Dead, Vincent's Limit Break), and damage bound
+        // for a creature REDIRECTED — to you (Blood of the Martyr), to its
+        // source's controller (Reflect Damage, Reverberation) or to a martyr
+        // (Martyrdom). Redirection that only spares YOU is Pacify's, like the
+        // player-only prevention above (Kjeldoran Royal Guard).
+        private static readonly Regex SavesFromDeathOrDamage = Rx(
+            @"gains? ""when this creature dies, return it to the battlefield"
+            + @"|damage would be dealt to (?:any|target|each) creature[^.\n]{0,40}dealt to you instead"
+            + @"|that damage is dealt to (?:that source's|that spell's) controller instead"
+            + @"|is dealt to that spell's controller instead"
+            + @"|damage that would be dealt to target creature[^.\n]{0,60}is dealt to this creature instead");
+
+        // UMBRA ARMOR (and its older name) on an Aura cast in response is a
+        // shield for the enchanted creature: Dog Umbra has flash and is tagged,
+        // Lion Umbra has none and is not.
+        private static readonly Regex UmbraArmor = Rx(@"\b(?:umbra|totem) armor\b");
+
+        // An ARTIFACT phased out is saved like a creature is (Vision Charm), but
+        // is not the Pacify that phasing out a creature also is.
+        private static readonly Regex PhasesAnArtifactOut = Rx(@"target [\w ,]{0,35}artifact[\w ,]{0,25} phases out(?![^\n]{0,20}until)");
+
+        // A shield handed to ONE TRIBE — or to TOKENS, which the Buff ruling of
+        // 2026-09-21 calls a tribe by another name — belongs to that deck's
+        // payoff and not to this tag: Basri's Cats, Azlask's Scions and Spawns,
+        // Ainok Strike Leader's creature tokens, Goblin Wizard's "target
+        // Goblin". None of the four is tagged. Case-SENSITIVE like TribalPump,
+        // and neither a CARD TYPE opening the sentence ("Artifacts you control
+        // gain hexproof") nor a PRONOUN ("It gains indestructible" — Lightfoot
+        // Technique) is a tribe.
+        private const string NotACardType =
+            @"(?!(?:Artifact|Land|Planeswalker|Enchantment|Battle|It|They|This|That|He|She|You)s?\b)";
+
+        private static readonly Regex ShieldForATribe = new(
+            ClauseStart + @"(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + NotATribe + NotACardType
+            + @"[A-Z][\w']+s?(?: and [A-Z][\w']+s?)? (?:you control )?gains?\b[^.\n]*"
+            + @"|[Cc]reature tokens you control gains?\b[^.\n]*"
+            + @"|[Tt]arget " + NotATribe + @"[A-Z][\w']+ gains?\b[^.\n]*",
+            RegexOptions.CultureInvariant);
+
+        // …and TAKING a shield away is the opposite of this tag: Nowhere to Run,
+        // Spectacular Pileup and Autumn Willow name hexproof, indestructible and
+        // shroud only to switch them off. 0 of 5 reviewed cards tagged.
+        private static readonly Regex TakesAShieldAway = Rx(
+            @"[^.\n]*\b(?:lose (?:all abilities and )?(?:hexproof|indestructible|protection|shroud)"
+            + @"|as though (?:they|it) didn'?t have (?:hexproof|shroud)|ward abilities of)[^.\n]*");
+
+        // The lines a Protection effect can be held up from without being an
+        // instant or having flash: an ACTIVATED ability, a card turned FACE UP
+        // (a special action, taken any time — Essence of Antiquity, Forum
+        // Familiar), a trigger on something BECOMING THE TARGET (Monk Gyatso),
+        // which is a response by construction, and CYCLING, which is an
+        // activated ability from the hand (Agonasaur Rex).
+        private static readonly Regex ReactiveTrigger = Rx(
+            @"\bwhen(?:ever)? [^,\n]{0,40}is turned face up|\bwhenever [^,\n]{0,60}becomes the target of"
+            + @"|\bwhen(?:ever)? you cycle\b");
 
         private static readonly Regex PreventDealtBy = Rx(
             @"damage that would be dealt (?:to and dealt )?by");

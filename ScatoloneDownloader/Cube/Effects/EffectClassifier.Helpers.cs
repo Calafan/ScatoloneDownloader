@@ -675,6 +675,31 @@ namespace ScatoloneDownloader.Cube
         /// enter-the-battlefield triggers do not qualify.</summary>
         private static bool IsInstantSpeed(Card card)
         {
+            if (IsCastInResponse(card))
+            {
+                return true;
+            }
+
+            string text = card.OracleText ?? string.Empty;
+
+            foreach (Regex pattern in ActivatedAbility)
+            {
+                if (pattern.IsMatch(text))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>Whether the CARD itself is cast in response: an instant, a
+        /// card with flash, or one that "may cast this spell as though it had
+        /// flash" — the old Auras' way of saying it (Mystic Veil, Relic Ward,
+        /// Ward of Lights, all tagged Protection and none read before
+        /// 2026-09-28).</summary>
+        private static bool IsCastInResponse(Card card)
+        {
             if ((card.TypeLine ?? string.Empty).Contains("Instant", StringComparison.OrdinalIgnoreCase))
             {
                 return true;
@@ -690,9 +715,37 @@ namespace ScatoloneDownloader.Cube
 
             string text = card.OracleText ?? string.Empty;
 
-            foreach (Regex pattern in ActivatedAbility)
+            return FlashLine.IsMatch(text) || CastAsThoughItHadFlash.IsMatch(text);
+        }
+
+        // The keyword as printed, for a card whose keyword list is missing.
+        private static readonly Regex FlashLine = Rx(@"^flash\b", RegexOptions.Multiline);
+
+        // …unless only for a COMMANDER, which a cube never has (Timely Ward).
+        private static readonly Regex CastAsThoughItHadFlash = Rx(@"cast this spell as though it had flash(?! if it targets a commander)");
+
+        /// <summary>Whether a Protection effect can be HELD UP: the card is cast
+        /// in response, or the LINE carrying one of the pattern's matches is an
+        /// activated ability or a reactive trigger (see ReactiveTrigger). Asked
+        /// per line since 2026-09-28 — asked of the whole card, any unrelated
+        /// activation vouched for a static shield: Flickering Ward's "{W}:
+        /// return this Aura" for its protection from a colour, Paladin's Arms'
+        /// equip cost for its ward. Reminder text is blanked first, because
+        /// ward's own reminder says "whenever it becomes the target".</summary>
+        private static bool HeldUp(Card card, string text, Regex pattern)
+        {
+            if (IsCastInResponse(card))
             {
-                if (pattern.IsMatch(text))
+                return pattern.IsMatch(text);
+            }
+
+            foreach (Match match in pattern.Matches(text))
+            {
+                int start = text.LastIndexOf('\n', Math.Max(0, match.Index - 1)) + 1;
+                int end = text.IndexOf('\n', match.Index);
+                string line = Parenthetical.Replace(text[start..(end < 0 ? text.Length : end)], " ");
+
+                if (ActivatedAbility.Any(a => a.IsMatch(line)) || ReactiveTrigger.IsMatch(line))
                 {
                     return true;
                 }

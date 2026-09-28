@@ -229,9 +229,23 @@ namespace ScatoloneDownloader.Cube
             // whatever needs it, in response, on the turn it matters. Only the
             // second is what the tag is for, so the vocabulary above has to clear
             // a timing gate before it counts.
-            if (result.HasFlag(CardEffect.Protection) && !IsInstantSpeed(card))
+            // Asked of the LINE the shield sits on since 2026-09-28; see HeldUp.
+            if (result.HasFlag(CardEffect.Protection) && !ProtectionPatterns.Any(p => HeldUp(card, text, p)))
             {
                 result &= ~CardEffect.Protection;
+            }
+
+            // …and not a shield for one TRIBE, nor one being TAKEN AWAY. Blanked
+            // and asked again, so a card that shields a tribe on one line and
+            // anybody on another keeps the tag. See the two patterns.
+            if (result.HasFlag(CardEffect.Protection))
+            {
+                string shields = TakesAShieldAway.Replace(ShieldForATribe.Replace(text, " "), " ");
+
+                if (shields != text && !ProtectionPatterns.Any(p => HeldUp(card, shields, p)))
+                {
+                    result &= ~CardEffect.Protection;
+                }
             }
 
             // Tokens is the third reading of the same question the Mill rule
@@ -691,7 +705,20 @@ namespace ScatoloneDownloader.Cube
             // clause names its victim INSIDE the match ("TARGET creature
             // phases out"), so there is nothing in front of it for the
             // self-versus-other gate to inspect and that gate was stripping it.
-            if (PhasesSomethingOut.IsMatch(text))
+            if (PhasesSomethingOut.IsMatch(text) || PhasesAnArtifactOut.IsMatch(text))
+            {
+                result |= CardEffect.Protection;
+            }
+
+            // The families ruled 2026-09-28 — regeneration, a blink that saves,
+            // a shield counter — and the three shapes read the same day. Each
+            // names its beneficiary inside the match, so, like prevention, they
+            // are added here after the self gate; each must be held up.
+            if (HeldUp(card, RegeneratesATribe.Replace(text, " "), RegeneratesSomebody)
+                || HeldUp(card, text, BlinksToSave)
+                || HeldUp(card, text, ShieldCounterOnSomebody)
+                || HeldUp(card, text, SavesFromDeathOrDamage)
+                || HeldUp(card, text, UmbraArmor))
             {
                 result |= CardEffect.Protection;
             }
