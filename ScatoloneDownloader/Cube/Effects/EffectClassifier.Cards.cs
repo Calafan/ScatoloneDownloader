@@ -470,14 +470,20 @@ namespace ScatoloneDownloader.Cube
         //     watches a discard and causes none; Tinybones and Entropic
         //     Battlecruiser keep the tag through the discard they DO cause;
         //   an ALTERNATIVE COST — "its controller may discard a card that shares
-        //     a color" (Dream Halls).
+        //     a color" (Dream Halls);
+        //   and, ruled 2026-09-28, a SYMMETRIC CHOICE — "each player MAY discard"
+        //     (Mind Bomb, Snort, Mog, Will of the Jeskai, and The Death of Gwen
+        //     Stacy, whose hand tag the ruling corrected): everybody picks, you
+        //     included, and nobody's hand is attacked. The mandatory "each player
+        //     discards" of Wheel of Fortune stays Discard.
         // Blanked and the Discard patterns asked again, so a card that also
         // attacks a hand elsewhere keeps the tag.
         private static readonly Regex NotAnAttackOnAHand = Rx(
             @"[^.\n]*causes? you to discard this card[^.\n]*"
             + @"|(?:target player|defending player|each player|that player)[^.\n]{0,30}draws? [^.\n]{0,20}cards?,? then discards? (?:a|two) cards?"
             + @"|whenever (?:an opponent|a player|one or more (?:of your )?opponents?) discards? [^,\n]*,"
-            + @"|its controller may discard[^.\n]*");
+            + @"|its controller may discard[^.\n]*"
+            + @"|each player may discard[^.\n]*");
 
         private static readonly Regex SacrificedLands = Rx(
             @"sacrifices? (a|one|two|three|four|five|\d+) lands?\b");

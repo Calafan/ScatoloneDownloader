@@ -397,7 +397,19 @@ namespace ScatoloneDownloader.Cube
                     Rx(@"choose (?:a|an|one|two|up to \w+)[^.\n]{0,60}from it[^\n]{0,60}\b(?:they|the player) discards?\b"
                         + @"|\bthey discard (?:a|two|that|their)\b"),
                     Rx(@"(?:target opponent|each opponent|target player)[^.\n]{0,50}, discards? a card"),
-                    Rx(@"search (?:target (?:player|opponent)'s|that player's) [\w ,]{0,30}\bhand\b[^.\n]{0,100}\bexile")]),
+                    Rx(@"search (?:target (?:player|opponent)'s|that player's) [\w ,]{0,30}\bhand\b[^.\n]{0,100}\bexile"),
+                    // Three hand attacks ruled 2026-09-28, each settling a split in
+                    // the hand tags: a card EXILED from their hand, however many and
+                    // however chosen (Ruthless Negotiation against Unscrupulous Agent,
+                    // same sentence; Crabomination's card at random), but not one
+                    // they may still PLAY (Lightstall Inquisitor, Elkin Lair); a card
+                    // chosen from their hand and put back ON THEIR LIBRARY (Agonizing
+                    // Memories against Painful Memories); and the whole hand looked at
+                    // and EXILED (Apple of Eden, "come Wheel of Fortune e sorelle").
+                    Rx(@"(?:target opponent|each opponent|target player|that player) exiles? [^.\n]{0,100}?\bcards?(?: at random)? "
+                        + @"from their hand(?![^\n]{0,60}\bmay play)"),
+                    Rx(@"look at target (?:player|opponent)'s hand and choose [^.\n]{0,40}\. put (?:them|it|that card) on (?:top|the bottom)"
+                        + @"|look at target (?:player|opponent)'s hand and exile")]),
 
                 // Drawing ONE card off a spell you cast replaces the spell — that is
                 // card parity, not advantage, which is why Eject and Broadside

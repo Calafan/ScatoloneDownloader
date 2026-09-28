@@ -2724,6 +2724,80 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // Ruled 2026-09-28, each settling a split: a card EXILED from their hand
+    // (Unscrupulous Agent, the same sentence as Ruthless Negotiation;
+    // Crabomination's card at random), a card chosen from their hand and put on
+    // their LIBRARY (Painful Memories, as Agonizing Memories), the whole hand
+    // looked at and EXILED (Apple of Eden, "come Wheel of Fortune e sorelle"), a
+    // symmetric REPLACEMENT of the draw (Chains of Mephistopheles), and Nicol
+    // Bolas's "that player discards their hand", whose missing tag was a slip.
+    [InlineData("Unscrupulous Agent", "Creature — Elf Detective",
+        "When this creature enters, target opponent exiles a card from their hand.")]
+    [InlineData("Crabomination", "Creature — Crab Demon",
+        "Emerge from artifact {5}{B}{B} (You may cast this spell by sacrificing an artifact and paying the "
+        + "emerge cost reduced by that artifact's mana value.)\nWhen this creature enters, target opponent "
+        + "exiles the top card of their library, a card at random from their graveyard, and a card at random "
+        + "from their hand. You may cast a spell from among cards exiled this way without paying its mana cost.")]
+    [InlineData("Painful Memories", "Sorcery",
+        "Look at target opponent's hand and choose a card from it. Put that card on top of that player's "
+        + "library.")]
+    [InlineData("Apple of Eden, Isu Relic", "Legendary Artifact",
+        "{T}, Pay 4 life, Sacrifice Apple of Eden: Look at target opponent's hand and exile those cards face "
+        + "down. You may play those cards this turn, and mana of any type can be spent to cast them. Until end "
+        + "of turn, whenever you play a land or cast a spell this way, its owner draws a card. At the beginning "
+        + "of the next end step, return the exiled cards to their owner's hand. Activate only as a sorcery.")]
+    [InlineData("Chains of Mephistopheles", "Enchantment",
+        "If a player would draw a card except the first one they draw in each of their draw steps, that "
+        + "player discards a card instead. If the player discards a card this way, they draw a card. If the "
+        + "player doesn't discard a card this way, they mill a card.")]
+    [InlineData("Nicol Bolas", "Legendary Creature — Elder Dragon",
+        "Flying\nAt the beginning of your upkeep, sacrifice Nicol Bolas unless you pay {U}{B}{R}.\nWhenever "
+        + "Nicol Bolas deals damage to an opponent, that player discards their hand.")]
+    public void Classify_AHandAttackRuledIn_IsDiscard(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Discard));
+    }
+
+    [Theory]
+    // Ruled 2026-09-28: "each player MAY discard" is a choice everybody makes,
+    // you included, and attacks nobody's hand (Mind Bomb; The Death of Gwen
+    // Stacy, whose hand tag was corrected); a card exiled that they may still
+    // PLAY is not lost (Lightstall Inquisitor, Elkin Lair); and a discard of
+    // YOUR OWN is a cost — the four hand tags that said otherwise were ruled
+    // errors (Professor Zei, Sabin, Stormbind, Summon: G.F. Ifrit).
+    [InlineData("Mind Bomb", "Sorcery",
+        "Each player may discard up to three cards. Mind Bomb deals damage to each player equal to 3 minus "
+        + "the number of cards they discarded this way.")]
+    [InlineData("The Death of Gwen Stacy", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Destroy "
+        + "target creature.\nII — Each player may discard a card. Each player who doesn't loses 3 life.\nIII — "
+        + "Exile any number of target players' graveyards.")]
+    [InlineData("Lightstall Inquisitor", "Creature — Angel Wizard",
+        "Vigilance\nWhen this creature enters, each opponent exiles a card from their hand and may play that "
+        + "card for as long as it remains exiled. Each spell cast this way costs {1} more to cast. Each land "
+        + "played this way enters tapped.")]
+    [InlineData("Elkin Lair", "World Enchantment",
+        "At the beginning of each player's upkeep, that player exiles a card at random from their hand. The "
+        + "player may play that card this turn. At the beginning of the next end step, if the player hasn't "
+        + "played the card, they put it into their graveyard.")]
+    [InlineData("Professor Zei, Anthropologist", "Legendary Creature — Human Advisor Ally",
+        "{T}, Discard a card: Draw a card.\n{1}, {T}, Sacrifice Professor Zei: Return target instant or "
+        + "sorcery card from your graveyard to your hand. Activate only during your turn.")]
+    [InlineData("Sabin, Master Monk", "Legendary Creature — Human Noble Monk",
+        "Double strike\nBlitz—{2}{R}{R}, Discard a card. (If you cast this spell for its blitz cost, it gains "
+        + "haste and \"When this creature dies, draw a card.\" Sacrifice it at the beginning of the next end "
+        + "step.)\nYou may cast this card from your graveyard using its blitz ability.")]
+    [InlineData("Stormbind", "Enchantment",
+        "{2}, Discard a card at random: This enchantment deals 2 damage to any target.")]
+    [InlineData("Summon: G.F. Ifrit", "Enchantment Creature — Saga Demon",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after IV.)\nI, II — You "
+        + "may discard a card. If you do, draw a card.\nIII, IV — Add {R}.")]
+    public void Classify_AHandAttackRuledOut_IsNotDiscard(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Discard));
+    }
+
+    [Theory]
     // Four rulings of 2026-09-25, Buff side. A spell that is ONLY the pump is
     // Buff however small, at sorcery speed too — "anche se fa schifo".
     [InlineData("Honor", "Sorcery",
