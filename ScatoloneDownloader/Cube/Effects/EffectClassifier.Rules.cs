@@ -122,7 +122,12 @@ namespace ScatoloneDownloader.Cube
                     // The old-set sweepers take everything printed in one expansion,
                     // however they word the kill — Golgothian Sylex and City in a
                     // Bottle make the controllers sacrifice. Ruled 2026-09-27.
-                    Rx(@"permanents? with a name originally printed in the")]),
+                    Rx(@"permanents? with a name originally printed in the"),
+                    // A permanent sacrificed FOR EACH permanent of a kind is every
+                    // one of that kind: Omen of Fire takes all the white ones, ruled
+                    // Wipe on 2026-09-28. A LAND paid per creature is a tax (Flooded
+                    // Woodlands, Reclamation) and names no permanent here.
+                    Rx(@"sacrifices? [^.\n]{0,60}\bpermanent\b[^.\n]{0,30} for each [\w ]{0,20}permanent they control")]),
 
                 // "Nonland permanent" is how the whole modern O-ring family is worded
                 // (Stormplain Detainment, Web Up, Emergency Eject), and reading only
@@ -230,9 +235,13 @@ namespace ScatoloneDownloader.Cube
                     // the hand tags were found split three to two between this and
                     // Wipe on the identical sentence: ONE creature each is an edict,
                     // ruled Removal (Fleshbag Marauder, Plaguecrafter, Tariff). Two or
-                    // more each is Wipe's.
+                    // more each is Wipe's. The edict can EXILE instead of sacrificing,
+                    // and then says "chooses … and exiles it": Sothera does it every
+                    // time one of yours dies, and the human ruled it Removal on
+                    // 2026-09-28 because it only ever lands on the opponents.
                     Rx(@"(?:target player|target opponent|each opponent)[\w ,]{0,30}sacrifices? (?:a|an|one|two|\d+)[\w ]{0,25}(?<!non)creature"
-                        + @"|each player sacrifices (?:a|an|one|the) [\w ]{0,25}(?<!non)creature"),
+                        + @"|each player sacrifices (?:a|an|one|the) [\w ]{0,25}(?<!non)creature"
+                        + @"|(?:each|target) opponent chooses (?:a|an|one) [\w ,-]{0,30}creature they control and (?:exiles|sacrifices) it"),
                     // A creature that ends up in a LIBRARY is as answered as one that
                     // is destroyed, and the Auras are the only place this wording
                     // appears: The Spot's Portal puts it on the bottom, Dramatic
@@ -276,7 +285,10 @@ namespace ScatoloneDownloader.Cube
                 // admits the plural "to their owners' hands".
                 (CardEffect.Bounce, [
                     Rx(@"return (?:[\w' ]{0,30})?target[\w ,']*to (?:its|their) owner(?:'s|s'|s)? hands?"),
-                    Rx(@"return (?:each|all|every)[\w ,']*to (?:its|their) owner(?:'s|s'|s)? hands?"),
+                    // …but not LANDS alone: returning every Island is a mana base
+                    // set back, which the human tags LandDestruction and Wipe and not
+                    // this (Omen of Fire, 2026-09-28).
+                    Rx(@"return (?:each|all|every)(?! (?:lands|islands|plains|swamps|mountains|forests)\b)[\w ,']*to (?:its|their) owner(?:'s|s'|s)? hands?"),
                     // The owner's choice of TOP OR BOTTOM of the library is the
                     // same tempo answer as a return to hand: 9 of 9 reviewed
                     // cards that say it are tagged Bounce (Trip Up, Ice Magic,

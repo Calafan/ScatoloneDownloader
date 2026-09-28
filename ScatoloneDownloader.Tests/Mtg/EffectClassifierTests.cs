@@ -534,6 +534,36 @@ public sealed class EffectClassifierTests
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Wipe));
     }
 
+    [Fact]
+    public void Classify_AnEdictThatExiles_IsRemovalNotWipe()
+    {
+        // Ruled 2026-09-28: Sothera's edict comes back every time one of yours
+        // dies, but it only ever lands on the opponents, so it is Removal.
+        CardEffect result = EffectClassifier.Classify(MakeCard("Sothera, the Supervoid", "Legendary Enchantment",
+            "Whenever a creature you control dies, each opponent chooses a creature they control and exiles "
+            + "it.\nAt the beginning of your end step, if a player controls no creatures, sacrifice Sothera, then "
+            + "put a creature card exiled with it onto the battlefield under your control with two additional +1/+1 "
+            + "counters on it."));
+
+        Assert.True(result.HasFlag(CardEffect.Removal));
+        Assert.False(result.HasFlag(CardEffect.Wipe));
+    }
+
+    [Fact]
+    public void Classify_EveryPermanentOfAKindSacrificed_IsWipe_AndLandsReturnedAreNotBounce()
+    {
+        // Ruled 2026-09-28: Omen of Fire is Wipe and LandDestruction. One
+        // permanent FOR EACH white permanent is all of them, and returning every
+        // Island sets a mana base back rather than bouncing a threat.
+        CardEffect result = EffectClassifier.Classify(MakeCard("Omen of Fire", "Instant",
+            "Return all Islands to their owners' hands. Each player sacrifices a Plains or a white permanent of "
+            + "their choice for each white permanent they control."));
+
+        Assert.True(result.HasFlag(CardEffect.Wipe));
+        Assert.True(result.HasFlag(CardEffect.LandDestruction));
+        Assert.False(result.HasFlag(CardEffect.Bounce));
+    }
+
     [Theory]
     // Two more ways a card fixes colours, neither of which says "or" on one line.
     [InlineData("Bleachbone Verge", "Land",

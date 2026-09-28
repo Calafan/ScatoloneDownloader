@@ -50,7 +50,8 @@
 
             [CardEffect.Bounce] =
                 "Returns a NAMED permanent to its owner's hand (\"return target …\", or a mass \"return each/all\"). "
-                + "Returning itself as a cost or an end-step drawback is a price the card pays, not an answer.",
+                + "Returning itself as a cost or an end-step drawback is a price the card pays, not an answer. "
+                + "Returning every land (or every Island) is LandDestruction's.",
 
             [CardEffect.Ramp] =
                 "More mana, or sooner: a mana ability on a creature or rock, a land onto the battlefield, a ritual, "
