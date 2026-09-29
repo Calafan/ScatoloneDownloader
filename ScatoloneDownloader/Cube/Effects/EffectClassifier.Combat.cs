@@ -480,12 +480,16 @@ namespace ScatoloneDownloader.Cube
         // A BLINK that saves is Protection: exiling your own and bringing it
         // back (Salvation Swan, Waterbender's Restoration, Safe Haven, and
         // Expose the Culprit's cloak), exiling anybody's until the next end step
-        // (Getaway Glamer, Hide on the Ceiling, Parting Gust), returning your own
-        // permanent to hand in response (Ambrosia Whiteheart, Sunpearl Kirin,
-        // Forum Familiar) and airbending your own creature when it is targeted
-        // (Monk Gyatso). A return to hand paid as a COST is not — the colon of
-        // an activation, or the ADDITIONAL COST of a counterspell (Familiar's
-        // Ruse, Disappearing Act).
+        // (Getaway Glamer, Hide on the Ceiling, Parting Gust), and airbending
+        // your own creature when it is targeted (Monk Gyatso).
+        //
+        // An UNSUMMON of your own is NOT, ruled 2026-09-29 on Dour Port-Mage —
+        // "Unsummon su se stessi non è protection (Airbend sì perché costa poco
+        // rigiocarlo)": the creature is saved into your hand and has to be paid
+        // for again, where an airbent one comes back for {2} and a blinked one
+        // for nothing. That overturns the return-to-hand reading of 2026-09-28
+        // (Ambrosia Whiteheart, Sunpearl Kirin, Forum Familiar), and it is not
+        // Bounce either, since it answers nobody (see NotAnAnswerToHand).
         private static readonly Regex BlinksToSave = Rx(
             @"exile (?:up to \w+ |x |any number of |another )?(?:other )?target [\w ,]{0,30}?(?:creatures?|permanents?)(?: [\w ]{0,20})? you (?:control|own)\b[\s\S]{0,120}?\breturn"
             + @"|exile (?:any number of|each|all) [\w ,-]{0,30}creatures? you control[^\n]{0,120}\b(?:return|cloak)"
@@ -494,7 +498,6 @@ namespace ScatoloneDownloader.Cube
             // …and the same with the clock first: "At the beginning of the next
             // end step, return that card" (Phelia, ruled 2026-09-29).
             + @"|exile (?:up to \w+ |x |another )?(?:other )?target [\w ,/]{0,40}\. at the beginning of the next end step, return (?:it|that card|the exiled cards?|those cards)"
-            + @"|(?<!additional cost to cast this spell, )\breturn (?:up to one |another |an? )?(?:other )?(?:target )?(?:nonland )?(?:permanent|creature)s? you control to (?:its|their) owner'?s? hands?(?!:)"
             + @"|you may airbend that creature"
             // …and airbending YOUR OWN outright, ruled 2026-09-29 ("su di te è
             // protection"): Airbender's Reversal, Appa, Steadfast Guardian.

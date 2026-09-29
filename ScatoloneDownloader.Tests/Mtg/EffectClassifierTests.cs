@@ -3028,8 +3028,9 @@ public sealed class EffectClassifierTests
     [InlineData("Broken Fall", "Enchantment",
         "Return this enchantment to its owner's hand: Regenerate target creature.")]
     // A BLINK that saves is Protection, ruled the same day: your own exiled and
-    // returned, anybody's until the next end step, your own returned to hand in
-    // response, your own airbent when targeted, your own cloaked.
+    // returned, anybody's until the next end step, your own airbent when
+    // targeted, your own cloaked. (Your own returned to HAND was here too until
+    // 2026-09-29 — see Classify_AnUnsummonOfYourOwn_IsNeitherProtectionNorBounce.)
     [InlineData("Salvation Swan", "Creature — Bird Cleric",
         "Flash\nFlying\nWhenever this creature or another Bird you control enters, exile up to one target "
         + "creature you control without flying. Return it to the battlefield under its owner's control with a "
@@ -3055,17 +3056,6 @@ public sealed class EffectClassifierTests
         + "create a tapped 1/1 blue Fish creature token before its other effects.)\nExile target nontoken "
         + "creature. If the gift wasn't promised, return that card to the battlefield under its owner's control "
         + "with a +1/+1 counter on it at the beginning of the next end step.")]
-    [InlineData("Ambrosia Whiteheart", "Legendary Creature — Bird",
-        "Flash\nWhen Ambrosia Whiteheart enters, you may return another permanent you control to its owner's "
-        + "hand.\nLandfall — Whenever a land you control enters, Ambrosia Whiteheart gets +1/+0 until end of "
-        + "turn.")]
-    [InlineData("Sunpearl Kirin", "Creature — Kirin",
-        "Flash\nFlying\nWhen this creature enters, return up to one other target nonland permanent you control "
-        + "to its owner's hand. If it was a token, draw a card.")]
-    [InlineData("Forum Familiar", "Creature — Cat",
-        "Disguise {1}{W} (You may cast this card face down for {3} as a 2/2 creature with ward {2}. Turn it "
-        + "face up any time for its disguise cost.)\nWhen this creature is turned face up, return another target "
-        + "permanent you control to its owner's hand and put a +1/+1 counter on this creature.")]
     [InlineData("Monk Gyatso", "Legendary Creature — Human Monk",
         "Whenever another creature you control becomes the target of a spell or ability, you may airbend that "
         + "creature. (Exile it. While it's exiled, its owner may cast it for {2} rather than its mana cost.)")]
@@ -3170,6 +3160,37 @@ public sealed class EffectClassifierTests
     public void Classify_ASaveHeldUpForSomethingElse_IsProtection(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // An UNSUMMON of your own is not Protection, ruled 2026-09-29 on Dour Port-
+    // Mage ("Unsummon su se stessi non è protection, Airbend sì perché costa poco
+    // rigiocarlo"): the creature has to be paid for again. This OVERTURNS the
+    // 2026-09-28 reading that had Ambrosia Whiteheart, Sunpearl Kirin and Forum
+    // Familiar pinned as Protection above; and it answers nobody, so it is not
+    // Bounce either.
+    [InlineData("Dour Port-Mage", "Creature — Frog Wizard",
+        "Whenever one or more other creatures you control leave the battlefield without dying, draw a "
+        + "card.\n{1}{U}, {T}: Return another target creature you control to its owner's hand.")]
+    [InlineData("Sunpearl Kirin", "Creature — Kirin",
+        "Flash\nFlying\nWhen this creature enters, return up to one other target nonland permanent you control "
+        + "to its owner's hand. If it was a token, draw a card.")]
+    [InlineData("Ambrosia Whiteheart", "Legendary Creature — Bird",
+        "Flash\nWhen Ambrosia Whiteheart enters, you may return another permanent you control to its owner's "
+        + "hand.\nLandfall — Whenever a land you control enters, Ambrosia Whiteheart gets +1/+0 until end of "
+        + "turn.")]
+    [InlineData("Forum Familiar", "Creature — Cat",
+        "Disguise {1}{W} (You may cast this card face down for {3} as a 2/2 creature with ward {2}. Turn it "
+        + "face up any time for its disguise cost.)\nWhen this creature is turned face up, return another target "
+        + "permanent you control to its owner's hand and put a +1/+1 counter on this creature.")]
+    [InlineData("Vedalken Mastermind", "Creature — Vedalken Wizard",
+        "{U}, {T}: Return target permanent you control to its owner's hand.")]
+    public void Classify_AnUnsummonOfYourOwn_IsNeitherProtectionNorBounce(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.False(result.HasFlag(CardEffect.Protection));
+        Assert.False(result.HasFlag(CardEffect.Bounce));
     }
 
     [Theory]
