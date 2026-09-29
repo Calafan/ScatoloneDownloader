@@ -310,7 +310,11 @@ namespace ScatoloneDownloader.Cube
         // them against the card with the un-aimable recursion blanked out.
         private static readonly Regex[] ReanimatePatterns =
         [
-            Rx(@"return[\w ,'\-/]{0,70}from[\w ,'\-/]{0,30}graveyard to the battlefield"),
+            // 90, not 70, as Regrowth's: Carmen, Cruel Skymarcher's "return up to
+            // one target permanent card WITH MANA VALUE LESS THAN OR EQUAL TO
+            // CARMEN'S POWER from your graveyard" runs to 86, and the human
+            // tagged it Reanimate on 2026-09-29.
+            Rx(@"return[\w ,'\-/]{0,90}from[\w ,'\-/]{0,30}graveyard to the battlefield"),
             // The same effect written PUT instead of RETURN, with the graveyard
             // named any of the ways the game names it — "from a graveyard", "in
             // that player's graveyard", "from an opponent's graveyard". All six

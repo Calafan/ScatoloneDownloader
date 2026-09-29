@@ -1582,6 +1582,17 @@ public sealed class EffectClassifierTests
         + "onto the battlefield under your control tapped and attacking.\n"
         + "Void — At the beginning of your end step, sacrifice this Aura unless a nonland permanent left the "
         + "battlefield this turn or a spell was warped this turn.")]
+    // A return whose card is qualified at length (mana value less than or equal to
+    // its power) is read up to 90 characters, as Regrowth's is: Carmen, tagged by
+    // the human on 2026-09-29, and Sandbender Scavengers.
+    [InlineData("Carmen, Cruel Skymarcher", "Legendary Creature — Vampire Soldier",
+        "Flying\nWhenever a player sacrifices a permanent, put a +1/+1 counter on Carmen and you gain 1 "
+        + "life.\nWhenever Carmen attacks, return up to one target permanent card with mana value less than or "
+        + "equal to Carmen's power from your graveyard to the battlefield.")]
+    [InlineData("Sandbender Scavengers", "Creature — Human Rogue",
+        "Whenever you sacrifice another permanent, put a +1/+1 counter on this creature.\nWhen this creature "
+        + "dies, you may exile it. When you do, return target creature card with mana value less than or equal "
+        + "to this creature's power from your graveyard to the battlefield.")]
     public void Classify_PuttingACreatureCardOntoTheBattlefield_IsReanimate(
         string name, string typeLine, string oracle)
     {
