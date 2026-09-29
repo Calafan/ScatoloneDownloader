@@ -833,7 +833,11 @@ namespace ScatoloneDownloader.Cube
                     // the players — "to each creature WITHOUT FLYING and each player"
                     // runs to 33 characters (Magmasaur, ruled Wipe and Burn with the
                     // rest of the symmetric sweepers on 2026-09-27).
-                    Rx(@"deals damage equal to [\w' ,+/]{0,70}to [\w ,'-]{0,40}" + BurnTarget + @"\b"),
+                    // A player named only as the CONTROLLER of the creature hit
+                    // is no face (Lothlórien Blade's "to target creature
+                    // defending player controls", untagged by the human on
+                    // 2026-09-29), hence the lookahead.
+                    Rx(@"deals damage equal to [\w' ,+/]{0,70}to [\w ,'-]{0,40}" + BurnTarget + @"\b(?! controls?\b)"),
                     // Life paid to keep something from happening is life lost.
                     // Ruled 2026-09-20 with the rest of Burn: Breathstealer's Crypt,
                     // Sirocco and Cleansing all charge a player life to stop the

@@ -4238,6 +4238,11 @@ public sealed class EffectClassifierTests
     [InlineData("Explosive Shot", "Instant", "Explosive Shot deals 4 damage to target creature.")]
     [InlineData("Thunder Salvo", "Instant",
         "Thunder Salvo deals X damage to target creature, where X is 2 plus the number of other spells you've cast this turn.")]
+    // A player named only as the controller of the creature hit is no face: the
+    // human took Burn off Lothlórien Blade on 2026-09-29.
+    [InlineData("Lothlórien Blade", "Artifact — Equipment",
+        "Whenever equipped creature attacks, it deals damage equal to its power to target creature defending "
+        + "player controls.\nEquip Elf {2}\nEquip {5}")]
     public void Classify_DamageAtACreature_IsRemovalNotBurn(string name, string typeLine, string oracle)
     {
         CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
