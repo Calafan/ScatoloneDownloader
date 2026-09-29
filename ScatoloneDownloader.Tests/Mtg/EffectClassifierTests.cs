@@ -3893,6 +3893,45 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // A Treasure a token the card creates will make is the token's, ruled
+    // 2026-09-29 on There and Back Again ("non crea Treasure ma li crea il token
+    // che viene creato solo quando muore"): Smaug's fourteen Treasures are
+    // Smaug's, and the Goblin Shaman's are the Goblin's.
+    [InlineData("There and Back Again", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Up to "
+        + "one target creature can't block for as long as you control this Saga. The Ring tempts you.\nII — "
+        + "Search your library for a Mountain card, put it onto the battlefield, then shuffle.\nIII — Create "
+        + "Smaug, a legendary 6/6 red Dragon creature token with flying, haste, and \"When Smaug dies, create "
+        + "fourteen Treasure tokens.\"")]
+    [InlineData("Fable of the Mirror-Breaker // Reflection of Kiki-Jiki", "Enchantment — Saga // Enchantment Creature — Goblin Shaman",
+        "(As this Saga enters and after your draw step, add a lore counter.)\nI — Create a 2/2 red Goblin "
+        + "Shaman creature token with \"Whenever this token attacks, create a Treasure token.\"\nII — You may "
+        + "discard up to two cards. If you do, draw that many cards.\nIII — Exile this Saga, then return it to "
+        + "the battlefield transformed under your control.\n{1}, {T}: Create a token that's a copy of another "
+        + "target nonlegendary creature you control, except it has haste. Sacrifice it at the beginning of the "
+        + "next end step.")]
+    public void Classify_ATreasureATokenMakes_IsTheTokens(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
+    }
+
+    [Theory]
+    // …and it does not RAMP the card either: the Goblin Shaman's Treasure on
+    // every attack was reading as a repeated maker. (There and Back Again is not
+    // here: its Mountain put onto the battlefield is its own Ramp.)
+    [InlineData("Fable of the Mirror-Breaker // Reflection of Kiki-Jiki", "Enchantment — Saga // Enchantment Creature — Goblin Shaman",
+        "(As this Saga enters and after your draw step, add a lore counter.)\nI — Create a 2/2 red Goblin "
+        + "Shaman creature token with \"Whenever this token attacks, create a Treasure token.\"\nII — You may "
+        + "discard up to two cards. If you do, draw that many cards.\nIII — Exile this Saga, then return it to "
+        + "the battlefield transformed under your control.\n{1}, {T}: Create a token that's a copy of another "
+        + "target nonlegendary creature you control, except it has haste. Sacrifice it at the beginning of the "
+        + "next end step.")]
+    public void Classify_ATreasureATokenMakes_DoesNotRampTheCard(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
     // Every LAND flavour of cycling fixes. "Basic landcycling" is printed on 125
     // cards, more than all five named types together, and was missed until now.
     [InlineData("Sylvan Reclamation", "Instant",

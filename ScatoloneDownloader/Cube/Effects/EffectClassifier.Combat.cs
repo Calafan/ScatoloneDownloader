@@ -987,6 +987,18 @@ namespace ScatoloneDownloader.Cube
         // it also RAMPS is a question of how many you get: one, once, is a rider
         // — the same line already drawn for the Clue. Ruled 2026-09-18.
         private static readonly Regex MakesATreasure = Rx(@"treasure token");
+
+        // …but a Treasure a created TOKEN makes is the token's, ruled 2026-09-29
+        // on There and Back Again ("non crea Treasure ma li crea il token che
+        // viene creato solo quando muore"): Smaug's fourteen Treasures are
+        // Smaug's, as a token's damage and a token's drain already were (Burn,
+        // see DamageFromSomethingItMade). The quotes of a token created "with"
+        // an ability are blanked before either Treasure question is asked.
+        // Three cards in the store are written this way — There and Back
+        // Again, Fable of the Mirror-Breaker, Diabolical Salvation — and none
+        // makes a Treasure outside the token's quotes.
+        private static readonly Regex TreasureATokenMakes = Rx(
+            @"\btokens? with [^""\n]{0,60}""[^""]*\btreasure\b[^""]*""");
         private static readonly Regex SeveralTreasures = Rx(
             @"create (?:two|three|four|five|x|\d+) treasure tokens"
             + @"|creates? that many treasure tokens"

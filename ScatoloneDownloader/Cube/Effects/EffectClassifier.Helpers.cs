@@ -441,6 +441,8 @@ namespace ScatoloneDownloader.Cube
 
         private static bool TreasureAlsoRamps(string text)
         {
+            text = TreasureATokenMakes.Replace(text, " ");
+
             if (!MakesATreasure.IsMatch(text))
             {
                 return false;

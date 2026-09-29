@@ -441,6 +441,19 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.ManaFixing;
             }
 
+            // …nor a Treasure a token the card creates will make: that is the
+            // token's. Blanked and asked again, so a card that also fixes on a
+            // line of its own keeps the tag. See TreasureATokenMakes.
+            if (result.HasFlag(CardEffect.ManaFixing) && TreasureATokenMakes.IsMatch(text))
+            {
+                string own = TreasureATokenMakes.Replace(text, " ");
+
+                if (!ManaFixingPatterns.Any(p => p.IsMatch(own)))
+                {
+                    result &= ~CardEffect.ManaFixing;
+                }
+            }
+
             // A land out of the graveyard rebuilds a mana base; it reanimates
             // nothing. Done by BLANKING the phrase and asking whether the rule
             // still matches, so a card that returns a creature AND a land keeps

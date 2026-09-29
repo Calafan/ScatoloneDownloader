@@ -14,7 +14,7 @@ namespace ScatoloneDownloader.Cube
         // One entry per effect; a card gets the effect if ANY of its patterns hit.
         private static readonly (CardEffect Effect, Regex[] Patterns)[] Rules;
 
-        // All five are the SAME ARRAY the table holds, looked up once —
+        // All six are the SAME ARRAY the table holds, looked up once —
         // hoisted out of it for the same reason as MillPatterns and
         // ReanimatePatterns: the vetoes that strip a tag re-ask its own patterns
         // against the text with the offending shape blanked out, so a card that
@@ -28,6 +28,8 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex[] DiscardPatterns;
 
         private static readonly Regex[] BouncePatterns;
+
+        private static readonly Regex[] ManaFixingPatterns;
 
         // A STATIC CONSTRUCTOR rather than three field initialisers, and that is
         // forced by the split: initialisers run in textual order within a file but
@@ -1008,6 +1010,7 @@ namespace ScatoloneDownloader.Cube
             WipePatterns = Rules.First(rule => rule.Effect == CardEffect.Wipe).Patterns;
             DiscardPatterns = Rules.First(rule => rule.Effect == CardEffect.Discard).Patterns;
             BouncePatterns = Rules.First(rule => rule.Effect == CardEffect.Bounce).Patterns;
+            ManaFixingPatterns = Rules.First(rule => rule.Effect == CardEffect.ManaFixing).Patterns;
         }
 
         // Damage aimed at THAT PERMANENT'S CONTROLLER, which is how the old
