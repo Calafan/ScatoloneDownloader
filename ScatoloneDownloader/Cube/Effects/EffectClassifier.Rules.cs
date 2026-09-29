@@ -459,7 +459,12 @@ namespace ScatoloneDownloader.Cube
                     Rx(@"(?:target opponent|each opponent|target player|that player) exiles? [^.\n]{0,100}?\bcards?(?: at random)? "
                         + @"from their hand(?![^\n]{0,60}\bmay play)"),
                     Rx(@"look at target (?:player|opponent)'s hand and choose [^.\n]{0,40}\. put (?:them|it|that card) on (?:top|the bottom)"
-                        + @"|look at target (?:player|opponent)'s hand and exile")]),
+                        + @"|look at target (?:player|opponent)'s hand and exile"
+                        // The same exile as a second sentence, "look at target
+                        // opponent's hand. You may exile a nonland card from it"
+                        // (Deep-Cavern Bat, tagged by the human on 2026-09-29),
+                        // unless its owner may still play it (Elite Spellbinder).
+                        + @"|look at target (?:player|opponent)'s hand\. you may exile [^.\n]{0,40}\bfrom it(?![^\n]{0,100}\bmay play)")]),
 
                 // Drawing ONE card off a spell you cast replaces the spell — that is
                 // card parity, not advantage, which is why Eject and Broadside

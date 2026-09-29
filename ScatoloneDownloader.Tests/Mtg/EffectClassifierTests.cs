@@ -2906,6 +2906,11 @@ public sealed class EffectClassifierTests
         + "cards in your graveyard, each opponent may sacrifice a nonland permanent of their choice or discard "
         + "a card. Then this creature deals damage equal to its power to each opponent who didn't sacrifice a "
         + "permanent or discard a card this way.")]
+    // The hand looked at and a card exiled from it in a second sentence: Deep-
+    // Cavern Bat, tagged by the human on 2026-09-29.
+    [InlineData("Deep-Cavern Bat", "Creature — Bat",
+        "Flying, lifelink\nWhen this creature enters, look at target opponent's hand. You may exile a nonland "
+        + "card from it until this creature leaves the battlefield.")]
     public void Classify_AHandAttackRuledIn_IsDiscard(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Discard));
@@ -2955,6 +2960,12 @@ public sealed class EffectClassifierTests
         + "their choice. If that player can't, they discard a card, they lose 2 life, you draw a card, you gain "
         + "2 life, you create a 2/2 white Knight creature token with vigilance, then you sacrifice this "
         + "enchantment.")]
+    // …but not when its owner may still play the exiled card (Elite Spellbinder),
+    // the line drawn on 2026-09-28.
+    [InlineData("Elite Spellbinder", "Creature — Human Cleric",
+        "Flying\nWhen this creature enters, look at target opponent's hand. You may exile a nonland card from "
+        + "it. For as long as that card remains exiled, its owner may play it. A spell cast this way costs {2} "
+        + "more to cast.")]
     public void Classify_AHandAttackRuledOut_IsNotDiscard(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Discard));
