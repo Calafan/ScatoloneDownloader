@@ -193,7 +193,7 @@ namespace ScatoloneDownloader.Cube
 
             // Added AFTER the land strip, because Crystal Vein is a land and is
             // exactly the card this rule is for. See the patterns above.
-            if ((SacrificesForMana.IsMatch(text) || RitualAddsMana.IsMatch(text))
+            if ((SacrificesForMana.IsMatch(text) || RitualAddsMana.IsMatch(SagaChapterLine.Replace(text, " ")))
                 && !LandEntersTapped.IsMatch(text))
             {
                 result |= CardEffect.Ramp;

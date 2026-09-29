@@ -4067,6 +4067,23 @@ public sealed class EffectClassifierTests
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
     }
 
+    [Theory]
+    // A Saga chapter's burst of mana is not Ramp, ruled 2026-09-29 (4 of the 6
+    // reviewed chapters that add mana are untagged, Maximum Carnage and Esper
+    // Origins among them).
+    [InlineData("The Bath Song", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI, II — "
+        + "Draw two cards, then discard a card.\nIII — Shuffle any number of target cards from your graveyard "
+        + "into your library. Add {U}{U}.")]
+    [InlineData("Maximum Carnage", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Until "
+        + "your next turn, each creature attacks each combat if able and attacks a player other than you if "
+        + "able.\nII — Add {R}{R}{R}.\nIII — This Saga deals 5 damage to each opponent.")]
+    public void Classify_ASagaChaptersBurstOfMana_IsNotRamp(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
     [Fact]
     public void Classify_Harrow_PaysOneLandForTwo_IsRamp()
     {

@@ -34,6 +34,15 @@ namespace ScatoloneDownloader.Cube
 
         private static readonly Regex RitualAddsMana = Rx(@"(?:^|\n|\. )add [\w ]{0,20}\{[wubrgc]");
 
+        // …but not a SAGA CHAPTER's burst of mana, ruled 2026-09-29 ("non è
+        // Ramp"): 4 of the 6 reviewed chapters that add mana are untagged
+        // (Maximum Carnage, Esper Origins, Clive's Ifrit, Terra), the newest
+        // among them, and Summon: G.F. Ifrit and Esper Valigarmanda went back
+        // for review. A chapter that GRANTS a mana ability for good (Huatli's
+        // "Creatures you control have '{T}: Add …'") is not a burst and is not
+        // blanked by this — it is read by the tap rule.
+        private static readonly Regex SagaChapterLine = Rx(@"^[ivx]+(?:, [ivx]+)* — [^\n]*", RegexOptions.Multiline);
+
         // The exact line the hand-tagging draws. Crystal Vein cracks for two and is
         // tagged; Dwarven Ruins, Ebon Stronghold, Havenwood Battleground, Ruins of
         // Trokair and Svyelunite Temple do the same thing and are not — because
