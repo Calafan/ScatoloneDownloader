@@ -1010,9 +1010,30 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex TreasureATokenMakes = Rx(
             @"\btokens? with [^""\n]{0,60}""[^""]*\btreasure\b[^""]*""");
         private static readonly Regex SeveralTreasures = Rx(
-            @"create (?:two|three|four|five|x|\d+) treasure tokens"
-            + @"|creates? that many treasure tokens"
-            + @"|treasure tokens? for each|(?:two|three|four|\d+) treasure tokens");
+            @"creates? (?:two|three|four|five|x|\d+) (?:tapped )?treasure tokens"
+            + @"|creates? (?:that many|a number of) (?:tapped )?treasure tokens"
+            + @"|(?:two|three|four|\d+) (?:tapped )?treasure tokens");
+
+        // "A Treasure FOR EACH" is several at once on a spell or an enters
+        // trigger (Covetous Elegy), and one per trigger on a trigger that
+        // fires again (Edward Kenway, whose Ramp the human took off on 09-23).
+        private static readonly Regex TreasureForEach = Rx(@"treasure tokens? for each");
+
+        private static readonly Regex RecurringTriggerWord = Rx(@"\bwhenever\b|\bat the beginning of\b");
+
+        // Treasures counted by the EXCESS DAMAGE a removal spell dealt are the
+        // spell's rider, however many: Bottle-Cap Blast and Hell to Pay, both
+        // left without Ramp by the human on 2026-09-23.
+        private static readonly Regex TreasuresForExcessDamage = Rx(
+            @"[^.\n]*(?:\bexcess\b[^.\n]*\btreasure tokens?|\btreasure tokens?[^.\n]*\bexcess\b)[^.\n]*");
+
+        // An ACTIVATED ability that makes a Treasure: a cost, then a colon, on
+        // the same line as the token — or the same ability GRANTED in quotes
+        // (Bootleggers' Stash's lands "{T}: Create a Treasure token"). See
+        // TreasureAlsoRamps.
+        private static readonly Regex ActivatedTreasureMaker = Rx(
+            @"^[^\n:""]{1,70}:[^\n]*\btreasure tokens?\b|""[^""\n:]{1,60}:[^""\n]*\btreasure tokens?\b",
+            RegexOptions.Multiline);
 
         // The Treasure's own reminder text carries "{T}, Sacrifice this token:",
         // which would make every Treasure card read as repeatable.

@@ -4059,15 +4059,48 @@ public sealed class EffectClassifierTests
 
     [Theory]
     // A Treasure is a Lotus Petal in token form: it always fixes, and it ramps
-    // when you get several at once or over and over. One, once, is a rider —
-    // the line already drawn for the Clue. Ruled 2026-09-18.
+    // when you get several at once — ruled 2026-09-18 — or when an ACTIVATED
+    // ability makes it. One, once, is a rider, the line drawn for the Clue; and
+    // ONE PER TRIGGER is never Ramp, ruled 2026-09-29 ("un Treasure per trigger
+    // mai"), which moved Gilded Ghoda from true to false and reads "a Treasure
+    // for each" on a trigger as one per trigger (Edward Kenway). Treasures
+    // counted by a removal spell's EXCESS DAMAGE are its rider (Bottle-Cap
+    // Blast, Hell to Pay).
     [InlineData("Professional Wrestler", "Creature — Human Warrior",
         "When this creature enters, create a Treasure token.", false)]
     [InlineData("Gilded Ghoda", "Creature — Frog Mount",
-        "Whenever this creature attacks while saddled, create a Treasure token.", true)]
+        "Whenever this creature attacks while saddled, create a Treasure token.", false)]
     [InlineData("Unexpected Windfall", "Instant",
         "As an additional cost to cast this spell, discard a card.\n"
         + "Draw two cards and create two Treasure tokens.", true)]
+    [InlineData("Fountainport", "Land",
+        "{T}: Add {C}.\n{2}, {T}, Sacrifice a token: Draw a card.\n{3}, {T}, Pay 1 life: Create a 1/1 blue Fish "
+        + "creature token.\n{4}, {T}: Create a Treasure token.", true)]
+    [InlineData("Prosperous Bandit", "Creature — Raccoon Rogue",
+        "Offspring {1} (You may pay an additional {1} as you cast this spell. If you do, when this creature "
+        + "enters, create a 1/1 token copy of it.)\nFirst strike\nWhenever this creature deals combat damage to a "
+        + "player, create that many tapped Treasure tokens.", true)]
+    [InlineData("Covetous Elegy", "Sorcery",
+        "Each player chooses up to two creatures they control, then sacrifices the rest. Then you create a "
+        + "tapped Treasure token for each creature your opponents control.", true)]
+    [InlineData("Bootleggers' Stash", "Artifact",
+        "Lands you control have \"{T}: Create a Treasure token.\"", true)]
+    [InlineData("Edward Kenway", "Legendary Creature — Human Assassin Pirate",
+        "At the beginning of your end step, create a Treasure token for each tapped Assassin, Pirate, and/or "
+        + "Vehicle you control.\nWhenever a Vehicle you control deals combat damage to a player, look at the top "
+        + "card of that player's library, then exile it face down. You may play that card for as long as it "
+        + "remains exiled.", false)]
+    [InlineData("Jolene, Plundering Pugilist", "Legendary Creature — Human Mercenary",
+        "Whenever you attack with one or more creatures with power 4 or greater, create a Treasure "
+        + "token.\n{1}{R}, Sacrifice a Treasure: Jolene deals 1 damage to any target.", false)]
+    [InlineData("Bottle-Cap Blast", "Instant",
+        "Improvise (Your artifacts can help cast this spell. Each artifact you tap after you're done "
+        + "activating mana abilities pays for {1}.)\nBottle-Cap Blast deals 5 damage to any target. If excess "
+        + "damage was dealt to a permanent this way, create that many tapped Treasure tokens. (They're "
+        + "artifacts with \"{T}, Sacrifice this token: Add one mana of any color.\")", false)]
+    [InlineData("Hell to Pay", "Sorcery",
+        "Hell to Pay deals X damage to target creature. Create a number of tapped Treasure tokens equal to "
+        + "the amount of excess damage dealt to that creature this way.", false)]
     public void Classify_Treasure_AlwaysFixes_AndRampsWhenThereAreSeveral(
         string name, string typeLine, string oracle, bool ramps)
     {

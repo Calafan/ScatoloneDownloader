@@ -412,11 +412,6 @@ namespace ScatoloneDownloader.Cube
                 && !(CounterOnSomebodyElse.IsMatch(rest) && !CounterForAnOpponent.IsMatch(rest));
         }
 
-        /// <summary>True when the card's Treasures come often enough or thick
-        /// enough to be extra mana rather than a rider: several at once, or one
-        /// on a repeating trigger or an activated ability. The reminder text is
-        /// blanked first, because it carries a colon and would make every
-        /// Treasure card read as repeatable.</summary>
         /// <summary>True when what the card makes is a CREATURE — said outright,
         /// said in a named token's reminder text, or made as a copy of one.
         /// </summary>
@@ -457,17 +452,25 @@ namespace ScatoloneDownloader.Cube
             return false;
         }
 
+        /// <summary>True when the card's Treasures are extra mana rather than a
+        /// rider: several at once, or made by an ACTIVATED ability you can use
+        /// again and again (Fountainport, Treasure Dredger, Warren Soultrader).
+        /// ONE Treasure per TRIGGER is never Ramp, ruled 2026-09-29 — "un
+        /// Treasure per trigger mai" — which overturns the "over and over" half
+        /// of the 2026-09-18 ruling: on 09-23 the human had taken Ramp off
+        /// Jolene, Orochi Soul-Reaver, Sword of Wealth and Power and Edward
+        /// Kenway, whose triggers each make one. "A Treasure for each" on a
+        /// trigger is still one per trigger (Edward Kenway). The reminder text
+        /// is blanked first, because it carries a colon and would read as an
+        /// activation.</summary>
         private static bool TreasureAlsoRamps(string text)
         {
-            text = TreasureATokenMakes.Replace(text, " ");
+            text = TreasuresForExcessDamage.Replace(
+                TreasureReminderText.Replace(TreasureATokenMakes.Replace(text, " "), " "), " ");
 
-            if (!MakesATreasure.IsMatch(text))
-            {
-                return false;
-            }
-
-            return SeveralTreasures.IsMatch(text)
-                || RepeatableWording.IsMatch(TreasureReminderText.Replace(text, " "));
+            return MakesATreasure.IsMatch(text)
+                && (SeveralTreasures.IsMatch(text) || ActivatedTreasureMaker.IsMatch(text)
+                    || text.Split('\n').Any(line => TreasureForEach.IsMatch(line) && !RecurringTriggerWord.IsMatch(line)));
         }
 
         /// <summary>True when EVERY line that adds mana charges mana for it and
