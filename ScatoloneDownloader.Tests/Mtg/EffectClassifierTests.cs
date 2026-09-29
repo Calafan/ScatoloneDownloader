@@ -3420,6 +3420,18 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // A shield on a creature the same card destroys at the next end step saves
+    // nothing, ruled 2026-09-29 by name: "il muro viene distrutto alla fine, non è
+    // una protezione".
+    [InlineData("Glyph of Destruction", "Instant",
+        "Target blocking Wall you control gets +10/+0 until end of combat. Prevent all damage that would be "
+        + "dealt to it this turn. Destroy it at the beginning of the next end step.")]
+    public void Classify_AShieldOnACreatureTheCardDestroys_IsNotProtection(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
     // Mill has to be aimed at somebody else. Everything here fills the caster's
     // own graveyard: as an upkeep tax (Deep Spawn), as an activation cost
     // (Millikin), as a recursion cost (Rot Farm Skeleton), or as the whole point

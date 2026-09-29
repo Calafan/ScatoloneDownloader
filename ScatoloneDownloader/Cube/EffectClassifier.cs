@@ -231,9 +231,10 @@ namespace ScatoloneDownloader.Cube
             // a timing gate before it counts.
             // Asked of the LINE the shield sits on since 2026-09-28; see HeldUp.
             // An Aura's or an Equipment's shield for its own creature is not
-            // asked at all, see WithoutAWornShield; every Protection reading
-            // below reads the same text.
-            string protectable = WithoutAWornShield(card, text);
+            // asked at all, see WithoutAWornShield, and nor is one on a creature
+            // the card destroys at the next end step (ShieldForTheDoomed); every
+            // Protection reading below reads the same text.
+            string protectable = ShieldForTheDoomed.Replace(WithoutAWornShield(card, text), " ");
 
             if (result.HasFlag(CardEffect.Protection) && !ProtectionPatterns.Any(p => HeldUp(card, protectable, p)))
             {

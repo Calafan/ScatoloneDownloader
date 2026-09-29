@@ -848,6 +848,17 @@ namespace ScatoloneDownloader.Cube
         // A Licid is a creature until it becomes the Aura (Nurturing Licid).
         private static readonly Regex BecomesAnAura = Rx(@"\bbecomes an aura\b");
 
+        // A shield on a creature the same line DESTROYS at the next end step
+        // saves nothing, ruled 2026-09-29 on Glyph of Destruction ("il muro viene
+        // distrutto alla fine, non è una protezione"): its "prevent all damage
+        // that would be dealt to it" buys one combat and the Wall is gone. The
+        // whole line is blanked from what Protection reads. "Destroy or sacrifice
+        // it at the beginning of the next end step" is on 15 reviewed cards and
+        // none is Protection; Glyph was the one proposal it moves.
+        private static readonly Regex ShieldForTheDoomed =
+            Rx(@"^[^\n]*\b(?:destroy|sacrifice) (?:it|that creature) at the beginning of the next end step\b[^\n]*",
+                RegexOptions.Multiline);
+
         // A BLINK at sorcery speed saves nothing: Lilysplash Mentor exiles your
         // own creature for {1}{G}{U} "Activate only as a sorcery", which is a
         // second enters trigger, and the human took its Protection off on
