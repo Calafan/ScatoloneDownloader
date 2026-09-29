@@ -230,7 +230,12 @@ namespace ScatoloneDownloader.Cube
             // second is what the tag is for, so the vocabulary above has to clear
             // a timing gate before it counts.
             // Asked of the LINE the shield sits on since 2026-09-28; see HeldUp.
-            if (result.HasFlag(CardEffect.Protection) && !ProtectionPatterns.Any(p => HeldUp(card, text, p)))
+            // An Aura's or an Equipment's shield for its own creature is not
+            // asked at all, see WithoutAWornShield; every Protection reading
+            // below reads the same text.
+            string protectable = WithoutAWornShield(card, text);
+
+            if (result.HasFlag(CardEffect.Protection) && !ProtectionPatterns.Any(p => HeldUp(card, protectable, p)))
             {
                 result &= ~CardEffect.Protection;
             }
@@ -241,9 +246,9 @@ namespace ScatoloneDownloader.Cube
             if (result.HasFlag(CardEffect.Protection))
             {
                 string shields = ShieldForThePlayerAlone.Replace(
-                    TakesAShieldAway.Replace(ShieldForATribe.Replace(text, " "), " "), " ");
+                    TakesAShieldAway.Replace(ShieldForATribe.Replace(protectable, " "), " "), " ");
 
-                if (shields != text && !ProtectionPatterns.Any(p => HeldUp(card, shields, p)))
+                if (shields != protectable && !ProtectionPatterns.Any(p => HeldUp(card, shields, p)))
                 {
                     result &= ~CardEffect.Protection;
                 }
@@ -718,7 +723,7 @@ namespace ScatoloneDownloader.Cube
             // (Bubble Matrix) sits on the board rather than being held up, and
             // requiring an instant, flash or an activated ability withdrew five
             // false positives at no cost in recall.
-            if (PreventsDamageForSomebodyElse(card) && IsInstantSpeed(card))
+            if (PreventsDamageForSomebodyElse(card, protectable) && IsInstantSpeed(card))
             {
                 result |= CardEffect.Protection;
             }
@@ -738,13 +743,13 @@ namespace ScatoloneDownloader.Cube
             // a shield counter — and the three shapes read the same day. Each
             // names its beneficiary inside the match, so, like prevention, they
             // are added here after the self gate; each must be held up.
-            if (HeldUp(card, RegeneratesATribe.Replace(text, " "), RegeneratesSomebody)
-                || HeldUp(card, text, BlinksToSave, onlyInResponse: true)
-                || HeldUp(card, text, ShieldCounterOnSomebody)
-                || HeldUp(card, text, SavesFromDeathOrDamage)
-                || HeldUp(card, text, UmbraArmor)
-                || HeldUp(card, text, PhasesYourPermanentsOut)
-                || ShieldsAnAreaStatically(text))
+            if (HeldUp(card, RegeneratesATribe.Replace(protectable, " "), RegeneratesSomebody)
+                || HeldUp(card, protectable, BlinksToSave, onlyInResponse: true)
+                || HeldUp(card, protectable, ShieldCounterOnSomebody)
+                || HeldUp(card, protectable, SavesFromDeathOrDamage)
+                || HeldUp(card, protectable, UmbraArmor)
+                || HeldUp(card, protectable, PhasesYourPermanentsOut)
+                || ShieldsAnAreaStatically(protectable))
             {
                 result |= CardEffect.Protection;
             }

@@ -113,10 +113,8 @@ namespace ScatoloneDownloader.Cube
         /// <summary>Whether the card prevents damage aimed at something other than
         /// itself — the prevention half of Protection. See the patterns above for
         /// why a fog, a self-shield and "damage dealt BY a creature" are all out.</summary>
-        private static bool PreventsDamageForSomebodyElse(Card card)
+        private static bool PreventsDamageForSomebodyElse(Card card, string text)
         {
-            string text = card.OracleText ?? string.Empty;
-
             if (!PreventDamageTo.IsMatch(text) && !PreventFromChosenSource.IsMatch(text))
             {
                 return false;
@@ -820,6 +818,35 @@ namespace ScatoloneDownloader.Cube
 
             return false;
         }
+
+        /// <summary>The card's text with every shield an AURA or an EQUIPMENT
+        /// gives the creature it is ON blanked out, unless the card itself comes
+        /// in at instant speed. Ruled 2026-09-29 on the regeneration Auras —
+        /// "quello non è protection: non è instant e non è ad area": Carapace,
+        /// Thrull Retainer, The Brute and Regeneration say "Regenerate enchanted
+        /// creature" behind a cost you can pay in response, but the Aura was put
+        /// there at sorcery speed, which is the 2026-09-28 line ("niente auree o
+        /// equip, salvo si possano usare a velocità istantanea") read to the
+        /// end. A flash Aura still answers (Fae Flight, Shardmage's Rescue), and
+        /// an ability the Aura hands its creature IN QUOTES shields somebody else
+        /// and stays (Samite Blessing, Healer's Headdress).</summary>
+        private static string WithoutAWornShield(Card card, string text)
+        {
+            string type = card.TypeLine ?? string.Empty;
+
+            bool worn = type.Contains("Aura", StringComparison.Ordinal)
+                || type.Contains("Equipment", StringComparison.Ordinal)
+                || BecomesAnAura.IsMatch(text);
+
+            return worn && !IsCastInResponse(card) ? ItsOwnCreature.Replace(text, " ") : text;
+        }
+
+        // A clause about the creature the card is on, stopped at a quote so that
+        // an ability granted in quotes is left standing.
+        private static readonly Regex ItsOwnCreature = Rx(@"[^.\n""]*\b(?:enchanted|equipped) creature\b[^.\n""]*");
+
+        // A Licid is a creature until it becomes the Aura (Nurturing Licid).
+        private static readonly Regex BecomesAnAura = Rx(@"\bbecomes an aura\b");
 
         // A BLINK at sorcery speed saves nothing: Lilysplash Mentor exiles your
         // own creature for {1}{G}{U} "Activate only as a sorcery", which is a

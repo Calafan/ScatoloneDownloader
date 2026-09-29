@@ -3284,6 +3284,59 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // A shield an Aura or an Equipment gives the creature it is ON, ruled
+    // 2026-09-29: the Aura went on at sorcery speed, whatever its ability costs
+    // afterwards.
+    [InlineData("Carapace", "Enchantment — Aura",
+        "Enchant creature\nEnchanted creature gets +0/+2.\nSacrifice this Aura: Regenerate enchanted creature.")]
+    [InlineData("Regeneration", "Enchantment — Aura",
+        "Enchant creature (Target a creature as you cast this. This card enters attached to that "
+        + "creature.)\n{G}: Regenerate enchanted creature. (The next time that creature would be destroyed this "
+        + "turn, instead tap it, remove it from combat, and heal all damage on it.)")]
+    [InlineData("Nurturing Licid", "Creature — Licid",
+        "{G}, {T}: This creature loses this ability and becomes an Aura enchantment with enchant creature. "
+        + "Attach it to target creature. You may pay {G} to end this effect.\n{G}: Regenerate enchanted "
+        + "creature.")]
+    [InlineData("Kithkin Armor", "Enchantment — Aura",
+        "Enchant creature\nEnchanted creature can't be blocked by creatures with power 3 or greater.\nSacrifice "
+        + "this Aura: The next time a source of your choice would deal damage to enchanted creature this turn, "
+        + "prevent that damage.")]
+    [InlineData("Ring of Evos Isle", "Artifact — Equipment",
+        "{2}: Equipped creature gains hexproof until end of turn. (It can't be the target of spells or "
+        + "abilities your opponents control.)\nAt the beginning of your upkeep, put a +1/+1 counter on equipped "
+        + "creature if it's blue.\nEquip {1} ({1}: Attach to target creature you control. Equip only as a "
+        + "sorcery.)")]
+    [InlineData("General's Kabuto", "Artifact — Equipment",
+        "Equipped creature has shroud. (It can't be the target of spells or abilities.)\nPrevent all combat "
+        + "damage that would be dealt to equipped creature.\nEquip {2} ({2}: Attach to target creature you "
+        + "control. Equip only as a sorcery.)")]
+    public void Classify_AShieldAnAuraOrEquipmentWears_IsNotProtection(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // …but a FLASH Aura still answers, and an ability the Aura hands its creature
+    // in quotes, or one aimed at a target, shields somebody else (2026-09-29).
+    [InlineData("Serpent Skin", "Enchantment — Aura",
+        "Flash\nEnchant creature\nEnchanted creature gets +1/+1.\n{G}: Regenerate enchanted creature.")]
+    [InlineData("Samite Blessing", "Enchantment — Aura",
+        "Enchant creature\nEnchanted creature has \"{T}: The next time a source of your choice would deal "
+        + "damage to target creature this turn, prevent that damage.\"")]
+    [InlineData("Floating Shield", "Enchantment — Aura",
+        "Enchant creature\nAs this Aura enters, choose a color.\nEnchanted creature has protection from the "
+        + "chosen color. This effect doesn't remove this Aura.\nSacrifice this Aura: Target creature gains "
+        + "protection from the chosen color until end of turn.")]
+    [InlineData("Healer's Headdress", "Artifact — Equipment",
+        "Equipped creature gets +0/+2 and has \"{T}: Prevent the next 1 damage that would be dealt to any "
+        + "target this turn.\"\n{W}{W}: Attach this Equipment to target creature you control.\nEquip {1} ({1}: "
+        + "Attach to target creature you control. Equip only as a sorcery.)")]
+    public void Classify_AnAuraThatAnswersOrShieldsSomebodyElse_IsProtection(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
     // Mill has to be aimed at somebody else. Everything here fills the caster's
     // own graveyard: as an upkeep tax (Deep Spawn), as an activation cost
     // (Millikin), as a recursion cost (Rot Farm Skeleton), or as the whole point
