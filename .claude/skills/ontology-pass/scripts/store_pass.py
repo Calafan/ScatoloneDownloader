@@ -55,6 +55,8 @@ def reviewed_at_in_diff():
 
 
 def commit(message_file):
+    # Resolved here: git runs in the store, where a relative -F path is not found.
+    message_file = Path(message_file).resolve()
     run("git", "-C", STORE_REPO, "add", *("metadata/" + f for f in FILES))
     run("git", "-C", STORE_REPO, "commit", "-q", "-F", message_file)
     run("git", "-C", STORE_REPO, "log", "--oneline", "-1")
@@ -121,7 +123,7 @@ def main():
         py("readme_ontology.py", "--write")
         if run("git", "-C", STORE_REPO, "status", "--short", "README.md").strip():
             run("git", "-C", STORE_REPO, "add", "README.md")
-            run("git", "-C", STORE_REPO, "commit", "-q", "-F", args.message)
+            run("git", "-C", STORE_REPO, "commit", "-q", "-F", Path(args.message).resolve())
             run("git", "-C", STORE_REPO, "log", "--oneline", "-1")
         else:
             print("README unchanged, nothing committed")
