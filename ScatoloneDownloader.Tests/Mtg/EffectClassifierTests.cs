@@ -4030,6 +4030,18 @@ public sealed class EffectClassifierTests
     [InlineData("Fertilid's Favor", "Instant",
         "Target player searches their library for a basic land card, puts it onto the battlefield tapped, "
         + "then shuffles. Put two +1/+1 counters on up to one target artifact or creature.")]
+    // Mana a PERMANENT adds on a trigger, read since 2026-09-29 (10 of 12 reviewed
+    // permanents written this way are tagged).
+    [InlineData("Electro, Assaulting Battery", "Legendary Creature — Human Villain",
+        "Flying\nYou don't lose unspent red mana as steps and phases end.\nWhenever you cast an instant or "
+        + "sorcery spell, add {R}.\nWhen Electro leaves the battlefield, you may pay {X}. When you do, he deals "
+        + "X damage to target player.")]
+    [InlineData("Rodeo Pyromancers", "Creature — Human Mercenary",
+        "Whenever you cast your first spell each turn, add {R}{R}.")]
+    [InlineData("Karn, Legacy Reforged", "Legendary Artifact Creature — Golem",
+        "Karn's power and toughness are each equal to the greatest mana value among artifacts you control.\nAt "
+        + "the beginning of your upkeep, add {C} for each artifact you control. This mana can't be spent to "
+        + "cast nonartifact spells. Until end of turn, you don't lose this mana as steps and phases end.")]
     public void Classify_ManaYouDidNotHaveToMake_IsRamp(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
@@ -4080,6 +4092,27 @@ public sealed class EffectClassifierTests
         + "your next turn, each creature attacks each combat if able and attacks a player other than you if "
         + "able.\nII — Add {R}{R}{R}.\nIII — This Saga deals 5 damage to each opponent.")]
     public void Classify_ASagaChaptersBurstOfMana_IsNotRamp(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // …but not mana from an ATTACK or combat damage, ruled 2026-09-29 ("mai Ramp
+    // dall'attacco": Tesak), a SPELL's trigger that rides on what it does
+    // (Reckless Blaze), or a token's own mana ability quoted inside the trigger
+    // (Basking Broodscale's Eldrazi Spawn).
+    [InlineData("Tesak, Judith's Hellhound", "Legendary Creature — Elemental Dog",
+        "Unleash (You may have this creature enter with a +1/+1 counter on it. It can't block as long as it "
+        + "has a +1/+1 counter on it.)\nOther Dogs you control have unleash.\nCreatures you control with counters "
+        + "on them have haste.\nWhenever Tesak attacks, add {R} for each attacking creature.")]
+    [InlineData("Reckless Blaze", "Sorcery — Lesson",
+        "Reckless Blaze deals 5 damage to each creature. Whenever a creature you control dealt damage this "
+        + "way dies this turn, add {R}.")]
+    [InlineData("Basking Broodscale", "Creature — Eldrazi Lizard",
+        "Devoid (This card has no color.)\n{1}{G}: Adapt 1. (If this creature has no +1/+1 counters on it, put "
+        + "a +1/+1 counter on it.)\nWhenever one or more +1/+1 counters are put on this creature, you may create "
+        + "a 0/1 colorless Eldrazi Spawn creature token with \"Sacrifice this token: Add {C}.\"")]
+    public void Classify_TriggeredManaThatIsNotTheCards_IsNotRamp(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
     }

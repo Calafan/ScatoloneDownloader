@@ -34,6 +34,22 @@ namespace ScatoloneDownloader.Cube
 
         private static readonly Regex RitualAddsMana = Rx(@"(?:^|\n|\. )add [\w ]{0,20}\{[wubrgc]");
 
+        // Mana a PERMANENT adds on a TRIGGER is Ramp — Electro, Rodeo
+        // Pyromancers, Muerra, Eladamri's Vineyard, Karn, Legacy Reforged, 10
+        // of the 12 reviewed permanents written this way, never read because
+        // no rule looked past a colon or a spell. Two limits, both measured:
+        // a SPELL's trigger is a rider on what the spell does (Mana Drain,
+        // Reckless Blaze, untagged), and mana from an ATTACK or combat damage
+        // is never Ramp, ruled 2026-09-29 — "mai Ramp dall'attacco" (Brazen
+        // Collector went back for review, Tesak stays untagged) — the same
+        // reading as the Treasure one Jolene got.
+        private static readonly Regex TriggeredMana = Rx(
+            @"(?:\bwhenever\b|\bat the beginning of\b)[^.\n]*?,[^.\n]*?\b(?:you |that player |target player |each player )?adds? "
+            + @"(?:\{|one mana|two mana|three mana|x mana|an amount|that much|\w+ mana of|mana)");
+
+        private static readonly Regex OnAnAttack = Rx(
+            @"\bwhenever [^,.\n]*\b(?:attacks?|attack with|deals? combat damage)\b");
+
         // …but not a SAGA CHAPTER's burst of mana, ruled 2026-09-29 ("non è
         // Ramp"): 4 of the 6 reviewed chapters that add mana are untagged
         // (Maximum Carnage, Esper Origins, Clive's Ifrit, Terra), the newest

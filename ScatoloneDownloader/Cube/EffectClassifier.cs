@@ -205,6 +205,8 @@ namespace ScatoloneDownloader.Cube
                 || (card.MacroType != MacroType.Land && ActivatedManaAbility.IsMatch(text))
                 || ExtraLandDrop.IsMatch(text)
                 || ManaMultiplier.IsMatch(text)
+                || (card.MacroType != MacroType.Spell
+                    && Quoted.Replace(text, " ").Split('\n').Any(line => TriggeredMana.IsMatch(line) && !OnAnAttack.IsMatch(line)))
                 || LandFromHandToPlay.IsMatch(text)
                 || UntapsLands.IsMatch(text)
                 || (card.MacroType != MacroType.Land
