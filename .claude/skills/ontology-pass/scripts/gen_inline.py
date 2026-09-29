@@ -16,6 +16,24 @@ def cs(s):
     return '"' + s.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n") + '"'
 
 
+def oracle_literal(text, indent="        "):
+    """The oracle text as a C# string expression wrapped near 100 columns."""
+    chunks, cur = [], ""
+    for word in text.split(" "):
+        if cur and len(cur) + len(word) + 1 > 100:
+            chunks.append(cur + " ")
+            cur = word
+        else:
+            cur = word if not cur else cur + " " + word
+    chunks.append(cur)
+    return ("\n" + indent + "+ ").join(cs(c) for c in chunks)
+
+
+def inline_data(r):
+    """One [InlineData(name, typeLine, oracle)] attribute for a dump record."""
+    return f"    [InlineData({cs(r['name'])}, {cs(r['type'])},\n        {oracle_literal(r['text'])})]"
+
+
 def main():
     dump, names = sys.argv[1], sys.argv[2:]
     cards = {}
@@ -28,17 +46,7 @@ def main():
         if name not in cards:
             print(f"// NOT IN THE DUMP: {name}")
             continue
-        r = cards[name]
-        chunks, cur = [], ""
-        for word in r["text"].split(" "):
-            if cur and len(cur) + len(word) + 1 > 100:
-                chunks.append(cur + " ")
-                cur = word
-            else:
-                cur = word if not cur else cur + " " + word
-        chunks.append(cur)
-        body = "\n        + ".join(cs(c) for c in chunks)
-        print(f"    [InlineData({cs(r['name'])}, {cs(r['type'])},\n        {body})]")
+        print(inline_data(cards[name]))
 
 
 if __name__ == "__main__":

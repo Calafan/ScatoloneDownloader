@@ -26,8 +26,11 @@ that was meant to be `\b`, `\w` or `\d`.
 
 It is not only regex source. On 2026-09-25 a heredoc script meaning to count the
 literal text `\r\n` (`b'\\r\\n'`) counted real CRLFs instead, and its "repair"
-rewrote a whole file as LF. Any Python that holds a backslash goes in a file
-written with Write and is run from there.
+rewrote a whole file as LF. And not only Python: on 2026-09-29 a neutralisation
+cases file written through a bash heredoc lost the doubled backslashes of its
+JSON strings and `neutralise.py` died on `Invalid \escape`. Any Python, and any
+JSON, that holds a backslash goes in a file written with Write and is run from
+there.
 
 ## A pattern array built from nulls
 
@@ -165,4 +168,34 @@ earlier message is stale the moment they tag another card.
 
 **Fix:** re-run `Score` before writing any number into a commit or a reply. This is
 AGENTS.md §3: a number that ends in a commit or a report is measured, never
-estimated.
+estimated. The same holds for the CARDS a message names: `store_moves.py
+--commit SHA --names` lists what the commit really moved.
+
+## A neutralisation that proves the code is dead
+
+**Symptom:** one case of an otherwise red neutralisation reports NOTHING WENT RED,
+and the fix it undoes looks right.
+
+**Cause:** another part of the rule already covers the cards, so the fix is dead
+code: the damage rule read the singular "each creature" only, which made the
+"each of those creatures" veto unreachable; a card copying itself was already
+excluded by the self-copy guard; "creature on top" had to meet directly, so the
+"you control" guard could never fire. Four times on 2026-09-27/29.
+
+**Fix:** check with `measure.py` that no card in the store moves without it,
+then delete it and say in the comment that it was tried and why it is not
+needed. A fix that DOES move cards but turns nothing red is untested: add the
+test.
+
+## The session scratchpad forgets
+
+**Symptom:** a new session has no `unreview-*.json`, no dumps, and no idea which
+cards were handed back.
+
+**Cause:** the scratchpad is per session. Until 2026-09-29 the handed-back list
+lived there, and the next session's `classify --overwrite` would have rewritten
+156 of the human's ruled cards with the classifier's proposals.
+
+**Fix:** durable state lives in `state/` (gitignored): `handed-back.json` and
+`work/`. `handed_back.py` rebuilds the list from the store's git and compares it
+with the file; run it at the start of a session that will classify.

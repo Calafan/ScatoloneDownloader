@@ -49,24 +49,17 @@ entry is overwritten by the next classify.
 **While handed-back cards are outstanding, every later classify has to protect
 them.** This bit on the very next run of 2026-09-25: classify rewrote them as the
 unreviewed entries they are (7 of 105 actually changed), and `split_unreviewed.py`
-refused, because a card from the human's pass carries their rating too. So:
+refused, because a card from the human's pass carries their rating too.
 
-```powershell
-Copy-Item $META\*.json $WORK\pre-classify\          # the handed-back tags live here
-dotnet run --project ScatoloneDownloader -- classify -m $META --overwrite
-Copy-Item $META\*.json $WORK\post-classify\
-python scripts\restore_handed_back.py $WORK\pre-classify $WORK\post-classify $WORK\unreview.json
-python scripts\split_unreviewed.py $WORK\post-classify --keep-head $WORK\unreview.json
-git -C $REPO add metadata/ ; git -C $REPO commit -F msg.txt
-Copy-Item $WORK\post-classify\*.json $META\
-python scripts\verify_tree.py --handed-back $WORK\unreview.json --compare $WORK\pre-classify
-```
-
-The last line must say every handed-back entry is identical to the backup. The
-list of handed-back cards is the `unreview` ruling file; keep it until the human
-has reviewed them all. They do that in the tagger and commit the result with
-their own pass — `verify_tree.py --handed-back` then reports none of them still
-unreviewed, and the protection is no longer needed.
+The list lives in `state/handed-back.json` — NOT in the session scratchpad, where
+it sat until 2026-09-29 and where a new session would not have found it.
+`restore_handed_back.py`, `split_unreviewed.py` and `verify_tree.py` default to
+it; `store_pass.py handback` adds to it; `handed_back.py` rebuilds it from git,
+because every hand-back is its own "chore(metadata): hand … back for review"
+commit and nothing else in this workflow removes a `reviewedAt` (it matched the
+session's list exactly, 156 of 156, when it was written). The human confirms the
+cards in the tagger and commits them with their own pass; they then drop out of
+the rebuilt list by themselves.
 
 ## Byte format
 
@@ -90,59 +83,53 @@ ManaFixing Pacify LandDestruction Mill Regrowth Redirect Cheat
 
 Both scripts here already do all of this. Hand-editing the JSON does not.
 
-## The two commits
+## The commits of a pass
 
-A pass produces at most two commits, and they are kept apart because they are two
-different kinds of claim. The first says *the human changed their mind*; the second
-says *the classifier reads more wordings now*. Mixing them makes both unreviewable.
-
-### 1. Rulings on reviewed entries
-
-Only when the human overturned their own tags.
+A pass produces up to four store commits, kept apart because each is a different
+kind of claim — *the human changed their mind*, *the classifier reads more
+wordings now*, *these cards go back for review*, *the README follows the
+tooltips*. Mixing them makes each unreviewable. `scripts/store_pass.py` runs each
+step, backs up and restores the human's tree around it, and verifies:
 
 ```powershell
-# 1. back up the human's tree
-Copy-Item $META\*.json $WORK\pre-pass\
+# the answers as names and tags -> the two ruling files (named / reached)
+python scripts\make_rulings.py spec.json
 
-# 2. build HEAD + only the rulings, and commit that
-python scripts\apply_ruling.py rulings.json --mode head
-git -C $REPO add metadata/ ; git -C $REPO commit -F msg.txt
+# 1. the human's rulings: HEAD + rulings committed, the tree restored and ruled too
+python scripts\store_pass.py rulings state\work\rulings-NAME.json -F msg-rulings.txt
 
-# 3. give the human their tree back, with the rulings also applied to it
-Copy-Item $WORK\pre-pass\*.json $META\
-python scripts\apply_ruling.py rulings.json --mode tree
+# (commit the code in the code repo here: the classify below runs it)
+
+# 2. the classifier's proposals: Release build, protected classify, split — then read the moves
+python scripts\store_pass.py classify
+python scripts\store_moves.py --names        # write the message from this
+python scripts\store_pass.py commit -F msg-classify.txt
+
+# 3. the reached cards handed back (AFTER the classify, or it overwrites them)
+python scripts\store_pass.py handback state\work\unreview-NAME.json -F msg-handback.txt
+
+# 4. the README table, when a tooltip changed
+python scripts\store_pass.py readme -F msg-readme.txt
 ```
 
-`--mode head` prints `non-effects fields: 0` when it is safe. In `--mode tree` the
-entry counts include the human's own work, so only that line is a signal.
+What each step checks, and refuses on:
 
-Build `rulings.json` with `scripts/find_cards.py --json`, never by pasting oracle
-ids — a wrong id is a silent no-op, or a tag written onto the wrong card.
+- `rulings` and `handback` stop unless `apply_ruling --mode head` reports
+  `non-effects fields: 0`; `rulings` also stops if a `reviewedAt` moved.
+- `classify` prints `reviewedAt lines in the staged diff: 0` — it must be 0 —
+  and the per-tag moves; `commit` refuses when it is not 0.
+- Every step ends in `verify_tree.py`: `still uncommitted: N reviewed | NOT
+  reviewed: 0 (outside the handed-back set: 0)`, and after a classify
+  `handed-back entries identical to the backup: all`.
 
-### 2. The classifier's new proposals
+After the commit, `store_moves.py --commit SHA --names` checks every card the
+message names. Messages come from a file (`-F`) and end with the attribution
+lines the session asks for. Nothing is pushed.
 
-```powershell
-Copy-Item $META\*.json $WORK\post-ruling\           # the human's tree, rulings applied
-dotnet run --project ScatoloneDownloader -- classify -m $META --overwrite
-Copy-Item $META\*.json $WORK\post-classify\         # what classify produced
-
-python scripts\split_unreviewed.py $WORK\post-classify
-git -C $REPO add metadata/ ; git -C $REPO commit -F msg.txt
-
-Copy-Item $WORK\post-classify\*.json $META\         # restore the human's tree
-```
-
-Then verify, every time:
-
-```powershell
-git -C $REPO diff -U0 -- metadata/ | Select-String 'reviewedAt'   # before the commit: must be empty
-python scripts\verify_tree.py                                      # after the restore
-```
-
-`verify_tree.py` prints the `still uncommitted: N | NOT reviewed: 0` line above.
-After applying a ruling or a hand-back to the tree, add `--compare` with the
-backup taken before it: exactly the ruled cards, and exactly the ruled fields,
-should differ.
+Build ruling files with `make_rulings.py` (or `find_cards.py --json`), never by
+pasting oracle ids — a wrong id is a silent no-op, or a tag written onto the
+wrong card; `make_rulings.py` refuses any name that does not match exactly one
+entry.
 
 ## Data-quality note
 

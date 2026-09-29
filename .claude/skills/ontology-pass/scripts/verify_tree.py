@@ -34,7 +34,9 @@ def cards_of(texts):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--handed-back", help="JSON list of {oracleId}")
+    default_list = Path(__file__).resolve().parents[1] / "state" / "handed-back.json"
+    ap.add_argument("--handed-back", default=str(default_list) if default_list.exists() else None,
+                    help="JSON list of {oracleId}; defaults to state/handed-back.json")
     ap.add_argument("--compare", help="backup directory holding the three tier files")
     ap.add_argument("--store", default=str(DEFAULT_STORE))
     args = ap.parse_args()
@@ -45,7 +47,7 @@ def main():
     tree = cards_of((meta / f).read_text(encoding="utf-8") for f in FILES)
     handed = set()
     if args.handed_back:
-        handed = {e["oracleId"] for e in json.loads(Path(args.handed_back).read_text(encoding="utf-8"))}
+        handed = {e["oracleId"] for e in json.loads(Path(args.handed_back).read_text(encoding="utf-8-sig"))}
 
     reviewed = [k for k in tree if tree[k] != head.get(k) and tree[k].get("reviewedAt")]
     unreviewed = [k for k in tree if tree[k] != head.get(k) and not tree[k].get("reviewedAt")]

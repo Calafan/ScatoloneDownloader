@@ -38,13 +38,19 @@ def main():
     # often carrying the human's own rating, which makes this script refuse.
     # Their HEAD version is kept here, and the caller puts the human's tags back
     # in the working tree from the pre-classify backup.
+    # Defaults to state/handed-back.json when no --keep-head is given, so a
+    # classify in a new session cannot forget the protection.
     ap.add_argument("--keep-head", action="append", default=[],
-                    help="JSON list of {oracleId, ...}: entries left exactly as HEAD has them")
+                    help="JSON list of {oracleId, ...}: entries left exactly as HEAD has them "
+                         "(default: state/handed-back.json)")
     args = ap.parse_args()
 
+    default_list = Path(__file__).resolve().parents[1] / "state" / "handed-back.json"
+    if not args.keep_head and default_list.exists():
+        args.keep_head = [str(default_list)]
     keep_head = set()
     for path in args.keep_head:
-        keep_head |= {e["oracleId"] for e in json.loads(Path(path).read_text(encoding="utf-8"))}
+        keep_head |= {e["oracleId"] for e in json.loads(Path(path).read_text(encoding="utf-8-sig"))}
 
     meta = Path(args.store)
     repo = meta.parent

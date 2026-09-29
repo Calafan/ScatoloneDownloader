@@ -7,18 +7,22 @@ pre-classify backup into the post-classify copy, before that copy is split and
 restored. Byte format kept: CRLF, 2-space indent, no BOM, no trailing newline.
 
 Usage:
-    python restore_handed_back.py <pre-classify-dir> <post-classify-dir> <handed-back.json>
+    python restore_handed_back.py <pre-classify-dir> <post-classify-dir> [handed-back.json]
+
+The list defaults to state/handed-back.json (see handed_back.py).
 """
 import json
 import sys
 from pathlib import Path
 
 FILES = ["fringe.json", "pool.json", "unrated.json"]
+DEFAULT_LIST = Path(__file__).resolve().parents[1] / "state" / "handed-back.json"
 
 
 def main():
-    pre, post, listing = Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3])
-    ids = {e["oracleId"] for e in json.loads(listing.read_text(encoding="utf-8"))}
+    pre, post = Path(sys.argv[1]), Path(sys.argv[2])
+    listing = Path(sys.argv[3]) if len(sys.argv) > 3 else DEFAULT_LIST
+    ids = {e["oracleId"] for e in json.loads(listing.read_text(encoding="utf-8-sig"))}
 
     restored = found = 0
     for name in FILES:

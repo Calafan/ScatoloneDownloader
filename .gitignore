@@ -401,5 +401,10 @@ FodyWeavers.xsd
 # See .claude/skills/ontology-pass/SKILL.md
 ScatoloneDownloader.Tests/Cube/
 
+# Ontology-pass working state: the handed-back list and the probes' work
+# directory. Durable across sessions, per machine, rebuildable from the
+# store's git (scripts/handed_back.py).
+.claude/skills/ontology-pass/state/
+
 # Per-machine Claude Code settings; the skills beside it are shared.
 .claude/settings.local.json
