@@ -777,7 +777,10 @@ namespace ScatoloneDownloader.Cube
         // The reminder text goes with the keyword, because "(To scry 2, look at
         // the top two cards of your library …)" is itself a look at the top.
         private const string OneScryOrSurveil =
-            @"\b(?:scry|scries|surveil|surveils) (?:\d+|x)\b\.?(?: ?\((?:to (?:scry|surveil) \w+, )?look at the top[^()]*\))?";
+            @"\b(?:scry|scries|surveil|surveils) (?:\d+|x)\b\.?(?: ?\((?:to (?:scry|surveil) \w+, )?look at the top[^()]*\))?"
+            // …and an EXPLORE, the same selection, since 2026-09-29 (see
+            // Explores), with its reminder.
+            + @"|(?<!\bwhenever [^,.\n]{0,60})\bexplores?\b(?:, then it explores again| x times)?\.?(?: ?\((?:to have it explore, )?reveal the top card[^()]*\))?";
 
         // A LOOT tacked onto a SPELL that does something else is the same rider,
         // ruled 2026-09-27 on Refute — "non ha Filter, solo counter" — which is
@@ -887,6 +890,24 @@ namespace ScatoloneDownloader.Cube
         // and Falkenrath Celebrants was still reading as two cards.
         private static readonly Regex BloodReminder = Rx(
             @"\((?:it's an artifact|they're artifacts) with ""\{1\}, \{t\}, discard a card, sacrifice this token: draw a card\.""\)");
+
+        // EXPLORE is selection, not a card, ruled 2026-09-29 ("explore =
+        // Filter") on Subterranean Schooner, which the human moved from
+        // CardAdvantage: a land off the top into your hand, or a counter and the
+        // choice to bin the card — the look-and-keep-one of the top card. Its
+        // reminder text says "Put that card into your hand", which the
+        // repeated look-and-keep rule read as a card on every attack, so the
+        // reminder is blanked before that rule is asked. Read outside brackets
+        // (a Map token's explore is the token's), never in a PAYOFF's trigger
+        // ("whenever a creature you control explores" — Wildgrowth Walker,
+        // Lurking Chupacabra), and like scry and surveil subject to the one-shot
+        // guard: an explore made once beside what the card does is noise. A
+        // check in that guard for a REPEATED explore beside a one-shot scry was
+        // written, turned nothing red and moved no card, and was removed.
+        private static readonly Regex Explores = Rx(@"(?<!\bwhenever [^,.\n]{0,60})\bexplores?\b");
+
+        private static readonly Regex ExploreReminder = Rx(
+            @"\(reveal the top card of your library\. put that card into your hand if it's a land\.[^)]*\)");
 
         private static bool MakesBloodAgainAndAgain(string text) =>
             Abilities(text).Any(a => MakesBlood.IsMatch(a) && AbilityRepeats(Parenthetical.Replace(a, " ")));

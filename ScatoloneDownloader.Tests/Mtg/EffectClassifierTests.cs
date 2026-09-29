@@ -1312,6 +1312,14 @@ public sealed class EffectClassifierTests
     [InlineData("Blood Servitor", "Artifact Creature — Construct",
         "When this creature enters, create a Blood token. (It's an artifact with \"{1}, {T}, Discard a card, "
         + "Sacrifice this token: Draw a card.\")")]
+    // An explore made once as a creature enters is the same one-shot rider a scry
+    // is, and a PAYOFF that watches others explore selects nothing.
+    [InlineData("Merfolk Branchwalker", "Creature — Merfolk Scout",
+        "When this creature enters, it explores. (Reveal the top card of your library. Put that card into "
+        + "your hand if it's a land. Otherwise, put a +1/+1 counter on this creature, then put the card back or "
+        + "put it into your graveyard.)")]
+    [InlineData("Wildgrowth Walker", "Creature — Elemental",
+        "Whenever a creature you control explores, put a +1/+1 counter on this creature and you gain 3 life.")]
     public void Classify_ASelectionMadeOnceInPassing_IsNotFilter(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
@@ -1360,6 +1368,12 @@ public sealed class EffectClassifierTests
     [InlineData("Unassuming Sage", "Creature — Human Peasant Wizard",
         "When this creature enters, you may pay {2}. If you do, create a Sorcerer Role token attached to it. "
         + "(Enchanted creature gets +1/+1 and has \"Whenever this creature attacks, scry 1.\")")]
+    // EXPLORE is selection, ruled 2026-09-29 ("explore = Filter"): Subterranean
+    // Schooner, moved from CardAdvantage by the human, explores on every attack.
+    [InlineData("Subterranean Schooner", "Artifact — Vehicle",
+        "Whenever this Vehicle attacks, target creature that crewed it this turn explores. (Reveal the top "
+        + "card of your library. Put that card into your hand if it's a land. Otherwise, put a +1/+1 counter on "
+        + "that creature, then put the card back or put it into your graveyard.)\nCrew 1")]
     public void Classify_ASelectionThatIsTheCardOrComesAgain_IsFilter(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));

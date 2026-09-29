@@ -586,7 +586,8 @@ namespace ScatoloneDownloader.Cube
             // The top few of your library, one of them into your hand, over and
             // over. See TopFewIntoYourHand for the ruling and the measurement,
             // and note that nothing withdraws Filter: the card really did select.
-            if (Abilities(text).Any(a =>
+            // Explore's reminder is not asked (see Explores).
+            if (Abilities(ExploreReminder.Replace(text, " ")).Any(a =>
                     (TopFewIntoYourHand.IsMatch(a) || SearchesSeveralIntoYourHand.IsMatch(a))
                     && (AbilityRepeatsAtNoCostToItself(a) || EntersTwiceWithOffspring(text, a))))
             {
@@ -817,6 +818,12 @@ namespace ScatoloneDownloader.Cube
 
             // Blood made again and again is a stream of rummages. See MakesBlood.
             if (MakesBloodAgainAndAgain(text))
+            {
+                result |= CardEffect.Filter;
+            }
+
+            // Explore is selection. See Explores.
+            if (Explores.IsMatch(Parenthetical.Replace(text, " ")))
             {
                 result |= CardEffect.Filter;
             }
