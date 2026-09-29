@@ -396,7 +396,20 @@ namespace ScatoloneDownloader.Cube
         // animates one land, manifest dread turns one card face down, and to
         // endure is to take the counters or one Spirit.
         private static readonly Regex OneBodyByKeyword = Rx(
-            @"\bearthbends?\b|\bmanifest dread\b|\bendures? (?:\d+|x)\b|\bcloaks? (?:the|a)\b");
+            @"\bearthbends?\b|\bmanifest dread\b|\bendures? (?:\d+|x)\b|\bcloaks? (?:the|a)\b|\bincubate (?:\d+|x)\b");
+
+        // INCUBATE makes an Incubator that becomes an artifact creature, and
+        // never says "token" outside its reminder text. Ruled 2026-09-29 after
+        // the human tagged Eyes of Gitaxias Tokens and left Furnace Gremlin
+        // untagged the same evening: from a spell or as something enters it is
+        // a body made ("solo da magia/ingresso"), while the one a creature
+        // leaves when it DIES only replaces it. That second half needs no rule
+        // of its own: the four cards that incubate on death are creatures making
+        // one body once, which OnlyAFewBodiesOnce (2026-09-24) already takes
+        // back — so is a creature that incubates once as it enters (Converter
+        // Beast). A dies-exclusion was written and neutralising it turned
+        // nothing red, and no card moved without it.
+        private static readonly Regex Incubates = Rx(@"\bincubate (?:\d+|x)\b");
 
         private static readonly Regex CloaksSeveral = Rx(@"\bcloaks? (?:two|three|four|\w+ of them)\b");
 

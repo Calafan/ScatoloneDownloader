@@ -2353,6 +2353,16 @@ public sealed class EffectClassifierTests
         "Thopters you control get +1/+1.\n"
         + "If one or more artifact tokens would be created under your control, those tokens plus an additional "
         + "1/1 colorless Thopter artifact creature token with flying are created instead.")]
+    // INCUBATE from a spell or as something enters makes a body, ruled 2026-09-29
+    // ("solo da magia/ingresso"): Eyes of Gitaxias, tagged by the human, and
+    // Sunfall.
+    [InlineData("Eyes of Gitaxias", "Sorcery",
+        "Incubate 3. (Create an Incubator token with three +1/+1 counters on it and \"{2}: Transform this "
+        + "token.\" It transforms into a 0/0 Phyrexian artifact creature.)\nDraw a card.")]
+    [InlineData("Sunfall", "Sorcery",
+        "Exile all creatures. Incubate X, where X is the number of creatures exiled this way. (Create an "
+        + "Incubator token with X +1/+1 counters on it and \"{2}: Transform this token.\" It transforms into a "
+        + "0/0 Phyrexian artifact creature.)")]
     public void Classify_MakingCreaturesWithoutTokens_IsTokens(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
@@ -2443,6 +2453,17 @@ public sealed class EffectClassifierTests
     [InlineData("Leering Onlooker", "Creature — Vampire",
         "Flying\n{2}{B}{B}, Exile this card from your graveyard: Create two tapped 1/1 black Bat creature tokens "
         + "with flying.")]
+    // …while the Incubator a creature leaves when it DIES only replaces it
+    // (Furnace Gremlin, untagged by the human on 2026-09-29), and one a creature
+    // makes once as it enters is the 2026-09-24 few-bodies-once rule (Converter
+    // Beast).
+    [InlineData("Furnace Gremlin", "Creature — Phyrexian Gremlin",
+        "{1}{R}: This creature gets +1/+0 until end of turn.\nWhen this creature dies, incubate X, where X is "
+        + "its power. (Create an Incubator token with X +1/+1 counters on it and \"{2}: Transform this token.\" "
+        + "It transforms into a 0/0 Phyrexian artifact creature.)")]
+    [InlineData("Converter Beast", "Creature — Phyrexian Beast",
+        "When this creature enters, incubate 5. (Create an Incubator token with five +1/+1 counters on it and "
+        + "\"{2}: Transform this token.\" It transforms into a 0/0 Phyrexian artifact creature.)")]
     public void Classify_ACreatureMakingOneOrTwoBodiesOnce_IsNotTokens(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));

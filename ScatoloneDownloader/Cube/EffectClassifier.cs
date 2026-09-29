@@ -277,7 +277,8 @@ namespace ScatoloneDownloader.Cube
             // inconsistency rather than a distinction, and the ruling settles it.
             if (Earthbend.IsMatch(text) || LandsBecomeCreatures.IsMatch(text)
                 || MakesABodyByKeyword.IsMatch(text) || AnimatesANoncreature.IsMatch(text)
-                || CopiesYourCreatureSpell.IsMatch(text))
+                || CopiesYourCreatureSpell.IsMatch(text)
+                || Incubates.IsMatch(text))
             {
                 result |= CardEffect.Tokens;
             }
