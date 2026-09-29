@@ -368,6 +368,12 @@ public sealed class EffectClassifierTests
     [InlineData("Lava Storm", "Instant",
         "Lava Storm deals 2 damage to each attacking creature or Lava Storm deals 2 damage to each blocking "
         + "creature.")]
+    // A side swept after a kill with a count of its own, "and 1 damage to each
+    // other creature with the same controller": Fear, Fire, Foes!, tagged Wipe by
+    // the human on 2026-09-29.
+    [InlineData("Fear, Fire, Foes!", "Sorcery",
+        "Damage can't be prevented this turn. Fear, Fire, Foes! deals X damage to target creature and 1 "
+        + "damage to each other creature with the same controller.")]
     public void Classify_ASweeperInAnyWording_IsWipe(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Wipe));

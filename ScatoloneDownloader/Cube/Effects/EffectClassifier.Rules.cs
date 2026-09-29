@@ -106,7 +106,12 @@ namespace ScatoloneDownloader.Cube
                     Rx(@"-1/-1 counters? on each(?: [\w-]{1,15}){0,3} creature\b(?! you control)"),
                     Rx(@"deals? (?:[\dX]+ |that much )?damage (?:equal to [^.\n]{1,60}? )?to each(?: [\w/-]{1,20}){0,4} creature\b(?!s? you control)"),
                     Rx(@"damage to [^.\n]{1,60}\band each creature (?:that player|they)\b[^.\n]{0,40}controls?"
-                        + @"|damage divided [^.\n]{0,30}among all creatures"),
+                        + @"|damage divided [^.\n]{0,30}among all creatures"
+                        // …and the same side swept after a kill with a count of
+                        // its own: Fear, Fire, Foes!'s "X damage to target
+                        // creature AND 1 DAMAGE TO EACH OTHER CREATURE WITH THE
+                        // SAME CONTROLLER", tagged Wipe by the human on 2026-09-29.
+                        + @"|\band [\dX]+ damage to each other creature (?:with the same controller|that player controls)"),
                     Rx(@"return (?:all|each)(?![\w ,-]{0,30}attached to)[\w ,-]{0,30}(?:permanent|creature)s?[\w ,'-]{0,40}to (?:their owners'|its owner's) hands?"),
                     // ONE creature each is an edict and is Removal, ruled 2026-09-27
                     // after the hand tags split three to two on the same sentence
