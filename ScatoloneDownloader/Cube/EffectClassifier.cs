@@ -739,7 +739,7 @@ namespace ScatoloneDownloader.Cube
             // names its beneficiary inside the match, so, like prevention, they
             // are added here after the self gate; each must be held up.
             if (HeldUp(card, RegeneratesATribe.Replace(text, " "), RegeneratesSomebody)
-                || HeldUp(card, text, BlinksToSave)
+                || HeldUp(card, text, BlinksToSave, onlyInResponse: true)
                 || HeldUp(card, text, ShieldCounterOnSomebody)
                 || HeldUp(card, text, SavesFromDeathOrDamage)
                 || HeldUp(card, text, UmbraArmor)

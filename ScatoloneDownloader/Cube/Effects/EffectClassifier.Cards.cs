@@ -440,9 +440,15 @@ namespace ScatoloneDownloader.Cube
         // because nothing was fetched; here, it really is a second helping of
         // the same draw, so it stops the "the card itself is a card"
         // subtraction from being charged twice.
+        //
+        // An OMEN is not a second cast, ruled 2026-09-29: its "(Then shuffle
+        // this card into its owner's library.)" sends the card away, it does
+        // not hand it back, so Flush Out's "discard a card. If you do, draw two
+        // cards" nets zero like Abandon Attachments and is Filter alone. The
+        // alternative that read that reminder as a rebuy matched nothing in
+        // the store but the five Omens, and was removed.
         private static readonly Regex CastsItselfASecondTime = Rx(
-            @"\b(?:flashback|harmonize|escape|jump-start|aftermath|buyback|rebound|retrace|encore)\b"
-            + @"|shuffles? this card into its owner'?s library");
+            @"\b(?:flashback|harmonize|escape|jump-start|aftermath|buyback|rebound|retrace|encore)\b");
 
         private static readonly Regex AnyAbilityWithACost = Rx(@"^[^\n:]{1,70}:", RegexOptions.Multiline);
 

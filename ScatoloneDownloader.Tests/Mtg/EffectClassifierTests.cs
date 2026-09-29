@@ -1054,6 +1054,10 @@ public sealed class EffectClassifierTests
     [InlineData("Alpharael, Dreaming Acolyte", "Legendary Creature — Human Cleric",
         "When Alpharael enters, draw two cards. Then discard two cards unless you discard an artifact card.\n"
         + "During your turn, Alpharael has deathtouch.")]
+    // An OMEN shuffles itself away, it is not cast twice (2026-09-29).
+    [InlineData("Stormshriek Feral // Flush Out", "Creature — Dragon // Sorcery — Omen",
+        "Flying, haste\n{1}{R}: This creature gets +1/+0 until end of turn.\nDiscard a card. If you do, draw "
+        + "two cards. (Then shuffle this card into its owner's library.)")]
     public void Classify_AOneShotThatPaysForItself_IsNotCardAdvantage(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
@@ -3269,6 +3273,11 @@ public sealed class EffectClassifierTests
         + "+1/+1 counter on Ultimate Spider-Man. He gains hexproof and becomes colorless until end of "
         + "turn.\nWhenever you attack, double the number of each kind of counter on each Spider and legendary "
         + "creature you control.")]
+    // A BLINK at SORCERY SPEED saves nothing (2026-09-29); a shield that lasts
+    // the turn still does, see Classify_EnduranceBobblehead_IsBuffAndProtection.
+    [InlineData("Lilysplash Mentor", "Creature — Frog Druid",
+        "Reach\n{1}{G}{U}: Exile another target creature you control, then return it to the battlefield under "
+        + "its owner's control with a +1/+1 counter on it. Activate only as a sorcery.")]
     public void Classify_NotASaveHeldUpForSomethingElse_IsNotProtection(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));

@@ -782,8 +782,13 @@ namespace ScatoloneDownloader.Cube
         /// activation vouched for a static shield: Flickering Ward's "{W}:
         /// return this Aura" for its protection from a colour, Paladin's Arms'
         /// equip cost for its ward. Reminder text is blanked first, because
-        /// ward's own reminder says "whenever it becomes the target".</summary>
-        private static bool HeldUp(Card card, string text, Regex pattern)
+        /// ward's own reminder says "whenever it becomes the target".
+        /// <para>
+        /// <paramref name="onlyInResponse"/> is for a save that lasts an instant
+        /// — a BLINK dodges only what is already on the stack — so an activation
+        /// limited to sorcery speed does not hold it up (see OnlyAsASorcery).
+        /// </para></summary>
+        private static bool HeldUp(Card card, string text, Regex pattern, bool onlyInResponse = false)
         {
             if (IsCastInResponse(card))
             {
@@ -806,7 +811,8 @@ namespace ScatoloneDownloader.Cube
 
                 string line = Parenthetical.Replace(text[start..(end < 0 ? text.Length : end)], " ");
 
-                if (ActivatedAbility.Any(a => a.IsMatch(line)) || ReactiveTrigger.IsMatch(line))
+                if ((ActivatedAbility.Any(a => a.IsMatch(line)) && !(onlyInResponse && OnlyAsASorcery.IsMatch(line)))
+                    || ReactiveTrigger.IsMatch(line))
                 {
                     return true;
                 }
@@ -814,6 +820,16 @@ namespace ScatoloneDownloader.Cube
 
             return false;
         }
+
+        // A BLINK at sorcery speed saves nothing: Lilysplash Mentor exiles your
+        // own creature for {1}{G}{U} "Activate only as a sorcery", which is a
+        // second enters trigger, and the human took its Protection off on
+        // 2026-09-29. Asked of the blink ALONE, because a shield that lasts
+        // the turn still covers it at sorcery speed: Endurance Bobblehead's
+        // indestructible "until end of turn" was ruled Protection by name on
+        // 2026-09-25, and so stay Burdened Stoneback and Daring Fiendbonder.
+        private static readonly Regex OnlyAsASorcery =
+            Rx(@"activate (?:this ability )?only (?:as a sorcery|any time you could cast a sorcery)");
 
         // The two shapes an activated ability's cost takes before its colon. Both
         // are bounded to a single line so an unrelated symbol cannot pair with a
