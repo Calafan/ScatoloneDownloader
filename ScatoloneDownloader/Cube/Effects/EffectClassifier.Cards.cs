@@ -123,10 +123,11 @@ namespace ScatoloneDownloader.Cube
         // reviewed cards, every one tagged, every one missed, because each
         // writes the same idea differently.
         //
-        //   1. Dig until a nonland card turns up and play it. This is what
-        //      DISCOVER spells out in its reminder text, so the keyword joins it
-        //      (Territorial Bruntar, Solstice Revelations, Breaching
-        //      Dragonstorm, Long-Range Sensor).
+        //   1. Dig until a nonland card turns up and play it (Solstice
+        //      Revelations, Breaching Dragonstorm). DISCOVER spells the same
+        //      thing out in its reminder text, and joined this pattern until
+        //      2026-09-29 — see Discovers for why it is asked apart now, and
+        //      why this pattern is asked with reminder text blanked.
         //   2. A standing permission over a growing pile: "you may play cards
         //      exiled with this creature" (Evendo Brushrazer, Urianger, Wheel of
         //      Potential, Triple Triad).
@@ -137,7 +138,7 @@ namespace ScatoloneDownloader.Cube
         //   5. The top of SOMEBODY ELSE'S library, which the several-cards rule
         //      already read for a count but not for one card (Vaan).
         private static readonly Regex ExileAndPlayFromThere = Rx(
-            @"exiles? cards? from the top of your library until you exile a nonland card|\bdiscover \d"
+            @"exiles? cards? from the top of your library until you exile a nonland card"
             + @"|(?:play|cast) (?:any number of |all |the )?(?:cards?|spells?|them)"
             + @"[\w ,'-]{0,30}exiled (?:with|this way|by)"
             // …and the same permission naming the pile in the singular, which
@@ -661,6 +662,17 @@ namespace ScatoloneDownloader.Cube
             + @"[^\n]{0,90}(?:you may (?:play|cast)|may play (?:it|them|that card))");
 
         // More than one card off the top is a draw two, whatever it costs to cast.
+        // DISCOVER is ONE card off the top, cast for free or kept — the one-card
+        // impulse, which is a card only when the ability comes back. Ruled
+        // 2026-09-29 when the human took CardAdvantage off Geological Appraiser
+        // (discover 3 as it enters) and Hidden Volcano (the land sacrificed for
+        // discover 4), against Long-Range Sensor's charge counters and
+        // Caparocti Sunborn's attack, which repeat and are tagged. Asked of the
+        // ABILITY with the self-consuming costs subtracted, the same gate the
+        // top-few-into-your-hand family uses. "Discover X" is the same keyword
+        // (Monstrous Vortex, Pantlaza).
+        private static readonly Regex Discovers = Rx(@"\bdiscover (?:\d+|x)\b");
+
         private static readonly Regex ImpulseOfSeveralCards = Rx(
             @"exiles? the top (?:two|three|four|five|six|seven|eight|nine|ten|x|\d+) cards? of your library");
 

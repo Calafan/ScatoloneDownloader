@@ -109,6 +109,59 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // DISCOVER is a one-card impulse, a card only when the ability comes back
+    // (2026-09-29): on every creature spell, off charge counters, on every attack,
+    // and granted to an equipped creature. Discover X and discover 10 are the same
+    // keyword.
+    [InlineData("Monstrous Vortex", "Enchantment",
+        "Whenever you cast a creature spell with power 5 or greater, discover X, where X is that spell's mana "
+        + "value. (Exile cards from the top of your library until you exile a nonland card with that mana value "
+        + "or less. Cast it without paying its mana cost or put it into your hand. Put the rest on the bottom "
+        + "in a random order.)")]
+    [InlineData("Long-Range Sensor", "Artifact",
+        "Whenever you attack a player, put a charge counter on this artifact.\n{1}, Remove two charge counters "
+        + "from this artifact: Discover 4. Activate only as a sorcery. (Exile cards from the top of your "
+        + "library until you exile a nonland card with mana value 4 or less. Cast it without paying its mana "
+        + "cost or put it into your hand. Put the rest on the bottom in a random order.)")]
+    [InlineData("Caparocti Sunborn", "Legendary Creature — Human Soldier",
+        "Whenever Caparocti Sunborn attacks, you may tap two untapped artifacts and/or creatures you control. "
+        + "If you do, discover 3. (Exile cards from the top of your library until you exile a nonland card with "
+        + "mana value 3 or less. Cast it without paying its mana cost or put it into your hand. Put the rest on "
+        + "the bottom in a random order.)")]
+    [InlineData("Swashbuckler's Whip", "Artifact — Equipment",
+        "Equipped creature has reach, \"{2}, {T}: Tap target artifact or creature,\" and \"{8}, {T}: Discover "
+        + "10.\" (Exile cards from the top of your library until you exile a nonland card with mana value 10 or "
+        + "less. Cast it without paying its mana cost or put it into your hand. Put the rest on the bottom in a "
+        + "random order.)\nEquip {1}")]
+    public void Classify_ARepeatedDiscover_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // …and a discover made ONCE is not, ruled 2026-09-29 when the human took
+    // CardAdvantage off Geological Appraiser and Hidden Volcano: an enters
+    // trigger, a land that sacrifices itself for it, a spell. The reminder text no
+    // longer vouches for it either.
+    [InlineData("Geological Appraiser", "Creature — Human Artificer",
+        "When this creature enters, if you cast it, discover 3. (Exile cards from the top of your library "
+        + "until you exile a nonland card with mana value 3 or less. Cast it without paying its mana cost or "
+        + "put it into your hand. Put the rest on the bottom in a random order.)")]
+    [InlineData("Hidden Volcano", "Land — Cave",
+        "This land enters tapped.\n{T}: Add {R}.\n{4}{R}, {T}, Sacrifice this land: Discover 4. Activate only "
+        + "as a sorcery. (Exile cards from the top of your library until you exile a nonland card with mana "
+        + "value 4 or less. Cast it without paying its mana cost or put it into your hand. Put the rest on the "
+        + "bottom in a random order.)")]
+    [InlineData("Daring Discovery", "Sorcery",
+        "Up to three target creatures can't block this turn.\nDiscover 4. (Exile cards from the top of your "
+        + "library until you exile a nonland card with mana value 4 or less. Cast it without paying its mana "
+        + "cost or put it into your hand. Put the rest on the bottom in a random order.)")]
+    public void Classify_ADiscoverOnce_IsNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
     // One card, once, in either vocabulary: the Clue still has to be cashed for
     // {2}, and the one-shot impulse just replaces the card that cast it.
     [InlineData("Cunning Maneuver", "Instant",

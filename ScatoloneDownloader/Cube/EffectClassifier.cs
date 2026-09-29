@@ -628,7 +628,8 @@ namespace ScatoloneDownloader.Cube
                 // Kain hands himself to the player he hit and pays you a card
                 // per point, which is a draw you cannot ask for.
                 || (DrawThatMany.IsMatch(text) && !ADrawYouCannotCount.IsMatch(text))
-                || (ExileAndPlayFromThere.IsMatch(text) && !ThePileIsTheirsAlready.IsMatch(text))
+                || (ExileAndPlayFromThere.IsMatch(Parenthetical.Replace(text, " ")) && !ThePileIsTheirsAlready.IsMatch(text))
+                || Abilities(text).Any(a => Discovers.IsMatch(a) && AbilityRepeatsAtNoCostToItself(a))
                 || (OneDrawButTwoCasts.IsMatch(text) && CastsItselfASecondTime.IsMatch(text))
                 || SelfSacrificeBuysSeveral.IsMatch(text)
                 || DiscardYourHandThenDrawSeveral.IsMatch(text)
