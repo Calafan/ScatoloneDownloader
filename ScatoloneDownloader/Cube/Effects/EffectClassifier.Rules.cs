@@ -491,6 +491,16 @@ namespace ScatoloneDownloader.Cube
                     // trigger word is no longer first on the line. Uthros
                     // Research Craft draws on every artifact you cast.
                     Rx(@"^(?:\d+\+ \| )?(?:whenever|at the beginning of)[^\n]{0,160}draws? (?:a|one) card", RegexOptions.Multiline),
+                    // …and two draws of YOURS that a long trigger puts past the
+                    // 160: "Otherwise, you draw a card" (Gandalf, Westward
+                    // Voyager) and a villainous choice whose first branch is your
+                    // draw (Davros), both tagged by the human on 2026-09-29.
+                    // Widening the window to 260 instead was measured the same
+                    // day: 3 right and 3 wrong (Captain Howler, Charitable Levy,
+                    // Finneas), because past 160 the draw is often somebody
+                    // else's.
+                    Rx(@"^(?:whenever|at the beginning of)[^\n]*(?:\botherwise, you draw a card|villainous choice — you draw a card)",
+                        RegexOptions.Multiline),
                     // The same trigger with ONE SENTENCE in front of it. Rowen
                     // says "Reveal the first card you draw each turn. Whenever
                     // you reveal a basic land card this way, draw a card", and

@@ -1917,6 +1917,18 @@ public sealed class EffectClassifierTests
     [InlineData("Beluna Grandsquall // Seek Thrills", "Legendary Creature — Giant Noble // Instant — Adventure",
         "Trample\nPermanent spells you cast that have an Adventure cost {1} less to cast.\nMill seven cards. "
         + "Then put all cards that have an Adventure from among the milled cards into your hand.")]
+    // A draw of yours past the 160 characters a long trigger allows, in the two
+    // wordings the human tagged on 2026-09-29: "Otherwise, you draw a card"
+    // (Gandalf) and a villainous choice whose first branch is your draw (Davros).
+    [InlineData("Gandalf, Westward Voyager", "Legendary Creature — Avatar Wizard",
+        "Whenever you cast a spell with mana value 5 or greater, each opponent reveals the top card of their "
+        + "library. If any of those cards shares a card type with that spell, copy that spell, you may choose "
+        + "new targets for the copy, and each opponent draws a card. Otherwise, you draw a card. (A copy of a "
+        + "permanent spell becomes a token.)")]
+    [InlineData("Davros, Dalek Creator", "Legendary Artifact Creature — Alien Scientist",
+        "Menace\nAt the beginning of your end step, create a 3/3 black Dalek artifact creature token with "
+        + "menace if an opponent lost 3 or more life this turn. Then each opponent who lost 3 or more life this "
+        + "turn faces a villainous choice — You draw a card, or that player discards a card.")]
     public void Classify_ACardYouCanGoBackForEveryTurn_IsCardAdvantage(
         string name, string typeLine, string oracle)
     {
