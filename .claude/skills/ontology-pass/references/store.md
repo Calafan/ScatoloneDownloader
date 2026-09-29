@@ -115,7 +115,13 @@ python scripts\store_pass.py readme -F msg-readme.txt
 What each step checks, and refuses on:
 
 - `rulings` and `handback` stop unless `apply_ruling --mode head` reports
-  `non-effects fields: 0`; `rulings` also stops if a `reviewedAt` moved.
+  `non-effects fields: 0`; `rulings` also stops if a `reviewedAt` moved. The
+  tree is restored from the backup whether they stop or not, and when no ruled
+  card is reviewed in HEAD there is no commit and the rulings go to the tree
+  only.
+- `apply_ruling --mode head` REWRITES the tree and is never run by hand: it
+  refuses without `--backed-up-to`, a byte-identical copy of the tree that only
+  `store_pass` passes (see hazards.md, 'A "dry run" that rewrote the human's tree').
 - `classify` prints `reviewedAt lines in the staged diff: 0` — it must be 0 —
   and the per-tag moves; `commit` refuses when it is not 0.
 - Every step ends in `verify_tree.py`: `still uncommitted: N reviewed | NOT

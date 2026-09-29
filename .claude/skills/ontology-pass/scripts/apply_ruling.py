@@ -12,8 +12,13 @@ review pass, which they commit themselves when the year is finished. Committing
 the tree wholesale would take that work with it.
 
 Usage:
-    python apply_ruling.py rulings.json --mode head
+    python apply_ruling.py rulings.json --mode head --backed-up-to DIR   # store_pass.py only
     python apply_ruling.py rulings.json --mode tree --store E:\\path\\to\\metadata
+
+--mode head is NOT a dry run: it rewrites the working tree's tier files as HEAD +
+rulings, and refuses unless --backed-up-to names a byte-identical copy of the
+tree to restore from. Never run it by hand; `store_pass.py rulings` and
+`handback` do the backup, the commit and the restore around it.
 
 rulings.json is a list of {name, oracleId, effect, op} where op is
 add|remove|unreview (an unreview needs no effect). `name` is for the human
@@ -111,11 +116,28 @@ def main():
     ap.add_argument("rulings", help="JSON list of {name, oracleId, effect, op}")
     ap.add_argument("--mode", choices=["head", "tree"], required=True)
     ap.add_argument("--store", default=str(DEFAULT_STORE))
+    ap.add_argument("--backed-up-to", help="--mode head only: a directory holding byte-identical copies "
+                                           "of the three tier files as they are in the tree now")
     args = ap.parse_args()
 
     meta = Path(args.store)
     repo = meta.parent
     rulings = json.loads(Path(args.rulings).read_text(encoding="utf-8"))
+
+    # --mode head REWRITES the working tree as HEAD + rulings, so the human's
+    # uncommitted pass is gone from the files unless somebody put it back.
+    # Run by hand "to check" on 2026-09-29, it wiped a 180-card sitting that had
+    # to be rebuilt from a Dump. Only store_pass.py may run it, and it proves the
+    # backup it restores from afterwards exists and matches the tree.
+    if args.mode == "head":
+        backup = Path(args.backed_up_to) if args.backed_up_to else None
+        if backup is None:
+            sys.exit("--mode head overwrites the working tree: run it through `store_pass.py rulings` "
+                     "or `handback`, which back the tree up and restore it (see references/store.md)")
+        for name in FILES:
+            if not (backup / name).is_file() or (backup / name).read_bytes() != (meta / name).read_bytes():
+                sys.exit("--backed-up-to %s does not hold the tree's %s as it is now — nothing written"
+                         % (backup, name))
 
     if args.mode == "head":
         data_by_file = {name: load_head(repo, name) for name in FILES}

@@ -217,3 +217,21 @@ lived there, and the next session's `classify --overwrite` would have rewritten
 **Fix:** durable state lives in `state/` (gitignored): `handed-back.json` and
 `work/`. `handed_back.py` rebuilds the list from the store's git and compares it
 with the file; run it at the start of a session that will classify.
+
+## A "dry run" that rewrote the human's tree
+
+**Symptom:** `git diff --stat` in the store shows a handful of lines where there
+were hundreds; `verify_tree.py` reports far fewer uncommitted reviewed entries
+than the review log saved.
+
+**Cause:** `apply_ruling.py --mode head` is not a preview. It writes the three
+tier files as HEAD + rulings, and only `store_pass.py` puts the human's tree back
+afterwards. Run by hand "to check" on 2026-09-29, it wiped a 180-card sitting.
+It was rebuilt from HEAD plus the Dump taken ten minutes earlier (effects and
+reviewedAt, 180 of 180 matching the review log); a rating or status changed in
+that sitting could not be, because nothing else records it.
+
+**Fix:** `--mode head` now refuses unless `--backed-up-to` names a byte-identical
+copy of the tree, which only `store_pass.py` passes, and `store_pass` restores the
+tree in a `finally`. To preview a ruling, read the ruling file. Take a `Dump`
+right after the human's sitting: it is the only other record of their tags.

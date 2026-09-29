@@ -63,17 +63,27 @@ def commit(message_file):
 
 
 def on_head_and_tree(rulings, message_file, unreview):
-    """HEAD + rulings committed; the human's tree restored and given the same rulings."""
+    """HEAD + rulings committed; the human's tree restored and given the same rulings.
+
+    The tree is put back from the backup whatever happens in between — a failed
+    check or a failed commit used to leave it in the HEAD+rulings state. When no
+    ruled card is reviewed in HEAD (every one of them sits in the human's
+    uncommitted pass) there is nothing to commit and the rulings go to the tree
+    alone."""
     backup = PASS_DIR / "pre-pass"
     copy_store(STORE, backup)
-    out = py("apply_ruling.py", rulings, "--mode", "head")
-    if "non-effects fields: 0" not in out:
-        sys.exit("a field other than effects moved — nothing committed; the tree is in "
-                 "HEAD+rulings state, restore it from %s" % backup)
-    if not unreview and reviewed_at_in_diff():
-        sys.exit("reviewedAt moved in a rulings commit — nothing committed")
-    commit(message_file)
-    copy_store(backup, STORE)
+    try:
+        out = py("apply_ruling.py", rulings, "--mode", "head", "--backed-up-to", backup)
+        if "non-effects fields: 0" not in out:
+            sys.exit("a field other than effects moved — nothing committed")
+        if not unreview and reviewed_at_in_diff():
+            sys.exit("reviewedAt moved in a rulings commit — nothing committed")
+        if subprocess.run(["git", "-C", str(STORE_REPO), "diff", "--quiet", "--", "metadata/"]).returncode == 0:
+            print("no ruled card is reviewed in HEAD — nothing to commit, the rulings go to the tree only")
+        else:
+            commit(message_file)
+    finally:
+        copy_store(backup, STORE)
     py("apply_ruling.py", rulings, "--mode", "tree")
 
 
