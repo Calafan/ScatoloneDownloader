@@ -1103,6 +1103,68 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // CardAdvantage and Filter on DIFFERENT abilities, ruled 2026-09-29 ("sono due
+    // abilità diverse"): a repeatable selection beside a separate draw does both.
+    [InlineData("Qiqirn Merchant", "Creature — Beast Citizen",
+        "{1}, {T}: Draw a card, then discard a card.\n{7}, {T}, Sacrifice this creature: Draw three cards. "
+        + "This ability costs {1} less to activate for each Town you control.")]
+    [InlineData("Dimir Strandcatcher", "Creature — Faerie Rogue",
+        "Flying\nWhenever you attack, surveil X, where X is the number of opponents being attacked.\nAt the "
+        + "beginning of each end step, if three or more cards were put into your graveyard from anywhere other "
+        + "than the battlefield this turn, draw a card.")]
+    [InlineData("Arcade Gannon", "Legendary Creature — Human Doctor",
+        "{T}: Draw a card, then discard a card. Put a quest counter on Arcade Gannon.\nFor Auld Lang Syne — "
+        + "Once during each of your turns, you may cast an artifact or Human spell from your graveyard with "
+        + "mana value less than or equal to the number of quest counters on Arcade Gannon.")]
+    [InlineData("Veronica, Dissident Scribe", "Legendary Creature — Human Artificer Rogue",
+        "Menace\nWhenever Veronica attacks, you may discard a card. If you do, draw a card.\nWhenever you "
+        + "discard one or more nonland cards for the first time each turn, create a Junk token. (It's an "
+        + "artifact with \"{T}, Sacrifice this token: Exile the top card of your library. You may play that card "
+        + "this turn. Activate only as a sorcery.\")")]
+    public void Classify_SelectingAndGainingOnDifferentAbilities_IsBoth(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.True(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // …but not a selection in the SAME ability as the draw (True Identity,
+    // Champions from Beyond), one made ONCE beside a draw engine (Case of the
+    // Crimson Pulse, Kaho), nor cards searched out and exiled to be CAST (Ugin,
+    // 2026-09-29).
+    [InlineData("True Identity", "Enchantment",
+        "Whenever this enchantment or another permanent you control is turned face up, scry 1, then draw a "
+        + "card. This ability triggers only once each turn.\nDisguise {W} (You may cast this card face down for "
+        + "{3} as a 2/2 creature with ward {2}. Turn it face up any time for its disguise cost.)")]
+    [InlineData("Champions from Beyond", "Enchantment",
+        "When this enchantment enters, create X 1/1 colorless Hero creature tokens.\nLight Party — Whenever "
+        + "you attack with four or more creatures, scry 2, then draw a card.\nFull Party — Whenever you attack "
+        + "with eight or more creatures, those creatures get +4/+4 until end of turn.")]
+    [InlineData("Case of the Crimson Pulse", "Enchantment — Case",
+        "When this Case enters, discard a card, then draw two cards.\nTo solve — You have no cards in hand. "
+        + "(If unsolved, solve at the beginning of your end step.)\nSolved — At the beginning of your upkeep, "
+        + "discard your hand, then draw two cards.")]
+    [InlineData("Kaho, Minamo Historian", "Legendary Creature — Human Wizard",
+        "When Kaho enters, search your library for up to three instant cards, exile them, then shuffle.\n{X}, "
+        + "{T}: You may cast a spell with mana value X from among cards exiled with Kaho without paying its "
+        + "mana cost.")]
+    [InlineData("Ugin, Eye of the Storms", "Legendary Planeswalker — Ugin",
+        "When you cast this spell, exile up to one target permanent that's one or more colors.\nWhenever you "
+        + "cast a colorless spell, exile up to one target permanent that's one or more colors.\n+2: You gain 3 "
+        + "life and draw a card.\n0: Add {C}{C}{C}.\n−11: Search your library for any number of colorless nonland "
+        + "cards, exile them, then shuffle. Until end of turn, you may cast those cards without paying their "
+        + "mana costs.")]
+    public void Classify_SelectingOnceOrInTheSameAbility_IsCardAdvantageAlone(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.False(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
     // A card changing places at exactly no net gain, however the halves are
     // worded, is Filter and nothing else.
     [InlineData("Grab the Prize", "Sorcery",

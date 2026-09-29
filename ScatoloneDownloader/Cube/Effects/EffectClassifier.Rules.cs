@@ -708,7 +708,10 @@ namespace ScatoloneDownloader.Cube
                     // to thin the library (Foresight, Mana Severance), and Scroll
                     // Rack trading cards from hand with the top.
                     Rx(@"shuffles? (?:the cards from )?(?:their|your) hand into (?:their|your) library, then draws? that many cards"),
-                    Rx(@"search your library for [^.\n]{0,40}cards?, exile them, then shuffle"),
+                    // …but not cards exiled to be CAST, which is no thinning of
+                    // the library (Ugin, Eye of the Storms' −11, 2026-09-29).
+                    Rx(@"search your library for [^.\n]{0,40}cards?, exile them, then shuffle"
+                        + @"(?!\.[^\n]{0,30}you may (?:cast|play) (?:those cards|them))"),
                     Rx(@"put that many cards from the top of your library into your hand")]),
 
                 // The [\w ] runs still cannot cross a FULL STOP, which is what keeps

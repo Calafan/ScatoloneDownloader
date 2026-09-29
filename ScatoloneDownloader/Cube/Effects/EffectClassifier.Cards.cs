@@ -1,5 +1,7 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Globalization;
+using System.Text.RegularExpressions;
 
+using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Mtg;
 
 namespace ScatoloneDownloader.Cube
@@ -811,6 +813,50 @@ namespace ScatoloneDownloader.Cube
                 && !ExileSeveralAndChooseOne.IsMatch(selecting)
                 && !PhasingLoot.IsMatch(selecting);
         }
+
+        // CardAdvantage and Filter on DIFFERENT ABILITIES, ruled 2026-09-29 on
+        // Qiqirn Merchant and Dimir Strandcatcher — "sono due abilità diverse.
+        // Es. looter che se si sacrifica peschi 3": the loot selects and the
+        // sacrifice draws, one ability each, so the card does both. That limits
+        // the 2026-09-27 exclusivity to a card whose selecting and gaining are
+        // the SAME ability (Overlord of the Floodpits draws two and discards
+        // one in one breath). Each ability is classified ALONE, the one reading
+        // that already knows every rule of both tags. And the ability that
+        // selects has to REPEAT, like the looter the ruling names: a selection
+        // made once beside what the card is for is the noise ruled out on
+        // 2026-09-27 (Case of the Crimson Pulse's enters rummage, Kaho's
+        // search, a hideaway), which the exclusivity had been hiding. That is
+        // also what keeps a SPELL whole, since its lines neither trigger nor
+        // cost: a separate "never split a spell" was measured and moved only
+        // Quicksilver Sea, a Plane whose two abilities are really two.
+        private static bool SelectsAndGainsOnDifferentAbilities(Card card, string text)
+        {
+            List<string> abilities = [.. Abilities(text).Where(a => a.Trim().Length > 0)];
+
+            if (abilities.Count < 2)
+            {
+                return false;
+            }
+
+            CardEffect[] each = [.. abilities.Select(a => Classify(new OneAbility(card, a)))];
+
+            return abilities.Where((a, i) => each[i].HasFlag(CardEffect.Filter) && !each[i].HasFlag(CardEffect.CardAdvantage))
+                       .Any(a => AbilityRepeats(Quoted.Replace(Parenthetical.Replace(a, " "), " ")))
+                && each.Any(e => e.HasFlag(CardEffect.CardAdvantage));
+        }
+
+        /// <summary>The card with the text of ONE of its abilities, for
+        /// <see cref="SelectsAndGainsOnDifferentAbilities"/>.</summary>
+        private sealed class OneAbility(Card card, string ability) : Card(new JsonCard
+        {
+            Name = card.Name,
+            Layout = card.Layout,
+            ReleasedAt = card.ReleasedAt.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            TypeLine = card.TypeLine,
+            OracleText = ability,
+            Keywords = card.Keywords,
+            ManaCost = card.ManaCost,
+        });
 
         // BLOOD, ruled 2026-09-27 under the scry ruling: "Blood Token rientra
         // nel punto F1, se ripetuti sì se singoli no". The token is a rummage —

@@ -75,14 +75,14 @@
             [CardEffect.CardAdvantage] =
                 "A card the opponent does not get. COUNT IT — the card ITSELF counts, so Ponder nets 0. A one-shot "
                 + "must draw two more than it pays; a REPEATABLE ability bought the card once, so one is enough — even "
-                + "paid with a card, itself or another permanent. Two off and ONE played is Filter; never "
-                + "both. Not a draw for THEM, nor an unreachable trigger.",
+                + "paid with a card or a permanent. Two off and ONE played is Filter; both only on two abilities. "
+                + "Not THEIR draw, nor an unreachable trigger.",
 
             [CardEffect.Filter] =
                 "Cards changing places at NO net gain: look at, mill or reveal a few and keep one, rearrange ANY "
                 + "player's top, every rummage, a wheel, hideaway, a scry LAND, a scry or Blood that comes AGAIN. Not a scry, "
-                + "surveil or Blood made ONCE beside the card's purpose, not a LAND kept (ManaFixing), not a CLOAK. "
-                + "Never beside CardAdvantage.",
+                + "surveil or Blood made ONCE in passing, not a LAND kept (ManaFixing), not a CLOAK. With "
+                + "CardAdvantage only on its own repeating ability.",
 
             [CardEffect.Reanimate] =
                 "A creature back from the dead and straight onto the BATTLEFIELD, cheating its cost. A card this card "

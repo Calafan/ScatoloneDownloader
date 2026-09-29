@@ -827,8 +827,10 @@ namespace ScatoloneDownloader.Cube
             // human moved eight of them to CardAdvantage alone (Meat Locker,
             // Overlord of the Floodpits, Polygraph Orb, Star Charter …) while
             // Focus the Mind still carried both on the same words. Asked last,
-            // after every rule that adds the draw.
-            if (result.HasFlag(CardEffect.CardAdvantage))
+            // after every rule that adds the draw. Asked PER ABILITY since
+            // 2026-09-29, see SelectsAndGainsOnDifferentAbilities.
+            if (result.HasFlag(CardEffect.CardAdvantage) && result.HasFlag(CardEffect.Filter)
+                && !SelectsAndGainsOnDifferentAbilities(card, text))
             {
                 result &= ~CardEffect.Filter;
             }
