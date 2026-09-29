@@ -18,6 +18,7 @@ The stash is always popped, even when a probe fails; if it is not, `git stash
 list` in the code repo shows it and `git stash pop` restores the change.
 """
 import argparse
+import os
 import shutil
 import subprocess
 import sys
@@ -57,9 +58,12 @@ def main():
 
     run_probes(["Score", "Dump", "TagDetail"], tag=args.tag)
     print_reports(["Score"], args.tag)
+    # The child prints card names ("Lothlórien Blade"): make it write UTF-8, or
+    # it writes the console's code page and this read dies on the first accent.
+    child_env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
     for line in subprocess.run([sys.executable, str(HERE / "blast_radius.py"), str(WORK_DIR / "dump-before.jsonl"),
                                 str(WORK_DIR / "dump.jsonl")], capture_output=True, text=True,
-                               encoding="utf-8").stdout.splitlines():
+                               encoding="utf-8", env=child_env).stdout.splitlines():
         if line.startswith(("reviewed", "unreviewed", "WRONG")):
             print(line)
     for tag in [args.tag, *args.other]:
