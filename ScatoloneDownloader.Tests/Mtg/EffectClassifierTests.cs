@@ -4251,17 +4251,17 @@ public sealed class EffectClassifierTests
     // And the seven edges each of those rulings has to leave alone. Damage
     // divided among "target CREATURES" can never reach a player; Fiery Justice
     // hands the five life straight back, which the human ruled an exception on
-    // purpose; ONE point of life is a rider, in either direction; "YOU lose life
-    // equal to" is the price of the card; a charge attached to a kill is a
-    // removal spell with a bonus; and what a TOKEN does is the token's.
+    // purpose; ONE point of life ONCE is a rider (a repeated one is Burn since
+    // 2026-09-29, see Classify_ARepeatedOnePointDrain_IsBurn, where Sanguine
+    // Syphoner moved); "YOU lose life equal to" is the price of the card; a
+    // charge attached to a kill is a removal spell with a bonus; and what a TOKEN
+    // does is the token's.
     [InlineData("Pyrokinesis", "Instant",
         "You may exile a red card from your hand rather than pay this spell's mana cost.\n"
         + "Pyrokinesis deals 4 damage divided as you choose among any number of target creatures.")]
     [InlineData("Fiery Justice", "Sorcery",
         "Fiery Justice deals 5 damage divided as you choose among any number of targets. "
         + "Target opponent gains 5 life.")]
-    [InlineData("Sanguine Syphoner", "Creature — Vampire",
-        "Whenever this creature attacks, each opponent loses 1 life and you gain 1 life.")]
     [InlineData("Reanimate", "Sorcery",
         "Put target creature card from a graveyard onto the battlefield under your control. "
         + "You lose life equal to that card's mana value.")]
@@ -4274,9 +4274,45 @@ public sealed class EffectClassifierTests
     [InlineData("Mysidian Elder", "Creature — Human Wizard",
         "When this creature enters, create a 0/1 black Wizard creature token with \"Whenever you cast a "
         + "noncreature spell, this token deals 1 damage to each opponent.\"")]
+    // One point of life drained ONCE is still a rider (a spell's mode), and a
+    // drain printed inside the quotes of a token the card creates is the token's
+    // (Keimi), read with the repeated drain on 2026-09-29.
+    [InlineData("Ebony Charm", "Instant",
+        "Choose one —\n• Target opponent loses 1 life and you gain 1 life.\n• Exile up to three target cards "
+        + "from a single graveyard.\n• Target creature gains fear until end of turn. (It can't be blocked except "
+        + "by artifact creatures and/or black creatures.)")]
+    [InlineData("Tatsunari, Toad Rider", "Legendary Creature — Human Ninja",
+        "Whenever you cast an enchantment spell, if you don't control a creature named Keimi, create Keimi, a "
+        + "legendary 3/3 black and green Frog creature token with \"Whenever you cast an enchantment spell, each "
+        + "opponent loses 1 life and you gain 1 life.\"\n{1}{G/U}: Tatsunari and target Frog you control can't be "
+        + "blocked this turn except by creatures with flying or reach.")]
     public void Classify_WhatOnlyLooksLikeBurn_IsNot(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
+    // ONE point of life that comes AGAIN AND AGAIN is Burn, revised 2026-09-29
+    // ("ripetuto sì, singolo no") from the 09-20 threshold of two: a trigger, an
+    // activation, or a keyword whose reminder says so (extort).
+    [InlineData("Sanguine Syphoner", "Creature — Vampire Warlock",
+        "Whenever this creature attacks, each opponent loses 1 life and you gain 1 life.")]
+    [InlineData("Vengeful Bloodwitch", "Creature — Vampire Warlock",
+        "Whenever this creature or another creature you control dies, target opponent loses 1 life and you "
+        + "gain 1 life.")]
+    [InlineData("Mirkwood Bats", "Creature — Bat",
+        "Flying\nWhenever you create or sacrifice a token, each opponent loses 1 life.")]
+    [InlineData("Blood Hustler", "Creature — Vampire Rogue",
+        "Whenever you commit a crime, put a +1/+1 counter on this creature. This ability triggers only once "
+        + "each turn. (Targeting opponents, anything they control, and/or cards in their graveyards is a "
+        + "crime.)\n{3}{B}: Target opponent loses 1 life and you gain 1 life.")]
+    [InlineData("Syndicate Heavy", "Creature — Giant Rogue",
+        "Extort (Whenever you cast a spell, you may pay {W/B}. If you do, each opponent loses 1 life and you "
+        + "gain that much life.)\nAt the beginning of each end step, if you gained 4 or more life this turn, "
+        + "investigate. (Create a Clue token. It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")")]
+    public void Classify_ARepeatedOnePointDrain_IsBurn(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
     }
 
     [Theory]

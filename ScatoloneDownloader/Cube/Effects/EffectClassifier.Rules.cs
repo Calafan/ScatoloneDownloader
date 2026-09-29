@@ -785,6 +785,16 @@ namespace ScatoloneDownloader.Cube
                     // because X is not one (Northern Air Temple). The subject list
                     // is spelled out so that "you lose 2 life" stays a price.
                     Rx(LosesLifeSubject + @" ?loses? (?:[2-9]|\d\d+|x) life"),
+                    // …unless the one point comes AGAIN AND AGAIN. Revised
+                    // 2026-09-29 ("ripetuto sì, singolo no"): since 09-23 the
+                    // human had tagged twelve of sixteen repeated one-point drains
+                    // Burn (Vengeful Bloodwitch, Raven of Fell Omens, Wispdrinker
+                    // Vampire, Mirkwood Bats …), against the 09-20 threshold. A
+                    // trigger or an activation on the same LINE makes it repeated;
+                    // an enters or dies trigger, or a spell, drains once and stays
+                    // the rider the threshold refuses.
+                    Rx(@"(?:\bwhenever\b|\bat the beginning of\b|^[^\n:""]{1,70}:)[^\n]*?"
+                        + LosesLifeSubject + @" ?loses? 1 life", RegexOptions.Multiline),
                     // The same life loss sized by a COUNT. Ruled 2026-09-20 and it
                     // splits cleanly on WHOSE life it is: four reviewed cards say
                     // "YOU lose life equal to" (Reanimate, Lich, Teval, Darkstar
@@ -1045,8 +1055,14 @@ namespace ScatoloneDownloader.Cube
         // so an ability granted to a creature you already control keeps the tag:
         // Black Mage's Rod says "this creature" and Fire Whip burns on a line of
         // its own.
+        // The LIFE LOSS a created token's quoted ability does is the token's too,
+        // read once the repeated one-point drain became Burn (2026-09-29): Keimi,
+        // the Frog token Tatsunari makes, drains on every enchantment spell, and
+        // that is the Frog's, the same evening the human ruled Smaug's Treasures
+        // Smaug's and not There and Back Again's.
         private static readonly Regex DamageFromSomethingItMade = Rx(
-            @"""[^""]{0,160}\bthis (?:token|emblem)[^""]{0,60}deals? [\dX]+ damage");
+            @"""[^""]{0,160}\bthis (?:token|emblem)[^""]{0,60}deals? [\dX]+ damage"
+            + @"|\btokens? with ""[^""]{0,200}\bloses? [\dX]+ life[^""]*""");
 
         // A creature with HASTE that is gone at the end of the turn it arrived
         // is a burn spell with legs. Ruled 2026-09-20: it attacks once and then

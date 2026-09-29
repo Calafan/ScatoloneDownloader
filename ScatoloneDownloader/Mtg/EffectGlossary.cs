@@ -103,9 +103,9 @@
 
             [CardEffect.Burn] =
                 "Damage or life loss aimed at a FACE, however counted and however slow: \"damage equal to the number "
-                + "of Swamps\", an upkeep tax, life PAID to stop the card, and losing TWO or more (one point is a "
-                + "rider). Damage at a creature is Removal; \"any target\" is both. Not damage to YOURSELF, and not "
-                + "what a TOKEN you made deals.",
+                + "of Swamps\", an upkeep tax, life PAID to stop the card, two or more life, or one point AGAIN and "
+                + "again. Damage at a creature is Removal; \"any target\" is both. Not damage to YOURSELF, nor what a "
+                + "TOKEN you made does.",
 
             [CardEffect.Sacrifice] =
                 "An outlet you can feed your OWN creatures or artifacts AGAIN AND AGAIN — a cost, a repeating trigger, "
