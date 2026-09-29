@@ -5018,6 +5018,14 @@ public sealed class EffectClassifierTests
         "Choose a card name. Exile the top six cards of your library, then reveal cards from the top "
         + "of your library until you reveal a card with the chosen name. Put that card into your hand "
         + "and exile all other cards revealed this way.")]
+    // The zones listed with commas, "your library, graveyard, and/or outside the
+    // game": Invasion of Arcavios, tagged Tutor by the human on 2026-09-29.
+    [InlineData("Invasion of Arcavios // Invocation of the Founders", "Battle — Siege // Enchantment",
+        "(As a Siege enters, choose an opponent to protect it. You and others can attack it. When it's "
+        + "defeated, exile it, then cast it transformed.)\nWhen this Siege enters, search your library, "
+        + "graveyard, and/or outside the game for an instant or sorcery card you own, reveal it, and put it "
+        + "into your hand. If you search your library this way, shuffle.\nWhenever you cast an instant or "
+        + "sorcery spell from your hand, you may copy that spell. You may choose new targets for the copy.")]
     public void Classify_FetchingANamedCardOutOfYourLibrary_IsTutor(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tutor));

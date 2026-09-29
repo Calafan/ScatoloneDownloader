@@ -77,7 +77,10 @@ namespace ScatoloneDownloader.Cube
         // creature on another is judged mode by mode.
         private static readonly Regex[] TutorPatterns =
         [
-            Rx(@"search (?:your|their) library[\w /]{0,25}for (?:up to \w+ |two |three |four |five |\d+ )?"
+            // The zones may be LISTED with commas — "search your library,
+            // graveyard, and/or outside the game for" (Invasion of Arcavios,
+            // tagged by the human on 2026-09-29) — hence the comma and the 40.
+            Rx(@"search (?:your|their) library[\w ,/]{0,40}for (?:up to \w+ |two |three |four |five |\d+ )?"
                 + @"[\w ,'\-/]{0,50}cards?\b"),
             // Demonic Consultation never searches: it names a card and then digs
             // until the NAME turns up. The name is the whole point — "reveal cards
