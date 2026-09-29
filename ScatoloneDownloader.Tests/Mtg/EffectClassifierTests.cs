@@ -3804,6 +3804,12 @@ public sealed class EffectClassifierTests
     // same ability one step removed.
     [InlineData("A Realm Reborn", "Enchantment",
         "Other permanents you control have \"{T}: Add one mana of any color.\"")]
+    // The same bare tap behind an ability word (Corrupted), which the human took
+    // ManaFixing off on 2026-09-29.
+    [InlineData("Glistening Sphere", "Artifact",
+        "This artifact enters tapped.\nWhen this artifact enters, proliferate.\n{T}: Add one mana of any "
+        + "color.\nCorrupted — {T}: Add three mana of any one color. Activate only if an opponent has three or "
+        + "more poison counters.")]
     public void Classify_ManaForNothingButATap_IsRampNotManaFixing(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));

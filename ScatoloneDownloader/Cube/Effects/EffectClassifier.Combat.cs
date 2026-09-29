@@ -1064,7 +1064,11 @@ namespace ScatoloneDownloader.Cube
         // Add one mana of any color.\"") — which is the same bare tap, one step
         // removed. A cost in front of the tap defeats both, which is the point:
         // "{1}, {T}: Add one mana of any color" contains no such opening.
-        private static readonly Regex BareTapAdds = Rx("^\\{t\\}: add |\"\\{t\\}: add ");
+        // An ABILITY WORD in front of the tap changes nothing — Glistening
+        // Sphere's "Corrupted — {T}: Add three mana of any one color" is the
+        // same bare tap behind a condition, and the human took ManaFixing off it
+        // on 2026-09-29.
+        private static readonly Regex BareTapAdds = Rx("^(?:[\\w' ]+ — )?\\{t\\}: add |\"\\{t\\}: add ");
 
         // The untap lock written about the card itself. "Target creature doesn't
         // untap during its controller's next untap step" (Frozen Solid) does NOT
