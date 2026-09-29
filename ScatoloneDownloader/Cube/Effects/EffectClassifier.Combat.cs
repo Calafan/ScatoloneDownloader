@@ -710,7 +710,12 @@ namespace ScatoloneDownloader.Cube
             + @"|is an? [\w ]{0,25}with base power and toughness [0-2]/"
             + @"|attacking creatures get -"
             + @"|gets? -[\dX]+/-0 and loses all abilities"
-            + @"|loses all abilities and (?:doesn'?t untap|can'?t attack)");
+            + @"|loses all abilities and (?:doesn'?t untap|can'?t attack)"
+            // A CURSED ROLE ("Enchanted creature is 1/1") put on an opponent's
+            // creature is the same small body in token form: Diminisher Witch,
+            // tagged by the human on 2026-09-29. On your own creature it is a
+            // drawback (Cursed Courtier, untagged the same day), hence the owner.
+            + @"|cursed role token attached to (?:up to one )?target creature (?:an opponent controls|you don't control)");
 
         // PREVENTING DAMAGE TO THE PLAYER ALONE is this tag and not Protection,
         // ruled 2026-09-22: "le prevenzioni al solo giocatore mettiamole come

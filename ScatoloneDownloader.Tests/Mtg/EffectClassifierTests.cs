@@ -5640,6 +5640,13 @@ public sealed class EffectClassifierTests
     [InlineData("Flood the Engine", "Enchantment — Aura",
         "Enchant creature or Vehicle\nWhen this Aura enters, tap enchanted permanent.\n"
         + "Enchanted permanent loses all abilities and doesn't untap during its controller's untap step.")]
+    // A Cursed Role ("Enchanted creature is 1/1") put on an opponent's creature:
+    // Diminisher Witch, tagged by the human on 2026-09-29.
+    [InlineData("Diminisher Witch", "Creature — Human Warlock",
+        "Bargain (You may sacrifice an artifact, enchantment, or token as you cast this spell.)\nWhen this "
+        + "creature enters, if it was bargained, create a Cursed Role token attached to target creature an "
+        + "opponent controls. (If you control another Role on it, put that one into the graveyard. Enchanted "
+        + "creature is 1/1.)")]
     public void Classify_TheWaysACreatureIsNeutralised_ArePacify(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
