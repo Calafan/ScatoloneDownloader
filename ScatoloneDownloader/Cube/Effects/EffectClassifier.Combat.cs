@@ -603,6 +603,30 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex PhasesYourPermanentsOut = Rx(
             @"\ball (?:nonland )?(?:permanents|creatures) you control phase out");
 
+        // Three returns to hand that answer nobody, found 2026-09-29, each
+        // untagged on every reviewed card: a permanent YOU CONTROL or own (0 of
+        // 7 — Exosuit Savior, Stickytongue Sentinel, Essence Reliquary, the
+        // Auras on Scarab of the Unseen's own permanent; saving it in response is
+        // Protection's, Sunpearl Kirin), a LAND (0 of 5 — Active Volcano and
+        // Flash Flood's "return target Island", which the human tags
+        // RemovePermanent alone, as Omen of Fire's every Island), and a card
+        // EXILED WITH the card coming back (Nyla), which is no permanent at all.
+        // The "you control" must sit between the verb and the hand, so "return
+        // target creature to its owner's hand, then return a land you control"
+        // still bounces the first; and the clause must not ALSO name one of
+        // theirs ("target permanent you control and target permanent you DON'T
+        // control" — Aether Tradewinds) nor be about the AURAS you own on it
+        // (Word of Undoing). Measured over the broad reading: 3 of 31 reviewed
+        // cards that return your own permanent are tagged, and those three are
+        // taken to the human as probable slips. Blanked and the Bounce patterns
+        // asked again.
+        private static readonly Regex NotAnAnswerToHand = Rx(
+            @"\breturn (?:(?!to (?:its|their) owners?'?s? hands?|don'?t control|opponents? controls?|auras? you (?:control|own))[^.\n]){0,60}"
+            + @"\byou (?:control|own)\b"
+            + @"(?:(?!to (?:its|their) owners?'?s? hands?|don'?t control|opponents? controls?)[^.\n]){0,60}to (?:its|their) owners?'?s? hands?"
+            + @"|\breturn target (?:island|swamp|mountain|forest|plains|land)\b[^.\n]*"
+            + @"|\breturn target card exiled with[^.\n]*");
+
         // The lines a Protection effect can be held up from without being an
         // instant or having flash: an ACTIVATED ability, a card turned FACE UP
         // (a special action, taken any time — Essence of Antiquity, Forum

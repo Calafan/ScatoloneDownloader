@@ -50,9 +50,10 @@
                 + "your own, a graveyard, lands alone.",
 
             [CardEffect.Bounce] =
-                "Returns a NAMED permanent to its owner's hand (\"return target …\", or a mass \"return each/all\"). "
-                + "Returning itself as a cost or an end-step drawback is a price the card pays, not an answer. "
-                + "Returning every land (or every Island) sets a mana base back and is not a bounce.",
+                "Returns a NAMED permanent to its owner's hand (\"return target …\", or a mass \"return each/all\"), "
+                + "or puts it on top of, or near the top of, its owner's library. Returning itself as a cost or a "
+                + "drawback is a price, not an answer; so is returning your OWN permanent, and a land returned "
+                + "sets a mana base back and is not a bounce.",
 
             [CardEffect.Ramp] =
                 "More mana, or sooner: a mana ability on a creature or rock, a land onto the battlefield, a ritual, "

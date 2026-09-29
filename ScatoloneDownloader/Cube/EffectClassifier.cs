@@ -394,6 +394,17 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Wipe;
             }
 
+            // Three returns to hand that answer nobody. See NotAnAnswerToHand.
+            if (result.HasFlag(CardEffect.Bounce))
+            {
+                string answers = NotAnAnswerToHand.Replace(text, " ");
+
+                if (answers != text && !BouncePatterns.Any(p => p.IsMatch(answers)))
+                {
+                    result &= ~CardEffect.Bounce;
+                }
+            }
+
             // Four shapes that name a player beside "discard" and attack nobody's
             // hand. See NotAnAttackOnAHand.
             if (result.HasFlag(CardEffect.Discard))

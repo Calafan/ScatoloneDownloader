@@ -14,7 +14,7 @@ namespace ScatoloneDownloader.Cube
         // One entry per effect; a card gets the effect if ANY of its patterns hit.
         private static readonly (CardEffect Effect, Regex[] Patterns)[] Rules;
 
-        // All four are the SAME ARRAY the table holds, looked up once —
+        // All five are the SAME ARRAY the table holds, looked up once —
         // hoisted out of it for the same reason as MillPatterns and
         // ReanimatePatterns: the vetoes that strip a tag re-ask its own patterns
         // against the text with the offending shape blanked out, so a card that
@@ -26,6 +26,8 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex[] WipePatterns;
 
         private static readonly Regex[] DiscardPatterns;
+
+        private static readonly Regex[] BouncePatterns;
 
         // A STATIC CONSTRUCTOR rather than three field initialisers, and that is
         // forced by the split: initialisers run in textual order within a file but
@@ -322,12 +324,30 @@ namespace ScatoloneDownloader.Cube
                     // …but not LANDS alone: returning every Island is a mana base
                     // set back, which the human tags LandDestruction and Wipe and not
                     // this (Omen of Fire, 2026-09-28).
-                    Rx(@"return (?:each|all|every)(?! (?:lands|islands|plains|swamps|mountains|forests)\b)[\w ,']*to (?:its|their) owner(?:'s|s'|s)? hands?"),
+                    Rx(@"return (?:each|all|every)(?! (?:lands|islands|plains|swamps|mountains|forests)\b)[\w ,']*to (?:its|their) owner(?:'s|s'|s)? hands?"
+                        // Hurkyl's Recall names the owner as the TARGET instead.
+                        + @"|return all [\w ]{0,30}target player owns to their hand"),
                     // The owner's choice of TOP OR BOTTOM of the library is the
                     // same tempo answer as a return to hand: 9 of 9 reviewed
                     // cards that say it are tagged Bounce (Trip Up, Ice Magic,
                     // Jailbreak Scheme), and none was read before 2026-09-25.
-                    Rx(@"owner puts it on their choice of the top or bottom of their library")]),
+                    // Widened 2026-09-29 for "THE OWNER OF TARGET nonland permanent
+                    // puts it on their choice" (Riverwalk Technique, Sudden Setback).
+                    Rx(@"owner (?:of target [^.\n]{0,40})?puts it on their choice of the top or bottom of their library"),
+                    // …and the other library placements the hand tags carry on every
+                    // reviewed card (8 of 8), read the same day: ON TOP of its
+                    // owner's library (Time Ebb, Ether Well — "creature" must meet
+                    // "on top" directly, which is what keeps Civic Guildmage's
+                    // "target creature YOU CONTROL on top", a cost, out; a guard for
+                    // it was written and turned nothing red), and SECOND or THIRD
+                    // FROM THE TOP (Deem Inferior, Lost Days, Wan Shi Tong, Riptide
+                    // Gearhulk) — of a TARGET, because the God-Eternals, Borborygmos
+                    // and Fblthp and Braided Net put THEMSELVES there, and Lost Hours
+                    // a card from a hand.
+                    Rx(@"put target [\w ]{0,30}creature on top of its owner's library"
+                        + @"|\btarget [^.\n]{0,60}\binto (?:their|its owner's) library (?:second|third) from the top"),
+                    // Creatures the OPPONENTS chose, returned (Summon: Valefor).
+                    Rx(@"return those (?:creatures|permanents) to their owners' hands")]),
 
                 // The old rule was two lines of `destroy target[\w ]*(artifact|
                 // enchantment)`, and that `[\w ]*` was free to run the length of the
@@ -957,6 +977,7 @@ namespace ScatoloneDownloader.Cube
             BurnPatterns = Rules.First(rule => rule.Effect == CardEffect.Burn).Patterns;
             WipePatterns = Rules.First(rule => rule.Effect == CardEffect.Wipe).Patterns;
             DiscardPatterns = Rules.First(rule => rule.Effect == CardEffect.Discard).Patterns;
+            BouncePatterns = Rules.First(rule => rule.Effect == CardEffect.Bounce).Patterns;
         }
 
         // Damage aimed at THAT PERMANENT'S CONTROLLER, which is how the old

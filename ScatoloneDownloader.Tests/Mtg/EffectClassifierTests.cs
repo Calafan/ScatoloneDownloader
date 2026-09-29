@@ -3383,6 +3383,88 @@ public sealed class EffectClassifierTests
         Assert.True(EffectClassifier.Classify(card).HasFlag(CardEffect.Bounce));
     }
 
+    [Theory]
+    // Read 2026-09-29, each shape tagged on every reviewed card using it: a
+    // target put on TOP of its owner's library (Time Ebb, Ether Well), SECOND or
+    // THIRD from the top (Deem Inferior, Riptide Gearhulk), "the OWNER OF TARGET
+    // … puts it on their choice of the top or bottom" (Riverwalk Technique), the
+    // owner as the target (Hurkyl's Recall), creatures the opponents chose
+    // (Summon: Valefor). A permanent of YOURS in the same clause as one of theirs
+    // still bounces theirs (Aether Tradewinds), the Auras you own on the target
+    // are not the target (Word of Undoing), and lands paid as a cost do not
+    // hide the creature bounced (Flooded Shoreline).
+    [InlineData("Time Ebb", "Sorcery",
+        "Put target creature on top of its owner's library.")]
+    [InlineData("Ether Well", "Instant",
+        "Put target creature on top of its owner's library. If that creature is red, you may put it on the "
+        + "bottom of its owner's library instead.")]
+    [InlineData("Deem Inferior", "Sorcery",
+        "This spell costs {1} less to cast for each card you've drawn this turn.\nThe owner of target nonland "
+        + "permanent puts it into their library second from the top or on the bottom.")]
+    [InlineData("Riptide Gearhulk", "Artifact Creature — Construct",
+        "Double strike\nProwess (Whenever you cast a noncreature spell, this creature gets +1/+1 until end of "
+        + "turn.)\nWhen this creature enters, for each opponent, put up to one target nonland permanent that "
+        + "player controls into its owner's library third from the top.")]
+    [InlineData("Riverwalk Technique", "Instant",
+        "Choose one —\n• The owner of target nonland permanent puts it on their choice of the top or bottom of "
+        + "their library.\n• Counter target noncreature spell.")]
+    [InlineData("Hurkyl's Recall", "Instant",
+        "Return all artifacts target player owns to their hand.")]
+    [InlineData("Summon: Valefor", "Enchantment Creature — Saga Drake",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after IV.)\nI — Sonic "
+        + "Wings — Each opponent chooses a creature with the greatest mana value among creatures they control. "
+        + "Return those creatures to their owners' hands.\nII, III, IV — Tap up to one target creature and put a "
+        + "stun counter on it.\nFlying")]
+    [InlineData("Word of Undoing", "Instant",
+        "Return target creature and all white Auras you own attached to it to their owners' hands.")]
+    [InlineData("Aether Tradewinds", "Instant",
+        "Return target permanent you control and target permanent you don't control to their owners' hands.")]
+    [InlineData("Flooded Shoreline", "Enchantment",
+        "{U}{U}, Return two Islands you control to their owner's hand: Return target creature to its owner's "
+        + "hand.")]
+    public void Classify_AReturnThatAnswersSomething_IsBounce(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Bounce));
+    }
+
+    [Theory]
+    // Returns that answer nobody, each untagged on (nearly) every reviewed card:
+    // your OWN permanent (3 of 31 tagged, taken to the human as slips), a LAND
+    // (0 of 5), the Auras on your own permanent, a card EXILED WITH the card;
+    // and the library placements of a creature of YOURS (Civic Guildmage), of
+    // the card ITSELF (God-Eternal Kefnet) and of a card from a HAND (Lost Hours).
+    [InlineData("Exosuit Savior", "Creature — Human Soldier",
+        "Flying\nWhen this creature enters, return up to one other target permanent you control to its owner's "
+        + "hand.")]
+    [InlineData("Essence Reliquary", "Artifact",
+        "{T}: Return another target permanent you control and all Auras you control attached to it to their "
+        + "owner's hand. Activate only during your turn.")]
+    [InlineData("Scarab of the Unseen", "Artifact",
+        "{T}, Sacrifice this artifact: Return all Auras attached to target permanent you own to their owners' "
+        + "hands. Draw a card at the beginning of the next turn's upkeep.")]
+    [InlineData("Active Volcano", "Instant",
+        "Choose one —\n• Destroy target blue permanent.\n• Return target Island to its owner's hand.")]
+    [InlineData("Nyla, Shirshu Sleuth", "Legendary Creature — Mole Beast",
+        "When Nyla enters, exile up to one target creature card from your graveyard. If you do, you lose X "
+        + "life and create X Clue tokens, where X is that card's mana value. (A Clue token is an artifact with "
+        + "\"{2}, Sacrifice this token: Draw a card.\")\nAt the beginning of your end step, if you control no "
+        + "Clues, return target card exiled with Nyla to its owner's hand.")]
+    [InlineData("Civic Guildmage", "Creature — Human Wizard",
+        "{G}, {T}: Target creature gets +0/+1 until end of turn.\n{U}, {T}: Put target creature you control on "
+        + "top of its owner's library.")]
+    [InlineData("God-Eternal Kefnet", "Legendary Creature — Zombie God",
+        "Flying\nYou may reveal the first card you draw each turn as you draw it. Whenever you reveal an "
+        + "instant or sorcery card this way, copy that card and you may cast the copy. That copy costs {2} less "
+        + "to cast.\nWhen God-Eternal Kefnet dies or is put into exile from the battlefield, you may put it into "
+        + "its owner's library third from the top.")]
+    [InlineData("Lost Hours", "Sorcery",
+        "Target player reveals their hand. You choose a nonland card from it. That player puts that card into "
+        + "their library third from the top.")]
+    public void Classify_AReturnThatAnswersNobody_IsNotBounce(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Bounce));
+    }
+
     [Fact]
     public void Classify_ManaDenial_WithoutDestroyingALand_IsNotProposed()
     {
