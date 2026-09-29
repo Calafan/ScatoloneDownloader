@@ -536,6 +536,8 @@ namespace ScatoloneDownloader.Cube
             return addsAny;
         }
 
+        private static readonly Regex ItOpensTheSentence = Rx(@"^\s*it\b");
+
         /// <summary>Whether every match of <paramref name="patterns"/> lands on the
         /// card itself, judged by the subject written in front of it. The window is
         /// the current LINE only (oracle text puts one ability per line), so a
@@ -570,9 +572,23 @@ namespace ScatoloneDownloader.Cube
                     // War Machine and Comet Crawler's "sacrifice ANOTHER creature.
                     // If you do, this creature gets +2/+2". Added 2026-09-17.
                     int clause = Math.Max(before.LastIndexOf(':'), before.LastIndexOf(". ", StringComparison.Ordinal));
+                    string previous = clause >= 0 ? before[..clause] : string.Empty;
                     if (clause >= 0)
                     {
                         before = before[(clause + 1)..];
+                    }
+
+                    // "IT" opening the sentence is whatever the sentence before it
+                    // was about: Pristine Skywise's "untap THIS CREATURE. IT gains
+                    // protection" shields itself, while Lightfoot Technique's "put
+                    // a counter on TARGET CREATURE. IT gains indestructible"
+                    // shields the target. Added 2026-09-29.
+                    if (ItOpensTheSentence.IsMatch(before)
+                        && SelfReference.IsMatch(previous[(previous.LastIndexOf(". ", StringComparison.Ordinal) + 1)..])
+                        && !Beneficiary.IsMatch(previous[(previous.LastIndexOf(". ", StringComparison.Ordinal) + 1)..]))
+                    {
+                        sawSelf = true;
+                        continue;
                     }
 
                     // The TRIGGER supplies a false beneficiary the same way the
@@ -743,6 +759,16 @@ namespace ScatoloneDownloader.Cube
             {
                 int start = text.LastIndexOf('\n', Math.Max(0, match.Index - 1)) + 1;
                 int end = text.IndexOf('\n', match.Index);
+
+                // A modal BULLET belongs to the trigger or activation that
+                // introduces it (Kykar's "whenever you cast a noncreature spell,
+                // choose one — • exile another target creature you control"), so
+                // the lines above it are read with it. Added 2026-09-29.
+                while (start > 0 && text.AsSpan(start).TrimStart().StartsWith("•"))
+                {
+                    start = text.LastIndexOf('\n', Math.Max(0, start - 2)) + 1;
+                }
+
                 string line = Parenthetical.Replace(text[start..(end < 0 ? text.Length : end)], " ");
 
                 if (ActivatedAbility.Any(a => a.IsMatch(line)) || ReactiveTrigger.IsMatch(line))

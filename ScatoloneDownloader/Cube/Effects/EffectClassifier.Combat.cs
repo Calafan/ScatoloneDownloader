@@ -491,6 +491,9 @@ namespace ScatoloneDownloader.Cube
             + @"|exile (?:any number of|each|all) [\w ,-]{0,30}creatures? you control[^\n]{0,120}\b(?:return|cloak)"
             + @"|exile (?:up to \w+ |x |another )?(?:other )?target [\w ,/]{0,40}\.[^.\n]{0,60}\breturn (?:it|that card|the exiled cards?|those cards)"
             + @"[^.\n]{0,80}at the beginning of the next end step"
+            // …and the same with the clock first: "At the beginning of the next
+            // end step, return that card" (Phelia, ruled 2026-09-29).
+            + @"|exile (?:up to \w+ |x |another )?(?:other )?target [\w ,/]{0,40}\. at the beginning of the next end step, return (?:it|that card|the exiled cards?|those cards)"
             + @"|(?<!additional cost to cast this spell, )\breturn (?:up to one |another |an? )?(?:other )?(?:target )?(?:nonland )?(?:permanent|creature)s? you control to (?:its|their) owner'?s? hands?(?!:)"
             + @"|you may airbend that creature");
 
@@ -551,10 +554,13 @@ namespace ScatoloneDownloader.Cube
         // (a special action, taken any time — Essence of Antiquity, Forum
         // Familiar), a trigger on something BECOMING THE TARGET (Monk Gyatso),
         // which is a response by construction, and CYCLING, which is an
-        // activated ability from the hand (Agonasaur Rex).
+        // activated ability from the hand (Agonasaur Rex). And a trigger on
+        // casting a NONCREATURE or INSTANT spell, which you can do in response —
+        // ruled 2026-09-29, "si possono usare instant quindi contano" (Kykar).
         private static readonly Regex ReactiveTrigger = Rx(
             @"\bwhen(?:ever)? [^,\n]{0,40}is turned face up|\bwhenever [^,\n]{0,60}becomes the target of"
-            + @"|\bwhen(?:ever)? you cycle\b");
+            + @"|\bwhen(?:ever)? you cycle\b"
+            + @"|\bwhenever you cast (?:or copy )?(?:a|an|your first|your second) (?:noncreature|instant)\b[^,\n]{0,40}spell");
 
         private static readonly Regex PreventDealtBy = Rx(
             @"damage that would be dealt (?:to and dealt )?by");

@@ -3050,6 +3050,18 @@ public sealed class EffectClassifierTests
     [InlineData("Revitalizing Repast // Old-Growth Grove", "Instant // Land",
         "Put a +1/+1 counter on target creature. It gains indestructible until end of turn.\nThis land enters "
         + "tapped.\n{T}: Add {B} or {G}.")]
+    // Ruled 2026-09-29, "si possono usare instant quindi contano": a blink on a
+    // modal bullet under a trigger on casting a NONCREATURE spell (Kykar), and
+    // one with the clock first, "at the beginning of the next end step, return
+    // that card", on a card with flash (Phelia).
+    [InlineData("Kykar, Zephyr Awakener", "Legendary Creature — Bird Wizard",
+        "Flying\nWhenever you cast a noncreature spell, choose one —\n• Exile another target creature you "
+        + "control. Return that card to the battlefield under its owner's control at the beginning of the next "
+        + "end step.\n• Create a 1/1 white Spirit creature token with flying.")]
+    [InlineData("Phelia, Exuberant Shepherd", "Legendary Creature — Dog",
+        "Flash\nWhenever Phelia attacks, exile up to one other target nonland permanent. At the beginning of "
+        + "the next end step, return that card to the battlefield under its owner's control. If it entered "
+        + "under your control, put a +1/+1 counter on Phelia.")]
     public void Classify_ASaveHeldUpForSomethingElse_IsProtection(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
@@ -3142,6 +3154,13 @@ public sealed class EffectClassifierTests
         "Enchant modified creature (Equipment, Auras its controller controls, and counters are "
         + "modifications.)\nEnchanted creature gets +3/+3 and has reach and vigilance.\nUmbra armor (If enchanted "
         + "creature would be destroyed, instead remove all damage from it and destroy this Aura.)")]
+    // "IT" opening a sentence after "this creature" is the card itself (2026-09-29).
+    [InlineData("Pristine Skywise", "Creature — Dragon",
+        "Flying\nWhenever you cast a noncreature spell, untap this creature. It gains protection from the "
+        + "color of your choice until end of turn.")]
+    [InlineData("Seasoned Hallowblade", "Creature — Human Warrior",
+        "Discard a card: Tap this creature. It gains indestructible until end of turn. (Damage and effects "
+        + "that say \"destroy\" don't destroy it.)")]
     public void Classify_NotASaveHeldUpForSomethingElse_IsNotProtection(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
