@@ -3416,6 +3416,12 @@ public sealed class EffectClassifierTests
     [InlineData("Lilysplash Mentor", "Creature — Frog Druid",
         "Reach\n{1}{G}{U}: Exile another target creature you control, then return it to the battlefield under "
         + "its owner's control with a +1/+1 counter on it. Activate only as a sorcery.")]
+    // A shield taken away in the singular, joined 2026-09-29 when the human took
+    // Protection off Rebel Salvo.
+    [InlineData("Rebel Salvo", "Instant",
+        "Affinity for Equipment (This spell costs {1} less to cast for each Equipment you control.)\nRebel "
+        + "Salvo deals 5 damage to target creature or planeswalker. That permanent loses indestructible until "
+        + "end of turn.")]
     public void Classify_NotASaveHeldUpForSomethingElse_IsNotProtection(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));

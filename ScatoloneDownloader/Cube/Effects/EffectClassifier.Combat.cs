@@ -556,9 +556,11 @@ namespace ScatoloneDownloader.Cube
 
         // …and TAKING a shield away is the opposite of this tag: Nowhere to Run,
         // Spectacular Pileup and Autumn Willow name hexproof, indestructible and
-        // shroud only to switch them off. 0 of 5 reviewed cards tagged.
+        // shroud only to switch them off. 0 of 5 reviewed cards tagged. The
+        // singular verb joined on 2026-09-29, when the human took Protection off
+        // Rebel Salvo ("That permanent LOSES indestructible until end of turn").
         private static readonly Regex TakesAShieldAway = Rx(
-            @"[^.\n]*\b(?:lose (?:all abilities and )?(?:hexproof|indestructible|protection|shroud)"
+            @"[^.\n]*\b(?:loses? (?:all abilities and )?(?:hexproof|indestructible|protection|shroud)"
             + @"|as though (?:they|it) didn'?t have (?:hexproof|shroud)|ward abilities of)[^.\n]*");
 
         // A STATIC shield over an AREA is Protection even though nothing is held
