@@ -433,11 +433,11 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.ManaFixing;
             }
 
-            // …and neither is mana you get for nothing but a tap. See
-            // BareTapAdds above for the ruling and the numbers behind it.
+            // …and neither is mana you get for nothing but a tap, or for any
+            // price that is not mana. See BareTapAdds and EveryFixerIsASource.
             if (result.HasFlag(CardEffect.ManaFixing)
                 && card.MacroType != MacroType.Land
-                && EveryFixerIsABareTap(text))
+                && EveryFixerIsASource(text))
             {
                 result &= ~CardEffect.ManaFixing;
             }

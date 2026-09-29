@@ -498,19 +498,23 @@ namespace ScatoloneDownloader.Cube
             return addsAny;
         }
 
-        /// <summary>True when EVERY line that fixes colour asks for nothing but a
-        /// tap, so the card is a mana source and not a fixer. Per line for the
-        /// same reason as <see cref="AllManaIsRestricted"/>: one paid ability is
-        /// enough to make the card fix, however many free ones sit next to it
-        /// (Mana Prism taps for {C} and pays {1} for the colour).
+        /// <summary>True when EVERY line that fixes colour is a mana SOURCE — a
+        /// bare tap, or since 2026-09-29 any activation whose cost holds no mana
+        /// ("solo il mana converte": a life, energy, a sacrifice, the tap of
+        /// other permanents, a mill leave it a source). Per line for the same
+        /// reason as <see cref="AllManaIsRestricted"/>: one ability paid in
+        /// mana is enough to make the card fix, however many free ones sit next
+        /// to it (Mana Prism taps for {C} and pays {1} for the colour).
         /// <para>
         /// Typecycling backs out first: it vouches for the tag on its own, from a
         /// line that mentions no mana at all, and the loop below would not see it.
+        /// So does a TREASURE, which fixes however it is paid for (2026-09-18) —
+        /// its own reminder is an activation with no mana in the cost.
         /// </para>
         /// </summary>
-        private static bool EveryFixerIsABareTap(string text)
+        private static bool EveryFixerIsASource(string text)
         {
-            if (TypeCycling.IsMatch(text))
+            if (TypeCycling.IsMatch(text) || MakesATreasure.IsMatch(TreasureATokenMakes.Replace(text, " ")))
             {
                 return false;
             }
@@ -524,13 +528,27 @@ namespace ScatoloneDownloader.Cube
                 }
 
                 sawFixer = true;
-                if (!BareTapAdds.IsMatch(line))
+                bool source = BareTapAdds.IsMatch(line)
+                    || (ActivatedAdd.IsMatch(line) && !PaidManaAbility.IsMatch(line));
+                if (!source || ManaGrantedToLands.IsMatch(line) || SpendsATokenBoughtWithMana(text, line))
                 {
                     return false;
                 }
             }
 
             return sawFixer;
+        }
+
+        /// <summary>True when the line sacrifices a TOKEN for its mana and the
+        /// card makes that token with an ability paid in mana — Diamond
+        /// Kaleidoscope pays {3} for the Prism it later cracks for any colour,
+        /// so the mana is paid, one line up.</summary>
+        private static bool SpendsATokenBoughtWithMana(string text, string line)
+        {
+            Match spent = SacrificesATokenForMana.Match(line);
+            return spent.Success
+                && Rx(@"^[^\n:]*\{[\dwubrg]\}[^\n:]*: create [^\n]*\b" + Regex.Escape(spent.Groups["token"].Value) + @"\b",
+                    RegexOptions.Multiline).IsMatch(text);
         }
 
         /// <summary>True when EVERY line that adds mana restricts what it may be

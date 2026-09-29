@@ -3931,17 +3931,54 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
-    // …but pay something on top of the tap and the card converts colour instead
-    // of making it, which is the whole job: 11 of 12 reviewed cards of this
-    // shape were tagged. A LAND is exempt and never asked — 17 of 17.
+    // …but pay MANA on top of the tap and the card converts colour instead of
+    // making it, which is the whole job. Any price converted until 2026-09-29;
+    // since "solo il mana converte" only mana does (Gene Pollinator moved to
+    // Classify_ANonManaPriceLeavesASource_IsRampNotManaFixing). A LAND is exempt
+    // and never asked — 17 of 17.
     [InlineData("Mana Prism", "Artifact", "{T}: Add {C}.\n{1}, {T}: Add one mana of any color.")]
     [InlineData("Celestial Prism", "Artifact", "{2}, {T}: Add one mana of any color.")]
-    [InlineData("Gene Pollinator", "Creature — Phyrexian Insect",
-        "{T}, Tap an untapped permanent you control: Add one mana of any color.")]
     [InlineData("Birds of Paradise, but a land", "Land", "{T}: Add one mana of any color.")]
+    // The mana paid one line up for the token later cracked (Diamond
+    // Kaleidoscope's {3} Prism), and one mana of any colour GRANTED TO LANDS, a
+    // land's colour (Dune Chanter, ManaFixing by hand).
+    [InlineData("Diamond Kaleidoscope", "Artifact",
+        "{3}, {T}: Create a 0/1 colorless Prism artifact creature token.\nSacrifice a Prism token: Add one "
+        + "mana of any color.")]
+    [InlineData("Dune Chanter", "Creature — Plant Druid",
+        "Reach\nLands you control and land cards you own that aren't on the battlefield are Deserts in "
+        + "addition to their other types.\nLands you control have \"{T}: Add one mana of any color.\"\n{T}: Mill "
+        + "two cards. You gain 1 life for each land card milled this way.")]
     public void Classify_ManaThatCostsSomething_IsManaFixing(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
+    }
+
+    [Theory]
+    // A price that is NOT mana — a life, energy, a sacrifice, the tap of other
+    // permanents — leaves a mana SOURCE, which is Ramp and not a fixer, ruled
+    // 2026-09-29 ("solo il mana converte") from the human's Ramp-only tags on
+    // Supportive Parents, Haunted Screen, Solar Transformer and Lotus Ring,
+    // overturning the 09-18 reading that pinned Gene Pollinator as a fixer.
+    [InlineData("Supportive Parents", "Creature — Human Citizen",
+        "Tap two untapped creatures you control: Add one mana of any color.")]
+    [InlineData("Haunted Screen", "Artifact",
+        "{T}: Add {W} or {B}.\n{T}, Pay 1 life: Add {G}, {U}, or {R}.\n{7}: Put seven +1/+1 counters on this "
+        + "artifact. It becomes a 0/0 Spirit creature in addition to its other types. Activate only once.")]
+    [InlineData("Solar Transformer", "Artifact",
+        "This artifact enters tapped.\nWhen this artifact enters, you get {E}{E}{E} (three energy "
+        + "counters).\n{T}: Add {C}.\n{T}, Pay {E}: Add one mana of any color.")]
+    [InlineData("Lotus Ring", "Artifact — Equipment",
+        "Indestructible\nEquipped creature gets +3/+3 and has vigilance and \"{T}, Sacrifice this creature: Add "
+        + "three mana of any one color.\"\nEquip {3}")]
+    [InlineData("Gene Pollinator", "Artifact Creature — Robot Insect",
+        "{T}, Tap an untapped permanent you control: Add one mana of any color.")]
+    public void Classify_ANonManaPriceLeavesASource_IsRampNotManaFixing(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Ramp));
+        Assert.False(result.HasFlag(CardEffect.ManaFixing));
     }
 
     [Theory]
@@ -4013,6 +4050,18 @@ public sealed class EffectClassifierTests
     [InlineData("Renewal", "Sorcery",
         "As an additional cost to cast this spell, sacrifice a land.\n"
         + "Search your library for a basic land card, put that card onto the battlefield, then shuffle.")]
+    // A mana ability in quotes that is a TOKEN's own (an Eldrazi Spawn's
+    // "Sacrifice this token: Add {C}") or the victim's Treasure ("sacrifice this
+    // artifact", Kitesail Larcenist) is not the card's, read with the quoted mana
+    // abilities on 2026-09-29.
+    [InlineData("Chittering Dispatcher", "Creature — Eldrazi Drone",
+        "Devoid (This card has no color.)\nMyriad\nWhen this creature leaves the battlefield, create a 0/1 "
+        + "colorless Eldrazi Spawn creature token with \"Sacrifice this token: Add {C}.\"")]
+    [InlineData("Kitesail Larcenist", "Creature — Human Pirate",
+        "Flying, ward {1}\nWhen this creature enters, for each player, choose up to one other target artifact "
+        + "or creature that player controls. For as long as this creature remains on the battlefield, the "
+        + "chosen permanents become Treasure artifacts with \"{T}, Sacrifice this artifact: Add one mana of any "
+        + "color\" and lose all other abilities.")]
     public void Classify_ManaOrLandThatIsNotYours_IsNotRamp(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));

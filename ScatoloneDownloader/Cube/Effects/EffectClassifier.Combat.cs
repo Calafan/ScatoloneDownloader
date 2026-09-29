@@ -954,8 +954,25 @@ namespace ScatoloneDownloader.Cube
         // hand (Elvish Spirit Guide), charge counters (the Mana Batteries). The
         // land exclusion is the existing structural one — a land making mana is
         // just a land.
+        //
+        // "Add ONE MANA of any color" behind a cost that is not mana is read
+        // too since 2026-09-29 ("solo il mana converte": that price leaves a
+        // mana SOURCE, which is Ramp) — Supportive Parents, The Cabbage
+        // Merchant, The Warring Triad, Molt Tender, all Ramp by hand and never
+        // proposed, because the pattern wanted a mana symbol after "add". A
+        // price in mana is still withdrawn by EveryManaAbilityIsPaidAndPoor.
+        // The same ability GRANTED in quotes is read from the quote (Lotus
+        // Ring's equipped creature "{T}, Sacrifice this creature: Add three
+        // mana of any one color", Ramp by hand) — but not a TOKEN's own ("this
+        // token"), which is the token's: an Eldrazi Spawn, a Treasure's
+        // reminder (18 of 20 Spawn makers are untagged by hand) — nor what a
+        // permanent turned into a Treasure keeps ("sacrifice this artifact":
+        // Kitesail Larcenist, Minimus Containment and Vraska make the victim's
+        // creature a Treasure, and the mana is its controller's).
         private static readonly Regex ActivatedManaAbility = Rx(
-            @"^[^\n:]{1,70}: add [\w ]{0,20}\{", RegexOptions.Multiline);
+            @"(?:^[^\n:]{1,70}|""(?![^""\n:]*\b(?:this token|sacrifice this artifact)\b)[^""\n:]{1,70}): add "
+            + @"(?:[\w ]{0,20}\{|(?:one|two|three|four|five|x|\d+) mana\b)",
+            RegexOptions.Multiline);
 
         private static readonly Regex ExtraLandDrop = Rx(
             @"play an additional land|play any number of lands|play up to \w+ additional lands"
@@ -1098,6 +1115,27 @@ namespace ScatoloneDownloader.Cube
         // same bare tap behind a condition, and the human took ManaFixing off it
         // on 2026-09-29.
         private static readonly Regex BareTapAdds = Rx("^(?:[\\w' ]+ — )?\\{t\\}: add |\"\\{t\\}: add ");
+
+        // Any activation that adds mana — a cost, a colon, "add" — at the start
+        // of the line (behind an ability word) or of a quoted ability. Whether
+        // its cost holds mana is PaidManaAbility's question. Ruled 2026-09-29
+        // ("solo il mana converte"): the human had taken ManaFixing off Haunted
+        // Screen (a life), Solar Transformer (energy) and Lotus Ring (a
+        // sacrifice), and Supportive Parents, The Cabbage Merchant, The Warring
+        // Triad and Molt Tender were Ramp alone, against the 2026-09-18 reading
+        // that ANY price on top converts colour (Gene Pollinator, Baylen).
+        private static readonly Regex ActivatedAdd = Rx(
+            "^(?:[\\w' ]+ — )?[^\\n:\"]{1,70}: add |\"[^\"\\n:]{1,70}: add ");
+
+        // …except a mana ability GRANTED TO LANDS, which is a land's colour and
+        // always fixes (Dune Chanter, Greenhouse, Preston Garvey's Settlement,
+        // all three ManaFixing by hand) — the land exemption one step removed.
+        // ONE mana of any colour: Tectonic Split hands the lands "three mana of
+        // any one color", which triples them and is Ramp alone by hand.
+        private static readonly Regex ManaGrantedToLands = Rx(
+            @"(?:\blands? you control have\b|\benchanted land has\b)[^\n]*\badd one mana of any colou?r");
+
+        private static readonly Regex SacrificesATokenForMana = Rx(@"sacrifice an? (?<token>[\w-]+) token: add ");
 
         // The untap lock written about the card itself. "Target creature doesn't
         // untap during its controller's next untap step" (Frozen Solid) does NOT

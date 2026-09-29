@@ -125,9 +125,10 @@
                 + "ManaFixing. Revealing until a type turns up is not this: that picks for you.",
 
             [CardEffect.ManaFixing] =
-                "Fixes colours: a choice that COSTS you something, any landcycling, a land with two abilities, a "
-                + "land fetched to HAND or kept from a few milled, a Treasure. Free for a tap is just Ramp (Birds), unless it's a land. Not a "
-                + "land put onto the battlefield, not mana you may only spend on one thing.",
+                "Fixes colours: a choice paid in MANA, any landcycling, a land with two abilities, a land fetched "
+                + "to HAND or kept from a few milled, a Treasure. Free for a tap, a life or a sacrifice is just Ramp "
+                + "(Birds), unless it's a land. Not a land put onto the battlefield, not mana you may only spend on "
+                + "one thing.",
 
             [CardEffect.Pacify] =
                 "Neutralises somebody else's creature without killing it: tapped, stunned, phased out, locked from "
