@@ -3900,6 +3900,11 @@ public sealed class EffectClassifierTests
     [InlineData("Veteran Explorer", "Creature — Human Soldier Scout",
         "When this creature dies, each player may search their library for up to two basic land cards, "
         + "put them onto the battlefield, then shuffle.")]
+    // A fetch aimed at TARGET player is one you point at yourself: Fertilid's
+    // Favor, tagged Ramp by the human on 2026-09-29.
+    [InlineData("Fertilid's Favor", "Instant",
+        "Target player searches their library for a basic land card, puts it onto the battlefield tapped, "
+        + "then shuffles. Put two +1/+1 counters on up to one target artifact or creature.")]
     public void Classify_ManaYouDidNotHaveToMake_IsRamp(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));

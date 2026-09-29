@@ -981,9 +981,12 @@ namespace ScatoloneDownloader.Cube
         // …but the land handed to the player a removal spell was aimed at is
         // their consolation, not your ramp: Emergency Eject, Price of Freedom,
         // Sandworm, Divert Disaster all say "its controller creates a Lander".
+        // TARGET player is not in it: you point the fetch at yourself, and the
+        // one reviewed card written that way is Ramp (Fertilid's Favor, tagged
+        // by the human on 2026-09-29), while "its controller" is 0 of 12.
         private static readonly Regex LandForSomebodyElse = Rx(
             @"its controller (?:creates|may search|searches|puts)"
-            + @"|(?:that|target|defending) player (?:creates|may search|searches|puts)");
+            + @"|(?:that|defending) player (?:creates|may search|searches|puts)");
 
         // A Treasure is a Lotus Petal in token form, so it always FIXES. Whether
         // it also RAMPS is a question of how many you get: one, once, is a rider
