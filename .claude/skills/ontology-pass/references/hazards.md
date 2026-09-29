@@ -187,6 +187,23 @@ then delete it and say in the comment that it was tried and why it is not
 needed. A fix that DOES move cards but turns nothing red is untested: add the
 test.
 
+## A handed-back card reviewed against a ruling it never saw
+
+**Symptom:** the human confirms a handed-back card without a tag the classifier
+now proposes, and `review-log.jsonl` shows the tag was not in `before` (Niko,
+Light of Hope without its blink's Protection; Ral, Crackling Wit and Summon:
+G.F. Cerberus without Redirect — all on 2026-09-29).
+
+**Cause:** `restore_handed_back.py` freezes every handed-back entry at its
+pre-classify state, which is what keeps the human's correction from being
+overwritten — and also what keeps every LATER ruling from reaching the card
+until the human reviews it. They then review the old proposal.
+
+**Fix:** when a `classify` reports handed-back entries it had rewritten, read
+them: a later ruling that moves one is a correction to add to that pass's
+rulings file (tree mode), not noise. After a control run, ask about any
+reviewed hand-back whose `before` lacks a tag the classifier now gives.
+
 ## The session scratchpad forgets
 
 **Symptom:** a new session has no `unreview-*.json`, no dumps, and no idea which
