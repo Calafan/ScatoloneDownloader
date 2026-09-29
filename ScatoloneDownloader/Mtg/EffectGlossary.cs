@@ -97,8 +97,8 @@
 
             [CardEffect.Protection] =
                 "Keeps something ELSE alive, held up in response or over an AREA: a keyword shield, prevention, "
-                + "redirection, regeneration, a saving blink, a shield counter, phasing. Not one creature's static, "
-                + "conditional or Aura/Equipment shield, a tribe's, a fog, an unsummon of your own, its own, nor "
+                + "redirection, regeneration, a saving blink or unsummon, a shield counter, phasing. Not one "
+                + "creature's static, conditional or Aura/Equipment shield, a tribe's, a fog, its own, nor "
                 + "damage a creature DEALS or aimed at YOU (Pacify).",
 
             [CardEffect.Burn] =

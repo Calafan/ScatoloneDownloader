@@ -480,16 +480,21 @@ namespace ScatoloneDownloader.Cube
         // A BLINK that saves is Protection: exiling your own and bringing it
         // back (Salvation Swan, Waterbender's Restoration, Safe Haven, and
         // Expose the Culprit's cloak), exiling anybody's until the next end step
-        // (Getaway Glamer, Hide on the Ceiling, Parting Gust), and airbending
-        // your own creature when it is targeted (Monk Gyatso).
+        // (Getaway Glamer, Hide on the Ceiling, Parting Gust), returning your own
+        // permanent to hand in response (Ambrosia Whiteheart, Sunpearl Kirin,
+        // Forum Familiar, Dour Port-Mage, Narrow Escape) and airbending your own
+        // creature when it is targeted (Monk Gyatso). A return to hand paid as a
+        // COST is not — the colon of an activation, or the ADDITIONAL COST of a
+        // counterspell (Familiar's Ruse, Disappearing Act) — and nor is one at
+        // sorcery speed (Chulane), which HeldUp's onlyInResponse keeps out.
         //
-        // An UNSUMMON of your own is NOT, ruled 2026-09-29 on Dour Port-Mage —
-        // "Unsummon su se stessi non è protection (Airbend sì perché costa poco
-        // rigiocarlo)": the creature is saved into your hand and has to be paid
-        // for again, where an airbent one comes back for {2} and a blinked one
-        // for nothing. That overturns the return-to-hand reading of 2026-09-28
-        // (Ambrosia Whiteheart, Sunpearl Kirin, Forum Familiar), and it is not
-        // Bounce either, since it answers nobody (see NotAnAnswerToHand).
+        // The UNSUMMON of your own was taken out on 2026-09-29 ("Unsummon su se
+        // stessi non è protection") and put back the same day: "una creatura
+        // flash che entra e rimbalza qualcosa di tuo conta protection -> anche
+        // Dour Port-Mage può tornare Protection", and every instant-speed form
+        // with it, the instant included. The human had already put Protection
+        // back on the three cards the first ruling handed back. It is still not
+        // Bounce, since it answers nobody (see NotAnAnswerToHand).
         private static readonly Regex BlinksToSave = Rx(
             @"exile (?:up to \w+ |x |any number of |another )?(?:other )?target [\w ,]{0,30}?(?:creatures?|permanents?)(?: [\w ]{0,20})? you (?:control|own)\b[\s\S]{0,120}?\breturn"
             + @"|exile (?:any number of|each|all) [\w ,-]{0,30}creatures? you control[^\n]{0,120}\b(?:return|cloak)"
@@ -498,6 +503,7 @@ namespace ScatoloneDownloader.Cube
             // …and the same with the clock first: "At the beginning of the next
             // end step, return that card" (Phelia, ruled 2026-09-29).
             + @"|exile (?:up to \w+ |x |another )?(?:other )?target [\w ,/]{0,40}\. at the beginning of the next end step, return (?:it|that card|the exiled cards?|those cards)"
+            + @"|(?<!additional cost to cast this spell, )\breturn (?:up to one |another |an? )?(?:other )?(?:target )?(?:nonland )?(?:permanent|creature)s? you control to (?:its|their) owner'?s? hands?(?!:)"
             + @"|you may airbend that creature"
             // …and airbending YOUR OWN outright, ruled 2026-09-29 ("su di te è
             // protection"): Airbender's Reversal, Appa, Steadfast Guardian.

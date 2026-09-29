@@ -3091,8 +3091,8 @@ public sealed class EffectClassifierTests
         "Return this enchantment to its owner's hand: Regenerate target creature.")]
     // A BLINK that saves is Protection, ruled the same day: your own exiled and
     // returned, anybody's until the next end step, your own airbent when
-    // targeted, your own cloaked. (Your own returned to HAND was here too until
-    // 2026-09-29 — see Classify_AnUnsummonOfYourOwn_IsNeitherProtectionNorBounce.)
+    // targeted, your own cloaked. (Your own returned to HAND is pinned in
+    // Classify_AnUnsummonOfYourOwn_IsProtectionNotBounce.)
     [InlineData("Salvation Swan", "Creature — Bird Cleric",
         "Flash\nFlying\nWhenever this creature or another Bird you control enters, exile up to one target "
         + "creature you control without flying. Return it to the battlefield under its owner's control with a "
@@ -3225,12 +3225,12 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
-    // An UNSUMMON of your own is not Protection, ruled 2026-09-29 on Dour Port-
-    // Mage ("Unsummon su se stessi non è protection, Airbend sì perché costa poco
-    // rigiocarlo"): the creature has to be paid for again. This OVERTURNS the
-    // 2026-09-28 reading that had Ambrosia Whiteheart, Sunpearl Kirin and Forum
-    // Familiar pinned as Protection above; and it answers nobody, so it is not
-    // Bounce either.
+    // An UNSUMMON of your own held up in response IS Protection. Taken out on
+    // 2026-09-29 ("Unsummon su se stessi non è protection") and put back the
+    // same day — "una creatura flash che entra e rimbalza qualcosa di tuo conta
+    // protection -> anche Dour Port-Mage può tornare Protection" — for every
+    // instant-speed form, the instant included (Narrow Escape). It answers
+    // nobody, so it is still not Bounce.
     [InlineData("Dour Port-Mage", "Creature — Frog Wizard",
         "Whenever one or more other creatures you control leave the battlefield without dying, draw a "
         + "card.\n{1}{U}, {T}: Return another target creature you control to its owner's hand.")]
@@ -3247,11 +3247,13 @@ public sealed class EffectClassifierTests
         + "permanent you control to its owner's hand and put a +1/+1 counter on this creature.")]
     [InlineData("Vedalken Mastermind", "Creature — Vedalken Wizard",
         "{U}, {T}: Return target permanent you control to its owner's hand.")]
-    public void Classify_AnUnsummonOfYourOwn_IsNeitherProtectionNorBounce(string name, string typeLine, string oracle)
+    [InlineData("Narrow Escape", "Instant",
+        "Return target permanent you control to its owner's hand. You gain 4 life.")]
+    public void Classify_AnUnsummonOfYourOwn_IsProtectionNotBounce(string name, string typeLine, string oracle)
     {
         CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
 
-        Assert.False(result.HasFlag(CardEffect.Protection));
+        Assert.True(result.HasFlag(CardEffect.Protection));
         Assert.False(result.HasFlag(CardEffect.Bounce));
     }
 
