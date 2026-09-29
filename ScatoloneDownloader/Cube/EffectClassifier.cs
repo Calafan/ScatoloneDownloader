@@ -730,7 +730,8 @@ namespace ScatoloneDownloader.Cube
                 || HeldUp(card, text, BlinksToSave)
                 || HeldUp(card, text, ShieldCounterOnSomebody)
                 || HeldUp(card, text, SavesFromDeathOrDamage)
-                || HeldUp(card, text, UmbraArmor))
+                || HeldUp(card, text, UmbraArmor)
+                || ShieldsAnAreaStatically(text))
             {
                 result |= CardEffect.Protection;
             }

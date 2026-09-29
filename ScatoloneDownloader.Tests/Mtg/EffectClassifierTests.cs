@@ -2898,14 +2898,92 @@ public sealed class EffectClassifierTests
     }
 
     [Fact]
-    public void Classify_StaticPrevention_FailsTheSameTimingGateAsAPrintedKeyword()
+    public void Classify_StaticPreventionOverAnArea_IsProtection()
     {
-        // Bubble Matrix sits on the board; it is never held up in response, which
-        // is the gate the keyword half has cleared since 2026-09-05.
+        // OVERTURNED 2026-09-29. Until then this test was
+        // Classify_StaticPrevention_FailsTheSameTimingGateAsAPrintedKeyword and
+        // asserted the opposite: Bubble Matrix sits on the board and is never
+        // held up. The human then ruled that a static shield over an AREA is
+        // Protection ("le protezioni statiche ad area … mettiamole Protection").
         CardEffect result = EffectClassifier.Classify(
             MakeCard("Bubble Matrix", "Artifact", "Prevent all damage that would be dealt to creatures."));
 
-        Assert.False(result.HasFlag(CardEffect.Protection));
+        Assert.True(result.HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // A STATIC shield over an AREA is Protection, ruled 2026-09-29: a group of
+    // your permanents named by card type or colour (Restricted Office, The Walls
+    // of Ba Sing Se, Righteous War, Shalai, Tam), a targeting ban on everybody
+    // (Dense Foliage), static prevention for creatures (Inner Sanctum, Crystal
+    // Barricade), and damage to you and your permanents redirected to one
+    // (Ancient Adamantoise).
+    [InlineData("Restricted Office // Lecture Hall", "Enchantment — Room // Enchantment — Room",
+        "When you unlock this door, destroy all creatures with power 3 or greater.\n(You may cast either half. "
+        + "That door unlocks on the battlefield. As a sorcery, you may pay the mana cost of a locked door to "
+        + "unlock it.)\nOther permanents you control have hexproof.\n(You may cast either half. That door unlocks "
+        + "on the battlefield. As a sorcery, you may pay the mana cost of a locked door to unlock it.)")]
+    [InlineData("The Walls of Ba Sing Se", "Legendary Artifact Creature — Wall",
+        "Defender\nOther permanents you control have indestructible.")]
+    [InlineData("Righteous War", "Enchantment",
+        "White creatures you control have protection from black.\nBlack creatures you control have protection "
+        + "from white.")]
+    [InlineData("Dense Foliage", "Enchantment",
+        "Creatures can't be the targets of spells.")]
+    [InlineData("Inner Sanctum", "Enchantment",
+        "Cumulative upkeep—Pay 2 life. (At the beginning of your upkeep, put an age counter on this "
+        + "permanent, then sacrifice it unless you pay its upkeep cost for each age counter on it.)\nPrevent all "
+        + "damage that would be dealt to creatures you control.")]
+    [InlineData("Crystal Barricade", "Artifact Creature — Wall",
+        "Defender (This creature can't attack.)\nYou have hexproof. (You can't be the target of spells or "
+        + "abilities your opponents control.)\nPrevent all noncombat damage that would be dealt to other "
+        + "creatures you control.")]
+    [InlineData("Ancient Adamantoise", "Creature — Turtle",
+        "Vigilance, ward {3}\nDamage isn't removed from this creature during cleanup steps.\nAll damage that "
+        + "would be dealt to you and other permanents you control is dealt to this creature instead.\nWhen this "
+        + "creature dies, exile it and create ten tapped Treasure tokens.")]
+    [InlineData("Shalai, Voice of Plenty", "Legendary Creature — Angel",
+        "Flying\nYou, planeswalkers you control, and other creatures you control have hexproof.\n{4}{G}{G}: Put "
+        + "a +1/+1 counter on each creature you control.")]
+    [InlineData("Tam, Mindful First-Year", "Legendary Creature — Gorgon Wizard",
+        "Each other creature you control has hexproof from each of its colors.\n{T}: Target creature you "
+        + "control becomes all colors until end of turn.")]
+    public void Classify_AStaticShieldOverAnArea_IsProtection(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // …but not one with a CONDITION — counters, tapped or untapped (Innkeeper's
+    // Talent, Saryth, The Seriema) — nor one for a creature TYPE (Riders of
+    // Gavony's Humans, Sigarda's), nor an Equipment's single creature (Swiftfoot
+    // Boots).
+    [InlineData("Innkeeper's Talent", "Enchantment — Class",
+        "(Gain the next level as a sorcery to add its ability.)\nAt the beginning of combat on your turn, put "
+        + "a +1/+1 counter on target creature you control.\n{G}: Level 2\nPermanents you control with counters on "
+        + "them have ward {1}.\n{3}{G}: Level 3\nIf you would put one or more counters on a permanent or player, "
+        + "put twice that many of each of those kinds of counters on that permanent or player instead.")]
+    [InlineData("Saryth, the Viper's Fang", "Legendary Creature — Human Warlock",
+        "Other tapped creatures you control have deathtouch.\nOther untapped creatures you control have "
+        + "hexproof.\n{1}, {T}: Untap another target creature or land you control.")]
+    [InlineData("The Seriema", "Legendary Artifact — Spacecraft",
+        "When The Seriema enters, search your library for a legendary creature card, reveal it, put it into "
+        + "your hand, then shuffle.\nStation (Tap another creature you control: Put charge counters equal to its "
+        + "power on this Spacecraft. Station only as a sorcery. It's an artifact creature at 7+.)\n7+ | "
+        + "Flying\nOther tapped legendary creatures you control have indestructible.")]
+    [InlineData("Riders of Gavony", "Creature — Human Knight",
+        "Vigilance\nAs this creature enters, choose a creature type.\nHuman creatures you control have "
+        + "protection from creatures of the chosen type.")]
+    [InlineData("Swiftfoot Boots", "Artifact — Equipment",
+        "Equipped creature has hexproof and haste. (It can't be the target of spells or abilities your "
+        + "opponents control. It can attack and {T} no matter when it came under your control.)\nEquip {1} ({1}: "
+        + "Attach to target creature you control. Equip only as a sorcery.)")]
+    [InlineData("Sigarda, Heron's Grace", "Legendary Creature — Angel",
+        "Flying\nYou and Humans you control have hexproof.\n{2}, Exile a card from your graveyard: Create a 1/1 "
+        + "white Human Soldier creature token.")]
+    public void Classify_AStaticShieldNotOverAnArea_IsNotProtection(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
     }
 
     [Theory]

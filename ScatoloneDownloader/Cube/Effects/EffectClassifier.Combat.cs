@@ -549,6 +549,40 @@ namespace ScatoloneDownloader.Cube
             @"[^.\n]*\b(?:lose (?:all abilities and )?(?:hexproof|indestructible|protection|shroud)"
             + @"|as though (?:they|it) didn'?t have (?:hexproof|shroud)|ward abilities of)[^.\n]*");
 
+        // A STATIC shield over an AREA is Protection even though nothing is held
+        // up, ruled 2026-09-29: "le protezioni statiche ad area (es. incantesimi
+        // che proteggono gli altri permanenti) mettiamole Protection, quelle
+        // condizionate no". An area is a group of your permanents named by card
+        // type or colour — Restricted Office's "other permanents you control have
+        // hexproof", The Walls of Ba Sing Se's indestructible, Righteous War's
+        // white creatures — a targeting ban on everybody (Dense Foliage), static
+        // prevention for creatures (Inner Sanctum, Crystal Barricade, Bubble
+        // Matrix), and damage to you and your permanents redirected to one
+        // (Ancient Adamantoise). NOT an Aura's or an Equipment's creature, which
+        // is one creature and not an area (0 of 18 tagged), nor a creature TYPE
+        // (the tribal reading above), nor a CONDITION — tapped or untapped, with
+        // a counter on it, during your turn, as long as (Innkeeper's Talent,
+        // Cathedral Acolyte, Saryth, The Seriema).
+        private static readonly Regex AreaShield = Rx(
+            @"^(?:[^.\n]{0,60}\b)?(?:(?:non\w+|white|blue|black|red|green|colorless|multicolored|artifact|enchantment|legendary|other) )*"
+            + @"(?:creatures|permanents|artifacts|lands|enchantments|planeswalkers) you control (?:have|has)\b[^.\n]{0,60}"
+            + @"\b(?:hexproof|shroud|indestructible|protection from|ward)"
+            + @"|^each (?:other )?creature you control has\b[^.\n]{0,40}\b(?:hexproof|shroud|indestructible|protection from|ward)"
+            + @"|^(?:creatures|permanents) can'?t be the targets? of"
+            + @"|^prevent all (?:noncombat |combat )?damage that would be dealt to (?:other )?(?:creatures|permanents)\b"
+            + @"|damage that would be dealt to you and other permanents you control is dealt to this creature instead",
+            RegexOptions.Multiline);
+
+        // …and a creature TYPE in front of "creatures" is a tribe, not an area
+        // ("Human creatures you control" — Riders of Gavony, Sliver Hivelord).
+        // Case-SENSITIVE: the type is what is capitalised.
+        private static readonly Regex TribeInFrontOfTheArea = new(
+            @"\b" + NotATribe + NotACardType + @"[A-Z][\w']+ creatures you control\b", RegexOptions.CultureInvariant);
+
+        private static readonly Regex ShieldCondition = Rx(
+            @"\b(?:untapped|tapped|with (?:a|an|one or more) [\w+/-]+ counters? on|counters on them|during (?:your|each)"
+            + @"|as long as|while|if)\b");
+
         // The lines a Protection effect can be held up from without being an
         // instant or having flash: an ACTIVATED ability, a card turned FACE UP
         // (a special action, taken any time — Essence of Antiquity, Forum

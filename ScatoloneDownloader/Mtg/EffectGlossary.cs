@@ -95,10 +95,10 @@
                 + "tokens get, or a keyword but double strike.",
 
             [CardEffect.Protection] =
-                "Keeps something ELSE alive, held up in response: a keyword shield, damage prevented or redirected, "
-                + "regeneration, a blink or a bounce that saves, a shield counter, phasing out. Not a static shield, "
-                + "not one for a tribe, not a fog, not the card's own, not damage a creature DEALS or aimed at YOU "
-                + "alone (Pacify).",
+                "Keeps something ELSE alive, held up in response or over an AREA: a keyword shield, damage prevented "
+                + "or redirected, regeneration, a saving blink, a shield counter, phasing out. Not a static shield "
+                + "on one creature or under a condition, not a tribe's, not a fog, not the card's own, not damage a "
+                + "creature DEALS or aimed at YOU alone (Pacify).",
 
             [CardEffect.Burn] =
                 "Damage or life loss aimed at a FACE, however counted and however slow: \"damage equal to the number "

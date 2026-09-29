@@ -536,6 +536,29 @@ namespace ScatoloneDownloader.Cube
             return addsAny;
         }
 
+        /// <summary>Whether the card shields an AREA statically, with no condition
+        /// in the sentence that does it. See AreaShield for the ruling.</summary>
+        private static bool ShieldsAnAreaStatically(string text)
+        {
+            string plain = Parenthetical.Replace(text, " ");
+
+            foreach (Match match in AreaShield.Matches(plain))
+            {
+                int start = plain.LastIndexOf(". ", match.Index, StringComparison.Ordinal);
+                int lineStart = plain.LastIndexOf('\n', Math.Max(0, match.Index - 1)) + 1;
+                start = Math.Max(start < 0 ? 0 : start + 2, lineStart);
+                int end = plain.IndexOfAny(['.', '\n'], match.Index + match.Length);
+                string sentence = plain[start..(end < 0 ? plain.Length : end)];
+
+                if (!ShieldCondition.IsMatch(sentence) && !TribeInFrontOfTheArea.IsMatch(sentence))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private static readonly Regex ItOpensTheSentence = Rx(@"^\s*it\b");
 
         private static readonly Regex HeOrSheOpensTheSentence = Rx(@"^\s*(?:he|she)\b");
