@@ -111,6 +111,7 @@ from a file, never through a heredoc (`references/hazards.md`).
 | `show.py` | text, hand tags, proposal and review date of cards by name, from `dump.jsonl` |
 | `moved_lines.py` | which unreviewed (or reviewed) cards moved one tag, and the line that moved them |
 | `review_changes.py` | what the human changed in their last sitting, per tag, from `review-log.jsonl` |
+| `stale_handbacks.py` | handed-back cards confirmed without a tag the classifier now proposes (needs a fresh `Dump`) |
 | `blast_radius.py` | what a code change moved: reviewed cards RIGHT/WRONG, unreviewed proposals |
 | `gen_inline.py` | `[InlineData]` lines with the exact oracle text, from `dump.jsonl` |
 | `splice_tests.py` | a new `[Theory]`, or more cases for an existing one, spliced into the test file |
@@ -150,6 +151,16 @@ against an explicit earlier ruling (Honor put back to Buff against B1), or two
 cards with the same words tagged both ways on the same day (Kozilek and It That
 Heralds the End). The human clears the log after committing a pass, so it covers
 the latest sitting only.
+
+Then look for what the log CANNOT show: a handed-back card is frozen against
+every ruling made after it was handed back, so the human may have confirmed it
+without ever seeing a tag the classifier now proposes (Niko, Ral and G.F.
+Cerberus on 2026-09-29). Those are questions too:
+
+```powershell
+python scripts\probes.py Dump
+python scripts\stale_handbacks.py
+```
 
 ## The pass
 

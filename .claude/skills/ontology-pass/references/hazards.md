@@ -201,8 +201,9 @@ until the human reviews it. They then review the old proposal.
 
 **Fix:** when a `classify` reports handed-back entries it had rewritten, read
 them: a later ruling that moves one is a correction to add to that pass's
-rulings file (tree mode), not noise. After a control run, ask about any
-reviewed hand-back whose `before` lacks a tag the classifier now gives.
+rulings file (tree mode), not noise. After a control run, `scripts/stale_handbacks.py`
+lists every reviewed hand-back whose `before` lacks a tag the classifier now
+gives; ask about each.
 
 ## The session scratchpad forgets
 
