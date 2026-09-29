@@ -245,7 +245,12 @@ namespace ScatoloneDownloader.Cube
                     // and then says "chooses … and exiles it": Sothera does it every
                     // time one of yours dies, and the human ruled it Removal on
                     // 2026-09-28 because it only ever lands on the opponents.
-                    Rx(@"(?:target player|target opponent|each opponent)[\w ,]{0,30}sacrifices? (?:a|an|one|two|\d+)[\w ]{0,25}(?<!non)creature"
+                    // DEFENDING PLAYER is the same opponent named by the attack:
+                    // Witch-king's edict on every attack, tagged Removal by the
+                    // human on 2026-09-29. "UNLESS defending player sacrifices"
+                    // is the opponent's choice of a price (Ogre Marauder), not
+                    // an edict, and stays out.
+                    Rx(@"(?:target player|target opponent|each opponent|(?<!unless )defending player)[\w ,]{0,30}sacrifices? (?:a|an|one|two|\d+)[\w ]{0,25}(?<!non)creature"
                         + @"|each player sacrifices (?:a|an|one|the) [\w ]{0,25}(?<!non)creature"
                         + @"|(?:each|target) opponent chooses (?:a|an|one) [\w ,-]{0,30}creature they control and (?:exiles|sacrifices) it"),
                     // A creature that ends up in a LIBRARY is as answered as one that

@@ -4229,6 +4229,11 @@ public sealed class EffectClassifierTests
     // Fight is the same act with the damage delegated; an edict never says "target".
     [InlineData("Prey Upon", "Sorcery", "Target creature you control fights target creature you don't control.")]
     [InlineData("Diabolic Edict", "Instant", "Target player sacrifices a creature.")]
+    // An edict aimed at DEFENDING PLAYER on every attack, tagged Removal by the
+    // human on 2026-09-29.
+    [InlineData("Witch-king, Bringer of Ruin", "Legendary Creature — Wraith Noble",
+        "Flying\nWhenever Witch-king attacks, defending player sacrifices a creature with the least power "
+        + "among creatures they control.")]
     public void Classify_DamageAndItsCousins_AreRemoval(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
@@ -5222,6 +5227,11 @@ public sealed class EffectClassifierTests
         "Whenever a creature dies, this artifact deals 2 damage to that creature's controller.")]
     // And the TOP of a library hands the card straight back.
     [InlineData("Time Ebb", "Sorcery", "Put target creature on top of its owner's library.")]
+    // …but UNLESS defending player sacrifices one is the opponent's choice of a
+    // price, not an edict.
+    [InlineData("Ogre Marauder", "Creature — Ogre Warrior",
+        "Whenever this creature attacks, it gains \"this creature can't be blocked\" until end of turn unless "
+        + "defending player sacrifices a creature of their choice.")]
     public void Classify_WhatOnlyReadsLikeAnAnswer_IsNotRemoval(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
