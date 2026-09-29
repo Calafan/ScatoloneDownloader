@@ -967,7 +967,11 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex TopFewIntoYourHand = Rx(
             @"(?:(?:looks? at|reveals?) (?:the top (?:\w+ )?cards?|that many cards|twice \w+ cards) "
             + @"(?:of|from the top of) your library|\bmills? (?:\w+|x) cards)"
-            + @"[^\n]{0,160}put (?:one of them|it|that card|[\w /,'-]{0,80}from among (?:them|the cards milled this way)"
+            // 200, not 160: Radagast the Brown qualifies the card at length ("a
+            // creature card that doesn't share a creature type with a creature
+            // you control from among those cards"), tagged by the human on
+            // 2026-09-29.
+            + @"[^\n]{0,200}put (?:one of them|it|that card|[\w /,'-]{0,80}from among (?:them|the cards milled this way)"
             + @"|\w+ of those cards) into your hand");
 
         // The same second hand reached with a SEARCH rather than a look, and

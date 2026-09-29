@@ -1893,6 +1893,20 @@ public sealed class EffectClassifierTests
         "Pray — Once during each of your turns, you may cast a creature spell from among cards in your "
         + "graveyard that were put there from anywhere other than the battlefield this turn.\n"
         + "Whenever you attack, you may pay {1} and discard a card. If you do, draw a card.")]
+    // The kept card qualified at length before "put it into your hand" (read up to
+    // 200 characters since 2026-09-29): Radagast the Brown, tagged by the human,
+    // and Whiskervale Forerunner.
+    [InlineData("Radagast the Brown", "Legendary Creature — Avatar Wizard",
+        "Whenever Radagast or another nontoken creature you control enters, look at the top X cards of your "
+        + "library, where X is that creature's mana value. You may reveal a creature card that doesn't share a "
+        + "creature type with a creature you control from among those cards and put it into your hand. Put the "
+        + "rest on the bottom of your library in a random order.")]
+    [InlineData("Whiskervale Forerunner", "Creature — Mouse Bard",
+        "Valiant — Whenever this creature becomes the target of a spell or ability you control for the first "
+        + "time each turn, look at the top five cards of your library. You may reveal a creature card with mana "
+        + "value 3 or less from among them. You may put it onto the battlefield if it's your turn. If you don't "
+        + "put it onto the battlefield, put it into your hand. Put the rest on the bottom of your library in a "
+        + "random order.")]
     public void Classify_ACardYouCanGoBackForEveryTurn_IsCardAdvantage(
         string name, string typeLine, string oracle)
     {
