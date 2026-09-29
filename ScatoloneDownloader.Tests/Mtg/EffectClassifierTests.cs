@@ -3161,6 +3161,13 @@ public sealed class EffectClassifierTests
     [InlineData("Seasoned Hallowblade", "Creature — Human Warrior",
         "Discard a card: Tap this creature. It gains indestructible until end of turn. (Damage and effects "
         + "that say \"destroy\" don't destroy it.)")]
+    // "HE" or "SHE" is always the card itself (2026-09-29).
+    [InlineData("Miles Morales // Ultimate Spider-Man", "Legendary Creature — Human Citizen Hero // Legendary Creature — Spider Human Hero",
+        "When Miles Morales enters, put a +1/+1 counter on each of up to two target creatures.\n{3}{R}{G}{W}: "
+        + "Transform Miles Morales. Activate only as a sorcery.\nFirst strike, haste\nCamouflage — {2}: Put a "
+        + "+1/+1 counter on Ultimate Spider-Man. He gains hexproof and becomes colorless until end of "
+        + "turn.\nWhenever you attack, double the number of each kind of counter on each Spider and legendary "
+        + "creature you control.")]
     public void Classify_NotASaveHeldUpForSomethingElse_IsNotProtection(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));

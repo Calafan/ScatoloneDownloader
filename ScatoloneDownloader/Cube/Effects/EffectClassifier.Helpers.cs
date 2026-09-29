@@ -538,6 +538,8 @@ namespace ScatoloneDownloader.Cube
 
         private static readonly Regex ItOpensTheSentence = Rx(@"^\s*it\b");
 
+        private static readonly Regex HeOrSheOpensTheSentence = Rx(@"^\s*(?:he|she)\b");
+
         /// <summary>Whether every match of <paramref name="patterns"/> lands on the
         /// card itself, judged by the subject written in front of it. The window is
         /// the current LINE only (oracle text puts one ability per line), so a
@@ -586,6 +588,16 @@ namespace ScatoloneDownloader.Cube
                     if (ItOpensTheSentence.IsMatch(before)
                         && SelfReference.IsMatch(previous[(previous.LastIndexOf(". ", StringComparison.Ordinal) + 1)..])
                         && !Beneficiary.IsMatch(previous[(previous.LastIndexOf(". ", StringComparison.Ordinal) + 1)..]))
+                    {
+                        sawSelf = true;
+                        continue;
+                    }
+
+                    // "HE" or "SHE" is always the card: only a legendary
+                    // character is written that way, and only about itself —
+                    // Miles Morales's back face "put a counter on Ultimate
+                    // Spider-Man. HE gains hexproof". Added 2026-09-29.
+                    if (HeOrSheOpensTheSentence.IsMatch(before))
                     {
                         sawSelf = true;
                         continue;
