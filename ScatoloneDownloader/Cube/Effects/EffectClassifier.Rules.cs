@@ -515,6 +515,12 @@ namespace ScatoloneDownloader.Cube
                     // missed entirely: Balance of Power, Baleful Stare, Become the
                     // Avalanche. Worth 24 recovered for 2 wrongly fired.
                     Rx(@"draws? a card for each|draws? cards equal to"),
+                    // Mill a few and put ALL of a kind from among them into your
+                    // hand: more than one card kept, a card even once (the
+                    // "take more than one" reading). Tazri and Beluna Grandsquall,
+                    // both tagged by the human on 2026-09-29, and the only two
+                    // cards in the store written this way.
+                    Rx(@"\bmills? (?:\w+|x) cards\.? (?:then )?put all [^.\n]{0,100}from among the milled cards into your hand"),
                     // …and the count-first version of the same sentence, where
                     // the "for each" opens it and the draw closes it: Mob
                     // Verdict pays a card per vote you took, Tempt with Bunnies

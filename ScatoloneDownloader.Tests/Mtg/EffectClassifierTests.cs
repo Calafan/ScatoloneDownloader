@@ -1907,6 +1907,16 @@ public sealed class EffectClassifierTests
         + "value 3 or less from among them. You may put it onto the battlefield if it's your turn. If you don't "
         + "put it onto the battlefield, put it into your hand. Put the rest on the bottom of your library in a "
         + "random order.")]
+    // Mill a few and keep ALL of a kind from among them, a card even once: Tazri
+    // and Beluna Grandsquall, tagged by the human on 2026-09-29.
+    [InlineData("Tazri, Stalwart Survivor", "Legendary Creature — Human Warrior",
+        "Each creature you control has \"{T}: Add one mana of any of this creature's colors. Spend this mana "
+        + "only to activate an ability of a creature. Activate only if this creature has another activated "
+        + "ability.\"\n{W}{U}{B}{R}{G}, {T}: Mill five cards. Put all creature cards with activated abilities "
+        + "that aren't mana abilities from among the milled cards into your hand.")]
+    [InlineData("Beluna Grandsquall // Seek Thrills", "Legendary Creature — Giant Noble // Instant — Adventure",
+        "Trample\nPermanent spells you cast that have an Adventure cost {1} less to cast.\nMill seven cards. "
+        + "Then put all cards that have an Adventure from among the milled cards into your hand.")]
     public void Classify_ACardYouCanGoBackForEveryTurn_IsCardAdvantage(
         string name, string typeLine, string oracle)
     {
