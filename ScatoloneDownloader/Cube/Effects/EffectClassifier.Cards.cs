@@ -323,7 +323,14 @@ namespace ScatoloneDownloader.Cube
 
         private static readonly Regex[] RegrowthPatterns =
         [
-            Rx(@"return[\w ,'\-/]{0,70}from[\w ,'\-/]{0,30}graveyard to[\w ',]{0,20}hand"),
+            // 90, not 70: Krile Baldesion's "return target creature card WITH MANA
+            // VALUE EQUAL TO THAT SPELL'S MANA VALUE from your graveyard" runs to
+            // 72 (2026-09-29).
+            Rx(@"return[\w ,'\-/]{0,90}from[\w ,'\-/]{0,30}graveyard to[\w ',]{0,20}hand"),
+            // Cards exiled out of a GRAVEYARD and later returned to their owners'
+            // HANDS (Aurelia's Vindicator, The Spot — ruled Regrowth and Bounce
+            // on 2026-09-29).
+            Rx(@"cards? from (?:a |your |their )?graveyards?[\s\S]{0,250}return the exiled cards to their owners' hands"),
             Rx(@"put[\w ,'\-/]{0,60}cards? from[\w ,'\-/]{0,30}graveyard into[\w ]{0,20}hand"),
             // The TOP OF A LIBRARY is a hand you have to wait one turn for, so
             // a card lifted out of a graveyard and put there is recursion.

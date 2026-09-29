@@ -347,7 +347,24 @@ namespace ScatoloneDownloader.Cube
                     Rx(@"put target [\w ]{0,30}creature on top of its owner's library"
                         + @"|\btarget [^.\n]{0,60}\binto (?:their|its owner's) library (?:second|third) from the top"),
                     // Creatures the OPPONENTS chose, returned (Summon: Valefor).
-                    Rx(@"return those (?:creatures|permanents) to their owners' hands")]),
+                    Rx(@"return those (?:creatures|permanents) to their owners' hands"),
+                    // Ruled 2026-09-29. AIRBEND aimed where an opponent's permanent
+                    // can be is this tag ("airbend sull'opponent è bounce"):
+                    // Airbending Lesson, Glider Staff, Aang, the Last Airbender,
+                    // Avatar's Wrath's "all other creatures". Airbending YOUR OWN is
+                    // Protection instead (Airbender's Reversal, Appa, Steadfast
+                    // Guardian, Monk Gyatso's "that creature"), and "to airbend a
+                    // creature" is only the reminder.
+                    Rx(@"(?<!\bto )\bairbend (?!that creature)(?:up to \w+ |any number of |all |another |each )?(?:other )?(?:target )?"
+                        + @"(?![^.\n]{0,50}\byou control)[^.\n]{0,40}?\b(?:creatures?|permanents?|spells?)\b"),
+                    // An Aura's creature returned, however it is paid for (Phantom
+                    // Wings, Sun Clasp — "bounce entrambe", 2026-09-29).
+                    Rx(@"return enchanted creature to its owner's hand"),
+                    // A permanent exiled until the card leaves or dies and then
+                    // returned to its owner's HAND is bounced, if late (Aurelia's
+                    // Vindicator, The Spot — ruled Bounce and Regrowth, 2026-09-29).
+                    Rx(@"exile (?:up to (?:\w+|x) )?(?:other )?target (?:nonland permanents?|creatures?)[\s\S]{0,250}"
+                        + @"return the exiled cards to their owners' hands")]),
 
                 // The old rule was two lines of `destroy target[\w ]*(artifact|
                 // enchantment)`, and that `[\w ]*` was free to run the length of the
@@ -1046,8 +1063,10 @@ namespace ScatoloneDownloader.Cube
         // Asked of the card with QUOTED text blanked out, because Strago and
         // Relm, Skirk Alarmist and Apprentice Necromancer all hand the drawback
         // to somebody else's creature.
+        // "YOUR end step" too, found 2026-09-29 on Fleeting Effigy, which the
+        // human had tagged Bounce and ruled "come il viashino".
         private static readonly Regex GoneAtEndOfTheTurn = Rx(
-            @"at the beginning of the (?:next )?end step, (?:sacrifice this creature"
+            @"at the beginning of (?:the (?:next )?|your )end step, (?:sacrifice this creature"
             + @"|return this creature to (?:its|their) owner'?s hand)");
 
         private static readonly Regex Hasty = Rx(@"\bhaste\b");

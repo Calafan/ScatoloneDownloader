@@ -3465,6 +3465,104 @@ public sealed class EffectClassifierTests
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Bounce));
     }
 
+    [Theory]
+    // Ruled 2026-09-29: AIRBEND aimed where an opponent's permanent can be is
+    // Bounce (Airbending Lesson, Aang the Last Airbender, Avatar's Wrath); an
+    // Aura's creature returned is Bounce whoever pays (Phantom Wings, Sun Clasp —
+    // "bounce entrambe"); and a permanent exiled until the card leaves or dies,
+    // then returned to its owner's hand, is Bounce and — for the graveyard cards
+    // exiled with it — Regrowth (Aurelia's Vindicator, The Spot).
+    [InlineData("Airbending Lesson", "Instant — Lesson",
+        "Airbend target nonland permanent. (Exile it. While it's exiled, its owner may cast it for {2} rather "
+        + "than its mana cost.)\nDraw a card.")]
+    [InlineData("Aang, the Last Airbender", "Legendary Creature — Human Avatar Ally",
+        "Flying\nWhen Aang enters, airbend up to one other target nonland permanent. (Exile it. While it's "
+        + "exiled, its owner may cast it for {2} rather than its mana cost.)\nWhenever you cast a Lesson spell, "
+        + "Aang gains lifelink until end of turn.")]
+    [InlineData("Avatar's Wrath", "Sorcery",
+        "Choose up to one target creature, then airbend all other creatures. (Exile them. While each one is "
+        + "exiled, its owner may cast it for {2} rather than its mana cost.)\nUntil your next turn, your "
+        + "opponents can't cast spells from anywhere other than their hands.\nExile Avatar's Wrath.")]
+    [InlineData("Sun Clasp", "Enchantment — Aura",
+        "Enchant creature\nEnchanted creature gets +1/+3.\n{W}: Return enchanted creature to its owner's hand.")]
+    [InlineData("Phantom Wings", "Enchantment — Aura",
+        "Enchant creature\nEnchanted creature has flying.\nSacrifice this Aura: Return enchanted creature to "
+        + "its owner's hand.")]
+    [InlineData("Aurelia's Vindicator", "Creature — Angel",
+        "Flying, lifelink, ward {2}\nDisguise {X}{3}{W}\nWhen this creature is turned face up, exile up to X "
+        + "other target creatures from the battlefield and/or creature cards from graveyards.\nWhen this "
+        + "creature leaves the battlefield, return the exiled cards to their owners' hands.")]
+    [InlineData("The Spot, Living Portal", "Legendary Creature — Human Scientist Villain",
+        "When The Spot enters, exile up to one target nonland permanent and up to one target nonland "
+        + "permanent card from a graveyard.\nWhen The Spot dies, put him on the bottom of his owner's library. "
+        + "If you do, return the exiled cards to their owners' hands.")]
+    public void Classify_ABounceRuledIn_IsBounce(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Bounce));
+    }
+
+    [Theory]
+    // Airbending YOUR OWN is Protection, not Bounce ("su di te è protection").
+    [InlineData("Airbender's Reversal", "Instant — Lesson",
+        "Choose one —\n• Destroy target attacking creature.\n• Airbend target creature you control. (Exile it. "
+        + "While it's exiled, its owner may cast it for {2} rather than its mana cost.)")]
+    [InlineData("Appa, Steadfast Guardian", "Legendary Creature — Bison Ally",
+        "Flash\nFlying\nWhen Appa enters, airbend any number of other target nonland permanents you control. "
+        + "(Exile them. While each one is exiled, its owner may cast it for {2} rather than its mana "
+        + "cost.)\nWhenever you cast a spell from exile, create a 1/1 white Ally creature token.")]
+    [InlineData("Monk Gyatso", "Legendary Creature — Human Monk",
+        "Whenever another creature you control becomes the target of a spell or ability, you may airbend that "
+        + "creature. (Exile it. While it's exiled, its owner may cast it for {2} rather than its mana cost.)")]
+    public void Classify_AirbendingYourOwn_IsProtectionNotBounce(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Protection));
+        Assert.False(result.HasFlag(CardEffect.Bounce));
+    }
+
+    [Fact]
+    public void Classify_AHastyCreatureBackInHandAtYourEndStep_IsBurnNotBounce()
+    {
+        // "Come il viashino" (2026-09-29): the 2026-09-20 ruling on haste that
+        // is gone at the end of the turn, read for "YOUR end step" too.
+        CardEffect result = EffectClassifier.Classify(MakeCard(
+            "Fleeting Effigy", "Creature — Elemental",
+            "Haste\nAt the beginning of your end step, return this creature to its owner's hand. (Return it only "
+            + "if it's on the battlefield.)\n{2}{R}: This creature gets +2/+0 until end of turn."));
+
+        Assert.True(result.HasFlag(CardEffect.Burn));
+        Assert.False(result.HasFlag(CardEffect.Bounce));
+    }
+
+    [Fact]
+    public void Classify_GraveyardCardsExiledThenReturnedToHand_IsRegrowthAndBounce()
+    {
+        // Ruled 2026-09-29, "Regrowth E Bounce (lo fa anche dal battlefield)".
+        CardEffect result = EffectClassifier.Classify(MakeCard("The Spot, Living Portal",
+            "Legendary Creature — Human Scientist Villain",
+            "When The Spot enters, exile up to one target nonland permanent and up to one target nonland permanent "
+            + "card from a graveyard.\nWhen The Spot dies, put him on the bottom of his owner's library. If you do, "
+            + "return the exiled cards to their owners' hands."));
+
+        Assert.True(result.HasFlag(CardEffect.Regrowth));
+        Assert.True(result.HasFlag(CardEffect.Bounce));
+    }
+
+    [Fact]
+    public void Classify_ACreatureCardFromYourGraveyardWithALongCondition_IsRegrowth()
+    {
+        // Krile Baldesion's condition runs the clause past 70 characters; its
+        // Bounce tag was a misclick (2026-09-29).
+        CardEffect result = EffectClassifier.Classify(MakeCard(
+            "Krile Baldesion", "Legendary Creature — Dwarf Wizard",
+            "Lifelink\nTrace Aether — Whenever you cast a noncreature spell, you may return target creature card "
+            + "with mana value equal to that spell's mana value from your graveyard to your hand. Do this only once "
+            + "each turn."));
+
+        Assert.True(result.HasFlag(CardEffect.Regrowth));
+    }
+
     [Fact]
     public void Classify_ManaDenial_WithoutDestroyingALand_IsNotProposed()
     {

@@ -495,7 +495,10 @@ namespace ScatoloneDownloader.Cube
             // end step, return that card" (Phelia, ruled 2026-09-29).
             + @"|exile (?:up to \w+ |x |another )?(?:other )?target [\w ,/]{0,40}\. at the beginning of the next end step, return (?:it|that card|the exiled cards?|those cards)"
             + @"|(?<!additional cost to cast this spell, )\breturn (?:up to one |another |an? )?(?:other )?(?:target )?(?:nonland )?(?:permanent|creature)s? you control to (?:its|their) owner'?s? hands?(?!:)"
-            + @"|you may airbend that creature");
+            + @"|you may airbend that creature"
+            // …and airbending YOUR OWN outright, ruled 2026-09-29 ("su di te è
+            // protection"): Airbender's Reversal, Appa, Steadfast Guardian.
+            + @"|(?<!\bto )\bairbend [^.\n]{0,50}\byou control\b");
 
         // A SHIELD COUNTER put on something is Protection (Protection Magic).
         private static readonly Regex ShieldCounterOnSomebody = Rx(
