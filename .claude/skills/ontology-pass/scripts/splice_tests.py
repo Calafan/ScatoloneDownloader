@@ -52,7 +52,10 @@ def main():
     cases = "\n".join(inline_data(by_name[n]) for n in args.cards) + "\n"
 
     path = Path(args.test_file)
-    raw = path.read_text(encoding="utf-8-sig")
+    # newline="" keeps the CRLFs: read_text would translate them and the file
+    # would be written back LF (references/hazards.md).
+    with open(path, encoding="utf-8-sig", newline="") as f:
+        raw = f.read()
     nl = "\r\n" if "\r\n" in raw else "\n"
     text = raw.replace("\r\n", "\n")
 
