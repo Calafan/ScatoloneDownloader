@@ -373,6 +373,24 @@ namespace ScatoloneDownloader.Cube
             PumpInsideQuotes.IsMatch(text) && !PlainPump.IsMatch(Quoted.Replace(text, " "))
             && !BuffPatterns.Any(p => p.IsMatch(Quoted.Replace(text, " ")));
 
+        /// <summary>True when the card's only pump goes to the creatures that
+        /// share ITS NAME — its own copies, which is the card pumping itself.
+        /// Ruled 2026-09-29 when the human took Buff off Gruff Triplets ("put
+        /// +1/+1 counters equal to its power on each creature you control named
+        /// Gruff Triplets", the two tokens it made of itself). Blanked and asked
+        /// again, like the tribe, so a card that also pumps somebody else keeps
+        /// the tag.</summary>
+        private static bool OnlyPumpsItsOwnCopies(Card card, string text)
+        {
+            Regex itsCopies = new(@"[^.\n]*\beach (?:other )?creatures? you control named "
+                + Regex.Escape(ShortName(card)) + @"\b[^.\n]*", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+            string rest = itsCopies.Replace(text, " ");
+            return rest != text
+                && !BuffPatterns.Any(p => p.IsMatch(rest))
+                && !(CounterOnSomebodyElse.IsMatch(rest) && !CounterForAnOpponent.IsMatch(rest));
+        }
+
         /// <summary>True when every Buff wording on the card sits inside a pump
         /// restricted to one creature type. Blank the tribal phrases out and ask
         /// again, so a lord that also pumps something unrestricted keeps the tag.

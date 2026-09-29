@@ -697,7 +697,8 @@ namespace ScatoloneDownloader.Cube
             // a card whose ONLY pump is restricted to one creature type. See the
             // patterns above; the "only" is why the tribal phrases are blanked and
             // the question asked again rather than tested in place.
-            if (result.HasFlag(CardEffect.Buff) && (OnlyPumpsATribe(text) || OnlyPumpsInsideQuotes(text)))
+            if (result.HasFlag(CardEffect.Buff)
+                && (OnlyPumpsATribe(text) || OnlyPumpsInsideQuotes(text) || OnlyPumpsItsOwnCopies(card, text)))
             {
                 result &= ~CardEffect.Buff;
             }

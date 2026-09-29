@@ -698,6 +698,22 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // A pump for the creatures that share the card's NAME goes to its own copies,
+    // which is the card pumping itself: the human took Buff off Gruff Triplets on
+    // 2026-09-29.
+    [InlineData("Gruff Triplets", "Creature — Satyr Warrior",
+        "Trample\nWhen this creature enters, if it isn't a token, create two tokens that are copies of "
+        + "it.\nWhen this creature dies, put a number of +1/+1 counters equal to its power on each creature you "
+        + "control named Gruff Triplets.")]
+    [InlineData("Charmed Stray", "Creature — Cat",
+        "Lifelink\nWhen this creature enters, put a +1/+1 counter on each other creature you control named "
+        + "Charmed Stray.")]
+    public void Classify_APumpForItsOwnCopies_IsNotBuff(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
     // A pump sized by X or by a count is still a pump; the rules only read
     // digits. Added 2026-09-18 INSIDE the beneficiary guard, which is the whole
     // point — see the next test.
