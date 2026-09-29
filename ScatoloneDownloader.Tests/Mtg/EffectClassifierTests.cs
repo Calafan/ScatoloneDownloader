@@ -2948,6 +2948,17 @@ public sealed class EffectClassifierTests
     [InlineData("Tam, Mindful First-Year", "Legendary Creature — Gorgon Wizard",
         "Each other creature you control has hexproof from each of its colors.\n{T}: Target creature you "
         + "control becomes all colors until end of turn.")]
+    // Every permanent you control phased out (Teferi's Protection), and "you AND
+    // permanents you control" (Veil of Summer): the permanents are shielded.
+    [InlineData("Teferi's Protection", "Instant",
+        "Until your next turn, your life total can't change and you gain protection from everything. All "
+        + "permanents you control phase out. (While they're phased out, they're treated as though they don't "
+        + "exist. They phase in before you untap during your untap step.)\nExile Teferi's Protection.")]
+    [InlineData("Veil of Summer", "Instant",
+        "Draw a card if an opponent has cast a blue or black spell this turn. Spells you control can't be "
+        + "countered this turn. You and permanents you control gain hexproof from blue and from black until end "
+        + "of turn. (You and they can't be the targets of blue or black spells or abilities your opponents "
+        + "control.)")]
     public void Classify_AStaticShieldOverAnArea_IsProtection(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
@@ -2981,6 +2992,18 @@ public sealed class EffectClassifierTests
     [InlineData("Sigarda, Heron's Grace", "Legendary Creature — Angel",
         "Flying\nYou and Humans you control have hexproof.\n{2}, Exile a card from your graveyard: Create a 1/1 "
         + "white Human Soldier creature token.")]
+    // A shield for the PLAYER ALONE is neither Protection nor Pacify, ruled
+    // 2026-09-29 ("nessuno dei due"); shroud's reminder goes with it.
+    [InlineData("Absolute Virtue", "Legendary Creature — Avatar Warrior",
+        "This spell can't be countered.\nFlying\nYou have protection from each of your opponents. (You can't be "
+        + "dealt damage, enchanted, or targeted by anything controlled by your opponents.)")]
+    [InlineData("Blossoming Calm", "Instant",
+        "You gain hexproof until your next turn. You gain 2 life.\nRebound (If you cast this spell from your "
+        + "hand, exile it as it resolves. At the beginning of your next upkeep, you may cast this card from "
+        + "exile without paying its mana cost.)")]
+    [InlineData("Gilded Light", "Instant",
+        "You gain shroud until end of turn. (You can't be the target of spells or abilities.)\nCycling {2} "
+        + "({2}, Discard this card: Draw a card.)")]
     public void Classify_AStaticShieldNotOverAnArea_IsNotProtection(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));

@@ -240,7 +240,8 @@ namespace ScatoloneDownloader.Cube
             // anybody on another keeps the tag. See the two patterns.
             if (result.HasFlag(CardEffect.Protection))
             {
-                string shields = TakesAShieldAway.Replace(ShieldForATribe.Replace(text, " "), " ");
+                string shields = ShieldForThePlayerAlone.Replace(
+                    TakesAShieldAway.Replace(ShieldForATribe.Replace(text, " "), " "), " ");
 
                 if (shields != text && !ProtectionPatterns.Any(p => HeldUp(card, shields, p)))
                 {
@@ -731,6 +732,7 @@ namespace ScatoloneDownloader.Cube
                 || HeldUp(card, text, ShieldCounterOnSomebody)
                 || HeldUp(card, text, SavesFromDeathOrDamage)
                 || HeldUp(card, text, UmbraArmor)
+                || HeldUp(card, text, PhasesYourPermanentsOut)
                 || ShieldsAnAreaStatically(text))
             {
                 result |= CardEffect.Protection;

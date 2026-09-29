@@ -583,6 +583,26 @@ namespace ScatoloneDownloader.Cube
             @"\b(?:untapped|tapped|with (?:a|an|one or more) [\w+/-]+ counters? on|counters on them|during (?:your|each)"
             + @"|as long as|while|if)\b");
 
+        // A shield for the PLAYER ALONE is neither this tag nor Pacify, ruled
+        // 2026-09-29 ("nessuno dei due"): Absolute Virtue's "you have protection
+        // from each of your opponents", Blossoming Calm's "you gain hexproof",
+        // Gilded Light's shroud. The keyword has to follow "you" directly, so
+        // "you AND permanents you control gain hexproof" (Veil of Summer, Dawn's
+        // Truce) still shields the permanents, and "whenever you gain life,
+        // target creature gains hexproof" is untouched. The reminder that follows
+        // goes with it, because shroud's says "YOU can't be the targets"
+        // (Gilded Light). Blanked with the tribal and taken-away shields in
+        // Classify.
+        private static readonly Regex ShieldForThePlayerAlone = Rx(
+            @"[^.\n]*\byou (?:have|gain|get) (?:hexproof|shroud|protection)\b[^.\n]*\.?(?:\s*\([^)\n]*\))?");
+
+        // …while phasing out EVERY permanent you control is a shield over an
+        // area, held up in response: Teferi's Protection and Perch Protection
+        // keep the tag through it once their "you gain protection" no longer
+        // counts.
+        private static readonly Regex PhasesYourPermanentsOut = Rx(
+            @"\ball (?:nonland )?(?:permanents|creatures) you control phase out");
+
         // The lines a Protection effect can be held up from without being an
         // instant or having flash: an ACTIVATED ability, a card turned FACE UP
         // (a special action, taken any time — Essence of Antiquity, Forum
