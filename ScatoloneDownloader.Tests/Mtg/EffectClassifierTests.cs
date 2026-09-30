@@ -996,6 +996,16 @@ public sealed class EffectClassifierTests
     [InlineData("Tropical Island", "Land — Forest Island", "({T}: Add {G} or {U}.)")]
     [InlineData("Dwarven Ruins", "Land",
         "This land enters tapped.\n{T}: Add {R}.\n{T}, Sacrifice this land: Add {R}{R}.")]
+    // A land that costs one untapped land to enter, or phases out every other
+    // turn, does not make more than it costs every turn (Balduvian Trading Post,
+    // Teferi's Isle — untagged, measured 2026-09-29).
+    [InlineData("Balduvian Trading Post", "Land",
+        "If this land would enter, sacrifice an untapped Mountain instead. If you do, put this land onto the "
+        + "battlefield. If you don't, put it into its owner's graveyard.\n{T}: Add {C}{R}.\n{1}, {T}: This land "
+        + "deals 1 damage to target attacking creature.")]
+    [InlineData("Teferi's Isle", "Legendary Land",
+        "Phasing (This phases in or out before you untap during each of your untap steps. While it's phased "
+        + "out, it's treated as though it doesn't exist.)\nTeferi's Isle enters tapped.\n{T}: Add {U}{U}.")]
     public void Classify_OrdinaryLands_AreNotRamp(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));

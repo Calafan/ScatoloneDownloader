@@ -39,6 +39,16 @@ namespace ScatoloneDownloader.Cube
         // wrong, and wrong for an instructive reason: the pattern was sweeping in
         // the five lands that enter tapped, and they were poisoning the number.
         // Separated, it is the largest Ramp win found — 133 errors to 118.
+        // …but not a land that costs ONE untapped land to enter (the Ice Age
+        // Balduvian Trading Post and Soldevi Excavations, 0 of 2 tagged — where
+        // Scorched Ruins sacrifices two for four and is Ramp), nor one that
+        // PHASES out every other turn (Teferi's Isle, untagged): neither makes
+        // more than it costs EVERY turn. Measured 2026-09-29. Arid Archway, a
+        // Desert that bounces a land like the five Karoos tagged Ramp, was
+        // left as Filter alone on 09-23 and stays the one exception.
+        private static readonly Regex LandThatDoesNotGainEveryTurn = Rx(
+            @"sacrifice an untapped [\w ]{1,20} instead|^phasing\b", RegexOptions.Multiline);
+
         private static readonly Regex SacrificesForMana = Rx(
             @"^[^\n:]{0,50}sacrifice[^\n:]{0,40}: add ", RegexOptions.Multiline);
 

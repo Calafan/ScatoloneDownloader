@@ -184,8 +184,9 @@ namespace ScatoloneDownloader.Cube
                 // 2026-09-18 to catch Teferi's Isle and reverted: it took the
                 // five Karoo lands with it, and those give a land back, so they
                 // tap for two net every turn after the first. One card gained,
-                // five lost.
-                if (LandTapsForMoreThanOne.IsMatch(text))
+                // five lost. Teferi's Isle is caught since 2026-09-29 by its
+                // PHASING instead — see LandThatDoesNotGainEveryTurn.
+                if (LandTapsForMoreThanOne.IsMatch(text) && !LandThatDoesNotGainEveryTurn.IsMatch(text))
                 {
                     result |= CardEffect.Ramp;
                 }
