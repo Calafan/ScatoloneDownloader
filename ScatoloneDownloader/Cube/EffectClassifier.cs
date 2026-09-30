@@ -845,8 +845,9 @@ namespace ScatoloneDownloader.Cube
                 result |= CardEffect.ManaFixing;
             }
 
-            // A land that fetches a land fixes. See LandFetchesALand.
-            if (card.MacroType == MacroType.Land && LandFetchesALand.IsMatch(text))
+            // A land that fetches a land fixes, and so does one of a chosen
+            // colour. See LandFetchesALand and LandOfAChosenColour.
+            if (card.MacroType == MacroType.Land && (LandFetchesALand.IsMatch(text) || LandOfAChosenColour.IsMatch(text)))
             {
                 result |= CardEffect.ManaFixing;
             }

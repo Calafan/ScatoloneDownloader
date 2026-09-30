@@ -3969,6 +3969,13 @@ public sealed class EffectClassifierTests
         "{T}: Add {C}.\n{T}, Sacrifice this land: Search your library for a basic Forest, Island, or Mountain "
         + "card, put it onto the battlefield tapped, then shuffle.\nCycling {G}{U}{R} ({G}{U}{R}, Discard this "
         + "card: Draw a card.)")]
+    // A land of the colour, or the basic land type, chosen as it enters fixes too
+    // (6 of 6 reviewed): Mirage Mesa, Multiversal Passage.
+    [InlineData("Mirage Mesa", "Land — Desert",
+        "This land enters tapped. As it enters, choose a color.\n{T}: Add one mana of the chosen color.")]
+    [InlineData("Multiversal Passage", "Land",
+        "As this land enters, choose a basic land type. Then you may pay 2 life. If you don't, it enters "
+        + "tapped.\nThis land is the chosen type.")]
     public void Classify_ALandThatFetchesALand_IsManaFixing(string name, string typeLine, string oracle)
     {
         CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));

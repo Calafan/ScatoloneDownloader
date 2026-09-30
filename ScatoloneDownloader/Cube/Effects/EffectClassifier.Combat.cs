@@ -45,6 +45,15 @@ namespace ScatoloneDownloader.Cube
             @"^[^\n:]{0,70}\{t\}[^\n:]{0,40}: search your library for [^.\n]{0,60}\bcard[^.\n]{0,40}put (?:it|that card) onto the battlefield",
             RegexOptions.Multiline);
 
+        // A LAND that makes the colour — or is the basic land type — chosen as
+        // it enters is a land that fixes: Crossroads Village, Mirage Mesa,
+        // Night Market, Tarnation Vista, Valgavoth's Lair and Multiversal
+        // Passage, all ManaFixing by hand and never read, because no line says
+        // "any color" or names two. On a rock the same words are a bare tap,
+        // a source, and are not asked (Coldsteel Heart).
+        private static readonly Regex LandOfAChosenColour = Rx(
+            @"add one mana of the chosen colou?r|this land is the chosen type");
+
         // The table's Ramp rule, named so the land-face strip can ask it again.
         private static readonly Regex TapAddsMana = Rx(@"\{t\}: add ");
 
