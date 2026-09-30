@@ -3949,6 +3949,11 @@ public sealed class EffectClassifierTests
         "Reach\nLands you control and land cards you own that aren't on the battlefield are Deserts in "
         + "addition to their other types.\nLands you control have \"{T}: Add one mana of any color.\"\n{T}: Mill "
         + "two cards. You gain 1 life for each land card milled this way.")]
+    // North Star's whole activation is the permission to spend mana as any type,
+    // and it fixes.
+    [InlineData("North Star", "Artifact",
+        "{4}, {T}: For one spell this turn, you may spend mana as though it were mana of any type to pay that "
+        + "spell's mana cost. (Additional costs are still paid normally.)")]
     public void Classify_ManaThatCostsSomething_IsManaFixing(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
@@ -3982,6 +3987,25 @@ public sealed class EffectClassifierTests
 
         Assert.True(result.HasFlag(CardEffect.ManaFixing));
         Assert.False(result.HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // "Spend mana as though it were mana of any type" riding on what the card does
+    // fixes no mana base: 3 of the 4 reviewed riders are untagged (Abstruse
+    // Appropriation, Outrageous Robbery, Case File Auditor), read 2026-09-29.
+    // North Star, whose whole activation is the permission, is the exception.
+    [InlineData("Abstruse Appropriation", "Instant",
+        "Devoid (This card has no color.)\nExile target nonland permanent. You may cast that card for as long "
+        + "as it remains exiled, and you may spend colorless mana as though it were mana of any color to cast "
+        + "that spell.")]
+    [InlineData("Case File Auditor", "Creature — Human Detective",
+        "When this creature enters and whenever you solve a Case, look at the top six cards of your library. "
+        + "You may reveal an enchantment card from among them and put it into your hand. Put the rest on the "
+        + "bottom of your library in a random order.\nYou may spend mana as though it were mana of any color to "
+        + "cast Case spells.")]
+    public void Classify_APermissionToSpendManaAsAnyType_IsNotManaFixing(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
     }
 
     [Theory]

@@ -54,6 +54,18 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex LandOfAChosenColour = Rx(
             @"add one mana of the chosen colou?r|this land is the chosen type");
 
+        // "Spend mana AS THOUGH it were mana of any type" rides on what the
+        // card does — a stolen card you may cast (Abstruse Appropriation,
+        // Outrageous Robbery), a Case spell (Case File Auditor), a Celestial
+        // Dawn — and fixes no mana base: 4 of the 5 reviewed cards that say it
+        // are untagged. The fifth is NORTH STAR, whose whole activation is the
+        // permission, and it stays.
+        private static readonly Regex SpendAsThoughAny = Rx(
+            @"(?:you may )?spend (?:mana|white mana|colorless mana) as though it were mana of any (?:type|colou?r)");
+
+        private static readonly Regex SpendAsThoughIsTheAbility = Rx(
+            @"^[^\n:]{1,40}: for one spell this turn, you may spend mana as though", RegexOptions.Multiline);
+
         // The table's Ramp rule, named so the land-face strip can ask it again.
         private static readonly Regex TapAddsMana = Rx(@"\{t\}: add ");
 
