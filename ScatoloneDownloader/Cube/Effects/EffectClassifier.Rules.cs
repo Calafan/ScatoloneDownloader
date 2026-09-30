@@ -991,7 +991,7 @@ namespace ScatoloneDownloader.Cube
                 // branch in Classify, where LandOntoTheBattlefield says the same
                 // thing more widely AND asks the two questions this one could not:
                 // whose land is it, and did you pay a land for it.
-                (CardEffect.Ramp, [Rx(@"\{t\}: add ")]),
+                (CardEffect.Ramp, [TapAddsMana]),
 
                 (CardEffect.Pacify, PacifyPatterns),
 

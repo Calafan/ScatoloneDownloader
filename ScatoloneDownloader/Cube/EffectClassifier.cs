@@ -191,6 +191,14 @@ namespace ScatoloneDownloader.Cube
                 }
             }
 
+            // …and so is the LAND FACE of a modal double-faced card. See
+            // WithoutALandFace. The table's tap rule is asked again without it.
+            string nonLandText = WithoutALandFace(card, text);
+            if (nonLandText != text && result.HasFlag(CardEffect.Ramp) && !TapAddsMana.IsMatch(nonLandText))
+            {
+                result &= ~CardEffect.Ramp;
+            }
+
             // Added AFTER the land strip, because Crystal Vein is a land and is
             // exactly the card this rule is for. See the patterns above.
             if ((SacrificesForMana.IsMatch(text) || RitualAddsMana.IsMatch(SagaChapterLine.Replace(text, " ")))
@@ -202,7 +210,7 @@ namespace ScatoloneDownloader.Cube
             // The eight families ruled 2026-09-18, all after the land strip for
             // the same reason. Each is documented on its own pattern above.
             if (CostsLessToCast.IsMatch(CostsLessForItself.Replace(text, " "))
-                || (card.MacroType != MacroType.Land && ActivatedManaAbility.IsMatch(text))
+                || (card.MacroType != MacroType.Land && ActivatedManaAbility.IsMatch(nonLandText))
                 || ExtraLandDrop.IsMatch(text)
                 || ManaMultiplier.IsMatch(text)
                 || (card.MacroType != MacroType.Spell
@@ -439,7 +447,7 @@ namespace ScatoloneDownloader.Cube
             // price that is not mana. See BareTapAdds and EveryFixerIsASource.
             if (result.HasFlag(CardEffect.ManaFixing)
                 && card.MacroType != MacroType.Land
-                && EveryFixerIsASource(text))
+                && EveryFixerIsASource(nonLandText))
             {
                 result &= ~CardEffect.ManaFixing;
             }

@@ -4042,6 +4042,10 @@ public sealed class EffectClassifierTests
         "Karn's power and toughness are each equal to the greatest mana value among artifacts you control.\nAt "
         + "the beginning of your upkeep, add {C} for each artifact you control. This mana can't be spent to "
         + "cast nonartifact spells. Until end of turn, you don't lose this mana as steps and phases end.")]
+    // A modal card whose FRONT taps for mana keeps it: the land-face strip starts
+    // at the land's own first line.
+    [InlineData("Tangled Florahedron // Tangled Vale", "Creature — Elemental // Land",
+        "{T}: Add {G}.\nThis land enters tapped.\n{T}: Add {G}.")]
     public void Classify_ManaYouDidNotHaveToMake_IsRamp(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
@@ -4094,6 +4098,35 @@ public sealed class EffectClassifierTests
     public void Classify_ASagaChaptersBurstOfMana_IsNotRamp(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // The LAND FACE of a modal double-faced card is a land, whose mana is just a
+    // land's: 9 of the 10 reviewed pay-3-life MDFCs are untagged, and the human
+    // left Boggart Bog and Drowned Jungle without Ramp on 2026-09-23/25 (Drowned
+    // Jungle's two colours are its ManaFixing).
+    [InlineData("Boggart Trawler // Boggart Bog", "Creature — Goblin // Land",
+        "When this creature enters, exile target player's graveyard.\nAs this land enters, you may pay 3 life. "
+        + "If you don't, it enters tapped.\n{T}: Add {B}.")]
+    [InlineData("Drowner of Truth // Drowned Jungle", "Creature — Eldrazi // Land",
+        "Devoid (This card has no color.)\nWhen you cast this spell, if {C} was spent to cast it, create two "
+        + "0/1 colorless Eldrazi Spawn creature tokens with \"Sacrifice this token: Add {C}.\"\nThis land enters "
+        + "tapped.\n{T}: Add {G} or {U}.")]
+    public void Classify_TheLandFaceOfAModalCard_IsJustALand(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // …and a land face that taps for two colours fixes, as any land does (Drowned
+    // Jungle, ManaFixing by hand).
+    [InlineData("Drowner of Truth // Drowned Jungle", "Creature — Eldrazi // Land",
+        "Devoid (This card has no color.)\nWhen you cast this spell, if {C} was spent to cast it, create two "
+        + "0/1 colorless Eldrazi Spawn creature tokens with \"Sacrifice this token: Add {C}.\"\nThis land enters "
+        + "tapped.\n{T}: Add {G} or {U}.")]
+    public void Classify_ADualLandFaceOfAModalCard_Fixes(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
     }
 
     [Theory]

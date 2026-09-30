@@ -34,6 +34,21 @@ namespace ScatoloneDownloader.Cube
 
         private static readonly Regex RitualAddsMana = Rx(@"(?:^|\n|\. )add [\w ]{0,20}\{[wubrgc]");
 
+        // The table's Ramp rule, named so the land-face strip can ask it again.
+        private static readonly Regex TapAddsMana = Rx(@"\{t\}: add ");
+
+        // The LAND FACE of a modal double-faced card is a land, whose mana is
+        // just a land's: the four "you may pay 3 life, else it enters tapped"
+        // backs the human reviewed on 2026-09-23/25 (Boggart Bog, Garden of
+        // Freyalise, Hydroelectric Laboratory, Mystic Peak) were proposed Ramp
+        // off the land's "{T}: Add" and none is tagged — 9 of the 10 reviewed
+        // pay-3-life MDFCs are untagged, Witch Enchanter the one handed back.
+        // The faces are joined by a newline with no marker, so the land face
+        // is read from its first "this land enters" line down; the transform
+        // cards, whose back face has to be earned, are not touched.
+        private static readonly Regex LandFaceStarts = Rx(
+            @"^(?:as this land enters|this land enters tapped)", RegexOptions.Multiline);
+
         // Mana a PERMANENT adds on a TRIGGER is Ramp — Electro, Rodeo
         // Pyromancers, Muerra, Eladamri's Vineyard, Karn, Legacy Reforged, 10
         // of the 12 reviewed permanents written this way, never read because

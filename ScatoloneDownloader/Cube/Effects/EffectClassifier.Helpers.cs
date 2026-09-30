@@ -539,6 +539,22 @@ namespace ScatoloneDownloader.Cube
             return sawFixer;
         }
 
+        /// <summary>The card's text without the LAND FACE of a modal
+        /// double-faced card whose back is a land and whose front is not.
+        /// See LandFaceStarts.</summary>
+        private static string WithoutALandFace(Card card, string text)
+        {
+            string[] faces = (card.TypeLine ?? string.Empty).Split(" // ");
+            if (faces.Length < 2 || !faces[1].Contains("Land", StringComparison.Ordinal)
+                || faces[0].Contains("Land", StringComparison.Ordinal))
+            {
+                return text;
+            }
+
+            Match land = LandFaceStarts.Match(text);
+            return land.Success ? text[..land.Index] : text;
+        }
+
         /// <summary>True when the line sacrifices a TOKEN for its mana and the
         /// card makes that token with an ability paid in mana — Diamond
         /// Kaleidoscope pays {3} for the Prism it later cracks for any colour,
