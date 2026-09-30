@@ -4117,6 +4117,14 @@ public sealed class EffectClassifierTests
         + "counters and isn't a creature until the last is removed. At the beginning of your end step, remove a "
         + "time counter from it.)\nWhenever this permanent enters or attacks, create a tapped colorless land "
         + "token named Everywhere that is every basic land type.")]
+    // A spell's mana after a comma or counted before the symbol, read 2026-09-29:
+    // Energy Tap, Burnt Offering.
+    [InlineData("Energy Tap", "Sorcery",
+        "Tap target untapped creature you control. If you do, add an amount of {C} equal to that creature's "
+        + "mana value.")]
+    [InlineData("Burnt Offering", "Instant",
+        "As an additional cost to cast this spell, sacrifice a creature.\nAdd X mana in any combination of {B} "
+        + "and/or {R}, where X is the sacrificed creature's mana value.")]
     public void Classify_ManaYouDidNotHaveToMake_IsRamp(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
@@ -4202,6 +4210,27 @@ public sealed class EffectClassifierTests
         + "graveyard.)\n{3}{G}, Sacrifice this creature: Return all land cards from your graveyard to the "
         + "battlefield tapped.")]
     public void Classify_ALandThatIsNotRampByHand_IsNotRamp(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // A spell's mana that rides on an answer — a kill, a counter, a sweep, a
+    // regrowth — is not Ramp: 4 of 5 reviewed (Narset's Rebuke, Mana Drain,
+    // Reckless Blaze, Sorceress's Schemes), The Last Agni Kai the exception. And
+    // mana in a keyword's reminder is not the spell's (Fire Nation Attacks'
+    // firebending).
+    [InlineData("Narset's Rebuke", "Instant",
+        "Narset's Rebuke deals 5 damage to target creature. Add {U}{R}{W}. If that creature would die this "
+        + "turn, exile it instead.")]
+    [InlineData("Mana Drain", "Instant",
+        "Counter target spell. At the beginning of your next main phase, add an amount of {C} equal to that "
+        + "spell's mana value.")]
+    [InlineData("Fire Nation Attacks", "Instant",
+        "Create two 2/2 red Soldier creature tokens with firebending 1. (Whenever a creature with firebending "
+        + "1 attacks, add {R}. This mana lasts until end of combat.)\nFlashback {8}{R} (You may cast this card "
+        + "from your graveyard for its flashback cost. Then exile it.)")]
+    public void Classify_ASpellsManaRidingOnAnAnswer_IsNotRamp(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
     }

@@ -66,6 +66,23 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex SpendAsThoughIsTheAbility = Rx(
             @"^[^\n:]{1,40}: for one spell this turn, you may spend mana as though", RegexOptions.Multiline);
 
+        // A SPELL's mana in the wordings the ritual rule could not read: after
+        // a comma ("If you do, add an amount of {C}" — Energy Tap, Channel,
+        // Spoils of Evil) or counted before the symbol ("Add X mana in any
+        // combination of {B} and/or {R}" — Burnt Offering, Metamorphosis). All
+        // five are Ramp by hand, read 2026-09-29, asked of spells only.
+        private static readonly Regex SpellAddsMana = Rx(
+            @", (?:you )?add (?:\{|x mana|an amount of|that much|one mana|two mana|three mana)"
+            + @"|\badd (?:x|\w+) mana (?:in any combination|of any)");
+
+        // …and a spell's mana that RIDES ON AN ANSWER is not Ramp: Narset's
+        // Rebuke, Sorceress's Schemes, Mana Drain and Reckless Blaze add mana
+        // beside a kill, a counter, a sweep or a regrowth and are untagged —
+        // 4 of 5 reviewed, The Last Agni Kai the one tagged, handed back.
+        private const CardEffect AnswersARitualRidesOn =
+            CardEffect.Removal | CardEffect.Counter | CardEffect.Wipe | CardEffect.Regrowth
+            | CardEffect.RemovePermanent | CardEffect.Burn;
+
         // The table's Ramp rule, named so the land-face strip can ask it again.
         private static readonly Regex TapAddsMana = Rx(@"\{t\}: add ");
 

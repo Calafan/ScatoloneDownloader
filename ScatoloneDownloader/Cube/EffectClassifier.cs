@@ -201,8 +201,13 @@ namespace ScatoloneDownloader.Cube
 
             // Added AFTER the land strip, because Crystal Vein is a land and is
             // exactly the card this rule is for. See the patterns above.
-            if ((SacrificesForMana.IsMatch(text) || RitualAddsMana.IsMatch(SagaChapterLine.Replace(text, " ")))
-                && !LandEntersTapped.IsMatch(text))
+            // A spell's mana counts when it is the spell's point, not when it
+            // rides on an answer. See SpellAddsMana and AnswersARitualRidesOn.
+            bool spell = card.MacroType == MacroType.Spell;
+            if ((SacrificesForMana.IsMatch(text) || RitualAddsMana.IsMatch(SagaChapterLine.Replace(text, " "))
+                    || (spell && SpellAddsMana.IsMatch(Quoted.Replace(Parenthetical.Replace(text, " "), " "))))
+                && !LandEntersTapped.IsMatch(text)
+                && !(spell && (result & AnswersARitualRidesOn) != CardEffect.None))
             {
                 result |= CardEffect.Ramp;
             }
