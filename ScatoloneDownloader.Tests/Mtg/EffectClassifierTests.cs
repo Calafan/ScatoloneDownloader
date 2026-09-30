@@ -971,6 +971,19 @@ public sealed class EffectClassifierTests
     [InlineData("Mishra's Workshop", "Land", "{T}: Add {C}{C}{C}. Spend this mana only to cast artifact spells.")]
     [InlineData("Karoo", "Land",
         "This land enters tapped.\nWhen this land enters, sacrifice it unless you return an untapped Plains you control to its owner's hand.\n{T}: Add {W}{W}.")]
+    // Three more shapes read 2026-09-29: two mana behind an ability word
+    // (Muraganda Raceway), a station land paying one for one per creature
+    // (Evendo), and a paid amount counted by the board (Three Tree City).
+    [InlineData("Muraganda Raceway", "Land",
+        "Start your engines! (If you have no speed, it starts at 1. It increases once on each of your turns "
+        + "when an opponent loses life. Max speed is 4.)\n{T}: Add {C}.\nMax speed — {T}: Add {C}{C}.")]
+    [InlineData("Evendo, Waking Haven", "Land — Planet",
+        "This land enters tapped.\n{T}: Add {G}.\nStation (Tap another creature you control: Put charge "
+        + "counters equal to its power on this Planet. Station only as a sorcery.)\n12+ | {G}, {T}: Add {G} for "
+        + "each creature you control.")]
+    [InlineData("Three Tree City", "Legendary Land",
+        "As Three Tree City enters, choose a creature type.\n{T}: Add {C}.\n{2}, {T}: Choose a color. Add an "
+        + "amount of mana of that color equal to the number of creatures you control of the chosen type.")]
     public void Classify_ALandThatMakesExtraManaEveryTurn_IsRamp(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));

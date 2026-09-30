@@ -18,8 +18,18 @@ namespace ScatoloneDownloader.Cube
         // Add {R}{R}" family is deliberately NOT caught — it spends itself for
         // the extra mana once, which is why Dwarven Ruins and Ebon Stronghold
         // are hand-tagged as nothing while Crystal Vein is not.
+        //
+        // Three more shapes of the same land, read 2026-09-29, each a reviewed
+        // land tagged Ramp and never proposed: the two-mana tap behind an
+        // ability word (Muraganda Raceway's "Max speed —"); a STATION land
+        // that pays one mana for one per creature or artifact (Evendo, Uthros
+        // — "12+ | {G}, {T}: Add {G} for each …"); and a land that pays for an
+        // AMOUNT counted by the board (Three Tree City).
         private static readonly Regex LandTapsForMoreThanOne = Rx(
-            @"^\{t\}: add \{[wubrgc]\}\{", RegexOptions.Multiline);
+            @"^(?:[\w' ]+ — )?\{t\}: add \{[wubrgc]\}\{"
+            + @"|^\d+\+ \| [^\n:]*: add \{[wubrgc]\} for each"
+            + @"|^[^\n:]*\{t\}: (?:choose a colou?r\. )?add an amount of mana",
+            RegexOptions.Multiline);
 
         // Mana that arrives without a {T} on a permanent you keep: Black Lotus and
         // Lotus Petal and Blood Pet spend THEMSELVES, Dark Ritual and Songs of the
