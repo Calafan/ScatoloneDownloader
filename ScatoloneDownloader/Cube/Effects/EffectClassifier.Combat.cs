@@ -34,6 +34,17 @@ namespace ScatoloneDownloader.Cube
 
         private static readonly Regex RitualAddsMana = Rx(@"(?:^|\n|\. )add [\w ]{0,20}\{[wubrgc]");
 
+        // A LAND that fetches a land onto the battlefield — sacrificing itself
+        // (the Landscapes, the Mirage fetches, Escape Tunnel, Vibrant
+        // Cityscape) or for a price (Thawing Glaciers, Urza's Cave) — is a
+        // fetch land, which fixes: 18 of 18 reviewed cards written this way are
+        // ManaFixing, Shire Terrace the latest (2026-09-29), and none was read,
+        // because the land search rules ask where the land goes and a land is
+        // never Ramp for it.
+        private static readonly Regex LandFetchesALand = Rx(
+            @"^[^\n:]{0,70}\{t\}[^\n:]{0,40}: search your library for [^.\n]{0,60}\bcard[^.\n]{0,40}put (?:it|that card) onto the battlefield",
+            RegexOptions.Multiline);
+
         // The table's Ramp rule, named so the land-face strip can ask it again.
         private static readonly Regex TapAddsMana = Rx(@"\{t\}: add ");
 

@@ -845,6 +845,12 @@ namespace ScatoloneDownloader.Cube
                 result |= CardEffect.ManaFixing;
             }
 
+            // A land that fetches a land fixes. See LandFetchesALand.
+            if (card.MacroType == MacroType.Land && LandFetchesALand.IsMatch(text))
+            {
+                result |= CardEffect.ManaFixing;
+            }
+
             // A scry or surveil made once, beside what the card is for, is noise.
             // Asked once every other tag is known, because a spell is judged by
             // whether it does anything else. See SelectsOnlyInPassing.

@@ -3955,6 +3955,29 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // A LAND that fetches a land onto the battlefield, sacrificing itself or for a
+    // price, is a fetch land: 18 of 18 reviewed cards written this way are
+    // ManaFixing (Shire Terrace the latest, 2026-09-29), and none is Ramp.
+    [InlineData("Shire Terrace", "Land",
+        "{T}: Add {C}.\n{1}, {T}, Sacrifice this land: Search your library for a basic land card, put it onto "
+        + "the battlefield tapped, then shuffle.")]
+    [InlineData("Thawing Glaciers", "Land",
+        "This land enters tapped.\n{1}, {T}: Search your library for a basic land card, put that card onto the "
+        + "battlefield tapped, then shuffle. Return this land to its owner's hand at the beginning of the next "
+        + "cleanup step.")]
+    [InlineData("Bountiful Landscape", "Land",
+        "{T}: Add {C}.\n{T}, Sacrifice this land: Search your library for a basic Forest, Island, or Mountain "
+        + "card, put it onto the battlefield tapped, then shuffle.\nCycling {G}{U}{R} ({G}{U}{R}, Discard this "
+        + "card: Draw a card.)")]
+    public void Classify_ALandThatFetchesALand_IsManaFixing(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.ManaFixing));
+        Assert.False(result.HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
     // A price that is NOT mana — a life, energy, a sacrifice, the tap of other
     // permanents — leaves a mana SOURCE, which is Ramp and not a fixer, ruled
     // 2026-09-29 ("solo il mana converte") from the human's Ramp-only tags on
