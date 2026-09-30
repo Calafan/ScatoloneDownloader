@@ -1070,7 +1070,27 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex LandOntoTheBattlefield = Rx(
             @"(?<!non)lands? cards?[\w ,'\/]{0,60}onto the battlefield"
             + @"|search your library for[\w ,'\/]{0,80}(?<!non)(?:land|forest|plains|island|swamp|mountain)"
-            + @"[\w ,'\/]{0,60}onto the battlefield");
+            + @"[\w ,'\/]{0,60}onto the battlefield"
+            // Three more wordings of the same land, read 2026-09-29, each a
+            // reviewed card tagged Ramp and never proposed: the land DUG UP and
+            // put onto the battlefield in a second sentence (Clifftop Lookout,
+            // The Regalia); the search whose "put those / two of them onto the
+            // battlefield" comes after a full stop (Point the Way, Viewpoint
+            // Synchronization, Flourishing Bloom-Kin), the put coming straight
+            // after the stop so a fallback "If you control a Dragon, put that
+            // card onto the battlefield instead" stays out (Embermouth Sentinel,
+            // ManaFixing — an "instead" lookahead was tried and turned nothing
+            // red); and a LAND TOKEN made (Overlord of the Hauntwoods' Everywhere).
+            //
+            // NOT the lands of a GRAVEYARD returned "to the battlefield":
+            // measured the same day at 1 reviewed card tagged Ramp (Lumra) out
+            // of 8 — the human files them under Regrowth (Undergrowth Recon,
+            // Pull Through the Weft), Reanimate (Sandman) or nothing (Aftermath
+            // Analyst, Summon: Titan, Will of the Sultai).
+            + @"|until you reveal a land card\. put that card onto the battlefield"
+            + @"|search your library for [^.\n]{0,80}(?<!non)(?:land|forest|plains|island|swamp|mountain) cards?[^.\n]{0,60}\. "
+            + @"put (?:those cards|them|one of them|two of them|that card|it) onto the battlefield"
+            + @"|\bcreate [^.\n]{0,40}\bland token");
 
         // …but the land handed to the player a removal spell was aimed at is
         // their consolation, not your ramp: Emergency Eject, Price of Freedom,

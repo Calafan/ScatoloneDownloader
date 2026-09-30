@@ -4100,6 +4100,23 @@ public sealed class EffectClassifierTests
     // at the land's own first line.
     [InlineData("Tangled Florahedron // Tangled Vale", "Creature — Elemental // Land",
         "{T}: Add {G}.\nThis land enters tapped.\n{T}: Add {G}.")]
+    // A land onto the battlefield in three more wordings, read 2026-09-29: dug up
+    // and put there in a second sentence, a search whose put comes after a full
+    // stop, and a land token.
+    [InlineData("Clifftop Lookout", "Creature — Frog Scout",
+        "Reach\nWhen this creature enters, reveal cards from the top of your library until you reveal a land "
+        + "card. Put that card onto the battlefield tapped and the rest on the bottom of your library in a "
+        + "random order.")]
+    [InlineData("Point the Way", "Enchantment",
+        "Start your engines! (If you have no speed, it starts at 1. It increases once on each of your turns "
+        + "when an opponent loses life. Max speed is 4.)\n{3}{G}, Sacrifice this enchantment: Search your "
+        + "library for up to X basic land cards, where X is your speed. Put those cards onto the battlefield "
+        + "tapped, then shuffle.")]
+    [InlineData("Overlord of the Hauntwoods", "Enchantment Creature — Avatar Horror",
+        "Impending 4—{1}{G}{G} (If you cast this spell for its impending cost, it enters with four time "
+        + "counters and isn't a creature until the last is removed. At the beginning of your end step, remove a "
+        + "time counter from it.)\nWhenever this permanent enters or attacks, create a tapped colorless land "
+        + "token named Everywhere that is every basic land type.")]
     public void Classify_ManaYouDidNotHaveToMake_IsRamp(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
@@ -4167,6 +4184,24 @@ public sealed class EffectClassifierTests
         + "0/1 colorless Eldrazi Spawn creature tokens with \"Sacrifice this token: Add {C}.\"\nThis land enters "
         + "tapped.\n{T}: Add {G} or {U}.")]
     public void Classify_TheLandFaceOfAModalCard_IsJustALand(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // Two land wordings the human does not count as Ramp: a land put onto the
+    // battlefield only INSTEAD of into the hand (Embermouth Sentinel, ManaFixing),
+    // and the lands of a graveyard returned to the battlefield (1 of 8 reviewed
+    // tagged, measured 2026-09-29).
+    [InlineData("Embermouth Sentinel", "Artifact Creature — Chimera",
+        "When this creature enters, you may search your library for a basic land card, reveal it, then "
+        + "shuffle and put that card on top. If you control a Dragon, put that card onto the battlefield tapped "
+        + "instead.")]
+    [InlineData("Aftermath Analyst", "Creature — Elf Detective",
+        "When this creature enters, mill three cards. (Put the top three cards of your library into your "
+        + "graveyard.)\n{3}{G}, Sacrifice this creature: Return all land cards from your graveyard to the "
+        + "battlefield tapped.")]
+    public void Classify_ALandThatIsNotRampByHand_IsNotRamp(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
     }
