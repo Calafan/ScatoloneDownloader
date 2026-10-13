@@ -239,6 +239,7 @@ namespace ScatoloneDownloader.Cube
                     && LandOntoTheBattlefield.IsMatch(ownLandDrops)
                     && !LandForSomebodyElse.IsMatch(text) && !PaysALandForTheLand.IsMatch(text))
                 || LandsBackAfterFillingTheGraveyard.IsMatch(text)
+                || (MakesAPowerstone.IsMatch(text) && !PowerstoneForSomebodyElse.IsMatch(text))
                 || TreasureAlsoRamps(text))
             {
                 result |= CardEffect.Ramp;
@@ -532,7 +533,7 @@ namespace ScatoloneDownloader.Cube
             {
                 string aimed = LandOutOfTheGraveyard.Replace(text, " ");
 
-                if (!ReanimatePatterns.Any(p => p.IsMatch(aimed))) { result &= ~CardEffect.Reanimate; }
+                if (!ReanimatePatterns.Any(p => p.IsMatch(WithoutSelfRecursion(card, aimed)))) { result &= ~CardEffect.Reanimate; }
 
                 if (!RegrowthPatterns.Any(p => p.IsMatch(aimed))) { result &= ~CardEffect.Regrowth; }
             }

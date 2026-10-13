@@ -1776,6 +1776,32 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // A card bringing ITSELF back reanimates nothing, ruled 2026-10-13 ("mai
+    // Reanimate"), overturning the 09-19 rejection of this veto.
+    [InlineData("Haunt of the Dead Marshes", "Creature — Nightmare Elf",
+        "When this creature enters, scry 1.\n{2}{B}: Return this card from your graveyard to the battlefield "
+        + "tapped. Activate only if you control a legendary creature.")]
+    public void Classify_ACardBringingItselfBack_IsNotReanimate(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
+    }
+
+    [Fact]
+    // A POWERSTONE is Ramp however it is made, a land included (Hall of
+    // Tagsin, 2026-10-13); not one handed to somebody else (Cityscape Leveler).
+    public void Classify_APowerstoneForYou_IsRamp()
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard("Hall of Tagsin", "Land",
+            "{T}: Add {C}.\n{1}, {T}: Add one mana of any color.\n{4}, {T}: Create a tapped Powerstone token. (It's "
+            + "an artifact with \"{T}: Add {C}. This mana can't be spent to cast a nonartifact spell.\")"))
+            .HasFlag(CardEffect.Ramp));
+        Assert.False(EffectClassifier.Classify(MakeCard("Cityscape Leveler", "Artifact Creature — Construct",
+            "Trample\nWhen you cast this spell and whenever this creature attacks, destroy up to one target "
+            + "nonland permanent. Its controller creates a tapped Powerstone token.\nUnearth {8}"))
+            .HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
     // The TOP OF A LIBRARY is a hand you wait one turn for, so a card lifted
     // out of a graveyard and put there is recursion. Ruled 2026-09-19, and all
     // five reviewed cards written this way were already tagged by hand.

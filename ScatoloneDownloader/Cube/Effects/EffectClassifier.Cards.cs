@@ -417,6 +417,29 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex LandOutOfTheGraveyard = Rx(
             @"land cards? (?:from|in)[\w ,'\-/]{0,30}graveyard[\w ,'\-/]{0,20}(?:on)?to the battlefield[^\n.]{0,40}");
 
+        // A card that brings ITSELF back from the graveyard reanimates nothing,
+        // ruled 2026-10-13 ("mai Reanimate"): unearth, escape, sarcophagus,
+        // "return this card from your graveyard to the battlefield", a death
+        // trigger that returns it (Helbrute, Wave of Rats, Lunar Hatchling
+        // named; 23 more reviewed cards realigned). It overturns the 09-19
+        // measurement that rejected this veto. Regrowth is not asked: a card
+        // returning itself to HAND keeps it (Hammer of Bogardan).
+        private static readonly Regex SelfRecursionWording = Rx(
+            @"[^.\n]*return (?:this card|this creature|this permanent|SELFNAME) from your graveyard to the battlefield[^.\n]*"
+            + @"|^(?:unearth|escape|sarcophagus|embalm|eternalize)\b[^\n]*"
+            + @"|[^.\n]*you may cast (?:this card|SELFNAME) from your graveyard[^.\n]*"
+            + @"|[^.\n]*when (?:this creature|SELFNAME) dies[^.\n]{0,80}return it to the battlefield[^.\n]*",
+            RegexOptions.Multiline);
+
+        /// <summary>The text without the card's ways of bringing ITSELF back,
+        /// its old wording naming itself. See SelfRecursionWording.</summary>
+        private static string WithoutSelfRecursion(Card card, string text)
+        {
+            string name = Regex.Escape((card.Name ?? string.Empty).Split(" // ")[0]);
+            string pattern = SelfRecursionWording.ToString().Replace("SELFNAME", name.Length > 0 ? name : "(?!)");
+            return Regex.Replace(text, pattern, " ", SelfRecursionWording.Options);
+        }
+
         // THE CARD ITSELF IS A CARD. Ruled 2026-09-19 and it completes the
         // count: Ponder is -1 for the Ponder and +1 for the draw, which is
         // zero, and Grab the Prize is -1 for the spell, -1 for the discard it

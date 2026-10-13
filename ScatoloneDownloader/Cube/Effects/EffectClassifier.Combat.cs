@@ -1264,6 +1264,16 @@ namespace ScatoloneDownloader.Cube
         // — the same line already drawn for the Clue. Ruled 2026-09-18.
         private static readonly Regex MakesATreasure = Rx(@"treasure token");
 
+        // A POWERSTONE is Ramp however many and however made — 11 of 11
+        // reviewed cards that make one carry the tag, one at a time included
+        // (Powerstone Engineer, Horned Stoneseeker), unlike the Treasure. Read
+        // 2026-10-13 without its reminder text, where Mishra, Lost to
+        // Phyrexia's mode, The Brothers' War's chapter and Hall of Tagsin (a
+        // land, after the land strip) print it bare. Not one handed to the
+        // controller of something destroyed (Cityscape Leveler).
+        private static readonly Regex MakesAPowerstone = Rx(@"\bcreates? [^.\n]{0,30}\bpowerstone tokens?");
+        private static readonly Regex PowerstoneForSomebodyElse = Rx(@"(?:its|their) controller creates [^.\n]{0,30}powerstone");
+
         // …but a Treasure a created TOKEN makes is the token's, ruled 2026-09-29
         // on There and Back Again ("non crea Treasure ma li crea il token che
         // viene creato solo quando muore"): Smaug's fourteen Treasures are
