@@ -418,7 +418,8 @@ namespace ScatoloneDownloader.Cube
         private static bool MakesACreatureBody(string text) =>
             CreatureTokenWording.IsMatch(text)
             || NamedTokenIsACreature.IsMatch(text)
-            || TokenCopiesACreature(text);
+            || TokenCopiesACreature(text)
+            || AmassesAnArmy.IsMatch(text);
 
         /// <summary>A token copy is a body unless the thing being copied is a
         /// noncreature permanent, ruled 2026-09-19: Esoteric Duplicator copies

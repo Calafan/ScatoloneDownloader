@@ -319,7 +319,9 @@ namespace ScatoloneDownloader.Cube
         // type lives in the reminder text — "Create a Spellgorger Weird token.
         // (It's a {2}{R} 2/2 Weird creature with …)" never says "creature
         // token" anywhere. The third is a COPY.
-        private static readonly Regex CreatureTokenWording = Rx(@"creature token");
+        // (?<!non): "an opponent sacrifices a NONCREATURE token" makes nothing
+        // (Bloodroot Apothecary, The Third Doctor), read 2026-10-13.
+        private static readonly Regex CreatureTokenWording = Rx(@"(?<!non)creature token");
 
         private static readonly Regex NamedTokenIsACreature = Rx(
             @"create[s]? (?:a|an|two|three|four|five|x|\d+)[\w ,'\-]{0,30} tokens?\. "
@@ -348,13 +350,31 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex AnimatesANoncreature = Rx(
             @"counters? on target noncreature [\w ]{0,20}\. it becomes an? 0/0\b[\w ,]{0,40}creature");
 
+        // A LAND or an ARTIFACT that animates ITSELF is a body made too,
+        // ruled 2026-10-13: the Restless lands, Cavernous Maw, Stalking Stones
+        // (13 of 14 reviewed lands), Levitating Statue and Eye of Malcator;
+        // Mishra's Factory, Jade Statue, Xanthic Statue and Chimeric Sphere,
+        // untagged before the ruling, were realigned. An ENCHANTMENT that does
+        // it is not in the ruling (Reverberating Summons tagged, Ride the
+        // Shoopuf not) and is not read.
+        private static readonly Regex SelfAnimates = Rx(
+            @"\bthis (?:land|artifact) becomes an? [^.\n]{0,40}\d+/\d+[^.\n]{0,60}creature");
+
+        // DASH returns the creature to hand every turn it is cast that way, so
+        // its enters trigger repeats, ruled 2026-10-13 on Riders of Rohan
+        // (Tokens). The one dash card that makes bodies; warp casts it again
+        // only once (Knight Luminary, untagged) and is not here.
+        private static readonly Regex DashRepeatsTheEntry = Rx(@"^dash\b", RegexOptions.Multiline);
+
         // A copy of a CREATURE spell becomes a token, and that is how the human
         // tags it, ruled 2026-09-28: "copia una magia creature è Token" (Case of
         // the Shifting Visage, Double Down's outlaws, Thurid, Jackal). Never says
         // "create", so the token wording above cannot see it. Copying any OTHER
-        // spell of yours is Redirect.
+        // spell of yours is Redirect. A PERMANENT spell copied becomes a token
+        // too (Archmage of Echoes' Faeries and Wizards, tagged Tokens and not
+        // CardAdvantage, read 2026-10-13).
         private static readonly Regex CopiesYourCreatureSpell = Rx(
-            @"(?:whenever|when) you (?:next )?cast [^.\n]{0,60}\b(?:creature|outlaw) spells?\b[^.\n]{0,60}, "
+            @"(?:whenever|when) you (?:next )?cast [^.\n]{0,60}\b(?:creature|outlaw|permanent) spells?\b[^.\n]{0,60}, "
             + @"copy (?:it|that spell)\b");
 
         // ---- A CREATURE that makes one or two bodies, once ------------------
@@ -396,7 +416,31 @@ namespace ScatoloneDownloader.Cube
         // animates one land, manifest dread turns one card face down, and to
         // endure is to take the counters or one Spirit.
         private static readonly Regex OneBodyByKeyword = Rx(
-            @"\bearthbends?\b|\bmanifest dread\b|\bendures? (?:\d+|x)\b|\bcloaks? (?:the|a)\b|\bincubate (?:\d+|x)\b");
+            @"\bearthbends?\b|\bmanifest dread\b|\bendures? (?:\d+|x)\b|\bcloaks? (?:the|a)\b|\bincubate (?:\d+|x)\b"
+            // An amass printed bare, once (Grishnákh, Sauron, Lord of the Rings,
+            // untagged), 2026-10-13.
+            + @"|\bamass(?: \w+)? (?:\d+|x)\b");
+
+        // …but an incubate REPEATED is as many bodies as it says, read
+        // 2026-10-13: Progenitor Exarch incubates "X times" and Elesh Norn's
+        // Saga "five times", both tagged, both vetoed as one body once.
+        private static readonly Regex IncubatesSeveralTimes = Rx(
+            @"\bincubate (?:\d+|x) (?:x|two|three|four|five|six|\d+) times\b");
+
+        // AMASS puts an Army on the board, or grows the one there, and on a
+        // card printed bare it never says "token" for the body check to read:
+        // Barad-dûr, Gríma Wormtongue and Sauron, the Dark Lord, tagged, read
+        // 2026-10-13 (amass is tagged on 25 of the 32 reviewed cards that say
+        // it; a creature that amasses once is still taken off by the
+        // few-bodies veto).
+        private static readonly Regex AmassesAnArmy = Rx(@"\bamass\b");
+
+        // Cards put onto the battlefield FACE DOWN as 2/2s, out of a LIBRARY
+        // or a fresh mill, are new bodies (Cybership, The Cyber-Controller,
+        // tagged); out of exile or a graveyard they are Reanimate (Death in
+        // Heaven, Missy, untagged for this). Read 2026-10-13.
+        private static readonly Regex FaceDownBodiesFromALibrary = Rx(
+            @"(?:library|milled this way) onto the battlefield face down under your control\. they're 2/2");
 
         // INCUBATE makes an Incubator that becomes an artifact creature, and
         // never says "token" outside its reminder text. Ruled 2026-09-29 after
@@ -513,6 +557,11 @@ namespace ScatoloneDownloader.Cube
             // keyword again ("(To earthbend 1, target land …)"), which made Dai
             // Li Agents' two earthbends three.
             int keywordBodies = OneBodyByKeyword.Matches(Parenthetical.Replace(ability, " ")).Count;
+            if (IncubatesSeveralTimes.IsMatch(ability))
+            {
+                keywordBodies = int.MaxValue;
+            }
+
             if (keywordBodies > 0)
             {
                 bodies = Math.Max(bodies ?? 0, keywordBodies);
@@ -552,7 +601,7 @@ namespace ScatoloneDownloader.Cube
             bool makesAny = false;
             string own = Quoted.Replace(text, " ");
 
-            if (BodiesOnEveryAttack.IsMatch(own))
+            if (BodiesOnEveryAttack.IsMatch(own) || DashRepeatsTheEntry.IsMatch(own))
             {
                 return false;
             }

@@ -292,7 +292,7 @@ namespace ScatoloneDownloader.Cube
             // a guard rather than as more regexes because the evidence sits
             // anywhere on the card, not next to the verb.
             if (result.HasFlag(CardEffect.Tokens)
-                && (!MakesACreatureBody(text) || SomebodyElseCreates.IsMatch(text)))
+                && !MakesACreatureBody(WhatSomebodyElseCreates.Replace(text, " ")))
             {
                 result &= ~CardEffect.Tokens;
             }
@@ -306,6 +306,8 @@ namespace ScatoloneDownloader.Cube
             // inconsistency rather than a distinction, and the ruling settles it.
             if (Earthbend.IsMatch(text) || LandsBecomeCreatures.IsMatch(text)
                 || MakesABodyByKeyword.IsMatch(text) || AnimatesANoncreature.IsMatch(text)
+                || SelfAnimates.IsMatch(text) || FaceDownBodiesFromALibrary.IsMatch(text)
+                || AmassesAnArmy.IsMatch(Parenthetical.Replace(text, " "))
                 || CopiesYourCreatureSpell.IsMatch(text)
                 || Incubates.IsMatch(text))
             {

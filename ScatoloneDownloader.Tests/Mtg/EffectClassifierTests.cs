@@ -2509,6 +2509,35 @@ public sealed class EffectClassifierTests
         "Exile all creatures. Incubate X, where X is the number of creatures exiled this way. (Create an "
         + "Incubator token with X +1/+1 counters on it and \"{2}: Transform this token.\" It transforms into a "
         + "0/0 Phyrexian artifact creature.)")]
+    // Read 2026-10-13: a LAND or ARTIFACT that animates itself (ruled), an
+    // amass printed bare, cards put face down as 2/2s from a library, and a
+    // permanent spell copied.
+    [InlineData("Restless Vinestalk", "Land",
+        "This land enters tapped.\n{T}: Add {G} or {U}.\n{3}{G}{U}: Until end of turn, this land becomes a 5/5 "
+        + "green and blue Plant creature with trample. It's still a land.\nWhenever this land attacks, up to one "
+        + "other target creature has base power and toughness 3/3 until end of turn.")]
+    [InlineData("Jade Statue", "Artifact",
+        "{2}: This artifact becomes a 3/6 Golem artifact creature until end of combat. Activate only during "
+        + "combat.")]
+    [InlineData("Barad-dûr", "Legendary Land",
+        "Barad-dûr enters tapped unless you control a legendary creature.\n{T}: Add {B}.\n{X}{X}{B}, {T}: Amass "
+        + "Orcs X. Activate only if a creature died this turn.")]
+    [InlineData("Cybership", "Artifact — Vehicle",
+        "Flying\nWhenever this Vehicle deals combat damage to a player, put the top two cards of that player's "
+        + "library onto the battlefield face down under your control. They're 2/2 Cyberman artifact "
+        + "creatures.\nCrew 4")]
+    [InlineData("Archmage of Echoes", "Creature — Faerie Wizard",
+        "Flying, ward {2}\nWhenever you cast a Faerie or Wizard permanent spell, copy it. (The copy becomes a "
+        + "token.)")]
+    // Somebody else creating is blanked sentence by sentence, not for the whole
+    // card: the Spirits of chapter III and the Samurai you make are yours.
+    [InlineData("Oath of the Grey Host", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — You and "
+        + "target opponent each create a Food token.\nII — Each opponent loses 3 life. Create a Treasure "
+        + "token.\nIII — Create three tapped 1/1 white Spirit creature tokens with flying.")]
+    [InlineData("Eiganjo Uprising", "Sorcery",
+        "Create X 2/2 white Samurai creature tokens with vigilance. They gain menace and haste until end of "
+        + "turn.\nEach opponent creates X minus one 2/2 white Samurai creature tokens with vigilance.")]
     public void Classify_MakingCreaturesWithoutTokens_IsTokens(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
@@ -2610,6 +2639,14 @@ public sealed class EffectClassifierTests
     [InlineData("Converter Beast", "Creature — Phyrexian Beast",
         "When this creature enters, incubate 5. (Create an Incubator token with five +1/+1 counters on it and "
         + "\"{2}: Transform this token.\" It transforms into a 0/0 Phyrexian artifact creature.)")]
+    // An amass once, as it enters, is the same one body once (2026-10-13).
+    [InlineData("Dunland Crebain", "Creature — Bird Horror",
+        "Flying\nWhen this creature enters, amass Orcs 2. (Put two +1/+1 counters on an Army you control. It's "
+        + "also an Orc. If you don't control an Army, create a 0/0 black Orc Army creature token first.)")]
+    [InlineData("Grishnákh, Brash Instigator", "Legendary Creature — Goblin Soldier",
+        "When Grishnákh enters, amass Orcs 2. When you do, until end of turn, gain control of target "
+        + "nonlegendary creature an opponent controls with power less than or equal to the amassed Army's "
+        + "power. Untap that creature. It gains haste until end of turn.")]
     public void Classify_ACreatureMakingOneOrTwoBodiesOnce_IsNotTokens(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
@@ -2641,6 +2678,21 @@ public sealed class EffectClassifierTests
         + "you may pay {2}. If you do, create a 1/1 black and green Pest creature token with \"When this token "
         + "dies, you gain 1 life.\"\nWhenever you gain life, you may pay {1}. If you do, put a +1/+1 counter on "
         + "each creature you control and those creatures gain trample until end of turn.")]
+    // Read 2026-10-13: DASH returns it to hand, so its enters trigger repeats
+    // (Riders of Rohan); an incubate repeated X times; an amass on a trigger
+    // that repeats, printed bare.
+    [InlineData("Riders of Rohan", "Creature — Human Knight",
+        "When this creature enters, create two 2/2 red Human Knight creature tokens with trample and "
+        + "haste.\nDash {4}{R}{W} (You may cast this spell for its dash cost. If you do, it gains haste, and "
+        + "it's returned from the battlefield to its owner's hand at the beginning of the next end step.)")]
+    [InlineData("Progenitor Exarch", "Creature — Phyrexian Cat Cleric",
+        "When this creature enters, incubate 3 X times. (To incubate 3, create an Incubator token with three "
+        + "+1/+1 counters on it and \"{2}: Transform this token.\" It transforms into a 0/0 Phyrexian artifact "
+        + "creature.)\n{T}: Transform target Incubator token you control.")]
+    [InlineData("Sauron, the Dark Lord", "Legendary Creature — Avatar Horror",
+        "Ward—Sacrifice a legendary artifact or legendary creature.\nWhenever an opponent casts a spell, amass "
+        + "Orcs 1.\nWhenever an Army you control deals combat damage to a player, the Ring tempts you.\nWhenever "
+        + "the Ring tempts you, you may discard your hand. If you do, draw four cards.")]
     public void Classify_ACreatureMakingManyOrRepeatedBodies_IsTokens(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
@@ -3785,6 +3837,18 @@ public sealed class EffectClassifierTests
     [InlineData("Tireless Tracker", "Creature — Human Scout", "Whenever a land you control enters, investigate. (Create a Clue token.)")]
     [InlineData("Afterlife", "Instant", "Destroy target creature. It can't be regenerated. Its controller creates a 1/1 white Spirit creature token with flying.")]
     [InlineData("Phelddagrif", "Legendary Creature — Hippo", "{G}: Phelddagrif gains trample until end of turn. Target opponent creates a 1/1 green Hippo creature token.")]
+    // A NONCREATURE token named in passing makes nothing (2026-10-13), and
+    // cards put face down out of EXILE are reanimated, not made.
+    [InlineData("Bloodroot Apothecary", "Creature — Squirrel Druid",
+        "Toxic 2 (Players dealt combat damage by this creature also get two poison counters. A player with "
+        + "ten or more poison counters loses the game.)\nWhen this creature enters, you and target opponent each "
+        + "create a Treasure token.\nWhenever an opponent sacrifices a noncreature token, that player gets two "
+        + "poison counters.")]
+    [InlineData("Death in Heaven", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI, II — "
+        + "Target player mills two cards, then exiles their graveyard.\nIII — Put all creature cards exiled with "
+        + "this enchantment onto the battlefield face down under your control. They're 2/2 Cyberman artifact "
+        + "creatures.")]
     public void Classify_TokensThatAreNotYourCreatures_IsNotTokens(string name, string typeLine, string oracle)
     {
         Card card = MakeCard(name, typeLine, oracle);
@@ -5664,6 +5728,18 @@ public sealed class EffectClassifierTests
 
         Assert.True(result.HasFlag(CardEffect.Tokens));
         Assert.False(result.HasFlag(CardEffect.Redirect));
+    }
+
+    [Fact]
+    // A copied PERMANENT spell is a token, not a second card: Archmage of
+    // Echoes is Tokens alone by hand (2026-10-13).
+    public void Classify_CopyingYourPermanentSpell_IsNotCardAdvantage()
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard("Archmage of Echoes", "Creature — Faerie Wizard",
+            "Flying, ward {2}\nWhenever you cast a Faerie or Wizard permanent spell, copy it. (The copy becomes a "
+            + "token.)"));
+
+        Assert.False(result.HasFlag(CardEffect.CardAdvantage));
     }
 
     [Theory]

@@ -1075,8 +1075,10 @@ namespace ScatoloneDownloader.Cube
         // from Mendicant Core, Guidelight, where the copy is behind Max speed
         // and a further {1} and the card carries no tag. Max speed is NOT a
         // blanket difficulty: 34 reviewed cards print it and 4 are tagged.
+        // A copied PERMANENT spell is a token, not a second card (Archmage of
+        // Echoes, Tokens alone by hand, 2026-10-13) — see CopiesYourCreatureSpell.
         private static readonly Regex CopiesYourOwnSpell = Rx(
-            @"whenever you cast (?:your |a |an )?[\w' ]{0,40}, copy it");
+            @"whenever you cast (?:your |a |an )?(?![\w' ]{0,40}\bpermanent spell)[\w' ]{0,40}, copy it");
 
         // A LOOT SPLIT ACROSS TWO TRIGGERS is still a loot, ruled 2026-09-22:
         // Teferi's Imp discards when it phases out and draws when it phases

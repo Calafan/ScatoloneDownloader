@@ -293,10 +293,20 @@ namespace ScatoloneDownloader.Cube
         // "Its controller creates a 1/1 white Spirit" (Afterlife), "target
         // opponent creates a 1/1 green Hippo" (Phelddagrif): the body is real,
         // but it is not on your side of the table.
-        private static readonly Regex SomebodyElseCreates = Rx(
+        //
+        // Blanked SENTENCE BY SENTENCE since 2026-10-13, not asked of the
+        // whole card: Oath of the Grey Host hands an opponent a Food in
+        // chapter I and makes three Spirits of its own in chapter III, Eiganjo
+        // Uprising makes X Samurai before each opponent gets X minus one, and
+        // Blink's Clue reminder says "They create" — all three tagged, none
+        // proposed while one such sentence vetoed the card.
+        private const string SomebodyElseCreatesWording =
             @"(?:its controller|that player|each player|each opponent|target opponent|an opponent"
             + @"|the exiled card's owner|they|opponents?)\s+(?:may have you |each )?creates?\b"
-            + @"|have an opponent create|you and target opponent each create");
+            + @"|have an opponent create|you and target opponent each create";
+
+        private static readonly Regex WhatSomebodyElseCreates = Rx(
+            @"[^.\n]*(?:" + SomebodyElseCreatesWording + @")[^.\n]*");
 
         // Hoisted for the same reason as MillPatterns: the beneficiary guard
         // re-walks their matches to see WHO the effect lands on.
