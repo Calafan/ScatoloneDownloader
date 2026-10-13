@@ -362,6 +362,15 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Removal;
             }
 
+            // …nor a SPELL whose damage waits on the next spells you cast. See
+            // SpellDamageOnYourNextCasts; the card is asked again without it.
+            if (result.HasFlag(CardEffect.Removal) && card.MacroType == MacroType.Spell
+                && SpellDamageOnYourNextCasts.IsMatch(text)
+                && !Classify(new OneAbility(card, SpellDamageOnYourNextCasts.Replace(text, " "))).HasFlag(CardEffect.Removal))
+            {
+                result &= ~CardEffect.Removal;
+            }
+
             // REMINDER TEXT does not lock anybody down. Primal Clay explains
             // defender with "(A creature with defender can't attack.)" and
             // Balduvian Shaman prints a worked EXAMPLE of text-changing that
@@ -568,6 +577,14 @@ namespace ScatoloneDownloader.Cube
                 {
                     result &= ~CardEffect.Burn;
                 }
+            }
+
+            // …nor a drain that waits on another member of a TRIBE. See
+            // DrainOnATribe.
+            if (result.HasFlag(CardEffect.Burn) && DrainsOnATribeItDoesNotMake(card, text)
+                && !BurnPatterns.Any(p => p.IsMatch(DrainOnATribe.Replace(text, " "))))
+            {
+                result &= ~CardEffect.Burn;
             }
 
             // Three shapes that look like selection and are not. Asked by

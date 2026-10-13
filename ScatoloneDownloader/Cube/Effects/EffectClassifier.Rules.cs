@@ -1106,6 +1106,41 @@ namespace ScatoloneDownloader.Cube
             @"""[^""]{0,160}\bthis (?:token|emblem)[^""]{0,60}deals? [\dX]+ damage"
             + @"|\btokens? with ""[^""]{0,200}\bloses? [\dX]+ life[^""]*""");
 
+        // A SPELL that only sets up damage on the NEXT spells you cast removes
+        // nothing by itself, ruled 2026-10-13 on Season of the Bold ("di suo
+        // non genera una removal, deve aggiungere un altro effetto"). A
+        // PERMANENT with the same trigger is Removal (Flaming Tyrannosaurus,
+        // Surtr, Screamer-Killer, Defiler of Instinct: 4 of 4).
+        private static readonly Regex SpellDamageOnYourNextCasts = Rx(
+            @"[^.\n]*whenever you cast [^,\n]{0,40}spell[^.\n]{0,60}deals? (?:\d+|x) damage[^.\n]*\.?");
+
+        // A drain that fires when ANOTHER MEMBER OF A TRIBE arrives waits on
+        // cards the card is not, ruled 2026-10-13 on Obyra, Dreaming Duelist
+        // ("Whenever another Faerie you control enters, each opponent loses 1
+        // life", untagged): "dipendono da condizioni esterne". The type is
+        // the capitalised word, so "another creature you control" — any body
+        // at all — is not here (Thunder of Unity keeps Burn). A card that MAKES
+        // that tribe itself enables its own drain and keeps it, the mirror of
+        // the ruling (Aatchik's Insects, Boggart Mischief's Goblins), and so
+        // does one that IS of the tribe and says "a", not "another" — it
+        // fires on itself (Leeching Sliver, Sanctum Seeker).
+        private static readonly Regex DrainOnATribe = Rx(
+            @"^whenever (?<another>another|a|an|one or more(?: other)?) (?!creatures?\b|nontoken\b|tokens?\b)(?<tribe>(?-i:[A-Z])[a-z]+?)s? "
+            + @"(?:creatures? )?you control (?:enters?|attacks?|dies|die)[^\n]*\bloses? [\dX]+ life[^\n]*",
+            RegexOptions.Multiline);
+
+        /// <summary>True when the card has a drain on another member of a
+        /// tribe it neither makes nor is. See DrainOnATribe.</summary>
+        private static bool DrainsOnATribeItDoesNotMake(Card card, string text) =>
+            DrainOnATribe.Matches(text).Any(m =>
+            {
+                string tribe = Regex.Escape(m.Groups["tribe"].Value);
+                bool makesIt = Rx(@"\bcreate[^.\n]*\b" + tribe + @"s?\b[^.\n]*\btokens?\b").IsMatch(text);
+                bool isIt = !m.Groups["another"].Value.Contains("other", StringComparison.OrdinalIgnoreCase)
+                    && Rx(@"\b" + tribe + @"\b").IsMatch(card.TypeLine ?? string.Empty);
+                return !makesIt && !isIt;
+            });
+
         // A creature with HASTE that is gone at the end of the turn it arrived
         // is a burn spell with legs. Ruled 2026-09-20: it attacks once and then
         // it is not there any more, so what it really did was put its power on

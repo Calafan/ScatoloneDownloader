@@ -5071,9 +5071,42 @@ public sealed class EffectClassifierTests
         "Extort (Whenever you cast a spell, you may pay {W/B}. If you do, each opponent loses 1 life and you "
         + "gain that much life.)\nAt the beginning of each end step, if you gained 4 or more life this turn, "
         + "investigate. (Create a Clue token. It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")")]
+    // A drain on a TRIBE the card makes itself, or IS and fires on itself
+    // ("a", not "another"), enables itself (2026-10-13).
+    [InlineData("Aatchik, Emerald Radian", "Legendary Creature — Insect Druid",
+        "When Aatchik enters, create a 1/1 green Insect creature token for each artifact and/or creature card "
+        + "in your graveyard.\nWhenever another Insect you control dies, put a +1/+1 counter on Aatchik. Each "
+        + "opponent loses 1 life.")]
+    [InlineData("Leeching Sliver", "Creature — Sliver",
+        "Whenever a Sliver you control attacks, defending player loses 1 life.")]
     public void Classify_ARepeatedOnePointDrain_IsBurn(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
+
+    [Fact]
+    // …but a drain waiting on OTHER members of a tribe is not, ruled
+    // 2026-10-13 ("dipendono da condizioni esterne").
+    public void Classify_ADrainOnSomebodyElseOfTheTribe_IsNotBurn()
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard("Obyra, Dreaming Duelist", "Legendary Creature — Faerie Warrior",
+            "Flash\nFlying\nWhenever another Faerie you control enters, each opponent loses 1 life."));
+
+        Assert.False(result.HasFlag(CardEffect.Burn));
+    }
+
+    [Fact]
+    // A SPELL that only sets up damage on your next casts removes nothing by
+    // itself (Season of the Bold, 2026-10-13: "deve aggiungere un altro effetto").
+    public void Classify_ASpellDamagingOnYourNextCasts_IsNotRemoval()
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard("Season of the Bold", "Sorcery",
+            "Choose up to five {P} worth of modes. You may choose the same mode more than once.\n{P} — Create a "
+            + "tapped Treasure token.\n{P}{P} — Exile the top two cards of your library. Until the end of your next "
+            + "turn, you may play them.\n{P}{P}{P} — Until the end of your next turn, whenever you cast a spell, "
+            + "Season of the Bold deals 2 damage to up to one target creature."));
+
+        Assert.False(result.HasFlag(CardEffect.Removal));
     }
 
     [Theory]
