@@ -36,7 +36,9 @@
                 + "not what can only touch what it is already blocking.",
 
             [CardEffect.Counter] =
-                "Answers a spell on the stack by countering it.",
+                "Answers a spell on the stack — countered, or taken off it to its owner's hand, to exile or into "
+                + "the library — or an activated or triggered ability. Not one of your own spells, nor one aimed at "
+                + "the card itself.",
 
             [CardEffect.RemovePermanent] =
                 "Answers ANY permanent — \"destroy/exile target (nonland) permanent\", the O-ring family, and a kill "

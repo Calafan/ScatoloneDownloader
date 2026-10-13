@@ -267,7 +267,41 @@ namespace ScatoloneDownloader.Cube
                     Rx(@"shuffles? enchanted creature into[\w ']{0,25}library"
                         + @"|enchanted creature'?s owner shuffles it into")]),
 
-                (CardEffect.Counter, [Rx(@"counter target[\w ]*spell")]),
+                // The stack answer, whatever it answers. Read 2026-10-13 from the
+                // sitting of 10-06..10-11: an ABILITY countered is the same
+                // answer ("Sì, tutti Counter" — Tishana's Tidebinder, Emerald
+                // Dragon, Brown Ouphe, Rust, Interdict, with Adric and Ayesha
+                // Tanaka's "unless that ability's controller pays" among them);
+                // "counter ALL other spells" is the mass one (Reverse the
+                // Polarity); and "return TARGET spell to its owner's hand" takes
+                // it off the stack as surely — 6 of 6 reviewed (Reprieve,
+                // Spellscorn Coven, Obscura Interceptor, and beside the Bounce of
+                // their permanent half Press the Enemy, Sink into Stupor, Jeskai
+                // Revelation). Krark's "return THAT spell" is a coin flip on its
+                // own and stays out. The same sitting reads the other ways a
+                // spell leaves the stack, every one tagged by hand: a spell CHOSEN
+                // first and countered later in the text (Aether Spike, Swallowed
+                // by Leviathan, Invert Polarity), EXILED (Smirking Spelljacker,
+                // Ertai's Meddling), put into its owner's LIBRARY (Sudden
+                // Setback), AIRBENT (Aang, Swift Savior); and the counter of
+                // "artifact, creature, or planeswalker spell" across its commas
+                // (Strix Serenade) and of "up to one" (Repulsive Mutation).
+                //
+                // Not a counter: one of YOUR OWN spells (Goblin Artisans), and
+                // one that targets THIS creature, which the card protects itself
+                // with (Mistfolk) — both untagged. A counterspell printed in a
+                // created TOKEN's quotes is the token's (Mage's Attendant's
+                // Wizard), as its damage is (DamageFromSomethingItMade).
+                (CardEffect.Counter, [
+                    Rx(@"(?<!\btokens? with ""[^""]{0,120})counter (?:up to one )?target [\w ,]{0,60}?spell(?! you control| that targets this\b)"),
+                    Rx(@"counter (?:up to one )?target (?:activated|triggered)\b"),
+                    Rx(@"counter all (?:other )?spells\b"),
+                    Rx(@"return (?:up to one )?target spells?\b[^.\n]{0,60}?to its owner's hand"),
+                    Rx(@"\bchoose target spell\b[\s\S]{0,250}?\bcounter (?:that|the chosen) spell\b"),
+                    Rx(@"\bexile (?:up to one )?target spells?\b|\btarget spell's controller exiles it\b"),
+                    Rx(@"\bowner of target spell\b[^.\n]{0,60}\bputs it\b"
+                        + @"|\bchoose target spell\b[^.\n]{0,60}\.\s*its owner puts it\b"),
+                    Rx(@"(?<!\bto )\bairbend [^.\n]{0,40}\bspells?\b")]),
 
                 // The other way to answer something on the stack. "copy target" is
                 // required rather than the bare word "copy": a token that enters "as a
@@ -331,8 +365,12 @@ namespace ScatoloneDownloader.Cube
                 // The filler before "target" is what admits "return UP TO ONE OTHER
                 // target nonland permanent"; the possessive alternation is what
                 // admits the plural "to their owners' hands".
+                //
+                // A SPELL returned and nothing else is Counter instead (Reprieve,
+                // Spellscorn Coven, 2026-10-13); "target spell OR nonland
+                // permanent" keeps this for its permanent.
                 (CardEffect.Bounce, [
-                    Rx(@"return (?:[\w' ]{0,30})?target[\w ,']*to (?:its|their) owner(?:'s|s'|s)? hands?"),
+                    Rx(@"return (?:[\w' ]{0,30})?target(?! spells?(?: you don't control)? to )[\w ,']*to (?:its|their) owner(?:'s|s'|s)? hands?"),
                     // …but not LANDS alone: returning every Island is a mana base
                     // set back, which the human tags LandDestruction and Wipe and not
                     // this (Omen of Fire, 2026-09-28).
