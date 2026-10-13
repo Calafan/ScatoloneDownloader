@@ -182,10 +182,10 @@ namespace ScatoloneDownloader.Cube
                 // Entering tapped is deliberately NOT asked here, though it is
                 // asked of the sacrifice-for-mana rule below. Tried on
                 // 2026-09-18 to catch Teferi's Isle and reverted: it took the
-                // five Karoo lands with it, and those give a land back, so they
-                // tap for two net every turn after the first. One card gained,
-                // five lost. Teferi's Isle is caught since 2026-09-29 by its
-                // PHASING instead — see LandThatDoesNotGainEveryTurn.
+                // five Karoo lands with it, then still Ramp. Teferi's Isle is
+                // caught since 2026-09-29 by its PHASING instead, and the
+                // Karoos since 2026-10-13 by the land they hand back — see
+                // LandThatDoesNotGainEveryTurn.
                 if (LandTapsForMoreThanOne.IsMatch(text) && !LandThatDoesNotGainEveryTurn.IsMatch(text))
                 {
                     result |= CardEffect.Ramp;
@@ -868,8 +868,10 @@ namespace ScatoloneDownloader.Cube
             }
 
             // A land that fetches a land fixes, and so does one of a chosen
-            // colour. See LandFetchesALand and LandOfAChosenColour.
-            if (card.MacroType == MacroType.Land && (LandFetchesALand.IsMatch(text) || LandOfAChosenColour.IsMatch(text)))
+            // colour, and one tapping for two colours at once. See
+            // LandFetchesALand, LandOfAChosenColour and LandTapsForTwoColours.
+            if (card.MacroType == MacroType.Land
+                && (LandFetchesALand.IsMatch(text) || LandOfAChosenColour.IsMatch(text) || LandTapsForTwoColours.IsMatch(text)))
             {
                 result |= CardEffect.ManaFixing;
             }

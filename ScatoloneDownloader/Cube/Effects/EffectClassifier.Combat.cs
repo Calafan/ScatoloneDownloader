@@ -13,8 +13,8 @@ namespace ScatoloneDownloader.Cube
     {
         // The one land shape that IS Ramp, ruled 2026-09-15. A land tapping for
         // its own single mana is just a land, but Ancient Tomb and Mishra's
-        // Workshop produce more than they cost EVERY turn, and so do the Karoo
-        // lands once they have given a land back. The "{T}, Sacrifice this land:
+        // Workshop produce more than they cost EVERY turn. (The Karoo lands were
+        // read here until 2026-10-13 — see LandThatDoesNotGainEveryTurn.) The "{T}, Sacrifice this land:
         // Add {R}{R}" family is deliberately NOT caught — it spends itself for
         // the extra mana once, which is why Dwarven Ruins and Ebon Stronghold
         // are hand-tagged as nothing while Crystal Vein is not.
@@ -43,11 +43,24 @@ namespace ScatoloneDownloader.Cube
         // Balduvian Trading Post and Soldevi Excavations, 0 of 2 tagged — where
         // Scorched Ruins sacrifices two for four and is Ramp), nor one that
         // PHASES out every other turn (Teferi's Isle, untagged): neither makes
-        // more than it costs EVERY turn. Measured 2026-09-29. Arid Archway, a
-        // Desert that bounces a land like the five Karoos tagged Ramp, was
-        // left as Filter alone on 09-23 and stays the one exception.
+        // more than it costs EVERY turn. Measured 2026-09-29. Nor, ruled
+        // 2026-09-30 ("togliamo Ramp ai Karoo"), a KAROO — a land that hands a
+        // land back as it enters: Karoo, Coral Atoll, Dormant Volcano,
+        // Everglades and Jungle Basin, Ramp by hand on 09-08, are no longer,
+        // and Arid Archway, left untagged on 09-23, stops being the exception.
         private static readonly Regex LandThatDoesNotGainEveryTurn = Rx(
-            @"sacrifice an untapped [\w ]{1,20} instead|^phasing\b", RegexOptions.Multiline);
+            @"sacrifice an untapped [\w ]{1,20} instead|^phasing\b"
+            + @"|enters, (?:sacrifice it unless you )?return (?:a land|an untapped \w+) you control to its owner's hand",
+            RegexOptions.Multiline);
+
+        // A LAND whose one tap adds TWO DIFFERENT colours at once fixes, as a
+        // dual does: the ten Ravnica Karoos (Azorius Chancery, Dimir Aqueduct …),
+        // ruled ManaFixing 2026-10-13 once their Ramp went. Guildless Commons
+        // ({C}{C}) and the older Karoos ({C}{U}) carry one colour and are just
+        // lands. Only the bare tap is asked, so the Invasion lands that
+        // sacrifice themselves for two colours once are not reached.
+        private static readonly Regex LandTapsForTwoColours = Rx(
+            @"^\{t\}: add \{([wubrg])\}\{(?!\1)[wubrg]\}\.", RegexOptions.Multiline);
 
         private static readonly Regex SacrificesForMana = Rx(
             @"^[^\n:]{0,50}sacrifice[^\n:]{0,40}: add ", RegexOptions.Multiline);

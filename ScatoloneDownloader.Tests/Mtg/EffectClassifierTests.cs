@@ -969,8 +969,8 @@ public sealed class EffectClassifierTests
     // 2026-09-15 off Ancient Tomb.
     [InlineData("Ancient Tomb", "Land", "{T}: Add {C}{C}. This land deals 2 damage to you.")]
     [InlineData("Mishra's Workshop", "Land", "{T}: Add {C}{C}{C}. Spend this mana only to cast artifact spells.")]
-    [InlineData("Karoo", "Land",
-        "This land enters tapped.\nWhen this land enters, sacrifice it unless you return an untapped Plains you control to its owner's hand.\n{T}: Add {W}{W}.")]
+    // (Karoo was pinned here, with invented text, until the Karoos lost Ramp on
+    // 2026-10-13 — see Classify_ALandOfOneColour_IsJustALand.)
     // Three more shapes read 2026-09-29: two mana behind an ability word
     // (Muraganda Raceway), a station land paying one for one per creature
     // (Evendo), and a paid amount counted by the board (Three Tree City).
@@ -1009,6 +1009,29 @@ public sealed class EffectClassifierTests
     public void Classify_OrdinaryLands_AreNotRamp(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // A KAROO, a land that hands a land back as it enters, is not Ramp: ruled
+    // 2026-09-30 ("togliamo Ramp ai Karoo"), Karoo and Coral Atoll named. One
+    // colour, or none, is no fixing either (Guildless Commons); the two-colour
+    // Ravnica ones are ManaFixing — see Classify_ALandThatFetchesALand_IsManaFixing.
+    [InlineData("Karoo", "Land",
+        "This land enters tapped.\nWhen this land enters, sacrifice it unless you return an untapped Plains "
+        + "you control to its owner's hand.\n{T}: Add {C}{W}.")]
+    [InlineData("Coral Atoll", "Land",
+        "This land enters tapped.\nWhen this land enters, sacrifice it unless you return an untapped Island "
+        + "you control to its owner's hand.\n{T}: Add {C}{U}.")]
+    [InlineData("Guildless Commons", "Land",
+        "This land enters tapped.\nWhen this land enters, return a land you control to its owner's hand.\n{T}: "
+        + "Add {C}{C}.")]
+    // Two mana of ONE colour is not two colours (Teferi's Isle, untagged).
+    [InlineData("Teferi's Isle", "Legendary Land",
+        "Phasing (This phases in or out before you untap during each of your untap steps. While it's phased "
+        + "out, it's treated as though it doesn't exist.)\nTeferi's Isle enters tapped.\n{T}: Add {U}{U}.")]
+    public void Classify_ALandOfOneColour_IsJustALand(string name, string typeLine, string oracle)
+    {
+        Assert.Equal(CardEffect.None, EffectClassifier.Classify(MakeCard(name, typeLine, oracle)));
     }
 
     [Theory]
@@ -4004,6 +4027,11 @@ public sealed class EffectClassifierTests
     [InlineData("Multiversal Passage", "Land",
         "As this land enters, choose a basic land type. Then you may pay 2 life. If you don't, it enters "
         + "tapped.\nThis land is the chosen type.")]
+    // …and so does a land tapping for two colours at once: the Ravnica Karoos,
+    // ruled 2026-10-13 once the Karoos lost Ramp.
+    [InlineData("Azorius Chancery", "Land",
+        "This land enters tapped.\nWhen this land enters, return a land you control to its owner's hand.\n{T}: "
+        + "Add {W}{U}.")]
     public void Classify_ALandThatFetchesALand_IsManaFixing(string name, string typeLine, string oracle)
     {
         CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
