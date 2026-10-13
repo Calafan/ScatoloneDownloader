@@ -4693,6 +4693,46 @@ public sealed class EffectClassifierTests
         + "Search your library for a green creature card, put it onto the battlefield, then shuffle.")]
     [InlineData("Omniscience", "Enchantment",
         "You may cast spells from your hand without paying their mana costs.")]
+    // Read and ruled 2026-10-13. Out of hand: "any number of", and a cap after
+    // the noun that is not "lesser".
+    [InlineData("Ghalta, Stampede Tyrant", "Legendary Creature — Elder Dinosaur",
+        "Trample\nWhen Ghalta enters, put any number of creature cards from your hand onto the battlefield.")]
+    [InlineData("Paladin Elizabeth Taggerdy", "Legendary Creature — Human Knight",
+        "Battalion — Whenever Paladin Elizabeth Taggerdy and at least two other creatures attack, draw a "
+        + "card, then you may put a creature card with mana value X or less from your hand onto the battlefield "
+        + "tapped and attacking, where X is Paladin Elizabeth Taggerdy's power.")]
+    // Out of the library, uncapped: from among the cards looked at, a reveal,
+    // a search for any number.
+    [InlineData("Arthur, Marigold Knight", "Legendary Creature — Mouse Knight",
+        "Haste\nWhenever Arthur and at least one other creature attack, look at the top six cards of your "
+        + "library. You may put a creature card from among them onto the battlefield tapped and attacking. Put "
+        + "the rest on the bottom of your library in a random order. Return that creature to its owner's hand "
+        + "at end of combat.")]
+    [InlineData("Doors of Durin", "Legendary Artifact",
+        "Whenever you attack, scry 2, then you may reveal the top card of your library. If a creature card is "
+        + "revealed this way, put it onto the battlefield tapped and attacking. Until your next turn, it gains "
+        + "trample if you control a Dwarf and hexproof if you control an Elf.")]
+    [InlineData("Bilbo, Birthday Celebrant", "Legendary Creature — Halfling Rogue",
+        "If you would gain life, you gain that much life plus 1 instead.\n{2}{W}{B}{G}, {T}, Exile Bilbo: "
+        + "Search your library for any number of creature cards, put them onto the battlefield, then shuffle. "
+        + "Activate only if you have 111 or more life.")]
+    // Uncapped free casts: a pile, a spell from hand, another spell's cost
+    // paid otherwise; and suspend granted to a card from the library.
+    [InlineData("Dance with Calamity", "Sorcery",
+        "Shuffle your library. As many times as you choose, you may exile the top card of your library. If "
+        + "the total mana value of the cards exiled this way is 13 or less, you may cast any number of spells "
+        + "from among those cards without paying their mana costs.")]
+    [InlineData("Great Intelligence's Plan", "Sorcery",
+        "Draw three cards. Then target opponent faces a villainous choice — They discard three cards, or you "
+        + "may cast a spell from your hand without paying its mana cost.")]
+    [InlineData("Dream Halls", "Enchantment",
+        "Rather than pay the mana cost for a spell, its controller may discard a card that shares a color "
+        + "with that spell.")]
+    [InlineData("Sibylline Soothsayer", "Creature — Human Warlock",
+        "Temporal Foresight — When this creature enters, reveal cards from the top of your library until you "
+        + "reveal a nonland card with mana value 3 or greater. Exile that card with three time counters on it. "
+        + "If it doesn't have suspend, it gains suspend. Put the rest of the revealed cards on the bottom of "
+        + "your library in a random order.")]
     public void Classify_APermanentThatArrivesWithoutBeingCast_IsCheat(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
@@ -4713,6 +4753,47 @@ public sealed class EffectClassifierTests
     [InlineData("Ugin, Eye of the Storms", "Legendary Planeswalker — Ugin",
         "−11: Search your library for any number of colorless nonland cards, exile them, then shuffle. "
         + "Until end of turn, you may cast those cards without paying their mana costs.")]
+    // Ruled 2026-10-13: a LESSER cap (Shadowfax), an opponent putting from
+    // their own hand (Wumpus Aberration), a mana-value cap on the card taken
+    // from the library (Emergent Woodwurm: Filter), a graveyard reveal
+    // (Deadbridge Chant: Reanimate), a pile the card filled itself (Forger's
+    // Foundry), copies (Arcane Bombardment), a card suspending itself (Rory
+    // Williams), and cascade under a mana-value cap (Breaching Dragonstorm).
+    [InlineData("Shadowfax, Lord of Horses", "Legendary Creature — Horse",
+        "Horses you control have haste. (They can attack and {T} as soon as they come under your "
+        + "control.)\nWhenever Shadowfax attacks, you may put a creature card with lesser power from your hand "
+        + "onto the battlefield tapped and attacking.")]
+    [InlineData("Wumpus Aberration", "Creature — Eldrazi Beast",
+        "Devoid (This card has no color.)\nWhen you cast this spell, if {C} wasn't spent to cast it, target "
+        + "opponent may put a creature card from their hand onto the battlefield.\nTrample")]
+    [InlineData("Emergent Woodwurm", "Creature — Wurm",
+        "Backup 3 (When this creature enters, put three +1/+1 counters on target creature. If that's another "
+        + "creature, it gains the following ability until end of turn.)\nWhenever this creature attacks, look at "
+        + "the top X cards of your library, where X is its power. You may put a permanent card with mana value "
+        + "X or less from among them onto the battlefield. Put the rest on the bottom of your library in a "
+        + "random order.")]
+    [InlineData("Deadbridge Chant", "Enchantment",
+        "When this enchantment enters, mill ten cards.\nAt the beginning of your upkeep, choose a card at "
+        + "random in your graveyard. If it's a creature card, put it onto the battlefield. Otherwise, put it "
+        + "into your hand.")]
+    [InlineData("Forger's Foundry", "Artifact",
+        "{T}: Add {U}. When you spend this mana to cast an instant or sorcery spell with mana value 3 or "
+        + "less, you may exile that spell instead of putting it into its owner's graveyard as it "
+        + "resolves.\n{3}{U}{U}, {T}: You may cast any number of spells from among cards exiled with this "
+        + "artifact without paying their mana costs. Activate only as a sorcery.")]
+    [InlineData("Arcane Bombardment", "Enchantment",
+        "Whenever you cast your first instant or sorcery spell each turn, exile an instant or sorcery card at "
+        + "random from your graveyard. Then copy each card exiled with this enchantment. You may cast any "
+        + "number of the copies without paying their mana costs.")]
+    [InlineData("Rory Williams", "Legendary Creature — Human Soldier",
+        "Partner with Amy Pond\nFirst strike, lifelink\nThe Last Centurion — When you cast this spell from "
+        + "anywhere other than exile, exile it with three time counters on it. It gains suspend. Then "
+        + "investigate. (Create a Clue token. It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")")]
+    [InlineData("Breaching Dragonstorm", "Enchantment",
+        "When this enchantment enters, exile cards from the top of your library until you exile a nonland "
+        + "card. You may cast it without paying its mana cost if that spell's mana value is 8 or less. If you "
+        + "don't, put that card into your hand.\nWhen a Dragon you control enters, return this enchantment to "
+        + "its owner's hand.")]
     public void Classify_TheOtherWaysAPermanentArrives_AreNotCheat(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
