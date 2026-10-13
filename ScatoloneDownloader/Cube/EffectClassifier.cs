@@ -382,6 +382,13 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Pacify;
             }
 
+            // Nor a tap fired at sorcery speed. See TapOnAnEnchantmentEntering.
+            if (result.HasFlag(CardEffect.Pacify) && TapOnAnEnchantmentEntering.IsMatch(text)
+                && !PacifyPatterns.Any(p => p.IsMatch(TapOnAnEnchantmentEntering.Replace(text, " "))))
+            {
+                result &= ~CardEffect.Pacify;
+            }
+
             // The same question one more time, for the two shapes that name a
             // victim and still point the wrong way. See the patterns above.
             if (result.HasFlag(CardEffect.Pacify) && OnlyRestrainsYourOwn(text))

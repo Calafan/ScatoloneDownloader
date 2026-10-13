@@ -126,15 +126,15 @@
 
             [CardEffect.ManaFixing] =
                 "Fixes colours: a choice paid in MANA, any landcycling, a land with two abilities, a land fetched "
-                + "to HAND or kept from a few milled, a Treasure. Free for a tap, a life or a sacrifice is just Ramp "
-                + "(Birds), unless it's a land. Not a land put onto the battlefield, not mana you may only spend on "
-                + "one thing.",
+                + "to HAND or kept from a few milled, a Treasure. Free for a tap, a life, a sacrifice or a trigger "
+                + "is just Ramp (Birds), unless it's a land. Not a land put onto the battlefield, not restricted "
+                + "mana unless a land makes it.",
 
             [CardEffect.Pacify] =
-                "Neutralises somebody else's creature without killing it: tapped, stunned, phased out, locked from "
-                + "untapping, can't attack or block, shrunk to base power 0, or the damage it DEALS prevented. "
-                + "HOW LONG does not matter. Not a LAND that won't untap, not an artifact tap, not a tap on your own "
-                + "attack, not a price the card pays itself.",
+                "Neutralises somebody else's creature without killing it: tapped, stunned, phased out, kept from "
+                + "untapping, can't attack or block, base power 0 or a -N/-0 that lasts, or the damage it DEALS "
+                + "prevented. A tap need not last. Not a LAND that won't untap, not an artifact tap, not a tap on "
+                + "your own attack, not a price the card pays.",
 
             [CardEffect.LandDestruction] =
                 "Takes a land off the battlefield, however worded: in a type list, behind a count, beside a "

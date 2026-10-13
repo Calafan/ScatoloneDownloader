@@ -6102,6 +6102,53 @@ public sealed class EffectClassifierTests
         + "creature enters, if it was bargained, create a Cursed Role token attached to target creature an "
         + "opponent controls. (If you control another Role on it, put that one into the graveyard. Enchanted "
         + "creature is 1/1.)")]
+    // …without naming the controller, and on each of theirs (2026-10-13).
+    [InlineData("Asinine Antics", "Sorcery",
+        "You may cast this spell as though it had flash if you pay {2} more to cast it.\nFor each creature "
+        + "your opponents control, create a Cursed Role token attached to that creature. (If you control "
+        + "another Role on it, put that one into the graveyard. Enchanted creature is 1/1.)")]
+    [InlineData("Gadwick's First Duel", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Create "
+        + "a Cursed Role token attached to up to one target creature. (If you control another Role on it, put "
+        + "that one into the graveyard. Enchanted creature is 1/1.)\nII — Scry 2.\nIII — When you next cast an "
+        + "instant or sorcery spell with mana value 3 or less this turn, copy that spell. You may choose new "
+        + "targets for the copy.")]
+    // A power shrink that LASTS, ruled 2026-10-13 ("Pacify solo se dura"): an
+    // Aura, or an activated one you can aim every turn.
+    [InlineData("Morgul-Knife Wound", "Enchantment — Aura",
+        "Enchant creature\nEnchanted creature gets -3/-0 and has \"At the beginning of your upkeep, exile this "
+        + "creature unless you pay 2 life.\"")]
+    [InlineData("Pradesh Gypsies", "Creature — Human Nomad",
+        "{1}{G}, {T}: Target creature gets -2/-0 until end of turn.")]
+    // Four more shapes read the same day, one reviewed card each.
+    [InlineData("Hunted by The Family", "Sorcery",
+        "Choose up to four target creatures you don't control. For each of them, that creature's controller "
+        + "faces a villainous choice — That creature becomes a 1/1 white Human creature and loses all "
+        + "abilities, or you create a token that's a copy of it.")]
+    [InlineData("The Eternal Wanderer", "Legendary Planeswalker",
+        "No more than one creature can attack The Eternal Wanderer each combat.\n+1: Exile up to one target "
+        + "artifact or creature. Return that card to the battlefield under its owner's control at the beginning "
+        + "of that player's next end step.\n0: Create a 2/2 white Samurai creature token with double strike.\n−4: "
+        + "For each player, choose a creature that player controls. Each player sacrifices all creatures they "
+        + "control not chosen this way.")]
+    [InlineData("Bewitching Leechcraft", "Enchantment — Aura",
+        "Enchant creature\nWhen this Aura enters, tap enchanted creature.\nEnchanted creature has \"If this "
+        + "creature would untap during your untap step, remove a +1/+1 counter from it instead. If you do, "
+        + "untap it.\" (Otherwise, it doesn't untap.)")]
+    [InlineData("The Pandorica", "Legendary Artifact",
+        "You may choose not to untap The Pandorica during your untap step.\n{1}{W}, {T}: Untap another target "
+        + "nonland permanent, then it phases out. It can't phase in for as long as The Pandorica remains "
+        + "tapped. When The Pandorica becomes untapped or leaves the battlefield, that permanent phases in. "
+        + "Activate only as a sorcery.")]
+    // A stun counter "on it" when the card named the victim first.
+    [InlineData("Trap the Trespassers", "Instant",
+        "Secret council — Each player secretly votes for a creature you don't control, then those votes are "
+        + "revealed. For each creature with one or more votes, put that many stun counters on it, then tap it. "
+        + "(If a permanent with a stun counter would become untapped, remove one from it instead.)")]
+    [InlineData("Shackle Slinger", "Creature — Human Soldier",
+        "Whenever you cast your second spell each turn, choose target creature an opponent controls. If it's "
+        + "tapped, put a stun counter on it. Otherwise, tap it. (If a permanent with a stun counter would "
+        + "become untapped, remove one from it instead.)")]
     public void Classify_TheWaysACreatureIsNeutralised_ArePacify(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
@@ -6143,6 +6190,34 @@ public sealed class EffectClassifierTests
         "As this creature enters, it becomes your choice of a 3/3 artifact creature, a 2/2 artifact "
         + "creature with flying, or a 1/6 Wall artifact creature with defender in addition to its other "
         + "types. (A creature with defender can't attack.)")]
+    // A shrink that does NOT last, ruled 2026-10-13: one-shot until end of
+    // turn (Desperate Parry named), an activation that sacrifices the card
+    // (Cabal Trainee), a repeating trigger (Fear of Falling, 0 of 6 tagged),
+    // and an Aura on a creature that becomes yours (Duskmourn's Domination).
+    [InlineData("Obyra's Attendants // Desperate Parry", "Creature — Faerie Wizard // Instant — Adventure",
+        "Flying\nTarget creature gets -4/-0 until end of turn. (Then exile this card. You may cast the "
+        + "creature later from exile.)")]
+    [InlineData("Cabal Trainee", "Creature — Human Minion",
+        "Sacrifice this creature: Target creature gets -2/-0 until end of turn.")]
+    [InlineData("Fear of Falling", "Enchantment Creature — Nightmare",
+        "Flying\nWhenever this creature attacks, target creature defending player controls gets -2/-0 and "
+        + "loses flying until your next turn.")]
+    [InlineData("Duskmourn's Domination", "Enchantment — Aura",
+        "Enchant creature\nYou control enchanted creature.\nEnchanted creature gets -3/-0 and loses all "
+        + "abilities.")]
+    // A tap fired at sorcery speed (ruled 2026-10-13, "gli incantesimi si
+    // giocano come sorcery"), a creature you just reanimated, and an attack
+    // trigger written "up to one target".
+    [InlineData("Rimefur Reindeer", "Creature — Elk",
+        "Whenever an enchantment you control enters, tap target creature an opponent controls.")]
+    [InlineData("Extraction Specialist", "Creature — Human Rogue",
+        "Lifelink\nWhen this creature enters, return target creature card with mana value 2 or less from your "
+        + "graveyard to the battlefield. That creature can't attack or block for as long as you control this "
+        + "creature.")]
+    [InlineData("Baseball Bat", "Artifact — Equipment",
+        "When this Equipment enters, attach it to target creature you control.\nEquipped creature gets "
+        + "+1/+1.\nWhenever equipped creature attacks, tap up to one target creature.\nEquip {3} ({3}: Attach to "
+        + "target creature you control. Equip only as a sorcery.)")]
     public void Classify_WhatOnlyLooksLikeALock_IsNotPacify(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));

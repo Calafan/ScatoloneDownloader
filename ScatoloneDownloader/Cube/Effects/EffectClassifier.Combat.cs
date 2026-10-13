@@ -830,18 +830,56 @@ namespace ScatoloneDownloader.Cube
         // reviewed set that taxes the swing itself.
         //
         // A bare "-5/-0" is NOT here and was measured and rejected at 2 tagged
-        // out of 12 — Cryoshatter is the one card this costs.
+        // out of 12 — Cryoshatter is the one card this costs. It came back
+        // SPLIT on 2026-10-13, ruled "Pacify solo se dura": a shrink that LASTS
+        // — an Aura (Cryoshatter, Morgul-Knife Wound, Disturbing Conversion,
+        // 4 of 4 reviewed) or an ACTIVATED one you can aim every turn (Jace,
+        // the Perfected Mind's +1, Pradesh Gypsies; not one that sacrifices
+        // itself, Cabal Trainee, which is once) — while a one-shot until
+        // end of turn is not (Desperate Parry, Deceive the Messenger, Sea Hag
+        // untagged; Shrink, Unagi's Spray never were), and nor is one on a
+        // repeating TRIGGER (0 of 6: Fear of Falling, Spring Splasher). An
+        // Aura on a creature that becomes YOURS shrinks your own (Animate
+        // Dead, Duskmourn's Domination).
         private static readonly Regex NeutralisesWithoutKilling = Rx(
             @"base power (?:and toughness )?0"
             + @"|is an? [\w ]{0,25}with base power and toughness [0-2]/"
             + @"|attacking creatures get -"
-            + @"|gets? -[\dX]+/-0 and loses all abilities"
+            + @"|(?<!(?:under your control|you control enchanted creature)[\s\S]*)"
+            + @"(?:gets? -[\dX]+/-0 and loses all abilities|^enchanted creature gets -[\dX]+/-0)"
+            + @"|^(?![^\n:]*sacrifice this)[^\n:]{0,40}: [^\n]{0,40}target creature(?! you control)[^\n]{0,40}gets? -[\dX]+/-0"
             + @"|loses all abilities and (?:doesn'?t untap|can'?t attack)"
             // A CURSED ROLE ("Enchanted creature is 1/1") put on an opponent's
             // creature is the same small body in token form: Diminisher Witch,
             // tagged by the human on 2026-09-29. On your own creature it is a
             // drawback (Cursed Courtier, untagged the same day), hence the owner.
-            + @"|cursed role token attached to (?:up to one )?target creature (?:an opponent controls|you don't control)");
+            // Read 2026-10-13 without naming one (Gadwick's First Duel, "up to
+            // one target creature") and on each of theirs (Asinine Antics,
+            // "attached to that creature"): 3 of 3 reviewed.
+            + @"|cursed role token attached to (?:that creature|(?:up to one )?target creature(?! you control))"
+            // Three more read the same day, one reviewed card each, tagged and
+            // never proposed: a creature that BECOMES a 1/1 and loses all
+            // abilities (Hunted by The Family); one exiled until ITS
+            // CONTROLLER's next end step, a whole turn of theirs (The Eternal
+            // Wanderer's +1 — "the next end step" is a flicker, and Protection);
+            // an Aura's untap that costs a counter (Bewitching Leechcraft); and
+            // a permanent phased out for as long as the card stays tapped (The
+            // Pandorica), the phasing twin of Amber Prison and Ice Floe — kept
+            // out of PhasesSomethingOut, which Protection reads too.
+            + @"|becomes an? [0-2]/[0-2] [^.\n]{0,40}creature[^.\n]{0,20}and loses all abilities"
+            + @"|return (?:that card|it) to the battlefield under its owner's control at the beginning of that player's next end step"
+            + @"|^enchanted creature has ""if this creature would untap during your untap step, remove"
+            + @"|target [\w ]{0,30}permanent, then it phases out\. it can'?t phase in for as long as [^.\n]{0,40}remains tapped",
+            RegexOptions.Multiline);
+
+        // A TAP fired by an enchantment of yours entering happens at sorcery
+        // speed, when it stops nobody: ruled 2026-10-13 on Rimefur Reindeer,
+        // untagged ("gli incantesimi si giocano come sorcery"). Kept to the
+        // enchantment — a creature's own ETB tap is Pacify 20 of 22 reviewed,
+        // and so are landfall and cast triggers (Grappling Kraken, Lossarnach
+        // Captain).
+        private static readonly Regex TapOnAnEnchantmentEntering = Rx(
+            @"^(?:[\w ]+ — )?whenever (?:an|another) enchantment you control enters, tap [^\n]*", RegexOptions.Multiline);
 
         // PREVENTING DAMAGE TO THE PLAYER ALONE is this tag and not Protection,
         // ruled 2026-09-22: "le prevenzioni al solo giocatore mettiamole come
@@ -952,6 +990,12 @@ namespace ScatoloneDownloader.Cube
             // bigger effect as a rider (Kitnap steals the creature it stuns,
             // Magmatic Hellkite stuns the land it just made an opponent fetch).
             Rx(@"stun counters? on (?!it\b|this )"),
+            // "On it" is the victim too when the card named one first, read
+            // 2026-10-13: Trap the Trespassers ("a creature you don't control …
+            // put that many stun counters on it"), Shackle Slinger ("target
+            // creature an opponent controls. If it's tapped, put a stun counter
+            // on it"), both tagged.
+            Rx(@"(?:target creature(?! you control)|creature you don'?t control)[^\n]{0,120}stun counters? on it\b"),
         ];
 
         // …and the drawback version, which is the same counter aimed inward:
@@ -973,7 +1017,7 @@ namespace ScatoloneDownloader.Cube
         // and tap it in the next sentence (Vengeful Villagers: "choose target
         // creature an opponent controls. Tap it").
         private static readonly Regex TapsOnItsOwnAttack = Rx(
-            @"(?:whenever|when)[^\n]{0,60}attacks?,[^\n]{0,40}tap target[\w ,'-]{0,40}creature"
+            @"(?:whenever|when)[^\n]{0,60}attacks?,[^\n]{0,40}tap (?:up to one )?target[\w ,'-]{0,40}creature"
             + @"|at the beginning of combat on your turn,[^\n]{0,90}tap target[\w ,'-]{0,40}creature"
             + @"|(?:whenever|when)[^\n]{0,60}attacks?, choose target[\w ,'-]{0,40}creature"
             + @"[^\n]{0,20}tap it\b");
@@ -995,8 +1039,12 @@ namespace ScatoloneDownloader.Cube
 
         // And "creatures you control can't attack" (Akron Legionnaire, Evil Eye of
         // Orms-by-Gore) is a drawback the card charges you, not a lock on them.
+        // So is the creature the card has just reanimated for you, read
+        // 2026-10-13 (Extraction Specialist: "That creature can't attack or
+        // block for as long as you control this creature", Reanimate alone).
         private static readonly Regex YourOwnCreaturesCantAttack = Rx(
-            @"creatures you control can'?t attack");
+            @"creatures you control can'?t attack"
+            + @"|from your graveyard to the battlefield\. that creature can'?t attack");
 
         private static readonly Regex[] PacifyPatterns = [AnyUntapLock, PreventsWhatACreatureDeals, .. PacifyOutward];
 
