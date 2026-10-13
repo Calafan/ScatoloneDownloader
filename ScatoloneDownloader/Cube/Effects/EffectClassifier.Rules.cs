@@ -1174,10 +1174,17 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex LooksAtTopAndCastsFree = Rx(
             @"look at the top [\w ]{1,20} of your library[^\n]{0,200}cast [^\n]{0,60}without paying its mana cost");
 
+        // A SORCERER ROLE's scry is the Role's, not the card's, ruled
+        // 2026-10-13: Unassuming Sage, Spellbook Vendor and Living Lectern
+        // untagged (overturning the 09-29 reading that a scry handed to
+        // something that repeats it keeps the tag, which named Unassuming Sage).
+        private static readonly Regex SorcererRoleScry = Rx(
+            @"sorcerer role token[^\n]*?""whenever this creature attacks, scry 1\.""");
+
         // Every shape above blanked, for the tag to be asked again.
         private static string WithoutFalseSelection(string text) =>
-            LooksAtTopAndCastsFree.Replace(LandFromAmongThemToHand.Replace(TheirDiscardYourDraw.Replace(
-                LooksAtTopForALand.Replace(LooksAtTopAndMakesBodies.Replace(text, " "), " "), " "), " "), " ");
+            SorcererRoleScry.Replace(LooksAtTopAndCastsFree.Replace(LandFromAmongThemToHand.Replace(TheirDiscardYourDraw.Replace(
+                LooksAtTopForALand.Replace(LooksAtTopAndMakesBodies.Replace(text, " "), " "), " "), " "), " "), " ");
 
         //   AND A LOOT THAT IS NOT YOURS. "Each opponent discards a card AND YOU
         //   DRAW a card" is two different players doing two different things,

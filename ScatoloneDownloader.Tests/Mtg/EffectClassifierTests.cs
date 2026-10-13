@@ -1495,11 +1495,9 @@ public sealed class EffectClassifierTests
     [InlineData("Treva's Charm", "Instant",
         "Choose one —\n• Destroy target enchantment.\n• Exile target attacking creature.\n• Draw a card, then "
         + "discard a card.")]
-    // A scry HANDED to something that repeats it keeps the tag even when the
-    // hand-over is once: the Sorcerer Role scries on every attack.
-    [InlineData("Unassuming Sage", "Creature — Human Peasant Wizard",
-        "When this creature enters, you may pay {2}. If you do, create a Sorcerer Role token attached to it. "
-        + "(Enchanted creature gets +1/+1 and has \"Whenever this creature attacks, scry 1.\")")]
+    // (Unassuming Sage was pinned here — a scry handed to something that
+    // repeats it — until the Sorcerer Role's scry stopped being Filter on
+    // 2026-10-13; see Classify_SelectionRuledOut_IsNotFilter.)
     // EXPLORE is selection, ruled 2026-09-29 ("explore = Filter"): Subterranean
     // Schooner, moved from CardAdvantage by the human, explores on every attack.
     [InlineData("Subterranean Schooner", "Artifact — Vehicle",
@@ -1600,6 +1598,14 @@ public sealed class EffectClassifierTests
         "{T}: Add one mana of any color.\n{3}, {T}: Look at the top X cards of your library, where X is the "
         + "number of Bobbleheads you control. You may cast a spell with mana value 3 or less from among them "
         + "without paying its mana cost. Put the rest on the bottom of your library in a random order.")]
+    // A SORCERER ROLE's scry is the Role's, ruled 2026-10-13.
+    [InlineData("Unassuming Sage", "Creature — Human Peasant Wizard",
+        "When this creature enters, you may pay {2}. If you do, create a Sorcerer Role token attached to it. "
+        + "(Enchanted creature gets +1/+1 and has \"Whenever this creature attacks, scry 1.\")")]
+    [InlineData("Spellbook Vendor", "Creature — Human Peasant",
+        "Vigilance\nAt the beginning of combat on your turn, you may pay {1}. When you do, create a Sorcerer "
+        + "Role token attached to target creature you control. (If you control another Role on it, put that one "
+        + "into the graveyard. Enchanted creature gets +1/+1 and has \"Whenever this creature attacks, scry 1.\")")]
     public void Classify_SelectionRuledOut_IsNotFilter(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
@@ -2075,6 +2081,11 @@ public sealed class EffectClassifierTests
         "Menace\nAt the beginning of your end step, create a 3/3 black Dalek artifact creature token with "
         + "menace if an opponent lost 3 or more life this turn. Then each opponent who lost 3 or more life this "
         + "turn faces a villainous choice — You draw a card, or that player discards a card.")]
+    // A DRAW MODE under a trigger that repeats, ruled 2026-10-13.
+    [InlineData("Glissa Sunslayer", "Legendary Creature — Phyrexian Zombie Elf",
+        "First strike, deathtouch\nWhenever Glissa Sunslayer deals combat damage to a player, choose one —\n• "
+        + "You draw a card and lose 1 life.\n• Destroy target enchantment.\n• Remove up to three counters from "
+        + "target permanent.")]
     public void Classify_ACardYouCanGoBackForEveryTurn_IsCardAdvantage(
         string name, string typeLine, string oracle)
     {
@@ -2116,6 +2127,38 @@ public sealed class EffectClassifierTests
     public void Classify_TheSameWordsRunOnce_IsNotCardAdvantage(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // A draw mode bought with a PERMANENT, or one each mode runs once a GAME,
+    // is not a card every turn (2026-10-13: Gorbag, Silent Hallcreeper).
+    [InlineData("Gorbag of Minas Morgul", "Legendary Creature — Orc Soldier",
+        "Whenever a Goblin or Orc you control deals combat damage to a player, you may sacrifice it. When you "
+        + "do, choose one —\n• Draw a card.\n• Create a Treasure token. (It's an artifact with \"{T}, Sacrifice "
+        + "this token: Add one mana of any color.\")")]
+    [InlineData("Silent Hallcreeper", "Enchantment Creature — Horror",
+        "This creature can't be blocked.\nWhenever this creature deals combat damage to a player, choose one "
+        + "that hasn't been chosen —\n• Put two +1/+1 counters on this creature.\n• Draw a card.\n• This creature "
+        + "becomes a copy of another target creature you control.")]
+    public void Classify_ADrawModeBoughtOrOnceAGame_IsNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Fact]
+    // A planeswalker's "draw, then discard unless" is both: a card when the
+    // condition holds, a loot when it does not (Kaito Shizuki, 2026-10-13).
+    public void Classify_APlaneswalkerLootUnless_IsCardAdvantageAndFilter()
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard("Kaito Shizuki", "Legendary Planeswalker — Kaito",
+            "At the beginning of your end step, if Kaito entered this turn, he phases out.\n+1: Draw a card. Then "
+            + "discard a card unless you attacked this turn.\n−2: Create a 1/1 blue Ninja creature token with \"This "
+            + "token can't be blocked.\"\n−7: You get an emblem with \"Whenever a creature you control deals combat "
+            + "damage to a player, search your library for a blue or black creature card, put it onto the "
+            + "battlefield, then shuffle.\""));
+
+        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.True(result.HasFlag(CardEffect.Filter));
     }
 
     [Theory]

@@ -698,10 +698,11 @@ namespace ScatoloneDownloader.Cube
                 || BecomesTheMonarch.IsMatch(text)
                 || SeveralTokensThatDraw.IsMatch(BloodReminder.Replace(text, " "))
                 || SacrificesAPileForCards.IsMatch(text)
-                || DrawModeEveryTurn.IsMatch(text)
+                || DrawModeEveryTurn.IsMatch(text) || DrawModeOnARepeatingTrigger.IsMatch(text)
                 || LooksAndKeepsTheRest.IsMatch(text)
                 || WarpPaysOnTheWayOutTwice.IsMatch(text)
                 || CopiesYourOwnSpell.IsMatch(text)
+                || PlaneswalkerDrawThenDiscardUnless.IsMatch(text)
                 || (ClueWording.IsMatch(text) && (RepeatableClue.IsMatch(text) || SeveralClues.IsMatch(text))))
             {
                 result |= CardEffect.CardAdvantage;
@@ -929,7 +930,8 @@ namespace ScatoloneDownloader.Cube
             // after every rule that adds the draw. Asked PER ABILITY since
             // 2026-09-29, see SelectsAndGainsOnDifferentAbilities.
             if (result.HasFlag(CardEffect.CardAdvantage) && result.HasFlag(CardEffect.Filter)
-                && !SelectsAndGainsOnDifferentAbilities(card, text))
+                && !SelectsAndGainsOnDifferentAbilities(card, text)
+                && !PlaneswalkerDrawThenDiscardUnless.IsMatch(text))
             {
                 result &= ~CardEffect.Filter;
             }

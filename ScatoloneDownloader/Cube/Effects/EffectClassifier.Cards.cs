@@ -848,6 +848,24 @@ namespace ScatoloneDownloader.Cube
         // also what keeps a SPELL whole, since its lines neither trigger nor
         // cost: a separate "never split a spell" was measured and moved only
         // Quicksilver Sea, a Plane whose two abilities are really two.
+        // An exception to that exclusivity, ruled 2026-10-13: a PLANESWALKER's
+        // "draw, then discard unless" is a card when the
+        // condition is met and a loot when it is not: Kaito Shizuki, Teferi
+        // Akosa of Zhalfir, Tezzeret, Betrayer of Flesh (3 of 3 both tags).
+        // A creature's or an enchantment's is still a loot (Katara, Seeking
+        // Revenge, Chakra Meditation).
+        private static readonly Regex PlaneswalkerDrawThenDiscardUnless = Rx(
+            @"^[+−-]?\d+: draw [^.\n]*\. then discard [^.\n]* unless", RegexOptions.Multiline);
+
+        // A selection written as its own verb inside the ability that gains
+        // (a scry, a surveil) was measured the same day as both tags, as asked
+        // of Rumor Gatherer and Sword of Once and Future: it reached 18
+        // reviewed cards, 2 right and 16 against the hand (Mirror of
+        // Galadriel's "Scry 1, then draw a card", Serum Sovereign, Saheeli,
+        // Sludge Titan — CardAdvantage alone) and went back as a question:
+        // ruled "solo CA", with Rumor Gatherer, Sword of Once and Future and
+        // Kellan, Daring Traveler keeping Filter as NAMED cards, no rule.
+
         private static bool SelectsAndGainsOnDifferentAbilities(Card card, string text)
         {
             List<string> abilities = [.. Abilities(text).Where(a => a.Trim().Length > 0)];
@@ -937,6 +955,19 @@ namespace ScatoloneDownloader.Cube
 
         private static readonly Regex DrawModeEveryTurn = Rx(
             @"hasn't been chosen this turn[\s\S]{0,200}^\W*draw (?:a|one|two) cards?", RegexOptions.Multiline);
+
+        // A DRAW MODE under any trigger that repeats is a card each time,
+        // ruled 2026-10-13: Glissa Sunslayer, Hylda of the Icy Crown, Black
+        // Market Connections (7 of 9 reviewed; Kastral, the Windcrested
+        // realigned and handed back). Not when the mode is bought with a
+        // permanent (Gorbag of Minas Morgul sacrifices the Orc), nor when each
+        // mode runs once a GAME — "hasn't been chosen" without "this turn"
+        // (Zuko, Conflicted, Silent Hallcreeper).
+        private static readonly Regex DrawModeOnARepeatingTrigger = Rx(
+            @"^(?:[\w ]+ — )?(?:whenever|at the beginning)(?![^\n]*sacrifice)(?![^\n]*hasn't been chosen(?! this turn))"
+            + @"[^\n]*choose one(?: or more)?[^\n]*—(?:\n•[^\n]*)*?\n•\s*(?:[\w ]+ — )?(?:you )?(?:scry \d+, then )?"
+            + @"draw (?:a|one|two) cards?",
+            RegexOptions.Multiline);
 
         private static readonly Regex LooksAndKeepsTheRest = Rx(
             @"look at the top \w+ cards? of your library[^\n]{0,200}put the rest into your hand");
