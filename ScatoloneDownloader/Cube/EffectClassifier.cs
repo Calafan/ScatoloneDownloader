@@ -384,6 +384,14 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Pacify;
             }
 
+            // Nor a Fog for you, cast once. See PreventsDamageToYouOnce.
+            if (result.HasFlag(CardEffect.Pacify) && card.MacroType == MacroType.Spell
+                && PreventsDamageToYouOnce.IsMatch(text)
+                && !PacifyPatterns.Any(p => p.IsMatch(PreventsDamageToYouOnce.Replace(text, " "))))
+            {
+                result &= ~CardEffect.Pacify;
+            }
+
             // Nor a tap fired at sorcery speed. See TapOnAnEnchantmentEntering.
             if (result.HasFlag(CardEffect.Pacify) && TapOnAnEnchantmentEntering.IsMatch(text)
                 && !PacifyPatterns.Any(p => p.IsMatch(TapOnAnEnchantmentEntering.Replace(text, " "))))

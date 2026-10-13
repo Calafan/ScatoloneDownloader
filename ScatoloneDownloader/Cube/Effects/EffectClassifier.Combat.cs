@@ -1015,6 +1015,19 @@ namespace ScatoloneDownloader.Cube
             @"enters tapped with [\w ]{0,12}stun counter"
             + @"|attacks, put [\w ]{0,10}stun counters? on it\b");
 
+        // A stun BOUGHT with a sacrifice on the card's own attack is the
+        // price of the trick, not a lock (Vengeful Villagers, ruled 2026-10-13).
+        private static readonly Regex StunBoughtOnItsOwnAttack = Rx(
+            @"attacks?,[^\n]{0,120}you may sacrifice [^.\n]{0,40}\. if you do, put a stun counter on [^.\n]*");
+
+        // PREVENTING DAMAGE TO YOU ONCE, from a SPELL, is a Fog and not this
+        // tag, ruled 2026-10-13 ("Ultimate Magic: Holy errore"): Eerie
+        // Interference, Take the Bait and Ultimate Magic: Holy untagged, Deep
+        // Wood realigned and handed back. The permanent that does it again
+        // and again stays (Al-abara's Carpet, Conservator, Scarecrow).
+        private static readonly Regex PreventsDamageToYouOnce = Rx(
+            @"[^.\n]*prevent (?:all|the next)[\w \d]{0,25}damage that would be dealt to you[^.\n]*");
+
         // Tapping a creature as an ATTACK TRIGGER is a combat trick, not a
         // lock: it pushes one blocker out of the way for the swing that is
         // already happening, and by the defender's next untap step it is gone.
@@ -1026,8 +1039,15 @@ namespace ScatoloneDownloader.Cube
         // from the other side (Kimahri), and a card may name the victim first
         // and tap it in the next sentence (Vengeful Villagers: "choose target
         // creature an opponent controls. Tap it").
+        //
+        // …unless the same tap also STUNS, ruled 2026-10-13: Mjölnir taps and
+        // puts a stun counter every time it attacks, which outlasts the swing
+        // (Pacify); Vengeful Villagers stuns only behind a sacrifice, which is
+        // the price the next pattern blanks (not Pacify) — "Mjölnir lo fa
+        // sempre, i Villagers solo dietro un costo".
         private static readonly Regex TapsOnItsOwnAttack = Rx(
             @"(?:whenever|when)[^\n]{0,60}attacks?,[^\n]{0,40}tap (?:up to one )?target[\w ,'-]{0,40}creature"
+            + @"(?![^.\n]{0,40}\band put a stun counter on it)"
             + @"|at the beginning of combat on your turn,[^\n]{0,90}tap target[\w ,'-]{0,40}creature"
             + @"|(?:whenever|when)[^\n]{0,60}attacks?, choose target[\w ,'-]{0,40}creature"
             + @"[^\n]{0,20}tap it\b");

@@ -6314,15 +6314,50 @@ public sealed class EffectClassifierTests
 
     [Fact]
     // …and a prevention aimed at the PLAYER ALONE is Pacify and NOT Protection.
+    // Pinned on Deep Wood, an instant, until 2026-10-13, when a Fog cast once
+    // stopped being Pacify; a permanent that does it again and again still is.
     public void Classify_PreventingDamageToYouAlone_IsPacifyAndNotProtection()
     {
         CardEffect effects = EffectClassifier.Classify(MakeCard(
-            "Deep Wood", "Instant",
-            "Cast this spell only during the declare attackers step and only if you've been attacked "
-            + "this step.\nPrevent all damage that would be dealt to you this turn by attacking creatures."));
+            "Conservator", "Artifact",
+            "{3}, {T}: Prevent the next 2 damage that would be dealt to you this turn."));
 
         Assert.True(effects.HasFlag(CardEffect.Pacify));
         Assert.False(effects.HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // A prevention to you cast ONCE is a Fog, ruled 2026-10-13 ("Ultimate
+    // Magic: Holy errore"); Holy keeps the Protection of its indestructible.
+    [InlineData("Eerie Interference", "Instant",
+        "Prevent all damage that would be dealt to you and creatures you control this turn by creatures.")]
+    [InlineData("Ultimate Magic: Holy", "Instant",
+        "Permanents you control gain indestructible until end of turn. If this spell was cast from exile, "
+        + "prevent all damage that would be dealt to you this turn.\nForetell {2}{W} (During your turn, you may "
+        + "pay {2} and exile this card from your hand face down. Cast it on a later turn for its foretell "
+        + "cost.)")]
+    // A stun bought with a sacrifice on its own attack is the trick's price.
+    [InlineData("Vengeful Villagers", "Creature — Human Citizen",
+        "Whenever this creature attacks, choose target creature an opponent controls. Tap it, then you may "
+        + "sacrifice an artifact or creature. If you do, put a stun counter on the chosen creature. (If a "
+        + "permanent with a stun counter would become untapped, remove one from it instead.)")]
+    public void Classify_AFogOrAStunBoughtOnTheAttack_IsNotPacify(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
+    }
+
+    [Fact]
+    // …while a tap on the attack that STUNS every time outlasts the swing:
+    // "Mjölnir lo fa sempre" (2026-10-13).
+    public void Classify_ATapAndStunOnEveryAttack_IsPacify()
+    {
+        CardEffect effects = EffectClassifier.Classify(MakeCard("Mjölnir, Storm Hammer", "Legendary Artifact — Equipment",
+            "When Mjölnir enters, attach it to target legendary creature you control.\nWhenever equipped creature "
+            + "attacks, tap target creature defending player controls and put a stun counter on it. Then Mjölnir "
+            + "deals damage to each opponent equal to the number of tapped creatures that opponent controls.\nEquip "
+            + "{4}"));
+
+        Assert.True(effects.HasFlag(CardEffect.Pacify));
     }
 
     private static Card MakeCard(string name, string typeLine, string oracleText, List<string>? keywords = null)

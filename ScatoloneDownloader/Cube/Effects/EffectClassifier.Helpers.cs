@@ -254,12 +254,14 @@ namespace ScatoloneDownloader.Cube
             string text = card.OracleText ?? string.Empty;
             bool ownPrice = CantAttackIsItsOwnPrice(card);
 
-            if (!ownPrice && !TapsOnItsOwnAttack.IsMatch(text) && !StunsItselfAsADrawback.IsMatch(text))
+            if (!ownPrice && !TapsOnItsOwnAttack.IsMatch(text) && !StunsItselfAsADrawback.IsMatch(text)
+                && !StunBoughtOnItsOwnAttack.IsMatch(text))
             {
                 return false;
             }
 
-            string rest = StunsItselfAsADrawback.Replace(TapsOnItsOwnAttack.Replace(text, " "), " ");
+            string rest = StunBoughtOnItsOwnAttack.Replace(
+                StunsItselfAsADrawback.Replace(TapsOnItsOwnAttack.Replace(text, " "), " "), " ");
             if (ownPrice)
             {
                 rest = CantAttackOrBlockUnless.Replace(rest, " ");
