@@ -499,7 +499,8 @@ namespace ScatoloneDownloader.Cube
         }
 
         /// <summary>True when EVERY line that fixes colour is a mana SOURCE — a
-        /// bare tap, or since 2026-09-29 any activation whose cost holds no mana
+        /// bare tap, since 2026-10-13 a trigger that charges no mana (Nissa,
+        /// Resurgent Animist), or since 2026-09-29 any activation whose cost holds no mana
         /// ("solo il mana converte": a life, energy, a sacrifice, the tap of
         /// other permanents, a mill leave it a source). Per line for the same
         /// reason as <see cref="AllManaIsRestricted"/>: one ability paid in
@@ -529,7 +530,8 @@ namespace ScatoloneDownloader.Cube
 
                 sawFixer = true;
                 bool source = BareTapAdds.IsMatch(line)
-                    || (ActivatedAdd.IsMatch(line) && !PaidManaAbility.IsMatch(line));
+                    || (ActivatedAdd.IsMatch(line) && !PaidManaAbility.IsMatch(line))
+                    || FreeTriggeredAdd.IsMatch(line);
                 if (!source || ManaGrantedToLands.IsMatch(line) || SpendsATokenBoughtWithMana(text, line))
                 {
                     return false;

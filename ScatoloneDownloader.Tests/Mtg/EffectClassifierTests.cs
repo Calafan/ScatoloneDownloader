@@ -656,6 +656,46 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // A LAND is exempt from that, ruled 2026-10-13: the restricted lands are
+    // ManaFixing by hand 8 of 8, the restricted non-lands 0 of 8. Great Hall of
+    // the Citadel also needed "two mana in any combination of colors" read,
+    // which Wizard's Rockets, paying {X} for it, shows on a non-land.
+    [InlineData("Great Hall of the Citadel", "Land",
+        "{T}: Add {C}.\n{1}, {T}: Add two mana in any combination of colors. Spend this mana only to cast "
+        + "legendary spells.")]
+    [InlineData("Ancient Ziggurat", "Land",
+        "{T}: Add one mana of any color. Spend this mana only to cast a creature spell.")]
+    [InlineData("Wizard's Rockets", "Artifact",
+        "This artifact enters tapped.\n{X}, {T}, Sacrifice this artifact: Add X mana in any combination of "
+        + "colors.\nWhen this artifact is put into a graveyard from the battlefield, draw a card.")]
+    public void Classify_ARestrictedLandOrAnyCombinationOfColours_IsManaFixing(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
+    }
+
+    [Theory]
+    // Mana a TRIGGER adds for nothing is a source, ruled 2026-10-13 ("free any
+    // colour = source"): Ramp alone, like a bare tap. Nissa named; Muerra
+    // untagged by hand.
+    [InlineData("Nissa, Resurgent Animist", "Legendary Creature — Elf Scout",
+        "Landfall — Whenever a land you control enters, add one mana of any color. Then if this is the second "
+        + "time this ability has resolved this turn, reveal cards from the top of your library until you reveal "
+        + "an Elf or Elemental card. Put that card into your hand and the rest on the bottom of your library in "
+        + "a random order.")]
+    [InlineData("Muerra, Trash Tactician", "Legendary Creature — Raccoon Warrior",
+        "At the beginning of your first main phase, add {R} or {G} for each Raccoon you control.\nWhenever you "
+        + "expend 4, you gain 3 life. (You expend 4 as you spend your fourth total mana to cast spells during a "
+        + "turn.)\nWhenever you expend 8, exile the top two cards of your library. Until the end of your next "
+        + "turn, you may play those cards.")]
+    public void Classify_FreeManaFromATrigger_IsRampNotManaFixing(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Ramp));
+        Assert.False(result.HasFlag(CardEffect.ManaFixing));
+    }
+
+    [Theory]
     // Two ways a card burns a face that the rules were not reading. Ruled
     // 2026-09-15; together they were 29 of Burn's 101 misses.
     [InlineData("Corroding Dragonstorm", "Enchantment",
@@ -984,9 +1024,55 @@ public sealed class EffectClassifierTests
     [InlineData("Three Tree City", "Legendary Land",
         "As Three Tree City enters, choose a creature type.\n{T}: Add {C}.\n{2}, {T}: Choose a color. Add an "
         + "amount of mana of that color equal to the number of creatures you control of the chosen type.")]
+    // "X mana of any one color" counted on a land, ruled 2026-10-13.
+    [InlineData("Baldur's Gate", "Legendary Land — Gate",
+        "{T}: Add {C}.\n{2}, {T}: Add X mana of any one color, where X is the number of other Gates you "
+        + "control.")]
     public void Classify_ALandThatMakesExtraManaEveryTurn_IsRamp(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // Lands out of a graveyard the card has just FILLED itself, ruled
+    // 2026-10-13 (3 of 3 reviewed: Blossoming Tortoise, Deeproot Wayfinder,
+    // Lumra). Insidious Roots, which makes the tokens it grants mana to, keeps
+    // its Ramp beside the veto below.
+    [InlineData("Blossoming Tortoise", "Creature — Turtle",
+        "Whenever this creature enters or attacks, mill three cards, then return a land card from your "
+        + "graveyard to the battlefield tapped.\nActivated abilities of lands you control cost {1} less to "
+        + "activate.\nLand creatures you control get +1/+1.")]
+    [InlineData("Lumra, Bellow of the Woods", "Legendary Creature — Elemental Bear",
+        "Reach, vigilance\nLumra's power and toughness are each equal to the number of lands you control.\nWhen "
+        + "Lumra enters, mill four cards. Then return all land cards from your graveyard to the battlefield "
+        + "tapped.")]
+    [InlineData("Insidious Roots", "Enchantment",
+        "Creature tokens you control have \"{T}: Add one mana of any color.\"\nWhenever one or more creature "
+        + "cards leave your graveyard, create a 0/1 green Plant creature token, then put a +1/+1 counter on "
+        + "each Plant you control.")]
+    public void Classify_LandsTheCardMilledOrTokensItMade_AreRamp(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // "Dipendono da condizioni esterne, la carta di suo non è in grado di
+    // generarle -> niente tag" (2026-10-13): a graveyard nobody filled
+    // (Undergrowth Recon), tokens the card does not make (Jaheira), an explore
+    // the card does not do (Nicanzil).
+    [InlineData("Undergrowth Recon", "Enchantment",
+        "At the beginning of your upkeep, return target land card from your graveyard to the battlefield "
+        + "tapped.")]
+    [InlineData("Jaheira, Friend of the Forest", "Legendary Creature — Human Elf Druid",
+        "Tokens you control have \"{T}: Add {G}.\"\nChoose a Background (You can have a Background as a second "
+        + "commander.)")]
+    [InlineData("Nicanzil, Current Conductor", "Legendary Creature — Merfolk Scout",
+        "Whenever a creature you control explores a land card, you may put a land card from your hand onto "
+        + "the battlefield tapped.\nWhenever a creature you control explores a nonland card, put a +1/+1 counter "
+        + "on Nicanzil.")]
+    public void Classify_ManaOnAConditionTheCardCannotMeet_IsNotRamp(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
     }
 
     [Theory]

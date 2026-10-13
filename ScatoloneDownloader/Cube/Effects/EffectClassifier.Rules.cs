@@ -946,6 +946,10 @@ namespace ScatoloneDownloader.Cube
                 (CardEffect.Tutor, TutorPatterns),
 
                 (CardEffect.ManaFixing, [Rx(@"add one mana of any color"), Rx(@"mana of any (one )?color"),
+                    // Read 2026-10-13: Great Hall of the Citadel and Wizard's
+                    // Rockets, both ManaFixing by hand; a free source that says
+                    // it is withdrawn by EveryFixerIsASource like any other.
+                    Rx(@"mana in any combination of colou?rs"),
                     Rx(@"add \{[wubrg]\} or \{[wubrg]\}"), Rx(@"add \{[wubrg]\}, \{[wubrg]\}"),
                     // Typecycling fetches the colour you are short of, which is the
                     // whole job. Added 2026-09-15; worth 11 on its own.

@@ -215,17 +215,30 @@ namespace ScatoloneDownloader.Cube
 
             // The eight families ruled 2026-09-18, all after the land strip for
             // the same reason. Each is documented on its own pattern above.
+            // A trigger or a grant the card cannot fire itself is asked
+            // without it (OnSomebodyElsesExplore, GrantedToTokens).
+            // The table's tap rule is asked again without the grant, as it is
+            // without a land face above.
+            string ownMana = MakesTokens.IsMatch(nonLandText) ? nonLandText : GrantedToTokens.Replace(nonLandText, " ");
+            if (ownMana != nonLandText && result.HasFlag(CardEffect.Ramp) && !TapAddsMana.IsMatch(ownMana))
+            {
+                result &= ~CardEffect.Ramp;
+            }
+
+            string ownLandDrops = OnSomebodyElsesExplore.Replace(text, " ");
+
             if (CostsLessToCast.IsMatch(CostsLessForItself.Replace(text, " "))
-                || (card.MacroType != MacroType.Land && ActivatedManaAbility.IsMatch(nonLandText))
+                || (card.MacroType != MacroType.Land && ActivatedManaAbility.IsMatch(ownMana))
                 || ExtraLandDrop.IsMatch(text)
                 || ManaMultiplier.IsMatch(text)
                 || (card.MacroType != MacroType.Spell
                     && Quoted.Replace(text, " ").Split('\n').Any(line => TriggeredMana.IsMatch(line) && !OnAnAttack.IsMatch(line)))
-                || LandFromHandToPlay.IsMatch(text)
+                || LandFromHandToPlay.IsMatch(ownLandDrops)
                 || UntapsLands.IsMatch(text)
                 || (card.MacroType != MacroType.Land
-                    && LandOntoTheBattlefield.IsMatch(text)
+                    && LandOntoTheBattlefield.IsMatch(ownLandDrops)
                     && !LandForSomebodyElse.IsMatch(text) && !PaysALandForTheLand.IsMatch(text))
+                || LandsBackAfterFillingTheGraveyard.IsMatch(text)
                 || TreasureAlsoRamps(text))
             {
                 result |= CardEffect.Ramp;
@@ -443,8 +456,12 @@ namespace ScatoloneDownloader.Cube
             // Mana you may only spend on one thing is not fixing — it buys the one
             // card the designer had in mind. The test is per LINE, because a card
             // with one restricted ability and one free one (Hermitic Herbalist)
-            // still fixes.
-            if (result.HasFlag(CardEffect.ManaFixing) && AllManaIsRestricted(text))
+            // still fixes. A LAND is exempt, ruled 2026-10-13: Great Hall of the
+            // Citadel, Secluded Courtyard, White Lotus Hideout and the other
+            // restricted lands are ManaFixing by hand (8 of 8), where every
+            // restricted non-land is not (0 of 8) — a land's colour is all it
+            // gives you, whatever it may be spent on.
+            if (result.HasFlag(CardEffect.ManaFixing) && card.MacroType != MacroType.Land && AllManaIsRestricted(text))
             {
                 result &= ~CardEffect.ManaFixing;
             }

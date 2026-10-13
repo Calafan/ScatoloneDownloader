@@ -24,11 +24,15 @@ namespace ScatoloneDownloader.Cube
         // ability word (Muraganda Raceway's "Max speed —"); a STATION land
         // that pays one mana for one per creature or artifact (Evendo, Uthros
         // — "12+ | {G}, {T}: Add {G} for each …"); and a land that pays for an
-        // AMOUNT counted by the board (Three Tree City).
+        // AMOUNT counted by the board (Three Tree City). And, ruled 2026-10-13,
+        // "X mana of any one color" counted on a land — Baldur's Gate for its
+        // Gates, The Core for the permanents in your graveyard — which is Ramp
+        // and ManaFixing both.
         private static readonly Regex LandTapsForMoreThanOne = Rx(
             @"^(?:[\w' ]+ — )?\{t\}: add \{[wubrgc]\}\{"
             + @"|^\d+\+ \| [^\n:]*: add \{[wubrgc]\} for each"
-            + @"|^[^\n:]*\{t\}: (?:choose a colou?r\. )?add an amount of mana",
+            + @"|^[^\n:]*\{t\}: (?:choose a colou?r\. )?add an amount of mana"
+            + @"|^[^\n:]*\{t\}: add x mana of any one colou?r",
             RegexOptions.Multiline);
 
         // Mana that arrives without a {T} on a permanent you keep: Black Lotus and
@@ -1107,6 +1111,29 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex LandFromHandToPlay = Rx(
             @"(?<!non)lands? cards? from your hand[\w \/]{0,30}onto the battlefield");
 
+        // …but not on a trigger only SOMEBODY ELSE's explore can fire: ruled
+        // 2026-10-13 on Nicanzil, Current Conductor, untagged ("dipendono da
+        // condizioni esterne, la carta di suo non è in grado di generarle"),
+        // as Merfolk Cave-Diver is. (No card in the store explores on its own
+        // AND carries this trigger, so no exception for one is written.)
+        private static readonly Regex OnSomebodyElsesExplore = Rx(
+            @"^whenever a creature you control explores[^\n]*", RegexOptions.Multiline);
+
+        // The same principle for a mana ability GRANTED TO TOKENS on a card that
+        // makes none: Jaheira, Friend of the Forest ("Tokens you control have
+        // '{T}: Add {G}.'") untagged, ruled 2026-10-13. Insidious Roots and
+        // Springleaf Parade make their own tokens and keep it.
+        private static readonly Regex GrantedToTokens = Rx(@"\btokens you control have ""[^""\n]*""");
+        private static readonly Regex MakesTokens = Rx(@"\bcreates?\b|\bamass\b|\bincubate\b|\bpopulate\b");
+
+        // Lands out of a GRAVEYARD the card has just FILLED itself are Ramp,
+        // ruled 2026-10-13: Blossoming Tortoise and Deeproot Wayfinder mill or
+        // surveil and then return a land on every trigger, and Lumra mills four
+        // and returns them all (3 of 3 reviewed). Without the self-fill the
+        // graveyard's lands stay out — see LandOntoTheBattlefield.
+        private static readonly Regex LandsBackAfterFillingTheGraveyard = Rx(
+            @"\b(?:mill|surveil)[^.\n]{0,25}[,.] then (?:you may )?return [^.\n]{0,30}land cards? from your graveyard to the battlefield");
+
         // (?<!non) because "untap all NONLAND permanents" ends in the same
         // letters — the same word-boundary trap as islandwalk and noncreature.
         private static readonly Regex UntapsLands = Rx(
@@ -1136,7 +1163,9 @@ namespace ScatoloneDownloader.Cube
             // measured the same day at 1 reviewed card tagged Ramp (Lumra) out
             // of 8 — the human files them under Regrowth (Undergrowth Recon,
             // Pull Through the Weft), Reanimate (Sandman) or nothing (Aftermath
-            // Analyst, Summon: Titan, Will of the Sultai).
+            // Analyst, Summon: Titan, Will of the Sultai). Lumra stopped being
+            // the exception on 2026-10-13: a card that FILLS the graveyard
+            // first is Ramp — see LandsBackAfterFillingTheGraveyard.
             + @"|until you reveal a land card\. put that card onto the battlefield"
             + @"|search your library for [^.\n]{0,80}(?<!non)(?:land|forest|plains|island|swamp|mountain) cards?[^.\n]{0,60}\. "
             + @"put (?:those cards|them|one of them|two of them|that card|it) onto the battlefield"
@@ -1203,9 +1232,11 @@ namespace ScatoloneDownloader.Cube
         //
         // The cost is any MANA symbol, generic or coloured: Fire Sprites asks
         // {G} for its {R} and is the plainest card in the family, so a pattern
-        // that only read {2} would have missed the whole point.
+        // that only read {2} would have missed the whole point. {X} is mana
+        // too, read 2026-10-13: Wizard's Rockets pays X for X in any
+        // combination of colours, and is ManaFixing alone by hand.
         private static readonly Regex PaidManaAbility = Rx(
-            @"^[^\n:]*\{[\dwubrg]\}[^\n:]*: add ", RegexOptions.Multiline);
+            @"^[^\n:]*\{[\dwubrgx]\}[^\n:]*: add ", RegexOptions.Multiline);
         private static readonly Regex PaidManaGivesBackMore = Rx(
             @"^[^\n:]*\{[\dwubrg]\}[^\n:]*: add (?:two|three|four|five|x|\d+) "
             + @"|^[^\n:]*\{[\dwubrg]\}[^\n:]*: add \{[wubrgc]\}\{", RegexOptions.Multiline);
@@ -1245,7 +1276,17 @@ namespace ScatoloneDownloader.Cube
         // a land was tagged 17 of 17, because a land makes no mana you did not
         // already have and the colour is the only thing it gives you.
         private static readonly Regex FixesColourOnThisLine = Rx(
-            @"mana of any (?:one )?color|add \{[wubrg]\} or \{[wubrg]\}|add \{[wubrg]\}, \{[wubrg]\}");
+            @"mana of any (?:one )?color|add \{[wubrg]\} or \{[wubrg]\}|add \{[wubrg]\}, \{[wubrg]\}"
+            + @"|mana in any combination of colou?rs");
+
+        // Mana a TRIGGER adds for nothing is a source too, ruled 2026-10-13
+        // ("free any colour = source"): Nissa, Resurgent Animist's landfall
+        // mana is Ramp alone, as Lotus Cobra's is, and Muerra's was untagged by
+        // hand; Outcaster Trailblazer, tagged on 09-23, went back for review.
+        // (A guard for a trigger that charges mana on the same line was
+        // written and dropped: no card in the store says it.)
+        private static readonly Regex FreeTriggeredAdd = Rx(
+            @"^(?:[\w' ]+ — )?(?:when|whenever|at the beginning)\b[^\n:]*?, add ");
 
         // Anchored at the start of the line, or at the start of a QUOTED ability
         // granted to something else ("Other permanents you control have \"{T}:
