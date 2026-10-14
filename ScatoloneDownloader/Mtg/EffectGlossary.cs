@@ -88,8 +88,9 @@
 
             [CardEffect.Reanimate] =
                 "A creature back from the dead and straight onto the BATTLEFIELD, cheating its cost. A card this card "
-                + "EXILED counts, and so does a token copy of a creature in a graveyard. Blinking your OWN creature "
-                + "does not — that is protection. A land coming back is Ramp.",
+                + "EXILED counts, and so does a token copy of a creature in a graveyard. Not a card bringing ITSELF "
+                + "back, nor one put back for somebody ELSE. Blinking your OWN creature does not count — that is "
+                + "protection. A land coming back is Ramp.",
 
             [CardEffect.Buff] =
                 "Raises POWER/TOUGHNESS for something else, when that is what the card is FOR: permanent, over an "
@@ -149,10 +150,10 @@
                 + "what the card does next, not an attack — dredge is a graveyard card, not a mill card.",
 
             [CardEffect.Regrowth] =
-                "Buys a card back out of a graveyard: to HAND, to the TOP of a library, or by CASTING it there — that "
-                + "last is reanimation for spells. A card that gives ITSELF a second cast (flashback, escape, unearth) "
-                + "is not. Nor is the BOTTOM of a library, or an opponent's graveyard. Straight to the battlefield is "
-                + "Reanimate.",
+                "Buys a card back out of a graveyard: to HAND, to the TOP of a library, or by CASTING it there or "
+                + "out of the exile it was moved to — reanimation for spells. A card coming back ITSELF (to hand, "
+                + "flashback, escape, unearth) is not. Nor is the BOTTOM of a library, or an opponent's graveyard. "
+                + "Straight to the battlefield is Reanimate.",
 
             [CardEffect.Cheat] =
                 "Puts a NONLAND permanent onto the battlefield without casting it — from hand (Sneak Attack, "

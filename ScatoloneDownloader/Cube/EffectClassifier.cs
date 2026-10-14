@@ -527,15 +527,19 @@ namespace ScatoloneDownloader.Cube
             // A land out of the graveyard rebuilds a mana base; it reanimates
             // nothing. Done by BLANKING the phrase and asking whether the rule
             // still matches, so a card that returns a creature AND a land keeps
-            // its tag. See LandOutOfTheGraveyard, and the note above it for the
-            // self-recursion veto that was measured here and rejected.
+            // its tag. See LandOutOfTheGraveyard. The card's ways of bringing
+            // ITSELF back are blanked for both tags (SelfRecursionWording,
+            // ruled 2026-10-13), and a creature put back for somebody else for
+            // Reanimate (ReanimatedForSomebodyElse).
             if (result.HasFlag(CardEffect.Reanimate) || result.HasFlag(CardEffect.Regrowth))
             {
                 string aimed = LandOutOfTheGraveyard.Replace(text, " ");
 
-                if (!ReanimatePatterns.Any(p => p.IsMatch(WithoutSelfRecursion(card, aimed)))) { result &= ~CardEffect.Reanimate; }
+                string ownRecursion = WithoutSelfRecursion(card, aimed);
 
-                if (!RegrowthPatterns.Any(p => p.IsMatch(aimed))) { result &= ~CardEffect.Regrowth; }
+                if (!ReanimatePatterns.Any(p => p.IsMatch(ReanimatedForSomebodyElse.Replace(ownRecursion, " ")))) { result &= ~CardEffect.Reanimate; }
+
+                if (!RegrowthPatterns.Any(p => p.IsMatch(ownRecursion))) { result &= ~CardEffect.Regrowth; }
             }
 
             // Added after that guard, and asked as a pair. See

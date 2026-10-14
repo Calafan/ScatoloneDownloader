@@ -1786,6 +1786,199 @@ public sealed class EffectClassifierTests
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
     }
 
+    [Theory]
+    // The wordings of the 10-06..10-11 sitting and the older ones it brought
+    // up, read 2026-10-13, every one tagged Reanimate by hand: a long list
+    // before "from", "OF your graveyard", cards "that weren't put there this
+    // way", the card described before its zone or a permanent card, a token
+    // copy of a permanent card, the Aura on a card in a graveyard, the verb
+    // first, hand-or-battlefield, the mass swap, cards chosen in a graveyard,
+    // a library-and/or-graveyard search, every creature of yours that dies.
+    [InlineData("Relive the Past", "Sorcery",
+        "Return up to one target artifact card, up to one target land card, and up to one target non-Aura "
+        + "enchantment card from your graveyard to the battlefield. They are 5/5 Elemental creatures in "
+        + "addition to their other types.")]
+    [InlineData("Shallow Grave", "Instant",
+        "Return the top creature card of your graveyard to the battlefield. That creature gains haste until "
+        + "end of turn. Exile it at the beginning of the next end step.")]
+    [InlineData("Bringer of the Last Gift", "Creature — Vampire Demon",
+        "Flying\nWhen this creature enters, if you cast it, each player sacrifices all other creatures they "
+        + "control. Then each player returns all creature cards from their graveyard that weren't put there "
+        + "this way to the battlefield.")]
+    [InlineData("Coalstoke Gearhulk", "Artifact Creature — Construct",
+        "Menace, deathtouch\nWhen this creature enters, put target creature card with mana value 4 or less "
+        + "from a graveyard onto the battlefield under your control with a finality counter on it. That "
+        + "creature gains menace, deathtouch, and haste. At the beginning of your next end step, exile that "
+        + "creature.")]
+    [InlineData("Staff of Eden, Vault's Key", "Legendary Artifact",
+        "When Staff of Eden enters, put target legendary permanent card not named Staff of Eden, Vault's Key "
+        + "from a graveyard onto the battlefield under your control.\n{T}: Draw a card for each permanent you "
+        + "control but don't own.")]
+    [InlineData("Bone Dancer", "Creature — Zombie",
+        "Whenever this creature attacks and isn't blocked, you may put the top creature card of defending "
+        + "player's graveyard onto the battlefield under your control. If you do, this creature assigns no "
+        + "combat damage this turn.")]
+    [InlineData("Fire Nation Salvagers", "Creature — Human Soldier",
+        "Menace\nWhen this creature enters, put a +1/+1 counter on target creature or Vehicle you "
+        + "control.\nWhenever one or more creatures you control with counters on them deal combat damage to a "
+        + "player, put target creature or Vehicle card from that player's graveyard onto the battlefield under "
+        + "your control.")]
+    [InlineData("Sin, Spira's Punishment", "Legendary Creature — Leviathan Avatar",
+        "Flying\nWhenever Sin enters or attacks, exile a permanent card from your graveyard at random, then "
+        + "create a tapped token that's a copy of that card. If the exiled card is a land card, repeat this "
+        + "process.")]
+    [InlineData("Lazotep Quarry", "Land — Desert",
+        "{T}: Add {C}.\n{T}, Sacrifice a creature: Add one mana of any color.\n{X}{2}, {T}, Sacrifice a "
+        + "Desert: Exile target creature card with mana value X from your graveyard. Create a token that's a "
+        + "copy of it, except it's a 4/4 black Zombie. Activate only as a sorcery.")]
+    [InlineData("Espers to Magicite", "Instant",
+        "Exile each opponent's graveyard. When you do, choose up to one target creature card exiled this "
+        + "way. Create a token that's a copy of that card, except it's an artifact and it loses all other card "
+        + "types.")]
+    [InlineData("Animate Dead", "Enchantment — Aura",
+        "Enchant creature card in a graveyard\nWhen this Aura enters, if it's on the battlefield, it loses "
+        + "\"enchant creature card in a graveyard\" and gains \"enchant creature put onto the battlefield with "
+        + "this Aura.\" Return enchanted creature card to the battlefield under your control and attach this "
+        + "Aura to it. When this Aura leaves the battlefield, that creature's controller sacrifices "
+        + "it.\nEnchanted creature gets -1/-0.")]
+    [InlineData("Squirming Emergence", "Sorcery",
+        "Fathomless descent — Return to the battlefield target nonland permanent card in your graveyard with "
+        + "mana value less than or equal to the number of permanent cards in your graveyard.")]
+    [InlineData("Myojin of Grim Betrayal", "Legendary Creature — Spirit",
+        "Myojin of Grim Betrayal enters with an indestructible counter on it if you cast it from your "
+        + "hand.\nRemove an indestructible counter from Myojin of Grim Betrayal: Put onto the battlefield "
+        + "under your control all creature cards in all graveyards that were put there from anywhere this turn.")]
+    [InlineData("Zuko's Conviction", "Instant",
+        "Kicker {4} (You may pay an additional {4} as you cast this spell.)\nReturn target creature card "
+        + "from your graveyard to your hand. If this spell was kicked, instead put that card onto the "
+        + "battlefield tapped.")]
+    [InlineData("Living Death", "Sorcery",
+        "Each player exiles all creature cards from their graveyard, then sacrifices all creatures they "
+        + "control, then puts all cards they exiled this way onto the battlefield.")]
+    [InlineData("Afterlife from the Loam", "Sorcery",
+        "Delve (Each card you exile from your graveyard while casting this spell pays for {1}.)\nFor each "
+        + "player, choose up to one target creature card in that player's graveyard. Put those cards onto the "
+        + "battlefield under your control. They're Zombies in addition to their other types.")]
+    [InlineData("Rejoin the Fight", "Sorcery",
+        "Mill three cards. Then starting with the next opponent in turn order, each opponent chooses a "
+        + "creature card in your graveyard that hasn't been chosen. Return each card chosen this way to the "
+        + "battlefield under your control.")]
+    [InlineData("Invasion of Ikoria", "Battle — Siege",
+        "(As a Siege enters, choose an opponent to protect it. You and others can attack it. When it's "
+        + "defeated, exile it, then cast it transformed.)\nWhen this Siege enters, search your library and/or "
+        + "graveyard for a non-Human creature card with mana value X or less and put it onto the battlefield. "
+        + "If you search your library this way, shuffle.\nReach\nFor each non-Human creature you control, you "
+        + "may have that creature assign its combat damage as though it weren't blocked.")]
+    [InlineData("Valkyrie's Call", "Enchantment",
+        "Whenever a nontoken, non-Angel creature you control dies, return that card to the battlefield under "
+        + "its owner's control with a +1/+1 counter on it. It has flying and is an Angel in addition to its "
+        + "other types.")]
+    public void Classify_ACreatureCardPutBackFromAGraveyard_IsReanimate(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
+    }
+
+    [Theory]
+    // Not for you: a creature put back under its owner's or an opponent's
+    // control (2026-10-13).
+    [InlineData("Immortal Obligation", "Instant",
+        "Return target creature card from an opponent's graveyard to the battlefield under their control "
+        + "with a duty counter on it. For as long as that creature has a duty counter on it, it is goaded, "
+        + "can't attack you or a permanent you control, and can't block creatures you control.")]
+    [InlineData("Mysterious Limousine", "Artifact — Vehicle",
+        "Whenever this Vehicle enters or attacks, exile up to one other target creature until this Vehicle "
+        + "leaves the battlefield. If a creature is put into exile this way, return each other card exiled "
+        + "with this Vehicle to the battlefield under its owner's control.\nCrew 2")]
+    public void Classify_ACreaturePutBackForSomebodyElse_IsNotReanimate(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
+    }
+
+    [Theory]
+    // Regrowth read 2026-10-13: a long list before "from", "graveyard or
+    // exiled card", a card exiled from a graveyard and later returned to hand,
+    // one of the top two, a pile, the top of the library untargeted, a card
+    // exiled out of a graveyard and cast or copied ("Sì"), cast from among
+    // what an evidence cost exiled, a cast card described before "from"
+    // ("Regrowth sempre"), a keyword a graveyard card gains (escape described
+    // or in quotes, read through its cost; flashback GAINED by each).
+    [InlineData("Rise from the Wreck", "Sorcery",
+        "Return up to one target creature card, up to one target Mount card, up to one target Vehicle card, "
+        + "and up to one target creature card with no abilities from your graveyard to your hand.")]
+    [InlineData("Sorceress's Schemes", "Sorcery",
+        "Return target instant or sorcery card from your graveyard or exiled card with flashback you own to "
+        + "your hand. Add {R}.\nFlashback {4}{R} (You may cast this card from your graveyard for its flashback "
+        + "cost. Then exile it.)")]
+    [InlineData("Nyla, Shirshu Sleuth", "Legendary Creature — Mole Beast",
+        "When Nyla enters, exile up to one target creature card from your graveyard. If you do, you lose X "
+        + "life and create X Clue tokens, where X is that card's mana value. (A Clue token is an artifact with "
+        + "\"{2}, Sacrifice this token: Draw a card.\")\nAt the beginning of your end step, if you control no "
+        + "Clues, return target card exiled with Nyla to its owner's hand.")]
+    [InlineData("Phyrexian Grimoire", "Artifact — Book",
+        "{4}, {T}: Target opponent chooses one of the top two cards of your graveyard. Exile that card and "
+        + "put the other one into your hand.")]
+    [InlineData("Split the Spoils", "Sorcery",
+        "Exile up to five target permanent cards from your graveyard and separate them into two piles. An "
+        + "opponent chooses one of those piles. Put that pile into your hand and the other into your "
+        + "graveyard. (Piles can be empty.)")]
+    [InlineData("Halo-Charged Skaab", "Creature — Zombie",
+        "When this creature enters, each player mills two cards. Then you may put an instant, sorcery, or "
+        + "battle card from your graveyard on top of your library. (To mill two cards, a player puts the top "
+        + "two cards of their library into their graveyard.)")]
+    [InlineData("Kaervek, the Punisher", "Legendary Creature — Human Warlock",
+        "Whenever you commit a crime, exile up to one target black card from your graveyard and copy it. You "
+        + "may cast the copy. If you do, you lose 2 life. (Targeting opponents, anything they control, and/or "
+        + "cards in their graveyards is a crime. Copies of permanent spells become tokens.)")]
+    [InlineData("Psionic Ritual", "Sorcery",
+        "Replicate—Tap an untapped Horror you control. (When you cast this spell, copy it for each time you "
+        + "paid its replicate cost. You may choose new targets for the copies.)\nExile target instant or "
+        + "sorcery card from a graveyard and copy it. You may cast the copy without paying its mana "
+        + "cost.\nExile Psionic Ritual.")]
+    [InlineData("Kylox's Voltstrider", "Artifact — Vehicle",
+        "Collect evidence 6: This Vehicle becomes an artifact creature until end of turn.\nWhenever this "
+        + "Vehicle attacks, you may cast an instant or sorcery spell from among cards exiled with it. If that "
+        + "spell would be put into a graveyard, put it on the bottom of its owner's library instead.\nCrew 2")]
+    [InlineData("Halo Forager", "Creature — Faerie Rogue",
+        "Flying\nWhen this creature enters, you may pay {X}. When you do, you may cast target instant or "
+        + "sorcery card with mana value X from a graveyard without paying its mana cost. If that spell would "
+        + "be put into a graveyard, exile it instead.")]
+    [InlineData("Desdemona, Freedom's Edge", "Legendary Creature — Human Rogue",
+        "Vigilance\nWhenever Desdemona attacks, target creature card in your graveyard that's an artifact or "
+        + "that has mana value 3 or less gains escape until end of turn. The escape cost is equal to its mana "
+        + "cost plus exile two other cards from your graveyard. (You may cast it from your graveyard for its "
+        + "escape cost this turn.)")]
+    [InlineData("The Grim Captain's Locker", "Legendary Artifact",
+        "{T}: Surveil 1. (Look at the top card of your library. You may put it into your graveyard.)\n{T}: "
+        + "Until end of turn, each creature card in your graveyard gains \"Escape—{3}{B}, Exile four other "
+        + "cards from your graveyard.\" (You may cast a card with escape from your graveyard for its escape "
+        + "cost.)")]
+    [InlineData("Past in Flames", "Sorcery",
+        "Each instant and sorcery card in your graveyard gains flashback until end of turn. The flashback "
+        + "cost is equal to its mana cost.\nFlashback {4}{R} (You may cast this card from your graveyard for "
+        + "its flashback cost. Then exile it.)")]
+    public void Classify_ACardBoughtBackFromAGraveyard_IsRegrowth(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Regrowth));
+    }
+
+    [Theory]
+    // Not Regrowth: a card returning ITSELF to hand ("Mai Regrowth (come
+    // Reanimate)", 2026-10-13), a return that is the price of keeping the
+    // card, and a keyword's reminder text.
+    [InlineData("Hammer of Bogardan", "Sorcery",
+        "Hammer of Bogardan deals 3 damage to any target.\n{2}{R}{R}{R}: Return this card from your "
+        + "graveyard to your hand. Activate only during your upkeep.")]
+    [InlineData("Harvest Wurm", "Creature — Wurm",
+        "When this creature enters, sacrifice it unless you return a basic land card from your graveyard to "
+        + "your hand.")]
+    [InlineData("Deeproot Historian", "Creature — Merfolk Druid",
+        "Merfolk and Druid cards in your graveyard have retrace. (You may cast cards with retrace from your "
+        + "graveyard by discarding a land card in addition to paying their other costs.)")]
+    public void Classify_ACardBoughtBackForNothing_IsNotRegrowth(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Regrowth));
+    }
+
     [Fact]
     // A POWERSTONE is Ramp however it is made, a land included (Hall of
     // Tagsin, 2026-10-13); not one handed to somebody else (Cityscape Leveler).

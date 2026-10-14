@@ -314,18 +314,58 @@ namespace ScatoloneDownloader.Cube
             // one target permanent card WITH MANA VALUE LESS THAN OR EQUAL TO
             // CARMEN'S POWER from your graveyard" runs to 86, and the human
             // tagged it Reanimate on 2026-09-29.
-            Rx(@"return[\w ,'\-/]{0,90}from[\w ,'\-/]{0,30}graveyard to the battlefield"),
+            // 130 and "OF your graveyard" read 2026-10-13, with every card
+            // tagged by hand: Relive the Past lists three targets before its
+            // "from" (Fiendish Panda describes one at length), Shallow Grave and
+            // Corpse Dance take "the top creature card OF your graveyard", and
+            // Bringer of the Last Gift's cards "that weren't put there this way"
+            // stand between the graveyard and the battlefield.
+            Rx(@"return[\w ,'\-/]{0,130}(?:from|of)[\w ,'\-/]{0,30}graveyards?(?: that [\w ']{0,40})? to the battlefield"),
             // The same effect written PUT instead of RETURN, with the graveyard
             // named any of the ways the game names it — "from a graveyard", "in
             // that player's graveyard", "from an opponent's graveyard". All six
             // reviewed cards written this way are tagged.
-            Rx(@"put[\w ,'\-/]{0,60}creature cards? (?:from|in)[\w ,'\-/]{0,40}graveyard"
-                + @"[\w ,'\-/]{0,40}onto the battlefield"),
+            // Read 2026-10-13: the card DESCRIBED before its zone (Coalstoke
+            // Gearhulk's "with mana value 4 or less", Staff of Eden's "not
+            // named …"), "creature or Vehicle card" (Fire Nation Salvagers), a
+            // PERMANENT card (Nezumi Freewheeler, Staff of Eden) and "the top
+            // creature card OF defending player's graveyard" (Bone Dancer) —
+            // 6 of 6 reviewed, all tagged. Whole words, or the IN of
+            // "defending" would stand in for the OF.
+            Rx(@"put[\w ,'\-/]{0,60}\b(?:creature|permanent)\b[\w ,'\-/]{0,40}?\bcards?\b[\w ,'\-/]{0,50}?\b(?:from|in|of)\b"
+                + @"[\w ,'\-/]{0,40}graveyards?[\w ,'\-/]{0,40}onto the battlefield"),
             // A token COPY of a creature card in a graveyard. Not the card
             // itself, but what lands on the table is the same. Ruled
             // 2026-09-19; 4 reviewed cards, 3 already tagged.
-            Rx(@"creature cards? (?:from|in)[\w ,'\-/]{0,40}graveyard"
-                + @"[\s\S]{0,140}(?:token that's a copy|token cop|tokens that are copies)"),
+            // Widened 2026-10-13 the same way, and for a PERMANENT card copied
+            // (Sin, Spira's Punishment, Lazotep Quarry) and the creature card
+            // "exiled this way" out of a graveyard (Espers to Magicite).
+            Rx(@"(?:creature|permanent) cards?\b[\w ,'\-/]{0,40}?(?:from|in)[\w ,'\-/]{0,40}graveyard"
+                + @"[\s\S]{0,140}(?:token that's a copy|token cop|tokens that are copies)"
+                + @"|graveyards?\b[\s\S]{0,80}creature cards? exiled this way[\s\S]{0,60}token that's a copy"),
+            // The other wordings of the sitting of 10-06..10-11 and the older
+            // ones it brought up, each tagged by hand on every reviewed card
+            // that says it (2026-10-13): the Aura that brings back the card it
+            // enchants (Animate Dead, Dance of the Dead); the verb first,
+            // "return to the battlefield target … card in your graveyard"
+            // (Squirming Emergence, Moira) and "put onto the battlefield … all
+            // creature cards in all graveyards" (Myojin of Grim Betrayal); a
+            // card returned to hand that may go to the battlefield instead
+            // (Zuko's Conviction, Back for Seconds, Cosmic Rebirth); the mass
+            // swap (Living Death); cards chosen in a graveyard and then put
+            // (Afterlife from the Loam, Rejoin the Fight, Coin of Fate); a
+            // library-and/or-graveyard search (Invasion of Ikoria); and every
+            // creature of yours that dies (Valkyrie's Call).
+            Rx(@"(?:return|put) enchanted creature card (?:on)?to the battlefield"),
+            Rx(@"return to the battlefield (?:up to \w+ )?(?:another )?target[\w ,'\-/]{0,60}cards? (?:in|from)[\w ' ]{0,25}graveyard"
+                + @"|put onto the battlefield[\w ,'\-/]{0,40}creature cards? (?:in|from)[\w ,'\-/]{0,20}graveyards?"),
+            Rx(@"(?:target|up to \w+ target) [\w ,'\-/]{0,40}cards? (?:from|in) your graveyard\b[^\n]{0,160}?"
+                + @"\bput (?:it|that card|one of those cards)\b[^.\n]{0,60}onto the battlefield"),
+            Rx(@"exiles? all creature cards from their graveyards?[^.\n]{0,100}puts? all cards they exiled this way onto the battlefield"),
+            Rx(@"creature cards? in [\w ']{0,30}graveyard\. put (?:those cards|that card|them|it) onto the battlefield"
+                + @"|creature cards? (?:in|from) your graveyard[^\n]{0,160}\breturn (?:each card chosen this way|the other) to the battlefield"),
+            Rx(@"search your library and/or graveyard for[^.\n]{0,60}creature card[^.\n]{0,80}put it onto the battlefield"),
+            Rx(@"whenever (?:a|another) [^.\n]{0,40}creature you control dies, return that card to the battlefield"),
         ];
 
         private static readonly Regex[] RegrowthPatterns =
@@ -333,12 +373,43 @@ namespace ScatoloneDownloader.Cube
             // 90, not 70: Krile Baldesion's "return target creature card WITH MANA
             // VALUE EQUAL TO THAT SPELL'S MANA VALUE from your graveyard" runs to
             // 72 (2026-09-29).
-            Rx(@"return[\w ,'\-/]{0,90}from[\w ,'\-/]{0,30}graveyard to[\w ',]{0,20}hand"),
+            // 150 since 2026-10-13 for Rise from the Wreck's four targets, and
+            // "graveyard OR exiled card with flashback you own" before the hand
+            // (Sorceress's Schemes). A return that is the PRICE of keeping the
+            // card is not this: Harvest Wurm is sacrificed "unless you return a
+            // basic land card", untagged.
+            Rx(@"(?<!unless you )return[\w ,'\-/]{0,150}from[\w ,'\-/]{0,30}graveyard(?: or [\w ]{0,40})? to[\w ',]{0,20}hand"),
             // Cards exiled out of a GRAVEYARD and later returned to their owners'
             // HANDS (Aurelia's Vindicator, The Spot — ruled Regrowth and Bounce
-            // on 2026-09-29).
-            Rx(@"cards? from (?:a |your |their )?graveyards?[\s\S]{0,250}return the exiled cards to their owners' hands"),
+            // on 2026-09-29). Read 2026-10-13 for one card returned: "the
+            // exiled card" (The Aesir Escape Valhalla), "target card exiled
+            // with Nyla" (Nyla, Shirshu Sleuth).
+            Rx(@"cards? from (?:a |your |their )?graveyards?[\s\S]{0,250}return [^.\n]{0,40}\bexiled\b[^.\n]{0,30} to (?:its|their) owners?'?s?'? hands?"),
             Rx(@"put[\w ,'\-/]{0,60}cards? from[\w ,'\-/]{0,30}graveyard into[\w ]{0,20}hand"),
+            // The rest of the sitting of 10-06..10-11, each tagged by hand on
+            // every reviewed card that says it (2026-10-13): one of the top two
+            // cards of your graveyard to hand (Phyrexian Grimoire); a pile of
+            // them (Split the Spoils); a card on top of your library without a
+            // target (Halo-Charged Skaab).
+            Rx(@"cards? of your graveyard\.[^.\n]{0,60}put the other (?:one )?into your hand"
+                + @"|from your graveyard[^\n]{0,120}put that pile into your hand"
+                + @"|put (?:a|an) [\w ,'\-/]{0,40}cards? from your graveyard on top of your library"),
+            // A card EXILED out of your graveyard and then cast or played — the
+            // card or its copy. Ruled 2026-10-13 ("Sì", 17 tagged: Kaervek,
+            // Arcane Bombardment, Capricious Hellraiser, Scholar of Combustion,
+            // Tersa, Quintorius Loremaster, The Tale of Tamiyo …); Nashi, Jacob
+            // Frye, Storm of Memories and Containment Construct reached; Shiko,
+            // Paragon of the Way named as the exception (its copy is a
+            // Reanimate). Out of "A graveyard" only when the card is copied there
+            // and then (Narset, Enlightened Exile, Psionic Ritual): Intrepid
+            // Paleontologist and Boiling Rock Rioter exile from any graveyard as
+            // hate, and cast from among what they exiled only later.
+            Rx(@"exile[^.\n]{0,80}\bcards?\b[^.\n]{0,80}from (?:your|each) graveyards?\b[\s\S]{0,200}?"
+                + @"(?:you may (?:cast|play) (?!this card)|cast the cop(?:y|ies))"
+                + @"|exile[^.\n]{0,80}\bcards?\b[^.\n]{0,80}from a graveyard\b[^.\n]{0,10}(?:and )?copy (?:it|them)\b"),
+            // …and cast from among the cards a collect-evidence or escape cost
+            // exiled from it (Kylox's Voltstrider, Skyway Robber).
+            Rx(@"(?:collect evidence|escape)[\s\S]{0,300}cast [^.\n]{0,60}from among cards exiled with (?:it|this)"),
             // The TOP OF A LIBRARY is a hand you have to wait one turn for, so
             // a card lifted out of a graveyard and put there is recursion.
             // Ruled 2026-09-19; all 5 reviewed cards written this way are
@@ -369,12 +440,30 @@ namespace ScatoloneDownloader.Cube
             // "WHENEVER YOU CAST a spell from your graveyard" only watches one
             // happen, the shape that keeps "whenever you draw a card" out of
             // CardAdvantage.
+            //
+            // The card may be DESCRIBED between its noun and "from", ruled
+            // 2026-10-13 ("Regrowth sempre", once or every turn): Halo
+            // Forager's "card with mana value X from a graveyard", Daring
+            // Waverider, Wishing Well, Invoke Calamity; Seifer Almasy, Sword of
+            // Once and Future and Gale, Waterdeep Prodigy, CardAdvantage alone
+            // by hand, reached. A keyword's reminder is not a cast ("You may
+            // cast cards with retrace from your graveyard": Deeproot
+            // Historian, untagged).
             Rx(@"(?<!whenever you )(?:may )?cast (?!this card\b|this spell\b|it\b)"
-                + @"(?!(?:[\w ,'\-/]{0,40})?for each)[\w ,'\-/]{0,50}(?:spells?|cards?) "
+                + @"(?!cards with (?:retrace|flashback|escape|harmonize|jump-start|mayhem)\b)"
+                + @"(?!(?:[\w ,'\-/]{0,40})?for each)[\w ,'\-/]{0,50}(?:spells?|cards?)\b[\w ,'\-/]{0,80}? "
                 + @"from (?:among )?(?:cards in )?(?:your|a|their|that player's) graveyard"),
+            // MEASURED AND DROPPED 2026-10-13: the card described between
+            // "graveyard" and "gains" (Desdemona, Freedom's Edge) and the keyword
+            // given in quotes (The Grim Captain's Locker's "Escape—") reached no
+            // card the cast patterns above do not already reach through the
+            // escape cost and its reminder.
             Rx(@"target[\w ,'\-/]{0,50}cards? in (?:your|a) graveyard gains? "
                 + @"(?:flashback|escape|harmonize|jump-start)"),
-            Rx(@"(?:each|all|any number of) [\w ,'\-/]{0,40}cards? in your graveyard ha(?:s|ve) "
+            // GAINS as well as HAS since 2026-10-13: Past in Flames, Will of the
+            // Jeskai ("each instant and sorcery card in your graveyard gains
+            // flashback"), reached.
+            Rx(@"(?:each|all|any number of) [\w ,'\-/]{0,40}cards? in your graveyard (?:ha(?:s|ve)|gains?) "
                 + @"(?:flashback|escape|harmonize|mayhem)"),
             Rx(@"(?:spells?|cards?)[\w ,'\-/]{0,20}(?:can be cast|may be cast) from your graveyard"),
         ];
@@ -404,8 +493,14 @@ namespace ScatoloneDownloader.Cube
         // and hand it back, which is a strange kind of protection and is
         // deliberately left untagged. Without the guard the rule fires on 6
         // cards and is right about 4.
+        //
+        // Nor is a card handed back to its OWNER: Mysterious Limousine returns
+        // the others "under its owner's control", Vault 13 "under their
+        // owners' control" — a temporary removal undone, untagged by hand
+        // (2026-10-13).
         private static readonly Regex ExiledCardOntoTheBattlefield = Rx(
-            @"(?:put|return)[\w ,'\-/]{0,50}exiled with[\w ,'\-/]{0,40}(?:on)?to the battlefield");
+            @"(?:put|return)[\w ,'\-/]{0,50}exiled with[\w ,'\-/]{0,40}(?:on)?to the battlefield"
+            + @"(?! under (?:its owner's|their owners'?) control)");
 
         private static readonly Regex BlinksYourOwnCreature = Rx(
             @"exiles? target creature you control|exiles? (?:it|them|that creature)[\w ,']{0,30}return");
@@ -422,14 +517,28 @@ namespace ScatoloneDownloader.Cube
         // "return this card from your graveyard to the battlefield", a death
         // trigger that returns it (Helbrute, Wave of Rats, Lunar Hatchling
         // named; 23 more reviewed cards realigned). It overturns the 09-19
-        // measurement that rejected this veto. Regrowth is not asked: a card
-        // returning itself to HAND keeps it (Hammer of Bogardan).
+        // measurement that rejected this veto. A card returning itself to
+        // HAND is not Regrowth either, ruled 2026-10-13 ("Mai Regrowth (come
+        // Reanimate)"): 16 reviewed cards tagged so (Hammer of Bogardan,
+        // Furious Forebear, Ringwraiths …) reached and handed back, against the
+        // 6 the hand had left untagged (Abzan Devotee, Whiteout, Curious
+        // Cadaver …).
         private static readonly Regex SelfRecursionWording = Rx(
-            @"[^.\n]*return (?:this card|this creature|this permanent|SELFNAME) from your graveyard to the battlefield[^.\n]*"
+            @"[^.\n]*return (?:this card|this creature|this permanent|SELFNAME) from your graveyard to "
+            + @"(?:the battlefield|your hand|its owner's hand)[^.\n]*"
             + @"|^(?:unearth|escape|sarcophagus|embalm|eternalize)\b[^\n]*"
             + @"|[^.\n]*you may cast (?:this card|SELFNAME) from your graveyard[^.\n]*"
             + @"|[^.\n]*when (?:this creature|SELFNAME) dies[^.\n]{0,80}return it to the battlefield[^.\n]*",
             RegexOptions.Multiline);
+
+        // A creature put back for SOMEBODY ELSE reanimates nothing for you:
+        // Immortal Obligation returns one "from an opponent's graveyard to the
+        // battlefield under their control", Reincarnation "from its owner's
+        // graveyard … under the control of that creature's owner", both
+        // untagged (read 2026-10-13). Blanked with the self-recursion.
+        private static readonly Regex ReanimatedForSomebodyElse = Rx(
+            @"[^.\n]*(?:an opponent's|its owner's|that player's) graveyard to the battlefield under "
+            + @"(?:their|its owner's|the control of)[^.\n]*");
 
         /// <summary>The text without the card's ways of bringing ITSELF back,
         /// its old wording naming itself. See SelfRecursionWording.</summary>
