@@ -3004,11 +3004,10 @@ public sealed class EffectClassifierTests
     [InlineData("Lightfoot Technique", "Instant",
         "Put a +1/+1 counter on target creature. It gains flying and indestructible until end of turn. (Damage "
         + "and effects that say \"destroy\" don't destroy it.)")]
-    // B3 — repeated, but a small extra on a CREATURE judged as a whole.
-    [InlineData("Expanding Ooze", "Creature — Ooze",
-        "{B}{G}: Adapt 1. (If this creature has no +1/+1 counters on it, put a +1/+1 counter on it.)\nWhenever "
-        + "this creature attacks, put a +1/+1 counter on target modified creature you control. (Equipment, Auras "
-        + "you control, and counters are modifications.)")]
+    // B3 — repeated, but a small extra on a CREATURE judged as a whole, and
+    // since 2026-10-14 only when it wears off: a counter stays Buff.
+    [InlineData("Infantry Veteran", "Creature — Human Soldier",
+        "{T}: Target attacking creature gets +1/+1 until end of turn.")]
     // A BITE is Removal alone, whatever the size: the pump aims it.
     [InlineData("Felling Blow", "Sorcery",
         "Put a +1/+1 counter on target creature you control. Then that creature deals damage equal to its power "
@@ -3262,7 +3261,10 @@ public sealed class EffectClassifierTests
         + "counter on a creature you control. It gains vigilance and trample until end of turn.\n{P}{P} — Choose "
         + "artifact or enchantment. Destroy all permanents of the chosen type.\n{P}{P}{P} — Draw cards equal to "
         + "the greatest power among creatures you control.")]
-    // A creature that grows another each time it connects — the B3 exception:
+    // A creature that grows another with a counter, again and again — the B3
+    // exception, widened 2026-10-14 from connecting to any repeated counter:
+    [InlineData("Loxodon Battle Priest", "Creature — Elephant Cleric",
+        "At the beginning of combat on your turn, put a +1/+1 counter on another target creature you control.")]
     [InlineData("Prowler, Misguided Mentor", "Legendary Creature — Human Rogue Villain",
         "Prowler can't be blocked by creatures with power 2 or less.\nWhenever Prowler deals combat damage to "
         + "a player, put a +1/+1 counter on another target creature you control.")]
@@ -3284,9 +3286,6 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
-    // B3 still holds for every other repeated small counter a creature hands out.
-    [InlineData("Loxodon Battle Priest", "Creature — Elephant Cleric",
-        "At the beginning of combat on your turn, put a +1/+1 counter on another target creature you control.")]
     // A new base on the creature an Aura stole is the contour of the theft.
     [InlineData("Coerced to Kill", "Enchantment — Aura",
         "Enchant creature\nYou control enchanted creature.\nEnchanted creature has base power and toughness "
@@ -5911,6 +5910,141 @@ public sealed class EffectClassifierTests
     public void Classify_TheOctoberStealGaps_AreNotSteal(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Steal));
+    }
+
+    [Theory]
+    // Buff's misses of October 2026, every one hand-tagged. A ROLE is a pump
+    // with no numbers in it.
+    [InlineData("Become Brutes", "Sorcery",
+        "One or two target creatures each gain haste until end of turn. For each of those creatures, create a "
+        + "Monster Role token attached to it. (If you control another Role on it, put that one into the "
+        + "graveyard. Enchanted creature gets +1/+1 and has trample.)")]
+    // B3 narrowed: a creature handing ANOTHER creature a Role or a counter
+    // every turn.
+    [InlineData("Gylwain, Casting Director", "Legendary Creature — Human Bard",
+        "Whenever Gylwain or another nontoken creature you control enters, choose one —\n• Create a Royal Role "
+        + "token attached to that creature.\n• Create a Sorcerer Role token attached to that creature.\n• Create "
+        + "a Monster Role token attached to that creature.")]
+    [InlineData("Haazda Vigilante", "Creature — Giant Soldier",
+        "Whenever this creature enters or attacks, put a +1/+1 counter on target creature you control with "
+        + "power 2 or less.")]
+    // Mentor's counter is only ever written in its reminder.
+    [InlineData("Ordruun Mentor", "Creature — Minotaur Soldier",
+        "Mentor (Whenever this creature attacks, put a +1/+1 counter on target attacking creature with lesser "
+        + "power.)\nWhenever you attack a player, target creature that's attacking that player gains first "
+        + "strike until end of turn.")]
+    // Five more ways to write the counter on somebody else.
+    [InlineData("Arwen, Weaver of Hope", "Legendary Creature — Elf Noble",
+        "Each other creature you control enters with a number of additional +1/+1 counters on it equal to "
+        + "Arwen's toughness.")]
+    [InlineData("Gluntch, the Bestower", "Legendary Creature — Jellyfish",
+        "Flying\nAt the beginning of your end step, choose a player. They put two +1/+1 counters on a creature "
+        + "they control. Choose a second player to draw a card. Then choose a third player to create two "
+        + "Treasure tokens.")]
+    [InlineData("Tribute to the World Tree", "Enchantment",
+        "Whenever a creature you control enters, draw a card if its power is 3 or greater. Otherwise, put two "
+        + "+1/+1 counters on it.")]
+    [InlineData("Jared Carthalion", "Legendary Planeswalker — Jared",
+        "+1: Create a 3/3 Kavu creature token with trample that's all colors.\n−3: Choose up to two target "
+        + "creatures. For each of them, put a number of +1/+1 counters on it equal to the number of colors it "
+        + "is.\n−6: Return target multicolored card from your graveyard to your hand. If that card was all "
+        + "colors, draw a card and create two Treasure tokens.\nJared Carthalion can be your commander.")]
+    [InlineData("Sandsteppe War Riders", "Creature — Human Warrior",
+        "Trample\nAt the beginning of combat on your turn, bolster X, where X is the number of differently "
+        + "named artifact tokens you control. (Choose a creature with the least toughness among creatures you "
+        + "control and put X +1/+1 counters on it.)")]
+    [InlineData("Uncivil Unrest", "Enchantment",
+        "Nontoken creatures you control have riot. (They enter with your choice of a +1/+1 counter or haste.)\n"
+        + "If a creature you control with a +1/+1 counter on it would deal damage to a permanent or player, it "
+        + "deals double that damage instead.")]
+    // A counter MOVED off the card onto a creature.
+    [InlineData("Costume Closet", "Artifact",
+        "This artifact enters with two +1/+1 counters on it.\n{T}: Move a +1/+1 counter from this artifact onto "
+        + "target creature you control. Activate only as a sorcery.\nWhenever a modified creature you control "
+        + "leaves the battlefield, put a +1/+1 counter on this artifact. (Equipment, Auras you control, and "
+        + "counters are modifications.)")]
+    // Six chapters are six pumps.
+    [InlineData("Long List of the Ents", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after VI.)\nI, II, III, "
+        + "IV, V, VI — Note a creature type that hasn't been noted for this Saga. When you next cast a creature "
+        + "spell of that type this turn, that creature enters with an additional +1/+1 counter on it.")]
+    // The team, then the tribe a little more — in numbers or in counters.
+    [InlineData("Take to the Streets", "Sorcery",
+        "Creatures you control get +2/+2 until end of turn. Citizens you control get an additional +1/+1 and "
+        + "gain vigilance until end of turn.")]
+    [InlineData("River Heralds' Boon", "Instant",
+        "Put a +1/+1 counter on target creature and a +1/+1 counter on up to one target Merfolk.")]
+    // A quoted pump handed to the creature the card is attached to.
+    [InlineData("Idolized", "Enchantment — Aura",
+        "Enchant creature\nEnchanted creature has \"Whenever this creature attacks alone, it gets +X/+X until "
+        + "end of turn, where X is the number of nonland permanents you control.\"")]
+    [InlineData("Astrologian's Planisphere", "Artifact — Equipment",
+        "Job select (When this Equipment enters, create a 1/1 colorless Hero creature token, then attach this "
+        + "to it.)\nEquipped creature is a Wizard in addition to its other types and has \"Whenever you cast a "
+        + "noncreature spell and whenever you draw your third card each turn, put a +1/+1 counter on this "
+        + "creature.\"\nDiana — Equip {2}")]
+    [InlineData("Tale of Katara and Toph", "Enchantment",
+        "Creatures you control have \"Whenever this creature becomes tapped for the first time during each of "
+        + "your turns, put a +1/+1 counter on it.\"")]
+    public void Classify_TheOctoberBuffGaps_AreBuff(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // A Role made once, as a creature enters, is B1's small one-shot.
+    [InlineData("Charmed Clothier", "Creature — Faerie Advisor",
+        "Flying\nWhen this creature enters, create a Royal Role token attached to another target creature you "
+        + "control. (If you control another Role on it, put that one into the graveyard. Enchanted creature "
+        + "gets +1/+1 and has ward {1}.)")]
+    // Bolster on entry is counters on entry: two are not enough.
+    [InlineData("Sandsteppe Scavenger", "Creature — Dog Scout",
+        "When this creature enters, bolster 2. (Choose a creature with the least toughness among creatures you "
+        + "control and put two +1/+1 counters on it.)")]
+    // "With a +1/+1 counter on it" says who dies, not what is put.
+    [InlineData("Rayblade Trooper", "Creature — Human Soldier",
+        "When this creature enters, put a +1/+1 counter on target creature you control.\nWhenever a nontoken "
+        + "creature you control with a +1/+1 counter on it dies, create a 1/1 white Human Soldier creature "
+        + "token.")]
+    // Six more ways to name a tribe.
+    [InlineData("Aunt May", "Legendary Creature — Human Citizen",
+        "Whenever another creature you control enters, you gain 1 life. If it's a Spider, put a +1/+1 counter "
+        + "on it.")]
+    [InlineData("Torgal, A Fine Hound", "Legendary Creature — Wolf",
+        "Whenever you cast your first Human creature spell each turn, that creature enters with an additional "
+        + "+1/+1 counter on it for each Dog and/or Wolf you control.\n{T}: Add one mana of any color.")]
+    [InlineData("Silver-Fur Master", "Creature — Rat Ninja",
+        "Ninjutsu {U}{B} ({U}{B}, Return an unblocked attacker you control to hand: Put this card onto the "
+        + "battlefield from your hand tapped and attacking.)\nNinjutsu abilities you activate cost {1} less to "
+        + "activate.\nOther Ninja and Rogue creatures you control get +1/+1.")]
+    [InlineData("Ogre Chitterlord", "Creature — Ogre Warrior",
+        "Menace\nWhenever this creature enters or attacks, create two 1/1 black Rat creature tokens with \"This "
+        + "token can't block.\" Then if you control five or more Rats, each Rat you control gets +2/+0 until "
+        + "end of turn.")]
+    [InlineData("Treebeard, Gracious Host", "Legendary Creature — Treefolk",
+        "Trample, ward {2}\nWhen Treebeard enters, create two Food tokens.\nWhenever you gain life, put that "
+        + "many +1/+1 counters on target Halfling or Treefolk.")]
+    [InlineData("The War Games", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after IV.)\nI — Each "
+        + "player creates three tapped 1/1 white Warrior creature tokens. The tokens are goaded for as long as "
+        + "this Saga remains on the battlefield.\nII, III — Put a +1/+1 counter on each Warrior creature.\nIV — "
+        + "You may exile a nontoken creature you control. When you do, exile all Warriors.")]
+    // A base with defender is the creature locked away.
+    [InlineData("Stasis Field", "Enchantment — Aura",
+        "Enchant creature\nEnchanted creature has base power and toughness 0/2, has defender, and loses all "
+        + "other abilities.")]
+    // A creature's one-shot "for each" is judged by the number it prints.
+    [InlineData("Eastfarthing Farmer", "Creature — Halfling Peasant",
+        "When this creature enters, create a Food token. When you do, target creature you control gets +1/+1 "
+        + "until end of turn for each Food you control. (A Food token is an artifact with \"{2}, {T}, Sacrifice "
+        + "this token: You gain 3 life.\")")]
+    // The printed Role is the reference card for a token, never cast.
+    [InlineData("Monster // Sorcerer", "Token Enchantment — Aura Role // Token Enchantment — Aura Role",
+        "Enchant creature\nEnchanted creature gets +1/+1 and has trample.\nEnchant creature\nEnchanted creature "
+        + "gets +1/+1 and has \"Whenever this creature attacks, scry 1.\"")]
+    public void Classify_TheOctoberBuffMisreadings_AreNotBuff(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
     }
 
     [Theory]

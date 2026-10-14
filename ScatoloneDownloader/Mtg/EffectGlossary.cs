@@ -94,8 +94,8 @@
 
             [CardEffect.Buff] =
                 "Raises POWER/TOUGHNESS for something else, when that is what the card is FOR: permanent, over an "
-                + "area, or bigger than +1/+1. A lone +1/+1 or one counter counts only on a pump spell or a "
-                + "noncreature engine. Not a bite (Removal), a self-pump, a pump only a tribe (colorless too) or "
+                + "area, or bigger than +1/+1. A lone +1/+1 counts only on a pump spell or an engine; on a "
+                + "creature, only as counters or Roles. Not a bite (Removal), a self-pump, a pump only a tribe (colorless too) or "
                 + "tokens get, or a keyword but double strike.",
 
             [CardEffect.Protection] =

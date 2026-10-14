@@ -362,7 +362,10 @@ namespace ScatoloneDownloader.Cube
             // toughness OF ANOTHER TARGET CREATURE YOU CONTROL become X/X" puts
             // that subject in the middle — matching from the start of the phrase
             // leaves the guard looking at the trigger and calling it a self-buff.
-            Rx(@"(?:enchanted|equipped) creature has base power and toughness"
+            // A base that comes with DEFENDER or the loss of every ability is the
+            // creature locked away, not raised: Stasis Field's 0/2 is Pacify
+            // alone (2026-10-14).
+            Rx(@"(?:enchanted|equipped) creature has base power and toughness(?![^.\n]*\b(?:has defender|loses all))"
                 + @"|(?<=base power and toughness of [\w ,'-]{0,60})becomes? [xX]/[xX]"),
             // DOUBLING is multiplication where the rest of this tag is addition,
             // and it lands in the same place. Ruled 2026-09-21: Bulk Up doubles
@@ -387,6 +390,17 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex Quoted = Rx("\"[^\"\\n]*\"");
         private static readonly Regex PumpInsideQuotes = Rx("\"[^\"\\n]{0,120}gets? \\+[\\dXx]");
         private static readonly Regex PlainPump = Rx(@"gets? \+[\dXx]+/\+[\dXx]+");
+
+        // A pump in quotes HANDED TO the creature you equip or enchant, or to
+        // your team, is the card's own pump with one step in between: the
+        // creature carries it and pumps itself (2026-10-14, four reviewed cards
+        // to one — Idolized, Well Rested, Conformer Shuriken and Astrologian's
+        // Planisphere tagged, Red Mage's Rapier handed back to agree; Tale of
+        // Katara and Toph is the team form). A token's quoted pump stays the
+        // token's: no token is equipped or enchanted as it is made.
+        private static readonly Regex GrantsAQuotedPump = Rx(
+            @"(?:(?:enchanted|equipped) creature|creatures you control) (?:[^.""\n]{0,60}\band )?(?:has|have|gains?) "
+            + @"""[^""\n]*(?:gets? \+[\dXx]|\+1/\+1 counters? on (?:this creature|it)\b)");
 
         // Reminder text, and the three rulings of 2026-09-21 that read it. A
         // pump printed inside PARENTHESES is explaining a keyword, not doing
@@ -453,7 +467,30 @@ namespace ScatoloneDownloader.Cube
             + @"|\b(?:has|have) scavenge\b"
             // "On A creature you control" is the same counter without a target
             // (Season of Gathering), written as an effect and not a trigger.
-            + @"|\bput (?:a|an|one|two|three) \+1/\+1 counters? on a creature you control");
+            + @"|\bput (?:a|an|one|two|three) \+1/\+1 counters? on a creature you control"
+            // Seven more wordings read 2026-10-14, every one a counter the
+            // human had tagged: a count spelled as a NUMBER OF (Arwen, Weaver of
+            // Hope), a player CHOSEN to put them (Gluntch), the creature that
+            // just entered called "it" (Tribute to the World Tree), each of two
+            // targets called "it" (Jared Carthalion), BOLSTER (Sandsteppe War
+            // Riders), RIOT handed to the team (Uncivil Unrest) and MENTOR,
+            // whose counter is only ever written in its reminder (Iroh, Dragon
+            // of the West; Ordruun Mentor). Mentor is the repeated small counter
+            // ruled Buff the same day; Danny Pink and Tributary Instructor were
+            // handed back with it.
+            + @"|\ba number of additional \+1/\+1 counters"
+            + @"|choose a player\. they put (?:a|an|one|two|three) \+1/\+1 counters? on a creature they control"
+            + @"|whenever (?:a|another) (?:nontoken )?creature you control enters[^\n]{0,80}put (?:a|an|one|two|three) \+1/\+1 counters? on it\b"
+            + @"|for each of them, put [\w ]{0,20}\+1/\+1 counters? on it\b"
+            + @"|\bbolster (?:\d|x)\b"
+            + @"|\b(?:have|has) riot\b"
+            + @"|(?:^|\n|, )mentor\b"
+            // MOVING a counter off an artifact or an enchantment onto a creature
+            // is the counter arriving, ruled Buff 2026-10-14 (Explorer's Cache,
+            // Agent's Toolkit; Costume Closet and Afiya Grove handed back). Only
+            // off THIS card: Tidus moves one between two of your creatures,
+            // which adds nothing to the board.
+            + @"|\bmove (?:a|an|one) (?:\+1/\+1 )?counters? from this (?:artifact|enchantment) onto");
 
         // Same question Buff always asks, in the one place this wording can point
         // the wrong way: a counter on THEIR creatures helps them, not you.
@@ -511,7 +548,20 @@ namespace ScatoloneDownloader.Cube
             + @"|[Cc]reatures? you control named [\w' ,-]{1,40} gets? \+"
             + @"|each creature you control named [\w' ,-]{1,40} gets? \+"
             + @"|" + ClauseStart + @"(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + StateBeforeATribe + NotATribe
-            + @"[A-Z][\w']+s?(?:, [A-Z][\w']+s?){0,20},? and [A-Z][\w']+s? you control (?:get|have)\b"
+            + @"[A-Z][\w']+s?(?:, [A-Z][\w']+s?){0,20},? and [A-Z][\w']+s?(?: creatures?)? you control (?:get|have)\b"
+            // Three more read 2026-10-14: the list with "creatures" after it
+            // (Silver-Fur Master's "Ninja and Rogue creatures"), "each Rat you
+            // control gets" mid-sentence (Ogre Chitterlord), and the counter on
+            // a tribe written without "you control" or with "or" (Treebeard's
+            // "target Halfling or Treefolk", The War Games' "each Warrior
+            // creature").
+            + @"|" + ClauseStart + @"[Ee]ach (?:other )?" + NotATribe + @"[A-Z][\w']+ you control gets\b"
+            // …and the counter a tribe's SPELL enters with (Torgal's first
+            // Human each turn, Jade Orb's Dragons).
+            + @"|cast (?:a|an|your first) " + NotATribe + @"[A-Z][\w']+ creature spell[^.\n]{0,60}enters with\b"
+            // …and the counter only a creature OF the tribe gets (Aunt May's
+            // "if it's a Spider, put a +1/+1 counter on it").
+            + @"|[Ii]f it's an? " + NotATribe + @"[A-Z][\w']+, put [\w ]{0,20}\+1/\+1 counters? on it\b"
             // The same lord in the two other vocabularies, ruled not Buff when
             // the human re-reviewed 2024 on 2026-09-25: COUNTERS on a tribe
             // (Camellia's "a +1/+1 counter on each other Squirrel you control",
@@ -521,7 +571,7 @@ namespace ScatoloneDownloader.Cube
             // the tribe (Inside Source's "target Detective you control gets",
             // Rockface Village's "target Lizard, Mouse, Otter, or Raccoon").
             + @"|\+1/\+1 counters? on (?:each |target |up to one target |another target )(?:other )?" + NotATribe
-            + @"[A-Z][\w']+s?(?: creatures?)? you control\b"
+            + @"[A-Z][\w']+s?(?: or [A-Z][\w']+s?)?(?: creatures?)?(?: you control\b|(?=[.,]))"
             + @"|" + ClauseStart + @"[Ee]ach (?:other )?" + NotATribe + @"[A-Z][\w']+ (?:creature )?you control enters? with\b"
             + @"|[Tt]arget " + NotATribe + @"[A-Z][\w']+(?:, [A-Z][\w']+)*,?(?: or [A-Z][\w']+)? you control gets\b"
             // And TOKENS are a tribe by another name, ruled the same day: a
@@ -1477,9 +1527,21 @@ namespace ScatoloneDownloader.Cube
         // with it; five unreviewed proposals did.
         private static readonly Regex PumpForEach = Rx(@"\bgets? \+\d+/\+(?:\d+|0)(?: until end of turn)? for each");
 
+        // BOLSTER is the same counters with the target chosen for you
+        // (Sandsteppe War Riders, 2026-10-14).
         private static readonly Regex PumpCounters = Rx(
             @"\b(?:put|puts|distribute|with)(?: an additional| additional)? "
-            + @"(?<n>a|an|one|two|three|four|five|six|seven|x|that many|\d+)(?: additional)? \+1/\+1 counters?");
+            + @"(?<n>a|an|one|two|three|four|five|six|seven|x|that many|\d+)(?: additional)? \+1/\+1 counters?"
+            + @"|\bbolster (?<n>\d+|x)\b");
+
+        // A ROLE is an Aura that pumps, made already attached: Monster, Royal,
+        // Sorcerer, Virtuous, Wicked and Young Hero all give +1/+1 or better.
+        // The CURSED Role sets a 1/1 base and is Pacify's. Read like a small
+        // permanent pump on whatever it is attached to (2026-10-14): Become
+        // Brutes, Gylwain, Ellivere and Spellbook Vendor tagged, the one-shots
+        // on a creature entering (Charmed Clothier, Redtooth Genealogist) not.
+        private static readonly Regex GivesARole = Rx(
+            @"create (?:a|an) (?:monster|royal|sorcerer|virtuous|wicked|young hero) role tokens? attached to");
 
         private static readonly Regex PumpDoubles = Rx(
             @"double (?:target creature's|that creature's|the) power|double the number of \+1/\+1 counters");
@@ -1560,8 +1622,10 @@ namespace ScatoloneDownloader.Cube
 
         private const int CreatureOneShotEnough = 3;
 
-        private static readonly Regex ConnectsToGrowAnother = Rx(
-            @"deals combat damage to (?:a player|an opponent), put [^.]{0,30}counters? on (?:another |up to one (?:other )?)?target creature");
+        // "A creature WITH a +1/+1 counter on it" names who triggers, not a
+        // counter being put: Rayblade Trooper's death trigger and Urdnan's
+        // first strike are not a second pump.
+        private static readonly Regex CounterAsACondition = Rx(@"\bwith (?:a|one or more) \+1/\+1 counters? on (?:it|them)\b");
 
         private static readonly Regex AbilityWordPrefix = Rx(@"^[^—\n]{1,40}— ");
         private static readonly Regex OwnTrigger = Rx(@"^(?:when|whenever|at the beginning|at end of combat)|^[^:\n]{1,60}:");
@@ -1572,7 +1636,7 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex CostSpendsTheCard = Rx(@"sacrifice this|exile this card from your graveyard");
         private static readonly Regex RepeatingTrigger = Rx(@"^(?:whenever|at the beginning|at end of combat)|\band whenever\b|\benters or attacks\b");
         private static readonly Regex UntilEndOfTurn = Rx(@"until end of turn");
-        private static readonly Regex PutsCounters = Rx(@"\bput\b|\bdistribute\b");
+        private static readonly Regex PutsCounters = Rx(@"\bput\b|\bdistribute\b|\bbolster\b");
         private static readonly Regex GetsPlus = Rx(@"\bgets? \+|\bget \+");
 
         private enum PumpTiming { Once, Instant, Repeat, Static }
@@ -1582,6 +1646,12 @@ namespace ScatoloneDownloader.Cube
             foreach (string raw in bullet != null ? [bullet, head] : new[] { head })
             {
                 string line = raw.Trim().TrimStart('•').Trim().ToLowerInvariant();
+
+                // Read BEFORE the ability word is stripped, because "I, II, III —"
+                // has the same shape as one: Long List of the Ents counted as a
+                // single chapter until 2026-10-14.
+                if (SeveralChapters.IsMatch(line)) { return PumpTiming.Repeat; }
+
                 if (!line.StartsWith("when") && !line.StartsWith("at "))
                 {
                     line = AbilityWordPrefix.Replace(line, string.Empty);
@@ -1593,7 +1663,7 @@ namespace ScatoloneDownloader.Cube
                     continue;
                 }
 
-                if (SeveralChapters.IsMatch(line) || LoyaltyCost.IsMatch(line)) { return PumpTiming.Repeat; }
+                if (LoyaltyCost.IsMatch(line)) { return PumpTiming.Repeat; }
                 if (OneChapter.IsMatch(line)) { return PumpTiming.Once; }
 
                 int colon = line.IndexOf(':');
@@ -1622,7 +1692,7 @@ namespace ScatoloneDownloader.Cube
             return PumpTiming.Once;
         }
 
-        private static int SizeOfPump(string piece)
+        private static int SizeOfPump(string piece, bool countsEach)
         {
             int best = 0;
             foreach (Match m in PumpNumbers.Matches(piece))
@@ -1652,7 +1722,7 @@ namespace ScatoloneDownloader.Cube
                 });
             }
 
-            if (PumpForEach.IsMatch(piece) || PumpDoubles.IsMatch(piece))
+            if ((PumpForEach.IsMatch(piece) && countsEach) || PumpDoubles.IsMatch(piece))
             {
                 best = Math.Max(best, 9);
             }
@@ -1665,14 +1735,24 @@ namespace ScatoloneDownloader.Cube
         private static bool PumpCounts(Card card, string head, string piece, PumpTiming timing, CardEffect otherTags)
         {
             bool single = !PumpOverAnArea.IsMatch(piece) && !PumpOnSeveral.IsMatch(piece);
-            int size = SizeOfPump(piece);
+            bool creature = FrontFaceIsACreature(card);
+
+            // A creature's one-shot "for each" is judged by the number it
+            // prints, not counted as an engine: Eastfarthing Farmer's +1/+1 per
+            // Food lasts the turn it enters (2026-10-14).
+            bool entersOnce = creature && timing == PumpTiming.Once && EntersTrigger.IsMatch(head.Trim());
+            int size = SizeOfPump(piece, countsEach: !entersOnce);
 
             if (Bite.IsMatch(piece) && timing is PumpTiming.Once or PumpTiming.Instant)
             {
                 return false;
             }
 
-            if (TribalPump.IsMatch(piece) || CountersMakeTheBody.IsMatch(piece))
+            // The tribe is judged on its own: Take to the Streets pumps the
+            // whole team and then Citizens a little more, and the team is Buff.
+            if ((TribalPump.IsMatch(piece) && !PlainPump.IsMatch(TribalPump.Replace(piece, " "))
+                    && !PumpCounters.IsMatch(TribalPump.Replace(piece, " ")))
+                || CountersMakeTheBody.IsMatch(piece))
             {
                 return false;
             }
@@ -1695,8 +1775,6 @@ namespace ScatoloneDownloader.Cube
             // Strike with a scry 1 on it — the pump is still the card.
             bool pumpIsTheCard = (otherTags & ~CardEffect.Filter) == CardEffect.None;
 
-            bool creature = FrontFaceIsACreature(card);
-
             if (timing == PumpTiming.Repeat)
             {
                 if (size >= 2)
@@ -1704,13 +1782,15 @@ namespace ScatoloneDownloader.Cube
                     return true;
                 }
 
-                // A creature that grows another every time it CONNECTS is the
-                // one repeated small pump on a creature the human tagged:
-                // Prowler and Scurry of Squirrels, 2 of 2, against 61 other B3
-                // creatures confirmed without it (2026-09-25).
+                // B3 narrowed 2026-10-14: a creature that hands ANOTHER creature
+                // a counter or a Role every turn is Buff after all — "tutti
+                // Buff" for Galadriel, Gift-Giver, the Role makers, Haliya and
+                // Haazda Vigilante. What stays out is the small pump that wears
+                // off at end of turn. Prowler and Scurry of Squirrels, which
+                // grow another when they connect, were the first two of these.
                 if (creature)
                 {
-                    return ConnectsToGrowAnother.IsMatch(piece);
+                    return PumpCounters.IsMatch(CounterAsACondition.Replace(piece, " ")) || GivesARole.IsMatch(piece);
                 }
 
                 // "+1/+1 a velocità sorcery è irrilevante come effetto": a
@@ -1778,7 +1858,8 @@ namespace ScatoloneDownloader.Cube
             {
                 foreach ((string piece, string? bullet) in bullets.Select(b => (b, (string?)b)).Prepend((head, null)))
                 {
-                    if (!PumpNumbers.IsMatch(piece) && !PumpCounters.IsMatch(piece) && !PumpDoubles.IsMatch(piece))
+                    if (!PumpNumbers.IsMatch(piece) && !PumpCounters.IsMatch(piece) && !PumpDoubles.IsMatch(piece)
+                        && !GivesARole.IsMatch(piece))
                     {
                         continue;
                     }

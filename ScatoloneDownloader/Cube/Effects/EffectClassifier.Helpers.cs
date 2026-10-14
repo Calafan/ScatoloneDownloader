@@ -373,7 +373,18 @@ namespace ScatoloneDownloader.Cube
         /// </para></summary>
         private static bool OnlyPumpsInsideQuotes(string text) =>
             PumpInsideQuotes.IsMatch(text) && !PlainPump.IsMatch(Quoted.Replace(text, " "))
-            && !BuffPatterns.Any(p => p.IsMatch(Quoted.Replace(text, " ")));
+            && !BuffPatterns.Any(p => p.IsMatch(Quoted.Replace(text, " ")))
+            && !GrantsAQuotedPump.IsMatch(Parenthetical.Replace(text, " "));
+
+        /// <summary>True when the card hands somebody else a pump in a wording
+        /// the subject gate cannot read: a counter names its beneficiary AFTER
+        /// the numbers, a Role has no numbers at all, and a quoted pump handed
+        /// to the equipped creature calls it "this creature". Asked wherever the
+        /// classifier blanks a shape and checks whether a pump is left.</summary>
+        private static bool HandsSomebodyElseAPump(string text) =>
+            (CounterOnSomebodyElse.IsMatch(text) && !CounterForAnOpponent.IsMatch(text))
+            || GivesARole.IsMatch(Quoted.Replace(text, " "))
+            || GrantsAQuotedPump.IsMatch(Parenthetical.Replace(text, " "));
 
         /// <summary>True when the card's only pump goes to the creatures that
         /// share ITS NAME — its own copies, which is the card pumping itself.

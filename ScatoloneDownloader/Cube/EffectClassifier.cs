@@ -145,6 +145,16 @@ namespace ScatoloneDownloader.Cube
                 return CardEffect.None;
             }
 
+            // A printed ROLE token is the same: the reference card for a token
+            // another card makes, never cast. Its +1/+1 is the Buff of the card
+            // that makes it (GivesARole). Five reviewed, all five untagged
+            // (Monster // Sorcerer, Wicked // Cursed, …; 2026-10-14). Other
+            // printed tokens keep their tags.
+            if ((card.TypeLine ?? string.Empty).Contains("Aura Role", StringComparison.OrdinalIgnoreCase))
+            {
+                return CardEffect.None;
+            }
+
             if (text.Length > 0)
             {
                 foreach ((CardEffect effect, Regex[] patterns) in Rules)
@@ -790,7 +800,9 @@ namespace ScatoloneDownloader.Cube
             // the text BEFORE a match for its subject, and a counter names its
             // beneficiary after ("put a +1/+1 counter ON target creature"), so it
             // would be stripped every time. See the patterns above.
-            if (CounterOnSomebodyElse.IsMatch(text) && !CounterForAnOpponent.IsMatch(text))
+            // A Role and a quoted pump handed to an equipped creature join them
+            // for the same reason. See HandsSomebodyElseAPump.
+            if (HandsSomebodyElseAPump(text))
             {
                 result |= CardEffect.Buff;
             }
@@ -822,7 +834,7 @@ namespace ScatoloneDownloader.Cube
                     .Select(line => AnswerOrShieldOnTheSameLine.IsMatch(line) ? " " : line));
 
                 if (realPump != text && !BuffPatterns.Any(p => p.IsMatch(realPump))
-                    && !(CounterOnSomebodyElse.IsMatch(realPump) && !CounterForAnOpponent.IsMatch(realPump)))
+                    && !HandsSomebodyElseAPump(realPump))
                 {
                     result &= ~CardEffect.Buff;
                 }
