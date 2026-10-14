@@ -6048,6 +6048,72 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // An activation whose cost runs past 40 characters is still held up.
+    [InlineData("Arwen, Mortal Queen", "Legendary Creature — Elf Noble", null,
+        "Arwen enters with an indestructible counter on her.\n{1}, Remove an indestructible counter from Arwen: "
+        + "Another target creature gains indestructible until end of turn. Put a +1/+1 counter and a lifelink "
+        + "counter on that creature and a +1/+1 counter and a lifelink counter on Arwen.")]
+    // Backup hands the hexproof printed below it to the creature it lands on.
+    [InlineData("Saiba Cryptomancer", "Creature — Moonfolk Ninja", "Flash",
+        "Flash\nBackup 1 (When this creature enters, put a +1/+1 counter on target creature. If that's another "
+        + "creature, it gains the following ability until end of turn.)\nHexproof")]
+    // Your own permanents phased out, the ones you choose.
+    [InlineData("Clever Concealment", "Instant", null,
+        "Convoke (Your creatures can help cast this spell. Each creature you tap while casting this spell pays "
+        + "for {1} or one mana of that creature's color.)\nAny number of target nonland permanents you control "
+        + "phase out. (Treat them and anything attached to them as though they don't exist until your next "
+        + "turn.)")]
+    [InlineData("Guardian of Faith", "Creature — Spirit Knight", "Flash",
+        "Flash\nFlying\nWhen this creature enters, any number of other target creatures you control phase out. "
+        + "(Treat them and anything attached to them as though they don't exist until your next turn.)")]
+    [InlineData("Ripples of Potential", "Instant", null,
+        "Proliferate, then choose any number of permanents you control that had a counter put on them this "
+        + "way. Those permanents phase out. (To proliferate, choose any number of permanents and/or players, "
+        + "then give each another counter of each kind already there. Treat phased-out permanents and anything "
+        + "attached to them as though they don't exist until their controller's next turn.)")]
+    // A blink of your own named in a list of types.
+    [InlineData("Scrollshift", "Instant", null,
+        "Exile up to one target artifact, creature, or enchantment you control, then return it to the "
+        + "battlefield under its owner's control.\nDraw a card.")]
+    // What died this turn, brought back from your graveyard in response.
+    [InlineData("Samwise the Stouthearted", "Legendary Creature — Halfling Peasant", "Flash",
+        "Flash\nWhen Samwise enters, choose up to one target permanent card in your graveyard that was put "
+        + "there from the battlefield this turn. Return it to your hand. Then the Ring tempts you.")]
+    [InlineData("Gerrard's Hourglass Pendant", "Legendary Artifact", "Flash",
+        "Flash\nIf a player would begin an extra turn, that player skips that turn instead.\n{4}, {T}, Exile "
+        + "Gerrard's Hourglass Pendant: Return to the battlefield tapped all artifact, creature, enchantment, "
+        + "and land cards in your graveyard that were put there from the battlefield this turn.")]
+    public void Classify_TheOctoberProtectionGaps_AreProtection(string name, string typeLine, string? keyword, string oracle)
+    {
+        Card card = MakeCard(name, typeLine, oracle, keyword is null ? null : [keyword]);
+
+        Assert.True(EffectClassifier.Classify(card).HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // A Dragon spell's hexproof is a tribe's shield.
+    [InlineData("Jade Orb of Dragonkind", "Artifact", null,
+        "{T}: Add {G}. When you spend this mana to cast a Dragon creature spell, it enters with an additional "
+        + "+1/+1 counter on it and gains hexproof until your next turn. (It can't be the target of spells or "
+        + "abilities your opponents control.)")]
+    // An opponent's graveyard saves nothing of yours.
+    [InlineData("Lobelia Sackville-Baggins", "Legendary Creature — Halfling Citizen", "Flash",
+        "Flash\nMenace\nWhen Lobelia enters, exile target creature card from an opponent's graveyard that was "
+        + "put there from the battlefield this turn, then create X Treasure tokens, where X is the exiled "
+        + "card's power.")]
+    // Your own lands phased out every upkeep are a cost.
+    [InlineData("Taniwha", "Legendary Creature — Serpent", null,
+        "Trample\nPhasing (This phases in or out before you untap during each of your untap steps. While it's "
+        + "phased out, it's treated as though it doesn't exist.)\nAt the beginning of your upkeep, all lands "
+        + "you control phase out. (They phase in before you untap during your next untap step.)")]
+    public void Classify_TheOctoberProtectionMisreadings_AreNotProtection(string name, string typeLine, string? keyword, string oracle)
+    {
+        Card card = MakeCard(name, typeLine, oracle, keyword is null ? null : [keyword]);
+
+        Assert.False(EffectClassifier.Classify(card).HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
     // LandDestruction, widened 2026-09-19. The land is almost never alone in the
     // sentence: it sits in a type list, behind a count, or beside a second target,
     // and the old {0,2} filler words could not cross a comma to reach it.

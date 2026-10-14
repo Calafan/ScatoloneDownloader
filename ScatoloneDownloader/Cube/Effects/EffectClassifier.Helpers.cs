@@ -952,7 +952,10 @@ namespace ScatoloneDownloader.Cube
         // short prefix then a colon".
         private static readonly Regex[] ActivatedAbility =
         [
-            Rx(@"\{[^}\n]+\}[^:\n]{0,40}:"),
+            // 60, not 40, since 2026-10-14: Arwen, Mortal Queen's "{1}, Remove
+            // an indestructible counter from Arwen:" is 45 characters past the
+            // brace.
+            Rx(@"\{[^}\n]+\}[^:\n]{0,60}:"),
             Rx(@"^(?:sacrifice|discard|pay|exile|tap|untap|remove|return|reveal)\b[^:\n]{0,50}:",
                 RegexOptions.Multiline),
         ];

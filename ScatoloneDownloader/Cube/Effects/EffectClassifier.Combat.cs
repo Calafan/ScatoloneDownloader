@@ -697,8 +697,10 @@ namespace ScatoloneDownloader.Cube
         // with it, the instant included. The human had already put Protection
         // back on the three cards the first ruling handed back. It is still not
         // Bounce, since it answers nobody (see NotAnAnswerToHand).
+        // The comma before "you control" joined 2026-10-14 for a list of types
+        // (Scrollshift's "artifact, creature, or enchantment you control").
         private static readonly Regex BlinksToSave = Rx(
-            @"exile (?:up to \w+ |x |any number of |another )?(?:other )?target [\w ,]{0,30}?(?:creatures?|permanents?)(?: [\w ]{0,20})? you (?:control|own)\b[\s\S]{0,120}?\breturn"
+            @"exile (?:up to \w+ |x |any number of |another )?(?:other )?target [\w ,]{0,30}?(?:creatures?|permanents?)(?:,? [\w ]{0,20})? you (?:control|own)\b[\s\S]{0,120}?\breturn"
             + @"|exile (?:any number of|each|all) [\w ,-]{0,30}creatures? you control[^\n]{0,120}\b(?:return|cloak)"
             + @"|exile (?:up to \w+ |x |another )?(?:other )?target [\w ,/]{0,40}\.[^.\n]{0,60}\breturn (?:it|that card|the exiled cards?|those cards)"
             + @"[^.\n]{0,80}at the beginning of the next end step"
@@ -753,7 +755,12 @@ namespace ScatoloneDownloader.Cube
             ClauseStart + @"(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + NotATribe + NotACardType
             + @"[A-Z][\w']+s?(?: and [A-Z][\w']+s?)? (?:you control )?gains?\b[^.\n]*"
             + @"|[Cc]reature tokens you control gains?\b[^.\n]*"
-            + @"|[Tt]arget " + NotATribe + @"[A-Z][\w']+ gains?\b[^.\n]*",
+            + @"|[Tt]arget " + NotATribe + @"[A-Z][\w']+ gains?\b[^.\n]*"
+            // …and the creature SPELL of one tribe that "enters with … and gains
+            // hexproof" (Jade Orb of Dragonkind's Dragon, 2026-10-14), the shield
+            // Torgal's counter is to Buff. Hexproof's reminder goes with it,
+            // since it says "can't be the target".
+            + @"|\bcast an? " + NotATribe + @"[A-Z][\w']+ creature spell, it\b[^.\n]*\.?(?:\s*\([^)\n]*\))?",
             RegexOptions.CultureInvariant);
 
         // …and TAKING a shield away is the opposite of this tag: Nowhere to Run,
@@ -816,8 +823,28 @@ namespace ScatoloneDownloader.Cube
         // area, held up in response: Teferi's Protection and Perch Protection
         // keep the tag through it once their "you gain protection" no longer
         // counts.
+        // Read again 2026-10-14 for the ones you CHOOSE: "any number of target
+        // nonland permanents you control phase out" (Clever Concealment,
+        // Gallifrey Falls // No More) and Ripples of Potential's "permanents you
+        // control that had a counter put on them this way. Those permanents
+        // phase out". Your own lands alone (Taniwha) are an upkeep cost.
         private static readonly Regex PhasesYourPermanentsOut = Rx(
-            @"\ball (?:nonland )?(?:permanents|creatures) you control phase out");
+            @"\b(?:all|any number of (?:other )?target) (?:nonland )?(?:permanents|creatures) you control phase out"
+            + @"|\bpermanents you control\b[^.\n]{0,80}\. those permanents phase out");
+
+        // BACKUP hands the abilities printed below it to the creature it lands
+        // on, so a backup creature with flash and hexproof shields somebody else
+        // in response (Saiba Cryptomancer, 2026-10-14).
+        private static readonly Regex BackupGrantsAShield = Rx(
+            @"\bbackup \d+\b[^\n]*\n(?:hexproof|indestructible|shroud|ward\b|protection from)");
+
+        // A permanent that died THIS TURN brought back from your graveyard is a
+        // save after the fact, when it can be held up (Samwise the Stouthearted's
+        // flash, Gerrard's Hourglass Pendant's activation; 2026-10-14). Moira,
+        // Urborg Haunt does it on entering at sorcery speed, and Lobelia from an
+        // opponent's graveyard; neither is tagged.
+        private static readonly Regex ReturnsWhatDiedThisTurn = Rx(
+            @"\bin your graveyard that (?:was|were) put there from the battlefield this turn\b");
 
         // Three returns to hand that answer nobody, found 2026-09-29, each
         // untagged on every reviewed card: a permanent YOU CONTROL or own (0 of
