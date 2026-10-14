@@ -2522,9 +2522,11 @@ public sealed class EffectClassifierTests
     // were going to have anyway (0 of 3 reviewed cards tagged). A repeatable
     // draw whose trigger names something NARROW is not one you can count on: a
     // coin flip, or becoming the target of an Aura spell or an activated
-    // ability, or paying an opponent a permanent for it. The line this does not
-    // cross is Surrak, whose trigger is any spell an opponent aims at your
-    // creatures — that happens by itself, and Surrak keeps the tag.
+    // ability. (Paying an opponent a permanent for it was on this list until
+    // 2026-10-14 — see Classify_ADrawPaidForWithAPermanentGivenAway_IsCardAdvantage.)
+    // The line this does not cross is Surrak, whose trigger is any spell an
+    // opponent aims at your creatures — that happens by itself, and Surrak
+    // keeps the tag.
     [InlineData("Aladdin's Lamp", "Artifact",
         "{X}, {T}: The next time you would draw a card this turn, instead look at the top X cards of "
         + "your library, put all but one of them on the bottom of your library in a random order, then "
@@ -2534,9 +2536,6 @@ public sealed class EffectClassifierTests
         + "artifact spell you control.")]
     [InlineData("Fugitive Druid", "Creature — Human Druid",
         "Whenever this creature becomes the target of an Aura spell, you draw a card.")]
-    [InlineData("Stiltzkin, Moogle Merchant", "Legendary Creature — Moogle",
-        "Lifelink\n{2}, {T}: Target opponent gains control of another target permanent you control. "
-        + "If they do, you draw a card.")]
     public void Classify_ADrawYouCannotCountOn_IsNotCardAdvantage(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
@@ -6434,12 +6433,6 @@ public sealed class EffectClassifierTests
     [InlineData("Haste Magic", "Instant",
         "Target creature gets +3/+1 and gains haste until end of turn. Exile the top card of your library. "
         + "You may play it until your next end step.")]
-    // A draw you cannot ask for, counted the other way round: Kain pays a card
-    // per point only once he has changed sides.
-    [InlineData("Kain, Traitorous Dragoon", "Legendary Creature — Human Knight",
-        "Jump — During your turn, Kain has flying.\n"
-        + "Whenever Kain deals combat damage to a player, that player gains control of Kain. If they do, "
-        + "you draw that many cards, create that many tapped Treasure tokens, then lose that much life.")]
     // A draw the card spends ITSELF on, written without a colon.
     [InlineData("Lim-Dûl's Paladin", "Creature — Human Knight",
         "Trample\nAt the beginning of your upkeep, you may discard a card. If you don't, sacrifice this "
@@ -6448,6 +6441,296 @@ public sealed class EffectClassifierTests
     public void Classify_TheSecondPassNonWordings_AreNotCardAdvantage(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Ruled 2026-10-14 ("Tutti e due CA"): a draw bought by handing another
+    // player a permanent of yours is a card. It overturns the 09-21 reading of
+    // Stiltzkin, and Kain — who hands over HIMSELF, like Yes Man — follows.
+    [InlineData("Stiltzkin, Moogle Merchant", "Legendary Creature — Moogle",
+        "Lifelink\n{2}, {T}: Target opponent gains control of another target permanent you control. If they "
+        + "do, you draw a card.")]
+    [InlineData("Discerning Financier", "Creature — Human Noble",
+        "At the beginning of your upkeep, if an opponent controls more lands than you, create a Treasure "
+        + "token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")\n{2}{W}: "
+        + "Choose another player. That player gains control of target Treasure you control. You draw a card.")]
+    [InlineData("Kain, Traitorous Dragoon", "Legendary Creature — Human Knight",
+        "Jump — During your turn, Kain has flying.\nWhenever Kain deals combat damage to a player, that "
+        + "player gains control of Kain. If they do, you draw that many cards, create that many tapped "
+        + "Treasure tokens, then lose that much life.")]
+    [InlineData("Yes Man, Personal Securitron", "Legendary Artifact Creature — Robot",
+        "{T}: Target opponent gains control of Yes Man. When they do, you draw two cards and put a quest "
+        + "counter on Yes Man. Activate only during your turn.\nWild Card — When Yes Man leaves the "
+        + "battlefield, its owner creates a tapped 1/1 white Soldier creature token for each quest counter on "
+        + "it.")]
+    public void Classify_ADrawPaidForWithAPermanentGivenAway_IsCardAdvantage(
+        string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // The 2026-10-14 pass over the reviewed CardAdvantage misses.
+    // A COPY of your own spell is a card when the spell can be anything
+    // (Storm of Saruman, ruled "Dipende dal tipo copiato"), not when it is a
+    // historic or colorless one — those are permanents as often as not, and a
+    // copied permanent is a token (The Sixth Doctor, Echoes of Eternity).
+    [InlineData("Storm of Saruman", "Enchantment",
+        "Ward {3}\nWhenever you cast your second spell each turn, copy it, except the copy isn't legendary. "
+        + "You may choose new targets for the copy. (A copy of a permanent spell becomes a token.)")]
+    // The MONARCH given to any player, not only to you.
+    [InlineData("Denethor, Stone Seer", "Legendary Creature — Human Noble",
+        "When Denethor enters, scry 2.\n{3}{R}, {T}, Sacrifice Denethor: Target player becomes the monarch. "
+        + "Denethor deals 3 damage to any target.")]
+    [InlineData("Éomer, King of Rohan", "Legendary Creature — Human Noble",
+        "Double strike\nÉomer enters with a +1/+1 counter on it for each other Human you control.\nWhen "
+        + "Éomer enters, target player becomes the monarch. Éomer deals damage equal to its power to any "
+        + "target.")]
+    // A PILE out of your own library put into your hand — Fact or Fiction.
+    [InlineData("Intrude on the Mind", "Instant",
+        "Reveal the top five cards of your library and separate them into two piles. An opponent chooses one "
+        + "of those piles. Put that pile into your hand and the other into your graveyard. Create a 0/0 "
+        + "colorless Thopter artifact creature token with flying, then put a +1/+1 counter on it for each card "
+        + "put into your graveyard this way.")]
+    [InlineData("Curator of Destinies", "Creature — Sphinx",
+        "This spell can't be countered.\nFlying\nWhen this creature enters, look at the top five cards of "
+        + "your library and separate them into a face-down pile and a face-up pile. An opponent chooses one of "
+        + "those piles. Put that pile into your hand and the other into your graveyard.")]
+    [InlineData("Sauron's Ransom", "Instant",
+        "Choose an opponent. They look at the top four cards of your library and separate them into a "
+        + "face-down pile and a face-up pile. Put one pile into your hand and the other into your graveyard. "
+        + "The Ring tempts you.")]
+    // SEVERAL cards kept from one look (ruling 13: "take two" is a card on its
+    // own), however the number is said.
+    [InlineData("Reality Heist", "Instant",
+        "Affinity for artifacts (This spell costs {1} less to cast for each artifact you control.)\nLook at "
+        + "the top seven cards of your library. You may reveal up to two artifact cards from among them and "
+        + "put them into your hand. Put the rest on the bottom of your library in a random order.")]
+    [InlineData("Pictures of Spider-Man", "Artifact",
+        "When this artifact enters, look at the top five cards of your library. You may reveal up to two "
+        + "creature cards from among them and put them into your hand. Put the rest on the bottom of your "
+        + "library in a random order.\n{1}, {T}, Sacrifice this artifact: Create a Treasure token. (It's an "
+        + "artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")")]
+    [InlineData("Sinuous Benthisaur", "Creature — Dinosaur",
+        "When this creature enters, look at the top X cards of your library, where X is the number of Caves "
+        + "you control plus the number of Cave cards in your graveyard. Put two of those cards into your hand "
+        + "and the rest on the bottom of your library in a random order.")]
+    [InlineData("Skyclave Plunder", "Sorcery",
+        "Look at the top X cards of your library, where X is three plus the number of creatures in your "
+        + "party. Put three of those cards into your hand and the rest on the bottom of your library in a "
+        + "random order. (Your party consists of up to one each of Cleric, Rogue, Warrior, and Wizard.)")]
+    [InlineData("Atraxa, Grand Unifier", "Legendary Creature — Phyrexian Angel",
+        "Flying, vigilance, deathtouch, lifelink\nWhen Atraxa enters, reveal the top ten cards of your "
+        + "library. For each card type, you may put a card of that type from among the revealed cards into "
+        + "your hand. Put the rest on the bottom of your library in a random order. (Artifact, battle, "
+        + "creature, enchantment, instant, land, planeswalker, and sorcery are card types.)")]
+    [InlineData("Hurkyl, Master Wizard", "Legendary Creature — Human Wizard Advisor",
+        "At the beginning of your end step, if you've cast a noncreature spell this turn, reveal the top "
+        + "five cards of your library. For each card type among noncreature spells you've cast this turn, you "
+        + "may put a card of that type from among the revealed cards into your hand. Put the rest on the "
+        + "bottom of your library in a random order.")]
+    // A loyalty ability that looks at two and keeps "the other" — Ashiok's +1
+    // is a card every turn, which the one-shot look is not.
+    [InlineData("Ashiok, Wicked Manipulator", "Legendary Planeswalker — Ashiok",
+        "If you would pay life while your library has at least that many cards in it, exile that many cards "
+        + "from the top of your library instead.\n+1: Look at the top two cards of your library. Exile one of "
+        + "them and put the other into your hand.\n−2: Create two 1/1 black Nightmare creature tokens with "
+        + "\"At the beginning of combat on your turn, if a card was put into exile this turn, put a +1/+1 "
+        + "counter on this token.\"\n−7: Target player exiles the top X cards of their library, where X is the "
+        + "total mana value of cards you own in exile.")]
+    // SAGA chapters that repeat a card.
+    [InlineData("An Unearthly Child", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI, II, "
+        + "III — Reveal cards from the top of your library until you reveal a Doctor card, a card with "
+        + "doctor's companion, or a Vehicle card. Put that card into your hand and the rest on the bottom of "
+        + "your library in a random order.")]
+    [InlineData("The Day of the Doctor", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after IV.)\nI, II, III "
+        + "— Exile cards from the top of your library until you exile a legendary card. You may play that card "
+        + "for as long as this Saga remains on the battlefield. Put the rest of those exiled cards on the "
+        + "bottom of your library in a random order.\nIV — Choose up to three Doctors. You may exile all other "
+        + "creatures. If you do, this Saga deals 13 damage to you.")]
+    [InlineData("The Bath Song", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI, II — "
+        + "Draw two cards, then discard a card.\nIII — Shuffle any number of target cards from your graveyard "
+        + "into your library. Add {U}{U}.")]
+    // JUNK made several at a time or again and again.
+    [InlineData("Mister Gutsy", "Artifact Creature — Robot Soldier",
+        "Whenever you cast an Aura or Equipment spell, put a +1/+1 counter on this creature.\nWhen this "
+        + "creature dies, create X Junk tokens, where X is the number of +1/+1 counters on it. (They're "
+        + "artifacts with \"{T}, Sacrifice this token: Exile the top card of your library. You may play that "
+        + "card this turn. Activate only as a sorcery.\")")]
+    [InlineData("Rose, Cutthroat Raider", "Legendary Artifact Creature — Robot",
+        "First strike\nRaid — At end of combat on your turn, if you attacked this turn, create a Junk token "
+        + "for each opponent you attacked. (It's an artifact with \"{T}, Sacrifice this token: Exile the top "
+        + "card of your library. You may play that card this turn. Activate only as a sorcery.\")\nWhenever "
+        + "you sacrifice a Junk, add {R}.")]
+    // A DRAW MODE you may choose more than once.
+    [InlineData("Riveteers Confluence", "Sorcery",
+        "Choose three. You may choose the same mode more than once.\n• You draw a card and you lose 1 "
+        + "life.\n• Riveteers Confluence deals 1 damage to each creature and planeswalker you don't "
+        + "control.\n• You may put a land card from your hand or graveyard onto the battlefield tapped.")]
+    [InlineData("Season of Weaving", "Sorcery",
+        "Choose up to five {P} worth of modes. You may choose the same mode more than once.\n{P} — Draw a "
+        + "card.\n{P}{P} — Choose an artifact or creature you control. Create a token that's a copy of "
+        + "it.\n{P}{P}{P} — Return each nonland, nontoken permanent to its owner's hand.")]
+    // REBOUND granted to your spells casts each of them twice.
+    [InlineData("Ojer Pakpatiq, Deepest Epoch", "Legendary Creature — God",
+        "Flying\nWhenever you cast an instant spell from your hand, it gains rebound. (Exile it as it "
+        + "resolves. At the beginning of your next upkeep, you may cast it from exile without paying its mana "
+        + "cost.)\nWhen Ojer Pakpatiq dies, return it to the battlefield tapped and transformed under its "
+        + "owner's control with three time counters on it.")]
+    // THAT MANY cards exiled from the top, and all of them yours to play.
+    [InlineData("Virtue of Courage", "Enchantment",
+        "Whenever a source you control deals noncombat damage to an opponent, you may exile that many cards "
+        + "from the top of your library. You may play those cards this turn.\nEmbereth Blaze deals 2 damage to "
+        + "any target. (Then exile this card. You may cast the enchantment later from exile.)")]
+    // A card out of your graveyard cast again and again from a tap.
+    [InlineData("Conduit of Worlds", "Artifact",
+        "You may play lands from your graveyard.\n{T}: Choose target nonland permanent card in your "
+        + "graveyard. If you haven't cast a spell this turn, you may cast that card. If you do, you can't cast "
+        + "additional spells this turn. Activate only as a sorcery.")]
+    // A recurring draw written where the trigger reading did not look: an
+    // enters-AND-whenever, or a closing "draw a card" after a long trigger.
+    [InlineData("Up the Beanstalk", "Enchantment",
+        "When this enchantment enters and whenever you cast a spell with mana value 5 or greater, draw a "
+        + "card.")]
+    [InlineData("The Toymaker's Trap", "Enchantment",
+        "At the beginning of your upkeep, secretly choose a number between 1 and 5 that hasn't been chosen. "
+        + "If you do, an opponent guesses which number you chose, then you reveal the number you chose. If "
+        + "they guessed wrong, they lose life equal to the number they guessed and you draw a card. If they "
+        + "guessed right, sacrifice this enchantment.")]
+    [InlineData("Erestor of the Council", "Legendary Creature — Elf Noble",
+        "Whenever players finish voting, each opponent who voted for a choice you voted for creates a "
+        + "Treasure token. You scry X, where X is the number of opponents who voted for a choice you didn't "
+        + "vote for. Draw a card.")]
+    // A discard that PAYS for an ability is not a rummage unless that ability
+    // draws: Chivalric Alliance and Psychic Frog draw on another line.
+    [InlineData("Chivalric Alliance", "Enchantment",
+        "Whenever you attack with two or more creatures, draw a card.\n{2}, Discard a card: Create a 2/2 "
+        + "white and blue Knight creature token with vigilance.")]
+    [InlineData("Psychic Frog", "Creature — Frog",
+        "Whenever this creature deals combat damage to a player or planeswalker, draw a card.\nDiscard a "
+        + "card: Put a +1/+1 counter on this creature.\nExile three cards from your graveyard: This creature "
+        + "gains flying until end of turn.")]
+    // Sentinels for the guards below: a look that starts with WHENEVER is not
+    // the one-shot Feral Encounter (Djeru and Hazoret), and a by-name self-
+    // sacrifice that draws MORE than one is still a card (Hylda's Crown, ED-E).
+    [InlineData("Djeru and Hazoret", "Legendary Creature — Human God",
+        "As long as you have one or fewer cards in hand, Djeru and Hazoret has vigilance and "
+        + "haste.\nWhenever Djeru and Hazoret attacks, look at the top six cards of your library. You may "
+        + "exile a legendary creature card from among them. Put the rest on the bottom of your library in a "
+        + "random order. Until end of turn, you may cast the exiled card without paying its mana cost.")]
+    [InlineData("Hylda's Crown of Winter", "Legendary Artifact",
+        "{1}, {T}: Tap target creature. This ability costs {1} less to activate during your turn.\n{3}, "
+        + "Sacrifice Hylda's Crown of Winter: Draw a card for each tapped creature your opponents control.")]
+    [InlineData("ED-E, Lonesome Eyebot", "Legendary Artifact Creature — Robot",
+        "Flying\nED-E My Love — Whenever you attack, if the number of attacking creatures is greater than "
+        + "the number of quest counters on ED-E, put a quest counter on it.\n{2}, Sacrifice ED-E: Draw a card, "
+        + "then draw an additional card for each quest counter on ED-E.")]
+    public void Classify_TheOctoberCardAdvantageGaps_AreCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Copies of a historic or colorless spell — see Storm of Saruman above.
+    [InlineData("Echoes of Eternity", "Kindred Enchantment — Eldrazi",
+        "If a triggered ability of a colorless spell you control or another colorless permanent you control "
+        + "triggers, that ability triggers an additional time.\nWhenever you cast a colorless spell, copy it. "
+        + "You may choose new targets for the copy. (A copy of a permanent spell becomes a token.)")]
+    [InlineData("The Sixth Doctor", "Legendary Creature — Time Lord Doctor",
+        "Time Lord's Prerogative — Whenever you cast a historic spell, copy it, except the copy isn't "
+        + "legendary. This ability triggers only once each turn. (Artifacts, legendaries, and Sagas are "
+        + "historic. A copy of a permanent spell becomes a token.)")]
+    // "That player shuffles, then draws" — THEIR draw, after the search that
+    // emptied their hand of a name.
+    [InlineData("Deadly Cover-Up", "Sorcery",
+        "As an additional cost to cast this spell, you may collect evidence 6.\nDestroy all creatures. If "
+        + "evidence was collected, exile a card from an opponent's graveyard. Then search its owner's "
+        + "graveyard, hand, and library for any number of cards with that name and exile them. That player "
+        + "shuffles, then draws a card for each card exiled from their hand this way.")]
+    [InlineData("The End", "Instant",
+        "This spell costs {2} less to cast if your life total is 5 or less.\nExile target creature or "
+        + "planeswalker. Search its controller's graveyard, hand, and library for any number of cards with the "
+        + "same name as that permanent and exile them. That player shuffles, then draws a card for each card "
+        + "exiled from their hand this way.")]
+    // A card TUTORED into exile and cast from there is a tutor, not a card.
+    [InlineData("Beseech the Mirror", "Sorcery",
+        "Bargain (You may sacrifice an artifact, enchantment, or token as you cast this spell.)\nSearch your "
+        + "library for a card, exile it face down, then shuffle. If this spell was bargained, you may cast the "
+        + "exiled card without paying its mana cost if that spell's mana value is 4 or less. Put the exiled "
+        + "card into your hand if it wasn't cast this way.")]
+    // A card that sacrifices ITSELF BY NAME for one card replaces itself —
+    // the parity rule, written with the name where "this" usually goes.
+    [InlineData("Five Hundred Year Diary", "Legendary Artifact — Book Clue",
+        "Five Hundred Year Diary enters tapped.\n{T}: Add {U} for each Clue you control.\n{2}, Sacrifice "
+        + "Five Hundred Year Diary: Draw a card.")]
+    [InlineData("Stone of Erech", "Legendary Artifact",
+        "If a creature an opponent controls would die, exile it instead.\n{2}, {T}, Sacrifice Stone of "
+        + "Erech: Exile target player's graveyard. Draw a card.")]
+    // Sentinels: a pile out of your GRAVEYARD is Regrowth (Split the Spoils);
+    // one kept, two only when kicked "instead", is a Filter (Consult the Star
+    // Charts); an enters-and-whenever that is not a draw of yours (Ivora's
+    // Blood, Bowmasters' ping); a discard that pays for a rummage on its own
+    // line (Invasion of Mercadia).
+    [InlineData("Split the Spoils", "Sorcery",
+        "Exile up to five target permanent cards from your graveyard and separate them into two piles. An "
+        + "opponent chooses one of those piles. Put that pile into your hand and the other into your "
+        + "graveyard. (Piles can be empty.)")]
+    [InlineData("Consult the Star Charts", "Instant",
+        "Kicker {1}{U} (You may pay an additional {1}{U} as you cast this spell.)\nLook at the top X cards "
+        + "of your library, where X is the number of lands you control. Put one of those cards into your hand. "
+        + "If this spell was kicked, put two of those cards into your hand instead. Put the rest on the bottom "
+        + "of your library in a random order.")]
+    [InlineData("Ivora, Insatiable Heir", "Legendary Creature — Vampire Warrior",
+        "Trample\nWhen Ivora enters and whenever it deals combat damage to a player, create a Blood token. "
+        + "(It's an artifact with \"{1}, {T}, Discard a card, Sacrifice this token: Draw a card.\")\nWhenever "
+        + "you discard a card, put a +1/+1 counter on Ivora.")]
+    [InlineData("Orcish Bowmasters", "Creature — Orc Archer",
+        "Flash\nWhen this creature enters and whenever an opponent draws a card except the first one they "
+        + "draw in each of their draw steps, this creature deals 1 damage to any target. Then amass Orcs 1.")]
+    [InlineData("Invasion of Mercadia", "Battle — Siege",
+        "(As a Siege enters, choose an opponent to protect it. You and others can attack it. When it's "
+        + "defeated, exile it, then cast it transformed.)\nWhen this Siege enters, you may discard a card. If "
+        + "you do, draw two cards.\n{2}{R}, {T}, Discard a card: Create two 1/1 blue and red Elemental "
+        + "creature tokens. Creatures you control get +1/+0 and gain haste until end of turn.")]
+    public void Classify_TheOctoberCardAdvantageGaps_AreNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // One card kept out of a look, or a rummage for as many as were thrown
+    // away, is Filter: explore spelled out in its long reminder (ruled 09-29
+    // "explore = Filter"), a one-shot look that exiles one creature to cast
+    // (Feral Encounter), and Fable's chapter II.
+    [InlineData("Deepfathom Echo", "Creature — Merfolk Spirit",
+        "At the beginning of combat on your turn, this creature explores. Then you may have it become a copy "
+        + "of another creature you control until end of turn. (To have this creature explore, reveal the top "
+        + "card of your library. Put that card into your hand if it's a land. Otherwise, put a +1/+1 counter "
+        + "on this creature, then put the card back or put it into your graveyard.)")]
+    [InlineData("Amalia Benavides Aguirre", "Legendary Creature — Vampire Scout",
+        "Ward—Pay 3 life.\nWhenever you gain life, Amalia Benavides Aguirre explores. Then destroy all other "
+        + "creatures if its power is exactly 20. (To have this creature explore, reveal the top card of your "
+        + "library. Put that card into your hand if it's a land. Otherwise, put a +1/+1 counter on this "
+        + "creature, then put the card back or put it into your graveyard.)")]
+    [InlineData("Feral Encounter", "Sorcery",
+        "Look at the top five cards of your library. You may exile a creature card from among them. Put the "
+        + "rest on the bottom of your library in a random order. You may cast the exiled card this turn. At "
+        + "the beginning of the next combat phase this turn, target creature you control deals damage equal to "
+        + "its power to up to one target creature you don't control.")]
+    [InlineData("Fable of the Mirror-Breaker", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter.)\nI — Create a 2/2 red Goblin "
+        + "Shaman creature token with \"Whenever this token attacks, create a Treasure token.\"\nII — You may "
+        + "discard up to two cards. If you do, draw that many cards.\nIII — Exile this Saga, then return it to "
+        + "the battlefield transformed under your control.")]
+    public void Classify_OneKeptOrAsManyAsThrownAway_IsFilterNotCardAdvantage(
+        string name, string typeLine, string oracle)
+    {
+        var effect = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+        Assert.True(effect.HasFlag(CardEffect.Filter));
+        Assert.False(effect.HasFlag(CardEffect.CardAdvantage));
     }
 
     [Theory]

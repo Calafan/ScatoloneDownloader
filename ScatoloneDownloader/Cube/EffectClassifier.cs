@@ -627,6 +627,7 @@ namespace ScatoloneDownloader.Cube
                     || SpendsItselfWithoutAColon.IsMatch(text)
                     || AdditionalCostDiscard.IsMatch(text) || ActivationCostDiscard.IsMatch(text)
                     || DrawPaidForWithACard.IsMatch(text)
+                    || DrawsOnceBySacrificingItsName(card, text)
                     || (BloodReminder.IsMatch(text) && !YouDraw.IsMatch(BloodReminder.Replace(text, " ")))))
             {
                 result &= ~CardEffect.CardAdvantage;
@@ -707,11 +708,14 @@ namespace ScatoloneDownloader.Cube
             if ((!onlyOneOfThem
                     && (impulseIsACard || ExileSeveralAndPlayThem.IsMatch(text)))
                 // "Draw that many cards" is added back after the guards, so it
-                // has to ask the guard that reads WHOSE misfortune it counts:
-                // Kain hands himself to the player he hit and pays you a card
-                // per point, which is a draw you cannot ask for.
-                || (DrawThatMany.IsMatch(text) && !ADrawYouCannotCount.IsMatch(text))
-                || (ExileAndPlayFromThere.IsMatch(Parenthetical.Replace(text, " ")) && !ThePileIsTheirsAlready.IsMatch(text))
+                // has to ask the guard that reads WHOSE misfortune it counts
+                // (Mister Negative's swapped life), and it is not a card when
+                // it only replaces as many as were discarded (Fable). Kain,
+                // who hands himself over for a card per point, is one since
+                // 2026-10-14.
+                || (DrawThatMany.IsMatch(text) && !ADrawYouCannotCount.IsMatch(text) && !RummagesThatMany.IsMatch(text))
+                || (ExileAndPlayFromThere.IsMatch(Parenthetical.Replace(text, " ")) && !ThePileIsTheirsAlready.IsMatch(text)
+                    && !TutoredIntoExile.IsMatch(text) && !onlyOneOfThem)
                 || Abilities(text).Any(a => Discovers.IsMatch(a) && AbilityRepeatsAtNoCostToItself(a))
                 || (OneDrawButTwoCasts.IsMatch(text) && CastsItselfASecondTime.IsMatch(text))
                 || SelfSacrificeBuysSeveral.IsMatch(text)
@@ -725,7 +729,11 @@ namespace ScatoloneDownloader.Cube
                 || WarpPaysOnTheWayOutTwice.IsMatch(text)
                 || CopiesYourOwnSpell.IsMatch(text)
                 || PlaneswalkerDrawThenDiscardUnless.IsMatch(text)
-                || (ClueWording.IsMatch(text) && (RepeatableClue.IsMatch(text) || SeveralClues.IsMatch(text))))
+                || (ClueWording.IsMatch(text) && (RepeatableClue.IsMatch(text) || SeveralClues.IsMatch(text)))
+                // The readings of 2026-10-14 — see PileFromTheTopIntoYourHand.
+                || PileFromTheTopIntoYourHand.IsMatch(text) || SeveralKeptFromALook.IsMatch(text)
+                || ChaptersRepeatACard.IsMatch(text) || JunkAgainOrSeveral.IsMatch(text)
+                || DrawModeChosenAgain.IsMatch(text) || GrantsRebound.IsMatch(text))
             {
                 result |= CardEffect.CardAdvantage;
             }
@@ -739,7 +747,6 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.CardAdvantage;
                 result |= CardEffect.Filter;
             }
-
             // Sacrifice, asked the same way: whose creature, and can you do it
             // again? A card that only lets an OPPONENT sacrifice is an edict, and
             // one that sacrifices once — to cast, as it enters, as a spell —

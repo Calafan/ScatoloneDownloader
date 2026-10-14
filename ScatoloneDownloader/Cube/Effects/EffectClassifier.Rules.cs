@@ -547,6 +547,21 @@ namespace ScatoloneDownloader.Cube
                     // 11, so this allows exactly one short sentence and no more.
                     Rx(@"^[^\n]{0,70}\. (?:whenever|at the beginning of)[^\n]{0,160}draws? (?:a|one) card",
                         RegexOptions.Multiline),
+                    // Three more shapes of the same trigger, each tagged by hand
+                    // on the one reviewed card that says it (2026-10-14): an
+                    // ENTERS trigger joined to a repeating one, "When this
+                    // enchantment enters and whenever you cast a spell …, draw a
+                    // card" (Up the Beanstalk); and a draw of YOURS past the 160,
+                    // said as "and YOU draw a card" (The Toymaker's Trap) or as a
+                    // closing sentence of its own, "Draw a card." (Erestor of the
+                    // Council). Not the 260 window rejected above. Orcish
+                    // Bowmasters' "whenever an opponent DRAWS" is not "draw a
+                    // card"; Ivora's Blood reminder is kept out by the Blood
+                    // guard, so a comma written in front of "draw" for it was
+                    // MEASURED AND DROPPED.
+                    Rx(@"^when [^\n,]{0,60} and (?:whenever|at the beginning of)[^\n]{0,160}\bdraw (?:a|one) card"
+                        + @"|^(?:whenever|at the beginning of)[^\n]*(?:\band you draw (?:a|one) card|\. draw (?:a|one) card\.$)",
+                        RegexOptions.Multiline),
                     // "An ADDITIONAL card" is a card, ruled 2026-09-21. Howling
                     // Mine and Sylvan Library say it and are tagged; the one
                     // card that says it and is not — Anvil of Bogardan — takes
