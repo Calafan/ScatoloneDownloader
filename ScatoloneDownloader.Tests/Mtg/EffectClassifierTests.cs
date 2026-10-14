@@ -6188,6 +6188,63 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // A hyphen in the mass return.
+    [InlineData("Jin-Gitaxias // The Great Synthesis", "Legendary Creature — Phyrexian Praetor // Enchantment — Saga",
+        CardEffect.Bounce,
+        "Ward {2}\nWhenever you cast a noncreature spell with mana value 3 or greater, draw a card.\n{3}{U}: "
+        + "Exile Jin-Gitaxias, then return it to the battlefield transformed under its owner's control. Activate "
+        + "only as a sorcery and only if you have seven or more cards in hand.\n(As this Saga enters and after "
+        + "your draw step, add a lore counter.)\nI — Draw cards equal to the number of cards in your hand. You "
+        + "have no maximum hand size for as long as you control this Saga.\nII — Return all non-Phyrexian "
+        + "creatures to their owners' hands.\nIII — You may cast any number of spells from your hand without "
+        + "paying their mana costs. Exile this Saga, then return it to the battlefield (front face up).")]
+    // "+1/+1" in the mass return, both tags.
+    [InlineData("Wave Goodbye", "Sorcery", CardEffect.Bounce,
+        "Return each creature without a +1/+1 counter on it to its owner's hand.")]
+    [InlineData("Wave Goodbye", "Sorcery", CardEffect.Wipe,
+        "Return each creature without a +1/+1 counter on it to its owner's hand.")]
+    // Fourth from the top.
+    [InlineData("Lost to Legend", "Instant", CardEffect.Bounce,
+        "Put target nonland historic permanent into its owner's library fourth from the top. (Artifacts, "
+        + "legendaries, and Sagas are historic.)")]
+    // The permanent an opponent chooses, then the rest shuffled away.
+    [InlineData("Teferi, Temporal Pilgrim", "Legendary Planeswalker — Teferi", CardEffect.Bounce,
+        "Whenever you draw a card, put a loyalty counter on Teferi.\n0: Draw a card.\n−12: Target opponent "
+        + "chooses a permanent they control and returns it to its owner's hand. Then they shuffle each nonland "
+        + "permanent they control into its owner's library.")]
+    [InlineData("Teferi, Temporal Pilgrim", "Legendary Planeswalker — Teferi", CardEffect.Wipe,
+        "Whenever you draw a card, put a loyalty counter on Teferi.\n0: Draw a card.\n−12: Target opponent "
+        + "chooses a permanent they control and returns it to its owner's hand. Then they shuffle each nonland "
+        + "permanent they control into its owner's library.")]
+    // All but the chosen destroyed.
+    [InlineData("Mount Doom", "Legendary Land", CardEffect.Wipe,
+        "{T}, Pay 1 life: Add {B} or {R}.\n{1}{B}{R}, {T}: Mount Doom deals 1 damage to each opponent.\n"
+        + "{5}{B}{R}, {T}, Sacrifice Mount Doom and a legendary artifact: Choose up to two creatures, then "
+        + "destroy the rest. Activate only as a sorcery.")]
+    [InlineData("Duneblast", "Sorcery", CardEffect.Wipe, "Choose up to one creature. Destroy the rest.")]
+    // Any number of tapped creatures turned face down.
+    [InlineData("Illithid Harvester // Plant Tadpoles", "Creature — Horror // Sorcery — Adventure", CardEffect.Wipe,
+        "Ceremorphosis — When this creature enters, turn any number of target tapped nontoken creatures face "
+        + "down. They're 2/2 Horror creatures.\nTap X target creatures. They don't untap during their "
+        + "controllers' next untap steps. (Then exile this card. You may cast the creature later from exile.)")]
+    public void Classify_TheOctoberBounceAndWipeGaps_CarryTheTag(string name, string typeLine, CardEffect effect, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(effect));
+    }
+
+    [Fact]
+    public void Classify_TheCreaturesThatCrewedIt_AreNotWiped()
+    {
+        Card card = MakeCard("Golden Argosy", "Legendary Artifact — Vehicle",
+            "Whenever Golden Argosy attacks, exile each creature that crewed it this turn. Return them to the "
+            + "battlefield tapped under their owner's control at the beginning of the next end step.\nCrew 1 (Tap "
+            + "any number of creatures you control with total power 1 or more: This Vehicle becomes an artifact "
+            + "creature until end of turn.)");
+
+        Assert.False(EffectClassifier.Classify(card).HasFlag(CardEffect.Wipe));
+    }
+
+    [Theory]
     // LandDestruction, widened 2026-09-19. The land is almost never alone in the
     // sentence: it sits in a type list, behind a count, or beside a second target,
     // and the old {0,2} filler words could not cross a comma to reach it.

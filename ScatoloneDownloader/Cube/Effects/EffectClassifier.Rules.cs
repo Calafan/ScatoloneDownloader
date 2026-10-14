@@ -98,7 +98,9 @@ namespace ScatoloneDownloader.Cube
                 // dexterity sweepers are read after the table, in Classify.
                 (CardEffect.Wipe, [
                     Rx(@"(?:destroy|exile) (?:all|each)(?: (?!attached\b)[\w-]{1,15},?){0,4}(?: and| or)? (?:creature|permanent)"
-                        + @"(?![\w ]{0,12}\bcards?\b)(?!s? (?:of the chosen type|you control|chosen this way))"
+                        // The creatures that CREWED it are your own, exiled and
+                        // returned (Golden Argosy, untagged; 2026-10-14).
+                        + @"(?![\w ]{0,12}\bcards?\b)(?!s? (?:of the chosen type|you control|chosen this way|that crewed))"
                         + @"(?!s? with (?:the same name|that name|the most votes))"),
                     Rx(@"(?<!don't )destroy those creatures|airbend all(?: [\w-]{1,15}){0,3} creatures"),
                     Rx(@"(?<!target |attacking |blocking )\bcreatures\b(?:(?! you control\b| with the same name\b)[^.\n]){0,60}? get -[\dX]+/-[1-9X]"),
@@ -112,7 +114,19 @@ namespace ScatoloneDownloader.Cube
                         // creature AND 1 DAMAGE TO EACH OTHER CREATURE WITH THE
                         // SAME CONTROLLER", tagged Wipe by the human on 2026-09-29.
                         + @"|\band [\dX]+ damage to each other creature (?:with the same controller|that player controls)"),
-                    Rx(@"return (?:all|each)(?![\w ,-]{0,30}attached to)[\w ,-]{0,30}(?:permanent|creature)s?[\w ,'-]{0,40}to (?:their owners'|its owner's) hands?"),
+                    // "+1/+1" may stand between the creature and the hand (Wave
+                    // Goodbye's "each creature without a +1/+1 counter on it",
+                    // 2026-10-14).
+                    Rx(@"return (?:all|each)(?![\w ,-]{0,30}attached to)[\w ,-]{0,30}(?:permanent|creature)s?[\w ,'+/-]{0,40}to (?:their owners'|its owner's) hands?"),
+                    // Three more ways to empty the board, read 2026-10-14: every
+                    // permanent of a player SHUFFLED into the library (Teferi,
+                    // Temporal Pilgrim's -12), all but the creatures chosen
+                    // destroyed (Mount Doom, Duneblast, Divine Reckoning), and any
+                    // number of tapped creatures turned face down (Illithid
+                    // Harvester).
+                    Rx(@"shuffles? (?:each|all) [\w ]{0,20}(?:permanents?|creatures?)[^.\n]{0,40} into (?:its owner's|their owners') librar"
+                        + @"|\bdestroy the rest\b"
+                        + @"|turn any number of target [\w ]{0,30}creatures face down"),
                     // ONE creature each is an edict and is Removal, ruled 2026-09-27
                     // after the hand tags split three to two on the same sentence
                     // (Abyssal Gatekeeper against Accursed Marauder): "un singolo
@@ -431,7 +445,9 @@ namespace ScatoloneDownloader.Cube
                     // …but not LANDS alone: returning every Island is a mana base
                     // set back, which the human tags LandDestruction and Wipe and not
                     // this (Omen of Fire, 2026-09-28).
-                    Rx(@"return (?:each|all|every)(?! (?:lands|islands|plains|swamps|mountains|forests)\b)[\w ,']*to (?:its|their) owner(?:'s|s'|s)? hands?"
+                    // A hyphen and "+1/+1" may stand in the list, 2026-10-14
+                    // (Jin-Gitaxias's "all non-Phyrexian creatures", Wave Goodbye).
+                    Rx(@"return (?:each|all|every)(?! (?:lands|islands|plains|swamps|mountains|forests)\b)[\w ,'+/-]*to (?:its|their) owner(?:'s|s'|s)? hands?"
                         // Hurkyl's Recall names the owner as the TARGET instead.
                         + @"|return all [\w ]{0,30}target player owns to their hand"),
                     // The owner's choice of TOP OR BOTTOM of the library is the
@@ -452,9 +468,13 @@ namespace ScatoloneDownloader.Cube
                     // and Fblthp and Braided Net put THEMSELVES there, and Lost Hours
                     // a card from a hand.
                     Rx(@"put target [\w ]{0,30}creature on top of its owner's library"
-                        + @"|\btarget [^.\n]{0,60}\binto (?:their|its owner's) library (?:second|third) from the top"),
-                    // Creatures the OPPONENTS chose, returned (Summon: Valefor).
-                    Rx(@"return those (?:creatures|permanents) to their owners' hands"),
+                        // FOURTH joined 2026-10-14 (Lost to Legend).
+                        + @"|\btarget [^.\n]{0,60}\binto (?:their|its owner's) library (?:second|third|fourth) from the top"),
+                    // Creatures the OPPONENTS chose, returned (Summon: Valefor),
+                    // and the permanent a target opponent chooses (Teferi,
+                    // Temporal Pilgrim's -12, 2026-10-14).
+                    Rx(@"return those (?:creatures|permanents) to their owners' hands"
+                        + @"|chooses an? [\w ]{0,20}(?:permanent|creature) they control and returns it to its owner's hand"),
                     // Ruled 2026-09-29. AIRBEND aimed where an opponent's permanent
                     // can be is this tag ("airbend sull'opponent è bounce"):
                     // Airbending Lesson, Glider Staff, Aang, the Last Airbender,
