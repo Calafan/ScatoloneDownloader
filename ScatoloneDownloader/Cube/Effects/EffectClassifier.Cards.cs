@@ -891,6 +891,9 @@ namespace ScatoloneDownloader.Cube
         // family deliberately does NOT ask this, because there the cost is
         // often paid by something else: Junktown makes three Junk tokens and
         // each token sacrifices ITSELF for a card, which is three cards.
+        private static bool AbilityRepeatsOutsideTheGraveyard(string ability) =>
+            AbilityRepeats(ability) && !SpendsItselfOutOfTheGraveyard(ability);
+
         private static bool AbilityRepeatsAtNoCostToItself(string ability) =>
             AbilityRepeats(ability)
             && !DrawBySacrificingItself.IsMatch(ability)
@@ -935,7 +938,9 @@ namespace ScatoloneDownloader.Cube
             @"\b(?:scry|scries|surveil|surveils) (?:\d+|x)\b\.?(?: ?\((?:to (?:scry|surveil) \w+, )?look at the top[^()]*\))?"
             // …and an EXPLORE, the same selection, since 2026-09-29 (see
             // Explores), with its reminder.
-            + @"|(?<!\bwhenever [^,.\n]{0,60})\bexplores?\b(?:, then it explores again| x times)?\.?(?: ?\((?:to have it explore, )?reveal the top card[^()]*\))?";
+            // Not one explored X TIMES, which is a look at X (Jadelight
+            // Spelunker, Filter by hand, 2026-10-14).
+            + @"|(?<!\bwhenever [^,.\n]{0,60})\bexplores?\b(?! x times)(?:, then it explores again)?\.?(?: ?\((?:to have it explore, )?reveal the top card[^()]*\))?";
 
         // A LOOT tacked onto a SPELL that does something else is the same rider,
         // ruled 2026-09-27 on Refute — "non ha Filter, solo counter" — which is
@@ -969,8 +974,14 @@ namespace ScatoloneDownloader.Cube
             // quindi conta l'effetto secco (come Ponder)": its "scries X, then
             // draws a card" is a Ponder you can choose, so a bullet line of a
             // spell is left alone.
+            // An ability that exiles the card out of the GRAVEYARD to pay for
+            // itself runs once (Survivor of Korlis scries 2 that way, untagged
+            // by hand, 2026-10-14). Not every self-spending cost: a scry the
+            // card SACRIFICES itself for is Filter by hand (Grim Bauble, Aang's
+            // Iceberg, the Omen cycle) — measured with AbilityRepeatsAtNoCost-
+            // ToItself and dropped.
             string repeating = string.Join('\n', Abilities(text).Select(a =>
-                AbilityRepeats(Quoted.Replace(Parenthetical.Replace(a, " "), " ")) ? a
+                AbilityRepeatsOutsideTheGraveyard(Quoted.Replace(Parenthetical.Replace(a, " "), " ")) ? a
                 : spell ? string.Join('\n', a.Split('\n').Select(line =>
                     line.TrimStart().StartsWith('•') ? line : BlankOutsideQuotes(QuotedOrOneScryOrLoot, line)))
                 : BlankOutsideQuotes(QuotedOrOneScry, a)));
@@ -985,7 +996,8 @@ namespace ScatoloneDownloader.Cube
 
             return !FilterPatterns.Any(p => p.IsMatch(selecting))
                 && !ExileSeveralAndChooseOne.IsMatch(selecting)
-                && !PhasingLoot.IsMatch(selecting);
+                && !PhasingLoot.IsMatch(selecting)
+                && !Explores.IsMatch(Parenthetical.Replace(selecting, " "));
         }
 
         // CardAdvantage and Filter on DIFFERENT ABILITIES, ruled 2026-09-29 on
@@ -1086,6 +1098,23 @@ namespace ScatoloneDownloader.Cube
 
         private static bool MakesBloodAgainAndAgain(string text) =>
             Abilities(text).Any(a => MakesBlood.IsMatch(a) && AbilityRepeats(Parenthetical.Replace(a, " ")));
+
+        // A MAP token is an explore in a bottle, so the Blood reading holds for
+        // it: one is a rider, a stream of them is selection — Sentinel of the
+        // Nameless City and Restless Anchorage make one on every attack (both
+        // Filter by hand, 2026-10-14). The Explores rule does not see them,
+        // because the explore sits in the token's reminder.
+        private static readonly Regex MakesMap = Rx(@"\bcreate (?:a|one) map token");
+
+        private static bool MakesMapsAgainAndAgain(string text) =>
+            Abilities(text).Any(a => MakesMap.IsMatch(a) && AbilityRepeats(Parenthetical.Replace(a, " ")));
+
+        // HIDEAWAY is Filter on every reviewed card that has it, 5 of 5, and
+        // that includes Wiretapping, which also draws a card every turn: the
+        // card it hides is the one it means to play, so the look is not a
+        // rider beside the draw. It is kept through the CardAdvantage
+        // exclusivity (2026-10-14).
+        private static readonly Regex Hideaway = Rx(@"^hideaway \d", RegexOptions.Multiline);
 
         // Three draws named CardAdvantage by the human on 2026-09-27, each
         // against a reading that had them as selection or as nothing:

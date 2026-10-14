@@ -81,10 +81,10 @@
                 + "Not THEIR draw, nor an unreachable trigger.",
 
             [CardEffect.Filter] =
-                "Cards changing places at NO net gain: look at, mill or reveal a few and keep one, rearrange ANY "
-                + "player's top, every rummage, a wheel, hideaway, a scry LAND, a scry or Blood that comes AGAIN. Not a scry, "
-                + "surveil or Blood made ONCE in passing, not a LAND kept (ManaFixing), not a CLOAK. With "
-                + "CardAdvantage only on its own repeating ability.",
+                "Cards changing places at NO net gain: keep one of a few looked at, milled or revealed, rearrange "
+                + "ANY player's top, every rummage or wheel, hideaway, a scry LAND, a scry, Blood or Map that comes "
+                + "AGAIN. Not one made ONCE in passing, nor a LAND kept (ManaFixing), nor a CLOAK. With "
+                + "CardAdvantage only on its own repeating ability, or hideaway.",
 
             [CardEffect.Reanimate] =
                 "A creature back from the dead and straight onto the BATTLEFIELD, cheating its cost. A card this card "

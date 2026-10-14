@@ -6734,6 +6734,108 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // The 2026-10-14 pass over the reviewed Filter misses. MILL N and keep one
+    // "from among the milled cards".
+    [InlineData("Seed of Hope", "Instant",
+        "Mill two cards. You may put a permanent card from among the milled cards into your hand. You gain 2 "
+        + "life. (To mill two cards, put the top two cards of your library into your graveyard.)")]
+    [InlineData("Picklock Prankster", "Creature — Faerie Rogue",
+        "Flying, vigilance\nMill four cards. Then put an instant, sorcery, or Faerie card from among the "
+        + "milled cards into your hand.")]
+    [InlineData("Wrenn and Realmbreaker", "Legendary Planeswalker — Wrenn",
+        "Lands you control have \"{T}: Add one mana of any color.\"\n+1: Up to one target land you control "
+        + "becomes a 3/3 Elemental creature with vigilance, hexproof, and haste until your next turn. It's "
+        + "still a land.\n−2: Mill three cards. You may put a permanent card from among the milled cards into "
+        + "your hand.\n−7: You get an emblem with \"You may play lands and cast permanent spells from your "
+        + "graveyard.\"")]
+    // Revealed and CHOSEN from among them.
+    [InlineData("Green Sun's Twilight", "Sorcery",
+        "Reveal the top X plus one cards of your library. Choose a creature card and/or a land card from "
+        + "among them. Put those cards into your hand and the rest on the bottom of your library in a random "
+        + "order. If X is 5 or more, instead put the chosen cards onto the battlefield or into your hand and "
+        + "the rest on the bottom of your library in a random order.")]
+    // A WHEEL of your own hand through the graveyard.
+    [InlineData("Decaying Time Loop", "Instant",
+        "Discard all the cards in your hand, then draw that many cards.\nRetrace (You may cast this card "
+        + "from your graveyard by discarding a land card in addition to paying its other costs.)")]
+    [InlineData("Path of the Pyromancer", "Sorcery",
+        "Discard all the cards in your hand. Add {R} for each card discarded this way, then draw that many "
+        + "cards plus one.\nWill of the Planeswalkers — Starting with you, each player votes for planeswalk or "
+        + "chaos. If planeswalk gets more votes, planeswalk. If chaos gets more votes or the vote is tied, "
+        + "chaos ensues.")]
+    // MAP tokens made on every attack.
+    [InlineData("Sentinel of the Nameless City", "Creature — Merfolk Warrior Scout",
+        "Vigilance\nWhenever this creature enters or attacks, create a Map token. (It's an artifact with "
+        + "\"{1}, {T}, Sacrifice this token: Target creature you control explores. Activate only as a "
+        + "sorcery.\")")]
+    [InlineData("Restless Anchorage", "Land",
+        "This land enters tapped.\n{T}: Add {W} or {U}.\n{1}{W}{U}: Until end of turn, this land becomes a "
+        + "2/3 white and blue Bird creature with flying. It's still a land.\nWhenever this land attacks, "
+        + "create a Map token.")]
+    // An explore made X TIMES is a look at X.
+    [InlineData("Jadelight Spelunker", "Creature — Merfolk Scout",
+        "When this creature enters, it explores X times. (To have it explore, reveal the top card of your "
+        + "library. Put that card into your hand if it's a land. Otherwise, put a +1/+1 counter on that "
+        + "creature, then put the card back or put it into your graveyard.)")]
+    // Sentinels: a "target player" loot can be yours (Forget); a scry the
+    // card SACRIFICES itself for still counts (Grim Bauble, Aang's Iceberg).
+    [InlineData("Forget", "Sorcery",
+        "Target player discards two cards, then draws as many cards as they discarded this way.")]
+    [InlineData("Grim Bauble", "Artifact",
+        "When this artifact enters, target creature an opponent controls gets -2/-2 until end of "
+        + "turn.\n{2}{B}, {T}, Sacrifice this artifact: Surveil 2. (Look at the top two cards of your library, "
+        + "then put any number of them into your graveyard and the rest on top of your library in any order.)")]
+    [InlineData("Aang's Iceberg", "Enchantment",
+        "Flash\nWhen this enchantment enters, exile up to one other target nonland permanent until this "
+        + "enchantment leaves the battlefield.\nWaterbend {3}: Sacrifice this enchantment. If you do, scry 2. "
+        + "(While paying a waterbend cost, you can tap your artifacts and creatures to help. Each one pays for "
+        + "{1}.)")]
+    public void Classify_TheOctoberFilterGaps_AreFilter(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // A LAND kept from the milled cards is ManaFixing (2026-09-27).
+    [InlineData("Patient Naturalist", "Creature — Human Scout",
+        "When this creature enters, mill three cards. Put a land card from among the milled cards into your "
+        + "hand. If you can't, create a Treasure token. (To mill three cards, put the top three cards of your "
+        + "library into your graveyard.)")]
+    // THEIR wheel and THEIR loot are the opponent's, not selection of yours.
+    [InlineData("Shocker", "Creature — Insect",
+        "Whenever this creature deals damage to a player, that player discards all the cards in their hand, "
+        + "then draws that many cards.")]
+    [InlineData("Memory Worm", "Creature — Alien Worm",
+        "Paradox — Whenever you cast a spell from anywhere other than your hand, this creature deals 2 "
+        + "damage to target player. That player discards a card, then draws a card. Put a +1/+1 counter on "
+        + "this creature.")]
+    // ONE Map token made once is a rider, like one Blood.
+    [InlineData("Cartographer's Companion", "Artifact Creature — Gnome",
+        "When this creature enters, create a Map token. (It's an artifact with \"{1}, {T}, Sacrifice this "
+        + "token: Target creature you control explores. Activate only as a sorcery.\")")]
+    // A scry the card exiles itself out of the graveyard for runs once.
+    [InlineData("Survivor of Korlis", "Creature — Human Soldier",
+        "First strike\n{1}{W}, Exile this card from your graveyard: Scry 2.")]
+    public void Classify_TheOctoberFilterGaps_AreNotFilter(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Fact]
+    public void Classify_HideawayBesideADrawEngine_IsFilterAndCardAdvantage()
+    {
+        // Hideaway is Filter on 5 of 5 reviewed cards, Wiretapping's draw
+        // engine included (2026-10-14).
+        var effect = EffectClassifier.Classify(MakeCard("Wiretapping", "Enchantment",
+            "Hideaway 5 (When this enchantment enters, look at the top five cards of your library, exile one "
+            + "face down, then put the rest on the bottom in a random order.)\nWhenever you draw your first card "
+            + "during each of your draw steps, draw a card. Then if you have nine or more cards in hand, you may "
+            + "play the exiled card without paying its mana cost."));
+        Assert.True(effect.HasFlag(CardEffect.Filter));
+        Assert.True(effect.HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
     // CUMULATIVE UPKEEP paid in CARDS draws one more every turn it survives,
     // and it is written where a cost goes, so no rule was looking there.
     [InlineData("Psychic Vortex", "Enchantment",

@@ -906,7 +906,7 @@ namespace ScatoloneDownloader.Cube
             }
 
             // Blood made again and again is a stream of rummages. See MakesBlood.
-            if (MakesBloodAgainAndAgain(text))
+            if (MakesBloodAgainAndAgain(text) || MakesMapsAgainAndAgain(text))
             {
                 result |= CardEffect.Filter;
             }
@@ -960,7 +960,8 @@ namespace ScatoloneDownloader.Cube
             // 2026-09-29, see SelectsAndGainsOnDifferentAbilities.
             if (result.HasFlag(CardEffect.CardAdvantage) && result.HasFlag(CardEffect.Filter)
                 && !SelectsAndGainsOnDifferentAbilities(card, text)
-                && !PlaneswalkerDrawThenDiscardUnless.IsMatch(text))
+                && !PlaneswalkerDrawThenDiscardUnless.IsMatch(text)
+                && !Hideaway.IsMatch(text))
             {
                 result &= ~CardEffect.Filter;
             }

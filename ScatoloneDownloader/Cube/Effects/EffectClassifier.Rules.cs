@@ -727,7 +727,10 @@ namespace ScatoloneDownloader.Cube
                     // the comma. The lookahead keeps CYCLING out, which is what an
                     // earlier and looser version of this pattern swallowed: it fired
                     // on 45 cards of which only 4 were tagged.
-                    Rx(@"discards? (?!this card)(?:a|one|two|three|four|five|x|\d+) cards?,? (?:then |and )(?:you )?draws?"),
+                    // Not THEIR loot: Memory Worm makes the player it hit discard
+                    // and draw (untagged Filter by hand, 2026-10-14). "Target
+                    // player" can be you, and Forget is Filter by hand.
+                    Rx(@"(?<!\bthat player )discards? (?!this card)(?:a|one|two|three|four|five|x|\d+) cards?,? (?:then |and )(?:you )?draws?"),
                     Rx(@"you may discard (?:a|one|up to \w+|any number of) cards?\.? ?(?:if you do, )?draws?"),
                     Rx(@"discards? (?:a|one|up to \w+|any number of|that many) cards?, then draws? that many"),
                     Rx(@"^[^\n:]{0,50}discard (?!this card)(?:a|one|\w+) cards?[^\n:]{0,30}: ?draw",
@@ -784,16 +787,29 @@ namespace ScatoloneDownloader.Cube
                     // 2026-09-27: "sì, ma in caso di terre è ManaFix". Cache Grab,
                     // Malevolent Rumble, Rosheen and Wood Sage were tagged, Eerie
                     // Gravestone was the human's slip. A LAND kept this way is
-                    // ManaFixing instead — see LandFromAmongThemToHand.
+                    // ManaFixing instead — see LandFromAmongThemToHand. "From among
+                    // the MILLED CARDS" is the same words (Seed of Hope, Picklock
+                    // Prankster, Wrenn and Realmbreaker's −2, 2026-10-14).
                     Rx(@"(?:\bmill|reveal the top) (?:\w+|x) cards?[^\n]{0,120}?"
-                        + @"(?:put [^\n]{0,60}from among (?:them|the cards milled this way) into your hand"
+                        + @"(?:put [^\n]{0,60}from among (?:them|the cards milled this way|the milled cards) into your hand"
                         + @"|put all of them with that name into your hand)"),
+                    // …and CHOSEN from among them before they go to hand: Green
+                    // Sun's Twilight reveals X plus one and keeps a creature
+                    // and/or a land (Filter by hand, 2026-10-14).
+                    Rx(@"reveal the top (?:\w+|x)(?: plus one)? cards? of your library\. choose [^.\n]{0,60}from among them\. "
+                        + @"put (?:it|that card|those cards) into your hand"),
                     // Four more shapes named Filter by the human on 2026-09-27, one
                     // card each in the reviewed set: a WHEEL that gives back what
                     // it took (Winds of Change), a search that EXILES what it finds
                     // to thin the library (Foresight, Mana Severance), and Scroll
                     // Rack trading cards from hand with the top.
                     Rx(@"shuffles? (?:the cards from )?(?:their|your) hand into (?:their|your) library, then draws? that many cards"),
+                    // The same wheel through the graveyard: Decaying Time Loop
+                    // discards your hand and draws that many, Path of the
+                    // Pyromancer that many plus one (both Filter by hand,
+                    // 2026-10-14). YOUR hand only — Shocker and Sycorax Commander
+                    // make the OPPONENT do it, and are Discard.
+                    Rx(@"discard all the cards in your hand[^\n]{0,60}then draw that many"),
                     // …but not cards exiled to be CAST, which is no thinning of
                     // the library (Ugin, Eye of the Storms' −11, 2026-09-29).
                     Rx(@"search your library for [^.\n]{0,40}cards?, exile them, then shuffle"
@@ -1308,7 +1324,7 @@ namespace ScatoloneDownloader.Cube
         //   the land fetched to hand the ManaFixing ruling already names.
         private static readonly Regex LandFromAmongThemToHand = Rx(
             @"(?:\bmill|reveal the top|look at the top) (?:\w+|x) cards?[^\n]{0,120}?"
-            + @"(?:put|reveal) (?:a|up to \w+|any number of) (?:basic )?land cards? from among (?:them|the cards milled this way)"
+            + @"(?:put|reveal) (?:a|up to \w+|any number of) (?:basic )?land cards? from among (?:them|the cards milled this way|the milled cards)"
             + @"(?: and put (?:it|them))? into your hand");
 
         //   And a card looked at and CAST FOR FREE was put into play, not chosen
