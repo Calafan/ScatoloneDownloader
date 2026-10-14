@@ -53,18 +53,27 @@ namespace ScatoloneDownloader.Cube
         private const string BurnTarget =
             @"(?:any (?:other )?target|target player|target opponent|each player|each opponent"
             + @"|each other (?:player|opponent)|that player|defending player|the player|them"
-            + @"|each of [\dX]+ targets|the controller of|its controller)";
+            + @"|each of (?:up to )?(?:[\dX]+|\w+) targets|the controller of|its controller"
+            // 2026-10-14: Chandra, Hope's Beacon's "each of UP TO TWO targets"
+            // and Invasion of Regatha's "another target BATTLE OR opponent".
+            + @"|(?:another )?target battle or opponent)";
 
         /// <summary>The players a life-loss clause can name, with room for the
         /// relative clause the modern templating puts between the subject and
         /// the verb — "each opponent WHO DOESN'T loses 2 life" (Fandaniel),
         /// "each opponent sacrifices a creature of their choice AND loses 3
         /// life" (Summon: Anima), "each player WHO OWNS A SPELL YOU CAST THIS
-        /// WAY loses life equal to its mana value" (Kefka).</summary>
+        /// WAY loses life equal to its mana value" (Kefka). A clause opened by
+        /// "who" or "dealt" may run longer (Gollum, Obsessed Stalker's "each
+        /// opponent DEALT COMBAT DAMAGE THIS GAME BY A CREATURE NAMED …", 2026-10-14);
+        /// widening every subject to 90 instead reached Scarring Memories'
+        /// "sacrifices …, discards a card, and loses 3 life", untagged. "Its
+        /// OWNER" joined the same day, for a spell cast from an opponent's
+        /// library (The Ruinous Powers); "half their life" stays out.</summary>
         private const string LosesLifeSubject =
             @"(?:each opponent|target opponent|target player|that player|that opponent|each player"
-            + @"|its controller|they|defending player|the chosen player|that spell's controller)"
-            + @"[\w ,'-]{0,45}\b";
+            + @"|its controller|its owner|they|defending player|the chosen player|that spell's controller)"
+            + @"(?: (?:who|dealt)\b[\w ,'-]{0,90}|[\w ,'-]{0,45})\b";
 
         // The subjects that make an effect land on something OTHER than the card
         // writing it. Looked for in the text preceding a Buff/Protection match on

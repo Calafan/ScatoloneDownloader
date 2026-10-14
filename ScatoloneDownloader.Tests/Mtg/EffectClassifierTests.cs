@@ -6114,6 +6114,80 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // "Each of UP TO TWO targets", and a battle beside the opponent.
+    [InlineData("Chandra, Hope's Beacon", "Legendary Planeswalker — Chandra",
+        "Whenever you cast an instant or sorcery spell, copy it. You may choose new targets for the copy. This "
+        + "ability triggers only once each turn.\n+2: Add two mana in any combination of colors.\n+1: Exile the "
+        + "top five cards of your library. Until the end of your next turn, you may cast an instant or sorcery "
+        + "spell from among those exiled cards.\n−X: Chandra deals X damage to each of up to two targets.")]
+    [InlineData("Invasion of Regatha // Disciples of the Inferno", "Battle — Siege // Creature — Human Monk",
+        "(As a Siege enters, choose an opponent to protect it. You and others can attack it. When it's "
+        + "defeated, exile it, then cast it transformed.)\nWhen this Siege enters, it deals 4 damage to another "
+        + "target battle or opponent and 1 damage to up to one target creature.")]
+    // The owner of a spell cast from an opponent's library.
+    [InlineData("The Ruinous Powers", "Enchantment",
+        "At the beginning of your upkeep, choose an opponent at random. Exile the top card of that player's "
+        + "library. Until end of turn, you may play that card and you may spend mana as though it were mana of "
+        + "any color to cast it. When you cast a spell this way, its owner loses life equal to its mana value.")]
+    // A relative clause longer than the window.
+    [InlineData("Gollum, Obsessed Stalker", "Legendary Creature — Halfling Horror",
+        "Skulk (This creature can't be blocked by creatures with greater power.)\nAt the beginning of your end "
+        + "step, each opponent dealt combat damage this game by a creature named Gollum, Obsessed Stalker loses "
+        + "life equal to the amount of life you gained this turn.")]
+    // Excess damage is the burn that goes past the kill.
+    [InlineData("Gandalf's Sanction", "Sorcery",
+        "Gandalf's Sanction deals X damage to target creature, where X is the number of instant and sorcery "
+        + "cards in your graveyard. Excess damage is dealt to that creature's controller instead.")]
+    // The life the enchanted creature's controller pays every upkeep.
+    [InlineData("Morgul-Knife Wound", "Enchantment — Aura",
+        "Enchant creature\nEnchanted creature gets -3/-0 and has \"At the beginning of your upkeep, exile this "
+        + "creature unless you pay 2 life.\"")]
+    // A hasty token gone at the next end step.
+    [InlineData("Urabrask's Forge", "Artifact",
+        "At the beginning of combat on your turn, put an oil counter on this artifact, then create an X/1 red "
+        + "Phyrexian Horror creature token with trample and haste, where X is the number of oil counters on this "
+        + "artifact. Sacrifice that token at the beginning of the next end step.")]
+    [InlineData("Daring Piracy", "Enchantment",
+        "At the beginning of combat on your turn, create a 1/1 red Pirate creature token with menace and haste. "
+        + "Exile it at the beginning of the next end step.")]
+    [InlineData("Feral Lightning", "Sorcery",
+        "Create three 3/1 red Elemental creature tokens with haste. Exile them at the beginning of the next end "
+        + "step.")]
+    [InlineData("Thatcher Revolt", "Sorcery",
+        "Create three 1/1 red Human creature tokens with haste. Sacrifice those tokens at the beginning of the "
+        + "next end step.")]
+    // "Each opponent WHO …" past the window.
+    [InlineData("Grim Reminder", "Instant",
+        "Search your library for a nonland card and reveal it. Each opponent who cast a spell this turn with the "
+        + "same name as that card loses 6 life. Then shuffle.\n{B}{B}: Return this card from your graveyard to "
+        + "your hand. Activate only during your upkeep.")]
+    public void Classify_TheOctoberBurnGaps_AreBurn(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
+    // The life a token's quoted ability takes is the token's.
+    [InlineData("Kaito, Dancing Shadow", "Legendary Planeswalker — Kaito",
+        "Whenever one or more creatures you control deal combat damage to a player, you may return one of them "
+        + "to its owner's hand. If you do, you may activate loyalty abilities of Kaito twice this turn rather "
+        + "than only once.\n+1: Up to one target creature can't attack or block until your next turn.\n0: Draw "
+        + "a card.\n−2: Create a 2/2 colorless Drone artifact creature token with deathtouch and \"When this "
+        + "token leaves the battlefield, each opponent loses 2 life and you gain 2 life.\"")]
+    // A subject that runs past the window without "who" stays out.
+    [InlineData("Scarring Memories", "Sorcery — Lesson",
+        "You may cast this spell as though it had flash if you control an attacking legendary creature.\n"
+        + "Target opponent sacrifices a creature of their choice, discards a card, and loses 3 life.")]
+    // A token copy given haste is not the Viashino's burn.
+    [InlineData("Kiki-Jiki, Mirror Breaker", "Legendary Creature — Goblin Shaman",
+        "Haste\n{T}: Create a token that's a copy of target nonlegendary creature you control, except it has "
+        + "haste. Sacrifice it at the beginning of the next end step.")]
+    public void Classify_TheOctoberBurnMisreadings_AreNotBurn(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
     // LandDestruction, widened 2026-09-19. The land is almost never alone in the
     // sentence: it sits in a type list, behind a count, or beside a second target,
     // and the old {0,2} filler words could not cross a comma to reach it.

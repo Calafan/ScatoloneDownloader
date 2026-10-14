@@ -1009,6 +1009,16 @@ namespace ScatoloneDownloader.Cube
                     // (Cleansing charges one per land destroyed).
                     Rx(@"unless (?:that player|they|any player|its controller) pays? (?:[2-9]|\d\d+|x) life"
                         + @"|for each[^\n.]{0,70}unless (?:that player|they|any player|its controller) pays? [\dX]+ life"),
+                    // …and the same charge handed in quotes to the creature an
+                    // Aura is on, whose controller is the "you" who pays every
+                    // upkeep (Morgul-Knife Wound, 2026-10-14).
+                    Rx(@"enchanted creature\b[^""\n]{0,40}\bhas ""[^""\n]*\bunless you pay (?:[2-9]|\d\d+|x) life"),
+                    // A hasty TOKEN gone at the next end step is the Viashino's
+                    // burn made by another card, ruled 2026-10-14 for the whole
+                    // family ("tutta la famiglia Burn"): Urabrask's Forge, and
+                    // Balduvian Dead and Daring Piracy handed back with it. A
+                    // token COPY ("except it has haste") is not this.
+                    Rx(@"\btokens? with [^""\n.]*\bhaste\b[^\n]{0,120}?\b(?:sacrifice|exile) (?:it|that token|them|those tokens) at the beginning of the next end step"),
                     // "Loses 1 life FOR EACH card type" is not the one-point rider
                     // the threshold above refuses — the count is what it is
                     // multiplied by (Polluted Cistern, Fandaniel). The subject is
@@ -1266,10 +1276,12 @@ namespace ScatoloneDownloader.Cube
         // also settles the one split this family had — Orcish Mine charges the
         // controller two for the land it just destroyed and is tagged, Icequake
         // and Stench of Evil do the same and were not.
+        // EXCESS damage handed on to the controller is not a charge for the
+        // kill but the burn that goes past it (Gandalf's Sanction, 2026-10-14).
         private static readonly Regex ChargesForAKillItJustMade = Rx(
             @"(?:destroy|exile|deals? [\dX]+ damage to target creature"
             + @"|damage equal to [\w' ]{0,25}to itself)"
-            + @"[\s\S]{0,160}(?:deals? )?(?:[\dX]+|that much|half [\dX]+)? ?damage"
+            + @"[\s\S]{0,160}(?:deals? )?(?:[\dX]+|that much|half [\dX]+)? ?(?<!\bexcess )damage"
             + @"[\w ,'-]{0,40}to (?:that|the) (?:creature|artifact|permanent|spell)'s controller");
 
         // Damage a TOKEN does, printed inside the quotes the token is created
@@ -1285,10 +1297,11 @@ namespace ScatoloneDownloader.Cube
         // read once the repeated one-point drain became Burn (2026-09-29): Keimi,
         // the Frog token Tatsunari makes, drains on every enchantment spell, and
         // that is the Frog's, the same evening the human ruled Smaug's Treasures
-        // Smaug's and not There and Back Again's.
+        // Smaug's and not There and Back Again's. A keyword may come before the
+        // quotes (Kaito, Dancing Shadow's Drone "with deathtouch and", 2026-10-14).
         private static readonly Regex DamageFromSomethingItMade = Rx(
             @"""[^""]{0,160}\bthis (?:token|emblem)[^""]{0,60}deals? [\dX]+ damage"
-            + @"|\btokens? with ""[^""]{0,200}\bloses? [\dX]+ life[^""]*""");
+            + @"|\btokens? with (?:[\w ,]{0,40} and )?""[^""]{0,200}\bloses? [\dX]+ life[^""]*""");
 
         // Removal's side of the same question, narrower: the ONE point a token
         // pings for is the token's (the Devil that dies — Ob Nixilis, the
