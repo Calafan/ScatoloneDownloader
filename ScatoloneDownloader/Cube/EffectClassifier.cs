@@ -372,6 +372,13 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Removal;
             }
 
+            // …nor the one-point ping of a token it makes. See TokenPing.
+            if (result.HasFlag(CardEffect.Removal) && TokenPing.IsMatch(text)
+                && !Classify(new OneAbility(card, TokenPing.Replace(text, " "))).HasFlag(CardEffect.Removal))
+            {
+                result &= ~CardEffect.Removal;
+            }
+
             // REMINDER TEXT does not lock anybody down. Primal Clay explains
             // defender with "(A creature with defender can't attack.)" and
             // Balduvian Shaman prints a worked EXAMPLE of text-changing that

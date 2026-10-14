@@ -6836,6 +6836,177 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // A creature SHUFFLED into its owner's library, from a spell or an ability.
+    [InlineData("This Is How It Ends", "Instant",
+        "Target creature's owner shuffles it into their library, then faces a villainous choice — They lose "
+        + "5 life, or they shuffle another creature they own into their library.")]
+    [InlineData("Zoyowa's Justice", "Instant",
+        "The owner of target artifact or creature with mana value 1 or greater shuffles it into their "
+        + "library. Then that player discovers X, where X is its mana value. (They exile cards from the top of "
+        + "their library until they exile a nonland card with that mana value or less. They cast it without "
+        + "paying its mana cost or put it into their hand. They put the rest on the bottom in a random order.)")]
+    [InlineData("Blink", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after IV.)\nI, III — "
+        + "Choose target creature. Its owner shuffles it into their library, then investigates. (They create a "
+        + "Clue token.)\nII, IV — Create a 2/2 black Alien Angel artifact creature token with first strike, "
+        + "vigilance, and \"Whenever an opponent casts a creature spell, this token isn't a creature until end "
+        + "of turn.\"")]
+    // The edict that EXILES, the one offered as a villainous choice, and the
+    // life-or-creature price every player pays.
+    [InlineData("Blot Out", "Instant",
+        "Target opponent exiles a creature or planeswalker they control with the greatest mana value among "
+        + "creatures and planeswalkers they control.")]
+    [InlineData("Midnight Crusader Shuttle", "Artifact — Vehicle",
+        "Midnight Entity — Whenever this Vehicle attacks, defending player faces a villainous choice — That "
+        + "player sacrifices a creature of their choice, or you gain control of a creature of your choice that "
+        + "player controls until end of turn. If you gain control of a creature this way, tap it, and it's "
+        + "attacking that player.\nCrew 2")]
+    [InlineData("Bellowing Mauler", "Creature — Ogre Warrior",
+        "At the beginning of your end step, each player loses 4 life unless they sacrifice a nontoken "
+        + "creature of their choice.")]
+    // A creature that stops being one: a Treasure, a Clue, a face-down 2/2.
+    [InlineData("Kitesail Larcenist", "Creature — Human Pirate",
+        "Flying, ward {1}\nWhen this creature enters, for each player, choose up to one other target "
+        + "artifact or creature that player controls. For as long as this creature remains on the battlefield, "
+        + "the chosen permanents become Treasure artifacts with \"{T}, Sacrifice this artifact: Add one mana "
+        + "of any color\" and lose all other abilities.")]
+    [InlineData("In Too Deep", "Enchantment — Aura",
+        "Split second (As long as this spell is on the stack, players can't cast spells or activate "
+        + "abilities that aren't mana abilities.)\nEnchant creature, planeswalker, or Clue\nEnchanted "
+        + "permanent is a colorless Clue artifact with \"{2}, Sacrifice this artifact: Draw a card\" and loses "
+        + "all other abilities. (It's no longer a creature or planeswalker.)")]
+    [InlineData("Cyber Conversion", "Instant",
+        "Turn target creature face down. It's a 2/2 Cyberman artifact creature.")]
+    // Damage whose amount is written any other way.
+    [InlineData("Fires of Victory", "Instant",
+        "Kicker {2}{U} (You may pay an additional {2}{U} as you cast this spell.)\nIf this spell was kicked, "
+        + "draw a card. Fires of Victory deals damage to target creature or planeswalker equal to the number "
+        + "of cards in your hand.")]
+    [InlineData("Spinning Wheel Kick", "Sorcery",
+        "Target creature you control deals damage equal to its power to each of X target creatures and/or "
+        + "planeswalkers.")]
+    [InlineData("Borborygmos and Fblthp", "Legendary Creature — Cyclops Homunculus",
+        "Whenever Borborygmos and Fblthp enters or attacks, draw a card, then you may discard any number of "
+        + "land cards. When you discard one or more cards this way, Borborygmos and Fblthp deals twice that "
+        + "much damage to target creature.\n{1}{U}: Put Borborygmos and Fblthp into its owner's library third "
+        + "from the top.")]
+    [InlineData("The Sea Devils", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI, II — "
+        + "Create a 2/2 green Alien Salamander creature token with islandwalk. (It can't be blocked as long as "
+        + "defending player controls an Island.)\nIII — Until end of turn, whenever a Salamander deals combat "
+        + "damage to a player, it deals that much damage to target creature that player controls.")]
+    [InlineData("Invasion of Regatha", "Battle — Siege",
+        "(As a Siege enters, choose an opponent to protect it. You and others can attack it. When it's "
+        + "defeated, exile it, then cast it transformed.)\nWhen this Siege enters, it deals 4 damage to "
+        + "another target battle or opponent and 1 damage to up to one target creature.\nProwess (Whenever you "
+        + "cast a noncreature spell, this creature gets +1/+1 until end of turn.)\nIf a noncreature source you "
+        + "control would deal damage to a creature, battle, or opponent, it deals that much damage plus 2 "
+        + "instead.")]
+    [InlineData("Chandra, Hope's Beacon", "Legendary Planeswalker — Chandra",
+        "Whenever you cast an instant or sorcery spell, copy it. You may choose new targets for the copy. "
+        + "This ability triggers only once each turn.\n+2: Add two mana in any combination of colors.\n+1: "
+        + "Exile the top five cards of your library. Until the end of your next turn, you may cast an instant "
+        + "or sorcery spell from among those exiled cards.\n−X: Chandra deals X damage to each of up to two "
+        + "targets.")]
+    [InlineData("Jaya's Immolating Inferno", "Legendary Sorcery",
+        "(You may cast a legendary sorcery only if you control a legendary creature or planeswalker.)\nJaya's "
+        + "Immolating Inferno deals X damage to each of up to three targets.")]
+    // A creature that stops being one, continued: a Treasure from a −2, a Food
+    // from an Aura (Sugar Coat, In Too Deep's twin).
+    [InlineData("Vraska, Betrayal's Sting", "Legendary Planeswalker — Vraska",
+        "−2: Target creature becomes a Treasure artifact with \"{T}, Sacrifice this artifact: Add one mana "
+        + "of any color\" and loses all other card types and abilities.")]
+    [InlineData("Sugar Coat", "Enchantment — Aura",
+        "Flash\nEnchant creature or Food\nEnchanted permanent is a colorless Food artifact with \"{2}, {T}, "
+        + "Sacrifice this artifact: You gain 3 life\" and loses all other card types and abilities.")]
+    // An Aura that can exile what it holds; a phasing that lasts as long as
+    // the card does.
+    [InlineData("Cooped Up", "Enchantment — Aura",
+        "Enchant creature\nEnchanted creature can't attack or block.\n{2}{W}: Exile enchanted creature.")]
+    [InlineData("The Phasing of Zhalfir", "Enchantment — Saga",
+        "Read ahead (Choose a chapter and start with that many lore counters. Add one after your draw step. "
+        + "Skipped chapters don't trigger. Sacrifice after III.)\nI, II — Another target nonland permanent "
+        + "phases out. It can't phase in for as long as you control this Saga.\nIII — Destroy all creatures. "
+        + "For each creature destroyed this way, its controller creates a 2/2 black Phyrexian creature token.")]
+    [InlineData("Oubliette", "Enchantment",
+        "When this enchantment enters, target creature phases out until this enchantment leaves the "
+        + "battlefield. Tap that creature as it phases in this way. (Auras and Equipment phase out with it. "
+        + "While permanents are phased out, they're treated as though they don't exist.)")]
+    // Sentinel: TWO points from a token that leaves still kill something.
+    [InlineData("Weapons Manufacturing", "Enchantment",
+        "Whenever a nontoken artifact you control enters, create a colorless artifact token named Munitions "
+        + "with \"When this token leaves the battlefield, it deals 2 damage to any target.\"")]
+    public void Classify_TheOctoberRemovalGaps_AreRemoval(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
+    // A CARD exiled from a graveyard, however long the sentence runs.
+    [InlineData("Armored Scrapgorger", "Creature — Phyrexian Beast",
+        "This creature gets +3/+0 as long as it has three or more oil counters on it.\n{T}: Add one mana of "
+        + "any color.\nWhenever this creature becomes tapped, exile target card from a graveyard and put an "
+        + "oil counter on this creature.")]
+    [InlineData("Lobelia Sackville-Baggins", "Legendary Creature — Halfling Citizen",
+        "Flash\nMenace\nWhen Lobelia enters, exile target creature card from an opponent's graveyard that "
+        + "was put there from the battlefield this turn, then create X Treasure tokens, where X is the exiled "
+        + "card's power.")]
+    // A blink of any creature, and of one you own.
+    [InlineData("Twining Twins", "Creature — Faerie Wizard",
+        "Flying, vigilance, ward {1}\nExile target nontoken creature. Return it to the battlefield under its "
+        + "owner's control at the beginning of the next end step.")]
+    [InlineData("Slip On the Ring", "Instant",
+        "Exile target creature you own, then return it to the battlefield under your control. The Ring "
+        + "tempts you.")]
+    [InlineData("Northampton Farm", "Land",
+        "{T}: Add {C}.\n{1}, {T}: Exile target creature you own.\n{2}, {T}, Sacrifice this land: Return a "
+        + "creature card exiled with this land to the battlefield under your control. Return each other card "
+        + "exiled with this land to its owner's hand.")]
+    // The Devil's one-point ping is the Devil's.
+    [InlineData("Pugnacious Pugilist", "Creature — Ogre Warrior",
+        "Whenever this creature attacks, create a tapped and attacking 1/1 red Devil creature token with "
+        + "\"When this token dies, it deals 1 damage to any target.\"\nBlitz {3}{R} (If you cast this spell "
+        + "for its blitz cost, it gains haste and \"When this creature dies, draw a card.\" Sacrifice it at "
+        + "the beginning of the next end step.)")]
+    // Sentinels: a phasing held by a TAPPED artifact is a tapper's lock; the
+    // price of "a creature, artifact, or land" is not an edict; an Aura that
+    // exiles its creature AND ITS AURAS is a blink.
+    [InlineData("The Pandorica", "Legendary Artifact",
+        "You may choose not to untap The Pandorica during your untap step.\n{1}{W}, {T}: Untap another "
+        + "target nonland permanent, then it phases out. It can't phase in for as long as The Pandorica "
+        + "remains tapped. When The Pandorica becomes untapped or leaves the battlefield, that permanent "
+        + "phases in. Activate only as a sorcery.")]
+    [InlineData("Tomb of Annihilation", "Dungeon",
+        "Trapped Entry — Each player loses 1 life. (Leads to: Veils of Fear, Oubliette)\nVeils of Fear — "
+        + "Each player loses 2 life unless they discard a card. (Leads to: Sandfall Cell)\nSandfall Cell — "
+        + "Each player loses 2 life unless they sacrifice a creature, artifact, or land of their choice. "
+        + "(Leads to: Cradle of the Death God)\nOubliette — Discard a card and sacrifice a creature, an "
+        + "artifact, and a land. (Leads to: Cradle of the Death God)\nCradle of the Death God — Create The "
+        + "Atropal, a legendary 4/4 black God Horror creature token with deathtouch.")]
+    [InlineData("Flickerform", "Enchantment — Aura",
+        "Enchant creature\n{2}{W}{W}: Exile enchanted creature and all Auras attached to it. At the "
+        + "beginning of the next end step, return that card to the battlefield under its owner's control. If "
+        + "you do, return the other cards exiled this way to the battlefield under their owners' control "
+        + "attached to that creature.")]
+    public void Classify_TheOctoberRemovalGaps_AreNotRemoval(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
+    }
+
+    [Fact]
+    public void Classify_AnExileItsOwnerMayPlayFrom_IsBounceNotRemoval()
+    {
+        // The card is as good as back in its owner's hand (2026-10-09).
+        var effect = EffectClassifier.Classify(MakeCard("Extraordinary Journey", "Enchantment",
+            "When this enchantment enters, exile up to X target creatures. For each of those cards, its owner "
+            + "may play it for as long as it remains exiled.\nWhenever one or more nontoken creatures enter, if "
+            + "one or more of them entered from exile or was cast from exile, you draw a card. This ability "
+            + "triggers only once each turn."));
+        Assert.True(effect.HasFlag(CardEffect.Bounce));
+        Assert.False(effect.HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
     // CUMULATIVE UPKEEP paid in CARDS draws one more every turn it survives,
     // and it is written where a cost goes, so no rule was looking there.
     [InlineData("Psychic Vortex", "Enchantment",

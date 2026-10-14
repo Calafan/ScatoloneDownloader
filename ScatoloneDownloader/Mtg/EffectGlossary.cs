@@ -31,9 +31,9 @@
 
             [CardEffect.Removal] =
                 "Answers ONE creature: destroy, exile, damage however counted, fight, an edict (one each counts), "
-                + "the BOTTOM of a library, or ANY toughness malus — \"+2/-1\" counts, an Aura counts. Not "
-                + "YOUR OWN, not a card in a GRAVEYARD, not \"-2/-0\" (Pacify), not \"each creature\" (Wipe), "
-                + "not what can only touch what it is already blocking.",
+                + "INTO a library, made a Treasure, or ANY toughness malus — \"+2/-1\" counts. Not YOUR OWN, not a "
+                + "BLINK, not a card in a GRAVEYARD, not \"-2/-0\" (Pacify), not \"each creature\" (Wipe), not a "
+                + "token's 1-point ping, not what can only touch its blocker.",
 
             [CardEffect.Counter] =
                 "Answers a spell on the stack — countered, or taken off it to its owner's hand, to exile or into "

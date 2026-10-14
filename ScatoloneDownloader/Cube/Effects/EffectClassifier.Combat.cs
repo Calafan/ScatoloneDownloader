@@ -182,16 +182,29 @@ namespace ScatoloneDownloader.Cube
         // Every clause that points a destroy or an exile at a creature, with
         // enough of the tail to see WHOSE creature it is and WHERE it is. Used by
         // the guard below, which asks whether any of them is a real answer.
+        // The tail may run on into the NEXT sentence by exactly one thing: the
+        // creature handed back, to the battlefield or to its owner's hand.
         private static readonly Regex AimedAtACreature = Rx(
-            @"(?:destroy|exile) (?:[\w -]{0,20})?target[\w ,'-]{0,45}(?<!non)creature[\w ,'-]{0,30}");
+            @"(?:destroy|exile) (?:[\w -]{0,20})?target[\w ,'-]{0,45}(?<!non)creature[\w ,'-]{0,30}"
+            + @"(?:\. (?:return (?:it|that card|them|those cards)\b|for each of those cards, its owner may play it\b))?");
 
         // Two ways a clause that reads like a kill answers nothing. YOUR OWN
         // creature is a blink, a sacrifice outlet or a way to hide it from a
         // Wrath — Cold Storage, Safe Haven, Niko and Y'shtola all exile one and
         // hand it back. And a creature CARD IN A GRAVEYARD is already dead, so
         // Eater of the Dead and Summoner's Sending are graveyard hate.
+        // Read again 2026-10-14 from the sitting of 10-06..10-10, three more:
+        // the creature YOU OWN is yours too (Northampton Farm, Sword of Hearth
+        // and Home; Slip On the Ring hands its back as well); a creature card
+        // FROM a graveyard is one even when the tail is cut before the word
+        // "graveyard" (Lobelia Sackville-Baggins, "from an opponent's
+        // graveyard"); and ANY creature exiled and RETURNED is a blink, not an
+        // answer — Twining Twins, The Eternal Wanderer and Explosive Getaway,
+        // 3 of 3 by hand — as is one whose owner may play it from exile
+        // (Extraordinary Journey, Bounce by hand).
         private static readonly Regex AnswersNobody = Rx(
-            @"you control|cards? (?:from|in)[\w ']{0,25}graveyard");
+            @"you control|you own|cards? (?:from|in)[\w ']{0,25}graveyard|\bcreature cards? from\b"
+            + @"|\breturn (?:it|that card|them|those cards)\b|\bits owner may play it\b");
 
         // It comes back: a blink is not an answer.
         private static readonly Regex ReturnsItToPlay = Rx(
@@ -217,12 +230,15 @@ namespace ScatoloneDownloader.Cube
         //     Team-Up), "to UP TO ONE OTHER target creature" (Venom Blast), "to
         //     EACH OF TWO OTHER target creatures" (Betrayal at the Vault), "to ANY
         //     OTHER target" (Screaming Nemesis), or back at itself.
+        // Read again 2026-10-14: "to each of X target creatures" (Spinning
+        // Wheel Kick) and "to target creature OR PLANESWALKER equal to" (Fires
+        // of Victory).
         private static readonly Regex DamageEqualTo = Rx(
             @"deals? damage equal to [\w' ,\-]{0,110}to (?:any (?:other )?target|itself"
-            + @"|(?:each of )?(?:two |three )?(?:any |another |other |up to \w+ )*target[\w ,'-]{0,30}creature"
+            + @"|(?:each of )?(?:two |three |X )?(?:any |another |other |up to \w+ )*target[\w ,'-]{0,30}creature"
             + @"|that creature(?!'s))"
             + @"|deals? damage to (?:itself|any (?:other )?target|that creature(?!'s)"
-            + @"|target[\w ,'-]{0,30}creature) equal to");
+            + @"|target[\w ,'-]{0,30}creature(?: or planeswalker)?) equal to");
 
         // A shrink is an answer: a creature whose toughness reaches zero dies just
         // as surely as one that is destroyed, and the two vocabularies for it are

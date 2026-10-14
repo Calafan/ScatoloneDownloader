@@ -213,14 +213,23 @@ namespace ScatoloneDownloader.Cube
                 // ends in "creature", so "destroy target noncreature artifact"
                 // (Gorilla Shaman, Joven) read as a kill. Same shape as tap/untap.
                 (CardEffect.Removal, [
-                    Rx(@"destroy target[\w ]*(?<!non)creature"), Rx(@"exile target[\w ]*(?<!non)creature"),
+                    // The exile filler may not cross a CARD: "exile target card
+                    // from a graveyard and put an oil counter on this creature"
+                    // (Armored Scrapgorger) found its creature at the far end.
+                    Rx(@"destroy target[\w ]*(?<!non)creature"), Rx(@"exile target(?:(?! cards?\b)[\w ])*(?<!non)creature"),
                     Rx(@"destroy target[\w ]*((?<!non)creature|planeswalker)"),
                     // The AMOUNT is written as freely as the target: "half X damage,
                     // rounded down" (Banshee), "X plus 1 damage" (Meteor Shower). And
                     // "any target" has two more spellings — "any OTHER target"
                     // (Self-Destruct) and "EACH OF X targets" (Firestorm).
+                    // "Each of UP TO two targets" too (Chandra, Hope's Beacon's −X),
+                    // read 2026-10-14.
                     Rx(@"deals? (?:half )?[\dX]+(?: plus \d+)? damage(?:, rounded (?:down|up),)? "
-                        + @"to (?:any (?:other )?target|that creature(?!'s)|each of [\dX]+ targets)"),
+                        + @"to (?:any (?:other )?target|that creature(?!'s)|each of (?:up to )?(?:[\dX]+|two|three) targets)"),
+                    // The SECOND half of a split shot, which has no "deals" of its
+                    // own: "4 damage to another target battle or opponent AND 1
+                    // damage to up to one target creature" (Invasion of Regatha).
+                    Rx(@"\band [\dX]+ damage to (?:up to one )?target [\w ]{0,20}(?<!non)creature"),
                     // The damage rules could not read a QUALIFIED target — "damage to
                     // target ATTACKING creature", "to target creature AN OPPONENT
                     // CONTROLS" — which was 23 of the misses on its own, and the
@@ -232,7 +241,13 @@ namespace ScatoloneDownloader.Cube
                     Rx(@"deals? [\dX]+ damage to [\w ]{0,20}target [\w -]{0,28}(?<!non)creature"),
                     // "That much damage" is an amount too — Screaming Nemesis hands
                     // back whatever it was dealt.
-                    Rx(@"deals? that much damage to any (?:other )?target"),
+                    // And at a target CREATURE, however the amount was reached —
+                    // "twice that much" for the lands discarded (Borborygmos and
+                    // Fblthp), the counters removed (Arcee, Sharpshooter), the
+                    // combat damage just dealt (The Sea Devils). Ruled 2026-10-14,
+                    // "Tutte Removal".
+                    Rx(@"deals? that much damage to any (?:other )?target"
+                        + @"|deals? (?:twice )?that much damage to target [\w ]{0,20}(?<!non)creature"),
                     Rx(@"deals damage to [\w ]{0,20}target [\w -]{0,28}(?<!non)creature equal to"),
                     // A fireball split between several things still kills one of them.
                     Rx(@"deals? (?:half )?[\dX]+(?: plus \d+)? damage divided "
@@ -255,9 +270,23 @@ namespace ScatoloneDownloader.Cube
                     // human on 2026-09-29. "UNLESS defending player sacrifices"
                     // is the opponent's choice of a price (Ogre Marauder), not
                     // an edict, and stays out.
-                    Rx(@"(?:target player|target opponent|each opponent|(?<!unless )defending player)[\w ,]{0,30}sacrifices? (?:a|an|one|two|\d+)[\w ]{0,25}(?<!non)creature"
+                    // Read 2026-10-14 from the sitting of 10-06..10-10: the edict
+                    // that EXILES ("target opponent exiles a creature they
+                    // control" — Blot Out, Debt to the Kami), the one offered as
+                    // a VILLAINOUS CHOICE (Midnight Crusader Shuttle, The Dalek
+                    // Emperor), and the life-or-creature price EACH PLAYER pays
+                    // every turn (Bellowing Mauler, Removal and Burn by hand) —
+                    // of a creature alone, so Tomb of Annihilation's "a
+                    // creature, artifact, or land" stays out. MEASURED AND
+                    // DROPPED: keeping "exiles a creature CARD" out of the
+                    // exile edict — the one card it reaches (Valki's "for each
+                    // opponent, exile a creature card") is Removal by its back
+                    // face anyway.
+                    Rx(@"(?:target player|target opponent|each opponent|(?<!unless )defending player)[\w ,]{0,30}(?:sacrifices?|exiles?) (?:a|an|one|two|\d+)[\w ]{0,25}(?<!non)creature"
                         + @"|each player sacrifices (?:a|an|one|the) [\w ]{0,25}(?<!non)creature"
-                        + @"|(?:each|target) opponent chooses (?:a|an|one) [\w ,-]{0,30}creature they control and (?:exiles|sacrifices) it"),
+                        + @"|(?:each|target) opponent chooses (?:a|an|one) [\w ,-]{0,30}creature they control and (?:exiles|sacrifices) it"
+                        + @"|villainous choice — that player sacrifices a [\w ]{0,25}(?<!non)creature"
+                        + @"|loses? [\dX]+ life unless they sacrifice a (?:nontoken )?creature\b(?!,)"),
                     // A creature that ends up in a LIBRARY is as answered as one that
                     // is destroyed, and the Auras are the only place this wording
                     // appears: The Spot's Portal puts it on the bottom, Dramatic
@@ -265,7 +294,35 @@ namespace ScatoloneDownloader.Cube
                     // in. Added 2026-09-19.
                     Rx(@"put target[\w ,'-]{0,30}(?<!non)creature[\w ,'-]{0,25}on the bottom of[\w ']{0,25}library"),
                     Rx(@"shuffles? enchanted creature into[\w ']{0,25}library"
-                        + @"|enchanted creature'?s owner shuffles it into")]),
+                        + @"|enchanted creature'?s owner shuffles it into"
+                        // …and from a spell or an ability, read 2026-10-14 (4 of 4 in
+                        // the sitting of 10-09): "target creature's owner shuffles it
+                        // into" (This Is How It Ends, Ominous Cemetery), "the owner of
+                        // target artifact or creature … shuffles it" (Zoyowa's
+                        // Justice), "choose target creature. Its owner shuffles it"
+                        // (Blink).
+                        + @"|target [\w ,-]{0,40}(?<!non)creature's owner shuffles it into"
+                        + @"|owner of target [\w ,-]{0,30}(?<!non)creature[\w ,-]{0,40} shuffles it into"
+                        + @"|choose target [\w ,-]{0,30}(?<!non)creature\. its owner shuffles it into"),
+                    // A creature that stops being one is as answered: it becomes a
+                    // Treasure, a Clue or a Food (Vraska, Betrayal's Sting's −2,
+                    // Kitesail Larcenist, In Too Deep), or a face-down 2/2 with
+                    // nothing printed on it (Cyber Conversion). Read 2026-10-14.
+                    Rx(@"target [\w ,-]{0,40}creature becomes a (?:Treasure|Clue|Food)\b"
+                        + @"|chosen permanents become (?:Treasure|Clue|Food)\b"
+                        + @"|enchanted (?:permanent|creature) is a colorless (?:Treasure|Clue|Food)\b"
+                        + @"|turn target [\w ,-]{0,30}(?<!non)creature face down"),
+                    // Phased out for as long as the card that did it stays, the
+                    // way an O-ring exiles (Oubliette, The Phasing of Zhalfir).
+                    // "For as long as The Pandorica REMAINS TAPPED" is a tapper's
+                    // lock and Pacify's, by hand.
+                    Rx(@"target [\w ,-]{0,30}(?:creature|permanent) phases out"
+                        + @"(?: until [\w' ]{0,40}leaves the battlefield|\. it can't phase in for as long as you control)"),
+                    // An Aura that can EXILE what it holds, for a price (Cooped
+                    // Up, Redemption Arc, Utter Insignificance: 3 of 4 by hand).
+                    // The full stop keeps Flickerform's "exile enchanted creature
+                    // AND ALL AURAS" — a blink of your own — out.
+                    Rx(@": exile enchanted creature\.")]),
 
                 // The stack answer, whatever it answers. Read 2026-10-13 from the
                 // sitting of 10-06..10-11: an ABILITY countered is the same
@@ -414,7 +471,11 @@ namespace ScatoloneDownloader.Cube
                     // returned to its owner's HAND is bounced, if late (Aurelia's
                     // Vindicator, The Spot — ruled Bounce and Regrowth, 2026-09-29).
                     Rx(@"exile (?:up to (?:\w+|x) )?(?:other )?target (?:nonland permanents?|creatures?)[\s\S]{0,250}"
-                        + @"return the exiled cards to their owners' hands")]),
+                        + @"return the exiled cards to their owners' hands"),
+                    // …and one its OWNER MAY PLAY for as long as it stays exiled is
+                    // the same card back in hand (Extraordinary Journey, Bounce by
+                    // hand, 2026-10-09). Read 2026-10-14.
+                    Rx(@"exile (?:up to (?:\w+|x) )?target [\w ]{0,30}creatures?\.[^.\n]{0,30}\bits owner may play it for as long as it remains exiled")]),
 
                 // The old rule was two lines of `destroy target[\w ]*(artifact|
                 // enchantment)`, and that `[\w ]*` was free to run the length of the
@@ -1228,6 +1289,16 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex DamageFromSomethingItMade = Rx(
             @"""[^""]{0,160}\bthis (?:token|emblem)[^""]{0,60}deals? [\dX]+ damage"
             + @"|\btokens? with ""[^""]{0,200}\bloses? [\dX]+ life[^""]*""");
+
+        // Removal's side of the same question, narrower: the ONE point a token
+        // pings for is the token's (the Devil that dies — Ob Nixilis, the
+        // Adversary, Pugnacious Pugilist, Spiked Corridor, 3 of 3 by hand).
+        // Two or three points from a token that enters or leaves still kill
+        // something and stay (Roxanne's Meteorite, Dragonbroods' Relic,
+        // Weapons Manufacturing). Read 2026-10-14; the whole quote is taken,
+        // so the card is asked again without it.
+        private static readonly Regex TokenPing = Rx(
+            @"""[^""]{0,160}\bthis token[^""]{0,60}deals? 1 damage[^""]*""");
 
         // A SPELL that only sets up damage on the NEXT spells you cast removes
         // nothing by itself, ruled 2026-10-13 on Season of the Bold ("di suo
