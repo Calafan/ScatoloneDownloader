@@ -197,8 +197,9 @@ namespace ScatoloneDownloader.Cube
             Rx(@"counter target spell[\s\S]{0,180}onto the battlefield (?:tapped )?under your control"),
             // Enchantment Alteration moves somebody else's Aura onto a permanent
             // of your choosing — theft of the Aura's job if not of its control.
-            // Ruled 2026-09-19.
-            Rx(@"attach (?:target|enchanted) aura"),
+            // Ruled 2026-09-19. Moving an Aura "you control" is your own, though:
+            // Codsworth re-equips, and was tagged Ramp alone.
+            Rx(@"attach (?:target|enchanted) aura(?![\w ]{0,40} you control to )"),
         ];
 
         /// <summary>Reanimating out of an OPPONENT'S graveyard is both Reanimate
@@ -230,23 +231,37 @@ namespace ScatoloneDownloader.Cube
             @"(?:target opponent|an opponent|each opponent|that opponent|target player|that player"
             + @"|defending player|another player|each player|opponent'?s|player'?s)"
             + @"[\w ,'\-]{0,60}(?:library|hand|graveyard)"
-            + @"|(?:library|hand|graveyard) of (?:target |an |each |that )?(?:opponent|player)"
-            // A mill IS the zone, and the only way Locke could ever be found: "each
-            // player mills a card … you may cast a spell from among those cards"
-            // never names a library at all.
-            + @"|(?:each|target|an|another|that) (?:player|opponent)[\w ,'\-]{0,20}mills?\b");
+            + @"|(?:library|hand|graveyard) of (?:target |an |each |that )?(?:opponent|player)");
+
+        /// <summary>A mill IS the zone, and the only way Locke could ever be found:
+        /// "each player mills a card … you may cast a spell from among those cards"
+        /// never names a library at all. It only pairs with YOU playing the card,
+        /// though — "each player mills two cards. Then you put a creature card from
+        /// a graveyard onto the battlefield" is Path of the Schemer reanimating
+        /// from any graveyard, which no victim was named for.</summary>
+        private static readonly Regex MillsSomebody = Rx(
+            @"(?:each|target|an|another|that) (?:player|opponent)[\w ,'\-]{0,20}mills?\b");
 
         /// <summary>Taking a CARD rather than a permanent — the other half of this
         /// tag, and 15 of the 28 cards it used to miss. It reads as two halves
         /// because either half alone is something else entirely: the zone alone is
         /// Mill, and "you may play" alone is your own impulse draw.</summary>
+        // The filler stops at "your": Virtue of Courage, Fireglass Mentor and
+        // Powerbalance name an opponent only as the trigger ("an opponent casts a
+        // spell, you may reveal the top card of YOUR library") and then play their
+        // own card. And "their library. They may play it" is the opponent playing
+        // their own: Urabrask makes them exile instead of drawing.
         private static readonly Regex SomebodyElsesZone = Rx(
             @"(?:target opponent|an opponent|each opponent|that opponent|target player|that player"
             + @"|defending player|another player|each player|opponent'?s|player'?s)"
-            + @"[\w ,'\-]{0,60}(?:library|hand|graveyard)"
-            + @"|(?:each|target|an|another|that) (?:player|opponent)[\w ,'\-]{0,20}mills?\b"
+            + @"(?:(?!\byour\b)[\w ,'\-]){0,60}(?:library|hand|graveyard)"
             + @"|(?:library|hand|graveyard) of (?:target |an |each |that )?(?:opponent|player)"
-            + @"|\btheir (?:library|hand|graveyard)\b");
+            + @"|\btheir (?:library|hand|graveyard)\b(?!\. they may (?:play|cast))");
+
+        /// <summary>A LAND out of their graveyard is Ramp, not theft — Realmbreaker
+        /// mills the opponent to find one, and was tagged Ramp alone.</summary>
+        private static readonly Regex LandCardFromAGraveyard = Rx(
+            @"land cards? from [\w' ]{0,30}graveyard");
 
         /// <summary>…and then YOU play it. Everything excluded here is a card of
         /// your own that happens to share a text with somebody else's zone: an
@@ -269,9 +284,11 @@ namespace ScatoloneDownloader.Cube
         /// Regrowth's business — Glacierwood Siege mills a player on one half and
         /// plays your own lands on the other, and only a rule reading the whole
         /// card could mistake that for a theft.</summary>
+        // Press the Enemy casts "an instant or sorcery spell with equal or lesser
+        // mana value FROM YOUR HAND", which no twenty letters could reach.
         private static readonly Regex PlaysACardYouOwn = Rx(
             @"(?:cards?|spells?) you own"
-            + @"|(?:play|cast)[\w ]{0,20}from your (?:graveyard|hand|library)");
+            + @"|(?:play|cast)[\w ]{0,70}from your (?:graveyard|hand|library)");
 
         /// <summary>The mirror image of Steal, and 12 of its 14 false positives:
         /// the card hands a permanent to somebody ELSE. It is the price Jinxed
@@ -288,7 +305,48 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex GivesControlAway = Rx(
             @"(?:target opponent|an opponent|each opponent|that opponent|another player|target player"
             + @"|that player|other players|they|the player with the most life"
-            + @"|that permanent's controller) (?:may |can't )?gains? control");
+            + @"|that permanent's controller|the attacking player|the player to your right)"
+            + @" (?:may |can't )?gains? control");
+
+        /// <summary>A token that steals is the token's, not the card's: Wake the
+        /// Dragon makes a Dragon whose combat damage takes an artifact, and was
+        /// tagged Tokens alone. The same reading as a token's ping for Removal and
+        /// Burn.</summary>
+        private static readonly Regex TokenSteals = Rx(
+            @"\btoken with [\w ,]{0,40}""[^""]*gains? control of[^""]*""");
+
+        /// <summary>Taking somebody else's CARD: their zone and you playing out of
+        /// it, or their graveyard onto your side of the board. Read one MODE at a
+        /// time — Riveteers Charm exiles a player's graveyard in one bullet and
+        /// plays your own library in another — and outside reminder text, where
+        /// an Adventure's "you may cast the creature later" and a legendary
+        /// sorcery's "you may cast" stood in for a play that never happens.</summary>
+        private static bool TakesSomebodyElsesCard(string text)
+        {
+            string spoken = Parenthetical.Replace(text, " ");
+            string[] lines = spoken.Split('\n');
+            string[] modes = lines.Where(l => l.TrimStart().StartsWith('•')).ToArray();
+            if (modes.Length == 0)
+            {
+                return TakesSomebodyElsesCard(spoken, text);
+            }
+
+            string rest = string.Join('\n', lines.Where(l => !l.TrimStart().StartsWith('•')));
+            return modes.Any(mode => TakesSomebodyElsesCard(rest + "\n" + mode, text));
+        }
+
+        // The card you own is read on the WHOLE text, reminders included: Lidless
+        // Gaze plays the top of each player's library and was tagged CardAdvantage
+        // alone, and its flashback reminder is the only thing that says so.
+        private static bool TakesSomebodyElsesCard(string spoken, string text)
+        {
+            bool yours = PlaysACardYouOwn.IsMatch(text);
+            return ((SomebodyElsesZone.IsMatch(spoken) || MillsSomebody.IsMatch(spoken))
+                    && AndPlaysThem.IsMatch(spoken) && !yours)
+                || (SomebodyElsesZone.IsMatch(LandCardFromAGraveyard.Replace(spoken, " "))
+                    && OntoYourSideOfTheBoard.IsMatch(spoken))
+                || (SomebodyElsesNamedZone.IsMatch(spoken) && AndSomebodyPlaysThem.IsMatch(spoken) && !yours);
+        }
 
         private static readonly Regex[] MillPatterns =
         [

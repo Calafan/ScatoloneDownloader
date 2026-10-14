@@ -5843,6 +5843,77 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // Steal's false positives of October 2026, every one tagged without it.
+    // The play lives in reminder text: an Adventure, a legendary sorcery.
+    [InlineData("Cruel Somnophage // Can't Wake Up", "Creature — Nightmare // Sorcery — Adventure",
+        "Cruel Somnophage's power and toughness are each equal to the number of creature cards in all "
+        + "graveyards.\nTarget player mills four cards. (Then exile this card. You may cast the creature "
+        + "later from exile.)")]
+    [InlineData("Isildur's Fateful Strike", "Legendary Instant",
+        "(You may cast a legendary instant only if you control a legendary creature or planeswalker.)\n"
+        + "Destroy target creature. If its controller has more than four cards in hand, they exile cards "
+        + "from their hand equal to the difference.")]
+    // The opponent is only the trigger; the library is YOURS.
+    [InlineData("Fireglass Mentor", "Creature — Elf Warlock",
+        "At the beginning of your second main phase, if an opponent lost life this turn, exile the top "
+        + "two cards of your library. Choose one of them. Until end of turn, you may play that card.")]
+    [InlineData("Powerbalance", "Enchantment",
+        "Whenever an opponent casts a spell, you may reveal the top card of your library. If you do, you "
+        + "may cast that card without paying its mana cost if the two spells have the same mana value.")]
+    // The opponent exiles from their own library and plays it themselves.
+    [InlineData("Urabrask, Heretic Praetor", "Legendary Creature — Phyrexian Praetor",
+        "Haste\nAt the beginning of your upkeep, exile the top card of your library. You may play it this "
+        + "turn.\nAt the beginning of each opponent's upkeep, the next time they would draw a card this "
+        + "turn, instead they exile the top card of their library. They may play it this turn.")]
+    // One bullet exiles a graveyard, another plays your own library.
+    [InlineData("Riveteers Charm", "Instant",
+        "Choose one —\n• Target opponent sacrifices a creature or planeswalker they control with the "
+        + "greatest mana value among creatures and planeswalkers they control.\n• Exile the top three cards "
+        + "of your library. Until your next end step, you may play those cards.\n• Exile target player's "
+        + "graveyard.")]
+    // A mill, then reanimation from ANY graveyard: no victim named.
+    [InlineData("Path of the Schemer", "Plane — Ravnica",
+        "Each player mills two cards. Then you put a creature card from a graveyard onto the battlefield "
+        + "under your control. It's an artifact in addition to its other types.")]
+    // A land out of their graveyard is Ramp.
+    [InlineData("Realmbreaker, the Invasion Tree", "Legendary Artifact",
+        "{2}, {T}: Target opponent mills three cards. Put a land card from their graveyard onto the "
+        + "battlefield tapped under your control. It gains \"If this land would leave the battlefield, "
+        + "exile it instead of putting it anywhere else.\"")]
+    // The spell is cast "from your hand", seventy letters on.
+    [InlineData("Press the Enemy", "Instant",
+        "Return target spell or nonland permanent an opponent controls to its owner's hand. You may cast "
+        + "an instant or sorcery spell with equal or lesser mana value from your hand without paying its "
+        + "mana cost.")]
+    // The playing of everyone's cards is told apart only by its flashback
+    // reminder — tagged CardAdvantage alone.
+    [InlineData("Lidless Gaze", "Sorcery",
+        "Exile the top card of each player's library. Until the end of your next turn, you may play those "
+        + "cards, and mana of any type can be spent to cast those spells.\nFlashback {2}{B}{R} (You may "
+        + "cast this card from your graveyard for its flashback cost. Then exile it.)")]
+    // Handing the artifact on.
+    [InlineData("Contested Game Ball", "Artifact",
+        "Whenever you're dealt combat damage, the attacking player gains control of this artifact and "
+        + "untaps it.\n{2}, {T}: Draw a card and put a point counter on this artifact. Then if it has five "
+        + "or more point counters on it, sacrifice it and create a Treasure token.")]
+    [InlineData("Hithlain Rope", "Artifact",
+        "This artifact can't be sacrificed.\n{2}, {T}: Draw a card. The player to your right gains control "
+        + "of this artifact.")]
+    // The token steals, not the card.
+    [InlineData("Wake the Dragon", "Sorcery",
+        "Create a 6/6 black and red Dragon creature token with flying, menace, and \"Whenever this token "
+        + "deals combat damage to a player, gain control of target artifact that player controls.\"")]
+    // Your own Aura, moved.
+    [InlineData("Codsworth, Handy Helper", "Legendary Artifact Creature — Robot",
+        "Commanders you control have ward {2}.\n{T}: Add {W}{W}. Spend this mana only to cast Aura and/or "
+        + "Equipment spells.\n{T}: Attach target Aura or Equipment you control to target creature you "
+        + "control. Activate only as a sorcery.")]
+    public void Classify_TheOctoberStealGaps_AreNotSteal(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Steal));
+    }
+
+    [Theory]
     // LandDestruction, widened 2026-09-19. The land is almost never alone in the
     // sentence: it sits in a type list, behind a count, or beside a second target,
     // and the old {0,2} filler words could not cross a comma to reach it.

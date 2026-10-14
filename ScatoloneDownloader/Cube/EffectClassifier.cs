@@ -907,11 +907,14 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Steal;
             }
 
-            if ((SomebodyElsesZone.IsMatch(text)
-                    && ((AndPlaysThem.IsMatch(text) && !PlaysACardYouOwn.IsMatch(text))
-                        || OntoYourSideOfTheBoard.IsMatch(text)))
-                || (SomebodyElsesNamedZone.IsMatch(text) && AndSomebodyPlaysThem.IsMatch(text)
-                    && !PlaysACardYouOwn.IsMatch(text)))
+            // No re-ask after the strip, unlike the donation above: no card both
+            // makes a thieving token and steals in its own words.
+            if (result.HasFlag(CardEffect.Steal) && TokenSteals.IsMatch(text))
+            {
+                result &= ~CardEffect.Steal;
+            }
+
+            if (TakesSomebodyElsesCard(text))
             {
                 result |= CardEffect.Steal;
             }
