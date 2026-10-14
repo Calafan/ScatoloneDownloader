@@ -6932,6 +6932,11 @@ public sealed class EffectClassifierTests
         "When this enchantment enters, target creature phases out until this enchantment leaves the "
         + "battlefield. Tap that creature as it phases in this way. (Auras and Equipment phase out with it. "
         + "While permanents are phased out, they're treated as though they don't exist.)")]
+    // Sentinel: a blink beside DAMAGE of its own keeps the damage's tag.
+    [InlineData("Immersturm", "Plane — Valla",
+        "Whenever a creature enters, that creature's controller may have it deal damage equal to its power "
+        + "to any target of their choice.\nWhenever chaos ensues, exile target creature, then return it to the "
+        + "battlefield under its owner's control.")]
     // Sentinel: TWO points from a token that leaves still kill something.
     [InlineData("Weapons Manufacturing", "Enchantment",
         "Whenever a nontoken artifact you control enters, create a colorless artifact token named Munitions "

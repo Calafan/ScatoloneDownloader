@@ -357,8 +357,12 @@ namespace ScatoloneDownloader.Cube
             // …and the same question asked of whose creature it is. Every aimed
             // clause on the card is read, and the tag only comes off when ALL of
             // them point at your own creature or at a graveyard — a card that
-            // kills one of theirs and blinks one of yours keeps it.
-            if (result.HasFlag(CardEffect.Removal) && OnlyAnswersNobody(text))
+            // kills one of theirs and blinks one of yours keeps it. And the card
+            // is asked again without those clauses, so a tag earned by DAMAGE
+            // somewhere else stays: Immersturm blinks any creature and also
+            // turns every creature that enters into a bite (2026-10-14).
+            if (result.HasFlag(CardEffect.Removal) && OnlyAnswersNobody(text)
+                && !Classify(new OneAbility(card, AimedAtACreature.Replace(text, " "))).HasFlag(CardEffect.Removal))
             {
                 result &= ~CardEffect.Removal;
             }
