@@ -223,8 +223,11 @@ namespace ScatoloneDownloader.Cube
             // exactly the card this rule is for. See the patterns above.
             // A spell's mana counts when it is the spell's point, not when it
             // rides on an answer. See SpellAddsMana and AnswersARitualRidesOn.
+            // A land sacrificing something else for one mana is not asked. See
+            // LandSacrificesAnotherForOne.
             bool spell = card.MacroType == MacroType.Spell;
-            if ((SacrificesForMana.IsMatch(text) || RitualAddsMana.IsMatch(SagaChapterLine.Replace(text, " "))
+            string sacrificedFor = card.MacroType == MacroType.Land ? LandSacrificesAnotherForOne.Replace(text, " ") : text;
+            if ((SacrificesForMana.IsMatch(sacrificedFor) || RitualAddsMana.IsMatch(SagaChapterLine.Replace(text, " "))
                     || (spell && SpellAddsMana.IsMatch(Quoted.Replace(Parenthetical.Replace(text, " "), " "))))
                 && !LandEntersTapped.IsMatch(text)
                 && !(spell && (result & AnswersARitualRidesOn) != CardEffect.None))
@@ -237,8 +240,10 @@ namespace ScatoloneDownloader.Cube
             // A trigger or a grant the card cannot fire itself is asked
             // without it (OnSomebodyElsesExplore, GrantedToTokens).
             // The table's tap rule is asked again without the grant, as it is
-            // without a land face above.
-            string ownMana = MakesTokens.IsMatch(nonLandText) ? nonLandText : GrantedToTokens.Replace(nonLandText, " ");
+            // without a land face above. One mana granted to lands is blanked
+            // the same way (OneManaGrantedToLands).
+            string ownMana = OneManaGrantedToLands.Replace(
+                MakesTokens.IsMatch(nonLandText) ? nonLandText : GrantedToTokens.Replace(nonLandText, " "), " ");
             if (ownMana != nonLandText && result.HasFlag(CardEffect.Ramp) && !TapAddsMana.IsMatch(ownMana))
             {
                 result &= ~CardEffect.Ramp;
@@ -256,7 +261,8 @@ namespace ScatoloneDownloader.Cube
                 || UntapsLands.IsMatch(text)
                 || (card.MacroType != MacroType.Land
                     && LandOntoTheBattlefield.IsMatch(ownLandDrops)
-                    && !LandForSomebodyElse.IsMatch(text) && !PaysALandForTheLand.IsMatch(text))
+                    && !LandForSomebodyElse.IsMatch(text) && !PaysALandForTheLand.IsMatch(text)
+                    && !SwapsLandsForLands.IsMatch(text))
                 || LandsBackAfterFillingTheGraveyard.IsMatch(text)
                 || (MakesAPowerstone.IsMatch(text) && !PowerstoneForSomebodyElse.IsMatch(text))
                 || TreasureAlsoRamps(text))
@@ -268,6 +274,14 @@ namespace ScatoloneDownloader.Cube
             // the tag whichever rule above granted it, and asked of the whole
             // card so that one free ability elsewhere keeps it.
             if (result.HasFlag(CardEffect.Ramp) && EveryManaAbilityIsPaidAndPoor(text))
+            {
+                result &= ~CardEffect.Ramp;
+            }
+
+            // …nor a card typed Treasure cracking itself. See TreasureItself;
+            // the card is asked again without that line.
+            if (result.HasFlag(CardEffect.Ramp) && IsATreasure(card) && TreasureItself.IsMatch(text)
+                && !Classify(new OneAbility(card, TreasureItself.Replace(text, " "))).HasFlag(CardEffect.Ramp))
             {
                 result &= ~CardEffect.Ramp;
             }
@@ -543,10 +557,12 @@ namespace ScatoloneDownloader.Cube
 
             // …nor a Treasure a token the card creates will make: that is the
             // token's. Blanked and asked again, so a card that also fixes on a
-            // line of its own keeps the tag. See TreasureATokenMakes.
-            if (result.HasFlag(CardEffect.ManaFixing) && TreasureATokenMakes.IsMatch(text))
+            // line of its own keeps the tag. See TreasureATokenMakes, and
+            // TreasureForSomebodyElse for one handed to another player.
+            if (result.HasFlag(CardEffect.ManaFixing)
+                && (TreasureATokenMakes.IsMatch(text) || TreasureForSomebodyElse.IsMatch(text)))
             {
-                string own = TreasureATokenMakes.Replace(text, " ");
+                string own = TreasureForSomebodyElse.Replace(TreasureATokenMakes.Replace(text, " "), " ");
 
                 if (!ManaFixingPatterns.Any(p => p.IsMatch(own)))
                 {
@@ -973,6 +989,15 @@ namespace ScatoloneDownloader.Cube
             // LandFetchesALand, LandOfAChosenColour and LandTapsForTwoColours.
             if (card.MacroType == MacroType.Land
                 && (LandFetchesALand.IsMatch(text) || LandOfAChosenColour.IsMatch(text) || LandTapsForTwoColours.IsMatch(text)))
+            {
+                result |= CardEffect.ManaFixing;
+            }
+
+            // Lands made every type, one land swapped for one, and a card
+            // typed Treasure fix too. See LandsOfEveryType,
+            // PaysALandForTheLand and TreasureItself.
+            if (LandsOfEveryType.IsMatch(text) || PaysALandForTheLand.IsMatch(text)
+                || (IsATreasure(card) && TreasureItself.IsMatch(text)))
             {
                 result |= CardEffect.ManaFixing;
             }

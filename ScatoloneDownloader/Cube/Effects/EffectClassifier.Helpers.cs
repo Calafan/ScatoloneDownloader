@@ -480,7 +480,8 @@ namespace ScatoloneDownloader.Cube
         private static bool TreasureAlsoRamps(string text)
         {
             text = TreasuresForExcessDamage.Replace(
-                TreasureReminderText.Replace(TreasureATokenMakes.Replace(text, " "), " "), " ");
+                TreasureReminderText.Replace(
+                    TreasureForSomebodyElse.Replace(TreasureATokenMakes.Replace(text, " "), " "), " "), " ");
 
             return MakesATreasure.IsMatch(text)
                 && (SeveralTreasures.IsMatch(text) || ActivatedTreasureMaker.IsMatch(text)
@@ -555,9 +556,13 @@ namespace ScatoloneDownloader.Cube
             return sawFixer;
         }
 
-        /// <summary>The card's text without the LAND FACE of a modal
-        /// double-faced card whose back is a land and whose front is not.
-        /// See LandFaceStarts.</summary>
+        /// <summary>True when the card is TYPED Treasure. See TreasureItself.</summary>
+        private static bool IsATreasure(Card card) =>
+            (card.TypeLine ?? string.Empty).Contains("Treasure", StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>The card's text without the LAND FACE of a double-faced
+        /// card whose back is a land and whose front is not — modal, or since
+        /// 2026-10-15 transformed. See LandFaceStarts.</summary>
         private static string WithoutALandFace(Card card, string text)
         {
             string[] faces = (card.TypeLine ?? string.Empty).Split(" // ");
@@ -567,8 +572,16 @@ namespace ScatoloneDownloader.Cube
                 return text;
             }
 
+            // A land face that taps for MORE than one stays: The Core, Ramp and
+            // ManaFixing by the 2026-10-13 ruling, and Gold-Forge Garrison.
             Match land = LandFaceStarts.Match(text);
-            return land.Success ? text[..land.Index] : text;
+            if (!land.Success)
+            {
+                return text;
+            }
+
+            string face = text[land.Index..];
+            return LandTapsForMoreThanOne.IsMatch(face) || LandFaceTapsForSeveral.IsMatch(face) ? text : text[..land.Index];
         }
 
         /// <summary>True when the line sacrifices a TOKEN for its mana and the

@@ -6440,6 +6440,225 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // The Ramp and ManaFixing gaps of the 2026-10-13 plan, read 2026-10-15.
+    // A discount for other spells in colour, with a fallback, or of {X} (ruled 2026-10-15).
+    [InlineData("Defiler of Flesh", "Creature — Phyrexian Horror", CardEffect.Ramp,
+        "Menace\nAs an additional cost to cast black permanent spells, you may pay 2 life. Those spells cost "
+        + "{B} less to cast if you paid life this way. This effect reduces only the amount of black mana you "
+        + "pay.\nWhenever you cast a black permanent spell, target creature you control gets +1/+1 and gains "
+        + "menace until end of turn.")]
+    [InlineData("Eluge, the Shoreless Sea", "Legendary Creature — Elemental Fish", CardEffect.Ramp,
+        "Eluge's power and toughness are each equal to the number of Islands you control.\nWhenever Eluge "
+        + "enters or attacks, put a flood counter on target land. It's an Island in addition to its other types "
+        + "for as long as it has a flood counter on it.\nThe first instant or sorcery spell you cast each turn "
+        + "costs {U} (or {1}) less to cast for each land you control with a flood counter on it.")]
+    [InlineData("Will, Scion of Peace", "Legendary Creature — Human Wizard", CardEffect.Ramp,
+        "Vigilance\n{T}: Spells you cast this turn that are white and/or blue cost {X} less to cast, where X "
+        + "is the amount of life you gained this turn. Activate only as a sorcery.")]
+    // A colour chosen first, mana handed to "target player", more than five.
+    [InlineData("Radiant Lotus", "Artifact", CardEffect.Ramp,
+        "{T}, Sacrifice one or more artifacts: Choose a color. Target player adds three mana of the chosen "
+        + "color for each artifact sacrificed this way. (Activate only as an instant.)")]
+    [InlineData("The Warring Triad", "Legendary Artifact Creature — God", CardEffect.Ramp,
+        "Flying, trample, haste\nAs long as there are fewer than eight cards in your graveyard, The Warring "
+        + "Triad isn't a creature.\n{T}, Mill a card: Target player adds one mana of any color. (Activate only "
+        + "as an instant.)")]
+    [InlineData("The Aetherspark", "Legendary Artifact Planeswalker — Equipment", CardEffect.Ramp,
+        "As long as The Aetherspark is attached to a creature, The Aetherspark can't be attacked and has "
+        + "\"Whenever equipped creature deals combat damage during your turn, put that many loyalty counters on "
+        + "The Aetherspark.\"\n+1: Attach The Aetherspark to up to one target creature you control. Put a +1/+1 "
+        + "counter on that creature.\n−5: Draw two cards.\n−10: Add ten mana of any one color.")]
+    // Ten Treasures; mana tripled or doubled.
+    [InlineData("Ancient Adamantoise", "Creature — Turtle", CardEffect.Ramp,
+        "Vigilance, ward {3}\nDamage isn't removed from this creature during cleanup steps.\nAll damage that "
+        + "would be dealt to you and other permanents you control is dealt to this creature instead.\nWhen this "
+        + "creature dies, exile it and create ten tapped Treasure tokens.")]
+    [InlineData("Virtue of Strength // Garenbrig Growth", "Enchantment // Sorcery — Adventure", CardEffect.Ramp,
+        "If you tap a basic land for mana, it produces three times as much of that mana instead.\nReturn "
+        + "target creature or land card from your graveyard to your hand. (Then exile this card. You may cast "
+        + "the enchantment later from exile.)")]
+    [InlineData("Mana Reflection", "Enchantment", CardEffect.Ramp,
+        "If you tap a permanent for mana, it produces twice as much of that mana instead.")]
+    // A land creature token; copies of a target land.
+    [InlineData("Awaken the Woods", "Sorcery", CardEffect.Ramp,
+        "Create X 1/1 green Forest Dryad land creature tokens. (They're affected by summoning sickness.)")]
+    [InlineData("Rebuild the City", "Sorcery", CardEffect.Ramp,
+        "Choose target land. Create three tokens that are copies of it, except they're 3/3 creatures in "
+        + "addition to their other types and they have vigilance and menace. (They're affected by summoning "
+        + "sickness.)")]
+    // A transformed land face that taps for more than one.
+    [InlineData("Matzalantli, the Great Door // The Core", "Legendary Artifact // Legendary Land", CardEffect.Ramp,
+        "{T}: Draw a card, then discard a card.\n{4}, {T}: Transform Matzalantli. Activate only if there are "
+        + "four or more permanent types among cards in your graveyard. (Artifact, battle, creature, "
+        + "enchantment, land, and planeswalker are permanent types.)\n(Transforms from "
+        + "Matzalantli.)\nFathomless descent — {T}: Add X mana of any one color, where X is the number of "
+        + "permanent cards in your graveyard.")]
+    [InlineData("Golden Guardian // Gold-Forge Garrison", "Artifact Creature — Golem // Land", CardEffect.Ramp,
+        "Defender\n{2}: This creature fights another target creature you control. When this creature dies "
+        + "this turn, return it to the battlefield transformed under your control.\n(Transforms from Golden "
+        + "Guardian.)\n{T}: Add two mana of any one color.\n{4}, {T}: Create a 4/4 colorless Golem artifact "
+        + "creature token.")]
+    // A land sacrificed as it enters, fetching on the reflexive trigger.
+    [InlineData("Brokers Hideout", "Land", CardEffect.ManaFixing,
+        "When this land enters, sacrifice it. When you do, search your library for a basic Forest, Plains, or "
+        + "Island card, put it onto the battlefield tapped, then shuffle and you gain 1 life.")]
+    // A chosen colour beside a fixed one; the colours of what it exiled.
+    [InlineData("Citadel Gate", "Land — Gate", CardEffect.ManaFixing,
+        "This land enters tapped.\nAs this land enters, choose a color other than white.\n{T}: Add {W} or one "
+        + "mana of the chosen color.")]
+    [InlineData("Pit of Offerings", "Land — Cave", CardEffect.ManaFixing,
+        "This land enters tapped.\nWhen this land enters, exile up to three target cards from "
+        + "graveyards.\n{T}: Add {C}.\n{T}: Add one mana of any of the exiled cards' colors.")]
+    // Lands made every type.
+    [InlineData("Leyline of the Guildpact", "Enchantment", CardEffect.ManaFixing,
+        "If this card is in your opening hand, you may begin the game with it on the battlefield.\nEach "
+        + "nonland permanent you control is all colors.\nLands you control are every basic land type in "
+        + "addition to their other types.")]
+    [InlineData("Energybending", "Instant — Lesson", CardEffect.ManaFixing,
+        "Lands you control gain all basic land types until end of turn.\nDraw a card.")]
+    [InlineData("Omo, Queen of Vesuva", "Legendary Creature — Shapeshifter Noble", CardEffect.ManaFixing,
+        "Whenever Omo enters or attacks, put an everything counter on each of up to one target land and up to "
+        + "one target creature.\nEach land with an everything counter on it is every land type in addition to "
+        + "its other types.\nEach nonland creature with an everything counter on it is every creature type.")]
+    // One land for one; a card typed Treasure; a land put on top.
+    [InlineData("Renewal", "Sorcery", CardEffect.ManaFixing,
+        "As an additional cost to cast this spell, sacrifice a land.\nSearch your library for a basic land "
+        + "card, put that card onto the battlefield, then shuffle.\nDraw a card at the beginning of the next "
+        + "turn's upkeep.")]
+    [InlineData("Buried Treasure", "Artifact — Treasure", CardEffect.ManaFixing,
+        "{T}, Sacrifice this artifact: Add one mana of any color.\n{5}, Exile this card from your graveyard: "
+        + "Discover 5. Activate only as a sorcery. (Exile cards from the top of your library until you exile a "
+        + "nonland card with mana value 5 or less. Cast it without paying its mana cost or put it into your "
+        + "hand. Put the rest on the bottom in a random order.)")]
+    [InlineData("Silver Deputy", "Artifact Creature — Mercenary", CardEffect.ManaFixing,
+        "When this creature enters, you may search your library for a basic land card or a Desert card, "
+        + "reveal it, then shuffle and put it on top.\n{T}: Target creature you control gets +1/+0 until end of "
+        + "turn. Activate only as a sorcery.")]
+    // A choice of colours granted to a target land fixes.
+    [InlineData("Spara's Adjudicators", "Creature — Cat Citizen", CardEffect.ManaFixing,
+        "When this creature enters, target creature an opponent controls can't attack or block until your "
+        + "next turn.\n{2}, Exile this card from your hand: Target land gains \"{T}: Add {G}, {W}, or {U}\" "
+        + "until this card is cast from exile. You may cast this card for as long as it remains exiled.")]
+    // The Treasure YOU make beside the one the opponent may make.
+    [InlineData("Tempting Contract", "Artifact", CardEffect.ManaFixing,
+        "At the beginning of your upkeep, each opponent may create a Treasure token. For each opponent who "
+        + "does, you create a Treasure token.")]
+    // A colour chosen, then "an amount of mana".
+    [InlineData("Nyx Lotus", "Legendary Artifact", CardEffect.Ramp,
+        "Nyx Lotus enters tapped.\n{T}: Choose a color. Add an amount of mana of that color equal to your "
+        + "devotion to that color. (Your devotion to a color is the number of mana symbols of that color in the "
+        + "mana costs of permanents you control.)")]
+    public void Classify_TheOctoberRampAndManaFixingGaps_CarryTheTag(string name, string typeLine, CardEffect effect, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(effect));
+    }
+
+    [Theory]
+    // A discount on itself, {X} included.
+    [InlineData("Fungal Colossus", "Creature — Fungus Beast", CardEffect.Ramp,
+        "This spell costs {X} less to cast, where X is the number of differently named lands you control.")]
+    // A transformed Temple that taps for one is just a land.
+    [InlineData("Ojer Axonil, Deepest Might // Temple of Power", "Legendary Creature — God // Land", CardEffect.Ramp,
+        "Trample\nIf a red source you control would deal an amount of noncombat damage less than Ojer "
+        + "Axonil's power to an opponent, that source deals damage equal to Ojer Axonil's power instead.\nWhen "
+        + "Ojer Axonil dies, return it to the battlefield tapped and transformed under its owner's "
+        + "control.\n(Transforms from Ojer Axonil, Deepest Might.)\n{T}: Add {R}.\n{2}{R}, {T}: Transform this "
+        + "land. Activate only if red sources you controlled dealt 4 or more noncombat damage this turn and "
+        + "only as a sorcery.")]
+    // A Treasure handed to somebody else.
+    [InlineData("An Offer You Can't Refuse", "Instant", CardEffect.Ramp,
+        "Counter target noncreature spell. Its controller creates two Treasure tokens. (They're artifacts "
+        + "with \"{T}, Sacrifice this token: Add one mana of any color.\")")]
+    [InlineData("An Offer You Can't Refuse", "Instant", CardEffect.ManaFixing,
+        "Counter target noncreature spell. Its controller creates two Treasure tokens. (They're artifacts "
+        + "with \"{T}, Sacrifice this token: Add one mana of any color.\")")]
+    [InlineData("Erestor of the Council", "Legendary Creature — Elf Noble", CardEffect.ManaFixing,
+        "Whenever players finish voting, each opponent who voted for a choice you voted for creates a "
+        + "Treasure token. You scry X, where X is the number of opponents who voted for a choice you didn't "
+        + "vote for. Draw a card.")]
+    [InlineData("Blooming Blast", "Instant", CardEffect.ManaFixing,
+        "Gift a Treasure (You may promise an opponent a gift as you cast this spell. If you do, they create a "
+        + "Treasure token before its other effects. It's an artifact with \"{T}, Sacrifice this token: Add one "
+        + "mana of any color.\")\nBlooming Blast deals 2 damage to target creature. If the gift was promised, "
+        + "Blooming Blast also deals 3 damage to that creature's controller.")]
+    // A card typed Treasure cracking itself.
+    [InlineData("Buried Treasure", "Artifact — Treasure", CardEffect.Ramp,
+        "{T}, Sacrifice this artifact: Add one mana of any color.\n{5}, Exile this card from your graveyard: "
+        + "Discover 5. Activate only as a sorcery. (Exile cards from the top of your library until you exile a "
+        + "nonland card with mana value 5 or less. Cast it without paying its mana cost or put it into your "
+        + "hand. Put the rest on the bottom in a random order.)")]
+    // One Treasure from an ability that sacrifices the card.
+    [InlineData("Volatile Fault", "Land — Cave", CardEffect.Ramp,
+        "{T}: Add {C}.\n{1}, {T}, Sacrifice this land: Destroy target nonbasic land an opponent controls. "
+        + "That player may search their library for a basic land card, put it onto the battlefield, then "
+        + "shuffle. You create a Treasure token.")]
+    [InlineData("Contested Game Ball", "Artifact", CardEffect.Ramp,
+        "Whenever you're dealt combat damage, the attacking player gains control of this artifact and untaps "
+        + "it.\n{2}, {T}: Draw a card and put a point counter on this artifact. Then if it has five or more "
+        + "point counters on it, sacrifice it and create a Treasure token.")]
+    // The land you untap to animate.
+    [InlineData("Silvanus's Invoker", "Creature — Dragon Druid", CardEffect.Ramp,
+        "Conjure Elemental — {8}: Untap target land you control. It becomes an 8/8 Elemental creature with "
+        + "trample and haste until end of turn. It's still a land.")]
+    // One mana granted to lands.
+    [InlineData("Dune Chanter", "Creature — Plant Druid", CardEffect.Ramp,
+        "Reach\nLands you control and land cards you own that aren't on the battlefield are Deserts in "
+        + "addition to their other types.\nLands you control have \"{T}: Add one mana of any color.\"\n{T}: "
+        + "Mill two cards. You gain 1 life for each land card milled this way.")]
+    [InlineData("Preston Garvey, Minuteman", "Legendary Creature — Human Soldier", CardEffect.Ramp,
+        "At the beginning of combat on your turn, create a green Aura enchantment token named Settlement "
+        + "attached to up to one target land you control. It has enchant land and \"Enchanted land has '{T}: "
+        + "Add one mana of any color.'\"\nWhenever Preston Garvey attacks, untap each enchanted permanent you "
+        + "control.")]
+    [InlineData("Spara's Adjudicators", "Creature — Cat Citizen", CardEffect.Ramp,
+        "When this creature enters, target creature an opponent controls can't attack or block until your "
+        + "next turn.\n{2}, Exile this card from your hand: Target land gains \"{T}: Add {G}, {W}, or {U}\" "
+        + "until this card is cast from exile. You may cast this card for as long as it remains exiled.")]
+    // Lands sacrificed for the lands revealed.
+    [InlineData("Hew the Entwood", "Sorcery", CardEffect.Ramp,
+        "Sacrifice any number of lands. Reveal the top X cards of your library, where X is the number of "
+        + "lands sacrificed this way. Choose any number of artifact and/or land cards revealed this way. Put "
+        + "all nonland cards chosen this way onto the battlefield, then put all land cards chosen this way onto "
+        + "the battlefield tapped, then put the rest on the bottom of your library in a random order.")]
+    // A land sacrificing a creature for one mana.
+    [InlineData("Lazotep Quarry", "Land — Desert", CardEffect.Ramp,
+        "{T}: Add {C}.\n{T}, Sacrifice a creature: Add one mana of any color.\n{X}{2}, {T}, Sacrifice a "
+        + "Desert: Exile target creature card with mana value X from your graveyard. Create a token that's a "
+        + "copy of it, except it's a 4/4 black Zombie. Activate only as a sorcery.")]
+    // Land tokens counted by commander casts.
+    [InlineData("Jyoti, Moag Ancient", "Legendary Creature — Elemental", CardEffect.Ramp,
+        "When Jyoti enters, create a 1/1 green Forest Dryad land creature token for each time you've cast "
+        + "your commander from the command zone this game. (They're affected by summoning sickness.)\nAt the "
+        + "beginning of each combat, land creatures you control get +X/+X until end of turn, where X is Jyoti's "
+        + "power.")]
+    // Lotus Vale gives two lands for its three.
+    [InlineData("Lotus Vale", "Land", CardEffect.Ramp,
+        "If this land would enter, sacrifice two untapped lands instead. If you do, put this land onto the "
+        + "battlefield. If you don't, put it into its owner's graveyard.\n{T}: Add three mana of any one color.")]
+    // Free mana on the enchanted land's tap, and to "target player".
+    [InlineData("Blighted Burgeoning", "Enchantment — Aura", CardEffect.ManaFixing,
+        "Enchant land\nWhen this Aura enters, incubate 2. (Create an Incubator token with two +1/+1 counters "
+        + "on it and \"{2}: Transform this token.\" It transforms into a 0/0 Phyrexian artifact "
+        + "creature.)\nWhenever enchanted land is tapped for mana, its controller adds an additional one mana "
+        + "of any color.")]
+    [InlineData("The Warring Triad", "Legendary Artifact Creature — God", CardEffect.ManaFixing,
+        "Flying, trample, haste\nAs long as there are fewer than eight cards in your graveyard, The Warring "
+        + "Triad isn't a creature.\n{T}, Mill a card: Target player adds one mana of any color. (Activate only "
+        + "as an instant.)")]
+    [InlineData("Bigger on the Inside", "Enchantment — Aura", CardEffect.ManaFixing,
+        "Enchant artifact or land\nEnchanted permanent has \"{T}: Target player adds two mana of any one "
+        + "color. The next spell they cast this turn has cascade.\" (When they cast their next spell, they "
+        + "exile cards from the top of their library until they exile a nonland card that costs less. They may "
+        + "cast it without paying its mana cost. They put the exiled cards on the bottom in a random order.)")]
+    // A discount on itself in COLOUR.
+    [InlineData("Khalni Hydra", "Creature — Hydra", CardEffect.Ramp,
+        "This spell costs {G} less to cast for each green creature you control.\nTrample")]
+    public void Classify_TheOctoberRampAndManaFixingGaps_DoNotCarryTheTag(string name, string typeLine, CardEffect effect, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(effect));
+    }
+
+    [Theory]
     // LandDestruction, widened 2026-09-19. The land is almost never alone in the
     // sentence: it sits in a type list, behind a count, or beside a second target,
     // and the old {0,2} filler words could not cross a comma to reach it.

@@ -35,6 +35,13 @@ namespace ScatoloneDownloader.Cube
             + @"|^[^\n:]*\{t\}: add x mana of any one colou?r",
             RegexOptions.Multiline);
 
+        // A transformed LAND FACE that taps for more than one is kept, as
+        // well as one the rule above reads: Gold-Forge Garrison's "two mana
+        // of any one color". Not asked of lands themselves — Lotus Vale gives
+        // two lands for its three and is untagged (2026-10-15).
+        private static readonly Regex LandFaceTapsForSeveral = Rx(
+            @"^[^\n:]*\{t\}: add (?:two|three) mana of any one colou?r", RegexOptions.Multiline);
+
         // Mana that arrives without a {T} on a permanent you keep: Black Lotus and
         // Lotus Petal and Blood Pet spend THEMSELVES, Dark Ritual and Songs of the
         // Damned are the same trade written as a spell. Ruled 2026-09-15.
@@ -69,6 +76,21 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex SacrificesForMana = Rx(
             @"^[^\n:]{0,50}sacrifice[^\n:]{0,40}: add ", RegexOptions.Multiline);
 
+        // …but a LAND that sacrifices something ELSE for ONE mana is a land
+        // tapping for one: Lazotep Quarry's creature for a colour is
+        // ManaFixing alone by hand, read 2026-10-15. Blanked on lands before
+        // the rule above is asked.
+        private static readonly Regex LandSacrificesAnotherForOne = Rx(
+            @"^\{t\}, sacrifice an? (?:creature|artifact)[^\n:]{0,20}: add one mana[^\n]*", RegexOptions.Multiline);
+
+        // A card TYPED Treasure is a Treasure: its "{T}, Sacrifice this
+        // artifact: Add one mana of any color" fixes once and ramps nothing.
+        // Buried Treasure and Courier's Briefcase are ManaFixing alone by
+        // hand, read 2026-10-15; Glittering Stockpile taps for {R} every turn
+        // as well and stays Ramp, and the untyped Lotus Petal is Ramp alone.
+        private static readonly Regex TreasureItself = Rx(
+            @"^\{t\}, sacrifice this artifact: add one mana of any colou?r\.?$", RegexOptions.Multiline);
+
         private static readonly Regex RitualAddsMana = Rx(@"(?:^|\n|\. )add [\w ]{0,20}\{[wubrgc]");
 
         // A LAND that fetches a land onto the battlefield — sacrificing itself
@@ -78,8 +100,12 @@ namespace ScatoloneDownloader.Cube
         // ManaFixing, Shire Terrace the latest (2026-09-29), and none was read,
         // because the land search rules ask where the land goes and a land is
         // never Ramp for it.
+        // The Capenna lands that sacrifice themselves AS THEY ENTER and fetch
+        // on the reflexive trigger are the same, read 2026-10-15 (Brokers
+        // Hideout, Obscura Storefront, Riveteers Overlook, 3 of 3).
         private static readonly Regex LandFetchesALand = Rx(
-            @"^[^\n:]{0,70}\{t\}[^\n:]{0,40}: search your library for [^.\n]{0,60}\bcard[^.\n]{0,40}put (?:it|that card) onto the battlefield",
+            @"^[^\n:]{0,70}\{t\}[^\n:]{0,40}: search your library for [^.\n]{0,60}\bcard[^.\n]{0,40}put (?:it|that card) onto the battlefield"
+            + @"|^when this land enters, sacrifice it\. when you do, search your library for [^.\n]{0,60}\bcard[^.\n]{0,40}put it onto the battlefield",
             RegexOptions.Multiline);
 
         // A LAND that makes the colour — or is the basic land type — chosen as
@@ -88,8 +114,19 @@ namespace ScatoloneDownloader.Cube
         // Passage, all ManaFixing by hand and never read, because no line says
         // "any color" or names two. On a rock the same words are a bare tap,
         // a source, and are not asked (Coldsteel Heart).
+        // Read 2026-10-15 beside a fixed colour (Citadel Gate's "{W} or one
+        // mana of the chosen color") and for the colours of what it exiled
+        // (Pit of Offerings), both ManaFixing by hand.
         private static readonly Regex LandOfAChosenColour = Rx(
-            @"add one mana of the chosen colou?r|this land is the chosen type");
+            @"add (?:\{[wubrg]\} or )?one mana of the chosen colou?r|this land is the chosen type"
+            + @"|add one mana of any of the exiled cards' colou?rs");
+
+        // Lands made EVERY basic land type fix every colour: Leyline of the
+        // Guildpact, Energybending and Omo, Queen of Vesuva, ManaFixing by
+        // hand (3 of 3), read 2026-10-15. "The basic land type of your choice"
+        // is split 1 to 1 (Mystic Compass tagged, Jinx not) and is not read.
+        private static readonly Regex LandsOfEveryType = Rx(
+            @"\blands? you control (?:are|gain) (?:every|all) basic land types?\b|\bis every land type\b");
 
         // "Spend mana AS THOUGH it were mana of any type" rides on what the
         // card does — a stolen card you may cast (Abstruse Appropriation,
@@ -130,10 +167,14 @@ namespace ScatoloneDownloader.Cube
         // off the land's "{T}: Add" and none is tagged — 9 of the 10 reviewed
         // pay-3-life MDFCs are untagged, Witch Enchanter the one handed back.
         // The faces are joined by a newline with no marker, so the land face
-        // is read from its first "this land enters" line down; the transform
-        // cards, whose back face has to be earned, are not touched.
+        // is read from its first "this land enters" line down.
+        // A TRANSFORMED land back is read from its "(Transforms from …)"
+        // reminder down since 2026-10-15: the Ojer gods die into a Temple
+        // that taps for one, and Ojer Axonil, Pakpatiq and Taq are untagged —
+        // as every artifact or enchantment front with the same Temple back is
+        // (Dowsing Device, The Everflowing Well, Twists and Turns).
         private static readonly Regex LandFaceStarts = Rx(
-            @"^(?:as this land enters|this land enters tapped)", RegexOptions.Multiline);
+            @"^(?:as this land enters|this land enters tapped|\(transforms from)", RegexOptions.Multiline);
 
         // Mana a PERMANENT adds on a TRIGGER is Ramp — Electro, Rodeo
         // Pyromancers, Muerra, Eladamri's Vineyard, Karn, Legacy Reforged, 10
@@ -1243,8 +1284,15 @@ namespace ScatoloneDownloader.Cube
         // Cost reduction is mana you never had to make. Only for OTHER spells:
         // "this spell costs {1} less to cast" is a discount on itself and was
         // hand-tagged Ramp on 0 of 40 cards, against 20 of 40 for the rest.
-        private static readonly Regex CostsLessToCast = Rx(@"costs? \{\d+\} less to cast");
-        private static readonly Regex CostsLessForItself = Rx(@"this spell costs \{\d+\} less to cast");
+        // A COLOURED discount (the Defilers' "{B} less", Eluge's "{U} (or
+        // {1}) less") is the same, read 2026-10-15, and so is {X}, ruled the
+        // same day ("Ramp tutte"): Will, Scion of Peace and Elminster were
+        // Ramp by hand, Rowan, Scion of War — Will's very words — Samut,
+        // Golden-Tail Trainer and Commander Liara Portyr were not, and went
+        // back for review. Seven "this spell costs {X} less" stay out, and so
+        // do the coloured ones on itself (Khalni Hydra, Demilich, Ertai's Scorn).
+        private static readonly Regex CostsLessToCast = Rx(@"costs? \{(?:\d+|x|[wubrg])\}(?: \(or \{\d+\}\))? less to cast");
+        private static readonly Regex CostsLessForItself = Rx(@"this spell costs \{(?:\d+|x|[wubrg])\} less to cast");
 
         // Any activated ability on a NON-LAND that adds mana, whatever it asks
         // for: a tap (Llanowar Elves), a counter (Wall of Roots), a card out of
@@ -1266,18 +1314,27 @@ namespace ScatoloneDownloader.Cube
         // permanent turned into a Treasure keeps ("sacrifice this artifact":
         // Kitesail Larcenist, Minimus Containment and Vraska make the victim's
         // creature a Treasure, and the mana is its controller's).
+        //
+        // Read 2026-10-15 as TapAddsMana is: a colour chosen first (Radiant
+        // Lotus), mana handed to "target player" (The Warring Triad, named
+        // above and still never proposed), a count past five (The
+        // Aetherspark's "−10: Add ten mana") and "an amount of mana" (Nyx
+        // Lotus).
         private static readonly Regex ActivatedManaAbility = Rx(
-            @"(?:^[^\n:]{1,70}|""(?![^""\n:]*\b(?:this token|sacrifice this artifact)\b)[^""\n:]{1,70}): add "
-            + @"(?:[\w ]{0,20}\{|(?:one|two|three|four|five|x|\d+) mana\b)",
+            @"(?:^[^\n:]{1,70}|""(?![^""\n:]*\b(?:this token|sacrifice this artifact)\b)[^""\n:]{1,70}): "
+            + @"(?:choose a colou?r\. )?(?:target player adds|add) "
+            + @"(?:[\w ]{0,20}\{|(?:one|two|three|four|five|six|seven|eight|nine|ten|x|\d+|an amount of) mana\b)",
             RegexOptions.Multiline);
 
         private static readonly Regex ExtraLandDrop = Rx(
             @"play an additional land|play any number of lands|play up to \w+ additional lands"
             + @"|additional lands? on each of your turns");
 
+        // "Produces three times as much" is Virtue of Strength, Ramp by hand,
+        // read 2026-10-15.
         private static readonly Regex ManaMultiplier = Rx(
             @"adds? an additional \{|for mana, (?:that player|its controller|they)[\w ]{0,12}adds?"
-            + @"|tapped for mana[^\n]{0,40}adds?");
+            + @"|tapped for mana[^\n]{0,40}adds?|\bproduces? (?:twice|three times) as much\b");
 
         private static readonly Regex LandFromHandToPlay = Rx(
             @"(?<!non)lands? cards? from your hand[\w \/]{0,30}onto the battlefield");
@@ -1297,6 +1354,17 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex GrantedToTokens = Rx(@"\btokens you control have ""[^""\n]*""");
         private static readonly Regex MakesTokens = Rx(@"\bcreates?\b|\bamass\b|\bincubate\b|\bpopulate\b");
 
+        // ONE mana granted to LANDS is a land's colour and fixes (see
+        // ManaGrantedToLands); it ramps nothing, since the land already
+        // tapped for one. Read 2026-10-15: Dune Chanter, Greenhouse, Preston
+        // Garvey's Settlement, Wrenn and Realmbreaker and Spara's
+        // Adjudicators are ManaFixing alone by hand, 5 of 5. TWO or three
+        // mana granted (Grafted Growth, Discreet Retreat, Tectonic Split) is
+        // Ramp, 3 of 3, and is not this.
+        private static readonly Regex OneManaGrantedToLands = Rx(
+            @"(?:\blands? you control have|\benchanted land has|\btarget land gains) [""']\{t\}: add "
+            + @"(?:one mana of any colou?r|\{[wubrg]\}(?:, \{[wubrg]\})*,? or \{[wubrg]\})\.?[""']");
+
         // Lands out of a GRAVEYARD the card has just FILLED itself are Ramp,
         // ruled 2026-10-13: Blossoming Tortoise and Deeproot Wayfinder mill or
         // surveil and then return a land on every trigger, and Lumra mills four
@@ -1307,9 +1375,12 @@ namespace ScatoloneDownloader.Cube
 
         // (?<!non) because "untap all NONLAND permanents" ends in the same
         // letters — the same word-boundary trap as islandwalk and noncreature.
+        // Not the land you are about to ANIMATE ("untap target land you
+        // control. It becomes an 8/8"): Silvanus's Invoker and Woodcaller
+        // Automaton, untagged by hand, read 2026-10-15.
         private static readonly Regex UntapsLands = Rx(
             @"untap (?:target|all|x target|up to \w+ target)[\w ]{0,20}(?<!non)"
-            + @"(?:lands?|forests?|islands?|swamps?|mountains?|plains)\b"
+            + @"(?:lands?|forests?|islands?|swamps?|mountains?|plains)\b(?![\w ]{0,15}\. it becomes)"
             + @"|untaps all basic lands");
 
         // (?<!non) again, and for the third time this session: "search your
@@ -1340,7 +1411,13 @@ namespace ScatoloneDownloader.Cube
             + @"|until you reveal a land card\. put that card onto the battlefield"
             + @"|search your library for [^.\n]{0,80}(?<!non)(?:land|forest|plains|island|swamp|mountain) cards?[^.\n]{0,60}\. "
             + @"put (?:those cards|them|one of them|two of them|that card|it) onto the battlefield"
-            + @"|\bcreate [^.\n]{0,40}\bland token");
+            // A land CREATURE token is a land too (Awaken the Woods' Forest
+            // Dryads), and so are the copies of a target land (Rebuild the
+            // City); both Ramp by hand, read 2026-10-15. Not one counted by
+            // COMMANDER casts, which a cube never makes (Jyoti, Moag Ancient,
+            // untagged), as for Redirect.
+            + @"|\bcreate [^.\n]{0,40}\bland (?:creature )?tokens?\b(?! for each time you've cast your commander)"
+            + @"|\btarget land\. create [^.\n]{0,20}\btokens that are copies of it");
 
         // …but the land handed to the player a removal spell was aimed at is
         // their consolation, not your ramp: Emergency Eject, Price of Freedom,
@@ -1378,10 +1455,23 @@ namespace ScatoloneDownloader.Cube
         // makes a Treasure outside the token's quotes.
         private static readonly Regex TreasureATokenMakes = Rx(
             @"\btokens? with [^""\n]{0,60}""[^""]*\btreasure\b[^""]*""");
+        // Past five as well: Ancient Adamantoise dies into ten, Ramp by hand.
         private static readonly Regex SeveralTreasures = Rx(
-            @"creates? (?:two|three|four|five|x|\d+) (?:tapped )?treasure tokens"
+            @"creates? (?:two|three|four|five|six|seven|eight|nine|ten|x|\d+) (?:tapped )?treasure tokens"
             + @"|creates? (?:that many|a number of) (?:tapped )?treasure tokens"
             + @"|(?:two|three|four|\d+) (?:tapped )?treasure tokens");
+
+        // A Treasure handed to SOMEBODY ELSE is their mana, not yours: An
+        // Offer You Can't Refuse ("Its controller creates two Treasure
+        // tokens"), Erestor of the Council ("each opponent who voted … creates
+        // a Treasure token") and Blooming Blast's gift, all three without
+        // Ramp or ManaFixing by hand, read 2026-10-15 — the Lander's reading
+        // (LandForSomebodyElse). "You and target opponent each create" is
+        // yours too, and Gonti's "that player" is whoever casts your stolen
+        // cards; neither is here. The reminder that follows goes with it.
+        private static readonly Regex TreasureForSomebodyElse = Rx(
+            @"(?:\bits controller|\beach opponent [^.,\n]{0,50}?) creates? [^.\n]{0,20}\btreasure tokens?\.(?: \([^)\n]*\))?"
+            + @"|\bgift an? treasure\b(?: \([^)\n]*\))?");
 
         // "A Treasure FOR EACH" is several at once on a spell or an enters
         // trigger (Covetous Elegy), and one per trigger on a trigger that
@@ -1400,8 +1490,12 @@ namespace ScatoloneDownloader.Cube
         // the same line as the token — or the same ability GRANTED in quotes
         // (Bootleggers' Stash's lands "{T}: Create a Treasure token"). See
         // TreasureAlsoRamps.
+        // Not one that SACRIFICES the card: it makes its one Treasure once,
+        // a rider (Volatile Fault, Contested Game Ball, untagged by hand; read
+        // 2026-10-15, Reckless Lackey went back for review).
         private static readonly Regex ActivatedTreasureMaker = Rx(
-            @"^[^\n:""]{1,70}:[^\n]*\btreasure tokens?\b|""[^""\n:]{1,60}:[^""\n]*\btreasure tokens?\b",
+            @"^(?![^\n]*\bsacrifice (?:this (?:land|artifact|creature|enchantment)|it)\b)[^\n:""]{1,70}:[^\n]*\btreasure tokens?\b"
+            + @"|""[^""\n:]{1,60}:[^""\n]*\btreasure tokens?\b",
             RegexOptions.Multiline);
 
         // The Treasure's own reminder text carries "{T}, Sacrifice this token:",
@@ -1431,17 +1525,32 @@ namespace ScatoloneDownloader.Cube
         // it fetches a real land onto the battlefield, and the 17 reviewed cards
         // that make one are all hand-tagged Ramp. Blanking the token's reminder
         // text was tried on 2026-09-18 and lost every one of them.
+        //
+        // The swap is the colour, though: Renewal's one land for one is
+        // ManaFixing, read as such 2026-10-15.
         private static readonly Regex PaysALandForTheLand = Rx(
             @"as an additional cost to cast this spell, sacrifice a land"
             + @"[\s\S]{0,140}search your library for an? basic land card");
 
+        // …and lands sacrificed for the lands among the cards they reveal is
+        // the same swap, X for at most X: Hew the Entwood, Cheat alone by
+        // hand, read 2026-10-15.
+        private static readonly Regex SwapsLandsForLands = Rx(
+            @"^sacrifice any number of lands\.[^\n]*\bland cards chosen this way onto the battlefield",
+            RegexOptions.Multiline);
+
         // See the ManaFixing rule-table entry for the ruling these two carry.
+        // Read 2026-10-15 to "put it on top" (Silver Deputy, ManaFixing by
+        // hand). Read across a full stop as well, for Aang's Journey's
+        // "…and a Shrine card. Reveal those cards, put them into your hand",
+        // and rejected the same day: it reached Tithe and Analyze the Pollen,
+        // both reviewed without the tag, for the one card.
         private static readonly Regex LandSearchToHand = Rx(
             @"search your library for[\w ,'-]{0,60}(?:land|plains|island|swamp|mountain|forest)"
             + @"[\w ,'-]{0,40}card[\w ,'-]{0,40}put (?:it|that card|those cards|them) into your hand");
         private static readonly Regex LandSearchToTop = Rx(
             @"search your library for[\w ,'-]{0,60}(?:land|plains|island|swamp|mountain|forest)"
-            + @"[\w ,'-]{0,60}put that card on top");
+            + @"[\w ,'-]{0,60}put (?:that card|it) on top");
 
         // A mana ability that costs nothing but the tap is a mana SOURCE: the
         // card is Ramp, and the colour it happens to make is a property of the
@@ -1466,8 +1575,11 @@ namespace ScatoloneDownloader.Cube
         // hand; Outcaster Trailblazer, tagged on 09-23, went back for review.
         // (A guard for a trigger that charges mana on the same line was
         // written and dropped: no card in the store says it.)
+        // "Its controller adds an additional one mana of any color" when the
+        // enchanted land is tapped is the same free trigger, read 2026-10-15:
+        // Blighted Burgeoning and Buried in the Garden are Ramp alone by hand.
         private static readonly Regex FreeTriggeredAdd = Rx(
-            @"^(?:[\w' ]+ — )?(?:when|whenever|at the beginning)\b[^\n:]*?, add ");
+            @"^(?:[\w' ]+ — )?(?:when|whenever|at the beginning)\b[^\n:]*?, (?:its controller adds|add) ");
 
         // Anchored at the start of the line, or at the start of a QUOTED ability
         // granted to something else ("Other permanents you control have \"{T}:
@@ -1488,16 +1600,22 @@ namespace ScatoloneDownloader.Cube
         // sacrifice), and Supportive Parents, The Cabbage Merchant, The Warring
         // Triad and Molt Tender were Ramp alone, against the 2026-09-18 reading
         // that ANY price on top converts colour (Gene Pollinator, Baylen).
+        // "Target player adds" is the same add, read 2026-10-15: Bigger on the
+        // Inside and The Warring Triad are Ramp alone by hand.
         private static readonly Regex ActivatedAdd = Rx(
-            "^(?:[\\w' ]+ — )?[^\\n:\"]{1,70}: add |\"[^\"\\n:]{1,70}: add ");
+            "^(?:[\\w' ]+ — )?[^\\n:\"]{1,70}: (?:target player adds|add) |\"[^\"\\n:]{1,70}: (?:target player adds|add) ");
 
         // …except a mana ability GRANTED TO LANDS, which is a land's colour and
         // always fixes (Dune Chanter, Greenhouse, Preston Garvey's Settlement,
         // all three ManaFixing by hand) — the land exemption one step removed.
         // ONE mana of any colour: Tectonic Split hands the lands "three mana of
         // any one color", which triples them and is Ramp alone by hand.
+        // A choice of colours granted to "target land" is the same, read
+        // 2026-10-15: Spara's Adjudicators' "{T}: Add {G}, {W}, or {U}",
+        // ManaFixing by hand.
         private static readonly Regex ManaGrantedToLands = Rx(
-            @"(?:\blands? you control have\b|\benchanted land has\b)[^\n]*\badd one mana of any colou?r");
+            @"(?:\blands? you control have\b|\benchanted land has\b|\btarget land gains\b)[^\n]*\badd "
+            + @"(?:one mana of any colou?r|\{[wubrg]\}(?:, \{[wubrg]\})*,? or \{[wubrg]\})");
 
         private static readonly Regex SacrificesATokenForMana = Rx(@"sacrifice an? (?<token>[\w-]+) token: add ");
 

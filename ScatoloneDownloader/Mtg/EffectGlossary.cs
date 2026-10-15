@@ -60,7 +60,7 @@
             [CardEffect.Ramp] =
                 "More mana, or sooner: a mana ability on a creature or rock, a land onto the battlefield, a ritual, "
                 + "a cost reduction, an extra land drop, untapping lands, several Treasures. Mana that COSTS mana "
-                + "fixes colour instead. A land tapping for its own one mana is just a land.",
+                + "fixes colour instead. A land tapping for one is just a land, its own mana or one GRANTED to it.",
 
             [CardEffect.Disenchant] =
                 "Answers an artifact or enchantment, at any count — \"up to one\", \"X target\", \"another\", "
@@ -129,7 +129,7 @@
 
             [CardEffect.ManaFixing] =
                 "Fixes colours: a choice paid in MANA, any landcycling, a land with two abilities, a land fetched "
-                + "to HAND or kept from a few milled, a Treasure. Free for a tap, a life, a sacrifice or a trigger "
+                + "to HAND or kept from a few milled, a Treasure of YOURS. Free for a tap, a life, a sacrifice or a trigger "
                 + "is just Ramp (Birds), unless it's a land. Not a land put onto the battlefield, not restricted "
                 + "mana unless a land makes it.",
 
