@@ -2799,9 +2799,168 @@ public sealed class EffectClassifierTests
     [InlineData("Eiganjo Uprising", "Sorcery",
         "Create X 2/2 white Samurai creature tokens with vigilance. They gain menace and haste until end of "
         + "turn.\nEach opponent creates X minus one 2/2 white Samurai creature tokens with vigilance.")]
+    // Land animations read wider 2026-10-15 (tagged 11 to 2): an X/X, an Aura's
+    // "enchanted land is a 3/3", "It becomes" after the land is named, lands
+    // becoming a copy of a creature, and a land cast face down by disguise.
+    [InlineData("Jolrael, Voice of Zhalfir", "Legendary Creature — Human Druid",
+        "At the beginning of combat on your turn, up to one target land you control becomes an X/X green and "
+        + "blue Bird creature with flying and haste until end of turn, where X is the number of cards in your "
+        + "hand. It's still a land.\nWhenever a land creature you control deals combat damage to a player, draw "
+        + "a card.")]
+    [InlineData("Crackling Emergence", "Enchantment — Aura",
+        "Enchant land you control\nEnchanted land is a 3/3 red Spirit creature with haste. It's still a "
+        + "land.\nIf enchanted land would be destroyed, instead sacrifice this Aura and that land gains "
+        + "indestructible until end of turn.")]
+    [InlineData("Silvanus's Invoker", "Creature — Dragon Druid",
+        "Conjure Elemental — {8}: Untap target land you control. It becomes an 8/8 Elemental creature with "
+        + "trample and haste until end of turn. It's still a land.")]
+    [InlineData("March from Velis Vel", "Sorcery",
+        "Choose a nonbasic land type. Each land you control of that type becomes a copy of target creature "
+        + "you control until end of turn and gains haste until end of turn.\nFlashback {4}{U} (You may cast this "
+        + "card from your graveyard for its flashback cost. Then exile it.)")]
+    [InlineData("Branch of Vitu-Ghazi", "Land",
+        "{T}: Add {C}.\nDisguise {3} (You may cast this card face down for {3} as a 2/2 creature with ward "
+        + "{2}. Turn it face up any time for its disguise cost.)\nWhen this land is turned face up, add two mana "
+        + "of any one color. Until end of turn, you don't lose this mana as steps and phases end.")]
     public void Classify_MakingCreaturesWithoutTokens_IsTokens(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    // An ARTIFACT the card animates is a body like the land, ruled 2026-10-15
+    // ("Tokens, come le terre") after the hand tags were split 6 to 7 on identical
+    // wordings: Majestic Metamorphosis tagged and Relic's Roar not, Katsumasa
+    // tagged and Tough Cookie not. Target or enchanted, until end of turn or for
+    // good.
+    [InlineData("Majestic Metamorphosis", "Instant",
+        "Until end of turn, target artifact or creature becomes a 4/4 Angel artifact creature and gains "
+        + "flying.\nDraw a card.")]
+    [InlineData("Relic's Roar", "Instant",
+        "Until end of turn, target artifact or creature becomes a Dinosaur artifact creature with base power "
+        + "and toughness 4/3 in addition to its other types.")]
+    [InlineData("Katsumasa, the Animator", "Legendary Creature — Moonfolk Artificer",
+        "Flying\n{2}{U}: Until end of turn, target noncreature artifact you control becomes an artifact "
+        + "creature and gains flying. If it's not a Vehicle, it has base power and toughness 1/1 until end of "
+        + "turn.\nAt the beginning of your upkeep, put a +1/+1 counter on each of up to three target noncreature "
+        + "artifacts.")]
+    [InlineData("Tough Cookie", "Artifact Creature — Food Golem",
+        "When this creature enters, create a Food token. (It's an artifact with \"{2}, {T}, Sacrifice this "
+        + "token: You gain 3 life.\")\n{2}{G}: Until end of turn, target noncreature artifact you control becomes "
+        + "a 4/4 artifact creature.\n{2}, {T}, Sacrifice this creature: You gain 3 life.")]
+    [InlineData("Mightstone's Animation", "Enchantment — Aura",
+        "Enchant artifact\nWhen this Aura enters, draw a card.\nEnchanted artifact is a creature with base "
+        + "power and toughness 4/4 in addition to its other types.")]
+    [InlineData("Depthshaker Titan", "Artifact Creature — Robot",
+        "When this creature enters, any number of target noncreature artifacts you control become 3/3 "
+        + "artifact creatures. Sacrifice them at the beginning of the next end step.\nEach artifact creature you "
+        + "control has melee, trample, and haste. (Whenever a creature with melee attacks, it gets +1/+1 until "
+        + "end of turn for each opponent you attacked this combat.)")]
+    [InlineData("Tezzeret, Betrayer of Flesh", "Legendary Planeswalker — Tezzeret",
+        "The first activated ability of an artifact you activate each turn costs {2} less to activate.\n+1: "
+        + "Draw two cards. Then discard two cards unless you discard an artifact card.\n−2: Target artifact "
+        + "becomes an artifact creature. If it isn't a Vehicle, it has base power and toughness 4/4.\n−6: You "
+        + "get an emblem with \"Whenever an artifact you control becomes tapped, draw a card.\"")]
+    public void Classify_AnArtifactAnimated_IsTokens(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    // An ENCHANTMENT that animates itself joined the 2026-10-13 ruling on lands
+    // and artifacts on 2026-10-15 ("Tokens, come terre e artefatti"): three tagged
+    // by hand, Ride the Shoopuf reached.
+    [InlineData("Reverberating Summons", "Enchantment",
+        "At the beginning of each combat, if you've cast two or more spells this turn, this enchantment "
+        + "becomes a 3/3 Monk creature with haste in addition to its other types until end of turn.\n{1}{R}, "
+        + "Discard your hand, Sacrifice this enchantment: Draw two cards.")]
+    [InlineData("Emergent Haunting", "Enchantment",
+        "At the beginning of your end step, if you haven't cast a spell from your hand this turn and this "
+        + "enchantment isn't a creature, it becomes a 3/3 Spirit creature with flying in addition to its other "
+        + "types.\n{2}{U}: Surveil 1. (Look at the top card of your library. You may put it into your "
+        + "graveyard.)")]
+    [InlineData("Case of the Gorgon's Kiss", "Enchantment — Case",
+        "When this Case enters, destroy up to one target creature that was dealt damage this turn.\nTo solve — "
+        + "Three or more creature cards were put into graveyards from anywhere this turn. (If unsolved, solve "
+        + "at the beginning of your end step.)\nSolved — This Case is a 4/4 Gorgon creature with deathtouch and "
+        + "lifelink in addition to its other types.")]
+    [InlineData("Ride the Shoopuf", "Enchantment",
+        "Landfall — Whenever a land you control enters, put a +1/+1 counter on target creature you "
+        + "control.\n{5}{G}{G}: This enchantment becomes a 7/7 Beast creature in addition to its other types.")]
+    public void Classify_AnEnchantmentAnimatingItself_IsTokens(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    // Plain MANIFEST is a body like cloak, ruled 2026-10-15 ("Tokens come cloak"):
+    // Orochi Soul-Reaver and Kozilek tagged by hand, Guardian of the Forgotten
+    // reached. Kozilek's players each manifest two, which can reach three for a
+    // creature cast once. Vannifar cloaks a card from hand in a mode of a
+    // repeating trigger.
+    [InlineData("Orochi Soul-Reaver", "Creature — Snake Ninja Rogue",
+        "Ninjutsu {3}{B} ({3}{B}, Return an unblocked attacker you control to hand: Put this card onto the "
+        + "battlefield from your hand tapped and attacking.)\nWhenever one or more creatures you control deal "
+        + "combat damage to a player, create a Treasure token and manifest the top card of that player's "
+        + "library. (Put it onto the battlefield face down as a 2/2 creature. Turn it face up any time for its "
+        + "mana cost if it's a creature card.)")]
+    [InlineData("Guardian of the Forgotten", "Creature — Elephant Warrior",
+        "Vigilance\nWhenever a modified creature you control dies, manifest the top card of your library. "
+        + "(Equipment, Auras you control, and counters are modifications. To manifest a card, put it onto the "
+        + "battlefield face down as a 2/2 creature. Turn it face up any time for its mana cost if it's a "
+        + "creature card.)")]
+    [InlineData("Kozilek, the Broken Reality", "Legendary Creature — Eldrazi",
+        "When you cast this spell, up to two target players each manifest two cards from their hands. For "
+        + "each card manifested this way, you draw a card. (To manifest a card, put it onto the battlefield "
+        + "face down as a 2/2 creature. Turn it face up any time for its mana cost if it's a creature "
+        + "card.)\nOther colorless creatures you control get +3/+2.")]
+    [InlineData("Vannifar, Evolved Enigma", "Legendary Creature — Elf Ooze Wizard",
+        "At the beginning of combat on your turn, choose one —\n• Cloak a card from your hand. (Put it onto "
+        + "the battlefield face down as a 2/2 creature with ward {2}. Turn it face up any time for its mana "
+        + "cost if it's a creature card.)\n• Put a +1/+1 counter on each colorless creature you control.")]
+    public void Classify_AManifest_IsTokens(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    // A LIEUTENANT line works only while you control your commander, and a cube
+    // game has none: ruled 2026-10-15 for every tag ("mai conta, per nessun tag").
+    // Ironwill Forger was tagged for its myriad, handed back. An X sized by your
+    // commanders is the same nothing (Cactus Preserve).
+    [InlineData("Siege-Gang Lieutenant", "Creature — Goblin",
+        "Lieutenant — At the beginning of combat on your turn, if you control your commander, create two 1/1 "
+        + "red Goblin creature tokens. Those tokens gain haste until end of turn.\n{2}, Sacrifice a Goblin: This "
+        + "creature deals 1 damage to any target.")]
+    [InlineData("Ironwill Forger", "Creature — Orc Artificer",
+        "Lieutenant — At the beginning of combat on your turn, if you control your commander, target "
+        + "nonlegendary creature you control gains myriad until end of turn. (Whenever it attacks, for each "
+        + "opponent other than defending player, you may create a token copy that's tapped and attacking that "
+        + "player or a planeswalker they control. Exile the tokens at end of combat.)")]
+    [InlineData("Loyal Apprentice", "Creature — Human Artificer",
+        "Haste\nLieutenant — At the beginning of combat on your turn, if you control your commander, create a "
+        + "1/1 colorless Thopter artifact creature token with flying. That token gains haste until end of turn.")]
+    [InlineData("Cactus Preserve", "Land — Desert",
+        "This land enters tapped.\n{T}: Add one mana of any type that a land you control could produce.\n{3}: "
+        + "Until end of turn, this land becomes an X/X green Plant creature with reach, where X is the greatest "
+        + "mana value among your commanders. It's still a land.")]
+    public void Classify_ALieutenantOrACommanderX_IsNotTokens(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    // The Lieutenant ruling of 2026-10-15 holds for every tag, not only Tokens: a
+    // draw behind it never happens in a cube.
+    [InlineData("Loyal Drake", "Creature — Drake",
+        "Flying\nLieutenant — At the beginning of combat on your turn, if you control your commander, draw a "
+        + "card.")]
+    [InlineData("Stormsurge Kraken", "Creature — Kraken",
+        "Hexproof\nLieutenant — As long as you control your commander, this creature gets +2/+2 and has "
+        + "\"Whenever this creature becomes blocked, you may draw two cards.\"")]
+    public void Classify_ALieutenantAbility_IsNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
     }
 
     [Theory]
@@ -2845,6 +3004,19 @@ public sealed class EffectClassifierTests
         + "Whenever a nontoken Equipment you control enters, create a token that's a copy of it, except it has "
         + "\"This Equipment's equip abilities cost {2} less to activate.\" Sacrifice that token at the beginning "
         + "of the next upkeep.")]
+    // A copy of a permanent ATTACHED to a creature is an Aura or an Equipment,
+    // whatever creature the line names (2026-10-15). And a copy made of another
+    // permanent is no body.
+    [InlineData("Arna Kennerüd, Skycaptain", "Legendary Creature — Human Knight",
+        "Flying, lifelink\nWard—Discard a card.\nWhenever a modified creature you control attacks, double the "
+        + "number of each kind of counter on it. Then for each nontoken permanent attached to it, create a "
+        + "token that's a copy of that permanent attached to that creature.")]
+    [InlineData("Three Dog, Galaxy News DJ", "Legendary Creature — Human Bard",
+        "Whenever you attack, you may pay {2} and sacrifice an Aura attached to Three Dog. When you sacrifice "
+        + "an Aura this way, for each other attacking creature you control, create a token that's a copy of "
+        + "that Aura attached to that creature.")]
+    [InlineData("True Polymorph", "Instant",
+        "Target artifact or creature becomes a copy of another target artifact or creature.")]
     public void Classify_ATokenCopyOfSomethingElse_IsNotTokens(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
@@ -2908,6 +3080,29 @@ public sealed class EffectClassifierTests
         "When Grishnákh enters, amass Orcs 2. When you do, until end of turn, gain control of target "
         + "nonlegendary creature an opponent controls with power less than or equal to the amassed Army's "
         + "power. Untap that creature. It gains haste until end of turn.")]
+    // A quote that ends its sentence keeps the full stop: Twisted Sewer-Witch
+    // makes one Rat, and the Roles after it are no bodies. An artifact animated
+    // once as the creature enters is one body once (Unctus's Retrofitter),
+    // 2026-10-15.
+    [InlineData("Twisted Sewer-Witch", "Creature — Human Warlock",
+        "When this creature enters, create a 1/1 black Rat creature token with \"This creature can't block.\" "
+        + "Then for each Rat you control, create a Wicked Role token attached to that Rat. (If you control "
+        + "another Role on it, put that one into the graveyard. Enchanted creature gets +1/+1. When this token "
+        + "is put into a graveyard, each opponent loses 1 life.)")]
+    [InlineData("Unctus's Retrofitter", "Creature — Phyrexian Artificer",
+        "Toxic 1 (Players dealt combat damage by this creature also get a poison counter.)\nWhen this creature "
+        + "enters, up to one target artifact you control becomes an artifact creature with base power and "
+        + "toughness 4/4 for as long as this creature remains on the battlefield.")]
+    // A creature that manifests ONE card once, as it enters or dies, is one body
+    // once like any other (2026-10-15, with the manifest ruling).
+    [InlineData("Temur War Shaman", "Creature — Human Shaman",
+        "When this creature enters, manifest the top card of your library. (Put that card onto the "
+        + "battlefield face down as a 2/2 creature. Turn it face up any time for its mana cost if it's a "
+        + "creature card.)\nWhenever a permanent you control is turned face up, if it's a creature, you may have "
+        + "it fight target creature you don't control.")]
+    [InlineData("Sultai Emissary", "Creature — Zombie Warrior",
+        "When this creature dies, manifest the top card of your library. (Put that card onto the battlefield "
+        + "face down as a 2/2 creature. Turn it face up any time for its mana cost if it's a creature card.)")]
     public void Classify_ACreatureMakingOneOrTwoBodiesOnce_IsNotTokens(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
@@ -2954,6 +3149,17 @@ public sealed class EffectClassifierTests
         "Ward—Sacrifice a legendary artifact or legendary creature.\nWhenever an opponent casts a spell, amass "
         + "Orcs 1.\nWhenever an Army you control deals combat damage to a player, the Ring tempts you.\nWhenever "
         + "the Ring tempts you, you may discard your hand. If you do, draw four cards.")]
+    // "Instead create X of those tokens" counts the creature tokens named before
+    // it, and storm on a creature makes a token per spell cast before it
+    // (2026-10-15).
+    [InlineData("Adipose Offspring", "Creature — Alien",
+        "Emerge {5}{W} (You may cast this spell by sacrificing a creature and paying the emerge cost reduced "
+        + "by that creature's mana value.)\nWhen this creature enters, create a 2/2 white Alien creature token. "
+        + "If this creature's emerge cost was paid, instead create X of those tokens, where X is the sacrificed "
+        + "creature's toughness.")]
+    [InlineData("Stormscale Scion", "Creature — Dragon",
+        "Flying\nOther Dragons you control get +1/+1.\nStorm (When you cast this spell, copy it for each spell "
+        + "cast before it this turn. Copies become tokens.)")]
     public void Classify_ACreatureMakingManyOrRepeatedBodies_IsTokens(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
@@ -2973,6 +3179,12 @@ public sealed class EffectClassifierTests
         + "transforms into Black Chocobo, search your library for a land card, put it onto the battlefield "
         + "tapped, then shuffle.\nLandfall — Whenever a land you control enters, Birds you control get +1/+0 "
         + "until end of turn.")]
+    // A named token inside a quoted grant, its creature type in the reminder after
+    // the quote (Tarmogoyf Nest, 2026-10-15).
+    [InlineData("Tarmogoyf Nest", "Kindred Enchantment — Lhurgoyf Aura",
+        "Enchant land\nEnchanted land has \"{1}{G}, {T}: Create a Tarmogoyf token.\" (It's a {1}{G} Lhurgoyf "
+        + "creature with \"Tarmogoyf's power is equal to the number of card types among cards in all graveyards "
+        + "and its toughness is equal to that number plus 1.\")")]
     public void Classify_ANoncreatureMakingOneBody_IsTokens(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
@@ -3183,6 +3395,15 @@ public sealed class EffectClassifierTests
         "Haste\nSurvival — At the beginning of your second main phase, if this creature is tapped, put three "
         + "+1/+1 counters on up to one target land you control. That land becomes a 0/0 Elemental creature in "
         + "addition to its other types. It gains haste until your next turn.")]
+    // The counters put on the card itself, or on a permanent of yours named by
+    // type, before "It becomes a 0/0" (2026-10-15).
+    [InlineData("Haunted Screen", "Artifact",
+        "{T}: Add {W} or {B}.\n{T}, Pay 1 life: Add {G}, {U}, or {R}.\n{7}: Put seven +1/+1 counters on this "
+        + "artifact. It becomes a 0/0 Spirit creature in addition to its other types. Activate only once.")]
+    [InlineData("Cosmium Confluence", "Sorcery",
+        "Choose three. You may choose the same mode more than once.\n• Search your library for a Cave card, "
+        + "put it onto the battlefield tapped, then shuffle.\n• Put three +1/+1 counters on a Cave you control. "
+        + "It becomes a 0/0 Elemental creature with haste. It's still a land.\n• Destroy target enchantment.")]
     public void Classify_CountersThatMakeABody_AreTokens(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
@@ -4106,6 +4327,34 @@ public sealed class EffectClassifierTests
         + "Target player mills two cards, then exiles their graveyard.\nIII — Put all creature cards exiled with "
         + "this enchantment onto the battlefield face down under your control. They're 2/2 Cyberman artifact "
         + "creatures.")]
+    // Read 2026-10-15: the consolation body of the creature just destroyed goes to
+    // its controller (14 reviewed, none tagged); re-cloaking creatures already
+    // yours, a trigger that only watches a manifest dread, cards manifested out of
+    // a graveyard, and a non-creature token whose reminder mentions creatures make
+    // no body.
+    [InlineData("Ovinomancer", "Creature — Human Wizard",
+        "When this creature enters, sacrifice it unless you return three basic lands you control to their "
+        + "owner's hand.\n{T}, Return this creature to its owner's hand: Destroy target creature. It can't be "
+        + "regenerated. That creature's controller creates a 0/1 green Sheep creature token.")]
+    [InlineData("Rapid Hybridization", "Instant",
+        "Destroy target creature. It can't be regenerated. That creature's controller creates a 3/3 green "
+        + "Frog Lizard creature token.")]
+    [InlineData("Expose the Culprit", "Instant",
+        "Choose one or both —\n• Turn target face-down creature face up.\n• Exile any number of face-up "
+        + "creatures you control with disguise in a face-down pile, shuffle that pile, then cloak them. (To "
+        + "cloak a card, put it onto the battlefield face down as a 2/2 creature with ward {2}. Turn it face up "
+        + "any time for its mana cost if it's a creature card.)")]
+    [InlineData("Paranormal Analyst", "Creature — Human Detective",
+        "Whenever you manifest dread, put a card you put into your graveyard this way into your hand.")]
+    [InlineData("Ghastly Conscription", "Sorcery",
+        "Exile all creature cards from target player's graveyard in a face-down pile, shuffle that pile, then "
+        + "manifest those cards. (To manifest a card, put it onto the battlefield face down as a 2/2 creature. "
+        + "Turn it face up any time for its mana cost if it's a creature card.)")]
+    [InlineData("Sticky Fingers", "Enchantment — Aura",
+        "Enchant creature\nEnchanted creature has menace and \"Whenever this creature deals combat damage to a "
+        + "player, create a Treasure token.\" (It can't be blocked except by two or more creatures. The token is "
+        + "an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")\nWhen enchanted creature "
+        + "dies, draw a card.")]
     public void Classify_TokensThatAreNotYourCreatures_IsNotTokens(string name, string typeLine, string oracle)
     {
         Card card = MakeCard(name, typeLine, oracle);
@@ -4118,6 +4367,25 @@ public sealed class EffectClassifierTests
     // The token that never says "creature token" because it is a copy of one.
     [InlineData("Kiki-Jiki, Mirror Breaker", "Legendary Creature — Goblin Shaman",
         "{T}: Create a token that's a copy of another target nonlegendary creature you control. That token gains haste.")]
+    // EACH PLAYER includes you, read 2026-10-15: every reviewed card on which each
+    // player creates a creature token is tagged.
+    [InlineData("Waiting in the Weeds", "Sorcery",
+        "Each player creates a 1/1 green Cat creature token for each untapped Forest they control.")]
+    [InlineData("The War Games", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after IV.)\nI — Each "
+        + "player creates three tapped 1/1 white Warrior creature tokens. The tokens are goaded for as long as "
+        + "this Saga remains on the battlefield.\nII, III — Put a +1/+1 counter on each Warrior creature.\nIV — "
+        + "You may exile a nontoken creature you control. When you do, exile all Warriors.")]
+    [InlineData("Tombstone Stairwell", "World Enchantment",
+        "Cumulative upkeep {1}{B} (At the beginning of your upkeep, put an age counter on this permanent, "
+        + "then sacrifice it unless you pay its upkeep cost for each age counter on it.)\nAt the beginning of "
+        + "each upkeep, if this enchantment is on the battlefield, each player creates a 2/2 black Zombie "
+        + "creature token with haste named Tombspawn for each creature card in their graveyard.\nAt the "
+        + "beginning of each end step and when this enchantment leaves the battlefield, destroy all tokens "
+        + "created with this enchantment. They can't be regenerated.")]
+    [InlineData("Liege of the Hollows", "Creature — Spirit",
+        "When this creature dies, each player may pay any amount of mana. Then each player creates a number "
+        + "of 1/1 green Squirrel creature tokens equal to the amount of mana they paid this way.")]
     public void Classify_CreatureTokensForYou_IsTokens(string name, string typeLine, string oracle)
     {
         Card card = MakeCard(name, typeLine, oracle);

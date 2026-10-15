@@ -440,11 +440,17 @@ namespace ScatoloneDownloader.Cube
         /// board to attack with. Asked of the LINE that makes the copy, because
         /// the type word that answers it sits in the trigger beside the verb.
         /// </summary>
+        // …and the copy of a permanent ATTACHED to a creature is an Aura or an
+        // Equipment, whatever creature the line names to attach it to (Arna
+        // Kennerüd, Three Dog: both untagged), 2026-10-15.
+        private static readonly Regex CopiesWhatIsAttached = Rx(
+            @"token that's a copy of (?:that|the|each) (?:\w+ )?(?:permanent|aura|equipment) attached\b");
+
         private static bool TokenCopiesACreature(string text)
         {
             foreach (string line in text.Split('\n'))
             {
-                if (!AnyTokenCopy.IsMatch(line))
+                if (!AnyTokenCopy.IsMatch(line) || CopiesWhatIsAttached.IsMatch(line))
                 {
                     continue;
                 }

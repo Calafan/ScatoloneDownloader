@@ -344,8 +344,17 @@ namespace ScatoloneDownloader.Cube
         // which is the half that matters when a human confirms every proposal.
         private static readonly Regex Earthbend = Rx(@"\bearthbends?\b");
 
+        // Read wider 2026-10-15, where the land animations were tagged 11 to 2
+        // by hand: an X/X (Jolrael, Sage of the Maze — the two, reached and
+        // handed back), an Aura's "enchanted land IS a 3/3" (Crackling
+        // Emergence), "It becomes" after the land is named (Silvanus's
+        // Invoker), and lands becoming a copy of a creature (March from Velis
+        // Vel). Not an X sized by your COMMANDERS, which a cube has none of
+        // (Cactus Preserve, untagged; the Lieutenant ruling of the same day).
         private static readonly Regex LandsBecomeCreatures = Rx(
-            @"lands? (?:you control )?(?:are|become)[\w ]{0,20}\d+/\d+[\w ]{0,20}creatures?");
+            @"lands? (?:you control )?(?:are|is|become)[\w ]{0,20}(?:\d+|x)/(?:\d+|x)[\w ]{0,30}creatures?(?![^.\n]*\bcommanders?\b)"
+            + @"|target land you control\. it becomes an? (?:\d+|x)/(?:\d+|x)"
+            + @"|lands? you control[\w ]{0,20} becomes? a copy of target creature");
 
         // "Its controller creates a 1/1 white Spirit" (Afterlife), "target
         // opponent creates a 1/1 green Hippo" (Phelddagrif): the body is real,
@@ -357,9 +366,19 @@ namespace ScatoloneDownloader.Cube
         // Uprising makes X Samurai before each opponent gets X minus one, and
         // Blink's Clue reminder says "They create" — all three tagged, none
         // proposed while one such sentence vetoed the card.
+        //
+        // EACH PLAYER includes you, read 2026-10-15: every reviewed card on
+        // which each player creates a creature token is tagged (Liege of the
+        // Hollows, The War Games, Tombstone Stairwell, Waiting in the Weeds),
+        // and the Treasures, Food and Landers each player gets are still no
+        // body. And the controller of the creature just DESTROYED or EXILED
+        // gets its consolation body on their side (Ovinomancer, Rapid
+        // Hybridization: 14 reviewed, none tagged); "that creature's
+        // controller" anywhere else may be you (Bramble Sovereign).
         private const string SomebodyElseCreatesWording =
-            @"(?:its controller|that player|each player|each opponent|target opponent|an opponent"
+            @"(?:its controller|that player|each opponent|target opponent|an opponent"
             + @"|the exiled card's owner|they|opponents?)\s+(?:may have you |each )?creates?\b"
+            + @"|(?<=(?:destroy|exile)[^\n]{0,120}\.\s)that (?:creature|permanent)'s controller creates\b"
             + @"|have an opponent create|you and target opponent each create";
 
         private static readonly Regex WhatSomebodyElseCreates = Rx(

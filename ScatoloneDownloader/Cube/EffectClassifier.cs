@@ -134,6 +134,10 @@ namespace ScatoloneDownloader.Cube
         /// of <see cref="Classify"/> for why it answers for the whole card.</summary>
         private static readonly Regex PlayedForAnte = Rx(@"if you're not playing for ante");
 
+        /// <summary>A Lieutenant line, ability word to end of line. See the
+        /// veto at the top of <see cref="Classify"/>.</summary>
+        private static readonly Regex LieutenantAbility = Rx(@"^lieutenant — [^\n]*", RegexOptions.Multiline);
+
         /// <summary>Proposes the effect flags for a card from its
         /// <see cref="Card.OracleText"/> and <see cref="Card.Keywords"/>. Returns
         /// <see cref="CardEffect.None"/> when nothing matches (leave it untagged).</summary>
@@ -162,6 +166,17 @@ namespace ScatoloneDownloader.Cube
             if ((card.TypeLine ?? string.Empty).Contains("Aura Role", StringComparison.OrdinalIgnoreCase))
             {
                 return CardEffect.None;
+            }
+
+            // A LIEUTENANT ability works only while you control your commander,
+            // and a cube game has none, so for this cube the line is not on the
+            // card at all. Ruled 2026-10-15 for every tag ("mai conta, per nessun
+            // tag"), after Ironwill Forger was found tagged Tokens by hand for
+            // its Lieutenant myriad and Siege-Gang Lieutenant untagged for its
+            // Lieutenant Goblins. The card is asked again without the line.
+            if (LieutenantAbility.IsMatch(text))
+            {
+                return Classify(new OneAbility(card, LieutenantAbility.Replace(text, " ")));
             }
 
             if (text.Length > 0)
@@ -341,8 +356,12 @@ namespace ScatoloneDownloader.Cube
             if (Earthbend.IsMatch(text) || LandsBecomeCreatures.IsMatch(text)
                 || MakesABodyByKeyword.IsMatch(text) || AnimatesANoncreature.IsMatch(text)
                 || SelfAnimates.IsMatch(text) || FaceDownBodiesFromALibrary.IsMatch(text)
+                || AnimatesAnArtifact.IsMatch(text)
                 || AmassesAnArmy.IsMatch(Parenthetical.Replace(text, " "))
+                || FaceDownFromYourSide.IsMatch(Parenthetical.Replace(text, " "))
                 || CopiesYourCreatureSpell.IsMatch(text)
+                || (FrontFaceIsACreature(card) && StormCopiesBecomeTokens.IsMatch(text))
+                || (card.MacroType == MacroType.Land && LandCastFaceDown.IsMatch(Parenthetical.Replace(text, " ")))
                 || Incubates.IsMatch(text))
             {
                 result |= CardEffect.Tokens;

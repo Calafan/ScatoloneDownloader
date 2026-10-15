@@ -416,9 +416,14 @@ namespace ScatoloneDownloader.Cube
         // (Bloodroot Apothecary, The Third Doctor), read 2026-10-13.
         private static readonly Regex CreatureTokenWording = Rx(@"(?<!non)creature token");
 
+        // Also inside a QUOTED grant, with the power left to the reminder's
+        // own quote: Tarmogoyf Nest's land has "{1}{G}, {T}: Create a
+        // Tarmogoyf token." (It's a {1}{G} Lhurgoyf creature with …), tagged,
+        // read 2026-10-15.
         private static readonly Regex NamedTokenIsACreature = Rx(
-            @"create[s]? (?:a|an|two|three|four|five|x|\d+)[\w ,'\-]{0,30} tokens?\. "
-            + @"\(it'?s? [\w ,'\-{}/]{0,40}\d+/\d+[\w ,'\-]{0,30}creature");
+            @"create[s]? (?:a|an|two|three|four|five|x|\d+)[\w ,'\-]{0,30} tokens?"
+            + @"(?:\. \(it'?s? [\w ,'\-{}/]{0,40}\d+/\d+[\w ,'\-]{0,30}creature"
+            + @"|\."" \(it's an? [\w ,'\-{}/]{0,40}creature)");
 
         private static readonly Regex AnyTokenCopy = Rx(
             @"token that's a copy|token cop(?:y|ies)|tokens that are copies");
@@ -430,28 +435,77 @@ namespace ScatoloneDownloader.Cube
         // shape the rules above can read. Ruled 2026-09-19. Cloak and manifest
         // dread turn a card face down as a 2/2; living weapon and job select
         // hand the Equipment a Germ or a Hero to carry it. 29 reviewed cards
-        // carry one of these and 24 were already tagged by hand; plain MANIFEST
-        // is deliberately not among them, being one card and untagged.
+        // carry one of these and 24 were already tagged by hand. Plain MANIFEST
+        // was left out then, being one card and untagged, and is read since
+        // 2026-10-15 (FaceDownFromYourSide). Not "cloak THEM" (Expose the
+        // Culprit re-cloaks creatures already yours), nor a trigger that only
+        // WATCHES a manifest dread (Paranormal Analyst), 2026-10-15.
         private static readonly Regex MakesABodyByKeyword = Rx(
-            @"\bcloaks? (?:the|two|three|four|\w+ of them|up to)|manifest dread"
+            @"\bcloaks? (?:the|two|three|four|\w+ of them|up to)\b|(?<!whenever you )manifest dread"
             + @"|\bliving weapon\b|\bjob select\b");
+
+        // MANIFEST is a body like cloak, ruled 2026-10-15 ("Tokens come
+        // cloak"): Orochi Soul-Reaver and Kozilek, the Broken Reality tagged by
+        // hand, Guardian of the Forgotten reached. Asked with reminder text
+        // blanked, which says "To manifest a card" on every one of them, and
+        // with the cloak Vannifar does from hand ("Cloak a card from your
+        // hand", tagged). Not the body an exiled creature's controller gets
+        // (Reality Shift), nor a trigger watching one, nor a card's NAME
+        // (O-Kagachi Made Manifest), nor cards out of a GRAVEYARD, which are
+        // reanimated as FaceDownBodiesFromALibrary says (Ghastly Conscription).
+        private static readonly Regex FaceDownFromYourSide = Rx(
+            @"(?<!whenever you |its controller |\bthey |\bmade |graveyard[^.\n]{0,100})\b(?:manifests?|cloaks? a card)\b(?! dread)");
 
         // A NONCREATURE permanent turned into a 0/0 creature and sized with
         // counters is a body made, the same shape as earthbend: Case of the
         // Filched Falcon "put four +1/+1 counters on target noncreature
         // artifact. It becomes a 0/0 Bird creature". Ruled Tokens 2026-09-25.
+        // The same with the counters put on the card ITSELF (Haunted Screen's
+        // "seven +1/+1 counters on this artifact. It becomes a 0/0 Spirit") or
+        // on a permanent of yours named by type (Cosmium Confluence's Cave),
+        // both tagged, read 2026-10-15.
         private static readonly Regex AnimatesANoncreature = Rx(
-            @"counters? on target noncreature [\w ]{0,20}\. it becomes an? 0/0\b[\w ,]{0,40}creature");
+            @"counters? on (?:target noncreature [\w ]{0,20}|this (?:artifact|enchantment|land)|an? [\w ]{1,15} you control)"
+            + @"\. it becomes an? 0/0\b[\w ,]{0,40}creature");
 
         // A LAND or an ARTIFACT that animates ITSELF is a body made too,
         // ruled 2026-10-13: the Restless lands, Cavernous Maw, Stalking Stones
         // (13 of 14 reviewed lands), Levitating Statue and Eye of Malcator;
         // Mishra's Factory, Jade Statue, Xanthic Statue and Chimeric Sphere,
-        // untagged before the ruling, were realigned. An ENCHANTMENT that does
-        // it is not in the ruling (Reverberating Summons tagged, Ride the
-        // Shoopuf not) and is not read.
+        // untagged before the ruling, were realigned. An ENCHANTMENT joined on
+        // 2026-10-15 ("Tokens, come terre e artefatti"): Reverberating Summons,
+        // Emergent Haunting and Case of the Gorgon's Kiss tagged by hand, Ride
+        // the Shoopuf reached. A VEHICLE is not here: it says "this Vehicle",
+        // and the 13 reviewed ones that animate themselves other than by crew
+        // are untagged, against 3 (Kylox's Voltstrider, War Balloon, Phoenix
+        // Fleet Airship, handed back).
         private static readonly Regex SelfAnimates = Rx(
-            @"\bthis (?:land|artifact) becomes an? [^.\n]{0,40}\d+/\d+[^.\n]{0,60}creature");
+            @"\bthis (?:land|artifact|enchantment|case) (?:becomes|is) an? [^.\n]{0,40}\d+/\d+[^.\n]{0,60}creature"
+            + @"|\bthis (?:land|artifact|enchantment) isn't a creature, it becomes an? \d+/\d+");
+
+        // An ARTIFACT animated by the card is a body like the land, ruled
+        // 2026-10-15 ("Tokens, come le terre"): the hand tags were split 6 to
+        // 7 on identical wordings — Majestic Metamorphosis tagged, Relic's
+        // Roar not; Katsumasa tagged, Tough Cookie not. Target or enchanted,
+        // until end of turn or for good. A creature that does it once as it
+        // enters is still taken back by the few-bodies rule (Unctus's
+        // Retrofitter), which counts it in OneBodyByKeyword.
+        private static readonly Regex AnimatesAnArtifact = Rx(
+            @"\b(?:target|enchanted) (?:noncreature )?artifacts?(?: token| or creature)?(?: you control)? (?:becomes?|is|are) "
+            + @"(?!a copy\b)(?:an? )?[\w ,/]{0,40}?\bcreatures?\b");
+
+        // STORM on a creature card puts its copies on the board as tokens,
+        // one for each spell cast before it (Stormscale Scion, tagged,
+        // 2026-10-15). Not on an Aura (Tempest Technique, Amphibian Downpour,
+        // untagged), and not a creature copying itself once (Sage of the
+        // Skies), which the reminder words differently.
+        private static readonly Regex StormCopiesBecomeTokens = Rx(
+            @"copy it for each spell cast before it this turn\. copies become tokens");
+
+        // A LAND cast face down is a 2/2 creature the land makes of itself,
+        // the 2026-10-13 ruling on self-animating lands (Branch of Vitu-Ghazi,
+        // tagged, 2026-10-15).
+        private static readonly Regex LandCastFaceDown = Rx(@"^(?:disguise|morph)\b", RegexOptions.Multiline);
 
         // DASH returns the creature to hand every turn it is cast that way, so
         // its enters trigger repeats, ruled 2026-10-13 on Riders of Rohan
@@ -512,7 +566,11 @@ namespace ScatoloneDownloader.Cube
             @"\bearthbends?\b|\bmanifest dread\b|\bendures? (?:\d+|x)\b|\bcloaks? (?:the|a)\b|\bincubate (?:\d+|x)\b"
             // An amass printed bare, once (Grishnákh, Sauron, Lord of the Rings,
             // untagged), 2026-10-13.
-            + @"|\bamass(?: \w+)? (?:\d+|x)\b");
+            + @"|\bamass(?: \w+)? (?:\d+|x)\b"
+            // A manifest, and a land or an artifact animated — ONE target
+            // (Unctus's Retrofitter as it enters), 2026-10-15.
+            + @"|\bmanifests? (?:the top card|a card|one)\b"
+            + @"|\b(?:up to one )?target (?:noncreature )?(?:land|artifact)(?: token| or creature)?(?: you control)? becomes\b");
 
         // …but an incubate REPEATED is as many bodies as it says, read
         // 2026-10-13: Progenitor Exarch incubates "X times" and Elesh Norn's
@@ -549,6 +607,15 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex Incubates = Rx(@"\bincubate (?:\d+|x)\b");
 
         private static readonly Regex CloaksSeveral = Rx(@"\bcloaks? (?:two|three|four|\w+ of them)\b");
+
+        // NOT here: "each manifest" (Kozilek, the Broken Reality) and "any number
+        // of target artifacts/lands" (Depthshaker Titan) read as reaching three
+        // were tried on 2026-10-15 — both cards keep the tag by other rules,
+        // nothing went red without them and no card moved, so they were removed.
+
+        // "Instead create X of those tokens" counts the creature tokens the
+        // sentence before named (Adipose Offspring), 2026-10-15.
+        private static readonly Regex OfThoseTokens = Rx(@"^\s*of (?:those|these) tokens\b");
 
         // The count sits right after the token when it is a count at all:
         // "create a 1/1 green Insect creature token FOR EACH artifact" (Aatchik).
@@ -593,7 +660,8 @@ namespace ScatoloneDownloader.Cube
             {
                 string rest = m.Groups["rest"].Value;
                 bool isBody = rest.Contains("creature token", StringComparison.OrdinalIgnoreCase)
-                    || AnyTokenCopy.IsMatch(rest);
+                    || AnyTokenCopy.IsMatch(rest)
+                    || (OfThoseTokens.IsMatch(rest) && ability.Contains("creature token", StringComparison.OrdinalIgnoreCase));
 
                 if (!isBody)
                 {
@@ -692,7 +760,12 @@ namespace ScatoloneDownloader.Cube
         private static bool OnlyAFewBodiesOnce(string text)
         {
             bool makesAny = false;
-            string own = Quoted.Replace(text, " ");
+
+            // A quote that ENDS its sentence keeps the full stop, or the next
+            // sentence reads as part of the token's: Twisted Sewer-Witch's Rat
+            // "with \"This creature can't block.\" Then for each Rat you
+            // control, create a Wicked Role" read as a Rat for each, 2026-10-15.
+            string own = Quoted.Replace(text, m => m.Value.EndsWith(".\"", StringComparison.Ordinal) ? ". " : " ");
 
             if (BodiesOnEveryAttack.IsMatch(own) || DashRepeatsTheEntry.IsMatch(own))
             {
