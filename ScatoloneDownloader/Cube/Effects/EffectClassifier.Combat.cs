@@ -1491,8 +1491,9 @@ namespace ScatoloneDownloader.Cube
         // (Bootleggers' Stash's lands "{T}: Create a Treasure token"). See
         // TreasureAlsoRamps.
         // Not one that SACRIFICES the card: it makes its one Treasure once,
-        // a rider (Volatile Fault, Contested Game Ball, untagged by hand; read
-        // 2026-10-15, Reckless Lackey went back for review).
+        // a rider (Volatile Fault, Contested Game Ball, untagged by hand),
+        // ruled 2026-10-15 ("No Ramp") against Pictures of Spider-Man and
+        // Reckless Lackey, tagged by hand before the 09-18 families ruling.
         private static readonly Regex ActivatedTreasureMaker = Rx(
             @"^(?![^\n]*\bsacrifice (?:this (?:land|artifact|creature|enchantment)|it)\b)[^\n:""]{1,70}:[^\n]*\btreasure tokens?\b"
             + @"|""[^""\n:]{1,60}:[^""\n]*\btreasure tokens?\b",
