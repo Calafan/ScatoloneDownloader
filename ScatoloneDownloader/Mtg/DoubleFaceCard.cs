@@ -13,6 +13,11 @@ namespace ScatoloneDownloader.Mtg
         internal string? FrontImageUri { get; init; }
         internal string? RearImageUri { get; init; }
 
+        /// <summary>A battle (Siege) front: its art is printed sideways, so the
+        /// composer flips the whole master 180° and the tagger turns it the other
+        /// way from an ordinary double. One definition for both.</summary>
+        internal bool IsSiege => TypeLine.Contains("Siege");
+
         internal DoubleFaceCard(JsonCard jsonCard) : base(jsonCard)
         {
             // Reached only when the top-level image_uris is absent (see

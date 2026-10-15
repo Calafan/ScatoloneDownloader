@@ -75,9 +75,7 @@ namespace ScatoloneDownloader.Download
                     {
                         using Stream front = await getManager.GetImageStreamAsync(RequireImageUri(doubleFace.FrontImageUri, card, "front"));
                         using Stream rear = await getManager.GetImageStreamAsync(RequireImageUri(doubleFace.RearImageUri, card, "rear"));
-                        bool isSiege = doubleFace.TypeLine.Contains("Siege");
-
-                        return CardImageComposer.ComposeDoubleFace(front, rear, isSiege);
+                        return CardImageComposer.ComposeDoubleFace(front, rear, doubleFace.IsSiege);
                     }
                 case SingleFaceCard singleFace:
                     {

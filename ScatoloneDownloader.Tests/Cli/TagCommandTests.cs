@@ -1,4 +1,5 @@
 using ScatoloneDownloader.Cli.Cube;
+using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Mtg;
 
 using Xunit;
@@ -142,5 +143,71 @@ public sealed class TagCommandTests
             () => TagCommand.BuildPrefixes(8765, [host]));
 
         Assert.Contains("bare hostname", ex.Message);
+    }
+
+    [Fact]
+    public void ReadingTurns_StandsADoubleUp_WithAQuarterTurnClockwise()
+    {
+        // The composer stacks both faces turned 90° anticlockwise.
+        Card card = Card.CreateCard(MakeJson("Creature — Human Wizard // Creature — Human Insect", faces: true));
+
+        Assert.Equal([90, 0], TagCommand.ReadingTurns(card));
+    }
+
+    [Fact]
+    public void ReadingTurns_OpensASiegeAsStored_AndTurnsTheOtherWay()
+    {
+        // The composer flips a Siege master 180°: the battle face already reads
+        // straight, and the creature on the back needs the turn the other way.
+        Card card = Card.CreateCard(MakeJson("Battle — Siege // Creature — Elemental", faces: true));
+
+        Assert.Equal([0, 270], TagCommand.ReadingTurns(card));
+    }
+
+    [Fact]
+    public void ReadingTurns_TurnsASplitCard_ButNotAnAftermath()
+    {
+        Card split = Card.CreateCard(MakeJson("Instant // Instant", layout: "split"));
+        Card aftermath = Card.CreateCard(MakeJson("Sorcery // Sorcery", layout: "split", keywords: ["Aftermath"]));
+
+        Assert.Equal([90, 0], TagCommand.ReadingTurns(split));
+        Assert.Equal([0], TagCommand.ReadingTurns(aftermath));
+    }
+
+    [Fact]
+    public void ReadingTurns_LeavesAnOrdinaryCardAlone()
+    {
+        Card card = Card.CreateCard(MakeJson("Instant"));
+
+        Assert.Equal([0], TagCommand.ReadingTurns(card));
+    }
+
+    private static JsonCard MakeJson(string typeLine, string layout = "normal", bool faces = false, List<string>? keywords = null)
+    {
+        JsonImageUris png = new() { Png = "https://test/card.png" };
+
+        return new JsonCard
+        {
+            Name = "Test Card",
+            Language = "en",
+            ReleasedAt = "2011-09-30",
+            Layout = faces ? "transform" : layout,
+            TypeLine = typeLine,
+            Games = ["paper"],
+            FrameEffects = [],
+            Set = "TST",
+            SetName = "Test Set",
+            SetType = "expansion",
+            BorderColor = "black",
+            Cmc = 1,
+            Colors = ["U"],
+            Keywords = keywords,
+            // A double carries its art on the faces and none at the top level,
+            // which is what makes CreateCard build a DoubleFaceCard.
+            ImageUris = faces ? null : png,
+            CardFaces = faces
+                ? [new JsonCardFace { Name = "Front", ImageUris = png }, new JsonCardFace { Name = "Back", ImageUris = png }]
+                : null,
+        };
     }
 }

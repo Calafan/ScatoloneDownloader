@@ -253,8 +253,9 @@ namespace ScatoloneDownloader.Cube
         }
 
         /// <summary>CMC folder bucket: exact 0-5, "6_Plus" for 6 or more. Invariant
-        /// culture so the decimal never leaks into the folder name.</summary>
-        private static string CmcBucket(double cmc)
+        /// culture so the decimal never leaks into the folder name. Also what the
+        /// tagger's cost picker groups on, so the two can never disagree.</summary>
+        internal static string CmcBucket(double cmc)
         {
             return cmc >= 6
                 ? "6_Plus"

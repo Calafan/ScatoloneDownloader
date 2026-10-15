@@ -9,14 +9,19 @@
   * { box-sizing: border-box; }
   body { margin:0; background:var(--bg); color:var(--txt); font:15px/1.4 system-ui,Segoe UI,sans-serif; height:100vh; overflow:hidden; }
 
-  /* Three zones. The masters are 745x1040, so the card is bound by HEIGHT and
-     cannot use extra width — which is what frees both side rails for the UI.
+  /* Three zones. The masters are portrait (745x1040, or 815x1110 with the
+     print bleed), so the card is bound by HEIGHT and cannot use extra width —
+     which is what frees both side rails for the UI. A double turned to read
+     is landscape and bound by the column's width instead; its faces come out
+     the same size either way, the turn only stands them up.
      Left: scope, set once and then left alone. Centre: the card. Right: the
      per-card controls, next to where the eye already is. */
   #app { display:flex; height:100vh; }
   #rail { flex:0 0 270px; background:var(--rail); border-right:1px solid var(--line); padding:16px; display:flex; flex-direction:column; gap:14px; overflow-y:auto; }
   #imgwrap { flex:1 1 auto; min-width:0; display:flex; align-items:center; justify-content:center; padding:16px; }
   #card { max-width:100%; max-height:96vh; border-radius:14px; box-shadow:0 8px 40px rgba(0,0,0,.6); }
+  #card.turnable { cursor:pointer; }
+  #card.loading { opacity:.35; }
   #panel { flex:0 1 620px; min-width:430px; background:var(--panel); padding:18px; display:flex; flex-direction:column; gap:14px; overflow-y:auto; }
 
   /* --- left rail --- */
@@ -179,8 +184,11 @@
     <div class="railhead">Scope</div>
     <div class="field"><label for="reviewSel">Review</label><select id="reviewSel"></select></div>
     <div class="field"><label for="rateSel">Rating</label><select id="rateSel"></select></div>
+    <div class="field"><label for="statusSel">Status</label><select id="statusSel"></select></div>
+    <div class="field"><label for="colorSel">Colour</label><select id="colorSel"></select></div>
     <div class="field"><label for="typeSel">Type</label><select id="typeSel"></select></div>
     <div class="field"><label for="effectSel">Effect</label><select id="effectSel"></select></div>
+    <div class="field"><label for="costSel">Cost</label><select id="costSel"></select></div>
     <div class="field"><label for="yearSel">Year</label><select id="yearSel"></select></div>
     <div class="field"><label for="folderSel">Set</label><select id="folderSel"></select></div>
     <div id="filter"></div>
@@ -194,7 +202,7 @@
     <label id="shufmode"><input type="checkbox" id="shufBox"> shuffle the queue</label>
   </div>
 
-  <div id="imgwrap"><img id="card" alt="card"></div>
+  <div id="imgwrap"><canvas id="card" role="img" aria-label="card"></canvas></div>
 
   <div id="panel">
     <div>
@@ -214,6 +222,7 @@
       <div><kbd>c</kbd> confirm as-is and go to the next card</div>
       <div><kbd>Home</kbd> back to the first card</div>
       <div><kbd>/</kbd> card list &nbsp; <kbd>Esc</kbd> close it</div>
+      <div>click a double or split card to turn it</div>
       <div>filters and shuffle: the pickers on the left</div>
     </div>
   </div>
@@ -255,6 +264,7 @@ let cards = [], effects = [], glossary = [], order = [], pos = 0;
 let effectOrder = [];
 let filterMode = 0, ratingMode = 0, effectFilter = "", filterFellBack = false;
 let yearSel = "", folderSel = "", typeSel = "", listOpen = false;
+let statusSel = "", colorSel = "", costSel = "";
 
 // Shuffle the queue by default. The server hands cards over in
 // Directory.GetFiles order, which is year folder ascending, so working the
@@ -310,7 +320,7 @@ const RATING_FILTERS = [
   { short: "fringe",  label: "fringe ★1-2",match: c => c.rating >= 1 && c.rating <= 2 },
   { short: "unrated", label: "unrated",    match: c => c.rating === 0 },
   { short: "★1",      label: "exactly ★1", match: c => c.rating === 1 },
-  { short: "★2",      label: "exactly ★2", match: c => c.rating === 2 },
+  { short: "★2",      label: "exactly ★2 (bench)", match: c => c.rating === 2 },
   { short: "★3",      label: "exactly ★3", match: c => c.rating === 3 },
   { short: "★4",      label: "exactly ★4", match: c => c.rating === 4 },
   { short: "★5",      label: "exactly ★5", match: c => c.rating === 5 },
@@ -350,6 +360,23 @@ function typeMatch(c) { return !typeSel || c.macro === typeSel; }
 
 function typeLabel() { return MACRO_LABELS[typeSel] || typeSel; }
 
+// The axes build-views files a card under besides type and effect, so any view
+// folder can be reproduced as a scope here: 4_ByColor/1 White/Creature/Cost 2
+// is colour + type + cost. Colour and cost arrive as the folder names
+// themselves (see TagCommand), which keeps the two from drifting apart. Status
+// is the axis the views apply first — a Banned/Token/Jolly card goes to its own
+// 0_ folder at any rating and never into the browse tree — so "no status" with
+// "pool" is exactly the pool the browse roots show, and "exactly ★2 (bench)"
+// with "no status" is 6_Bench.
+function statusMatch(c) { return !statusSel || c.status === statusSel; }
+function colorMatch(c) { return !colorSel || c.color === colorSel; }
+function costMatch(c) { return !costSel || c.cost === costSel; }
+
+function statusLabel() { return statusSel === "None" ? "no status" : statusSel; }
+
+// Cost buckets are "0".."5" and "6_Plus", as the view folders spell them.
+function costLabel(bucket) { return bucket === "6_Plus" ? "cost 6+" : `cost ${bucket}`; }
+
 function folderMatch(c) {
   if (folderSel) return c.folder === folderSel;
   if (yearSel) return yearOf(c.folder) === yearSel;
@@ -362,7 +389,10 @@ async function boot() {
   effects = data.effects;
   glossary = data.glossary || [];
   effectOrder = effects.map((_, i) => i).sort((a, b) => effects[a].localeCompare(effects[b]));
-  cards = data.cards.map(c => ({...c, effects: new Set(c.effects), folder: c.folder || ""}));
+  cards = data.cards.map(c => ({
+    ...c, effects: new Set(c.effects), folder: c.folder || "",
+    turns: c.turns && c.turns.length ? c.turns : [0], turnAt: 0,
+  }));
   buildScopeControls();
   buildOrder();
   render();
@@ -376,7 +406,8 @@ function buildOrder() {
   const rate = RATING_FILTERS[ratingMode].match;
   order = cards.map((c,i)=>i).filter(i => {
     const c = cards[i];
-    return match(c) && rate(c) && typeMatch(c) && effectMatch(c) && folderMatch(c);
+    return match(c) && rate(c) && statusMatch(c) && colorMatch(c) && typeMatch(c)
+      && effectMatch(c) && costMatch(c) && folderMatch(c);
   });
   // Nothing matches (e.g. a set whose cards are all reviewed): show every card
   // rather than a blank page, and say so, so it can't be read as the filter.
@@ -392,6 +423,16 @@ function buildOrder() {
 function buildScopeControls() {
   fillSelect("reviewSel", FILTERS.map((f, i) => [String(i), f.label]), String(filterMode));
   fillSelect("rateSel", RATING_FILTERS.map((f, i) => [String(i), f.label]), String(ratingMode));
+  fillSelect("statusSel", [
+    ["", "any status"],
+    ["None", "no status — normal card"],
+    ...STATUS_ORDER.filter(s => s.name !== "None").map(s => [s.name, s.name]),
+  ], statusSel);
+  const colors = [...new Set(cards.map(c => c.color).filter(Boolean))].sort();
+  fillSelect("colorSel", [["", "all colours"], ...colors.map(x => [x, x])], colorSel);
+  const costs = [...new Set(cards.map(c => c.cost).filter(Boolean))]
+    .sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+  fillSelect("costSel", [["", "any cost"], ...costs.map(x => [x, costLabel(x)])], costSel);
   fillSelect("effectSel", [
     [EFFECT_ANY, "any effect"],
     [EFFECT_NONE, "— no effect at all —"],
@@ -437,9 +478,65 @@ function effectLabel() {
 
 function cur() { return cards[order[pos]]; }
 
+// The card is painted on a canvas rather than shown as an <img> so it can be
+// turned: a double's master holds both faces sideways, and the server says
+// which turns stand it up (TagCommand.ReadingTurns — the first is the default,
+// a click cycles the rest). A CSS rotation would leave the layout box in the
+// unturned shape, spilling out of the column; turning the pixels gives the
+// canvas the turned shape, and the same max-width/max-height then fit it like
+// any other card. The master on disk is never touched.
+let shown = null;    // { index, img } — the last image that finished loading
+let painted = "";    // "index:turn" now on the canvas, so a save doesn't repaint
+let loadToken = 0;
+
+function cardUrl(c) { return "/img/" + c.index; }
+
+function showCard(c) {
+  const turn = c.turns[c.turnAt];
+  if (painted === `${c.index}:${turn}`) return;
+  if (shown && shown.index === c.index) { paintCard(c, shown.img); return; }
+  // Until the new image arrives the canvas still holds the previous card while
+  // the panel already names the new one; dimming it keeps the two from being
+  // mistaken for each other on a slow link (the phone, over the tunnel).
+  document.getElementById("card").classList.add("loading");
+  const token = ++loadToken;
+  const img = new Image();
+  img.onload = () => {
+    if (token !== loadToken) return;   // moved on before it arrived
+    shown = { index: c.index, img };
+    paintCard(c, img);
+  };
+  img.src = cardUrl(c);
+}
+
+function paintCard(c, img) {
+  const turn = c.turns[c.turnAt];
+  const sideways = turn === 90 || turn === 270;
+  const w = img.naturalWidth, h = img.naturalHeight;
+  const cv = document.getElementById("card");
+  cv.width = sideways ? h : w;   // resizing also clears it and resets the transform
+  cv.height = sideways ? w : h;
+  const ctx = cv.getContext("2d");
+  ctx.translate(cv.width / 2, cv.height / 2);
+  ctx.rotate(turn * Math.PI / 180);
+  ctx.drawImage(img, -w / 2, -h / 2);
+  cv.classList.remove("loading");
+  cv.classList.toggle("turnable", c.turns.length > 1);
+  cv.title = c.turns.length > 1 ? "Click to turn the card" : "";
+  cv.setAttribute("aria-label", c.name);
+  painted = `${c.index}:${turn}`;
+}
+
+document.getElementById("card").onclick = () => {
+  const c = cur();
+  if (c.turns.length < 2) return;
+  c.turnAt = (c.turnAt + 1) % c.turns.length;
+  showCard(c);
+};
+
 function render() {
   const c = cur();
-  document.getElementById("card").src = "/img/" + c.index + "?t=" + c.index;
+  showCard(c);
 
   const taggedTotal = cards.filter(x => x.effects.size > 0).length;
   const reviewedTotal = cards.filter(x => x.reviewed).length;
@@ -457,8 +554,11 @@ function render() {
   filterEl.textContent = filterFellBack
     ? "Nothing matches this combination — showing every card."
     : `Showing: ${FILTERS[filterMode].label} · ${RATING_FILTERS[ratingMode].label}`
+      + (statusSel ? ` · ${statusLabel()}` : "")
+      + (colorSel ? ` · ${colorSel}` : "")
       + (typeSel ? ` · ${typeLabel()}` : "")
       + (effectFilter ? ` · ${effectLabel()}` : "")
+      + (costSel ? ` · ${costLabel(costSel)}` : "")
       + (folderSel || yearSel ? ` · ${folderSel || yearSel}` : "");
   filterEl.className = filterFellBack ? "fellback" : "";
   document.getElementById("shufBox").checked = shuffled;
@@ -598,7 +698,8 @@ function closeList() {
 }
 
 function preload() {
-  if (pos+1 < order.length) { const im = new Image(); im.src = "/img/" + cards[order[pos+1]].index; }
+  // Same URL showCard asks for, so the next card comes out of the cache.
+  if (pos+1 < order.length) { const im = new Image(); im.src = cardUrl(cards[order[pos+1]]); }
 }
 
 function toggle(i) {
@@ -672,6 +773,9 @@ document.getElementById("reviewSel").onchange = e => { filterMode = Number(e.tar
 document.getElementById("rateSel").onchange = e => { ratingMode = Number(e.target.value); e.target.blur(); requeue(); };
 document.getElementById("effectSel").onchange = e => { effectFilter = e.target.value; e.target.blur(); requeue(); };
 document.getElementById("typeSel").onchange = e => { typeSel = e.target.value; e.target.blur(); requeue(); };
+document.getElementById("statusSel").onchange = e => { statusSel = e.target.value; e.target.blur(); requeue(); };
+document.getElementById("colorSel").onchange = e => { colorSel = e.target.value; e.target.blur(); requeue(); };
+document.getElementById("costSel").onchange = e => { costSel = e.target.value; e.target.blur(); requeue(); };
 document.getElementById("shufBox").onchange = e => { shuffled = e.target.checked; e.target.blur(); requeue(); };
 document.getElementById("yearSel").onchange = e => {
   yearSel = e.target.value;

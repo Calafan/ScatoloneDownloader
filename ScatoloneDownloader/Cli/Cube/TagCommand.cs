@@ -231,6 +231,13 @@ namespace ScatoloneDownloader.Cli.Cube
                     // ontology does and a reordered enum cannot silently
                     // re-point the filter at a different bucket.
                     macro = m.Card.MacroType.ToString(),
+                    // Colour and cost are sent as the very folder names
+                    // build-views files the card under ("2 Azorius", and the
+                    // "Cost N" bucket), so a scope picked here is the same set
+                    // of cards as the matching view folder in Bridge.
+                    color = ColorCategoryClassifier.ViewFolderName(m.Card.ColorCategory),
+                    cost = ViewGenerator.CmcBucket(m.Card.Cmc),
+                    turns = ReadingTurns(m.Card),
                     reviewed = !IsPendingReview(m.Card),
                     folder = RelativeFolder(masterDir, m.Path),
                 });
@@ -334,16 +341,6 @@ namespace ScatoloneDownloader.Cli.Cube
             return [.. prefixes];
         }
 
-        /// <summary>
-        /// True when no human has confirmed this card yet — its metadata entry is
-        /// missing, or present with no <c>reviewedAt</c>. This single predicate
-        /// backs both the startup "To review" count and the page's <c>reviewed</c>
-        /// flag, which the tagger's DEFAULT filter inverts: the review queue is
-        /// untagged cards AND auto-tagged ones together, because <c>classify</c>
-        /// writes effects only when it has a suggestion — a card it read and found
-        /// nothing for stays effect-less, so it is invisible in an auto-only view
-        /// while an untagged-only view hides every auto suggestion.
-        /// </summary>
         /// <summary>The card's folder relative to the master library, with forward
         /// slashes ("2000/Invasion"), or "" for a file sitting in the root. This is
         /// what the page's folder filter groups on — the equivalent of picking a
@@ -364,6 +361,51 @@ namespace ScatoloneDownloader.Cli.Cube
             return relative == "." ? string.Empty : relative.Replace(Path.DirectorySeparatorChar, '/');
         }
 
+        /// <summary>
+        /// The orientations the page shows this card in, as clockwise turns in
+        /// degrees: the first is how it opens, and clicking the card cycles
+        /// through the rest. Only cards whose master is drawn sideways get more
+        /// than one.
+        /// <list type="bullet">
+        /// <item><description>A double-faced master holds both faces turned 90°
+        /// anticlockwise and stacked (<see cref="Imaging.CardImageComposer"/>),
+        /// so a quarter turn clockwise stands them both up, front on the left.
+        /// </description></item>
+        /// <item><description>A Siege is the exception: the composer flips the
+        /// whole master, so the battle face — itself printed sideways — already
+        /// reads straight, and the back face needs the turn the other way.
+        /// </description></item>
+        /// <item><description>A split card's Scryfall image has both halves
+        /// sideways the same way a double's faces are. Aftermath is left alone:
+        /// its top half reads straight, and that is the half cast first.
+        /// </description></item>
+        /// </list>
+        /// </summary>
+        internal static int[] ReadingTurns(Card card)
+        {
+            if (card is DoubleFaceCard doubleFace)
+            {
+                return doubleFace.IsSiege ? [0, 270] : [90, 0];
+            }
+
+            if (card.Layout == "split" && !card.Keywords.Contains("Aftermath"))
+            {
+                return [90, 0];
+            }
+
+            return [0];
+        }
+
+        /// <summary>
+        /// True when no human has confirmed this card yet — its metadata entry is
+        /// missing, or present with no <c>reviewedAt</c>. This single predicate
+        /// backs both the startup "To review" count and the page's <c>reviewed</c>
+        /// flag, which the tagger's DEFAULT filter inverts: the review queue is
+        /// untagged cards AND auto-tagged ones together, because <c>classify</c>
+        /// writes effects only when it has a suggestion — a card it read and found
+        /// nothing for stays effect-less, so it is invisible in an auto-only view
+        /// while an untagged-only view hides every auto suggestion.
+        /// </summary>
         private bool IsPendingReview(Card card)
             => string.IsNullOrEmpty(card.OracleId)
                 || !metadata.Cards.TryGetValue(card.OracleId, out CardMetadataEntry? entry)
