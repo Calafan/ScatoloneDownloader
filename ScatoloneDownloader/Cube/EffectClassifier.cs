@@ -576,16 +576,25 @@ namespace ScatoloneDownloader.Cube
             // its tag. See LandOutOfTheGraveyard. The card's ways of bringing
             // ITSELF back are blanked for both tags (SelfRecursionWording,
             // ruled 2026-10-13), and a creature put back for somebody else for
-            // Reanimate (ReanimatedForSomebodyElse).
+            // Reanimate (ReanimatedForSomebodyElse), and one only a creature TYPE
+            // can use (WithoutTribalRecursion).
             if (result.HasFlag(CardEffect.Reanimate) || result.HasFlag(CardEffect.Regrowth))
             {
                 string aimed = LandOutOfTheGraveyard.Replace(text, " ");
 
                 string ownRecursion = WithoutSelfRecursion(card, aimed);
 
-                if (!ReanimatePatterns.Any(p => p.IsMatch(ReanimatedForSomebodyElse.Replace(ownRecursion, " ")))) { result &= ~CardEffect.Reanimate; }
+                if (!ReanimatePatterns.Any(p => p.IsMatch(WithoutTribalRecursion(ReanimatedForSomebodyElse.Replace(ownRecursion, " "))))) { result &= ~CardEffect.Reanimate; }
 
                 if (!RegrowthPatterns.Any(p => p.IsMatch(ownRecursion))) { result &= ~CardEffect.Regrowth; }
+            }
+
+            // The same tribal guard for Cheat, ruled the same day: a type card
+            // or a cost only that type pays (TribalCard, TribalCost).
+            if (result.HasFlag(CardEffect.Cheat) && (TribalCard.IsMatch(text) || TribalCost.IsMatch(text))
+                && !CheatPatterns.Any(p => p.IsMatch(WithoutTribalRecursion(text))))
+            {
+                result &= ~CardEffect.Cheat;
             }
 
             // Added after that guard, and asked as a pair. See

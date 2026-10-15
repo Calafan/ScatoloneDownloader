@@ -88,9 +88,9 @@
 
             [CardEffect.Reanimate] =
                 "A creature back from the dead and straight onto the BATTLEFIELD, cheating its cost. A card this card "
-                + "EXILED counts, and so does a token copy of a creature in a graveyard. Not a card bringing ITSELF "
-                + "back, nor one put back for somebody ELSE. Blinking your OWN creature does not count — that is "
-                + "protection. A land coming back is Ramp.",
+                + "EXILED counts, and so does a token copy of one in a graveyard. Not a card bringing ITSELF back, "
+                + "one put back for somebody ELSE, or one only a creature TYPE can use. Blinking your OWN creature "
+                + "is protection; a land back is Ramp.",
 
             [CardEffect.Buff] =
                 "Raises POWER/TOUGHNESS for something else, when that is what the card is FOR: permanent, over an "
@@ -158,8 +158,9 @@
 
             [CardEffect.Cheat] =
                 "Puts a NONLAND permanent onto the battlefield without casting it — from hand (Sneak Attack, "
-                + "Elvish Piper) or library (Natural Order) — or lets you cast free STANDING (Omniscience). Out of "
-                + "a graveyard is Reanimate; a land is Ramp; one free exiled card is CardAdvantage.",
+                + "Elvish Piper) or library (Natural Order) — or lets you cast free STANDING (Omniscience). Not one "
+                + "only a creature TYPE can use. Out of a graveyard is Reanimate; a land is Ramp; one free exiled "
+                + "card is CardAdvantage.",
 
             [CardEffect.Redirect] =
                 "Acts on a spell without countering it: changes its targets, takes control of it, or copies it — "

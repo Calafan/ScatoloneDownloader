@@ -556,6 +556,68 @@ namespace ScatoloneDownloader.Cube
             return Regex.Replace(text, pattern, " ", SelfRecursionWording.Options);
         }
 
+        // A reanimation or a cheat only a creature TYPE can use is neither tag,
+        // ruled 2026-10-15 ("Reanimate e Cheat non dovrebbero contare" for the
+        // tribal ones): a Pirate card back from the graveyard (Admiral Brass),
+        // a Goblin card out of the hand (Goblin Wizard), Dragon spells cast free
+        // (Dracogenesis), a creature card of the CHOSEN type (From the Rubble,
+        // Belbe's Portal) or one that shares a creature type (Call to the
+        // Kindred), and — asked with Kiora — one behind a tribal trigger: its
+        // trigger and its look at the top are one sentence. Before it the hand
+        // had tagged 7 such Reanimates and 6 such Cheats, all handed back. An
+        // EXCLUSION is no tribe — Junji's "non-Dragon creature card" keeps
+        // Reanimate.
+        // NB case-SENSITIVE: the type is what is capitalised, as for the tribal
+        // pump and shield (NotATribe, NotACardType). The subtypes of the other
+        // card types that these cards name are refused as well: an Aura
+        // (Academy Researchers), an Equipment (Stoneforge Mystic), a Vehicle
+        // (Fire Nation Salvagers), a Spacecraft — "creature or Spacecraft card"
+        // is any creature (Scrounge for Eternity) — and a Cave (Glimpse the
+        // Core). A "Saga card" is read as a type like a tribe, which is what the
+        // hand had on Rydia, Summoner of Mist: no Reanimate.
+        private const string NotAnotherKindOfSubtype =
+            @"(?!(?:Aura|Equipment|Vehicle|Spacecraft|Cave)s?\b)";
+
+        private const string ACreatureType = @"(?<![Nn]on-)\b" + NotATribe + NotACardType + NotAnotherKindOfSubtype + @"[A-Z][\w'-]+";
+
+        private static readonly Regex TribalCard = new(
+            ACreatureType + @" (?:creature |permanent )?(?:cards?|spells?)\b"
+            + @"|\bcreature cards? (?:of the chosen type|of that type|that shares? a creature type)\b",
+            RegexOptions.CultureInvariant);
+
+        // …unless the same sentence names a card ANY creature could be: Thwart
+        // the Grave returns "target creature card and up to one target Cleric,
+        // Rogue, Warrior, or Wizard creature card", and the first is a
+        // reanimation.
+        private static readonly Regex UnrestrictedCard = Rx(@"\bcreature cards?\b");
+
+        private static readonly Regex OneSentence = new(@"[^.\n]+", RegexOptions.CultureInvariant);
+
+        // The same for an ability only OTHER members of a type pay for, ruled
+        // with Kiora ("Vale per ogni Cheat o Reanimate dietro un trigger
+        // tribale"): tap five untapped Zombies (Gravespawn Sovereign), sacrifice
+        // another Cleric (Shadow-Rite Priest), tap another untapped Merfolk
+        // (Meanders Guide). The whole ability line goes, its effect being the
+        // next sentence. One creature of the type is no tribe — Slimefoot's
+        // "Sacrifice a Saproling" — nor is a type the card makes tokens of
+        // itself (Rat King, Verminister's "Sacrifice three Rats").
+        private static readonly Regex TribalCost = new(
+            @"\b(?:[Tt]ap|Sacrifice) (?:another|two|three|four|five|six|seven|eight|nine|ten|X) (?:untapped )?"
+            + @"(?<type>" + ACreatureType + @")[^\n]*",
+            RegexOptions.CultureInvariant);
+
+        private static bool MakesTokensOf(string text, string type) =>
+            Regex.IsMatch(text, @"\bcreate\b[^.\n]*\b" + Regex.Escape(type.TrimEnd('s')) + @" creature tokens?\b");
+
+        /// <summary>The text without the sentences that reanimate or cheat only
+        /// a creature type, and the abilities only that type pays for. See
+        /// TribalCard and TribalCost.</summary>
+        private static string WithoutTribalRecursion(string text) =>
+            OneSentence.Replace(
+                TribalCost.Replace(text, cost => MakesTokensOf(text, cost.Groups["type"].Value) ? cost.Value : " "),
+                sentence => TribalCard.IsMatch(sentence.Value)
+                    && !UnrestrictedCard.IsMatch(TribalCard.Replace(sentence.Value, " ")) ? " " : sentence.Value);
+
         // THE CARD ITSELF IS A CARD. Ruled 2026-09-19 and it completes the
         // count: Ponder is -1 for the Ponder and +1 for the draw, which is
         // zero, and Grab the Prize is -1 for the spell, -1 for the discard it

@@ -6659,6 +6659,145 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // A reanimation or a cheat only a creature TYPE can use is neither tag,
+    // ruled 2026-10-15 ("Reanimate e Cheat non dovrebbero contare").
+    // A creature TYPE out of the hand or the library, or cast free.
+    [InlineData("Goblin Wizard", "Creature — Goblin Wizard", CardEffect.Cheat,
+        "{T}: You may put a Goblin permanent card from your hand onto the battlefield.\n{R}: Target Goblin "
+        + "gains protection from white until end of turn.")]
+    [InlineData("Dracogenesis", "Enchantment", CardEffect.Cheat,
+        "You may cast Dragon spells without paying their mana costs.")]
+    [InlineData("Kaalia of the Vast", "Legendary Creature — Human Cleric", CardEffect.Cheat,
+        "Flying\nWhenever Kaalia attacks an opponent, you may put an Angel, Demon, or Dragon creature card "
+        + "from your hand onto the battlefield tapped and attacking that opponent.")]
+    // The chosen type, and a type shared with the enchanted creature.
+    [InlineData("Belbe's Portal", "Artifact", CardEffect.Cheat,
+        "As this artifact enters, choose a creature type.\n{3}, {T}: You may put a creature card of the "
+        + "chosen type from your hand onto the battlefield.")]
+    [InlineData("Call to the Kindred", "Enchantment — Aura", CardEffect.Cheat,
+        "Enchant creature\nAt the beginning of your upkeep, you may look at the top five cards of your "
+        + "library. If you do, you may put a creature card that shares a creature type with enchanted creature "
+        + "from among them onto the battlefield, then you put the rest of those cards on the bottom of your "
+        + "library in any order.")]
+    // Behind a tribal trigger, in the same sentence (ruled with Kiora).
+    [InlineData("Kiora, Sovereign of the Deep", "Legendary Creature — Merfolk Noble", CardEffect.Cheat,
+        "Vigilance, ward {3}\nWhenever you cast a Kraken, Leviathan, Octopus, or Serpent spell from your "
+        + "hand, look at the top X cards of your library, where X is that spell's mana value. You may cast a "
+        + "spell with mana value less than X from among them without paying its mana cost. Put the rest on the "
+        + "bottom of your library in a random order.")]
+    // Behind a cost only other members of the type pay.
+    [InlineData("Shadow-Rite Priest", "Creature — Human Cleric", CardEffect.Cheat,
+        "Other Clerics you control get +1/+1.\n{3}{B}{B}, {T}, Sacrifice another Cleric: Search your library "
+        + "for a black creature card, put it onto the battlefield, then shuffle.")]
+    [InlineData("Gravespawn Sovereign", "Creature — Zombie", CardEffect.Reanimate,
+        "Tap five untapped Zombies you control: Put target creature card from a graveyard onto the "
+        + "battlefield under your control.")]
+    [InlineData("Meanders Guide", "Creature — Merfolk Scout", CardEffect.Reanimate,
+        "Whenever this creature attacks, you may tap another untapped Merfolk you control. When you do, "
+        + "return target creature card with mana value 3 or less from your graveyard to the battlefield.")]
+    // A creature TYPE back from the graveyard: alone, in a list, and/or, of the chosen type, of that type.
+    [InlineData("Admiral Brass, Unsinkable", "Legendary Creature — Human Pirate", CardEffect.Reanimate,
+        "When Admiral Brass enters, mill four cards.\nAt the beginning of combat on your turn, you may return "
+        + "target Pirate creature card from your graveyard to the battlefield with a finality counter on it. It "
+        + "has base power and toughness 4/4. It gains haste until end of turn. (If a creature with a finality "
+        + "counter on it would die, exile it instead.)")]
+    [InlineData("Queen's Bay Paladin", "Creature — Vampire Knight", CardEffect.Reanimate,
+        "Whenever this creature enters or attacks, return up to one target Vampire card from your graveyard "
+        + "to the battlefield with a finality counter on it. You lose life equal to its mana value. (If a "
+        + "creature with a finality counter on it would die, exile it instead.)")]
+    [InlineData("Bloodline Necromancer", "Creature — Vampire Wizard", CardEffect.Reanimate,
+        "Lifelink\nWhen this creature enters, you may return target Vampire or Wizard creature card from your "
+        + "graveyard to the battlefield.")]
+    [InlineData("Celestial Gatekeeper", "Creature — Bird Cleric", CardEffect.Reanimate,
+        "Flying\nWhen this creature dies, exile it, then return up to two target Bird and/or Cleric permanent "
+        + "cards from your graveyard to the battlefield.")]
+    [InlineData("From the Rubble", "Enchantment", CardEffect.Reanimate,
+        "As this enchantment enters, choose a creature type.\nAt the beginning of your end step, return "
+        + "target creature card of the chosen type from your graveyard to the battlefield with a finality "
+        + "counter on it. (If a creature with a finality counter on it would die, exile it instead.)")]
+    [InlineData("Haunting Voyage", "Sorcery", CardEffect.Reanimate,
+        "Choose a creature type. Return up to two creature cards of that type from your graveyard to the "
+        + "battlefield. If this spell was foretold, return all creature cards of that type from your graveyard "
+        + "to the battlefield instead.\nForetell {5}{B}{B} (During your turn, you may pay {2} and exile this "
+        + "card from your hand face down. Cast it on a later turn for its foretell cost.)")]
+    [InlineData("Kastral, the Windcrested", "Legendary Creature — Bird Scout", CardEffect.Reanimate,
+        "Flying\nWhenever one or more Birds you control deal combat damage to a player, choose one —\n• You "
+        + "may put a Bird creature card from your hand or graveyard onto the battlefield with a finality "
+        + "counter on it.\n• Put a +1/+1 counter on each Bird you control.\n• Draw a card.")]
+    [InlineData("Kastral, the Windcrested", "Legendary Creature — Bird Scout", CardEffect.Cheat,
+        "Flying\nWhenever one or more Birds you control deal combat damage to a player, choose one —\n• You "
+        + "may put a Bird creature card from your hand or graveyard onto the battlefield with a finality "
+        + "counter on it.\n• Put a +1/+1 counter on each Bird you control.\n• Draw a card.")]
+    // A token copy of what a type-only sentence exiled; the next sentence is about those cards.
+    [InlineData("Altaïr Ibn-La'Ahad", "Legendary Creature — Human Assassin", CardEffect.Reanimate,
+        "First strike\nWhenever Altaïr attacks, exile up to one target Assassin creature card from your "
+        + "graveyard with a memory counter on it. Then for each creature card you own in exile with a memory "
+        + "counter on it, create a tapped and attacking token that's a copy of it. Exile those tokens at end of "
+        + "combat.")]
+    // A Saga card is a type too (Rydia's Summon).
+    [InlineData("Rydia, Summoner of Mist", "Legendary Creature — Human Shaman", CardEffect.Reanimate,
+        "Landfall — Whenever a land you control enters, you may discard a card. If you do, draw a "
+        + "card.\nSummon — {X}, {T}: Return target Saga card with mana value X from your graveyard to the "
+        + "battlefield with a finality counter on it. It gains haste until end of turn. Activate only as a "
+        + "sorcery.")]
+    public void Classify_TheTribalReanimateAndCheat_DoNotCarryTheTag(string name, string typeLine, CardEffect effect, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(effect));
+    }
+
+    [Theory]
+    // An exclusion is no tribe.
+    [InlineData("Junji, the Midnight Sky", "Legendary Creature — Dragon Spirit", CardEffect.Reanimate,
+        "Flying, menace\nWhen Junji dies, choose one —\n• Each opponent discards two cards and loses 2 "
+        + "life.\n• Put target non-Dragon creature card from a graveyard onto the battlefield under your "
+        + "control. You lose 2 life.")]
+    [InlineData("Body Launderer", "Creature — Ogre Rogue", CardEffect.Reanimate,
+        "Deathtouch\nWhenever another nontoken creature you control dies, this creature connives.\nWhen this "
+        + "creature dies, return another target non-Rogue creature card with equal or lesser power from your "
+        + "graveyard to the battlefield.")]
+    [InlineData("Kinnan, Bonder Prodigy", "Legendary Creature — Human Druid", CardEffect.Cheat,
+        "Whenever you tap a nonland permanent for mana, add one mana of any type that permanent "
+        + "produced.\n{5}{G}{U}: Look at the top five cards of your library. You may put a non-Human creature "
+        + "card from among them onto the battlefield. Put the rest on the bottom of your library in a random "
+        + "order.")]
+    // A card any creature could be, beside the tribal one.
+    [InlineData("Thwart the Grave", "Sorcery", CardEffect.Reanimate,
+        "This spell costs {1} less to cast for each creature in your party. (Your party consists of up to one "
+        + "each of Cleric, Rogue, Warrior, and Wizard.)\nReturn target creature card and up to one target "
+        + "Cleric, Rogue, Warrior, or Wizard creature card from your graveyard to the battlefield.")]
+    // The subtypes of the other card types are no tribe.
+    [InlineData("Scrounge for Eternity", "Sorcery", CardEffect.Reanimate,
+        "As an additional cost to cast this spell, sacrifice an artifact or creature.\nReturn target creature "
+        + "or Spacecraft card with mana value 5 or less from your graveyard to the battlefield. Then create a "
+        + "Lander token. (It's an artifact with \"{2}, {T}, Sacrifice this token: Search your library for a "
+        + "basic land card, put it onto the battlefield tapped, then shuffle.\")")]
+    [InlineData("Academy Researchers", "Creature — Human Wizard", CardEffect.Cheat,
+        "When this creature enters, you may put an Aura card from your hand onto the battlefield attached to "
+        + "this creature.")]
+    [InlineData("Stoneforge Mystic", "Creature — Kor Artificer", CardEffect.Cheat,
+        "When this creature enters, you may search your library for an Equipment card, reveal it, put it into "
+        + "your hand, then shuffle.\n{1}{W}, {T}: You may put an Equipment card from your hand onto the "
+        + "battlefield.")]
+    // One creature of the type pays, or the card makes tokens of it.
+    [InlineData("Slimefoot and Squee", "Legendary Creature — Fungus Goblin", CardEffect.Reanimate,
+        "Whenever Slimefoot and Squee enters or attacks, create a 1/1 green Saproling creature "
+        + "token.\n{1}{B}{R}{G}, Sacrifice a Saproling: Return this card and up to one other target creature "
+        + "card from your graveyard to the battlefield. Activate only as a sorcery.")]
+    [InlineData("Rat King, Verminister", "Legendary Creature — Rat Avatar", CardEffect.Reanimate,
+        "Disappear — At the beginning of your end step, if a permanent left the battlefield under your "
+        + "control this turn, create a 1/1 black Rat creature token and put a +1/+1 counter on Rat King.\n{T}, "
+        + "Sacrifice three Rats: Return target creature card and all other cards with the same name as that "
+        + "card from your graveyard to the battlefield tapped.")]
+    // A Cave card is a land.
+    [InlineData("Glimpse the Core", "Sorcery", CardEffect.Reanimate,
+        "Choose one —\n• Search your library for a basic Forest card, put that card onto the battlefield "
+        + "tapped, then shuffle.\n• Return target Cave card from your graveyard to the battlefield tapped.")]
+    public void Classify_TheTribalReanimateAndCheat_KeepTheTagForAnyCreature(string name, string typeLine, CardEffect effect, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(effect));
+    }
+
+    [Theory]
     // LandDestruction, widened 2026-09-19. The land is almost never alone in the
     // sentence: it sits in a type list, behind a count, or beside a second target,
     // and the old {0,2} filler words could not cross a comma to reach it.
