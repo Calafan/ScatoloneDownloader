@@ -384,6 +384,12 @@ namespace ScatoloneDownloader.Cube
                 + @"(?:[^""\n]|""[^""\n]*"")*?\b(?:target (?:player|opponent)|each opponent|an opponent|that player|defending player|its controller)"
                 + @"[\w ,]{0,40}exiles? the top [\w ]{0,30}of their library",
                 RegexOptions.Multiline),
+            // RAD COUNTERS mill whoever gets them, one card each at the start of
+            // their main phase — 13 of 13 reviewed cards that hand them to a
+            // player carry this tag, "each player" included (Nuclear Fallout,
+            // Vault 12), read 2026-10-15. Not the ones YOU get (Contaminated
+            // Drink, Mariposa Military Base, Strong, Tato Farmer).
+            Rx(@"(?<!\byou (?:may )?)\bgets? [\w ]{0,25}\brad counters?|\bgive each (?:player|opponent) [\w ]{0,10}\brad counters?"),
         ];
 
         // The token has to be a CREATURE, and it has to be yours. A Treasure, a

@@ -6358,6 +6358,88 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // RemovePermanent and Mill, read 2026-10-15. A permanent narrowed by more
+    // than "nonland".
+    [InlineData("Commander Sofia Daguerre", "Legendary Creature — Human Pilot", CardEffect.RemovePermanent,
+        "Flash\nCrash Landing — When Commander Sofia Daguerre enters, destroy up to one target legendary "
+        + "permanent. That permanent's controller creates a Junk token. (It's an artifact with \"{T}, Sacrifice "
+        + "this token: Exile the top card of your library. You may play that card this turn. Activate only as a "
+        + "sorcery.\")")]
+    [InlineData("Extinguisher Battleship", "Artifact — Spacecraft", CardEffect.RemovePermanent,
+        "When this Spacecraft enters, destroy target noncreature permanent. Then this Spacecraft deals 4 damage "
+        + "to each creature.\nStation (Tap another creature you control: Put charge counters equal to its power "
+        + "on this Spacecraft. Station only as a sorcery. It's an artifact creature at 5+.)\n5+ | Flying, trample")]
+    [InlineData("Thief of Existence", "Creature — Eldrazi", CardEffect.RemovePermanent,
+        "Devoid (This card has no color.)\nWhen you cast this spell, exile up to one target noncreature, nonland "
+        + "permanent an opponent controls with mana value 4 or less. If you do, Thief of Existence gains \"When "
+        + "this creature leaves the battlefield, target opponent draws a card.\"")]
+    // A token is a permanent.
+    [InlineData("Kraul Whipcracker", "Creature — Insect Assassin", CardEffect.RemovePermanent,
+        "Reach\nWhen this creature enters, destroy target token an opponent controls.")]
+    // Named by its mana value, destroyed on the reflexive trigger.
+    [InlineData("Behemoth of Vault 0", "Artifact Creature — Robot", CardEffect.RemovePermanent,
+        "Trample\nWhen this creature enters, you get {E}{E}{E}{E} (four energy counters).\nWhen this creature "
+        + "dies, you may pay an amount of {E} equal to target nonland permanent's mana value. When you do, "
+        + "destroy that permanent.")]
+    // Chosen by each player among yours.
+    [InlineData("The Legend of Yangchen // Avatar Yangchen", "Enchantment — Saga // Legendary Creature — Avatar",
+        CardEffect.RemovePermanent,
+        "(As this Saga enters and after your draw step, add a lore counter.)\nI — Starting with you, each player "
+        + "chooses up to one permanent with mana value 3 or greater from among permanents your opponents control. "
+        + "Exile those permanents.\nII — You may have target opponent draw three cards. If you do, draw three "
+        + "cards.\nIII — Exile this Saga, then return it to the battlefield transformed under your control.")]
+    // A return further off is not the blink.
+    [InlineData("Unyielding Gatekeeper", "Creature — Elephant Cleric", CardEffect.RemovePermanent,
+        "Disguise {1}{W} (You may cast this card face down for {3} as a 2/2 creature with ward {2}. Turn it face "
+        + "up any time for its disguise cost.)\nWhen this creature is turned face up, exile another target "
+        + "nonland permanent. If you controlled it, return it to the battlefield tapped. Otherwise, its "
+        + "controller creates a 2/2 white and blue Detective creature token.")]
+    // Rad counters handed to a player.
+    [InlineData("Glowing One", "Creature — Zombie Mutant", CardEffect.Mill,
+        "Deathtouch\nWhenever this creature deals combat damage to a player, they get four rad counters.\n"
+        + "Whenever a player mills a nonland card, you gain 1 life.")]
+    [InlineData("Bloatfly Swarm", "Creature — Insect Mutant", CardEffect.Mill,
+        "Flying\nThis creature enters with five +1/+1 counters on it.\nIf damage would be dealt to this "
+        + "creature while it has a +1/+1 counter on it, prevent that damage, remove that many +1/+1 counters "
+        + "from it, then give each player a rad counter for each +1/+1 counter removed this way.")]
+    public void Classify_TheOctoberRemovePermanentAndMillGaps_CarryTheTag(string name, string typeLine, CardEffect effect, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(effect));
+    }
+
+    [Theory]
+    // A permanent CARD is in a graveyard.
+    [InlineData("Savvy Trader", "Creature — Human Citizen", CardEffect.RemovePermanent,
+        "When this creature enters, exile target permanent card from your graveyard. You may play that card for "
+        + "as long as it remains exiled.\nSpells you cast from anywhere other than your hand cost {1} less to "
+        + "cast.")]
+    // A blink whose return follows straight on.
+    [InlineData("Eldrazi Confluence", "Instant", CardEffect.RemovePermanent,
+        "Choose three. You may choose the same mode more than once.\n• Target creature gets +3/-3 until end of "
+        + "turn.\n• Exile target nonland permanent, then return it to the battlefield tapped under its owner's "
+        + "control.\n• Create a 1/1 colorless Eldrazi Scion creature token with \"Sacrifice this token: Add "
+        + "{C}.\"")]
+    [InlineData("Blizzard Strix", "Snow Creature — Bird", CardEffect.RemovePermanent,
+        "Flash\nFlying\nWhen this creature enters, if you control another snow permanent, exile target "
+        + "permanent other than this creature. Return that card to the battlefield under its owner's control at "
+        + "the beginning of the next end step.")]
+    // The exile handed back to the owners' hands.
+    [InlineData("The Spot, Living Portal", "Legendary Creature — Human Scientist Villain", CardEffect.RemovePermanent,
+        "When The Spot enters, exile up to one target nonland permanent and up to one target nonland permanent "
+        + "card from a graveyard.\nWhen The Spot dies, put him on the bottom of his owner's library. If you do, "
+        + "return the exiled cards to their owners' hands.")]
+    // Rad counters YOU get.
+    [InlineData("Contaminated Drink", "Instant", CardEffect.Mill,
+        "Draw X cards, then you get half X rad counters, rounded up.")]
+    [InlineData("Tato Farmer", "Creature — Zombie Mutant Peasant", CardEffect.Mill,
+        "Landfall — Whenever a land you control enters, you may get two rad counters.\n{T}: Put target land card "
+        + "in a graveyard that was milled this turn onto the battlefield tapped under your control.")]
+    public void Classify_TheOctoberRemovePermanentAndMillGaps_DoNotCarryTheTag(string name, string typeLine, CardEffect effect, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(effect));
+    }
+
+    [Theory]
     // LandDestruction, widened 2026-09-19. The land is almost never alone in the
     // sentence: it sits in a type list, behind a count, or beside a second target,
     // and the old {0,2} filler words could not cross a comma to reach it.

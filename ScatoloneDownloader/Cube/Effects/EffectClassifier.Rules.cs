@@ -169,11 +169,32 @@ namespace ScatoloneDownloader.Cube
                 // permanent you chose (Fatal Grudge) — the plain edict of "a
                 // permanent of their choice" stays out, 3 reviewed against it
                 // (Kefka, Throne of the Grim Captain, annihilator).
+                //
+                // Read later the same day: the permanent may be narrowed by more
+                // than "nonland" — "target LEGENDARY permanent" (Commander Sofia
+                // Daguerre), "NONCREATURE permanent" (Extinguisher Battleship),
+                // "noncreature, nonland permanent" (Thief of Existence; Molten
+                // Collapse, 3:1, handed back) — or be a TOKEN (Kraul
+                // Whipcracker). A permanent CARD is in a graveyard (Savvy Trader,
+                // Split the Spoils). A blink is no answer when the return follows
+                // straight on, ", then return it" or ". Return that card"
+                // (Eldrazi Confluence, Mistmeadow Vanisher) — a return further
+                // off is somebody else's (Unyielding Gatekeeper returns only your
+                // own; Dion destroys before it exiles). And The Spot hands its
+                // exile back to the owners' hands, which the human tags Bounce.
                 (CardEffect.RemovePermanent, [
-                    Rx(@"(?:destroy|exile) (?:[\w ]{0,15})?target nonland permanent(?!s? you (?:own|control)\b)"
+                    Rx(@"(?:destroy|exile) (?:[\w ]{0,15})?target (?:(?:non[\w-]+|legendary),? )*permanent"
+                        + @"(?!s? you (?:own|control)\b)(?!s? cards?\b)"
+                        + @"(?![\w ,]{0,30}(?:,? then return it|\. return (?:it|that card)) to the battlefield)"
+                        + @"(?![\s\S]*\breturn the exiled cards? to (?:their|its) owners?'? hands?)"
                         + @"|destroy up to \w+ other target nonland permanents"),
-                    Rx(@"(?:destroy|exile) (?:[\w ]{0,15})?target permanent(?! you (?:own|control)\b)"),
+                    Rx(@"(?:destroy|exile) (?:[\w ]{0,15})?target tokens?\b"),
                     Rx(@"\bchooses an? permanent they control that shares a card type\b[^.\n]{0,60}\bsacrifices it\b"),
+                    // The victim named by its mana value, then destroyed on the
+                    // reflexive trigger (Behemoth of Vault 0), and the permanents
+                    // each player chooses among yours (The Legend of Yangchen).
+                    Rx(@"target nonland permanent's [\w ]{0,20}\. when you do, destroy that permanent"
+                        + @"|chooses up to one permanent [^.\n]{0,60}\bpermanents your opponents control\. exile those permanents"),
                     // A COLOUR-restricted permanent kill belongs here rather than to
                     // Removal, ruled 2026-09-20. It was tried as Removal the day
                     // before, on the reading that "destroy target red permanent" is

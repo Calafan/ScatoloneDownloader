@@ -41,9 +41,9 @@
                 + "the card itself.",
 
             [CardEffect.RemovePermanent] =
-                "Answers ANY permanent — \"destroy/exile target (nonland) permanent\", the O-ring family, and a kill "
-                + "narrowed only by COLOUR (\"destroy target red permanent\"). The breadth is the point, so it stays "
-                + "this tag even when you would usually aim it at a creature.",
+                "Answers ANY permanent — \"destroy/exile target (nonland) permanent\", a token, the O-ring family, "
+                + "and a kill narrowed only by COLOUR (\"target red permanent\") or by what it is NOT (\"noncreature\"). "
+                + "The breadth is the point, even if you would usually aim it at a creature. Not your own, nor a blink.",
 
             [CardEffect.Wipe] =
                 "Mass removal: the board emptied — destroyed, exiled, damaged (players too), shrunk, airbent, "
@@ -147,7 +147,7 @@
 
             [CardEffect.Mill] =
                 "Puts cards from ANOTHER player's library into their graveyard, or into exile when nobody plays them "
-                + "after. Filling your own graveyard is fuel for "
+                + "after, and rad counters handed to them. Filling your own graveyard is fuel for "
                 + "what the card does next, not an attack — dredge is a graveyard card, not a mill card.",
 
             [CardEffect.Regrowth] =
