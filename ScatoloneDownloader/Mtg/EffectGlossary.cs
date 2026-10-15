@@ -146,7 +146,8 @@
                 + "own, and not the wider mana-denial family.",
 
             [CardEffect.Mill] =
-                "Puts cards from ANOTHER player's library into their graveyard. Filling your own graveyard is fuel for "
+                "Puts cards from ANOTHER player's library into their graveyard, or into exile when nobody plays them "
+                + "after. Filling your own graveyard is fuel for "
                 + "what the card does next, not an attack — dredge is a graveyard card, not a mill card.",
 
             [CardEffect.Regrowth] =

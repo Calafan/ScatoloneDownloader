@@ -3481,12 +3481,9 @@ public sealed class EffectClassifierTests
         + "their choice. If that player can't, they discard a card, they lose 2 life, you draw a card, you gain "
         + "2 life, you create a 2/2 white Knight creature token with vigilance, then you sacrifice this "
         + "enchantment.")]
-    // …but not when its owner may still play the exiled card (Elite Spellbinder),
-    // the line drawn on 2026-09-28.
-    [InlineData("Elite Spellbinder", "Creature — Human Cleric",
-        "Flying\nWhen this creature enters, look at target opponent's hand. You may exile a nonland card from "
-        + "it. For as long as that card remains exiled, its owner may play it. A spell cast this way costs {2} "
-        + "more to cast.")]
+    // Elite Spellbinder sat here until 2026-10-15, when the card YOU choose
+    // from a hand you looked at was ruled Discard even though its owner may
+    // still play it (Invasion of Gobakhan, in the October gaps below).
     public void Classify_AHandAttackRuledOut_IsNotDiscard(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Discard));
@@ -6242,6 +6239,122 @@ public sealed class EffectClassifierTests
             + "creature until end of turn.)");
 
         Assert.False(EffectClassifier.Classify(card).HasFlag(CardEffect.Wipe));
+    }
+
+    [Theory]
+    // The small reading gaps of the 2026-10-13 plan, read on 2026-10-15.
+    // The enchantment second in a type list.
+    [InlineData("Get Lost", "Instant", CardEffect.Disenchant,
+        "Destroy target creature, enchantment, or planeswalker. Its controller creates two Map tokens. (They're "
+        + "artifacts with \"{1}, {T}, Sacrifice this token: Target creature you control explores. Activate only "
+        + "as a sorcery.\")")]
+    // "Up to one OTHER target".
+    [InlineData("Vault 13: Dweller's Journey", "Enchantment — Saga", CardEffect.Disenchant,
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — For each "
+        + "player, exile up to one other target enchantment or creature that player controls until this Saga "
+        + "leaves the battlefield.\nII — You gain 2 life and scry 2.\nIII — Return two cards exiled with this "
+        + "Saga to the battlefield under their owners' control and put the rest on the bottom of their owners' "
+        + "libraries.")]
+    // The enchantment its controller exiles.
+    [InlineData("Debt to the Kami", "Instant", CardEffect.Disenchant,
+        "Choose one —\n• Target opponent exiles a creature they control.\n• Target opponent exiles an "
+        + "enchantment they control.")]
+    // A nonbasic land at the end of a longer list.
+    [InlineData("Ray of Ruin", "Sorcery", CardEffect.LandDestruction,
+        "Exile target creature, Vehicle, or nonbasic land. Scry 1. (Look at the top card of your library. You "
+        + "may put that card on the bottom.)")]
+    // The top of their library exiled, and nothing played from it.
+    [InlineData("Ulamog, the Defiler", "Legendary Creature — Eldrazi", CardEffect.Mill,
+        "When you cast this spell, target opponent exiles the top half of their library, rounded up.\nWard—"
+        + "Sacrifice two permanents.\nUlamog enters with a number of +1/+1 counters on it equal to the greatest "
+        + "mana value among cards in exile.\nUlamog has annihilator X, where X is the number of +1/+1 counters "
+        + "on it.")]
+    // …and the card cast face down is the creature itself, not the exiled one.
+    [InlineData("Raven Guild Master", "Creature — Human Wizard Mutant", CardEffect.Mill,
+        "Whenever this creature deals combat damage to a player, that player exiles the top ten cards of their "
+        + "library.\nMorph {2}{U}{U} (You may cast this card face down as a 2/2 creature for {3}. Turn it face up "
+        + "any time for its morph cost.)")]
+    // Three cards discarded on a villainous choice.
+    [InlineData("Great Intelligence's Plan", "Sorcery", CardEffect.Discard,
+        "Draw three cards. Then target opponent faces a villainous choice — They discard three cards, or you may "
+        + "cast a spell from your hand without paying its mana cost.")]
+    // "They exile cards from their hand" once the player is named.
+    [InlineData("Isildur's Fateful Strike", "Legendary Instant", CardEffect.Discard,
+        "(You may cast a legendary instant only if you control a legendary creature or planeswalker.)\nDestroy "
+        + "target creature. If its controller has more than four cards in hand, they exile cards from their hand "
+        + "equal to the difference.")]
+    // The card you chose from their hand, even though they may still play it.
+    [InlineData("Invasion of Gobakhan // Lightshield Array", "Battle — Siege // Enchantment", CardEffect.Discard,
+        "(As a Siege enters, choose an opponent to protect it. You and others can attack it. When it's defeated, "
+        + "exile it, then cast it transformed.)\nWhen this Siege enters, look at target opponent's hand. You may "
+        + "exile a nonland card from it. For as long as that card remains exiled, its owner may play it. A spell "
+        + "cast this way costs {2} more to cast.\nAt the beginning of your end step, put a +1/+1 counter on each "
+        + "creature that attacked this turn.\nSacrifice this enchantment: Creatures you control gain hexproof and "
+        + "indestructible until end of turn.")]
+    // Any number of targets, "and/or".
+    [InlineData("Display of Power", "Instant", CardEffect.Redirect,
+        "This spell can't be copied.\nCopy any number of target instant and/or sorcery spells. You may choose "
+        + "new targets for the copies.")]
+    // Up to three OTHER target nonland permanents.
+    [InlineData("Soul of Emancipation", "Creature — Avatar", CardEffect.RemovePermanent,
+        "When this creature enters, destroy up to three other target nonland permanents. For each of those "
+        + "permanents, its controller creates a 3/3 white Angel creature token with flying.")]
+    // The edict whose victim shares the card type you chose.
+    [InlineData("Fatal Grudge", "Sorcery", CardEffect.RemovePermanent,
+        "As an additional cost to cast this spell, sacrifice a nonland permanent.\nEach opponent chooses a "
+        + "permanent they control that shares a card type with the sacrificed permanent and sacrifices it.\nDraw "
+        + "a card.")]
+    public void Classify_TheOctoberSmallGaps_CarryTheTag(string name, string typeLine, CardEffect effect, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(effect));
+    }
+
+    [Theory]
+    // A permanent you own or control is no answer.
+    [InlineData("Staff of Compleation", "Artifact", CardEffect.RemovePermanent,
+        "{T}, Pay 1 life: Destroy target permanent you own.\n{T}, Pay 2 life: Add one mana of any color.\n{T}, "
+        + "Pay 3 life: Proliferate.\n{T}, Pay 4 life: Draw a card.\n{5}: Untap this artifact.")]
+    [InlineData("Displacer Kitten", "Creature — Cat Beast", CardEffect.RemovePermanent,
+        "Avoidance — Whenever you cast a noncreature spell, exile up to one target nonland permanent you "
+        + "control, then return that card to the battlefield under its owner's control.")]
+    // An Aura attached to this creature is not a creature sacrificed.
+    [InlineData("Faunsbane Troll", "Creature — Troll", CardEffect.Sacrifice,
+        "When this creature enters, create a Monster Role token attached to it. (Enchanted creature gets +1/+1 "
+        + "and has trample.)\n{1}, Sacrifice an Aura attached to this creature: This creature fights target "
+        + "creature you don't control. If that creature would die this turn, exile it instead. Activate only as "
+        + "a sorcery.")]
+    // The top of their library exiled and then played is Steal: cast on the
+    // same line, before the exile on a villainous choice, played as "those
+    // cards", put under your control, cast on the next line.
+    [InlineData("Crabomination", "Creature — Crab Demon", CardEffect.Mill,
+        "Emerge from artifact {5}{B}{B} (You may cast this spell by sacrificing an artifact and paying the emerge "
+        + "cost reduced by that artifact's mana value.)\nWhen this creature enters, target opponent exiles the "
+        + "top card of their library, a card at random from their graveyard, and a card at random from their "
+        + "hand. You may cast a spell from among cards exiled this way without paying its mana cost.")]
+    [InlineData("Ensnared by the Mara", "Sorcery", CardEffect.Mill,
+        "Each opponent faces a villainous choice — They exile cards from the top of their library until they "
+        + "exile a nonland card, then you may cast that card without paying its mana cost, or that player exiles "
+        + "the top four cards of their library and Ensnared by the Mara deals damage equal to the total mana "
+        + "value of those exiled cards to that player.")]
+    [InlineData("Outrageous Robbery", "Instant", CardEffect.Mill,
+        "Target opponent exiles the top X cards of their library face down. You may look at and play those "
+        + "cards for as long as they remain exiled. If you cast a spell this way, you may spend mana as though "
+        + "it were mana of any type to cast it.")]
+    [InlineData("Oblivion Sower", "Creature — Eldrazi", CardEffect.Mill,
+        "When you cast this spell, target opponent exiles the top four cards of their library, then you may put "
+        + "any number of land cards that player owns from exile onto the battlefield under your control.")]
+    [InlineData("Nightveil Specter", "Creature — Specter", CardEffect.Mill,
+        "Flying\nWhenever this creature deals combat damage to a player, that player exiles the top card of "
+        + "their library.\nYou may play lands and cast spells from among cards exiled with this creature.")]
+    // …and a token's quoted ability is the token's.
+    [InlineData("Ashiok, Nightmare Muse", "Legendary Planeswalker — Ashiok", CardEffect.Mill,
+        "+1: Create a 2/3 blue and black Nightmare creature token with \"Whenever this token attacks or blocks, "
+        + "each opponent exiles the top two cards of their library.\"\n−3: Return target nonland permanent to "
+        + "its owner's hand, then that player exiles a card from their hand.\n−7: You may cast up to three "
+        + "spells from among face-up cards your opponents own from exile without paying their mana costs.")]
+    public void Classify_TheOctoberSmallGaps_DoNotCarryTheTag(string name, string typeLine, CardEffect effect, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(effect));
     }
 
     [Theory]

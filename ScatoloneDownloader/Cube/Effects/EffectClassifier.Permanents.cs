@@ -27,13 +27,20 @@ namespace ScatoloneDownloader.Cube
         // mode rather than on the words its whole text happens to contain.
         private static readonly Regex[] DisenchantPatterns =
         [
-            Rx(@"(?:destroy|exile) (?:up to \w+ |another |x |two |three |four |\d+ )?target " + DisenchantNoun),
+            // The noun may come second in a type list, "destroy target creature,
+            // enchantment, or planeswalker" (Get Lost), and the count may say
+            // "up to one OTHER target" (Vault 13), both read 2026-10-15.
+            Rx(@"(?:destroy|exile) (?:up to \w+ (?:other )?|another |x |two |three |four |\d+ )?target (?:[\w '\-]{1,14}, )?" + DisenchantNoun),
             Rx(@"(?:destroy|exile) (?:all|each) " + DisenchantNoun),
             // An edict aimed at an artifact answers one all the same, and unlike
             // the creature edict it cannot be blanked by a token: Pick Your Poison
             // and Gaius van Baelsar both read "each opponent sacrifices an
             // artifact of their choice" and the human tags both here.
             Rx(OtherPlayer + @" sacrifices?[\w ]{0,20}" + DisenchantNoun),
+            // …and so is the one EXILED by its controller, "target opponent
+            // exiles an enchantment they control" (Debt to the Kami, Early
+            // Winter), read 2026-10-15.
+            Rx(OtherPlayer + @" exiles? an? " + DisenchantNoun),
             // Ultimate Magic: Meteor names no target at all — "for each opponent,
             // choose an artifact or land that player controls. Destroy the chosen
             // permanents." The same clause is LandDestruction's last miss.
@@ -120,6 +127,12 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex[] LandDestructionPatterns =
         [
             Rx(@"(?:destroy|exile)[^\n]{0,80}target [\w ,'\-]{0,30}\blands?\b"),
+            // A NONBASIC land closes a longer list, "exile target creature,
+            // Vehicle, or nonbasic land" (Ray of Ruin, 2026-10-15). Widening the
+            // run above to 40 for every land was measured the same day and
+            // reaches "the number of lands you control" (Lasyd Prowler) and
+            // "other than basic land cards" (Haunting Echoes).
+            Rx(@"(?:destroy|exile)[^\n]{0,80}target [\w ,'\-]{0,40}\bnonbasic lands?\b"),
             Rx(@"(?:destroy|exile) (?:all|each)[\w ,'\-]{0,30}\blands?\b"),
             Rx(@"(?:destroy|exile) (?:up to \w+ |x |two |three |four |\d+ )?(?:all|each|target) "
                 + @"[\w ,'\-]{0,20}" + BasicLandType),
@@ -355,6 +368,22 @@ namespace ScatoloneDownloader.Cube
             // Same sentence with the victim in front of the verb, which is how
             // Millstone and most pre-2021 mill is actually written.
             Rx(OtherPlayer + @"[\w ,]{0,30}puts? the top [\w ]{0,30}library into"),
+            // The top of their library EXILED is the same attack, read
+            // 2026-10-15 from the three reviewed cards that say it and nothing
+            // more (Ulamog, the Defiler; Ashiok, Wicked Manipulator's -7;
+            // Malboro). Not when a card is PLAYED, cast or put under your
+            // control anywhere on that line or the next — that is Steal, and the
+            // seven reviewed cards that say so carry no Mill (Outrageous
+            // Robbery, Bloodsoaked Insight, Crabomination; Ensnared by the Mara,
+            // whose OTHER villainous branch casts) — unless it is the card
+            // itself cast face down (Raven Guild Master's megamorph reminder);
+            // not when "each player" exiles, which
+            // includes you (Memory Vessel, Triple Triad); and not inside a
+            // TOKEN's quoted ability (Ashiok, Nightmare Muse).
+            Rx(@"^(?![^\n]*(?:\n[^\n]*)?\b(?:(?:may|can) (?:cast|play)(?! this card\b)|(?:cast|play)s? (?:it|them|that card|those cards)|under your control)\b)"
+                + @"(?:[^""\n]|""[^""\n]*"")*?\b(?:target (?:player|opponent)|each opponent|an opponent|that player|defending player|its controller)"
+                + @"[\w ,]{0,40}exiles? the top [\w ]{0,30}of their library",
+                RegexOptions.Multiline),
         ];
 
         // The token has to be a CREATURE, and it has to be yours. A Treasure, a

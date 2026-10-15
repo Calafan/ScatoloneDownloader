@@ -161,9 +161,19 @@ namespace ScatoloneDownloader.Cube
                 // permanent is RemovePermanent, not Removal, even when the card that
                 // exiles it happens to be aimed at a creature in practice.
                 // Recall 29.0% -> 83.9%, 24 wrong -> 12.
+                // Read 2026-10-15: a permanent YOU OWN or control is no answer
+                // (Despotic Scepter, Staff of Compleation, Telim'Tor's Edict, and
+                // the blinks — Felidar Guardian, Displacer Kitten); "destroy up to
+                // three OTHER target nonland permanents" is (Soul of Emancipation);
+                // and so is the edict whose victim must share the card type of a
+                // permanent you chose (Fatal Grudge) — the plain edict of "a
+                // permanent of their choice" stays out, 3 reviewed against it
+                // (Kefka, Throne of the Grim Captain, annihilator).
                 (CardEffect.RemovePermanent, [
-                    Rx(@"(?:destroy|exile) (?:[\w ]{0,15})?target nonland permanent"),
-                    Rx(@"(?:destroy|exile) (?:[\w ]{0,15})?target permanent"),
+                    Rx(@"(?:destroy|exile) (?:[\w ]{0,15})?target nonland permanent(?!s? you (?:own|control)\b)"
+                        + @"|destroy up to \w+ other target nonland permanents"),
+                    Rx(@"(?:destroy|exile) (?:[\w ]{0,15})?target permanent(?! you (?:own|control)\b)"),
+                    Rx(@"\bchooses an? permanent they control that shares a card type\b[^.\n]{0,60}\bsacrifices it\b"),
                     // A COLOUR-restricted permanent kill belongs here rather than to
                     // Removal, ruled 2026-09-20. It was tried as Removal the day
                     // before, on the reading that "destroy target red permanent" is
@@ -392,7 +402,13 @@ namespace ScatoloneDownloader.Cube
                 // is Fork, Reverberate and Twincast.
                 (CardEffect.Redirect, [Rx(@"change the targets? of"),
                     Rx(@"change (?:that|target) spell's targets?"),
-                    Rx(@"cop(?:y|ies) target[\w ]*(?:spell|ability)"),
+                    // "Copy ANY NUMBER OF target instant AND/OR sorcery spells"
+                    // (Display of Power), read 2026-10-15. A copy of an ABILITY of
+                    // your own is not this: "you may copy that ability. You may
+                    // choose new targets for the copy" carries no tag on 6 of 7
+                    // reviewed cards (Ertha Jo, Rowan's Talent, Verrak, Firebender
+                    // Ascension; Ashnod handed back).
+                    Rx(@"cop(?:y|ies) (?:any number of )?target[\w /]*(?:spell|ability)"),
                     // Two more ways to act on a spell already on the stack, both
                     // tagged and neither read before 2026-09-28: choosing NEW
                     // TARGETS for other spells outright (Boltbender), and taking
@@ -569,7 +585,7 @@ namespace ScatoloneDownloader.Cube
                     Rx(@"unless (?:that player|they|he or she)[^.\n]{0,80}\bdiscards? (?:a|two) cards?"
                         + @"|(?:each|target) opponent may [^.\n]{0,80}\bor discard (?:a|two) cards?"),
                     Rx(@"choose (?:a|an|one|two|up to \w+)[^.\n]{0,60}from it[^\n]{0,60}\b(?:they|the player) discards?\b"
-                        + @"|\bthey discard (?:a|two|that|their)\b"),
+                        + @"|\bthey discard (?:a|two|three|that|their)\b"),
                     Rx(@"(?:target opponent|each opponent|target player)[^.\n]{0,50}, discards? a card"),
                     Rx(@"search (?:target (?:player|opponent)'s|that player's) [\w ,]{0,30}\bhand\b[^.\n]{0,100}\bexile"),
                     // Three hand attacks ruled 2026-09-28, each settling a split in
@@ -580,15 +596,21 @@ namespace ScatoloneDownloader.Cube
                     // chosen from their hand and put back ON THEIR LIBRARY (Agonizing
                     // Memories against Painful Memories); and the whole hand looked at
                     // and EXILED (Apple of Eden, "come Wheel of Fortune e sorelle").
-                    Rx(@"(?:target opponent|each opponent|target player|that player) exiles? [^.\n]{0,100}?\bcards?(?: at random)? "
+                    // "They" once the player is named (Isildur's Fateful Strike,
+                    // 2026-10-15).
+                    Rx(@"(?:target opponent|each opponent|target player|that player|\bthey) exiles? [^.\n]{0,100}?\bcards?(?: at random)? "
                         + @"from their hand(?![^\n]{0,60}\bmay play)"),
                     Rx(@"look at target (?:player|opponent)'s hand and choose [^.\n]{0,40}\. put (?:them|it|that card) on (?:top|the bottom)"
                         + @"|look at target (?:player|opponent)'s hand and exile"
                         // The same exile as a second sentence, "look at target
                         // opponent's hand. You may exile a nonland card from it"
                         // (Deep-Cavern Bat, tagged by the human on 2026-09-29),
-                        // unless its owner may still play it (Elite Spellbinder).
-                        + @"|look at target (?:player|opponent)'s hand\. you may exile [^.\n]{0,40}\bfrom it(?![^\n]{0,100}\bmay play)")]),
+                        // even when its owner may still play it: the card YOU
+                        // chose from a hand you looked at, ruled 2026-10-15
+                        // (Invasion of Gobakhan, Elite Spellbinder). The card
+                        // THEY choose or lose at random and may play stays out
+                        // above (Lightstall Inquisitor, Elkin Lair).
+                        + @"|look at target (?:player|opponent)'s hand\. you may exile [^.\n]{0,40}\bfrom it")]),
 
                 // Drawing ONE card off a spell you cast replaces the spell — that is
                 // card parity, not advantage, which is why Eject and Broadside
@@ -1076,7 +1098,9 @@ namespace ScatoloneDownloader.Cube
                 // permanent at will, which the human ruled an outlet by another name
                 // (Despotic Scepter, Rats of Rath, City of Shadows).
                 (CardEffect.Sacrifice, [
-                    Rx(@"sacrifices? (?:a|an|another|two|three|\d+|x\b|one or more\b)[\w ]*(?:creature|artifact|permanent)"),
+                    // An Aura "ATTACHED TO this creature" is not a creature
+                    // sacrificed (Faunsbane Troll, 2026-10-15).
+                    Rx(@"sacrifices? (?:a|an|another|two|three|\d+|x\b|one or more\b)(?:(?!\battached to\b)[\w ])*(?:creature|artifact|permanent)"),
                     Rx(SacrificeKeywordGranted + @"|\bsacrificing (?:a|an|another)[\w ]*(?:creature|artifact|permanent)"),
                     Rx(SacrificesYourOwnByAnotherVerb, RegexOptions.Multiline)]),
 
