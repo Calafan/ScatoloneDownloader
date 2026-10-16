@@ -1,0 +1,113 @@
+# Buff
+
+Canonical record of the rulings for `CardEffect.Buff`. The one-line tooltip shown in the tagger is
+in [`EffectGlossary.cs`](../../ScatoloneDownloader/Mtg/EffectGlossary.cs).
+
+raise POWER and/or TOUGHNESS — that is the whole test, ruled 2026-09-18. A granted KEYWORD is not
+Buff, however good it is: flying, deathtouch, lifelink, first strike, indestructible change what a
+creature does, not what its numbers are, and the hand-tagging says so 49 cards to 5 (Jump and Cloak
+of Feathers are the same sentence and only one was tagged).
+
+DOUBLE STRIKE is the single exception, because doubling the damage is doubling the power by another
+name. A pump sized by X or by a count is a pump too. Only when it lands on SOMETHING ELSE (Giant
+Growth, Glorious Anthem, Bonesplitter): a creature that pumps only itself has a stat line, not an
+effect, so "{2}{R}: This creature gets +3/+0" and "Uril gets +2/+2 for each Aura attached to it"
+stay untagged. A +1/+1 COUNTER on somebody else is the same effect in the other vocabulary and
+counts too, ruled 2026-09-15 — one counter on one creature, support, distribute, all of it; only
+counters aimed at an OPPONENT'S creatures stay out. That ruling went AGAINST the measurement: of the
+161 reviewed cards putting a counter on somebody else only 46 were tagged, the two halves were
+indistinguishable by wording, and 113 reviewed entries were realigned by hand the same day. It is
+the largest single correction the ontology has taken. The other half of that ruling points the other
+way: a pump restricted to one creature TYPE is NOT Buff — "Minotaur creatures get +1/+0" promises a
+payoff a cube with no Minotaur deck cannot collect.
+
+A COLOUR is not a tribe (Crusade, Bad Moon keep it) and neither is a STATE (Castle's "untapped
+creatures you control"); a lord that also pumps something unrestricted keeps it too.
+
+SIZE AND PURPOSE, ruled 2026-09-24/25, and it OVERTURNS "one counter on one creature" from
+2026-09-15 for one-shots. The human's rule: Buff only when repeated, permanent (not tribal), at
+instant speed, over an area, or +5/+5 and more — and "a single one must be bigger than +1/+1 or have
+more than one target", where SINGLE means ONE-SHOT, not one target: the human's own re-review of
+Buff that day kept Expanding Ooze and Sample Collector (one counter, one target, every attack) and
+Fae Flight (+1/+0, permanent). Three rulings then fixed what SMALL (+1/+1, +1/+0, one counter) is
+worth, each asking what the card is FOR. B1: a small one-shot at sorcery speed is never Buff — "1
+segnalino o un +1/+1 a sorcery non fa niente", and most of them are creatures entering. B2: a small
+one-shot at INSTANT speed is Buff only when the pump IS the card — Gift of the Viper and Guided
+Strike, not Magic Damper or Lightfoot Technique, which are Protection with a rider; read as "carries
+no other effect tag", with Filter not counting, since a scry is the rider the human calls saturating
+(Storm Strike keeps it). B3: a small REPEATED pump on a CREATURE is not Buff either — "an extra of a
+creature you judge as a whole"; on a NONCREATURE the pump is the card and stays (Firebreathing,
+Innkeeper's Talent, Collector's Cage). And a BITE is Removal alone at any size (Felling Blow, Bite
+Down on Crime): the pump is how the removal is aimed. Stonewood Invocation, +5/+5 and shroud, is
+Buff and Protection. 105 reviewed tags came off (64 B3, 27 B1, 8 B2, 5 bites, and one self-pump
+found on the way) and were handed back to the human unreviewed, at their request, because the rule
+had only settled in the last 200–250 cards of the sitting that produced it. Only the pumps the size
+reading recognises are judged; a double strike grant, a base P/T or a doubling is left standing and
+keeps the tag on its own (Origin of Spider-Man's chapter III). A bullet that carries its own trigger
+is timed by it (Hollowmurk Siege's "Abzan — Whenever you attack"), and a cost that exiles the card
+from its graveyard runs once (Wither and Bloom). B3 was CONFIRMED for noncreatures the same day: the
+30 reviewed noncreature cards whose only pump is small and repeated "fanno solo Buff" and keep it.
+
+Ruled by name as well: a STATE in front of a tribe is still a tribe (Gornog's "Attacking Warriors
+you control"), and counters that ARE a body — on the creatures the sentence just made (Valgavoth's
+Onslaught) or on a noncreature that becomes a 0/0 (Case of the Filched Falcon) — are Tokens, not
+Buff; "those creatures" that were TARGETED rather than made stay Buff (Biogenic Upgrade, Smile at
+Death). Hurska Sweet-Tooth, Soulshriek and Endurance Bobblehead are Buff, the last with Protection.
+
+The self-pump ruling of 2026-09-18 was also found missing three wordings and they are read now: "it
+gets" when the clause in front of it is about the card (Slimy Piper, "as long as this creature is
+equipped, it gets"), the card's own name ("Rashka gets"), and counters doubled on this creature
+(Mossborn Hydra).
+
+On the human's re-review of 2024 (2026-09-25) the TRIBE was ruled out in every vocabulary, not only
+"Goblins you control get": counters on each of a tribe (Camellia's Squirrels, Kastral's Birds), a
+counter the tribe enters with (Slinza's Beasts), and a target that must belong to it (Inside
+Source's "target Detective", Rockface Village's list of four types) — and TOKENS are a tribe by
+another name (Hildibrand's "creature tokens you control get +1/+1", Sandstorm Salvager's counter on
+each creature token), so a pump only tokens get is a Tokens payoff and not Buff. The 12 older
+reviewed tags on the wrong side (Krenko, Minwu, Caretaker's Talent, Ezekiel Sims…) were taken off
+and handed back. The same re-review put the tag back on the one repeated small pump on a creature
+that grows ANOTHER each time it connects (Prowler, Scurry of Squirrels — 2 of 2, against 61 B3
+creatures confirmed without it), and found the reading blind to double strike beside a quoted token
+pump (Blacksmith's Talent), to the creature just CAST entering with counters (Communal Brewing — but
+not the one a reanimation brings back), to scavenge granted to a graveyard (Young Deathclaws), to a
+counter "on a creature you control" in a mode bought five times (Season of Gathering), and to a new
+base on a stolen creature, which is the theft's contour (Coerced to Kill). Four more rulings closed
+that pass the same day.
+
+A SPELL that is only the pump is Buff however small, sorcery speed included — "se la carta fa solo
+quello … che diventi Buff anche se fa schifo" (Honor); B1 now means a sorcery that does something
+else too.
+
+COLORLESS counts as a tribe (Kozilek; It That Heralds the End's older tag corrected by name, Titans'
+Vanguard and Vannifar handed back); other colours still do not.
+
+COUNTERS a creature hands out as it ENTERS need three or more — Apothecary Stomper's two are "come
+se fosse un 6/6" — while a temporary pump on entry (Toucan-Puffin) and counters from the graveyard
+(Agent of Kotis) keep the old bar. And a small pump that lasts the turn and is made only at sorcery
+speed is "irrilevante come effetto" on a card that does something else: Starnheim Memento is Ramp. A
+sorcery-speed COUNTER is not that (Perilous Snare keeps Buff). A pump for the creatures that share
+the card's NAME is the card pumping its own copies, not this tag (Gruff Triplets, untagged by the
+human on 2026-09-29; Charmed Stray).
+
+Read again 2026-10-14, four rulings. B3 NARROWED: a creature that hands ANOTHER creature a +1/+1
+counter or a Role every turn is Buff ("tutti Buff": Galadriel, Gift-Giver, Gylwain, Haliya, Haazda
+Vigilante); the small repeated pump that wears off at end of turn stays out — measured, dropping B3
+whole moved 45 more reviewed cards and every one against the hand tag. Mentor is that counter (Iroh,
+Ordruun Mentor; Danny Pink and Tributary Instructor handed back).
+
+A ROLE is a pump with no numbers (Become Brutes, Ellivere, Spellbook Vendor); a printed Role token
+card carries no tags, like ante.
+
+MOVING a +1/+1 counter off an artifact or enchantment onto a creature is Buff (Explorer's Cache,
+Agent's Toolkit; Costume Closet, Afiya Grove handed back). A quoted pump handed to the equipped or
+enchanted creature or to the team is the card's (Idolized, Well Rested, Conformer Shuriken,
+Astrologian's Planisphere, Tale of Katara and Toph; Red Mage's Rapier handed back, 4 to 1). Granting
+PROWESS is a keyword, not Buff (Narset, Enlightened Exile handed back without it), and a team base
+X/X is not Buff either (Candlekeep Inspiration handed back). A base that comes with defender or the
+loss of every ability is Pacify (Stasis Field). More tribes: "Ninja and Rogue creatures", "each Rat
+you control gets", "target Halfling or Treefolk", "each Warrior creature", a tribe's spell entering
+with a counter (Torgal), "if it's a Spider, put" (Aunt May); Coppercoat Vanguard, Oakhollow Village
+and Vaan handed back without Buff. A creature's one-shot "for each" is judged by its printed number
+(Eastfarthing Farmer). Measured: Buff F1 96.6 to 98.6, with the 66 reviewed cards these rulings
+reached handed back to the tagger.

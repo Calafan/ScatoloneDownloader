@@ -171,9 +171,10 @@ prints the `netsh http add urlacl` reservations a new host name needs.
 ### The effect classifier
 
 `classify` reads the rules text and proposes tags from the 25-effect ontology in
-[`Mtg/CardEffect.cs`](ScatoloneDownloader/Mtg/CardEffect.cs). The comments on
-each member are the rulings: every boundary, when it was decided, the cards
-that settled it and how many reviewed cards it moved. The one-line definitions
+[`Mtg/CardEffect.cs`](ScatoloneDownloader/Mtg/CardEffect.cs). The rulings are in
+[`docs/ontology/`](docs/ontology), one file per member: every boundary, when it
+was decided, the cards that settled it and how many reviewed cards it moved.
+The one-line definitions
 shown as tooltips in the tagger are in
 [`Mtg/EffectGlossary.cs`](ScatoloneDownloader/Mtg/EffectGlossary.cs), and the
 rules themselves in [`Cube/Effects/`](ScatoloneDownloader/Cube/Effects).

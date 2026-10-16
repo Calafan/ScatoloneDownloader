@@ -4,8 +4,8 @@ description: >-
   Run an ontology pass on the MTG cube effect classifier — measure one CardEffect
   tag against the hand-reviewed cards, bucket the disagreements, count each
   hypothesis before writing it, bring the genuinely split cases back as questions,
-  then apply the rulings to EffectClassifier, the tests, the CardEffect ontology
-  comment, the glossary tooltip and the metadata store. Use this whenever the work
+  then apply the rulings to EffectClassifier, the tests, the tag's ontology file
+  in docs/ontology, the glossary tooltip and the metadata store. Use this whenever the work
   touches EffectClassifier, CardEffect, EffectGlossary, the ScatoloneQuintet
   metadata store, precision/recall of the auto-tagger, or a disagreement between a
   hand tag and an automatic one — and use it even when the request names only a tag
@@ -202,7 +202,7 @@ Reading the answers:
   when the obvious replacement is another tag (Krile's Bounce "errore di
   click" for its plain Regrowth), apply it and say so, so it can be undone.
 - "Come impatta con il punto N?" and "cosa avevamo deciso?" are questions, not
-  rulings: answer from the `CardEffect` comment (the canonical record), propose
+  rulings: answer from `docs/ontology/<Tag>.md` (the canonical record), propose
   the consistent reading, and implement only after "confermo".
 
 **6. Apply.** A ruling lands in up to five places, and missing one leaves the
@@ -215,8 +215,10 @@ ontology lying to the next reader:
 - **the tests** → one `[InlineData]` per ruling, with real oracle text, through
   `scripts/splice_tests.py`; never invented or retyped text. A test pinning the
   ruling that was just overturned is moved, with a comment saying so and when
-- **the ontology** → the `CardEffect` member comment, which is the canonical
-  record, and the `EffectGlossary` tooltip (40–340 characters, enforced by a test)
+- **the ontology** → `docs/ontology/<Tag>.md`, which is the canonical record (a
+  new ruling is its own paragraph, led by its verb and date, wrapped at 100
+  columns; the `CardEffect` member keeps only the pointer to the file), and the
+  `EffectGlossary` tooltip (40–340 characters, enforced by a test)
 - **the README** of ScatoloneQuintet, whose ontology table copies the tooltips
   → `scripts/readme_ontology.py --write` whenever a tooltip changed
 
