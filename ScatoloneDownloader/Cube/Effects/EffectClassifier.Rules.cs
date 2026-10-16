@@ -1354,8 +1354,12 @@ namespace ScatoloneDownloader.Cube
                     // not Reanimate), and one under a cap is selection, Filter
                     // alone ("qualunque tetto = Filter": Emergent Woodwurm,
                     // Kayla's Reconstruction, Wilfred Mott, Knickknack Ouphe).
+                    // The noun may be a LIST that ends in a land, read
+                    // 2026-10-16: Bramble Familiar's "a creature, enchantment,
+                    // or land card" is the ruled card.
                     Rx(@"put (?:a|an|up to \w+|any number of|all|one|two) (?:(?!mana value|lesser|power)[^.\n]){0,100}?"
-                        + @"\b(?:creature|permanent|artifact|enchantment|nonland|equipment|aura|planeswalker) cards? "
+                        + @"\b(?:creature|permanent|artifact|enchantment|nonland|equipment|aura|planeswalker)"
+                        + @"(?:,? (?:or )?(?:creature|artifact|enchantment|land|planeswalker|battle))* cards? "
                         + @"(?:(?!mana value|lesser|power)[^.\n]){0,60}?from among (?:them|those cards|the (?:milled|revealed|exiled) cards)"
                         + @"[^.\n]{0,20} onto the battlefield"),
                     // …and the same out of a reveal or an exile named "this way"
@@ -1418,6 +1422,33 @@ namespace ScatoloneDownloader.Cube
                     // version is the impulse rider above, which is a card.
                     Rx(@"(?:look at|reveal) the top [\w ]{1,20} of your library[^\n]{0,200}"
                         + @"cast [^\n]{0,80}from among them without paying"),
+                    // …and a look that EXILES the one it keeps and casts it free
+                    // later, with no mana-value cap, ruled 2026-10-16 ("Hideaway
+                    // no, altri sì"): Djeru and Hazoret's legendary creature, The
+                    // Dragon-Kami Reborn's hatched creature. Not HIDEAWAY, whose
+                    // play waits on a condition and stays Filter alone, 4 of 5 by
+                    // hand (Evercoat Ursine handed back) — its reminder joins the
+                    // look with a comma, not a full stop. Not under a cap either:
+                    // Discover the Impossible's "if it's an instant spell".
+                    // Keldon Flamesage's "mana value X or less" never gets here,
+                    // its look running on into "where X is"; a guard against a
+                    // cap in the exiled noun was tried and matched no card.
+                    Rx(@"look at the top \w+ cards of your library\. (?:you may )?exile (?:a|an|one) [^.\n]{0,120}\."
+                        + @"[\s\S]{0,300}?cast (?:the exiled card|a [\w ]{0,20}spell from among cards [^.\n]{0,20}in exile with [\w-]+ counters on them)"
+                        + @" without paying its mana cost(?! if)"),
+                    // Exiling until a NONLAND card and casting it free with no cap
+                    // is cascade without its ceiling, Cheat by the 2026-10-13
+                    // ruling ("carta grossa": Sarevok's Tome); with a cap after it
+                    // stays CardAdvantage (Breaching Dragonstorm, Solstice
+                    // Revelations, Ryan Sinclair).
+                    Rx(@"until you (?:exile|reveal) a nonland card\. you may cast (?:that card|it|the exiled card) without paying its mana cost(?! if)"),
+                    // A card out of your HAND cast free, as Great Intelligence's
+                    // Plan, when it is chosen first (The Seventh Doctor), and the
+                    // card a loot discarded (Malcolm, named 2026-10-13). One card
+                    // each; the impulse rider ("exile the top card … cast it") and
+                    // Steal's (Hidetsugu and Kairi) say neither.
+                    Rx(@"choose a card in your hand\.[^\n]{0,200}you may cast it without paying its mana cost"),
+                    Rx(@"you may cast the discarded card without paying its mana cost"),
                     // Vault 112: Sadistic Simulation plays one of the cards it
                     // exiled for free: Filter and Cheat, not CardAdvantage.
                     // Ruled 2026-10-16.

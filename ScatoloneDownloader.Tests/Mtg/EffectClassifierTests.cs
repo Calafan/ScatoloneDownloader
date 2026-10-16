@@ -9382,6 +9382,82 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // Cheat pass of 2026-10-16. A list of nouns ending in a land out of a mill
+    // (Bramble Familiar); a look that exiles the card it keeps and casts it free
+    // with no cap, ruled the same day (Djeru and Hazoret, The Dragon-Kami Reborn);
+    // an exile until a nonland card cast free with no cap (Sarevok's Tome, whose
+    // 'Exile cards' had also read as a tribe); a card chosen from the hand (The
+    // Seventh Doctor) and the card a loot discarded (Malcolm) cast free.
+    [InlineData("Bramble Familiar // Fetch Quest", "Creature — Elemental Raccoon // Sorcery — Adventure",
+        "{T}: Add {G}.\n{1}{G}, {T}, Discard a card: Return this creature to its owner's hand.\nMill seven "
+        + "cards. Then put a creature, enchantment, or land card from among the milled cards onto the "
+        + "battlefield.")]
+    [InlineData("Djeru and Hazoret", "Legendary Creature — Human God",
+        "As long as you have one or fewer cards in hand, Djeru and Hazoret has vigilance and haste.\nWhenever "
+        + "Djeru and Hazoret attacks, look at the top six cards of your library. You may exile a legendary "
+        + "creature card from among them. Put the rest on the bottom of your library in a random order. Until "
+        + "end of turn, you may cast the exiled card without paying its mana cost.")]
+    [InlineData("The Dragon-Kami Reborn // Dragon-Kami's Egg", "Enchantment — Saga // Enchantment Creature — Egg",
+        "(As this Saga enters and after your draw step, add a lore counter.)\nI, II — You gain 2 life. Look at "
+        + "the top three cards of your library. Exile one of them face down with a hatching counter on it, then "
+        + "put the rest on the bottom of your library in any order.\nIII — Exile this Saga, then return it to "
+        + "the battlefield transformed under your control.\nWhenever this creature or a Dragon you control dies, "
+        + "you may cast a creature spell from among cards you own in exile with hatching counters on them "
+        + "without paying its mana cost.")]
+    [InlineData("Sarevok's Tome", "Artifact — Book",
+        "When this artifact enters, you take the initiative.\n{T}: Add {C}. If you have the initiative, add "
+        + "{C}{C} instead.\n{3}, {T}: Exile cards from the top of your library until you exile a nonland card. "
+        + "You may cast that card without paying its mana cost. Activate only if you've completed a dungeon.")]
+    [InlineData("The Seventh Doctor", "Legendary Creature — Time Lord Doctor",
+        "Whenever The Seventh Doctor attacks, choose a card in your hand. Defending player guesses whether "
+        + "that card's mana value is greater than the number of artifacts you control. If they guessed wrong, "
+        + "you may cast it without paying its mana cost. If you don't cast a spell this way, investigate. "
+        + "(Create a Clue token. It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")")]
+    [InlineData("Malcolm, Alluring Scoundrel", "Legendary Creature — Siren Pirate",
+        "Flash\nFlying\nWhenever Malcolm deals combat damage to a player, put a chorus counter on it. Draw a "
+        + "card, then discard a card. If there are four or more chorus counters on Malcolm, you may cast the "
+        + "discarded card without paying its mana cost.")]
+    public void Classify_TheCheatPassOfOctober16_UncappedFreeCasts_AreCheat(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
+    }
+
+    [Theory]
+    // Ruled 2026-10-16 ("Hideaway no, altri sì"): hideaway is Filter alone, its
+    // play waiting on a condition (Evercoat Ursine handed back, Collector's Cage).
+    // A cap keeps the free cast out: Keldon Flamesage's 'mana value X or less',
+    // Discover the Impossible's 'if it's an instant spell', Ryan Sinclair's lesser
+    // mana value.
+    [InlineData("Evercoat Ursine", "Creature — Elemental Bear",
+        "Trample\nHideaway 3, hideaway 3 (When this creature enters, look at the top three cards of your "
+        + "library, exile one face down, then put the rest on the bottom in a random order. Then do it "
+        + "again.)\nWhenever this creature deals combat damage to a player, if there are cards exiled with it, "
+        + "you may play one of them without paying its mana cost.")]
+    [InlineData("Collector's Cage", "Artifact",
+        "Hideaway 5 (When this artifact enters, look at the top five cards of your library, exile one face "
+        + "down, then put the rest on the bottom in a random order.)\n{1}, {T}: Put a +1/+1 counter on target "
+        + "creature you control. Then if you control three or more creatures with different powers, you may "
+        + "play the exiled card without paying its mana cost.")]
+    [InlineData("Keldon Flamesage", "Creature — Human Shaman",
+        "Enlist\nWhenever this creature attacks, look at the top X cards of your library, where X is this "
+        + "creature's power. You may exile an instant or sorcery card with mana value X or less from among "
+        + "them. Put the rest on the bottom of your library in a random order. You may cast the exiled card "
+        + "without paying its mana cost.")]
+    [InlineData("Discover the Impossible", "Instant",
+        "Look at the top five cards of your library. Exile one of them face down and put the rest on the "
+        + "bottom of your library in a random order. You may cast the exiled card without paying its mana cost "
+        + "if it's an instant spell with mana value 2 or less. If you don't, put that card into your hand.")]
+    [InlineData("Ryan Sinclair", "Legendary Creature — Human",
+        "Whenever Ryan attacks, exile cards from the top of your library until you exile a nonland card. You "
+        + "may cast the exiled card without paying its mana cost if it's a spell with mana value less than or "
+        + "equal to Ryan's power. Put the exiled cards not cast this way on the bottom of your library in a "
+        + "random order.\nDoctor's companion (You can have two commanders if the other is the Doctor.)")]
+    public void Classify_TheCheatPassOfOctober16_HideawayAndCappedCasts_AreNotCheat(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
+    }
+
+    [Theory]
     // A TAP, in every shape the game prints it. Ruled 2026-09-22 after the hand
     // tags were found contradicting themselves on identical wording; the human
     // resolved six pairs the same way and rejected both proposed lines — the

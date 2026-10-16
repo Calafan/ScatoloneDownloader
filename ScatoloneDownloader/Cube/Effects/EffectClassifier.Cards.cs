@@ -614,7 +614,13 @@ namespace ScatoloneDownloader.Cube
         private const string NotAnotherKindOfSubtype =
             @"(?!(?:Aura|Equipment|Vehicle|Spacecraft|Cave)s?\b)";
 
-        private const string ACreatureType = @"(?<![Nn]on-)\b" + NotATribe + NotACardType + NotAnotherKindOfSubtype + @"[A-Z][\w'-]+";
+        // Nor the VERB that opens a sentence: Sarevok's Tome's "{3}, {T}: Exile
+        // cards from the top of your library until you exile a nonland card"
+        // read as a tribe called Exile and lost its Cheat (2026-10-16).
+        private const string NotAVerb =
+            @"(?!(?:Exile|Reveal|Return|Discard|Cast|Play|Put|Mill)\b)";
+
+        private const string ACreatureType = @"(?<![Nn]on-)\b" + NotATribe + NotACardType + NotAnotherKindOfSubtype + NotAVerb + @"[A-Z][\w'-]+";
 
         private static readonly Regex TribalCard = new(
             ACreatureType + @" (?:creature |permanent )?(?:cards?|spells?)\b"
