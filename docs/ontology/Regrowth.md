@@ -3,7 +3,10 @@
 Canonical record of the rulings for `CardEffect.Regrowth`. The one-line tooltip shown in the tagger
 is in [`EffectGlossary.cs`](../../ScatoloneDownloader/Mtg/EffectGlossary.cs).
 
-a card from a graveyard back to HAND — the sibling of Reanimate, same origin, different destination.
+a card from a graveyard back to HAND — the sibling of Reanimate, same origin, different destination
+(Regrowth, Raise Dead, Eternal Witness). Deliberately NOT merged with Reanimate, which puts it
+straight onto the battlefield: one hands back a card you still have to pay for, the other cheats the
+cost — different speeds, different decks.
 
 The TOP OF A LIBRARY counts too, ruled 2026-09-19: it is a hand you wait one turn for, and all 5
 reviewed cards written that way were already tagged.
@@ -30,9 +33,7 @@ a card EXILED out of your graveyard and then cast or played IS ("Sì": Kaervek, 
 Tersa; Shiko, Paragon of the Way the named exception), and so is a cast card DESCRIBED before "from"
 ("Regrowth sempre": Seifer Almasy, Gale, Sword of Once and Future). A return that is the PRICE of
 keeping the card (Harvest Wurm) and a keyword's reminder (Deeproot Historian's "cards with retrace")
-are not.   // return a card from a graveyard to HAND (Regrowth, Raise Dead, Eternal Witness).
-Deliberately NOT merged with Reanimate, which puts it straight onto the battlefield: one hands back
-a card you still have to pay for, the other cheats the cost — different speeds, different decks.
+are not.
 
 Ruled 2026-10-16 (G1, "Solo Steal"): a card cast from an OPPONENT'S graveyard is NOT this tag but
 Steal alone (Deluxe Dragster named, Tinybones, Bauble Burglar realigned); from ANY graveyard it
