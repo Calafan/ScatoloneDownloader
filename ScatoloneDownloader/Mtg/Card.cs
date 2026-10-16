@@ -104,6 +104,12 @@ namespace ScatoloneDownloader.Mtg
         /// defaults to <see cref="CardEffect.None"/> when the card is untagged.</summary>
         internal CardEffect Effects { get; set; } = CardEffect.None;
 
+        /// <summary>True when the metadata entry carries a <c>reviewedAt</c>, i.e. a
+        /// human confirmed its tags; false when the effects are only the
+        /// classifier's proposal or the card has no entry. Loaded by
+        /// <see cref="Cube.MetadataJsonSynchronizer"/>.</summary>
+        internal bool Reviewed { get; set; }
+
         internal MacroType MacroType { get; init; }
         internal string ColorCategory { get; init; }
         internal int ManaPips { get; init; }

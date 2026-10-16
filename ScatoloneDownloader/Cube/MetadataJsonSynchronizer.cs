@@ -38,12 +38,14 @@ namespace ScatoloneDownloader.Cube
                     card.Rating = entry.Rating;
                     card.Status = entry.StatusValue;
                     card.Effects = entry.EffectFlags;
+                    card.Reviewed = entry.ReviewedAt != null;
                 }
                 else
                 {
                     card.Rating = 0;
                     card.Status = CardStatus.None;
                     card.Effects = CardEffect.None;
+                    card.Reviewed = false;
                 }
             }
         }

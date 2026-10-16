@@ -22,9 +22,43 @@ namespace ScatoloneDownloader.Mtg
             "4_5_Colors", "Colorless",
         ];
 
+        // Column order of the effect matrix and of the answers table.
+        private static readonly string[] EffectColumns =
+            ["W", "U", "B", "R", "G", "Multi", "Colorless"];
+
+        private static readonly string[] EffectColumnNames =
+            ["White", "Blue", "Black", "Red", "Green", "Multi", "Colorless"];
+
+        /// <summary>
+        /// Answers-vs-targets groups. Each target set is what the group's flags can
+        /// actually hit, not what the card happens to be: creature answers
+        /// (Removal, RemovePermanent, Wipe, and the soft ones Pacify, Bounce, Steal)
+        /// aim at the non-land creatures. Disenchant's own definition sends artifact
+        /// CREATURES to Removal, so the artifact/enchantment group aims only at the
+        /// NON-creature artifacts and enchantments. Counterspells aim at spells
+        /// cast, which no card count can stand for, hence no target. Land
+        /// destruction aims at the analysed non-basic lands.
+        /// </summary>
+        private static readonly (string Label, CardEffect Effects, AnswerTargets Targets)[] AnswerGroupDefinitions =
+        [
+            ("Creature removal", CardEffect.Removal | CardEffect.RemovePermanent | CardEffect.Wipe, AnswerTargets.Creatures),
+            ("Soft creature answers", CardEffect.Pacify | CardEffect.Bounce | CardEffect.Steal, AnswerTargets.Creatures),
+            ("Artifact/enchantment removal", CardEffect.Disenchant | CardEffect.RemovePermanent, AnswerTargets.NonCreatureArtifactsAndEnchantments),
+            ("Counterspells", CardEffect.Counter, AnswerTargets.None),
+            ("Land destruction", CardEffect.LandDestruction, AnswerTargets.Lands),
+        ];
+
+        private enum AnswerTargets
+        {
+            None,
+            Creatures,
+            NonCreatureArtifactsAndEnchantments,
+            Lands,
+        }
+
         private readonly List<Card> analyzedCards;
 
-        // Rating-2 cards, reported as an appendix (section 6) and never mixed into
+        // Rating-2 cards, reported as an appendix (section 7) and never mixed into
         // the metrics above it — they are candidates, not pool.
         private readonly List<Card> benchCards;
 
@@ -57,6 +91,18 @@ namespace ScatoloneDownloader.Mtg
                 normal.Where(c => RatingTierClassifier.Classify(c.Rating) == RatingTier.Bench).ToList());
         }
 
+        /// <summary>Maps a <see cref="Card.ColorCategory"/> to its effect column:
+        /// mono colours and Colorless map to themselves, every other bucket
+        /// (guilds, shards, wedges, 4-5 colours) to "Multi".</summary>
+        internal static string EffectColumn(string colorCategory)
+        {
+            return colorCategory switch
+            {
+                "W" or "U" or "B" or "R" or "G" or "Colorless" => colorCategory,
+                _ => "Multi",
+            };
+        }
+
         private static int GetPercentage(int value, int total)
         {
             return total != 0 ? (int)Math.Round(value * 100.0 / total) : 0;
@@ -79,6 +125,7 @@ namespace ScatoloneDownloader.Mtg
             AppendLandsSection(sb, report);
             AppendCategoryAnalysis(sb, report);
             AppendEffectDistribution(sb, report);
+            AppendAnswersVsTargets(sb, report);
             AppendBenchSection(sb, benchCards);
 
             using StreamWriter writer = new(path);
@@ -249,17 +296,61 @@ namespace ScatoloneDownloader.Mtg
             }
         }
 
+        private static bool HasAnyEffect(AnalysisReport report)
+        {
+            return report.TotalCards - report.UntaggedEffectCount > 0;
+        }
+
         private static void AppendEffectDistribution(StringBuilder sb, AnalysisReport report)
         {
             int tagged = report.TotalCards - report.UntaggedEffectCount;
 
-            sb.AppendLine("## 5. Effect Distribution (Excluding Lands)");
+            // Nothing tagged (the download analyze/files path): keep the flat
+            // report exactly as it was before the colour matrix existed.
+            if (!HasAnyEffect(report))
+            {
+                sb.AppendLine("## 5. Effect Distribution (Excluding Lands)");
+                sb.AppendLine("*A card can carry several effects, so counts overlap and their sum exceeds the card total.*");
+                sb.AppendLine($"*   **Tagged:** {tagged} / {report.TotalCards} ({GetPercentage(tagged, report.TotalCards)}%) | **Untagged:** {report.UntaggedEffectCount}");
+                sb.AppendLine();
+                sb.AppendLine("| Effect | Cards | % of Non-Land |");
+                sb.AppendLine("| :--- | :--- | :--- |");
+                sb.AppendLine();
+                return;
+            }
+
+            sb.AppendLine("## 5. Effects by Color (Excluding Lands)");
             sb.AppendLine("*A card can carry several effects, so counts overlap and their sum exceeds the card total.*");
             sb.AppendLine($"*   **Tagged:** {tagged} / {report.TotalCards} ({GetPercentage(tagged, report.TotalCards)}%) | **Untagged:** {report.UntaggedEffectCount}");
+            sb.AppendLine("*Columns: mono-coloured cards by colour, Multi = two or more colours, Colorless = no colour identity; each card counts in exactly one column.*");
             sb.AppendLine();
 
-            sb.AppendLine("| Effect | Cards | % of Non-Land |");
-            sb.AppendLine("| :--- | :--- | :--- |");
+            AppendEffectMatrix(sb, report);
+        }
+
+        /// <summary>
+        /// Renders the effect-by-colour matrix: card totals per column, then how
+        /// much of each column a human reviewed (the rest are the classifier's
+        /// proposals, so a count weighs only as much as its reviewed share), the
+        /// untagged remainder, and one row per effect that occurs at all. Shared by
+        /// the pool section and the bench appendix so the two read identically.
+        /// </summary>
+        private static void AppendEffectMatrix(StringBuilder sb, AnalysisReport report)
+        {
+            sb.AppendLine("| Effect | " + string.Join(" | ", EffectColumnNames) + " | Total |");
+            sb.AppendLine("| :--- | " + string.Concat(Enumerable.Repeat(":--- | ", EffectColumns.Length)) + ":--- |");
+
+            sb.AppendLine("| **Non-land cards** | "
+                + string.Join(" | ", EffectColumns.Select(c => report.CardsByColumn.GetValueOrDefault(c, 0).ToString()))
+                + $" | {report.TotalCards} |");
+
+            sb.AppendLine("| **Reviewed** | "
+                + string.Join(" | ", EffectColumns.Select(c => FormatShare(report.ReviewedByColumn.GetValueOrDefault(c, 0), report.CardsByColumn.GetValueOrDefault(c, 0))))
+                + $" | {FormatShare(report.ReviewedByColumn.Values.Sum(), report.TotalCards)} |");
+
+            sb.AppendLine("| **Untagged** | "
+                + string.Join(" | ", EffectColumns.Select(c => FormatShare(report.UntaggedByColumn.GetValueOrDefault(c, 0), report.CardsByColumn.GetValueOrDefault(c, 0))))
+                + $" | {FormatShare(report.UntaggedEffectCount, report.TotalCards)} |");
 
             IEnumerable<KeyValuePair<CardEffect, int>> rows = report.EffectCounts
                 .Where(kvp => kvp.Value > 0)
@@ -268,14 +359,64 @@ namespace ScatoloneDownloader.Mtg
 
             foreach ((CardEffect effect, int count) in rows)
             {
-                sb.AppendLine($"| {effect} | {count} | {GetPercentage(count, report.TotalCards)}% |");
+                IEnumerable<string> cells = EffectColumns.Select(c => FormatShare(
+                    report.EffectCountsByColumn.GetValueOrDefault(c)?.GetValueOrDefault(effect, 0) ?? 0,
+                    report.CardsByColumn.GetValueOrDefault(c, 0)));
+
+                sb.AppendLine($"| {effect} | {string.Join(" | ", cells)} | {FormatShare(count, report.TotalCards)} |");
+            }
+
+            sb.AppendLine();
+        }
+
+        /// <summary>"n (p%)" of a column, or "-" when the count (or the column) is empty.</summary>
+        private static string FormatShare(int count, int columnTotal)
+        {
+            return count == 0 || columnTotal == 0 ? "-" : $"{count} ({GetPercentage(count, columnTotal)}%)";
+        }
+
+        private static string FormatCount(int count)
+        {
+            return count == 0 ? "-" : count.ToString();
+        }
+
+        /// <summary>
+        /// Section 6 — for each family of answers, how many distinct cards the pool
+        /// holds per colour against how many cards they can hit. Omitted when
+        /// nothing is tagged, since the table would be all dashes.
+        /// </summary>
+        private static void AppendAnswersVsTargets(StringBuilder sb, AnalysisReport report)
+        {
+            if (!HasAnyEffect(report))
+            {
+                return;
+            }
+
+            sb.AppendLine("## 6. Answers vs Targets");
+            sb.AppendLine("*Distinct cards per group: a card is counted once even when it carries several flags of the group. \"Targets per answer\" = targets / answering cards.*");
+            sb.AppendLine();
+            sb.AppendLine("| Answers | Tags | " + string.Join(" | ", EffectColumnNames) + " | Total | Targets | Targets per answer |");
+            sb.AppendLine("| :--- | :--- | " + string.Concat(Enumerable.Repeat(":--- | ", EffectColumns.Length)) + ":--- | :--- | :--- |");
+
+            foreach (AnswerGroupCount group in report.AnswerGroups)
+            {
+                string tags = string.Join(", ", Enum.GetValues<CardEffect>()
+                    .Where(f => f != CardEffect.None && group.Effects.HasFlag(f))
+                    .Select(f => f.ToString()));
+                string cells = string.Join(" | ", EffectColumns.Select(c => FormatCount(group.ByColumn.GetValueOrDefault(c, 0))));
+                string targets = group.Targets.HasValue ? group.Targets.Value.ToString() : "-";
+                string ratio = group.Targets.HasValue && group.Total > 0
+                    ? ((double)group.Targets.Value / group.Total).ToString("0.#")
+                    : "-";
+
+                sb.AppendLine($"| **{group.Label}** | {tags} | {cells} | {FormatCount(group.Total)} | {targets} | {ratio} |");
             }
 
             sb.AppendLine();
         }
 
         /// <summary>
-        /// Section 6 — what is available on the bench (rating 2) to fill a hole the
+        /// Section 7 — what is available on the bench (rating 2) to fill a hole the
         /// sections above just exposed. Rendered from a full
         /// <see cref="AnalysisReport"/> computed over the bench cards alone, so the
         /// counting rules (basic lands and legacy-tagged cards skipped, lands split
@@ -299,7 +440,7 @@ namespace ScatoloneDownloader.Mtg
 
             int tagged = bench.TotalCards - bench.UntaggedEffectCount;
 
-            sb.AppendLine($"## 6. Bench Availability ({bench.TotalCards + bench.LandCount} Cards, Rating 2)");
+            sb.AppendLine($"## 7. Bench Availability ({bench.TotalCards + bench.LandCount} Cards, Rating 2)");
             sb.AppendLine("*Cards cut by a hair. They are NOT counted in any section above — this is the");
             sb.AppendLine("shortlist to promote from when a section above shows a hole, browsable under");
             sb.AppendLine("`Views/6_Bench/`. Raise a card to 3 in the tagger and the next `build-views`");
@@ -353,28 +494,14 @@ namespace ScatoloneDownloader.Mtg
                 sb.AppendLine();
             }
 
-            IEnumerable<KeyValuePair<CardEffect, int>> effectRows = bench.EffectCounts
-                .Where(kvp => kvp.Value > 0)
-                .OrderByDescending(kvp => kvp.Value)
-                .ThenBy(kvp => (int)kvp.Key)
-                .ToList();
-
-            if (!effectRows.Any())
+            if (!HasAnyEffect(bench))
             {
                 return;
             }
 
-            sb.AppendLine("### Available by Effect");
+            sb.AppendLine("### Available by Effect and Color");
             sb.AppendLine();
-            sb.AppendLine("| Effect | Cards | % of Bench Non-Land |");
-            sb.AppendLine("| :--- | :--- | :--- |");
-
-            foreach ((CardEffect effect, int count) in effectRows)
-            {
-                sb.AppendLine($"| {effect} | {count} | {GetPercentage(count, bench.TotalCards)}% |");
-            }
-
-            sb.AppendLine();
+            AppendEffectMatrix(sb, bench);
         }
 
         private static string FormatCmcDistribution(Dictionary<double, int> rawCmc)
@@ -542,6 +669,75 @@ namespace ScatoloneDownloader.Mtg
                 }
             }
 
+            // Same effect tally, split by colour column (each card sits in exactly one).
+            Dictionary<string, int> cardsByColumn = [];
+            Dictionary<string, int> reviewedByColumn = [];
+            Dictionary<string, int> untaggedByColumn = [];
+            Dictionary<string, Dictionary<CardEffect, int>> effectsByColumn = [];
+            foreach (Card c in nonLands)
+            {
+                string column = EffectColumn(c.ColorCategory);
+                cardsByColumn[column] = cardsByColumn.GetValueOrDefault(column, 0) + 1;
+
+                if (c.Reviewed)
+                {
+                    reviewedByColumn[column] = reviewedByColumn.GetValueOrDefault(column, 0) + 1;
+                }
+
+                if (c.Effects == CardEffect.None)
+                {
+                    untaggedByColumn[column] = untaggedByColumn.GetValueOrDefault(column, 0) + 1;
+                    continue;
+                }
+
+                if (!effectsByColumn.TryGetValue(column, out Dictionary<CardEffect, int>? columnEffects))
+                {
+                    columnEffects = [];
+                    effectsByColumn[column] = columnEffects;
+                }
+
+                foreach (CardEffect flag in Enum.GetValues<CardEffect>())
+                {
+                    if (flag != CardEffect.None && c.Effects.HasFlag(flag))
+                    {
+                        columnEffects[flag] = columnEffects.GetValueOrDefault(flag, 0) + 1;
+                    }
+                }
+            }
+
+            int creatureTargets = nonLands.Count(c => c.MacroType == MacroType.Creature);
+            int artifactEnchantmentTargets = nonLands.Count(c => c.MacroType != MacroType.Creature
+                && (c.TypeLine.Contains("Artifact", StringComparison.Ordinal)
+                    || c.TypeLine.Contains("Enchantment", StringComparison.Ordinal)));
+
+            List<AnswerGroupCount> answerGroups = [];
+            foreach ((string label, CardEffect groupEffects, AnswerTargets targetKind) in AnswerGroupDefinitions)
+            {
+                Dictionary<string, int> byColumn = [];
+                foreach (Card c in nonLands.Where(c => (c.Effects & groupEffects) != CardEffect.None))
+                {
+                    string column = EffectColumn(c.ColorCategory);
+                    byColumn[column] = byColumn.GetValueOrDefault(column, 0) + 1;
+                }
+
+                int? targets = targetKind switch
+                {
+                    AnswerTargets.Creatures => creatureTargets,
+                    AnswerTargets.NonCreatureArtifactsAndEnchantments => artifactEnchantmentTargets,
+                    AnswerTargets.Lands => lands.Count(),
+                    _ => null,
+                };
+
+                answerGroups.Add(new AnswerGroupCount
+                {
+                    Label = label,
+                    Effects = groupEffects,
+                    Targets = targets,
+                    ByColumn = byColumn,
+                    Total = byColumn.Values.Sum(),
+                });
+            }
+
             double globalPips = nonLands.Sum(c => (double)c.ManaPips);
             double globalPipDensity = total > 0 ? globalPips / total : 0;
 
@@ -602,6 +798,11 @@ namespace ScatoloneDownloader.Mtg
                 LandsByCategory = landsByCategory,
                 EffectCounts = effectCounts,
                 UntaggedEffectCount = untaggedEffects,
+                CardsByColumn = cardsByColumn,
+                ReviewedByColumn = reviewedByColumn,
+                UntaggedByColumn = untaggedByColumn,
+                EffectCountsByColumn = effectsByColumn,
+                AnswerGroups = answerGroups,
                 TotalCards = total,
             };
         }

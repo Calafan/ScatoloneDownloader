@@ -14,7 +14,7 @@ namespace ScatoloneDownloader.Tests.Mtg;
 /// the active pool (rating 3-5, no Banned/Token/Jolly), matching the views and
 /// the CardStatus doc — the unrated backlog and excluded status cards must not
 /// skew the distributions. Rating 2 is the one exception: it is carried along as
-/// the bench and rendered as an appendix (section 6), still contributing to no
+/// the bench and rendered as an appendix (section 7), still contributing to no
 /// metric above it. The plain constructor is unaffected (the download
 /// analyze/files path still analyzes whatever it is given).
 /// </summary>
@@ -86,7 +86,7 @@ public sealed class CardAnalyzerForPoolTests : IDisposable
 
         // The two rating-2 cards land in the appendix. Rating 1 is not a bench
         // card, and a Banned 2 is a status card — neither may appear.
-        Assert.Contains("## 6. Bench Availability (2 Cards, Rating 2)", text);
+        Assert.Contains("## 7. Bench Availability (2 Cards, Rating 2)", text);
         Assert.Contains("### Available by Color and Cost", text);
 
         // The cost histogram is the point of the section: one 2-drop, one 6+.
@@ -94,7 +94,7 @@ public sealed class CardAnalyzerForPoolTests : IDisposable
 
         // And the effect axis, for "the pool is short on ramp" lookups.
         Assert.Contains("### Available by Effect", text);
-        Assert.Contains("| Ramp | 1 |", text);
+        Assert.Contains("| Ramp | - | - | - | - | 1 (50%) | - | - | 1 (50%) |", text);
     }
 
     [Fact]

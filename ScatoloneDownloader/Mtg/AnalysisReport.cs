@@ -71,7 +71,46 @@ namespace ScatoloneDownloader.Mtg
         /// <summary>Non-land cards with no effect tagged yet.</summary>
         internal int UntaggedEffectCount { get; init; }
 
+        /// <summary>Non-land cards per effect column (W, U, B, R, G, Multi, Colorless);
+        /// see <see cref="CardAnalyzer.EffectColumn"/>.</summary>
+        internal Dictionary<string, int> CardsByColumn { get; init; } = [];
+
+        /// <summary>Of <see cref="CardsByColumn"/>, the cards a human reviewed
+        /// (<see cref="Card.Reviewed"/>).</summary>
+        internal Dictionary<string, int> ReviewedByColumn { get; init; } = [];
+
+        /// <summary>Of <see cref="CardsByColumn"/>, the cards with no effect tagged.</summary>
+        internal Dictionary<string, int> UntaggedByColumn { get; init; } = [];
+
+        /// <summary>[column][flag] = cards carrying the flag. Overlapping, like
+        /// <see cref="EffectCounts"/>.</summary>
+        internal Dictionary<string, Dictionary<CardEffect, int>> EffectCountsByColumn { get; init; } = [];
+
+        /// <summary>Answers-vs-targets groups, in report order.</summary>
+        internal List<AnswerGroupCount> AnswerGroups { get; init; } = [];
+
         /// <summary>Total card count analyzed (excludes basic lands + tagged cards, per existing rule).</summary>
         internal int TotalCards { get; init; }
+    }
+
+    /// <summary>
+    /// One row of the answers-vs-targets table: how many DISTINCT non-land cards
+    /// carry any flag of the group (a card with two flags of the group counts
+    /// once), split by effect column, and how many cards those answers can hit.
+    /// </summary>
+    internal sealed class AnswerGroupCount
+    {
+        internal required string Label { get; init; }
+
+        /// <summary>The flags that put a card in the group.</summary>
+        internal required CardEffect Effects { get; init; }
+
+        /// <summary>Cards the group's answers can aim at; null when no meaningful
+        /// target set exists (counterspells).</summary>
+        internal int? Targets { get; init; }
+
+        internal Dictionary<string, int> ByColumn { get; init; } = [];
+
+        internal int Total { get; init; }
     }
 }
