@@ -46,9 +46,9 @@
 
             [CardEffect.Wipe] =
                 "Mass removal: the board emptied — destroyed, exiled, damaged (players too), shrunk, airbent, "
-                + "returned, two or more sacrificed each, or an edict every turn. An adjective does not narrow it "
-                + "(\"white creatures get -1/-1\"); a creature TYPE does. Not what fights it or didn't attack, "
-                + "your own, a graveyard, lands alone.",
+                + "returned, two or more sacrificed each, or an edict every turn. Lands count: \"destroy all lands\", "
+                + "\"all Islands\". An adjective does not narrow it; a creature TYPE does. Not what fights it or "
+                + "didn't attack, your own, a graveyard, X target lands.",
 
             [CardEffect.Bounce] =
                 "Returns a NAMED permanent to its owner's hand (\"return target …\", or a mass \"return each/all\"), "
@@ -140,9 +140,9 @@
 
             [CardEffect.LandDestruction] =
                 "Takes a land off the battlefield, however worded: in a type list, behind a count, beside a "
-                + "second target, in a sweeper, or named by basic type (\"destroy all Islands\"). A land edict "
-                + "counts. Not a land in a GRAVEYARD, not an Aura ATTACHED to one (that protects it), not your "
-                + "own, and not the wider mana-denial family.",
+                + "second target, by basic type (\"destroy all Islands\"), or in any sweep that takes them "
+                + "(Balance, Apocalypse). A land edict counts. Not a land in a GRAVEYARD, not an Aura ATTACHED to "
+                + "one, not your own, not mana denial.",
 
             [CardEffect.Mill] =
                 "Puts cards from ANOTHER player's library into their graveyard, or into exile when nobody plays them "

@@ -159,12 +159,31 @@ namespace ScatoloneDownloader.Cube
             // reaches "the number of lands you control" (Lasyd Prowler) and
             // "other than basic land cards" (Haunting Echoes).
             Rx(@"(?:destroy|exile)[^\n]{0,80}target [\w ,'\-]{0,40}\bnonbasic lands?\b"),
-            Rx(@"(?:destroy|exile) (?:all|each)[\w ,'\-]{0,30}\blands?\b"),
+            // Not "all other permanents EXCEPT FOR LANDS" (Elspeth Tirel) nor
+            // "all Swamps YOU CONTROL" (Return of the Nightstalkers), 2026-10-16.
+            // "All lands you control" was guarded the same way and moved no card
+            // (Desolation Angel destroys them all when kicked), so it is not.
+            Rx(@"(?:destroy|exile) (?:all|each)(?:(?!except\b)[\w ,'\-]){0,30}\blands?\b"),
             Rx(@"(?:destroy|exile) (?:up to \w+ |x |two |three |four |\d+ )?(?:all|each|target) "
-                + @"[\w ,'\-]{0,20}" + BasicLandType),
-            // "Each player chooses six lands they control, then sacrifices the
-            // rest" (Planetary Annihilation) names no victim at all.
-            Rx(@"chooses? [\w ]{0,15}\blands?\b[\w ,'\-]{0,30}sacrifices? the rest"),
+                + @"[\w ,'\-]{0,20}" + BasicLandType + @"(?! you control)"),
+            // Every sweep that takes the opponents' lands is this tag, whether or
+            // not it says "land", ruled 2026-10-16 ("sì, sempre") on Balance
+            // against Planetary Annihilation and Apocalypse against Jokulhaups:
+            // all the PERMANENTS taken (Apocalypse, Upheaval, Worldfire, Urza's
+            // Sylex), and a pile kept that may hold lands or IS lands, the rest
+            // sacrificed (Balance, Cataclysm, Global Ruin, Balancing Act). Not
+            // what a NAME, a COLOUR, a mana value or a chosen type picks (Wirefly
+            // Hive, Wash Out, Celestial Kirin, Season of Gathering), and not a
+            // pile of NONLAND permanents (Cataclysmic Gearhulk).
+            Rx(@"(?:destroy|exile|return) all (?:other )?permanents\b"
+                + @"(?! (?:you control|you own|of |with |named |attached |that ))"
+                + @"(?![^.\n]{0,30}except for [^.\n]{0,40}\blands)"),
+            Rx(@"\bchooses? (?![^.\n]*\bnonland\b)[^.\n]{0,100}?\b(?:lands?|permanents?)\b[^.\n]{0,120}?"
+                + @"\bsacrifices? (?:the rest|all other permanents)"),
+            // Lands handed back to their owners are as gone as destroyed ones:
+            // Sunder, and Omen of Fire's Islands.
+            Rx(@"return (?:all|each) (?:[\w-]+ )?(?:lands|" + BasicLandType + @")(?! you control)"
+                + @"[^.\n]{0,30}to (?:their owners'|its owner's) hands?"),
             // "FOR EACH LAND, destroy that land unless any player pays 1 life"
             // (Cleansing) names its victim with a pronoun. Anchored on the "each
             // land" in front of it, because Erosion says "destroy that land" of
@@ -174,8 +193,15 @@ namespace ScatoloneDownloader.Cube
             // "each player WHO TAPPED A LAND FOR MANA THIS TURN sacrifices a land
             // of their choice" (Desolation). Nature's Wrath names a basic type
             // where Desolation says "land".
+            // The victim may close a TYPE LIST, "sacrifices all artifacts,
+            // enchantments, and nonbasic lands" (Wave of Vitriol), but not as the
+            // last of a CHOICE, "an artifact, creature, or land of their choice"
+            // (Braids, Cabal Minion), which never has to be a land. And it may
+            // follow a creature edict, "…, then sacrifices a land of their
+            // choice" (Din of the Fireherd, Smallpox), 2026-10-16.
             Rx(@"(?:target (?:player|opponent)|each player|that player|each opponent)"
-                + @"[\w ,'\-]{0,60}sacrifices? (?:[\w-]+ ){0,3}(?:lands?\b|" + BasicLandType + @")"),
+                + @"[\w ,'\-]{0,60}sacrifices? (?:[\w-]+,? ){0,5}(?<!\bor )(?:lands?\b|" + BasicLandType + @")"
+                + @"|, then sacrifices (?:[\w-]+ ){0,3}(?:lands?\b|" + BasicLandType + @")"),
             // Fallow Earth answers a land without destroying it — but the
             // destination has to be a library or a graveyard, because Tato Farmer
             // puts one ONTO THE BATTLEFIELD with almost the same words.
@@ -198,26 +224,17 @@ namespace ScatoloneDownloader.Cube
 
         /// <summary>"Destroy target Aura attached to a land" PROTECTS the land —
         /// Savaen Elves and Pyramids, the same pair that fooled Disenchant.</summary>
-        private static readonly Regex AuraOnALand = Rx(@"aura attached to");
+        private static readonly Regex AuraOnALand = Rx(@"auras? attached to");
 
         /// <summary>Rats of Rath destroys "target artifact, creature, or land YOU
         /// CONTROL", which denies nobody anything.</summary>
         private static readonly Regex DestroysYourOwnLand = Rx(
             @"(?:destroy|exile)[^\n]{0,60}target[\w ,'\-]{0,40}you control");
 
-        /// <summary>Natural Balance takes the lands off whoever has six and hands
-        /// basics to whoever has four, which is a rebalance rather than denial.
-        /// <para>
-        /// It only excuses a line that DESTROYS nothing. Sandworm, Price of
-        /// Freedom and Magmatic Hellkite all kill a land and offer a basic back as
-        /// consolation, and the human tags all three; what makes Natural Balance
-        /// different is that the only thing done to the lands is their own
-        /// controller sacrificing them.
-        /// </para></summary>
-        private static readonly Regex HandsTheLandsBack = Rx(
-            @"search[\w ']{0,20}library for[\w ,'\-]{0,25}basic land");
-
-        private static readonly Regex AnyDestroyOrExile = Rx(@"\b(?:destroy|exile)s?\b");
+        // A rebalance that hands basics back was excused here until 2026-10-16
+        // (Natural Balance, on a line that destroys nothing). Overturned with the
+        // sweeps: every sweep that takes the opponents' lands is this tag, and a
+        // basic offered back is consolation (Wave of Vitriol, From the Ashes).
 
         // Hoisted for the same reason as MillPatterns: the donation guard below
         // strips the clause that gives a permanent AWAY and then re-runs these,

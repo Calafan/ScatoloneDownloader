@@ -94,10 +94,9 @@ namespace ScatoloneDownloader.Cube
                 // is Miasma Demon's Removal), at "creatures YOU CONTROL" (Vampirism,
                 // Vibrating Sphere) and at ATTACKING creatures (Wind Shear); damage
                 // to each other creature YOU CONTROL is Cinder Giant's price; CARDS
-                // in a graveyard are not the board (Yggdrasil, Zombie Mob); and
-                // "sacrifices the rest" must be about CREATURES — Natural Balance
-                // keeps five lands and is untagged. The combat-only and the
-                // dexterity sweepers are read after the table, in Classify.
+                // in a graveyard are not the board (Yggdrasil, Zombie Mob). The
+                // combat-only and the dexterity sweepers are read after the
+                // table, in Classify.
                 (CardEffect.Wipe, [
                     Rx(@"(?:destroy|exile) (?:all|each)(?: (?!attached\b)[\w-]{1,15},?){0,4}(?: and| or)? (?:creature|permanent)"
                         // The creatures that CREWED it are your own, exiled and
@@ -140,12 +139,15 @@ namespace ScatoloneDownloader.Cube
                         + @"|each player sacrifices (?!(?:a|an|one|the)\b)[\w ]{0,20}(?:creature|permanent)"
                         + @"|each player chooses (?:two|three|\d+|x)\b[^.\n]{0,40}creatures they control\. (?:exile|destroy) them"),
                     // …but the SAME edict every turn, for every player, grinds the
-                    // board away and is Wipe: Dystopia, The Abyss, Nature's Wrath,
-                    // ruled 2026-09-27. A LAND or an ARTIFACT alone (Mana Vortex,
-                    // Destructive Flow, Molder Slug) is the other tags' business.
+                    // board away and is Wipe: Dystopia, The Abyss, ruled 2026-09-27.
+                    // One LAND or one ARTIFACT a turn (Mana Vortex, Destructive
+                    // Flow, Molder Slug) is the other tags' business, and so is
+                    // Nature's Wrath, "that player sacrifices an Island or blue
+                    // permanent" whenever one enters: Wipe on 2026-09-27, ruled
+                    // LandDestruction alone on 2026-10-17, which took out the only
+                    // alternative that read it.
                     Rx(@"at the beginning of each (?:player's )?upkeep, (?:that player sacrifices [\w ,-]{0,40}(?:creature|permanent)"
-                        + @"|destroy target[^.\n]{0,40}creature that player controls)"
-                        + @"|whenever a player puts [^.\n]{0,60}onto the battlefield, that player sacrifices [^.\n]{0,40}permanent"),
+                        + @"|destroy target[^.\n]{0,40}creature that player controls)"),
                     // The old-set sweepers take everything printed in one expansion,
                     // however they word the kill — Golgothian Sylex and City in a
                     // Bottle make the controllers sacrifice. Ruled 2026-09-27.
@@ -154,7 +156,26 @@ namespace ScatoloneDownloader.Cube
                     // one of that kind: Omen of Fire takes all the white ones, ruled
                     // Wipe on 2026-09-28. A LAND paid per creature is a tax (Flooded
                     // Woodlands, Reclamation) and names no permanent here.
-                    Rx(@"sacrifices? [^.\n]{0,60}\bpermanent\b[^.\n]{0,30} for each [\w ]{0,20}permanent they control")]),
+                    Rx(@"sacrifices? [^.\n]{0,60}\bpermanent\b[^.\n]{0,30} for each [\w ]{0,20}permanent they control"),
+                    // The LANDS swept are a board too, ruled 2026-10-16 ("mettiamo
+                    // wipe a tutti questi spacca terra ad area") on Omen of Fire
+                    // against Boil: all lands or all of a basic type destroyed,
+                    // exiled or returned (Armageddon, Boil, Flashfires, Sunder),
+                    // every land that shares the name (Wake of Destruction), a pile
+                    // of lands kept (Natural Balance, Global Ruin), and two or more
+                    // each, all, or one per card, sacrificed (Wildfire, Keldon
+                    // Firebombers, Thoughts of Ruin) — the creatures' own line. Not
+                    // your own (Return of the Nightstalkers), nor X TARGET lands,
+                    // which point at them one by one (Rain of Salt, Orcish
+                    // Settlers), nor one land each (Hurloon Shaman, Mana Vortex).
+                    Rx(@"(?:destroy|exile) (?:all|each)(?:(?!except\b|attached\b)[\w ,'\-]){0,30}"
+                        + @"(?:\blands?\b|" + BasicLandType + @")(?! you control)"
+                        + @"|destroy target land and all other lands"
+                        + @"|return (?:all|each) (?:[\w-]+ )?(?:lands|" + BasicLandType + @")(?! you control)"
+                        + @"[^.\n]{0,30}to (?:their owners'|its owner's) hands?"
+                        + @"|each player[^.\n]{0,120}\blands?\b[^.\n]{0,120}sacrifices the rest"
+                        + @"|each player[^.\n]{0,160}\bsacrifices? (?!(?:a|an|one|that|the)\b)(?:[\w-]+,? ){1,5}?lands\b"
+                        + @"|each player sacrifices an? land (?:of their choice )?for each")]),
 
                 // "Nonland permanent" is how the whole modern O-ring family is worded
                 // (Stormplain Detainment, Web Up, Emergency Eject), and reading only

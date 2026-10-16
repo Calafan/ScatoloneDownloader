@@ -40,9 +40,10 @@ public sealed class EffectClassifierTests
     [InlineData("Control Magic", "Enchantment — Aura", "Enchant creature. You control enchanted creature.", CardEffect.Steal)]
     [InlineData("Stone Rain", "Sorcery", "Destroy target land.", CardEffect.LandDestruction)]
     [InlineData("Wasteland", "Land", "{T}, Sacrifice Wasteland: Destroy target nonbasic land.", CardEffect.LandDestruction)]
-    // "Destroy all lands" is land destruction, not a creature/permanent wipe:
-    // Wipe's patterns deliberately list creatures, permanents and nonland only.
-    [InlineData("Armageddon", "Sorcery", "Destroy all lands.", CardEffect.LandDestruction)]
+    // "Destroy all lands" is land destruction AND a wipe since 2026-10-16: the
+    // lands swept are a board too. It was LandDestruction alone before, when
+    // Wipe's patterns listed creatures, permanents and nonland only.
+    [InlineData("Armageddon", "Sorcery", "Destroy all lands.", CardEffect.LandDestruction | CardEffect.Wipe)]
     [InlineData("Rain of Salt", "Sorcery", "Destroy two target lands.", CardEffect.LandDestruction)]
     [InlineData("Sinkhole", "Sorcery", "Destroy target land.", CardEffect.LandDestruction)]
     [InlineData("Glimpse the Unthinkable", "Sorcery", "Target player mills ten cards.", CardEffect.Mill)]
@@ -385,7 +386,7 @@ public sealed class EffectClassifierTests
     // at (Choking Vines, Glyph of Doom, Coils of the Medusa, Season of the
     // Witch, Heat Stroke); a dexterity flip (Chaos Orb, Falling Star); your OWN creatures
     // (Cinder Giant, Vampirism, Ghostway); creature CARDS in a graveyard (Zombie
-    // Mob); a pile of LANDS (Natural Balance); Auras ATTACHED to one permanent
+    // Mob); Auras ATTACHED to one permanent
     // or Equipment attached to one creature (Scarab of the Unseen, Blastfire
     // Bolt); a type the card lets you CHOOSE among artifact and enchantment
     // (Season of Gathering, Druid of Purification); a NAME or a VOTE that picks
@@ -422,11 +423,6 @@ public sealed class EffectClassifierTests
     [InlineData("Zombie Mob", "Creature — Zombie",
         "This creature enters with a +1/+1 counter on it for each creature card in your graveyard.\nWhen this "
         + "creature enters, exile all creature cards from your graveyard.")]
-    [InlineData("Natural Balance", "Sorcery",
-        "Each player who controls six or more lands chooses five lands they control and sacrifices the rest. "
-        + "Each player who controls four or fewer lands may search their library for up to X basic land cards "
-        + "and put them onto the battlefield, where X is five minus the number of lands they control. Then each "
-        + "player who searched their library this way shuffles.")]
     [InlineData("Scarab of the Unseen", "Artifact",
         "{T}, Sacrifice this artifact: Return all Auras attached to target permanent you own to their owners' "
         + "hands. Draw a card at the beginning of the next turn's upkeep.")]
@@ -546,11 +542,8 @@ public sealed class EffectClassifierTests
     [InlineData("The Abyss", "World Enchantment",
         "At the beginning of each player's upkeep, destroy target nonartifact creature that player controls "
         + "of their choice. It can't be regenerated.")]
-    [InlineData("Nature's Wrath", "Enchantment",
-        "At the beginning of your upkeep, sacrifice this enchantment unless you pay {G}.\nWhenever a player "
-        + "puts an Island or blue permanent onto the battlefield, that player sacrifices an Island or blue "
-        + "permanent of their choice.\nWhenever a player puts a Swamp or black permanent onto the battlefield, "
-        + "that player sacrifices a Swamp or black permanent of their choice.")]
+    // Nature's Wrath was pinned here until 2026-10-17; it is LandDestruction
+    // alone now, with Mana Vortex, and is pinned in Classify_ASweeperRuledOut_IsNotWipe.
     [InlineData("Golgothian Sylex", "Artifact",
         "{1}, {T}: Each nontoken permanent with a name originally printed in the Antiquities expansion is "
         + "sacrificed by its controller.")]
@@ -576,7 +569,46 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
-    // A repeated edict of LANDS is not a board (Mana Vortex), and a sweeper of
+    // The lands swept are a board too, ruled 2026-10-16 on Omen of Fire against
+    // Boil: all lands or all of a basic type destroyed, exiled or returned, every
+    // land sharing the name, a pile of lands kept, and two or more each, all, or
+    // one per card, sacrificed.
+    [InlineData("Boil", "Instant",
+        "Destroy all Islands.")]
+    [InlineData("Flashfires", "Sorcery",
+        "Destroy all Plains.")]
+    [InlineData("Ajani Vengeant", "Legendary Planeswalker — Ajani",
+        "+1: Target permanent doesn't untap during its controller's next untap step.\n−2: Ajani deals 3 damage "
+        + "to any target and you gain 3 life.\n−7: Destroy all lands target player controls.")]
+    [InlineData("Sunder", "Instant",
+        "Return all lands to their owners' hands.")]
+    [InlineData("Wake of Destruction", "Sorcery",
+        "Destroy target land and all other lands with the same name as that land.")]
+    [InlineData("Natural Balance", "Sorcery",
+        "Each player who controls six or more lands chooses five lands they control and sacrifices the rest. "
+        + "Each player who controls four or fewer lands may search their library for up to X basic land cards "
+        + "and put them onto the battlefield, where X is five minus the number of lands they control. Then each "
+        + "player who searched their library this way shuffles.")]
+    [InlineData("Global Ruin", "Sorcery",
+        "Each player chooses from the lands they control a land of each basic land type, then sacrifices the "
+        + "rest.")]
+    [InlineData("Keldon Firebombers", "Creature — Human Soldier",
+        "When this creature enters, each player sacrifices all lands they control except for three.")]
+    [InlineData("Tectonic Break", "Sorcery",
+        "Each player sacrifices X lands of their choice.")]
+    [InlineData("Wave of Vitriol", "Sorcery",
+        "Each player sacrifices all artifacts, enchantments, and nonbasic lands they control. For each land "
+        + "sacrificed this way, its controller may search their library for a basic land card and put it onto "
+        + "the battlefield tapped. Then each player who searched their library this way shuffles.")]
+    [InlineData("Thoughts of Ruin", "Sorcery",
+        "Each player sacrifices a land of their choice for each card in your hand.")]
+    public void Classify_ALandSweep_IsWipe(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Wipe));
+    }
+
+    [Theory]
+    // One LAND a turn is not a board (Mana Vortex), and a sweeper of
     // ONE creature type is a tribal card's business, ruled 2026-09-27 off Goblin
     // Shrine ("è tribale quindi niente").
     [InlineData("Mana Vortex", "Enchantment",
@@ -588,6 +620,33 @@ public sealed class EffectClassifierTests
         + "Aura leaves the battlefield, it deals 1 damage to each Goblin creature.")]
     [InlineData("Scorch the Fields", "Sorcery",
         "Destroy target land. Scorch the Fields deals 1 damage to each Human creature.")]
+    // Not a land sweep, 2026-10-16: X target lands, pointed at one by one (Rain of
+    // Salt, Orcish Settlers), one land each (Hurloon Shaman, Desolation), your own
+    // Swamps (Return of the Nightstalkers), and the Auras attached to a land
+    // (Street Sweeper).
+    [InlineData("Rain of Salt", "Sorcery",
+        "Destroy two target lands.")]
+    [InlineData("Orcish Settlers", "Creature — Orc",
+        "{X}{X}{R}, {T}, Sacrifice this creature: Destroy X target lands.")]
+    [InlineData("Hurloon Shaman", "Creature — Minotaur Shaman",
+        "When this creature dies, each player sacrifices a land of their choice.")]
+    [InlineData("Desolation", "Enchantment",
+        "At the beginning of each end step, each player who tapped a land for mana this turn sacrifices a "
+        + "land of their choice. This enchantment deals 2 damage to each player who sacrificed a Plains this "
+        + "way.")]
+    [InlineData("Return of the Nightstalkers", "Sorcery",
+        "Return all Nightstalker permanent cards from your graveyard to the battlefield. Then destroy all "
+        + "Swamps you control.")]
+    [InlineData("Street Sweeper", "Artifact Creature — Construct",
+        "Whenever this creature attacks, destroy all Auras attached to target land.")]
+    // One land or one coloured permanent sacrificed whenever one enters is
+    // LandDestruction alone, like Mana Vortex, ruled 2026-10-17 (Nature's Wrath
+    // was Wipe from 2026-09-27).
+    [InlineData("Nature's Wrath", "Enchantment",
+        "At the beginning of your upkeep, sacrifice this enchantment unless you pay {G}.\nWhenever a player "
+        + "puts an Island or blue permanent onto the battlefield, that player sacrifices an Island or blue "
+        + "permanent of their choice.\nWhenever a player puts a Swamp or black permanent onto the battlefield, "
+        + "that player sacrifices a Swamp or black permanent of their choice.")]
     public void Classify_ASweeperRuledOut_IsNotWipe(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Wipe));
@@ -7255,6 +7314,69 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // Every sweep that takes the opponents' lands is LandDestruction, whether or
+    // not it says land, ruled 2026-10-16 on Balance against Planetary Annihilation
+    // and Apocalypse against Jokulhaups: all the permanents taken, and a pile kept
+    // that may hold lands or is lands, the rest sacrificed. Natural Balance was
+    // excused as a rebalance until that day.
+    [InlineData("Apocalypse", "Sorcery",
+        "Exile all permanents. You discard your hand.")]
+    [InlineData("Upheaval", "Sorcery",
+        "Return all permanents to their owners' hands.")]
+    [InlineData("Worldslayer", "Artifact — Equipment",
+        "Whenever equipped creature deals combat damage to a player, destroy all permanents other than this "
+        + "Equipment.\nEquip {5} ({5}: Attach to target creature you control. Equip only as a sorcery.)")]
+    [InlineData("Urza's Sylex", "Legendary Artifact",
+        "{2}{W}{W}, {T}, Exile Urza's Sylex: Each player chooses six lands they control. Destroy all other "
+        + "permanents. Activate only as a sorcery.\nWhen Urza's Sylex is put into exile from the battlefield, "
+        + "you may pay {2}. If you do, search your library for a planeswalker card, reveal it, put it into your "
+        + "hand, then shuffle.")]
+    [InlineData("Balance", "Sorcery",
+        "Each player chooses a number of lands they control equal to the number of lands controlled by the "
+        + "player who controls the fewest, then sacrifices the rest. Players discard cards and sacrifice "
+        + "creatures the same way.")]
+    [InlineData("Cataclysm", "Sorcery",
+        "Each player chooses from among the permanents they control an artifact, a creature, an enchantment, "
+        + "and a land, then sacrifices the rest.")]
+    [InlineData("Global Ruin", "Sorcery",
+        "Each player chooses from the lands they control a land of each basic land type, then sacrifices the "
+        + "rest.")]
+    [InlineData("Natural Balance", "Sorcery",
+        "Each player who controls six or more lands chooses five lands they control and sacrifices the rest. "
+        + "Each player who controls four or fewer lands may search their library for up to X basic land cards "
+        + "and put them onto the battlefield, where X is five minus the number of lands they control. Then each "
+        + "player who searched their library this way shuffles.")]
+    public void Classify_ASweepThatTakesTheLandsUnnamed_IsLandDestruction(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.LandDestruction));
+    }
+
+    [Theory]
+    // Read 2026-10-16: lands returned to their owners' hands (Sunder), a land
+    // closing a type list (Wave of Vitriol, Structural Collapse), and a land edict
+    // after a creature edict (Din of the Fireherd, Smallpox).
+    [InlineData("Sunder", "Instant",
+        "Return all lands to their owners' hands.")]
+    [InlineData("Wave of Vitriol", "Sorcery",
+        "Each player sacrifices all artifacts, enchantments, and nonbasic lands they control. For each land "
+        + "sacrificed this way, its controller may search their library for a basic land card and put it onto "
+        + "the battlefield tapped. Then each player who searched their library this way shuffles.")]
+    [InlineData("Structural Collapse", "Sorcery",
+        "Target player sacrifices an artifact and a land of their choice. Structural Collapse deals 2 damage "
+        + "to that player.")]
+    [InlineData("Din of the Fireherd", "Sorcery",
+        "Create a 5/5 black and red Elemental creature token. Target opponent sacrifices a creature of their "
+        + "choice for each black creature you control, then sacrifices a land of their choice for each red "
+        + "creature you control.")]
+    [InlineData("Smallpox", "Sorcery",
+        "Each player loses 1 life, discards a card, sacrifices a creature of their choice, then sacrifices a "
+        + "land of their choice.")]
+    public void Classify_ALandSweepTheRulesCouldNotRead_IsLandDestruction(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.LandDestruction));
+    }
+
+    [Theory]
     // "NONland permanent" has no word boundary in front of "land", which is the
     // only thing keeping the whole O-ring family out of this tag.
     [InlineData("Web Up", "Enchantment",
@@ -7268,12 +7390,40 @@ public sealed class EffectClassifierTests
         + "Creatures you control have all activated abilities of all land cards exiled with this creature.")]
     // Your own denies nobody anything.
     [InlineData("Rats of Rath", "Creature — Rat", "{B}: Destroy target artifact, creature, or land you control.")]
-    // And a rebalance that destroys nothing and hands basics back is not denial.
-    [InlineData("Natural Balance", "Sorcery",
-        "Each player who controls six or more lands chooses five lands they control and sacrifices "
-        + "the rest. Each player who controls four or fewer lands may search their library for up to "
-        + "X basic land cards and put them onto the battlefield, where X is five minus the number of "
-        + "lands they control. Then each player who searched their library this way shuffles.")]
+    // Natural Balance, a rebalance that destroys nothing and hands basics back,
+    // was pinned here until 2026-10-16; it is LandDestruction now, with every
+    // sweep that takes the opponents' lands.
+    // Read 2026-10-16: a pile of NONLAND permanents (Cataclysmic Gearhulk), every
+    // permanent of a colour, a mana value or a name (Wash Out, Celestial Kirin,
+    // Wirefly Hive), all permanents except for lands (Cyclone Summoner, Elspeth
+    // Tirel), your own Swamps (Return of the Nightstalkers), the Auras attached to
+    // a land (Street Sweeper), and a land that closes a choice and never has to be
+    // one (Braids, Cabal Minion).
+    [InlineData("Cataclysmic Gearhulk", "Artifact Creature — Construct",
+        "Vigilance\nWhen this creature enters, each player chooses an artifact, a creature, an enchantment, "
+        + "and a planeswalker from among the nonland permanents they control, then sacrifices the rest.")]
+    [InlineData("Wash Out", "Sorcery",
+        "Return all permanents of the color of your choice to their owners' hands.")]
+    [InlineData("Celestial Kirin", "Legendary Creature — Kirin Spirit",
+        "Flying\nWhenever you cast a Spirit or Arcane spell, destroy all permanents with that spell's mana "
+        + "value.")]
+    [InlineData("Wirefly Hive", "Artifact",
+        "{3}, {T}: Flip a coin. If you win the flip, create a 2/2 colorless Insect artifact creature token "
+        + "with flying named Wirefly. If you lose the flip, destroy all permanents named Wirefly.")]
+    [InlineData("Cyclone Summoner", "Creature — Giant Wizard",
+        "When this creature enters, if you cast it from your hand, return all permanents to their owners' "
+        + "hands except for Giants, Wizards, and lands.")]
+    [InlineData("Elspeth Tirel", "Legendary Planeswalker — Elspeth",
+        "+2: You gain 1 life for each creature you control.\n−2: Create three 1/1 white Soldier creature "
+        + "tokens.\n−5: Destroy all other permanents except for lands and tokens.")]
+    [InlineData("Return of the Nightstalkers", "Sorcery",
+        "Return all Nightstalker permanent cards from your graveyard to the battlefield. Then destroy all "
+        + "Swamps you control.")]
+    [InlineData("Street Sweeper", "Artifact Creature — Construct",
+        "Whenever this creature attacks, destroy all Auras attached to target land.")]
+    [InlineData("Braids, Cabal Minion", "Legendary Creature — Human Minion",
+        "At the beginning of each player's upkeep, that player sacrifices an artifact, creature, or land of "
+        + "their choice.")]
     public void Classify_WhatOnlyReadsLikeLandDestruction_IsNot(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle))

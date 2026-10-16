@@ -64,9 +64,8 @@ namespace ScatoloneDownloader.Cube
 
         /// <summary>Whether some ONE line of the card really takes a land off the
         /// battlefield. Read line by line for the same reason Disenchant is. See
-        /// <see cref="LandAlreadyInAGraveyard"/>, <see cref="AuraOnALand"/>,
-        /// <see cref="DestroysYourOwnLand"/> and <see cref="HandsTheLandsBack"/>
-        /// for the card behind each veto.</summary>
+        /// <see cref="LandAlreadyInAGraveyard"/>, <see cref="AuraOnALand"/> and
+        /// <see cref="DestroysYourOwnLand"/> for the card behind each veto.</summary>
         private static bool AnswersALand(string text)
         {
             foreach (string line in text.Split('\n'))
@@ -77,8 +76,7 @@ namespace ScatoloneDownloader.Cube
                 }
 
                 if (LandAlreadyInAGraveyard.IsMatch(line) || AuraOnALand.IsMatch(line)
-                    || DestroysYourOwnLand.IsMatch(line)
-                    || (HandsTheLandsBack.IsMatch(line) && !AnyDestroyOrExile.IsMatch(line)))
+                    || DestroysYourOwnLand.IsMatch(line))
                 {
                     continue;
                 }
