@@ -293,11 +293,15 @@ partial-class initialisation hazard in `references/hazards.md`.
 Read `C:\Users\Cala\.claude\AGENTS.md` first; it governs, and this section only
 says how it applies here.
 
-The honest position for this workflow: **delegation is the exception.** The
-expensive operations in an ontology pass are deterministic, not cognitive — the
+The global policy (AGENTS.md §1, since 2026-10-13) is that Opus orchestrates and
+hands the base work to cheaper agents. In an ontology pass there is less base work
+than it looks: the expensive operations are deterministic, not cognitive — the
 probes above do all the searching exactly, for no tokens, and the repo is
 CodeGraph-indexed so a `codegraph_explore` beats a spawned agent for any code
-question. What is left is the judgement, and AGENTS.md forbids delegating that.
+question. Running a probe is one command with short output, so it stays on the
+main thread like any such command. What is left is the judgement, which AGENTS.md
+keeps on Opus. So here the orchestrator delegates the two jobs in the table below
+and little else.
 
 **Never delegate** (AGENTS.md §3, and each has bitten here): deciding whether a
 disagreement is real; choosing a threshold; reading a measurement run; **any number
@@ -308,7 +312,7 @@ measured, never estimated; and commits.
 
 | task | how |
 |---|---|
-| implement an already-written pattern spec + its tests | `Agent` with `model: "sonnet"`, `isolation: "worktree"` |
+| implement an already-written pattern spec + its tests | `Agent` with `model: "sonnet"`, `isolation: "worktree"`; the worktree starts from `main`, so the spec names the base commit and the agent runs `git switch -c <branch> <sha>` first |
 | sweep many files for one conclusion, outside this repo | `Agent` with `model: "haiku"` |
 
 On return from the Sonnet agent, the third column of AGENTS.md's table is the part
