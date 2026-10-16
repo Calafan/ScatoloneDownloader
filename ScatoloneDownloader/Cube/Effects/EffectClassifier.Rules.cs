@@ -1454,8 +1454,13 @@ namespace ScatoloneDownloader.Cube
                     // CardAdvantage (Jodah, Breaching Dragonstorm) — neither shape
                     // below says it, so a "lesser" guard written for them was
                     // measured, matched no card, and was dropped.
+                    // A FIXED cap is no "carta grossa" either, ruled 2026-10-16 on
+                    // Perception Bobblehead ("è 3 o meno il costo che ti regala"):
+                    // Collected Conjuring's 3 and Hazoret's Undying Fury's 5. An X
+                    // cap stays, as big as the damage or the mana paid (Kotis,
+                    // Villainous Wealth, Epic Experiment; Kotis Cheat by hand).
                     Rx(@"you may cast (?:(?:any number of|up to \w+) )?(?:[\w/-]+ ){0,5}?spells "
-                        + @"(?:with mana value [^.\n]{0,20} )?from among (?![^.\n]{0,60}exiled with this)[^.\n]{0,80}"
+                        + @"(?:with mana value (?!\d)[^.\n]{0,20} )?from among (?![^.\n]{0,60}exiled with this)[^.\n]{0,80}"
                         + @"without paying their mana costs"),
                     Rx(@"cast (?:a|an|up to \w+|any number of) [^.\n]{0,40}spells? from your hand"
                         + @"[^.\n]{0,40}without paying (?:its|their) mana costs?"),
@@ -1472,9 +1477,13 @@ namespace ScatoloneDownloader.Cube
                     // card into play at no cost, named Cheat by the human on
                     // 2026-09-27 (Perception Bobblehead) — Aetherworks Marvel is
                     // the same card. Asked of a LOOK or a REVEAL only: the EXILE
-                    // version is the impulse rider above, which is a card.
+                    // version is the impulse rider above, which is a card. Under
+                    // a FIXED cap it is Filter alone, ruled 2026-10-16 on the same
+                    // Bobblehead ("è 3 o meno il costo che ti regala"), as the
+                    // 10-13 "qualunque tetto = Filter" ruled a permanent put from
+                    // among them; the one reviewed card it reaches.
                     Rx(@"(?:look at|reveal) the top [\w ]{1,20} of your library[^\n]{0,200}"
-                        + @"cast [^\n]{0,80}from among them without paying"),
+                        + @"cast (?![^\n]{0,80}?mana value \d+ or less)[^\n]{0,80}from among them without paying"),
                     // …and a look that EXILES the one it keeps and casts it free
                     // later, with no mana-value cap, ruled 2026-10-16 ("Hideaway
                     // no, altri sì"): Djeru and Hazoret's legendary creature, The

@@ -1610,16 +1610,50 @@ public sealed class EffectClassifierTests
 
     [Theory]
     // LOOKING at the top few and casting one free is Cheat, named on Perception
-    // Bobblehead on 2026-09-27; Aetherworks Marvel is the same card.
-    [InlineData("Perception Bobblehead", "Artifact — Bobblehead",
-        "{T}: Add one mana of any color.\n{3}, {T}: Look at the top X cards of your library, where X is the "
-        + "number of Bobbleheads you control. You may cast a spell with mana value 3 or less from among them "
-        + "without paying its mana cost. Put the rest on the bottom of your library in a random order.")]
+    // Bobblehead on 2026-09-27; Aetherworks Marvel is the same card. Bobblehead
+    // itself left on 2026-10-16 for its fixed cap, see
+    // Classify_AFreeCastUnderAFixedCap_IsNotCheat.
     [InlineData("Aetherworks Marvel", "Legendary Artifact",
         "Whenever a permanent you control is put into a graveyard, you get {E} (an energy counter).\n{T}, Pay "
         + "six {E}: Look at the top six cards of your library. You may cast a spell from among them without "
         + "paying its mana cost. Put the rest on the bottom of your library in a random order.")]
     public void Classify_LookAndCastOneFree_IsCheat(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
+    }
+
+    [Theory]
+    // A free cast under a FIXED mana-value cap is no Cheat, ruled 2026-10-16 on
+    // Perception Bobblehead ("è 3 o meno il costo che ti regala"): Filter alone
+    // after a look, CardAdvantage out of an exiled pile.
+    [InlineData("Perception Bobblehead", "Artifact — Bobblehead",
+        "{T}: Add one mana of any color.\n{3}, {T}: Look at the top X cards of your library, where X is the "
+        + "number of Bobbleheads you control. You may cast a spell with mana value 3 or less from among them "
+        + "without paying its mana cost. Put the rest on the bottom of your library in a random order.")]
+    [InlineData("Collected Conjuring", "Sorcery",
+        "Exile the top six cards of your library. You may cast up to two sorcery spells with mana value 3 or "
+        + "less from among them without paying their mana costs. Put the exiled cards not cast this way on the "
+        + "bottom of your library in a random order.")]
+    [InlineData("Hazoret's Undying Fury", "Sorcery",
+        "Shuffle your library, then exile the top four cards. You may cast any number of spells with mana "
+        + "value 5 or less from among them without paying their mana costs. Lands you control don't untap "
+        + "during your next untap step.")]
+    public void Classify_AFreeCastUnderAFixedCap_IsNotCheat(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
+    }
+
+    [Theory]
+    // …while an X cap stays Cheat, as big as the damage or the mana paid: Kotis
+    // by hand, 2026-10-15.
+    [InlineData("Kotis, the Fangkeeper", "Legendary Creature — Zombie Warrior",
+        "Indestructible\nWhenever Kotis deals combat damage to a player, exile the top X cards of their "
+        + "library, where X is the amount of damage dealt. You may cast any number of spells with mana value X "
+        + "or less from among them without paying their mana costs.")]
+    [InlineData("Villainous Wealth", "Sorcery",
+        "Target opponent exiles the top X cards of their library. You may cast any number of spells with mana "
+        + "value X or less from among them without paying their mana costs.")]
+    public void Classify_AFreeCastUnderAnXCap_IsCheat(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
     }

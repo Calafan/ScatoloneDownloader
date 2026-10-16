@@ -72,4 +72,11 @@ Mind's Desire, Oracle's Vault), and a pile the card filled itself with counters,
 and not asked).
 
 Since 2026-10-16 a look and a free cast is Filter as well as this tag, the consequence of the 10-13
-Kiora ruling (see Filter): Perception Bobblehead keeps its Cheat.
+Kiora ruling (see Filter).
+
+Ruled 2026-10-16 on Perception Bobblehead ("è 3 o meno il costo che ti regala"): a free cast under a
+FIXED mana-value cap is not this tag, the free-cast side of the 10-13 "qualunque tetto = Filter".
+After a look it is Filter alone (Bobblehead, the one reviewed card it reaches, named and corrected);
+out of an exiled pile it stays CardAdvantage (Collected Conjuring's 3, Hazoret's Undying Fury's 5,
+both unreviewed). An X cap stays, as big as the damage dealt or the mana paid: Kotis, the Fangkeeper
+by hand on 10-15, Villainous Wealth and Epic Experiment proposed.
