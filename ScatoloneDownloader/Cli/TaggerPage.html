@@ -370,6 +370,45 @@ function typeLabel() { return MACRO_LABELS[typeSel] || typeSel; }
 // with "no status" is 6_Bench.
 function statusMatch(c) { return !statusSel || c.status === statusSel; }
 function colorMatch(c) { return !colorSel || c.color === colorSel; }
+
+// The colour is still matched on the folder name, but the picker shows only
+// the readable part: the leading digit ("2 Azorius") exists to sort the view
+// folders by colour count, and here it becomes the option group instead.
+// Within a group the order is the one Magic reads in — WUBRG, the guilds,
+// then shards and wedges — as ColorCategoryClassifier lists its names; a name
+// missing from this list still gets an entry, last in its group.
+const COLOR_GROUPS = { "1": "Mono", "2": "Guilds", "3": "Shards & wedges" };
+const COLOR_ORDER = [
+  "White", "Blue", "Black", "Red", "Green",
+  "Azorius", "Dimir", "Rakdos", "Gruul", "Selesnya", "Orzhov", "Izzet", "Golgari", "Boros", "Simic",
+  "Esper", "Grixis", "Jund", "Naya", "Bant", "Abzan", "Jeskai", "Sultai", "Mardu", "Temur",
+  "4-5 Colors", "Colorless",
+];
+
+function colorName(folder) { return folder.replace(/^\d+ /, ""); }
+
+function fillColorSelect() {
+  const rank = f => {
+    const i = COLOR_ORDER.indexOf(colorName(f));
+    return i < 0 ? COLOR_ORDER.length : i;
+  };
+  const folders = [...new Set(cards.map(c => c.color).filter(Boolean))]
+    .sort((a, b) => a[0].localeCompare(b[0]) || rank(a) - rank(b) || a.localeCompare(b));
+  const el = document.getElementById("colorSel");
+  el.innerHTML = "";
+  el.appendChild(new Option("all colours", ""));
+  let group = null;
+  for (const f of folders) {
+    const label = COLOR_GROUPS[f[0]] || "Other";
+    if (!group || group.label !== label) {
+      group = document.createElement("optgroup");
+      group.label = label;
+      el.appendChild(group);
+    }
+    group.appendChild(new Option(colorName(f), f));
+  }
+  el.value = colorSel;
+}
 function costMatch(c) { return !costSel || c.cost === costSel; }
 
 function statusLabel() { return statusSel === "None" ? "no status" : statusSel; }
@@ -428,8 +467,7 @@ function buildScopeControls() {
     ["None", "no status — normal card"],
     ...STATUS_ORDER.filter(s => s.name !== "None").map(s => [s.name, s.name]),
   ], statusSel);
-  const colors = [...new Set(cards.map(c => c.color).filter(Boolean))].sort();
-  fillSelect("colorSel", [["", "all colours"], ...colors.map(x => [x, x])], colorSel);
+  fillColorSelect();
   const costs = [...new Set(cards.map(c => c.cost).filter(Boolean))]
     .sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
   fillSelect("costSel", [["", "any cost"], ...costs.map(x => [x, costLabel(x)])], costSel);
@@ -555,7 +593,7 @@ function render() {
     ? "Nothing matches this combination — showing every card."
     : `Showing: ${FILTERS[filterMode].label} · ${RATING_FILTERS[ratingMode].label}`
       + (statusSel ? ` · ${statusLabel()}` : "")
-      + (colorSel ? ` · ${colorSel}` : "")
+      + (colorSel ? ` · ${colorName(colorSel)}` : "")
       + (typeSel ? ` · ${typeLabel()}` : "")
       + (effectFilter ? ` · ${effectLabel()}` : "")
       + (costSel ? ` · ${costLabel(costSel)}` : "")
