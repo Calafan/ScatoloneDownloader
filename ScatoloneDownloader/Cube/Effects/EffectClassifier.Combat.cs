@@ -185,9 +185,13 @@ namespace ScatoloneDownloader.Cube
         // is never Ramp, ruled 2026-09-29 — "mai Ramp dall'attacco" (Brazen
         // Collector went back for review, Tesak stays untagged) — the same
         // reading as the Treasure one Jolene got.
+        // The mana may come a sentence later, "IF YOU DO, add three mana in any
+        // combination of its colors" (Omnath, Locus of All, Ramp by hand;
+        // 2026-10-16).
         private static readonly Regex TriggeredMana = Rx(
             @"(?:\bwhenever\b|\bat the beginning of\b)[^.\n]*?,[^.\n]*?\b(?:you |that player |target player |each player )?adds? "
-            + @"(?:\{|one mana|two mana|three mana|x mana|an amount|that much|\w+ mana of|mana)");
+            + @"(?:\{|one mana|two mana|three mana|x mana|an amount|that much|\w+ mana of|mana)"
+            + @"|(?:\bwhenever\b|\bat the beginning of\b)[^.\n]*?,[^\n]{0,200}?\bif you do, (?:you )?adds? (?:\{|\w+ mana\b)");
 
         private static readonly Regex OnAnAttack = Rx(
             @"\bwhenever [^,.\n]*\b(?:attacks?|attack with|deals? combat damage)\b");
@@ -253,8 +257,11 @@ namespace ScatoloneDownloader.Cube
         // answer — Twining Twins, The Eternal Wanderer and Explosive Getaway,
         // 3 of 3 by hand — as is one whose owner may play it from exile
         // (Extraordinary Journey, Bounce by hand).
+        // A target creature CARD described at length before its zone is one
+        // too, read 2026-10-16: Lazotep Quarry's "exile target creature card
+        // WITH MANA VALUE X from your graveyard" ran past the tail.
         private static readonly Regex AnswersNobody = Rx(
-            @"you control|you own|cards? (?:from|in)[\w ']{0,25}graveyard|\bcreature cards? from\b"
+            @"you control|you own|cards? (?:from|in)[\w ']{0,25}graveyard|\bcreature cards? from\b|\btarget creature cards?\b"
             + @"|\breturn (?:it|that card|them|those cards)\b|\bits owner may play it\b");
 
         // A TARGET LIMITED TO A CREATURE TYPE is never Removal, ruled 2026-10-16
@@ -523,14 +530,15 @@ namespace ScatoloneDownloader.Cube
         // Planisphere tagged, Red Mage's Rapier handed back to agree; Tale of
         // Katara and Toph is the team form). A token's quoted pump stays the
         // token's: no token is equipped or enchanted as it is made.
-        // NOT an enchanted LAND: its "{T}: Target creature gets +2/+2" is a
-        // granted ability pumping a target, the 2026-09-21 ruling's own case
-        // (Forbidden Lore). Tried 2026-10-16 for Mystic Might, which was tagged
-        // on 09-04 before that ruling, and withdrawn; Mystic Might was handed
-        // back instead.
+        // An enchanted LAND's "{T}: Target creature gets +2/+2 until end of
+        // turn" is Buff as well, ruled 2026-10-16 ("Buff a entrambe") on Mystic
+        // Might and Forbidden Lore. That OVERTURNS the 2026-09-21 reading, which
+        // took Forbidden Lore as the quoted-target case and kept it untagged:
+        // the land is yours and pumps every turn, like the Aura's own pump.
         private static readonly Regex GrantsAQuotedPump = Rx(
             @"(?:(?:enchanted|equipped) creature|creatures you control) (?:[^.""\n]{0,60}\band )?(?:has|have|gains?) "
-            + @"""[^""\n]*(?:gets? \+[\dXx]|\+1/\+1 counters? on (?:this creature|it)\b)");
+            + @"""[^""\n]*(?:gets? \+[\dXx]|\+1/\+1 counters? on (?:this creature|it)\b)"
+            + @"|enchanted land (?:has|gains?) ""[^""\n]*\btarget creature gets? \+[\dXx]");
 
         // Reminder text, and the three rulings of 2026-09-21 that read it. A
         // pump printed inside PARENTHESES is explaining a keyword, not doing
@@ -1496,7 +1504,11 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex ActivatedManaAbility = Rx(
             @"(?:^[^\n:]{1,70}|""(?![^""\n:]*\b(?:this token|sacrifice this artifact)\b)[^""\n:]{1,70}): "
             + @"(?:choose a colou?r\. )?(?:target player adds|add) "
-            + @"(?:[\w ]{0,20}\{|(?:one|two|three|four|five|six|seven|eight|nine|ten|x|\d+|an amount of) mana\b)",
+            + @"(?:[\w ]{0,20}\{|(?:one|two|three|four|five|six|seven|eight|nine|ten|x|\d+|an amount of) mana\b)"
+            // …and the mana at the END of the ability, "{T}: Goad target
+            // creature … That player draws a card. YOU ADD {R}" (Red Death,
+            // Shipwrecker, Ramp by hand; 2026-10-16).
+            + @"|^(?:[^\n:—]{1,40} — )?\{t\}: [^\n]{0,150}?\. you add \{",
             RegexOptions.Multiline);
 
         private static readonly Regex ExtraLandDrop = Rx(
@@ -1508,6 +1520,30 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex ManaMultiplier = Rx(
             @"adds? an additional \{|for mana, (?:that player|its controller|they)[\w ]{0,12}adds?"
             + @"|tapped for mana[^\n]{0,40}adds?|\bproduces? (?:twice|three times) as much\b");
+
+        // …unless the extra mana may only pay CUMULATIVE UPKEEP: Snowfall's
+        // Islands pay for Snowfall and nothing else (untagged; 2026-10-16).
+        private static readonly Regex ManaOnlyForUpkeep = Rx(@"spend this mana only to pay cumulative upkeep");
+
+        // A land that puts ITSELF onto the battlefield from your hand is a land
+        // drop you did not spend: Talon Gates of Madara's "{4}: Put this card
+        // from your hand onto the battlefield", Ramp by hand (2026-10-16). For
+        // MANA alone: Urban Retreat pays by returning a creature, and is
+        // ManaFixing alone.
+        private static readonly Regex LandPutsItselfFromHand = Rx(
+            @"^\{\d+\}: put this card from your hand onto the battlefield", RegexOptions.Multiline);
+
+        // ONE mana in quotes that is not yours to use as a source, read
+        // 2026-10-16 from three cards proposed Ramp and untagged by hand: an
+        // Aura on an OPPONENT'S creature (Honest Work's Humble Merchant), the
+        // reminder of a Blood Moon (Zhao, the Moon Slayer's "nonbasic lands
+        // are Mountains … and have '{T}: Add {R}'"), and a card that becomes a
+        // LAND tapping for one (Princess Yue's Moon). Blanked with
+        // OneManaGrantedToLands, so the table's tap rule is asked again.
+        private static readonly Regex OneManaNotASource = Rx(
+            @"(?<=\benchant creature an opponent controls\b[\s\S]{0,300})""\{t\}: add \{[wubrgc]\}\.?"""
+            + @"|(?<=\blose all other land types and abilities and have )""\{t\}: add \{[wubrgc]\}\.?"""
+            + @"|(?<=\ba land named [^.\n]{1,30}\. \w+ gains )""\{t\}: add \{[wubrgc]\}\.?""");
 
         private static readonly Regex LandFromHandToPlay = Rx(
             @"(?<!non)lands? cards? from your hand[\w \/]{0,30}onto the battlefield");
@@ -1551,9 +1587,13 @@ namespace ScatoloneDownloader.Cube
         // Not the land you are about to ANIMATE ("untap target land you
         // control. It becomes an 8/8"): Silvanus's Invoker and Woodcaller
         // Automaton, untagged by hand, read 2026-10-15.
+        // Nor lands untapped at the END STEP for a price of "you can't cast
+        // spells until your next turn" (Innocuous Researcher, untagged; read
+        // 2026-10-16): the mana is for instants you may not cast.
         private static readonly Regex UntapsLands = Rx(
             @"untap (?:target|all|x target|up to \w+ target)[\w ]{0,20}(?<!non)"
             + @"(?:lands?|forests?|islands?|swamps?|mountains?|plains)\b(?![\w ]{0,15}\. it becomes)"
+            + @"(?![^\n]{0,40}\byou can't cast spells\b)"
             + @"|untaps all basic lands");
 
         // (?<!non) again, and for the third time this session: "search your
@@ -1590,7 +1630,11 @@ namespace ScatoloneDownloader.Cube
             // COMMANDER casts, which a cube never makes (Jyoti, Moag Ancient,
             // untagged), as for Redirect.
             + @"|\bcreate [^.\n]{0,40}\bland (?:creature )?tokens?\b(?! for each time you've cast your commander)"
-            + @"|\btarget land\. create [^.\n]{0,20}\btokens that are copies of it");
+            + @"|\btarget land\. create [^.\n]{0,20}\btokens that are copies of it"
+            // Lands searched out and EXILED, then put onto the battlefield one
+            // at a time from exile (Omenpath Journey, Ramp by hand; 2026-10-16).
+            + @"|search your library for [^.\n]{0,60}\bland cards?[^.\n]{0,40}, exile them[\s\S]{0,200}"
+            + @"\bexiled with this \w+ and put it onto the battlefield");
 
         // …but the land handed to the player a removal spell was aimed at is
         // their consolation, not your ramp: Emergency Eject, Price of Freedom,
@@ -1646,10 +1690,39 @@ namespace ScatoloneDownloader.Cube
             @"(?:\bits controller|\beach opponent [^.,\n]{0,50}?) creates? [^.\n]{0,20}\btreasure tokens?\.(?: \([^)\n]*\))?"
             + @"|\bgift an? treasure\b(?: \([^)\n]*\))?");
 
+        // A Treasure in a quoted ability a creature has UNTIL END OF TURN is
+        // the borrowed creature's, for one attack: Furnace Reins steals a
+        // creature and hands it "whenever this creature deals combat damage
+        // …, create a Treasure token", Steal alone by hand (2026-10-16). The
+        // reminder that follows goes with it.
+        private static readonly Regex TreasureForATurn = Rx(
+            @"until end of turn, it gains [^""\n]{0,30}""[^""\n]*\bcreate a treasure token\.?""\.?(?: \([^)\n]*\))?");
+
+        // Mana that fixes no colour, read 2026-10-16 from two cards proposed
+        // ManaFixing and untagged by hand: an ability that makes the very
+        // colour it is PAID in (Sunken Palace's "{1}{U}, {T}, Exile seven cards
+        // from your graveyard: Add {U}", whose point is the copy), and one mana
+        // of any colour as a RIDER on a recursion (Tamiyo, Seasoned Scholar's
+        // "If it's a green card, add one mana of any color"). Blanked and the
+        // card asked again.
+        private static readonly Regex NoColourFixed = Rx(
+            @"^[^\n:]*\{([wubrg])\}[^\n:]*: add \{\1\}[^\n]*"
+            + @"|\bif it's an? \w+ card, add one mana of any colou?r\.?",
+            RegexOptions.Multiline);
+
         // "A Treasure FOR EACH" is several at once on a spell or an enters
         // trigger (Covetous Elegy), and one per trigger on a trigger that
         // fires again (Edward Kenway, whose Ramp the human took off on 09-23).
-        private static readonly Regex TreasureForEach = Rx(@"treasure tokens? for each");
+        // …and the count first, "FOR EACH of those cards that has the same mana
+        // value as another card revealed this way, create a Treasure token"
+        // (Vault 21: House Gambit's chapter III, Ramp by hand). Read 2026-10-16,
+        // on a CHAPTER only: a spell's "for each mana from a Desert spent …,
+        // create a tapped Treasure token" is Cataclysmic Prospecting's rider,
+        // and Tivit's "for each bribery vote" a vote's, both untagged.
+        private static readonly Regex TreasureForEach = Rx(
+            @"treasure tokens? for each"
+            + @"|^[ivx]+(?:, [ivx]+)* — [^\n]*\bfor each [^.\n]{0,100}, create (?:a|one) (?:tapped )?treasure token",
+            RegexOptions.Multiline);
 
         private static readonly Regex RecurringTriggerWord = Rx(@"\bwhenever\b|\bat the beginning of\b");
 
@@ -1718,10 +1791,16 @@ namespace ScatoloneDownloader.Cube
         // hand). Read across a full stop as well, for Aang's Journey's
         // "…and a Shrine card. Reveal those cards, put them into your hand",
         // and rejected the same day: it reached Tithe and Analyze the Pollen,
-        // both reviewed without the tag, for the one card.
+        // both reviewed without the tag, for the one card. Read again
+        // 2026-10-16 with "REVEAL THOSE CARDS" only: Tithe's two Plains to
+        // hand fix like Gift of Estates' three, and Tithe was handed back with
+        // it, while Analyze the Pollen's "creature or land card. Reveal THAT
+        // card" stays out.
         private static readonly Regex LandSearchToHand = Rx(
             @"search your library for[\w ,'-]{0,60}(?:land|plains|island|swamp|mountain|forest)"
-            + @"[\w ,'-]{0,40}card[\w ,'-]{0,40}put (?:it|that card|those cards|them) into your hand");
+            + @"[\w ,'-]{0,40}card[\w ,'-]{0,40}put (?:it|that card|those cards|them) into your hand"
+            + @"|search your library for[\w ,'-]{0,60}(?:land|plains|island|swamp|mountain|forest)"
+            + @"[\w ,'-]{0,40}cards?\. reveal those cards, put them into your hand");
         private static readonly Regex LandSearchToTop = Rx(
             @"search your library for[\w ,'-]{0,60}(?:land|plains|island|swamp|mountain|forest)"
             + @"[\w ,'-]{0,60}put (?:that card|it) on top");

@@ -43,3 +43,10 @@ the same sentence (Thwart the Grave), a Vehicle, Spacecraft or Cave card, one cr
 (Slimefoot and Squee's Saproling), a type the card makes tokens of (Rat King, Verminister). The 7
 reviewed tribal Reanimates were handed back. A tribal trigger the card fires ITSELF stays Reanimate,
 asked the same day ("Restano"): Vulpine Harvester is a Phyrexian and needs no tribal deck.
+
+Read 2026-10-16: an enchanted creature that dies returned UNDER YOUR CONTROL (Necrogen Communion,
+False Demise; Abduction returns it to its owner and is Steal), a creature put into your graveyard
+returned to the battlefield (Angelic Renewal, moved from Regrowth), and a creature or permanent CAST
+FREE from your graveyard (Counterpoint, and Shiko, Paragon of the Way's copy). Handed back: All
+Hallow's Eve, Cass and False Demise with the tag; Noctis, Prince of Lucis, which casts artifacts
+from your graveyard for their cost, without it.

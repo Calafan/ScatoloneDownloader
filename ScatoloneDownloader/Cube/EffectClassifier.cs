@@ -56,7 +56,9 @@ namespace ScatoloneDownloader.Cube
             + @"|each of (?:up to )?(?:[\dX]+|\w+) targets|the controller of|its controller"
             // 2026-10-14: Chandra, Hope's Beacon's "each of UP TO TWO targets"
             // and Invasion of Regatha's "another target BATTLE OR opponent".
-            + @"|(?:another )?target battle or opponent)";
+            + @"|(?:another )?target battle or opponent"
+            // 2026-10-16: Aurelia, the Law Above's "to each of your opponents".
+            + @"|each of your opponents)";
 
         /// <summary>The players a life-loss clause can name, with room for the
         /// relative clause the modern templating puts between the subject and
@@ -69,7 +71,8 @@ namespace ScatoloneDownloader.Cube
         /// widening every subject to 90 instead reached Scarring Memories'
         /// "sacrifices …, discards a card, and loses 3 life", untagged. "Its
         /// OWNER" joined the same day, for a spell cast from an opponent's
-        /// library (The Ruinous Powers); "half their life" stays out.</summary>
+        /// library (The Ruinous Powers). "Half their life" is read apart, with a
+        /// narrower subject list — see the Burn table.</summary>
         private const string LosesLifeSubject =
             @"(?:each opponent|target opponent|target player|that player|that opponent|each player"
             + @"|its controller|its owner|they|defending player|the chosen player|that spell's controller)"
@@ -102,8 +105,11 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex TriggerClause = Rx(
             @"(?:whenever|when|at the beginning of)\b[^,\n]{0,160},");
 
+        // "Loses ALL ABILITIES" names nobody: Monument to Perfection "becomes a
+        // 9/9 … loses all abilities, and gains indestructible" shields itself
+        // (2026-10-16).
         private static readonly Regex Beneficiary = Rx(
-            @"\b(?:target|another|other|each|all|enchanted|equipped|chosen|"
+            @"\b(?:target|another|other|each|all(?! abilities\b)|enchanted|equipped|chosen|"
             // "that creature" is the beneficiary a second sentence refers back to:
             // "Gain control of target creature ... that creature gets +2/+0".
             // …and the TYPE the card just named, which the four nouns above do
@@ -257,8 +263,8 @@ namespace ScatoloneDownloader.Cube
             // The table's tap rule is asked again without the grant, as it is
             // without a land face above. One mana granted to lands is blanked
             // the same way (OneManaGrantedToLands).
-            string ownMana = OneManaGrantedToLands.Replace(
-                MakesTokens.IsMatch(nonLandText) ? nonLandText : GrantedToTokens.Replace(nonLandText, " "), " ");
+            string ownMana = OneManaNotASource.Replace(OneManaGrantedToLands.Replace(
+                MakesTokens.IsMatch(nonLandText) ? nonLandText : GrantedToTokens.Replace(nonLandText, " "), " "), " ");
             if (ownMana != nonLandText && result.HasFlag(CardEffect.Ramp) && !TapAddsMana.IsMatch(ownMana))
             {
                 result &= ~CardEffect.Ramp;
@@ -269,7 +275,8 @@ namespace ScatoloneDownloader.Cube
             if (CostsLessToCast.IsMatch(CostsLessForItself.Replace(text, " "))
                 || (card.MacroType != MacroType.Land && ActivatedManaAbility.IsMatch(ownMana))
                 || ExtraLandDrop.IsMatch(text)
-                || ManaMultiplier.IsMatch(text)
+                || (ManaMultiplier.IsMatch(text) && !ManaOnlyForUpkeep.IsMatch(text))
+                || (card.MacroType == MacroType.Land && LandPutsItselfFromHand.IsMatch(text))
                 || (card.MacroType != MacroType.Spell
                     && Quoted.Replace(text, " ").Split('\n').Any(line => TriggeredMana.IsMatch(line) && !OnAnAttack.IsMatch(line)))
                 || LandFromHandToPlay.IsMatch(ownLandDrops)
@@ -614,14 +621,22 @@ namespace ScatoloneDownloader.Cube
             // line of its own keeps the tag. See TreasureATokenMakes, and
             // TreasureForSomebodyElse for one handed to another player.
             if (result.HasFlag(CardEffect.ManaFixing)
-                && (TreasureATokenMakes.IsMatch(text) || TreasureForSomebodyElse.IsMatch(text)))
+                && (TreasureATokenMakes.IsMatch(text) || TreasureForSomebodyElse.IsMatch(text) || TreasureForATurn.IsMatch(text)))
             {
-                string own = TreasureForSomebodyElse.Replace(TreasureATokenMakes.Replace(text, " "), " ");
+                string own = TreasureForATurn.Replace(TreasureForSomebodyElse.Replace(TreasureATokenMakes.Replace(text, " "), " "), " ");
 
                 if (!ManaFixingPatterns.Any(p => p.IsMatch(own)))
                 {
                     result &= ~CardEffect.ManaFixing;
                 }
+            }
+
+            // …nor mana of the very colour the ability is paid in, nor one mana
+            // of any colour tacked on as a rider. See NoColourFixed.
+            if (result.HasFlag(CardEffect.ManaFixing) && NoColourFixed.IsMatch(text)
+                && !ManaFixingPatterns.Any(p => p.IsMatch(NoColourFixed.Replace(text, " "))))
+            {
+                result &= ~CardEffect.ManaFixing;
             }
 
             // A land out of the graveyard rebuilds a mana base; it reanimates
@@ -697,6 +712,16 @@ namespace ScatoloneDownloader.Cube
             // DrainOnATribe.
             if (result.HasFlag(CardEffect.Burn) && DrainsOnATribeItDoesNotMake(card, text)
                 && !BurnPatterns.Any(p => p.IsMatch(DrainOnATribe.Replace(text, " "))))
+            {
+                result &= ~CardEffect.Burn;
+            }
+
+            // …nor a player paid in cards for the life, nor a punisher on an
+            // opponent's own sacrifice. See DrawsForTheLife and
+            // PunishesTheirSacrifice.
+            if (result.HasFlag(CardEffect.Burn)
+                && (DrawsForTheLife.IsMatch(text) || PunishesTheirSacrifice.IsMatch(text))
+                && !BurnPatterns.Any(p => p.IsMatch(PunishesTheirSacrifice.Replace(DrawsForTheLife.Replace(text, " "), " "))))
             {
                 result &= ~CardEffect.Burn;
             }

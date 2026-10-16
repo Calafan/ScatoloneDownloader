@@ -105,3 +105,5 @@ activation cost up to 60 characters long (Arwen, Mortal Queen, which also reache
 regeneration and Seasoned Tactician's Circle of Protection, 9 to 1 and 13 to 1, both handed back);
 and a tribe's creature spell entering with hexproof is a tribe's shield (Jade Orb of Dragonkind).
 Measured: Protection F1 97.9 to 99.5 before the store pass.
+
+Read 2026-10-16: "all abilities" lost names no beneficiary (Monument to Perfection).

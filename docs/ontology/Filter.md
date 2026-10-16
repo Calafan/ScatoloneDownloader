@@ -156,3 +156,14 @@ once is a rider), an explore made X TIMES (Jadelight Spelunker), and HIDEAWAY ke
 of 5 by hand (Wiretapping). Not this tag: THAT player's loot (Memory Worm — "target player" can be
 you, Forget), and a scry the card exiles itself out of the graveyard for, which runs once (Survivor
 of Korlis; one it SACRIFICES itself for still counts, Grim Bauble).
+
+Withdrawn 2026-10-16: the veto that kept a LOOK AND A FREE CAST out of this tag, written from
+Perception Bobblehead in September. The 2026-10-13 answer made Kiora Cheat AND Filter, and the
+tribal ruling later took only its Cheat, so a look and a free cast is both: Perception Bobblehead is
+handed back with Filter, and Aetherworks Marvel, Svella and Genesis Wave, unreviewed, gain it. Read
+the same day: a milled card put into your hand (Terra, Magical Adept), one cast free or put onto the
+battlefield from among the milled (Summons of Saruman, Bramble Familiar) and one put onto the
+battlefield from among the revealed (Knickknack Ouphe), but not a land alone, which is Ramp
+(Shigeki, Jukai Visionary). A connive beside a spell bounced is the rider of a counterspell (Obscura
+Interceptor). Handed back without the tag: Thrill-Kill Disciple, Candy Trail and Invasion of
+Pyrulea.

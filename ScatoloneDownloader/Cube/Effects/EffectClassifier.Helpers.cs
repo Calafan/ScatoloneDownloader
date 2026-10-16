@@ -93,7 +93,7 @@ namespace ScatoloneDownloader.Cube
         {
             foreach (string line in text.Split('\n'))
             {
-                if (!DisenchantPatterns.Any(p => p.IsMatch(line)))
+                if (!DisenchantPatterns.Any(p => p.IsMatch(TargetCardInAGraveyard.Replace(line, " "))))
                 {
                     continue;
                 }

@@ -842,18 +842,17 @@ public sealed class EffectClassifierTests
     }
 
     [Fact]
-    public void Classify_AQuotedAbilityThatPumpsATarget_IsNotBuff()
+    public void Classify_ALandHandedAQuotedPump_IsBuff()
     {
-        // This used to be the exception to the quotes rule, on the reading that
-        // a granted ability pumping ANY creature is a Buff the card handed you.
-        // Overturned 2026-09-21 by the same ruling Burn got the day before: what
-        // a token or a granted ability does belongs to whatever received it,
-        // whoever it then points at. Seven reviewed cards hand out a "{T}:
-        // Target creature you control gets +1/+0" and none is tagged Buff.
+        // Overturned twice. This was the exception to the quotes rule, then on
+        // 2026-09-21 it pinned the opposite: what a granted ability does belongs
+        // to whatever received it. Ruled back on 2026-10-16 for an ENCHANTED
+        // LAND only ("Buff a entrambe", with Mystic Might): a land is no creature
+        // to own the pump, so the Aura is what hands it out.
         CardEffect result = EffectClassifier.Classify(MakeCard("Forbidden Lore", "Enchantment — Aura",
             "Enchant land\nEnchanted land has \"{T}: Target creature gets +2/+1 until end of turn.\""));
 
-        Assert.False(result.HasFlag(CardEffect.Buff));
+        Assert.True(result.HasFlag(CardEffect.Buff));
     }
 
     [Theory]
@@ -1593,11 +1592,9 @@ public sealed class EffectClassifierTests
         + "face down, then put the rest on the bottom of their library in a random order. You may play the "
         + "exiled cards for as long as they remain exiled. Mana of any type can be spent to cast spells this "
         + "way.")]
-    // A card looked at and cast for free was cheated in, not chosen between.
-    [InlineData("Perception Bobblehead", "Artifact — Bobblehead",
-        "{T}: Add one mana of any color.\n{3}, {T}: Look at the top X cards of your library, where X is the "
-        + "number of Bobbleheads you control. You may cast a spell with mana value 3 or less from among them "
-        + "without paying its mana cost. Put the rest on the bottom of your library in a random order.")]
+    // Perception Bobblehead stood here from 2026-09-23 ("cheated in, not chosen
+    // between") until 2026-10-16: the 10-13 ruling made Kiora Cheat AND Filter,
+    // so a look-and-cast-free is both, and the veto was withdrawn.
     // A SORCERER ROLE's scry is the Role's, ruled 2026-10-13.
     [InlineData("Unassuming Sage", "Creature — Human Peasant Wizard",
         "When this creature enters, you may pay {2}. If you do, create a Sorcerer Role token attached to it. "
@@ -9351,7 +9348,9 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
-    // C4, 2026-10-16: a card cast from any or their graveyard counts for Regrowth.
+    // C4, 2026-10-16: a card cast from ANY graveyard counts for Regrowth, since
+    // yours is among them. C4 also counted THEIR graveyard; G1 overturned that
+    // half later the same day (Deluxe Dragster: "solo Steal").
     [InlineData("Urabrask // The Great Work", "Legendary Creature — Phyrexian Praetor // Enchantment — Saga",
         "First strike\nWhenever you cast an instant or sorcery spell, Urabrask deals 1 damage to target "
         + "opponent. Add {R}.\n{R}: Exile Urabrask, then return it to the battlefield transformed under its "
@@ -9361,7 +9360,7 @@ public sealed class EffectClassifierTests
         + "Treasure tokens.\nIII — Until end of turn, you may cast instant and sorcery spells from any "
         + "graveyard. If a spell cast this way would be put into a graveyard, exile it instead. Exile this "
         + "Saga, then return it to the battlefield (front face up).")]
-    public void Classify_TheOctober16Pass_AGraveyardOfTheirsCast_IsRegrowth(string name, string typeLine, string oracle)
+    public void Classify_TheOctober16Pass_AnyGraveyardCast_IsRegrowth(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Regrowth));
     }
@@ -9793,6 +9792,476 @@ public sealed class EffectClassifierTests
             + "{4}"));
 
         Assert.True(effects.HasFlag(CardEffect.Pacify));
+    }
+
+    [Theory]
+    // Ruled 2026-10-16 (B2): an opponent or a target player losing half their life
+    // is always Burn ("Sempre Burn"). Readings of the same pass: damage to each of
+    // your opponents, a life gain answered with that much life lost, a drain on
+    // entering that returns itself to hand, damage divided among up to N targets,
+    // and Ob Nixilis's +1 drain, which B1 leaves standing.
+    [InlineData("Alpharael, Stonechosen", "Legendary Creature — Human Cleric",
+        "Ward—Discard a card at random.\nVoid — Whenever Alpharael attacks, if a nonland permanent left the "
+        + "battlefield this turn or a spell was warped this turn, defending player loses half their life, "
+        + "rounded up.")]
+    [InlineData("Betor, Kin to All", "Legendary Creature — Spirit Dragon",
+        "Flying\nAt the beginning of your end step, if creatures you control have total toughness 10 or "
+        + "greater, draw a card. Then if creatures you control have total toughness 20 or greater, untap each "
+        + "creature you control. Then if creatures you control have total toughness 40 or greater, each "
+        + "opponent loses half their life, rounded up.")]
+    [InlineData("Aurelia, the Law Above", "Legendary Creature — Angel",
+        "Flying, vigilance, haste\nWhenever a player attacks with three or more creatures, you draw a "
+        + "card.\nWhenever a player attacks with five or more creatures, Aurelia deals 3 damage to each of your "
+        + "opponents and you gain 3 life.")]
+    [InlineData("Enduring Tenacity", "Enchantment Creature — Snake Glimmer",
+        "Whenever you gain life, target opponent loses that much life.\nWhen Enduring Tenacity dies, if it was "
+        + "a creature, return it to the battlefield under its owner's control. It's an enchantment. (It's not a "
+        + "creature.)")]
+    [InlineData("Intimidation Campaign", "Enchantment",
+        "When this enchantment enters, each opponent loses 1 life, you gain 1 life, and you draw a "
+        + "card.\nWhenever you commit a crime, you may return this enchantment to its owner's hand. (It returns "
+        + "only from the battlefield. Targeting opponents, anything they control, and/or cards in their "
+        + "graveyards is a crime.)")]
+    [InlineData("Blaster Hulk", "Artifact Creature — Pirate",
+        "This spell costs {1} less to cast for each {E} (energy counter) you've paid or lost this "
+        + "turn.\nHaste\nWhenever this creature attacks, you get {E}{E}, then you may pay eight {E}. When you do, "
+        + "this creature deals 8 damage divided as you choose among up to eight targets.")]
+    [InlineData("Ob Nixilis, the Adversary", "Legendary Planeswalker — Nixilis",
+        "Casualty X. The copy isn't legendary and has starting loyalty X. (As you cast this spell, you may "
+        + "sacrifice a creature with power X. When you do, copy this spell. The copy becomes a token.)\n+1: Each "
+        + "opponent loses 2 life unless they discard a card. If you control a Demon or Devil, you gain 2 "
+        + "life.\n−2: Create a 1/1 red Devil creature token with \"When this token dies, it deals 1 damage to any "
+        + "target.\"\n−7: Target player draws seven cards and loses 7 life.")]
+    public void Classify_TheOctober16BurnPass_IsBurn(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
+    // Ruled 2026-10-16: a player who draws N and loses N life is never burnt (B1,
+    // "Mai Burn", Monumental Corruption), and Blooming Blast's gift is no Burn
+    // (B3). Half the life of its owner or of each player stays out of B2. A ward
+    // paid in life taxes their spell (0 of the 6 reviewed), and a drain that
+    // punishes an opponent's sacrifice is untagged on Vengeful Tracker.
+    [InlineData("Monumental Corruption", "Sorcery",
+        "Target player draws X cards and loses X life, where X is the number of artifacts you control.")]
+    [InlineData("Blooming Blast", "Instant",
+        "Gift a Treasure (You may promise an opponent a gift as you cast this spell. If you do, they create a "
+        + "Treasure token before its other effects. It's an artifact with \"{T}, Sacrifice this token: Add one "
+        + "mana of any color.\")\nBlooming Blast deals 2 damage to target creature. If the gift was promised, "
+        + "Blooming Blast also deals 3 damage to that creature's controller.")]
+    [InlineData("Personal Incarnation", "Creature — Avatar Incarnation",
+        "{0}: The next 1 damage that would be dealt to this creature this turn is dealt to its owner instead. "
+        + "Only this creature's owner may activate this ability.\nWhen this creature dies, its owner loses half "
+        + "their life, rounded up.")]
+    [InlineData("Shahrazad", "Sorcery",
+        "Players play a Magic subgame, using their libraries as their decks. Each player who doesn't win the "
+        + "subgame loses half their life, rounded up.")]
+    [InlineData("Zul Ashur, Lich Lord", "Legendary Creature — Zombie Warlock",
+        "Ward—Pay 2 life. (Whenever this creature becomes the target of a spell or ability an opponent "
+        + "controls, counter it unless that player pays 2 life.)\n{T}: You may cast target Zombie creature card "
+        + "from your graveyard this turn.")]
+    [InlineData("Vengeful Tracker", "Creature — Human Detective",
+        "Whenever an opponent sacrifices an artifact, this creature deals 2 damage to them.")]
+    public void Classify_TheOctober16BurnPass_IsNotBurn(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
+    // Readings of 2026-10-16: any number of target artifacts, the type Season of
+    // Gathering lets you choose, and an artifact or enchantment shuffled into its
+    // owner's library.
+    [InlineData("Rampaging Yao Guai", "Creature — Bear Mutant",
+        "Vigilance, trample\nThis creature enters with X +1/+1 counters on it.\nWhen this creature enters, "
+        + "destroy any number of target artifacts and/or enchantments with total mana value X or less.")]
+    [InlineData("Season of Gathering", "Sorcery",
+        "Choose up to five {P} worth of modes. You may choose the same mode more than once.\n{P} — Put a +1/+1 "
+        + "counter on a creature you control. It gains vigilance and trample until end of turn.\n{P}{P} — Choose "
+        + "artifact or enchantment. Destroy all permanents of the chosen type.\n{P}{P}{P} — Draw cards equal to "
+        + "the greatest power among creatures you control.")]
+    [InlineData("Cathartic Parting", "Sorcery",
+        "The owner of target artifact or enchantment an opponent controls shuffles it into their library. You "
+        + "may shuffle up to four target cards from your graveyard into your library.")]
+    public void Classify_TheOctober16DisenchantPass_IsDisenchant(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Disenchant));
+    }
+
+    [Theory]
+    // A sacrifice an opponent makes on their own is a trigger's condition, not an
+    // edict, and a card in a graveyard is no permanent to answer (0 of 31
+    // reviewed).
+    [InlineData("Vengeful Tracker", "Creature — Human Detective",
+        "Whenever an opponent sacrifices an artifact, this creature deals 2 damage to them.")]
+    [InlineData("Grave Robbers", "Creature — Human Rogue",
+        "{B}, {T}: Exile target artifact card from a graveyard. You gain 2 life.")]
+    [InlineData("Saruman of Many Colors", "Legendary Creature — Avatar Wizard",
+        "Ward—Discard an enchantment, instant, or sorcery card.\nWhenever you cast your second spell each "
+        + "turn, each opponent mills two cards. When one or more cards are milled this way, exile target "
+        + "enchantment, instant, or sorcery card with equal or lesser mana value than that spell from an "
+        + "opponent's graveyard. Copy the exiled card. You may cast the copy without paying its mana cost.")]
+    public void Classify_TheOctober16DisenchantPass_IsNotDisenchant(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Disenchant));
+    }
+
+    [Theory]
+    // Lands an opponent controls, destroyed by count rather than by target.
+    [InlineData("Krenko's Buzzcrusher", "Artifact Creature — Insect Thopter",
+        "Flying, trample\nWhen this creature enters, for each player, destroy up to one nonbasic land that "
+        + "player controls. For each land destroyed this way, its controller may search their library for a "
+        + "basic land card, put it onto the battlefield tapped, then shuffle.")]
+    public void Classify_TheOctober16LandDestructionPass_IsLandDestruction(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.LandDestruction));
+    }
+
+    [Theory]
+    // Exiling THIS CARD from your hand is a cost, whatever land it then names.
+    [InlineData("Spara's Adjudicators", "Creature — Cat Citizen",
+        "When this creature enters, target creature an opponent controls can't attack or block until your "
+        + "next turn.\n{2}, Exile this card from your hand: Target land gains \"{T}: Add {G}, {W}, or {U}\" until "
+        + "this card is cast from exile. You may cast this card for as long as it remains exiled.")]
+    public void Classify_TheOctober16LandDestructionPass_IsNotLandDestruction(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.LandDestruction));
+    }
+
+    [Theory]
+    // A permanent of theirs exiled and then cast by you.
+    [InlineData("Abstruse Appropriation", "Instant",
+        "Devoid (This card has no color.)\nExile target nonland permanent. You may cast that card for as long "
+        + "as it remains exiled, and you may spend colorless mana as though it were mana of any color to cast "
+        + "that spell.")]
+    public void Classify_TheOctober16StealPass_IsSteal(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Steal));
+    }
+
+    [Theory]
+    // A card exiled from a graveyard and cast is no permanent taken, and a card
+    // cast from your own graveyard is yours.
+    [InlineData("Savvy Trader", "Creature — Human Citizen",
+        "When this creature enters, exile target permanent card from your graveyard. You may play that card "
+        + "for as long as it remains exiled.\nSpells you cast from anywhere other than your hand cost {1} less "
+        + "to cast.")]
+    [InlineData("Raul, Trouble Shooter", "Legendary Creature — Zombie Mutant Rogue",
+        "Once during each of your turns, you may cast a spell from among cards in your graveyard that were "
+        + "milled this turn.\n{T}: Each player mills a card. (They each put the top card of their library into "
+        + "their graveyard.)")]
+    public void Classify_TheOctober16StealPass_IsNotSteal(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Steal));
+    }
+
+    [Theory]
+    // Ruled 2026-10-16 (G1): casting a card from an OPPONENT's graveyard is Steal
+    // only, never Regrowth ("Solo Steal", named on Deluxe Dragster).
+    [InlineData("Deluxe Dragster", "Artifact — Vehicle",
+        "This Vehicle can't be blocked except by Vehicles.\nWhenever this Vehicle deals combat damage to a "
+        + "player, you may cast target instant or sorcery card from that player's graveyard without paying its "
+        + "mana cost. If that spell would be put into a graveyard, exile it instead.\nCrew 2")]
+    [InlineData("Tinybones, Bauble Burglar", "Legendary Creature — Skeleton Rogue",
+        "Whenever an opponent discards a card, exile it from their graveyard with a stash counter on "
+        + "it.\nDuring your turn, you may play cards you don't own with stash counters on them from exile, and "
+        + "mana of any type can be spent to cast those spells.\n{3}{B}, {T}: Each opponent discards a card. "
+        + "Activate only as a sorcery.")]
+    public void Classify_TheOctober16RegrowthPass_TheirGraveyardCast_IsNotRegrowth(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Regrowth));
+    }
+
+    [Theory]
+    // Readings of 2026-10-16: a target card in your graveyard you may then cast, a
+    // card in your graveyard put into your hand two sentences later, the top card
+    // of your graveyard put on top of your library, and flashback granted to the
+    // instants and sorceries in graveyards.
+    [InlineData("Conduit of Worlds", "Artifact",
+        "You may play lands from your graveyard.\n{T}: Choose target nonland permanent card in your graveyard. "
+        + "If you haven't cast a spell this turn, you may cast that card. If you do, you can't cast additional "
+        + "spells this turn. Activate only as a sorcery.")]
+    [InlineData("Cosmic Rebirth", "Instant",
+        "Choose target permanent card in your graveyard. If it has mana value 3 or less, you may put it onto "
+        + "the battlefield. If you don't put it onto the battlefield, put it into your hand.\nYou gain 3 life.")]
+    [InlineData("Guiding Spirit", "Creature — Angel Spirit",
+        "Flying\n{T}: If the top card of target player's graveyard is a creature card, put that card on top of "
+        + "that player's library.")]
+    [InlineData("Otaria", "Plane — Dominaria",
+        "Instant and sorcery cards in graveyards have flashback. The flashback cost is equal to the card's "
+        + "mana cost. (Its owner may cast the card from their graveyard for its mana cost. Then they exile "
+        + "it.)\nWhenever chaos ensues, take an extra turn after this one.")]
+    public void Classify_TheOctober16RegrowthPass_IsRegrowth(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Regrowth));
+    }
+
+    [Theory]
+    // Readings of 2026-10-16: an enchanted creature that dies returned under your
+    // control, a creature put into your graveyard returned, and a creature or
+    // permanent cast free from your graveyard, the copy included.
+    [InlineData("Necrogen Communion", "Enchantment — Aura",
+        "Enchant creature you control\nEnchanted creature has toxic 2. (Players dealt combat damage by it also "
+        + "get two poison counters.)\nWhen enchanted creature dies, return that card to the battlefield under "
+        + "your control.")]
+    [InlineData("False Demise", "Enchantment — Aura",
+        "Enchant creature\nWhen enchanted creature dies, return that card to the battlefield under your "
+        + "control.")]
+    [InlineData("Angelic Renewal", "Enchantment",
+        "Whenever a creature is put into your graveyard from the battlefield, you may sacrifice this "
+        + "enchantment. If you do, return that card to the battlefield.")]
+    [InlineData("Counterpoint", "Instant",
+        "Counter target spell. You may cast a creature, instant, sorcery, or planeswalker spell from your "
+        + "graveyard with mana value less than or equal to that spell's mana value without paying its mana "
+        + "cost.")]
+    [InlineData("Shiko, Paragon of the Way", "Legendary Creature — Spirit Dragon",
+        "Flying, vigilance\nWhen Shiko enters, exile target nonland card with mana value 3 or less from your "
+        + "graveyard. Copy it, then you may cast the copy without paying its mana cost. (A copy of a permanent "
+        + "spell becomes a token.)")]
+    public void Classify_TheOctober16ReanimatePass_IsReanimate(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
+    }
+
+    [Theory]
+    // A creature that returns under its OWNER's control was never yours to bring
+    // back.
+    [InlineData("Abduction", "Enchantment — Aura",
+        "Enchant creature\nWhen this Aura enters, untap enchanted creature.\nYou control enchanted "
+        + "creature.\nWhen enchanted creature dies, return that card to the battlefield under its owner's "
+        + "control.")]
+    public void Classify_TheOctober16ReanimatePass_IsNotReanimate(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
+    }
+
+    [Theory]
+    // A target creature CARD is in a graveyard, not on the battlefield.
+    [InlineData("Lazotep Quarry", "Land — Desert",
+        "{T}: Add {C}.\n{T}, Sacrifice a creature: Add one mana of any color.\n{X}{2}, {T}, Sacrifice a Desert: "
+        + "Exile target creature card with mana value X from your graveyard. Create a token that's a copy of "
+        + "it, except it's a 4/4 black Zombie. Activate only as a sorcery.")]
+    public void Classify_TheOctober16Pass_ATargetCreatureCard_IsNotRemoval(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
+    // "All abilities" lost is not "all" creatures shielded.
+    [InlineData("Monument to Perfection", "Artifact",
+        "{3}, {T}: Search your library for a basic, Sphere, or Locus land card, reveal it, put it into your "
+        + "hand, then shuffle.\n{3}: This artifact becomes a 9/9 Phyrexian Construct artifact creature, loses "
+        + "all abilities, and gains indestructible and toxic 9. Activate only if there are nine or more lands "
+        + "with different names among the basic, Sphere, and Locus lands you control.")]
+    public void Classify_TheOctober16Pass_AllAbilities_IsNotProtection(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // Readings of 2026-10-16: a look and a free cast is Filter beside its Cheat,
+    // since the 10-13 ruling made Kiora both; a milled card put into your hand,
+    // cast free or put onto the battlefield from among the milled; and a revealed
+    // card put onto the battlefield from among them.
+    [InlineData("Perception Bobblehead", "Artifact — Bobblehead",
+        "{T}: Add one mana of any color.\n{3}, {T}: Look at the top X cards of your library, where X is the "
+        + "number of Bobbleheads you control. You may cast a spell with mana value 3 or less from among them "
+        + "without paying its mana cost. Put the rest on the bottom of your library in a random order.")]
+    [InlineData("Terra, Magical Adept // Esper Terra", "Legendary Creature — Human Wizard Warrior // Legendary Enchantment Creature — Saga Wizard",
+        "When Terra enters, mill five cards. Put up to one enchantment card milled this way into your "
+        + "hand.\nTrance — {4}{R}{G}, {T}: Exile Terra, then return it to the battlefield transformed under its "
+        + "owner's control. Activate only as a sorcery.\n(As this Saga enters and after your draw step, add a "
+        + "lore counter.)\nI, II, III — Create a token that's a copy of target nonlegendary enchantment you "
+        + "control. It gains haste. If it's a Saga, put up to three lore counters on it. Sacrifice it at the "
+        + "beginning of your next end step.\nIV — Add {W}{W}, {U}{U}, {B}{B}, {R}{R}, and {G}{G}. Exile Esper "
+        + "Terra, then return it to the battlefield (front face up).\nFlying")]
+    [InlineData("Summons of Saruman", "Sorcery",
+        "Amass Orcs X. Mill X cards. You may cast an instant or sorcery spell with mana value X or less from "
+        + "among them without paying its mana cost. (To amass Orcs X, put X +1/+1 counters on an Army you "
+        + "control. It's also an Orc. If you don't control an Army, create a 0/0 black Orc Army creature token "
+        + "first.)\nFlashback—{3}{U}{R}, Exile X cards from your graveyard.")]
+    [InlineData("Bramble Familiar // Fetch Quest", "Creature — Elemental Raccoon // Sorcery — Adventure",
+        "{T}: Add {G}.\n{1}{G}, {T}, Discard a card: Return this creature to its owner's hand.\nMill seven "
+        + "cards. Then put a creature, enchantment, or land card from among the milled cards onto the "
+        + "battlefield.")]
+    [InlineData("Knickknack Ouphe", "Creature — Ouphe",
+        "This creature enters with X +1/+1 counters on it.\nWhen this creature enters, reveal the top X cards "
+        + "of your library. You may put any number of Aura cards with mana value X or less from among them onto "
+        + "the battlefield. Then put all cards revealed this way that weren't put onto the battlefield on the "
+        + "bottom of your library in a random order.")]
+    public void Classify_TheOctober16FilterPass_IsFilter(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // A connive beside a spell bounced is the rider of a counterspell, and a land
+    // alone put onto the battlefield from the revealed is Ramp, not selection.
+    [InlineData("Obscura Interceptor", "Creature — Octopus Wizard",
+        "Flash\nLifelink\nWhen this creature enters, it connives. When it connives this way, return up to one "
+        + "target spell to its owner's hand. (To have a creature connive, draw a card, then discard a card. If "
+        + "you discarded a nonland card, put a +1/+1 counter on that creature.)")]
+    [InlineData("Shigeki, Jukai Visionary", "Legendary Enchantment Creature — Snake Druid",
+        "{1}{G}, {T}, Return Shigeki to its owner's hand: Reveal the top four cards of your library. You may "
+        + "put a land card from among them onto the battlefield tapped. Put the rest into your "
+        + "graveyard.\nChannel — {X}{X}{G}{G}, Discard this card: Return X target nonlegendary cards from your "
+        + "graveyard to your hand.")]
+    public void Classify_TheOctober16FilterPass_IsNotFilter(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // A search for a creature or land card is still a creature found.
+    [InlineData("Analyze the Pollen", "Sorcery",
+        "As an additional cost to cast this spell, you may collect evidence 8. (Exile cards with total mana "
+        + "value 8 or greater from your graveyard.)\nSearch your library for a basic land card. If evidence was "
+        + "collected, instead search your library for a creature or land card. Reveal that card, put it into "
+        + "your hand, then shuffle.")]
+    public void Classify_TheOctober16Pass_ASearchForACreatureOrLand_IsTutor(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tutor));
+    }
+
+    [Theory]
+    // Readings of 2026-10-16: a chapter's Treasure for each, a land that puts
+    // itself from your hand, mana added after an if-you-do, a tap ability that
+    // adds mana a sentence later, and lands searched, exiled, then put onto the
+    // battlefield.
+    [InlineData("Vault 21: House Gambit", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI, II — "
+        + "Discard a card, then draw a card.\nIII — Reveal up to five nonland cards from your hand. For each of "
+        + "those cards that has the same mana value as another card revealed this way, create a Treasure token.")]
+    [InlineData("Talon Gates of Madara", "Land — Gate",
+        "When this land enters, up to one target creature phases out.\n{T}: Add {C}.\n{1}, {T}: Add one mana of "
+        + "any color.\n{4}: Put this card from your hand onto the battlefield.")]
+    [InlineData("Omnath, Locus of All", "Legendary Creature — Phyrexian Elemental",
+        "If you would lose unspent mana, that mana becomes black instead.\nAt the beginning of your first main "
+        + "phase, look at the top card of your library. You may reveal that card if it has three or more "
+        + "colored mana symbols in its mana cost. If you do, add three mana in any combination of its colors "
+        + "and put it into your hand. If you don't reveal it, put it into your hand.")]
+    [InlineData("Red Death, Shipwrecker", "Legendary Creature — Crab Mutant",
+        "Alluring Eyes — {T}: Goad target creature an opponent controls. That player draws a card. You add "
+        + "{R}. (Until your next turn, that creature attacks each combat if able and attacks a player other "
+        + "than you if able.)")]
+    [InlineData("Omenpath Journey", "Enchantment",
+        "When this enchantment enters, search your library for up to five land cards that have different "
+        + "names, exile them, then shuffle.\nAt the beginning of your end step, choose a card at random exiled "
+        + "with this enchantment and put it onto the battlefield tapped.")]
+    public void Classify_TheOctober16RampPass_IsRamp(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // Ruled 2026-10-16: Terra loses Ramp ("Togli Ramp"), and a free cast of a
+    // tribe is nothing (C1, Dracogenesis and Charred Foyer). Vetoes: lands
+    // untapped beside you can't cast spells, mana only for upkeep costs, a land
+    // put from your hand for a creature returned, the mana an Aura gives an
+    // opponent's creature, a Moon's basic, a land the dead card becomes, and a
+    // Treasure for each outside a Saga's chapter.
+    [InlineData("Terra, Magical Adept // Esper Terra", "Legendary Creature — Human Wizard Warrior // Legendary Enchantment Creature — Saga Wizard",
+        "When Terra enters, mill five cards. Put up to one enchantment card milled this way into your "
+        + "hand.\nTrance — {4}{R}{G}, {T}: Exile Terra, then return it to the battlefield transformed under its "
+        + "owner's control. Activate only as a sorcery.\n(As this Saga enters and after your draw step, add a "
+        + "lore counter.)\nI, II, III — Create a token that's a copy of target nonlegendary enchantment you "
+        + "control. It gains haste. If it's a Saga, put up to three lore counters on it. Sacrifice it at the "
+        + "beginning of your next end step.\nIV — Add {W}{W}, {U}{U}, {B}{B}, {R}{R}, and {G}{G}. Exile Esper "
+        + "Terra, then return it to the battlefield (front face up).\nFlying")]
+    [InlineData("Dracogenesis", "Enchantment",
+        "You may cast Dragon spells without paying their mana costs.")]
+    [InlineData("Charred Foyer // Warped Space", "Enchantment — Room // Enchantment — Room",
+        "At the beginning of your upkeep, exile the top card of your library. You may play it this turn.\n(You "
+        + "may cast either half. That door unlocks on the battlefield. As a sorcery, you may pay the mana cost "
+        + "of a locked door to unlock it.)\nOnce each turn, you may pay {0} rather than pay the mana cost for a "
+        + "spell you cast from exile.\n(You may cast either half. That door unlocks on the battlefield. As a "
+        + "sorcery, you may pay the mana cost of a locked door to unlock it.)")]
+    [InlineData("Innocuous Researcher", "Creature — Centaur Detective",
+        "Parley — Whenever this creature attacks, each player reveals the top card of their library. For each "
+        + "nonland card revealed this way, you investigate. Then each player draws a card.\nAt the beginning of "
+        + "your end step, you may untap all lands you control. If you do, you can't cast spells until your next "
+        + "turn.")]
+    [InlineData("Snowfall", "Enchantment",
+        "Cumulative upkeep {U} (At the beginning of your upkeep, put an age counter on this permanent, then "
+        + "sacrifice it unless you pay its upkeep cost for each age counter on it.)\nWhenever an Island is "
+        + "tapped for mana, its controller may add an additional {U}. If that Island is snow, its controller "
+        + "may add an additional {U}{U} instead. Spend this mana only to pay cumulative upkeep costs.")]
+    [InlineData("Urban Retreat", "Land",
+        "This land enters tapped.\n{T}: Add {G}, {W}, or {U}.\n{2}, Return a tapped creature you control to its "
+        + "owner's hand: Put this card from your hand onto the battlefield. Activate only as a sorcery.")]
+    [InlineData("Honest Work", "Enchantment — Aura",
+        "Enchant creature an opponent controls\nWhen this Aura enters, tap enchanted creature and remove all "
+        + "counters from it.\nEnchanted creature loses all abilities and is a Citizen with base power and "
+        + "toughness 1/1 and \"{T}: Add {C}\" named Humble Merchant. (It loses all other creature types and "
+        + "names.)")]
+    [InlineData("Zhao, the Moon Slayer", "Legendary Creature — Human Soldier",
+        "Menace\nNonbasic lands enter tapped.\n{7}: Put a conqueror counter on Zhao.\nAs long as Zhao has a "
+        + "conqueror counter on him, nonbasic lands are Mountains. (They lose all other land types and "
+        + "abilities and have \"{T}: Add {R}.\")")]
+    [InlineData("Princess Yue", "Legendary Creature — Human Noble Ally",
+        "When Princess Yue dies, if she was a nonland creature, return this card to the battlefield tapped "
+        + "under your control. She's a land named Moon. She gains \"{T}: Add {C}.\" (She's still legendary.)\n{T}: "
+        + "Scry 2.")]
+    [InlineData("Cataclysmic Prospecting", "Sorcery",
+        "Cataclysmic Prospecting deals X damage to each creature. For each mana from a Desert spent to cast "
+        + "this spell, create a tapped Treasure token.")]
+    public void Classify_TheOctober16RampPass_IsNotRamp(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // Ruled 2026-10-16 (M1): a land made the basic type of your choice is
+    // ManaFixing ("MF a entrambe", Mystic Compass and Jinx). Readings: lands found
+    // and revealed into your hand, and a reveal until a land card goes to hand.
+    [InlineData("Mystic Compass", "Artifact",
+        "{1}, {T}: Target land becomes the basic land type of your choice until end of turn.")]
+    [InlineData("Jinx", "Instant",
+        "Target land becomes the basic land type of your choice until end of turn.\nDraw a card at the "
+        + "beginning of the next turn's upkeep.")]
+    [InlineData("Aang's Journey", "Sorcery — Lesson",
+        "Kicker {2} (You may pay an additional {2} as you cast this spell.)\nSearch your library for a basic "
+        + "land card. If this spell was kicked, instead search your library for a basic land card and a Shrine "
+        + "card. Reveal those cards, put them into your hand, then shuffle.\nYou gain 2 life.")]
+    [InlineData("Tithe", "Instant",
+        "Search your library for a Plains card. If target opponent controls more lands than you, you may "
+        + "search your library for an additional Plains card. Reveal those cards, put them into your hand, then "
+        + "shuffle.")]
+    [InlineData("Gift of Estates", "Sorcery",
+        "If an opponent controls more lands than you, search your library for up to three Plains cards, "
+        + "reveal them, put them into your hand, then shuffle.")]
+    [InlineData("House Cartographer", "Creature — Human Scout Survivor",
+        "Survival — At the beginning of your second main phase, if this creature is tapped, reveal cards from "
+        + "the top of your library until you reveal a land card. Put that card into your hand and the rest on "
+        + "the bottom of your library in a random order.")]
+    public void Classify_TheOctober16ManaFixingPass_IsManaFixing(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
+    }
+
+    [Theory]
+    // Vetoes of 2026-10-16: a Treasure maker lent for a turn, and mana of the
+    // colour the cost already paid, or of any colour only when the card returned
+    // is green.
+    [InlineData("Furnace Reins", "Sorcery",
+        "Gain control of target creature until end of turn. Untap that creature. Until end of turn, it gains "
+        + "haste and \"Whenever this creature deals combat damage to a player or battle, create a Treasure "
+        + "token.\" (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")")]
+    [InlineData("Sunken Palace", "Land — Cave",
+        "This land enters tapped.\n{T}: Add {U}.\n{1}{U}, {T}, Exile seven cards from your graveyard: Add {U}. "
+        + "When you spend this mana to cast a spell or activate an ability, copy that spell or ability. You may "
+        + "choose new targets for the copy. (Mana abilities can't be copied.)")]
+    [InlineData("Tamiyo, Inquisitive Student // Tamiyo, Seasoned Scholar", "Legendary Creature — Moonfolk Wizard // Legendary Planeswalker — Tamiyo",
+        "Flying\nWhenever Tamiyo attacks, investigate. (Create a Clue token. It's an artifact with \"{2}, "
+        + "Sacrifice this token: Draw a card.\")\nWhen you draw your third card in a turn, exile Tamiyo, then "
+        + "return her to the battlefield transformed under her owner's control.\n+2: Until your next turn, "
+        + "whenever a creature attacks you or a planeswalker you control, it gets -1/-0 until end of turn.\n−3: "
+        + "Return target instant or sorcery card from your graveyard to your hand. If it's a green card, add "
+        + "one mana of any color.\n−7: Draw cards equal to half the number of cards in your library, rounded up. "
+        + "You get an emblem with \"You have no maximum hand size.\"")]
+    public void Classify_TheOctober16ManaFixingPass_IsNotManaFixing(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
     }
 
     private static Card MakeCard(string name, string typeLine, string oracleText, List<string>? keywords = null)

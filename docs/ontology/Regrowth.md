@@ -33,3 +33,12 @@ keeping the card (Harvest Wurm) and a keyword's reminder (Deeproot Historian's "
 are not.   // return a card from a graveyard to HAND (Regrowth, Raise Dead, Eternal Witness).
 Deliberately NOT merged with Reanimate, which puts it straight onto the battlefield: one hands back
 a card you still have to pay for, the other cheats the cost — different speeds, different decks.
+
+Ruled 2026-10-16 (G1, "Solo Steal"): a card cast from an OPPONENT'S graveyard is NOT this tag but
+Steal alone (Deluxe Dragster named, Tinybones, Bauble Burglar realigned); from ANY graveyard it
+still is, since yours is among them (C4, Urabrask // The Great Work). Read the same day: a target
+card in your graveyard you may then cast (Conduit of Worlds), one put into your hand two sentences
+later (Cosmic Rebirth), the top card of your graveyard put on top of your library (Guiding Spirit)
+and flashback granted to the instants and sorceries in graveyards (Otaria). Handed back without the
+tag, the rules reading none: Dutiful Knowledge Seeker, Paradigm Shift, Dredger's Insight,
+Undergrowth Recon and Heartless Conscription; Angelic Renewal moves to Reanimate.

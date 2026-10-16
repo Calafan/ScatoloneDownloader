@@ -1025,9 +1025,26 @@ namespace ScatoloneDownloader.Cube
                     // ManaFixing instead — see LandFromAmongThemToHand. "From among
                     // the MILLED CARDS" is the same words (Seed of Hope, Picklock
                     // Prankster, Wrenn and Realmbreaker's −2, 2026-10-14).
+                    // "Put up to one enchantment card MILLED THIS WAY into your
+                    // hand" (Terra, Magical Adept, 2026-10-16).
                     Rx(@"(?:\bmill|reveal the top) (?:\w+|x) cards?[^\n]{0,120}?"
                         + @"(?:put [^\n]{0,60}from among (?:them|the cards milled this way|the milled cards) into your hand"
-                        + @"|put all of them with that name into your hand)"),
+                        + @"|put all of them with that name into your hand"
+                        + @"|put (?:up to one|a|an|one) [\w ,'\-]{0,40}cards? milled this way into your hand)"),
+                    // …and the one kept CAST free or put ONTO THE BATTLEFIELD, read
+                    // 2026-10-16, each the one reviewed card that says it: "mill X
+                    // cards. You may cast an instant or sorcery spell … from among
+                    // them without paying" (Summons of Saruman), "mill seven cards.
+                    // Then put a creature, enchantment, or land card from among the
+                    // milled cards onto the battlefield" (Bramble Familiar), and
+                    // "reveal the top X cards … put any number of Aura cards … from
+                    // among them onto the battlefield" (Knickknack Ouphe; the
+                    // look-at form of it is 7 of 7 reviewed). Not a LAND alone,
+                    // which is Ramp (Shigeki, the 2026-09-20 ruling below).
+                    Rx(@"\bmill (?:\w+|x) cards?\. you may cast [^.\n]{0,80}from among them without paying"
+                        + @"|\bmill (?:\w+|x) cards?\. then put [^.\n]{0,60}from among the milled cards onto the battlefield"
+                        + @"|reveal the top (?:\w+|x) cards? of your library\. you may put (?!(?:a|up to one) (?:basic )?land cards?\b)"
+                        + @"[^.\n]{0,80}from among them onto the battlefield"),
                     // …and CHOSEN from among them before they go to hand: Green
                     // Sun's Twilight reveals X plus one and keeps a creature
                     // and/or a land (Filter by hand, 2026-10-14).
@@ -1138,12 +1155,34 @@ namespace ScatoloneDownloader.Cube
                     // the rider the threshold refuses.
                     Rx(@"(?:\bwhenever\b|\bat the beginning of\b|^[^\n:""]{1,70}:)[^\n]*?"
                         + LosesLifeSubject + @" ?loses? 1 life", RegexOptions.Multiline),
+                    // An enters drain on a permanent that RETURNS ITSELF to hand
+                    // is cast again, and so repeats — the dash reading of Riders
+                    // of Rohan (2026-10-13), applied to Intimidation Campaign on
+                    // 2026-10-16.
+                    Rx(@"\benters, [^\n]*?" + LosesLifeSubject + @" ?loses? 1 life[\s\S]*"
+                        + @"\breturn this \w+ to its owner's hand"),
                     // The same life loss sized by a COUNT. Ruled 2026-09-20 and it
                     // splits cleanly on WHOSE life it is: four reviewed cards say
                     // "YOU lose life equal to" (Reanimate, Lich, Teval, Darkstar
                     // Augur) and none is tagged, because that is the price the card
                     // charges; seven say somebody else does and six are tagged.
                     Rx(LosesLifeSubject + @" ?loses? life equal to"),
+                    // …and sized by the life just gained: "whenever you gain life,
+                    // target opponent loses THAT MUCH life" (Enduring Tenacity;
+                    // the gain-life family is 2 of 2 reviewed, 2026-10-16). Only
+                    // after a life GAIN: "that much" sized by anything else was
+                    // measured the same day at 1 tagged of 3 — Barbed Servitor's
+                    // damage dealt to it, Caustic Bronco's revealed card.
+                    Rx(@"whenever you gain life\b[^\n]*?" + LosesLifeSubject + @" ?loses? that much life"),
+                    // HALF their life, aimed at an opponent, is always Burn —
+                    // ruled 2026-10-16 ("sempre Burn") on Aphelia, Rush of Dread,
+                    // Unstoppable Slasher and Grievous Wound against Alpharael and
+                    // Betor, which were handed back. The subjects are only the ones
+                    // that point at somebody else: "its OWNER" is Personal
+                    // Incarnation charging the player who owns it, and "EACH
+                    // player" is Shahrazad, which halves you as well.
+                    Rx(@"(?:each opponent|target opponent|target player|that player|\bthey|defending player)"
+                        + @" loses? half their life"),
                     // Damage DIVIDED among "targets" — bare, so a face can be one of
                     // them. Ruled 2026-09-20: five of the six reviewed cards written
                     // that way are tagged (Fireball, Rolling Thunder, Pyrotechnics,
@@ -1153,7 +1192,8 @@ namespace ScatoloneDownloader.Cube
                     // human ruled an exception ON PURPOSE: it hands the opponent
                     // back exactly the five life it dealt, so the count is zero.
                     Rx(@"damage divided (?:evenly,? )?(?:rounded down,? )?(?:as you choose )?"
-                        + @"among (?:any number of|one, two, or three|\w+) targets\b"
+                        // "among UP TO EIGHT targets" (Blaster Hulk, 2026-10-16).
+                        + @"among (?:any number of|one, two, or three|up to \w+|\w+) targets\b"
                         + @"(?![^\n]{0,40}gains? [\dX]+ life)"),
                     // The same damage with the word order the other way round —
                     // "deals damage TO that player EQUAL TO the number of artifacts
@@ -1187,7 +1227,12 @@ namespace ScatoloneDownloader.Cube
                     // The threshold applies here too, with one escape: a single
                     // point charged FOR EACH of something is not one point at all
                     // (Cleansing charges one per land destroyed).
-                    Rx(@"unless (?:that player|they|any player|its controller) pays? (?:[2-9]|\d\d+|x) life"
+                    // A WARD paid in life is the reminder "counter it unless that
+                    // player pays 2 life", and protects the creature rather than
+                    // burning anybody: 0 of the 6 reviewed ward-life cards are
+                    // tagged for it (Zul Ashur, Sire of Seven Deaths, Nine-Fingers
+                    // Keene …), Gev and Invasion of Karsus for other lines. 2026-10-16.
+                    Rx(@"(?<!counter it )unless (?:that player|they|any player|its controller) pays? (?:[2-9]|\d\d+|x) life"
                         + @"|for each[^\n.]{0,70}unless (?:that player|they|any player|its controller) pays? [\dX]+ life"),
                     // …and the same charge handed in quotes to the creature an
                     // Aura is on, whose controller is the "you" who pays every
@@ -1283,6 +1328,14 @@ namespace ScatoloneDownloader.Cube
                     // over the 5,035 reviewed cards, to-hand was tagged 28 of 30
                     // (93.3%) and to-battlefield 8 of 51 (15.7%). Worth 17 on its own.
                     LandSearchToHand, LandSearchToTop,
+                    // …and dug up to hand, "reveal cards from the top of your
+                    // library until you reveal a land card. Put that card into
+                    // your hand" (House Cartographer, 2026-10-16).
+                    Rx(@"until you reveal a land card\. put that card into your hand"),
+                    // A land made the BASIC TYPE you choose is the colour you are
+                    // short of, ruled 2026-10-16 ("MF a entrambe") on Mystic
+                    // Compass, which repeats it, and Jinx, which does it once.
+                    Rx(@"\btarget land becomes the basic land type of your choice"),
                     // A colour filter: you feed it mana and it hands back a colour
                     // you did not have. Ruled 2026-09-18, the mirror of the Ramp
                     // ruling — the same ability that adds no mana converts colour,
@@ -1554,6 +1607,23 @@ namespace ScatoloneDownloader.Cube
             + @"(?:creatures? )?you control (?:enters?|attacks?|dies|die)[^\n]*\bloses? [\dX]+ life[^\n]*",
             RegexOptions.Multiline);
 
+        /// <summary>"Target player draws three cards and loses 3 life" is never
+        /// Burn, ruled 2026-10-16 ("mai Burn"): the life is what the cards cost,
+        /// whoever is pointed at. Monumental Corruption was changed by name;
+        /// Insatiable Avarice, Unscrupulous Contractor and Vault Plunderer were
+        /// already untagged. Blanked and asked again, so Ob Nixilis, the
+        /// Adversary keeps Burn through its +1.</summary>
+        private static readonly Regex DrawsForTheLife = Rx(
+            @"draws? (?:a|an|one|two|three|four|five|six|seven|x|\d+) cards? and loses? [\dX]+ life");
+
+        /// <summary>A punisher on an opponent's OWN sacrifice — "whenever an
+        /// opponent sacrifices an artifact, this creature deals 2 damage to
+        /// them" (Vengeful Tracker, untagged) — waits on a choice the opponent
+        /// makes; 0 of the 3 reviewed cards with the trigger carry Burn
+        /// (2026-10-16). The whole line is blanked.</summary>
+        private static readonly Regex PunishesTheirSacrifice = Rx(
+            @"^[^\n]*\bwhenever an opponent sacrifices\b[^\n]*", RegexOptions.Multiline);
+
         /// <summary>True when the card has a drain on another member of a
         /// tribe it neither makes nor is. See DrainOnATribe.</summary>
         private static bool DrainsOnATribeItDoesNotMake(Card card, string text) =>
@@ -1629,10 +1699,19 @@ namespace ScatoloneDownloader.Cube
             + @"(?:put|reveal) (?:a|up to \w+|any number of) (?:basic )?land cards? from among (?:them|the cards milled this way|the milled cards)"
             + @"(?: and put (?:it|them))? into your hand");
 
-        //   And a card looked at and CAST FOR FREE was put into play, not chosen
-        //   between: Perception Bobblehead is Ramp and Cheat by hand.
-        private static readonly Regex LooksAtTopAndCastsFree = Rx(
-            @"look at the top [\w ]{1,20} of your library[^\n]{0,200}cast [^\n]{0,60}without paying its mana cost");
+        //   A card looked at and CAST FOR FREE was vetoed here from 2026-09-27,
+        //   on Perception Bobblehead (Ramp and Cheat by hand). Withdrawn
+        //   2026-10-16: the 10-13 ruling on Kiora, Sovereign of the Deep made
+        //   the same words Cheat AND Filter ("Kiora Cheat+Filter"; the tribal
+        //   ruling later took only the Cheat), and Bobblehead was handed back.
+        //   The exile-and-cast form stays CardAdvantage (Djeru and Hazoret,
+        //   Keldon Flamesage).
+
+        //   A connive on the enters trigger that also sends a SPELL back is the
+        //   rider Refute's loot is (2026-09-27): Obscura Interceptor is Counter
+        //   alone by hand (2026-10-16). The whole line goes, reminder and all.
+        private static readonly Regex ConniveBesideACounter = Rx(
+            @"^[^\n]*\bconnives\b[^\n]*\breturn up to one target spell\b[^\n]*", RegexOptions.Multiline);
 
         // A SORCERER ROLE's scry is the Role's, not the card's, ruled
         // 2026-10-13: Unassuming Sage, Spellbook Vendor and Living Lectern
@@ -1643,7 +1722,7 @@ namespace ScatoloneDownloader.Cube
 
         // Every shape above blanked, for the tag to be asked again.
         private static string WithoutFalseSelection(string text) =>
-            SorcererRoleScry.Replace(LooksAtTopAndCastsFree.Replace(LandFromAmongThemToHand.Replace(TheirDiscardYourDraw.Replace(
+            SorcererRoleScry.Replace(ConniveBesideACounter.Replace(LandFromAmongThemToHand.Replace(TheirDiscardYourDraw.Replace(
                 LooksAtTopForALand.Replace(LooksAtTopAndMakesBodies.Replace(text, " "), " "), " "), " "), " "), " ");
 
         //   AND A LOOT THAT IS NOT YOURS. "Each opponent discards a card AND YOU

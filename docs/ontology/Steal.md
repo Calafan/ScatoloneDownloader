@@ -44,3 +44,10 @@ with reanimating from any graveyard (Path of the Schemer, Nezumi Freewheeler); a
 graveyard is Ramp (Realmbreaker); "the attacking player" and "the player to your right" are
 donations (Contested Game Ball, Hithlain Rope); a TOKEN that steals is the token's (Wake the
 Dragon); and moving an Aura YOU control is your own (Codsworth). Steal F1 94.9 to 98.8.
+
+Ruled 2026-10-16 (G1, "Solo Steal"): casting a card from an OPPONENT'S graveyard is this tag alone,
+never Regrowth. Deluxe Dragster was corrected by name, Tinybones, Bauble Burglar follows, and four
+unreviewed cards lost the Regrowth with it (Diluvian Primordial, Whispersteel Dagger, Wrexial,
+Shaman's Trance). Read the same day: a permanent of theirs exiled and then cast by you (Abstruse
+Appropriation), which a CARD exiled from a graveyard is not (Savvy Trader); and a card cast "from
+among cards IN your graveyard" is yours (Raul, Trouble Shooter).

@@ -27,3 +27,9 @@ in the Screen), "exile target nonland PERMANENT" is RemovePermanent (Web Up, Sea
 Auracite).
 
 Ruled 2026-09-19; took the tag from 43 wrong out of 5,037 reviewed cards to 2.
+
+Read 2026-10-16: "any number of target" artifacts (Rampaging Yao Guai), the type Season of Gathering
+lets you choose, and an artifact or enchantment shuffled into its owner's library (Cathartic
+Parting). Not this: a sacrifice watched by "whenever an opponent sacrifices", a trigger and no edict
+(Vengeful Tracker), and a target artifact or enchantment CARD in a graveyard (Grave Robbers, Saruman
+of Many Colors; 0 of 31 reviewed). Wrath of the Skies is handed back without the tag.

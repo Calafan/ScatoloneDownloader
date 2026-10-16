@@ -30,13 +30,18 @@ namespace ScatoloneDownloader.Cube
             // The noun may come second in a type list, "destroy target creature,
             // enchantment, or planeswalker" (Get Lost), and the count may say
             // "up to one OTHER target" (Vault 13), both read 2026-10-15.
-            Rx(@"(?:destroy|exile) (?:up to \w+ (?:other )?|another |x |two |three |four |\d+ )?target (?:[\w '\-]{1,14}, )?" + DisenchantNoun),
+            // "Destroy ANY NUMBER OF target artifacts and/or enchantments"
+            // (Rampaging Yao Guai, 2026-10-16).
+            Rx(@"(?:destroy|exile) (?:up to \w+ (?:other )?|another |any number of |x |two |three |four |\d+ )?target (?:[\w '\-]{1,14}, )?" + DisenchantNoun),
             Rx(@"(?:destroy|exile) (?:all|each) " + DisenchantNoun),
             // An edict aimed at an artifact answers one all the same, and unlike
             // the creature edict it cannot be blanked by a token: Pick Your Poison
             // and Gaius van Baelsar both read "each opponent sacrifices an
             // artifact of their choice" and the human tags both here.
-            Rx(OtherPlayer + @" sacrifices?[\w ]{0,20}" + DisenchantNoun),
+            // A TRIGGER on the opponent's own sacrifice is no edict: "whenever an
+            // opponent sacrifices an artifact, this creature deals 2 damage to
+            // them" (Vengeful Tracker, untagged; 2026-10-16).
+            Rx(OtherPlayer + @"(?<!\bwhenever [\w ]{1,20}) sacrifices?[\w ]{0,20}" + DisenchantNoun),
             // …and so is the one EXILED by its controller, "target opponent
             // exiles an enchantment they control" (Debt to the Kami, Early
             // Winter), read 2026-10-15.
@@ -45,7 +50,24 @@ namespace ScatoloneDownloader.Cube
             // choose an artifact or land that player controls. Destroy the chosen
             // permanents." The same clause is LandDestruction's last miss.
             Rx(@"choose an? [\w ,'\-]{0,30}\bartifacts?\b[^\n]{0,40}destroy the chosen"),
+            // …and the TYPE chosen rather than the permanent: "Choose artifact or
+            // enchantment. Destroy all permanents of the chosen type" (Season of
+            // Gathering, 2026-10-16).
+            Rx(@"choose (?:artifact|enchantment)[\w ,]{0,25}\. (?:destroy|exile) all permanents of the chosen type"),
+            // A tuck answers one too: "the owner of target artifact or
+            // enchantment an opponent controls SHUFFLES IT INTO their library"
+            // (Cathartic Parting, 2026-10-16).
+            Rx(@"target " + DisenchantNoun + @"[^.\n]{0,40}shuffles? it into"),
         ];
+
+        /// <summary>A CARD in a graveyard is graveyard hate, not an answer to a
+        /// permanent: "exile target artifact card from a graveyard" (Grave
+        /// Robbers), "exile target enchantment, instant, or sorcery card … from
+        /// an opponent's graveyard" (Saruman of Many Colors). 0 of 31 reviewed
+        /// cards that say it are tagged for it (2026-10-16). Blanked on the line
+        /// before the patterns are asked.</summary>
+        private static readonly Regex TargetCardInAGraveyard = Rx(
+            @"target [^.\n]{0,60}?\bcards?\b[^.\n]{0,60}?from (?:a|an opponent's|your|that player's|their|target player's) graveyard");
 
         /// <summary>A sweeper that happens to name artifacts is Wipe: Jokulhaups,
         /// Nevinyrral's Disk, Ultima and Death Begets Life all take the creatures
@@ -109,9 +131,11 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex SearchesOnlyForALand = Rx(
             @"library[^.\n]{0,40}for [^.\n]{0,25}(?:basic |snow |nonbasic )*(?:\blands?\b|" + BasicLandType + ")");
 
+        // "A creature OR LAND card" too: Analyze the Pollen searches for a basic
+        // land, and "instead" for either once evidence is collected (2026-10-16).
         private static readonly Regex SearchesForSomethingElseToo = Rx(
             @"\b(?:creature|artifact|enchantment|instant|sorcery|planeswalker|equipment|battle"
-            + @"|legendary|nonland permanent) cards?\b");
+            + @"|legendary|nonland permanent)(?: or land)? cards?\b");
 
         // "Search your library for a card NAMED Llanowar Sentinel" was vetoed for
         // half a day, on the evidence that five reviewed cards said it and none
@@ -126,7 +150,9 @@ namespace ScatoloneDownloader.Cube
         // them one line at a time, so a modal card is judged mode by mode.
         private static readonly Regex[] LandDestructionPatterns =
         [
-            Rx(@"(?:destroy|exile)[^\n]{0,80}target [\w ,'\-]{0,30}\blands?\b"),
+            // Not "EXILE THIS CARD from your hand: target land gains …", a cost
+            // paid with the card itself (Spara's Adjudicators, 2026-10-16).
+            Rx(@"(?:destroy|exile)(?! this card)[^\n]{0,80}target [\w ,'\-]{0,30}\blands?\b"),
             // A NONBASIC land closes a longer list, "exile target creature,
             // Vehicle, or nonbasic land" (Ray of Ruin, 2026-10-15). Widening the
             // run above to 40 for every land was measured the same day and
@@ -158,6 +184,11 @@ namespace ScatoloneDownloader.Cube
             // choose an artifact or land that player controls. Destroy the chosen
             // permanents." The same clause is the last Disenchant miss.
             Rx(@"choose an? [\w ,'\-]{0,30}\blands?\b[^\n]{0,40}destroy the chosen"),
+            // A land named by its CONTROLLER and no target: "for each player,
+            // destroy up to one nonbasic land that player controls" (Krenko's
+            // Buzzcrusher, 2026-10-16).
+            Rx(@"(?:destroy|exile) (?:up to )?(?:a|an|one|two|three) (?:nonbasic |basic )?lands? "
+                + @"(?:that player|target player|target opponent|an opponent|each opponent) controls"),
         ];
 
         /// <summary>A land card in a GRAVEYARD is fuel, not a target: Steward of
@@ -213,6 +244,11 @@ namespace ScatoloneDownloader.Cube
             // Ruled 2026-09-19. Moving an Aura "you control" is your own, though:
             // Codsworth re-equips, and was tagged Ramp alone.
             Rx(@"attach (?:target|enchanted) aura(?![\w ]{0,40} you control to )"),
+            // A permanent exiled and then CAST by you is taken twice over:
+            // "Exile target nonland permanent. You may cast that card for as
+            // long as it remains exiled" (Abstruse Appropriation, 2026-10-16).
+            // A permanent CARD is your own graveyard's (Savvy Trader).
+            Rx(@"exile target (?:nonland )?permanent\b(?! cards?\b)[^.\n]{0,30}\. you may (?:cast|play) that card\b"),
         ];
 
         /// <summary>Reanimating out of an OPPONENT'S graveyard is both Reanimate
@@ -299,9 +335,12 @@ namespace ScatoloneDownloader.Cube
         /// card could mistake that for a theft.</summary>
         // Press the Enemy casts "an instant or sorcery spell with equal or lesser
         // mana value FROM YOUR HAND", which no twenty letters could reach.
+        // "Cast a spell from among cards IN your graveyard that were milled this
+        // turn" is your own as well (Raul, Trouble Shooter, whose tap mills
+        // every player; 2026-10-16).
         private static readonly Regex PlaysACardYouOwn = Rx(
             @"(?:cards?|spells?) you own"
-            + @"|(?:play|cast)[\w ]{0,70}from your (?:graveyard|hand|library)");
+            + @"|(?:play|cast)[\w ]{0,70}(?:from|in) your (?:graveyard|hand|library)");
 
         /// <summary>The mirror image of Steal, and 12 of its 14 false positives:
         /// the card hands a permanent to somebody ELSE. It is the price Jinxed

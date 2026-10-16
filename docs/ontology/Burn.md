@@ -88,3 +88,22 @@ library (The Ruinous Powers), a relative clause opened by "who" or "dealt" up to
 damage handed on to the controller, which is not a charge for the kill (Gandalf's Sanction), and an
 Aura handing its creature "unless you pay 2 life" every upkeep (Morgul-Knife Wound); Kaito, Dancing
 Shadow's Drone keeps its drain to itself. Measured: Burn F1 98.1 to 98.6 before the store pass.
+
+Ruled 2026-10-16 (B1, "Mai Burn"): a player who DRAWS N CARDS AND LOSES N LIFE is never burnt; the
+life is what the cards cost, whoever pays it. Monumental Corruption was tagged and is corrected by
+name; Ob Nixilis, the Adversary keeps the tag through its +1 drain, another sentence. A drain that
+answers an OPPONENT'S SACRIFICE falls the same way, as the hand already had it (Vengeful Tracker
+untagged). Both are dropped only when nothing else on the card reads as Burn once they are blanked.
+
+Ruled 2026-10-16 (B2, "Sempre Burn"): an opponent, a target player or a defending player losing HALF
+THEIR LIFE is always Burn. Alpharael, Stonechosen and Betor, Kin to All were untagged and are handed
+back with it; "its owner" (Personal Incarnation) and "each player" (Shahrazad) aim at nobody and
+stay out. Blooming Blast's 3 damage to the controller is no Burn (B3, "Nessun Burn", named): it
+rides an answer, which is the Misthios's Fury rule.
+
+Read the same day: damage to "each of your opponents" (Aurelia, the Law Above), a life gain answered
+with "that much life" lost (Enduring Tenacity; the broad "loses that much life" measured 1 tagged of
+3 and was narrowed to a life gain), a drain on entering by a card that returns itself to hand
+(Intimidation Campaign) and damage divided among "up to eight targets" (Blaster Hulk). A WARD paid
+in life ("counter it unless that player pays 2 life") taxes their spell: 0 of the 6 reviewed are
+tagged. Arbiter of Woe, whose entering drain the rules already read, is handed back with the tag.

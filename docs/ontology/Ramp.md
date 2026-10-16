@@ -93,3 +93,17 @@ Pictures of Spider-Man and Reckless Lackey untagged); the land untapped to be an
 Invoker, Woodcaller Automaton); ONE mana granted to lands, which fixes (Dune Chanter, Wrenn and
 Realmbreaker, Spara's Adjudicators — two or three granted is Ramp, 3 of 3); lands sacrificed for the
 lands revealed (Hew the Entwood); a land sacrificing a creature for one mana (Lazotep Quarry).
+
+Ruled 2026-10-16: Terra, Magical Adept is not this tag ("Togli Ramp"; it keeps Filter), and a free
+cast of a TRIBE is nothing at all (C1, "Sarebbe Cheat ma per le tribali resta niente"): Dracogenesis
+loses Ramp, and Charred Foyer // Warped Space keeps only CardAdvantage and Cheat. Read the same day:
+a Saga chapter's Treasure for each (Vault 21: House Gambit; written to the chapters after
+Cataclysmic Prospecting came up wrong), a land that puts itself from your hand for mana (Talon Gates
+of Madara; not one that returns a creature for it, Urban Retreat), mana added after an "if you do"
+(Omnath, Locus of All), a tap ability that adds mana a sentence later (Red Death, Shipwrecker) and
+lands searched, exiled and put onto the battlefield (Omenpath Journey). Not this: lands untapped
+beside "you can't cast spells" (Innocuous Researcher), extra mana spent only on cumulative upkeep
+(Snowfall), and the one-mana ability handed to an opponent's creature (Honest Work), to a Moon's
+lands (Zhao, the Moon Slayer) or to the land a dead card becomes (Princess Yue). Handed back: Savvy
+Trader, Strong Back, Astrolabe, Alchemist's Talent, Boneyard Desecrator and Natural Balance with the
+tag; Town Greeter and Dazzling Theater without it; Gift of Estates and Tithe move to ManaFixing.

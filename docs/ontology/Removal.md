@@ -112,3 +112,6 @@ chapter (Summon: Ixion and Trial of a Time Lord corrected by name, Vault 13: Dwe
 handed back); every other O-Ring stays here. And a CUMULATIVE UPKEEP an Aura hands to the creature
 is this tag paid in LIFE as in mana ("Removal, no Pacify"): Decomposition joins Mana Chains, which
 overturns the line above that kept its life payment out.
+
+Read 2026-10-16: a "target creature card" is in a graveyard, no creature to answer (Lazotep Quarry).
+Tidal Wave is handed back without the tag.

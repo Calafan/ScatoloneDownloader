@@ -142,9 +142,13 @@ The three reviewed cards whose only pump it is are untagged (Sagu Pummeler, Kher
 Champion of Dusan), against Agent of Kotis's renew without the reach counter, tagged and reviewed
 the same day as Sagu Pummeler. Repeated, it is an engine (Guide of Souls).
 
-REJECTED 2026-10-16: the quoted target pump handed to an enchanted LAND as the card's own pump.
-Mystic Might was tagged on 09-04, before the 2026-09-21 ruling whose own case is Forbidden Lore, the
-same Aura; Mystic Might was handed back instead.
+REJECTED 2026-10-16, then RULED the other way the same day: the quoted target pump handed to an
+enchanted LAND as the card's own pump. Mystic Might was tagged on 09-04, before the 2026-09-21
+ruling whose own case is Forbidden Lore, the same Aura; Mystic Might was handed back, confirmed with
+Buff, and asked ("Buff a entrambe", U1): a land is no creature to own the pump, so the Aura hands it
+out.
+This overturns the 09-21 case for an enchanted land only, and Forbidden Lore is handed back with the
+tag; a pump granted to a creature or a token still belongs to it.
 
 Handed back 2026-10-16 to agree with older rulings that reach them: without Buff a keyword grant
 (Flickering Ward, The Wind Crystal), a self-pump (Nesting Bot's "Max speed — This creature gets"), a

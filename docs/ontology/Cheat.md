@@ -70,3 +70,6 @@ a tribe called Exile. Still out: the impulse rider ("exile the top card … you 
 Mind's Desire, Oracle's Vault), and a pile the card filled itself with counters, as Forger's Foundry
 (Tasha, the Witch Queen out of graveyards, Goliath Daydreamer out of its own spells; both unreviewed
 and not asked).
+
+Since 2026-10-16 a look and a free cast is Filter as well as this tag, the consequence of the 10-13
+Kiora ruling (see Filter): Perception Bobblehead keeps its Cheat.

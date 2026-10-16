@@ -403,6 +403,22 @@ namespace ScatoloneDownloader.Cube
                 + @"|creature cards? (?:in|from) your graveyard[^\n]{0,160}\breturn (?:each card chosen this way|the other) to the battlefield"),
             Rx(@"search your library and/or graveyard for[^.\n]{0,60}creature card[^.\n]{0,80}put it onto the battlefield"),
             Rx(@"whenever (?:a|another) [^.\n]{0,40}creature you control dies, return that card to the battlefield"),
+            // …and the one creature an Aura is on, "when enchanted creature dies,
+            // return that card to the battlefield under your control" (Necrogen
+            // Communion, False Demise), or any creature of yours, the enchantment
+            // sacrificed for it (Angelic Renewal). Read 2026-10-16. Under YOUR
+            // control: Abduction hands the stolen creature back to its owner.
+            Rx(@"when(?:ever)? enchanted creature dies, return that card to the battlefield under your control"
+                + @"|whenever a creature is put into your graveyard from the battlefield[^\n]{0,80}return that card to the battlefield"),
+            // A FREE cast out of your graveyard of a card that may be a creature
+            // or another permanent — Counterpoint's "creature, instant, sorcery,
+            // or planeswalker spell", Shiko's "nonland card" and its copy — puts
+            // a permanent on the battlefield for nothing, read 2026-10-16. The
+            // instant-and-sorcery casts stay Regrowth alone (Daring Waverider,
+            // Wishing Well, Seifer Almasy, Sword of Once and Future: 0 of 6).
+            Rx(@"cast (?:a |an |target )?[\w ,'\-/]{0,40}\b(?:creature|permanent|nonland)\b[\w ,'\-/]{0,60}"
+                + @"from your graveyard[^.\n]{0,80}without paying"
+                + @"|\b(?:creature|permanent|nonland) card[\w ,'\-/]{0,40}from your graveyard\. copy it, then you may cast the copy without paying"),
         ];
 
         private static readonly Regex[] RegrowthPatterns =
@@ -428,6 +444,14 @@ namespace ScatoloneDownloader.Cube
             // cards of your graveyard to hand (Phyrexian Grimoire); a pile of
             // them (Split the Spoils); a card on top of your library without a
             // target (Halo-Charged Skaab).
+            // Read 2026-10-16, each the one reviewed card that says it and
+            // tagged: a card CHOSEN in your graveyard and then cast (Conduit of
+            // Worlds) or put into your hand when it does not go to the
+            // battlefield (Cosmic Rebirth); the top card of a graveyard put on
+            // top of the library (Guiding Spirit).
+            Rx(@"target [\w ,'\-/]{0,50}cards? in your graveyard\.[^\n]{0,80}\byou may cast that card"
+                + @"|target [\w ,'\-/]{0,50}cards? in your graveyard\.[^\n]{0,200}\bput it into your hand"
+                + @"|the top card of [\w' ]{0,25}graveyard is [^,\n]{0,30}, put that card on top of"),
             Rx(@"cards? of your graveyard\.[^.\n]{0,60}put the other (?:one )?into your hand"
                 + @"|from your graveyard[^\n]{0,120}put that pile into your hand"
                 + @"|put (?:a|an) [\w ,'\-/]{0,40}cards? from your graveyard on top of your library"),
@@ -489,7 +513,15 @@ namespace ScatoloneDownloader.Cube
             Rx(@"(?<!whenever you )(?:may )?cast (?!this card\b|this spell\b|it\b)"
                 + @"(?!cards with (?:retrace|flashback|escape|harmonize|jump-start|mayhem)\b)"
                 + @"(?!(?:[\w ,'\-/]{0,40})?for each)[\w ,'\-/]{0,50}(?:spells?|cards?)\b[\w ,'\-/]{0,80}? "
-                + @"from (?:among )?(?:cards in )?(?:your|a|any|their|that player's) graveyard"),
+                + @"from (?:among )?(?:cards in )?(?:your|a|any) graveyard"),
+            // A card cast out of an OPPONENT'S graveyard — "that player's", "their"
+            // — is Steal alone and never Regrowth, ruled 2026-10-16 ("solo
+            // Steal"): Tinybones, the Pickpocket by hand, Deluxe Dragster changed
+            // by name. The two possessives were in the list above until then.
+            //
+            // A free cast of a card that can be a PERMANENT is Reanimate as well,
+            // read 2026-10-16 from Counterpoint and Shiko, Paragon of the Way:
+            // what lands may be a creature. See ReanimatePatterns.
             // "From ANY graveyard" is the same cast, ruled 2026-10-16: Urabrask //
             // The Great Work's chapter III ("Until end of turn, you may cast
             // instant and sorcery spells from any graveyard") is Regrowth like
@@ -507,7 +539,11 @@ namespace ScatoloneDownloader.Cube
             // Jeskai ("each instant and sorcery card in your graveyard gains
             // flashback"), reached.
             Rx(@"(?:each|all|any number of) [\w ,'\-/]{0,40}cards? in your graveyard (?:ha(?:s|ve)|gains?) "
-                + @"(?:flashback|escape|harmonize|mayhem)"),
+                + @"(?:flashback|escape|harmonize|mayhem)"
+                // …and in EVERY graveyard, yours among them (Otaria), which the
+                // cast above read through the reminder's "their graveyard" until
+                // that left its list on 2026-10-16.
+                + @"|\b(?:instant|sorcery|instant and sorcery) cards in graveyards (?:ha(?:s|ve)|gains?) flashback"),
             Rx(@"(?:spells?|cards?)[\w ,'\-/]{0,20}(?:can be cast|may be cast) from your graveyard"),
         ];
 

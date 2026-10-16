@@ -24,3 +24,7 @@ already IN A GRAVEYARD is fuel (Steward of the Harvest), an AURA ATTACHED TO a l
 destroys nothing and hands basics back is not denial (Natural Balance) — that last excuses only a
 line with no destroy or exile in it, because Sandworm, Price of Freedom and Magmatic Hellkite all
 kill a land and offer a basic as consolation. 23 wrong out of 5,037 reviewed cards down to 4.
+
+Read 2026-10-16: lands an opponent controls destroyed by count, not by target (Krenko's
+Buzzcrusher). Not this: exiling THIS CARD from your hand as a cost, whatever land it then names
+(Spara's Adjudicators).

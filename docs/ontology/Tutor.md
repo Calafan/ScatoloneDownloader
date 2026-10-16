@@ -29,3 +29,7 @@ was costing Dragonstorm Forecaster. Searching without putting the card in your H
 Ugin exiles and casts them free, Goblin Recruiter stacks the top of the library, Foresight just
 exiles. 26 wrong out of 5,037 reviewed cards down to 1, and that one is Elemental Teachings, held
 out by the land ruling on purpose.
+
+Read 2026-10-16: a search for "a creature or land card" (Analyze the Pollen; Traverse the Ulvenwald,
+unreviewed). Handed back: Central Elevator, Thornvault Forager and The Hunger Tide Rises with the
+tag; Urza's Cave without it.

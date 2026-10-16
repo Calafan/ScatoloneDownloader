@@ -76,3 +76,13 @@ Adjudicators). Not a Treasure handed to somebody else (An Offer You Can't Refuse
 Council, Blooming Blast's gift), nor the free extra mana of an enchanted land, a source (Blighted
 Burgeoning, Buried in the Garden), nor free mana handed to "target player" (Bigger on the Inside,
 The Warring Triad).
+
+Ruled 2026-10-16 (M1, "MF a entrambe"): a target land made the basic land type of your choice is
+this tag, Mystic Compass and Jinx alike; Jinx is handed back with it. Read the same day: lands
+searched, revealed and put into your hand (Aang's Journey; the 2026-10-15 rejection of that shape
+revisited, Analyze the Pollen staying out through "that card"), which moves Gift of Estates and
+Tithe here from Ramp, and a reveal until a land card goes to hand (House Cartographer). Not this: a
+Treasure maker lent for a turn (Furnace Reins), a source adding the colour its cost already paid
+(Sunken Palace), and one mana of any colour only when the card returned is green (Tamiyo,
+Inquisitive Student). Handed back: Land Tax with the tag; Crystal Vein, Metamorphosis, All-Fates
+Scroll, Fellwar Stone, Candelabra of Tawnos and Hall of Gemstone without it.
