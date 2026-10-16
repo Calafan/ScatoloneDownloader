@@ -6313,6 +6313,125 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // Double strike handed to another creature: named in the sentence before, a
+    // mode of the equipped creature's attack, a list of keywords for the team.
+    [InlineData("Kayla's Command", "Sorcery",
+        "Choose two —\n• Create a 2/2 colorless Construct artifact creature token.\n• Put a +1/+1 counter on a "
+        + "creature you control. It gains double strike until end of turn.\n• Search your library for a basic "
+        + "Plains card, reveal it, put it into your hand, then shuffle.\n• You gain 2 life and scry 2.")]
+    [InlineData("The Spear of Leonidas", "Legendary Artifact — Equipment",
+        "Whenever equipped creature attacks, choose one —\n• Bull Rush — It gains double strike until end of "
+        + "turn.\n• Summon — Create Phobos, a legendary 3/2 red Horse creature token.\n• Revelation — Discard two "
+        + "cards, then draw two cards.\nEquip {2}")]
+    [InlineData("Bleeding Effect", "Enchantment",
+        "At the beginning of combat on your turn, creatures you control gain flying until end of turn if a "
+        + "creature card in your graveyard has flying. The same is true for first strike, double strike, "
+        + "deathtouch, hexproof, indestructible, lifelink, menace, reach, trample, and vigilance.")]
+    // A counter on the creature a trigger names, or on the one the sentence before
+    // targeted.
+    [InlineData("Sphere Grid", "Enchantment",
+        "Whenever a creature you control deals combat damage to a player, put a +1/+1 counter on that "
+        + "creature.\nUnlock Ability — Creatures you control with +1/+1 counters on them have reach and trample.")]
+    [InlineData("Experimental Lab // Staff Room", "Enchantment — Room // Enchantment — Room",
+        "When you unlock this door, manifest dread, then put two +1/+1 counters and a trample counter on that "
+        + "creature.\n(You may cast either half. That door unlocks on the battlefield. As a sorcery, you may pay "
+        + "the mana cost of a locked door to unlock it.)\nWhenever a creature you control deals combat damage to "
+        + "a player, turn that creature face up or put a +1/+1 counter on it.\n(You may cast either half. That "
+        + "door unlocks on the battlefield. As a sorcery, you may pay the mana cost of a locked door to unlock "
+        + "it.)")]
+    [InlineData("The Aetherspark", "Legendary Artifact Planeswalker — Equipment",
+        "As long as The Aetherspark is attached to a creature, The Aetherspark can't be attacked and has "
+        + "\"Whenever equipped creature deals combat damage during your turn, put that many loyalty counters on "
+        + "The Aetherspark.\"\n+1: Attach The Aetherspark to up to one target creature you control. Put a +1/+1 "
+        + "counter on that creature.\n−5: Draw two cards.\n−10: Add ten mana of any one color.")]
+    // A repeated counter that comes with a keyword counter is still an engine.
+    [InlineData("Guide of Souls", "Creature — Human Cleric",
+        "Whenever another creature you control enters, you gain 1 life and get {E} (an energy "
+        + "counter).\nWhenever you attack, you may pay {E}{E}{E}. When you do, put two +1/+1 counters and a "
+        + "flying counter on target attacking creature. It becomes an Angel in addition to its other types.")]
+    // A permanent pump beside a damage shield is the card's pump.
+    [InlineData("Caduceus, Staff of Hermes", "Legendary Artifact — Equipment",
+        "Equipped creature has lifelink.\nAs long as you have 30 or more life, equipped creature gets +5/+5 "
+        + "and has indestructible and \"Prevent all damage that would be dealt to this creature.\"\nEquip {W}{W}")]
+    // A +N/-M on your own creature, ruled 2026-10-16.
+    [InlineData("Ashnod's Battle Gear", "Artifact",
+        "You may choose not to untap this artifact during your untap step.\n{2}, {T}: Target creature you "
+        + "control gets +2/-2 for as long as this artifact remains tapped.")]
+    // Reinforce, whose counters are written only in its reminder.
+    [InlineData("Fowl Strike", "Instant",
+        "Destroy target creature with flying.\nReinforce 2—{2}{G} ({2}{G}, Discard this card: Put two +1/+1 "
+        + "counters on target creature.)")]
+    // A pump alone on its line, beside a shield only a Human gets.
+    [InlineData("Flare of Faith", "Instant",
+        "Target creature gets +2/+2 until end of turn. If it's a Human, instead it gets +3/+3 and gains "
+        + "indestructible until end of turn.")]
+    public void Classify_TheMidOctoberBuffGaps_AreBuff(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // A one-shot pump said with a shield, on a card that is Protection, ruled
+    // 2026-10-16.
+    [InlineData("Dark Endurance", "Instant",
+        "This spell costs {1} less to cast if it targets a blocking creature.\nTarget creature gets +2/+0 and "
+        + "gains indestructible until end of turn. (Damage and effects that say \"destroy\" don't destroy it.)")]
+    [InlineData("Fake Your Own Death", "Instant",
+        "Until end of turn, target creature gets +2/+0 and gains \"When this creature dies, return it to the "
+        + "battlefield tapped under its owner's control and you create a Treasure token.\" (It's an artifact "
+        + "with \"{T}, Sacrifice this token: Add one mana of any color.\")")]
+    [InlineData("Presumed Dead", "Instant",
+        "Until end of turn, target creature gets +2/+0 and gains \"When this creature dies, return it to the "
+        + "battlefield under its owner's control and suspect it.\" (A suspected creature has menace and can't "
+        + "block.)")]
+    // Sacrificed by name, it pumps the team once beside the shield.
+    [InlineData("Hajar, Loyal Bodyguard", "Legendary Creature — Human Soldier",
+        "Sacrifice Hajar: Legendary creatures you control get +1/+0 and gain indestructible until end of "
+        + "turn.")]
+    // Otherwise is not other: the counters it doubles are its own.
+    [InlineData("Lily Bowen, Raging Grandma", "Legendary Creature — Mutant Warrior",
+        "Vigilance\nLily Bowen enters with two +1/+1 counters on it.\nAt the beginning of your upkeep, double "
+        + "the number of +1/+1 counters on Lily Bowen if its power is 16 or less. Otherwise, remove all but one "
+        + "+1/+1 counter from it, then you gain 1 life for each +1/+1 counter removed this way.")]
+    // The tribe as a clause after the noun.
+    [InlineData("Skeleton Crew", "Creature — Skeleton Pirate",
+        "Each other creature you control that's a Skeleton or Pirate gets +1/+1.\nWhenever one or more "
+        + "creature cards leave your graveyard, create a 2/2 black Skeleton Pirate creature token. (This "
+        + "ability triggers only from the battlefield.)\n{5}{B}: Return this card from your graveyard to the "
+        + "battlefield tapped.")]
+    // A one-shot counter that comes with a keyword counter is the keyword handed
+    // out.
+    [InlineData("Sagu Pummeler", "Creature — Beast",
+        "Reach\nRenew — {4}{G}, Exile this card from your graveyard: Put two +1/+1 counters and a reach "
+        + "counter on target creature. Activate only as a sorcery.")]
+    // The creature an opponent has just been handed.
+    [InlineData("Jon Irenicus, Shattered One", "Legendary Creature — Elf Wizard",
+        "At the beginning of your end step, target opponent gains control of up to one target creature you "
+        + "control. Put two +1/+1 counters on it and tap it. It's goaded for the rest of the game and it gains "
+        + "\"This creature can't be sacrificed.\" (It attacks each combat if able and attacks a player other than "
+        + "you if able.)\nWhenever a creature you own but don't control attacks, you draw a card.")]
+    // The +N/-M an Aura gives is not Buff, ruled 2026-10-16.
+    [InlineData("Grave Servitude", "Enchantment — Aura",
+        "You may cast this spell as though it had flash. If you cast it any time a sorcery couldn't have been "
+        + "cast, the controller of the permanent it becomes sacrifices it at the beginning of the next cleanup "
+        + "step.\nEnchant creature\nEnchanted creature gets +3/-1 and is black.")]
+    // Exalted and rampage are keywords, never Buff, ruled 2026-10-16.
+    [InlineData("Emissary of Soulfire", "Creature — Djinn Monk",
+        "When this creature enters, you get {E}{E}{E} (three energy counters).\nPay {E}{E}: Put an exalted "
+        + "counter on target creature you control. Activate only as a sorcery. (Whenever a creature you control "
+        + "attacks alone, it gets +1/+1 until end of turn for each instance of exalted among permanents you "
+        + "control.)")]
+    [InlineData("Rapid Fire", "Instant",
+        "Cast this spell only before blockers are declared.\nTarget creature gains first strike until end of "
+        + "turn. If it doesn't have rampage, that creature gains rampage 2 until end of turn. (Whenever the "
+        + "creature becomes blocked, it gets +2/+2 until end of turn for each creature blocking it beyond the "
+        + "first.)")]
+    public void Classify_TheMidOctoberBuffMisreadings_AreNotBuff(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
     // An activation whose cost runs past 40 characters is still held up.
     [InlineData("Arwen, Mortal Queen", "Legendary Creature — Elf Noble", null,
         "Arwen enters with an indestructible counter on her.\n{1}, Remove an indestructible counter from Arwen: "

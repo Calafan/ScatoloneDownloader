@@ -946,8 +946,11 @@ namespace ScatoloneDownloader.Cube
                     realPump = PumpsWhatItTook.Replace(realPump, " ");
                 }
 
+                // …except a line whose pump is PERMANENT: Caduceus's +5/+5 on
+                // the equipped creature comes with a damage shield, and the
+                // pump is the card (2026-10-16).
                 realPump = string.Join('\n', realPump.Split('\n')
-                    .Select(line => AnswerOrShieldOnTheSameLine.IsMatch(line) ? " " : line));
+                    .Select(line => AnswerOrShieldOnTheSameLine.IsMatch(line) && !PumpIsPermanent.IsMatch(line) ? " " : line));
 
                 if (realPump != text && !BuffPatterns.Any(p => p.IsMatch(realPump))
                     && !HandsSomebodyElseAPump(realPump))

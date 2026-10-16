@@ -395,7 +395,9 @@ namespace ScatoloneDownloader.Cube
         private static bool HandsSomebodyElseAPump(string text) =>
             (CounterOnSomebodyElse.IsMatch(text) && !CounterForAnOpponent.IsMatch(text))
             || GivesARole.IsMatch(Quoted.Replace(text, " "))
-            || GrantsAQuotedPump.IsMatch(Parenthetical.Replace(text, " "));
+            || GrantsAQuotedPump.IsMatch(Parenthetical.Replace(text, " "))
+            || DoubleStrikeForAnother.IsMatch(text)
+            || PlusMinusOnYours.IsMatch(text);
 
         /// <summary>True when the card's only pump goes to the creatures that
         /// share ITS NAME — its own copies, which is the card pumping itself.

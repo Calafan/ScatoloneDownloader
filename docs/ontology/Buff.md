@@ -111,3 +111,44 @@ with a counter (Torgal), "if it's a Spider, put" (Aunt May); Coppercoat Vanguard
 and Vaan handed back without Buff. A creature's one-shot "for each" is judged by its printed number
 (Eastfarthing Farmer). Measured: Buff F1 96.6 to 98.6, with the 66 reviewed cards these rulings
 reached handed back to the tagger.
+
+RULED 2026-10-16 ("Solo Protection", Presumed Dead against Fake Your Own Death): a one-shot pump
+said in the same breath as a shield — indestructible, hexproof, shroud, protection, or "When this
+creature dies, return it" — is the shield's rider on a card that is Protection, not Buff. Dark
+Endurance and Fake Your Own Death handed back without it; Hajar's "Sacrifice Hajar" is the same
+one-shot. A +5/+5 is a pump of its own (Stonewood Invocation), a repeated one is an engine
+(Endurance Bobblehead), a creature's entry trigger that is not Protection keeps the tag (Rampaging
+Spiketail, Perigee Beckoner), and so does a pump alone on its line beside a shield only a Human gets
+(Flare of Faith).
+
+RULED 2026-10-16 ("Keyword, mai Buff"): exalted and rampage are keywords, never Buff, like prowess
+(Emissary of Soulfire, Merchant of Truth and Rapid Fire handed back without it).
+
+RULED 2026-10-16 ("Solo sulle tue creature"): a +N/-M is Buff only on creatures you control —
+Ashnod's Battle Gear's "target creature you control gets +2/-2", Tourach's Gate's attackers. An
+Aura's or an Equipment's +N/-M is not (Grave Servitude handed back).
+
+Read 2026-10-16, wordings the rules could not see: double strike handed to the creature named in the
+sentence before (Kayla's Command), as a mode of the equipped creature's attack (The Spear of
+Leonidas), or in the team's list of keywords (Bleeding Effect); a counter on the creature a trigger
+names (Sphere Grid, Experimental Lab) or that the sentence before targeted (The Aetherspark), but
+not on the one just handed to an opponent (Jon Irenicus); keyword counters joined by "and" (Guide of
+Souls); a permanent pump beside a damage shield (Caduceus); reinforce (Fowl Strike); the card
+sacrificed by name (Hajar); "Otherwise" is not "other" (Lily Bowen); and a tribe written as a
+clause, "that's a Skeleton or Pirate" (Skeleton Crew).
+
+MEASURED 2026-10-16: a ONE-SHOT counter that comes with a keyword counter is the keyword handed out.
+The three reviewed cards whose only pump it is are untagged (Sagu Pummeler, Kheru Goldkeeper,
+Champion of Dusan), against Agent of Kotis's renew without the reach counter, tagged and reviewed
+the same day as Sagu Pummeler. Repeated, it is an engine (Guide of Souls).
+
+REJECTED 2026-10-16: the quoted target pump handed to an enchanted LAND as the card's own pump.
+Mystic Might was tagged on 09-04, before the 2026-09-21 ruling whose own case is Forbidden Lore, the
+same Aura; Mystic Might was handed back instead.
+
+Handed back 2026-10-16 to agree with older rulings that reach them: without Buff a keyword grant
+(Flickering Ward, The Wind Crystal), a self-pump (Nesting Bot's "Max speed — This creature gets"), a
+tribe's target (Manifold Mouse), a team base (Sephiroth, Fallen Hero) and a token's pump (Crescent
+Island Temple, Unfortunate Accident, We Ride at Dawn); with it, B3 narrowed (Shelinda, Yevon
+Acolyte; Spider-Man Noir). Measured: Buff F1 98.6 to 99.1 before the hand-backs, and the 17 reviewed
+cards still in disagreement are exactly the ones handed back.

@@ -514,6 +514,11 @@ namespace ScatoloneDownloader.Cube
         // Planisphere tagged, Red Mage's Rapier handed back to agree; Tale of
         // Katara and Toph is the team form). A token's quoted pump stays the
         // token's: no token is equipped or enchanted as it is made.
+        // NOT an enchanted LAND: its "{T}: Target creature gets +2/+2" is a
+        // granted ability pumping a target, the 2026-09-21 ruling's own case
+        // (Forbidden Lore). Tried 2026-10-16 for Mystic Might, which was tagged
+        // on 09-04 before that ruling, and withdrawn; Mystic Might was handed
+        // back instead.
         private static readonly Regex GrantsAQuotedPump = Rx(
             @"(?:(?:enchanted|equipped) creature|creatures you control) (?:[^.""\n]{0,60}\band )?(?:has|have|gains?) "
             + @"""[^""\n]*(?:gets? \+[\dXx]|\+1/\+1 counters? on (?:this creature|it)\b)");
@@ -564,7 +569,10 @@ namespace ScatoloneDownloader.Cube
             // (Thunderous Velocipede, Tromell). The last is restricted to OTHER
             // creatures, because "this creature enters with an additional +1/+1
             // counter" is the self-pump this tag has always refused.
-            @"\+[\dX]+/\+[\dX]+ counters?(?:, a [\w ]{0,20}counter,? (?:and a [\w ]{0,20}counter )?)?"
+            // The keyword counters beside it can be joined by "and" alone (Guide
+            // of Souls' "two +1/+1 counters and a flying counter on target",
+            // 2026-10-16).
+            @"\+[\dX]+/\+[\dX]+ counters?(?:,? (?:and )?an? [\w ]{0,20}counter,?(?: and an? [\w ]{0,20}counter)?)?"
             + @" ?(?:equal to [\w' ]{0,30} )?on "
             + @"(?:target|another|each|up to|one or more|enchanted)"
             // "That creature" when it is the one just CAST (Communal Brewing,
@@ -596,7 +604,14 @@ namespace ScatoloneDownloader.Cube
             // handed back with it.
             + @"|\ba number of additional \+1/\+1 counters"
             + @"|choose a player\. they put (?:a|an|one|two|three) \+1/\+1 counters? on a creature they control"
-            + @"|whenever (?:a|another) (?:nontoken )?creature you control enters[^\n]{0,80}put (?:a|an|one|two|three) \+1/\+1 counters? on it\b"
+            // Widened 2026-10-16 from "enters" to any trigger of the creature
+            // and to "that creature" (Sphere Grid and Experimental Lab count the
+            // creature that connected, both tagged by hand), and joined by the
+            // creature named in the sentence before (The Aetherspark's "target
+            // creature you control. Put a +1/+1 counter on that creature").
+            + @"|whenever (?:a|another) (?:nontoken )?creature you control [^\n]{0,80}put (?:a|an|one|two|three) \+1/\+1 counters? on (?:it|that creature)\b"
+            // Not the creature an opponent has just been handed (Jon Irenicus).
+            + @"|(?<!control of (?:up to one )?)target creature you control\. put (?:a|an|one|two|three) \+1/\+1 counters? on (?:it|that creature)\b"
             + @"|for each of them, put [\w ]{0,20}\+1/\+1 counters? on it\b"
             + @"|\bbolster (?:\d|x)\b"
             + @"|\b(?:have|has) riot\b"
@@ -606,7 +621,28 @@ namespace ScatoloneDownloader.Cube
             // Agent's Toolkit; Costume Closet and Afiya Grove handed back). Only
             // off THIS card: Tidus moves one between two of your creatures,
             // which adds nothing to the board.
-            + @"|\bmove (?:a|an|one) (?:\+1/\+1 )?counters? from this (?:artifact|enchantment) onto");
+            + @"|\bmove (?:a|an|one) (?:\+1/\+1 )?counters? from this (?:artifact|enchantment) onto"
+            // REINFORCE, whose counters are only ever written in its reminder
+            // like mentor's (Fowl Strike, tagged 2026-09-23).
+            + @"|\breinforce (?:[2-9]|x)\b");
+
+        // DOUBLE STRIKE handed to another creature in three wordings the
+        // subject gate cannot read, all tagged by hand (2026-10-16): the
+        // creature named in the sentence before and then called "it" (Kayla's
+        // Command), a mode of the equipped creature's attack trigger (The Spear
+        // of Leonidas's "• Bull Rush — It gains double strike"), and the team's
+        // list of keywords (Bleeding Effect's "The same is true for first
+        // strike, double strike, …").
+        private static readonly Regex DoubleStrikeForAnother = Rx(
+            @"(?:target|a|another) creature you control\. (?:it|that creature) gains [\w ,]{0,30}double strike"
+            + @"|(?:equipped|enchanted) creature attacks\b[^\n]*(?:\n•[^\n]*){0,4}?(?:\n• (?:[^—\n]{1,30}— )?|, )it gains [\w ,]{0,30}double strike"
+            + @"|creatures you control gain [^.\n]{0,80}\. the same is true for [\w ,]{0,80}double strike");
+
+        // A +N/-M is Buff only on YOUR creatures, ruled 2026-10-16 ("Solo sulle
+        // tue creature"): Ashnod's Battle Gear's "target creature you control
+        // gets +2/-2" is tagged, an Aura or an Equipment's +N/-M is not (Grave
+        // Servitude handed back). Tourach's Gate's attackers already were.
+        private static readonly Regex PlusMinusOnYours = Rx(@"\bcreatures? you control gets? \+[1-9]\d*/-[1-9]\d*");
 
         // Same question Buff always asks, in the one place this wording can point
         // the wrong way: a counter on THEIR creatures helps them, not you.
@@ -663,6 +699,10 @@ namespace ScatoloneDownloader.Cube
             + @"|[Cc]reatures you control of the chosen type (?:get|have)\b"
             + @"|[Cc]reatures? you control named [\w' ,-]{1,40} gets? \+"
             + @"|each creature you control named [\w' ,-]{1,40} gets? \+"
+            // …and the tribe as a clause after the noun (Skeleton Crew's "each
+            // other creature you control that's a Skeleton or Pirate gets
+            // +1/+1"), which the human took off Buff on 2026-10-06.
+            + @"|[Cc]reatures? you control that's an? " + NotATribe + @"[A-Z][\w']+(?: or [A-Z][\w']+)* gets? \+"
             + @"|" + ClauseStart + @"(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + StateBeforeATribe + NotATribe
             + @"[A-Z][\w']+s?(?:, [A-Z][\w']+s?){0,20},? and [A-Z][\w']+s?(?: creatures?)? you control (?:get|have)\b"
             // Three more read 2026-10-14: the list with "creatures" after it
@@ -1814,7 +1854,9 @@ namespace ScatoloneDownloader.Cube
 
         private static readonly Regex PumpIsPermanent = Rx(@"\b(?:enchanted|equipped) (?:creature|permanent)s? (?:gets?|has)\b");
 
-        private static readonly Regex PumpNamesSomebody = Rx(@"target|another|other");
+        // Whole words: "Otherwise" is not "other" (Lily Bowen's upkeep doubles
+        // its own counters, 2026-10-16).
+        private static readonly Regex PumpNamesSomebody = Rx(@"\b(?:target|another|other)\b");
 
         // The pump that aims a removal spell: "it deals damage equal to its power
         // to target creature", "then it fights".
@@ -1859,6 +1901,9 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex UntilEndOfTurn = Rx(@"until end of turn");
         private static readonly Regex PutsCounters = Rx(@"\bput\b|\bdistribute\b|\bbolster\b");
         private static readonly Regex GetsPlus = Rx(@"\bgets? \+|\bget \+");
+        private static readonly Regex PumpBesideAShield = Rx(
+            @"\bgets? \+[\dx]+/[-+][\dx]+ and gains? (?:indestructible|hexproof|shroud|protection from|""when this creature dies, return)");
+        private static readonly Regex CounterWithAKeywordCounter = Rx(@"\+1/\+1 counters?,? and an? [\w ]{1,20}counter\b");
 
         private enum PumpTiming { Once, Instant, Repeat, Static }
 
@@ -1891,7 +1936,13 @@ namespace ScatoloneDownloader.Cube
                 if (colon > 0 && !line.StartsWith("when") && !line.StartsWith("at the")
                     && PaidCost.IsMatch(line[..colon]))
                 {
-                    return CostSpendsTheCard.IsMatch(line[..colon]) ? PumpTiming.Once : PumpTiming.Repeat;
+                    // The card can be sacrificed by NAME as well (Hajar's
+                    // "Sacrifice Hajar:", 2026-10-16).
+                    string cost = line[..colon];
+                    string name = ShortName(card).ToLowerInvariant();
+                    bool spendsTheCard = CostSpendsTheCard.IsMatch(cost)
+                        || (name.Length >= 3 && cost.Contains("sacrifice " + name, StringComparison.Ordinal));
+                    return spendsTheCard ? PumpTiming.Once : PumpTiming.Repeat;
                 }
 
                 if (RepeatingTrigger.IsMatch(line)) { return PumpTiming.Repeat; }
@@ -1953,7 +2004,7 @@ namespace ScatoloneDownloader.Cube
 
         /// <summary>Does this one pump earn Buff under the 2026-09-25 rule? See
         /// the block comment above for B1, B2, B3 and the bite.</summary>
-        private static bool PumpCounts(Card card, string head, string piece, PumpTiming timing, CardEffect otherTags)
+        private static bool PumpCounts(Card card, string head, string piece, string line, PumpTiming timing, CardEffect otherTags)
         {
             bool single = !PumpOverAnArea.IsMatch(piece) && !PumpOnSeveral.IsMatch(piece);
             bool creature = FrontFaceIsACreature(card);
@@ -1974,6 +2025,35 @@ namespace ScatoloneDownloader.Cube
             if ((TribalPump.IsMatch(piece) && !PlainPump.IsMatch(TribalPump.Replace(piece, " "))
                     && !PumpCounters.IsMatch(TribalPump.Replace(piece, " ")))
                 || CountersMakeTheBody.IsMatch(piece))
+            {
+                return false;
+            }
+
+            // A one-shot pump said in the same breath as a SHIELD is the
+            // shield's rider when the card is Protection already. Ruled
+            // 2026-10-16 ("Solo Protection", Presumed Dead against Fake Your Own
+            // Death): Dark Endurance's +2/+0 beside indestructible, Hajar's
+            // +1/+0 beside the team's. Read on the line WITH its quotes, because
+            // "When this creature dies, return it" is a shield in quotes. A
+            // +5/+5 is a pump of its own (Stonewood Invocation), a repeated one
+            // an engine (Endurance Bobblehead), and a creature's entry trigger
+            // that is not Protection keeps it (Rampaging Spiketail).
+            // Only when no other pump is on the line: Flare of Faith's +2/+2
+            // stands alone, and the shield is for Humans.
+            if (timing is PumpTiming.Once or PumpTiming.Instant && otherTags.HasFlag(CardEffect.Protection)
+                && PumpBesideAShield.IsMatch(line) && !PumpNumbers.IsMatch(PumpBesideAShield.Replace(line, " "))
+                && size < 5)
+            {
+                return false;
+            }
+
+            // A ONE-SHOT counter that comes with a keyword counter is the
+            // keyword handed out, measured 2026-10-16: the three reviewed cards
+            // whose only pump it is are untagged (Sagu Pummeler, Kheru
+            // Goldkeeper, Champion of Dusan), while Agent of Kotis's renew,
+            // the same without the reach counter, was tagged the same day as
+            // Sagu Pummeler. Repeated it is an engine (Guide of Souls).
+            if (timing is PumpTiming.Once or PumpTiming.Instant && CounterWithAKeywordCounter.IsMatch(piece))
             {
                 return false;
             }
@@ -2044,8 +2124,14 @@ namespace ScatoloneDownloader.Cube
         /// </summary>
         private static bool EveryPumpIsBesideThePoint(Card card, CardEffect otherTags)
         {
-            string own = Quoted.Replace(Parenthetical.Replace(card.OracleText ?? string.Empty, " "), " ");
+            string withQuotes = Parenthetical.Replace(card.OracleText ?? string.Empty, " ");
+            string own = Quoted.Replace(withQuotes, " ");
             string rest = own;
+
+            // Line for line the same text with its quotes kept: neither pattern
+            // crosses a line break, so the two split alike.
+            string[] ownLines = own.Split('\n');
+            string[] quotedLines = withQuotes.Split('\n');
             bool judged = false;
             bool sawItself = false;
 
@@ -2105,7 +2191,17 @@ namespace ScatoloneDownloader.Cube
                             timing = PumpTiming.Static;
                         }
 
-                        if (PumpCounts(card, head, piece, timing, otherTags))
+                        // A double strike handed out in the same piece is a Buff
+                        // of its own, whatever the size of the counter beside it
+                        // (Kayla's Command, 2026-10-16).
+                        if (DoubleStrikeForAnother.IsMatch(piece))
+                        {
+                            return false;
+                        }
+
+                        int at = Array.IndexOf(ownLines, piece);
+                        string line = at >= 0 ? quotedLines[at] : piece;
+                        if (PumpCounts(card, head, piece, line, timing, otherTags))
                         {
                             return false;
                         }
