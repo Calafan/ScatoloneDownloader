@@ -107,3 +107,51 @@ dietro un costo"). Finally, REMINDER TEXT and worked EXAMPLES lock nobody down �
 explains defender with "(A creature with defender can't attack.)" and Balduvian Shaman quotes "black
 creatures can't attack" twice inside an example of text-changing — so the patterns are re-asked with
 the brackets stripped.
+
+Worked again 2026-10-16 and closed at 10 wrong out of 265 reviewed (F1 96.0% -> 98.1%), every one of
+the ten a card the rulings below correct or hand back. Five rulings, asked one at a time.
+
+A FLICKER IS NEVER THIS TAG ("Flicker mai Pacify"): Parting Gust and Phelia, Exuberant Shepherd were
+the only two of seven reviewed flickers of somebody's permanent to the next end step tagged here,
+and both lose it and were handed back. Twining Twins says Parting Gust's very words and is
+Protection alone; the gift that exiles for good is what makes Parting Gust Removal ("Parting Gust ha
+l'opzione per rimuovere definitivamente la creatura"). The Eternal Wanderer's exile to ITS
+CONTROLLER'S next end step, a whole turn of theirs, stays.
+
+An O-RING ON A SAGA is this tag ALONE, not Removal ("Sì, solo Pacify"): the creature comes back when
+the Saga is sacrificed after its last chapter. Summon: Ixion (Removal and Pacify by hand) and Trial
+of a Time Lord (Removal alone) were corrected by name, and Vault 13: Dweller's Journey was reached
+and handed back (its Disenchant was not asked). An O-Ring on any other permanent stays Removal: 23
+reviewed, none tagged here.
+
+An untap lock GIVEN to the creature a Wall blocked is this tag ("entrambe Pacify"): Mindbender
+Spores and Glyph of Delusion, whose quoted "This creature doesn't untap during your untap step" had
+read as the card taxing itself. Glyph was handed back.
+
+A CUMULATIVE UPKEEP an Aura hands to the creature is Removal and not this tag, paid in life as in
+mana ("Removal, no Pacify"): Decomposition, Burn and Pacify by hand, is now Burn and Removal like
+Mana Chains, because a tax the controller can pay is not a lock (2026-09-16).
+
+A creature an AURA turns into an artifact is this tag as well as Removal ("Aura = +Pacify"): Sugar
+Coat's Food comes back as the creature when the Aura goes, while Vraska, Betrayal's Sting's Treasure
+is for good and stays Removal alone.
+
+Read the same day without a ruling. Out: an Equipment's untap lock, which holds down your own
+creature (T-45 Power Armor; Cement Shoes, Vulshok Gauntlets and Heavy Arbalest among the unreviewed;
+Shield of the Righteous locks the creature equipped one BLOCKS and stays), an Aura's on a creature
+it has put under your control (Dance of the Dead), "can't attack or block ALONE" (Toby's token and
+Pipsqueak, 0 of 2; six unreviewed like Mogg Flunkies), a base 0 on a creature you cast (Cycle of
+Life, 0 of 8), a tap that makes the creature deal the damage (Deadshot), and "other creatures can't
+attack" (Oracle en-Vec). In, one reviewed card each: an Aura's "otherwise, it has base power and
+toughness 1/1" (Burden of Proof), a target of theirs that "loses all abilities until your next turn"
+(Azure Beastbinder), an attacker made blocked (Dazzling Beauty), an Aura that removes its creature
+from combat (Imprison), and damage dealt to you sent back to the creature that dealt it (Mangara's
+Equity).
+
+Handed back the same day, older than the rule that now covers them or alone against it: Wayspeaker
+Bodyguard +Pacify (a Flurry CAST trigger, which taps like Grappling Kraken's landfall and Galvanic
+Giant's cast trigger, 3 of 4; reviewed before the plain-tap ruling of 09-22, and wrongly listed
+among the attack-trigger taps since), Summon: Yojimbo +Pacify (a Propaganda tax on chapters II and
+III, 3 of 4 with Propaganda, Koskun Falls and Elephant Grass; also before 09-22), Harrier Strix
++Pacify (the one "when ... enters, tap target" card of 19 reviewed left untagged), and Nature's
+Chosen -Pacify (an untapper, tagged before the 09-15 ruling; Infuse says the same and is untagged).

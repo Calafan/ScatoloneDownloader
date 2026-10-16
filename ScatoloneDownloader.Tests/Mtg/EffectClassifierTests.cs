@@ -8542,6 +8542,13 @@ public sealed class EffectClassifierTests
         + "sacrifices a nontoken creature of their choice.")]
     [InlineData("Winter Blast", "Sorcery",
         "Tap X target creatures. Winter Blast deals 2 damage to each of those creatures with flying.")]
+    // Paid in LIFE it is the same Aura, ruled 2026-10-16 'Removal, no Pacify'
+    // (Decomposition).
+    [InlineData("Decomposition", "Enchantment — Aura",
+        "Enchant black creature\nEnchanted creature has \"Cumulative upkeep—Pay 1 life.\" (At the beginning of "
+        + "its controller's upkeep, that player puts an age counter on it, then sacrifices it unless they pay "
+        + "its upkeep cost for each age counter on it.)\nWhen enchanted creature dies, its controller loses 2 "
+        + "life.")]
     public void Classify_TheOctober16RemovalPassGains_AreRemoval(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
@@ -8626,6 +8633,28 @@ public sealed class EffectClassifierTests
         + "under its owner's control tapped with the noted number and kind of counters on it. If you do, return "
         + "the other exiled cards to the battlefield under their owner's control attached to that permanent.")]
     public void Classify_TheOctober16Pass_AnExileThatEndsOnUntap_IsPacify(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Pacify));
+        Assert.False(result.HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
+    // An O-Ring on a SAGA gives the creature back when the Saga is sacrificed:
+    // Pacify alone, not Removal, ruled 2026-10-16 'Si, solo Pacify' on Summon:
+    // Ixion against Trial of a Time Lord.
+    [InlineData("Summon: Ixion", "Enchantment Creature — Saga Unicorn",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — "
+        + "Aerospark — Exile target creature an opponent controls until this Saga leaves the battlefield.\nII, "
+        + "III — Put a +1/+1 counter on each of up to two target creatures you control. You gain 2 life.\nFirst "
+        + "strike")]
+    [InlineData("Trial of a Time Lord", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after IV.)\nI, II, III — "
+        + "Exile target nontoken creature an opponent controls until this Saga leaves the battlefield.\nIV — "
+        + "Starting with you, each player votes for innocent or guilty. If guilty gets more votes, the owner of "
+        + "each card exiled with this Saga puts that card on the bottom of their library.")]
+    public void Classify_TheOctober16Pass_ASagaORing_IsPacifyAlone(string name, string typeLine, string oracle)
     {
         CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
 
@@ -9457,6 +9486,55 @@ public sealed class EffectClassifierTests
         "Whenever you cast your second spell each turn, choose target creature an opponent controls. If it's "
         + "tapped, put a stun counter on it. Otherwise, tap it. (If a permanent with a stun counter would "
         + "become untapped, remove one from it instead.)")]
+    // Read 2026-10-16, one reviewed card each, tagged and never proposed: an
+    // Aura's OTHERWISE base 1/1 (Burden of Proof), a target of theirs that loses
+    // all abilities until your next turn (Azure Beastbinder), an attacker made
+    // blocked (Dazzling Beauty), an Aura that removes its creature from combat
+    // (Imprison), and damage dealt to you sent back to that creature (Mangara's
+    // Equity).
+    [InlineData("Burden of Proof", "Enchantment — Aura",
+        "Flash\nEnchant creature\nEnchanted creature gets +2/+2 as long as it's a Detective you control. "
+        + "Otherwise, it has base power and toughness 1/1 and can't block Detectives.")]
+    [InlineData("Azure Beastbinder", "Creature — Rat Rogue",
+        "Vigilance\nThis creature can't be blocked by creatures with power 2 or greater.\nWhenever this "
+        + "creature attacks, up to one target artifact, creature, or planeswalker an opponent controls loses "
+        + "all abilities until your next turn. If it's a creature, it also has base power and toughness 2/2 "
+        + "until your next turn.")]
+    [InlineData("Dazzling Beauty", "Instant",
+        "Cast this spell only during the declare blockers step.\nTarget unblocked attacking creature becomes "
+        + "blocked. (This spell works on creatures that can't be blocked.)\nDraw a card at the beginning of the "
+        + "next turn's upkeep.")]
+    [InlineData("Imprison", "Enchantment — Aura",
+        "Enchant creature\nWhenever a player activates an ability of enchanted creature with {T} in its "
+        + "activation cost that isn't a mana ability, you may pay {1}. If you do, counter that ability. If you "
+        + "don't, destroy this Aura.\nWhenever enchanted creature attacks or blocks, you may pay {1}. If you do, "
+        + "tap the creature, remove it from combat, and creatures it was blocking that had become blocked by "
+        + "only that creature this combat become unblocked. If you don't, destroy this Aura.")]
+    [InlineData("Mangara's Equity", "Enchantment",
+        "As this enchantment enters, choose black or red.\nAt the beginning of your upkeep, sacrifice this "
+        + "enchantment unless you pay {1}{W}.\nWhenever a creature of the chosen color deals damage to you or a "
+        + "white creature you control, this enchantment deals that much damage to that creature.")]
+    // An untap lock GIVEN to the creature a Wall blocked, ruled 2026-10-16
+    // 'entrambe Pacify': the quoted 'this creature' is the victim, not the card. A
+    // creature turned into an artifact by an AURA, ruled the same day 'Aura =
+    // +Pacify' (Sugar Coat). And an Equipment whose lock lands on the creature
+    // equipped one BLOCKS is still a lock.
+    [InlineData("Mindbender Spores", "Creature — Fungus Wall",
+        "Defender (This creature can't attack.)\nFlying\nWhenever this creature blocks a creature, put four "
+        + "fungus counters on that creature. The creature gains \"This creature doesn't untap during your untap "
+        + "step if it has a fungus counter on it\" and \"At the beginning of your upkeep, remove a fungus counter "
+        + "from this creature.\"")]
+    [InlineData("Glyph of Delusion", "Instant",
+        "Put X glyph counters on target creature that target Wall blocked this turn, where X is the power of "
+        + "that blocked creature. The creature gains \"This creature doesn't untap during your untap step if it "
+        + "has a glyph counter on it\" and \"At the beginning of your upkeep, remove a glyph counter from this "
+        + "creature.\"")]
+    [InlineData("Sugar Coat", "Enchantment — Aura",
+        "Flash\nEnchant creature or Food\nEnchanted permanent is a colorless Food artifact with \"{2}, {T}, "
+        + "Sacrifice this artifact: You gain 3 life\" and loses all other card types and abilities.")]
+    [InlineData("Shield of the Righteous", "Artifact — Equipment",
+        "Equipped creature gets +0/+2 and has vigilance.\nWhenever equipped creature blocks a creature, that "
+        + "creature doesn't untap during its controller's next untap step.\nEquip {2}")]
     public void Classify_TheWaysACreatureIsNeutralised_ArePacify(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
@@ -9526,6 +9604,55 @@ public sealed class EffectClassifierTests
         "When this Equipment enters, attach it to target creature you control.\nEquipped creature gets "
         + "+1/+1.\nWhenever equipped creature attacks, tap up to one target creature.\nEquip {3} ({3}: Attach to "
         + "target creature you control. Equip only as a sorcery.)")]
+    // Read 2026-10-16: an Equipment's lock and an Aura's on a creature put under
+    // your control hold down your own (T-45 Power Armor, Dance of the Dead); can't
+    // attack or block ALONE is a statline's price (Toby's token); a base 0 on a
+    // creature you cast (Cycle of Life); a tap that makes the creature deal damage
+    // (Deadshot); other creatures can't attack (Oracle en-Vec); a permanent
+    // Treasure is Removal alone (Vraska); damage sent to the controller is Burn
+    // (Backfire); and a flicker to the next end step is never Pacify, ruled the
+    // same day (Phelia).
+    [InlineData("T-45 Power Armor", "Artifact — Equipment",
+        "When this Equipment enters, you get {E}{E} (two energy counters).\nEquipped creature gets +3/+3 and "
+        + "doesn't untap during its controller's untap step.\nAt the beginning of your upkeep, you may pay {E}. "
+        + "If you do, untap equipped creature, then put your choice of a menace, trample, or lifelink counter "
+        + "on it.\nEquip {3}")]
+    [InlineData("Dance of the Dead", "Enchantment — Aura",
+        "Enchant creature card in a graveyard\nWhen this Aura enters, if it's on the battlefield, it loses "
+        + "\"enchant creature card in a graveyard\" and gains \"enchant creature put onto the battlefield with "
+        + "this Aura.\" Put enchanted creature card onto the battlefield tapped under your control and attach "
+        + "this Aura to it. When this Aura leaves the battlefield, that creature's controller sacrifices "
+        + "it.\nEnchanted creature gets +1/+1 and doesn't untap during its controller's untap step.\nAt the "
+        + "beginning of the upkeep of enchanted creature's controller, that player may pay {1}{B}. If the "
+        + "player does, untap that creature.")]
+    [InlineData("Toby, Beastie Befriender", "Legendary Creature — Human Wizard",
+        "When Toby enters, create a 4/4 white Beast creature token with \"This token can't attack or block "
+        + "alone.\"\nAs long as you control four or more creature tokens, creature tokens you control have "
+        + "flying.")]
+    [InlineData("Cycle of Life", "Enchantment",
+        "Return this enchantment to its owner's hand: Target creature you cast this turn has base power and "
+        + "toughness 0/1 until your next upkeep. At the beginning of your next upkeep, put a +1/+1 counter on "
+        + "that creature.")]
+    [InlineData("Deadshot", "Sorcery",
+        "Tap target creature. It deals damage equal to its power to another target creature.")]
+    [InlineData("Oracle en-Vec", "Creature — Human Wizard",
+        "{T}: Target opponent chooses any number of creatures they control. During that player's next turn, "
+        + "the chosen creatures attack if able, and other creatures can't attack. At the beginning of that "
+        + "turn's end step, destroy each of the chosen creatures that didn't attack this turn. Activate only "
+        + "during your turn.")]
+    [InlineData("Vraska, Betrayal's Sting", "Legendary Planeswalker — Vraska",
+        "Compleated ({B/P} can be paid with {B} or 2 life. If life was paid, this planeswalker enters with "
+        + "two fewer loyalty counters.)\n0: You draw a card and lose 1 life. Proliferate.\n−2: Target creature "
+        + "becomes a Treasure artifact with \"{T}, Sacrifice this artifact: Add one mana of any color\" and loses "
+        + "all other card types and abilities.\n−9: If target player has fewer than nine poison counters, they "
+        + "get a number of poison counters equal to the difference.")]
+    [InlineData("Backfire", "Enchantment — Aura",
+        "Enchant creature\nWhenever enchanted creature deals damage to you, this Aura deals that much damage "
+        + "to that creature's controller.")]
+    [InlineData("Phelia, Exuberant Shepherd", "Legendary Creature — Dog",
+        "Flash\nWhenever Phelia attacks, exile up to one other target nonland permanent. At the beginning of "
+        + "the next end step, return that card to the battlefield under its owner's control. If it entered "
+        + "under your control, put a +1/+1 counter on Phelia.")]
     public void Classify_WhatOnlyLooksLikeALock_IsNotPacify(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));

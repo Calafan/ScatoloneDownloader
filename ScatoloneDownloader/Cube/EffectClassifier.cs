@@ -460,6 +460,14 @@ namespace ScatoloneDownloader.Cube
                 result |= CardEffect.Pacify;
             }
 
+            // …nor one that ends with the SAGA that made it, which is Pacify's
+            // (it reads as Pacify through PacifyOutward). See ExileEndsWithTheSaga.
+            if (result.HasFlag(CardEffect.Removal) && ExileEndsWithTheSaga.IsMatch(text)
+                && !Classify(new OneAbility(card, ExileEndsWithTheSaga.Replace(text, " "))).HasFlag(CardEffect.Removal))
+            {
+                result &= ~CardEffect.Removal;
+            }
+
             // REMINDER TEXT does not lock anybody down. Primal Clay explains
             // defender with "(A creature with defender can't attack.)" and
             // Balduvian Shaman prints a worked EXAMPLE of text-changing that
@@ -476,8 +484,10 @@ namespace ScatoloneDownloader.Cube
                 }
             }
 
-            // A Wall is not a Pacify effect. See the patterns above.
-            if (result.HasFlag(CardEffect.Pacify) && SelfCantAttack.IsMatch(text) && !OutwardCantAttack.IsMatch(text))
+            // A Wall is not a Pacify effect. See the patterns above. Unless it
+            // hands a lock to what it blocks (Mindbender Spores).
+            if (result.HasFlag(CardEffect.Pacify) && SelfCantAttack.IsMatch(text) && !OutwardCantAttack.IsMatch(text)
+                && !GrantsAnUntapLock.IsMatch(text))
             {
                 result &= ~CardEffect.Pacify;
             }

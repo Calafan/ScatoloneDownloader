@@ -288,6 +288,15 @@ namespace ScatoloneDownloader.Cube
             @"exile target [\w ,-]{0,30}creature[^\n]*?\bwhen [^.\n]*\bbecomes untapped\b[^.\n]*, return "
             + @"(?:it|that exiled card|that card)\b");
 
+        // An O-Ring on a SAGA gives the creature back within a few turns, when
+        // the Saga is sacrificed after its last chapter: Pacify ALONE, not
+        // Removal, ruled 2026-10-16 ("Sì, solo Pacify") on Summon: Ixion
+        // (Removal and Pacify by hand) against Trial of a Time Lord (Removal
+        // alone), both corrected by name. An O-Ring on any other permanent stays
+        // Removal — 23 reviewed, none tagged Pacify.
+        private static readonly Regex ExileEndsWithTheSaga = Rx(
+            @"exile (?:up to one )?(?:other )?target [^.\n]{0,40}creature[^.\n]{0,40}until this saga leaves the battlefield");
+
         // It comes back: a blink is not an answer.
         private static readonly Regex ReturnsItToPlay = Rx(
             @"return (?:it|them|that card|those cards)[\w ,']{0,40}to the battlefield");
@@ -1100,9 +1109,24 @@ namespace ScatoloneDownloader.Cube
         // repeating TRIGGER (0 of 6: Fear of Falling, Spring Splasher). An
         // Aura on a creature that becomes YOURS shrinks your own (Animate
         // Dead, Duskmourn's Domination).
+        //
+        // Read 2026-10-16: a base 0 set on a creature YOU cast or control is
+        // a trick of yours (Cycle of Life, untagged; 0 of 8 reviewed say it).
         private static readonly Regex NeutralisesWithoutKilling = Rx(
-            @"base power (?:and toughness )?0"
+            @"(?<!creature you (?:cast|control)[^.\n]{0,60})base power (?:and toughness )?0"
             + @"|is an? [\w ]{0,25}with base power and toughness [0-2]/"
+            // Four more read 2026-10-16, one reviewed card each, tagged and
+            // never proposed: an Aura's "OTHERWISE, it has base power and
+            // toughness 1/1" (Burden of Proof, a pump only for your own
+            // Detectives); a target of theirs that "loses all abilities UNTIL
+            // YOUR NEXT TURN" (Azure Beastbinder, whose attack trigger outlasts
+            // the swing); and an Aura turning the creature into a noncreature
+            // artifact (Sugar Coat's Food, ruled the same day "Aura = +Pacify":
+            // it comes back when the Aura goes — Vraska, Betrayal's Sting's
+            // Treasure is for good and stays Removal alone).
+            + @"|otherwise, it has base power and toughness [0-2]/"
+            + @"|target (?![^.\n]{0,60}\byou control\b)[^.\n]{0,60}loses all abilities until your next turn"
+            + @"|^enchanted (?:creature|permanent) is an? [^\n]{0,60}artifact\b[^\n]{0,200}loses all other card types and abilities"
             + @"|attacking creatures get -"
             + @"|(?<!(?:under your control|you control enchanted creature)[\s\S]*)"
             + @"(?:gets? -[\dX]+/-0 and loses all abilities|^enchanted creature gets -[\dX]+/-0)"
@@ -1185,6 +1209,16 @@ namespace ScatoloneDownloader.Cube
             @"unless (?:its|their) controller pays|unless that player pays"
             + @"|(?:may|doesn'?t|does) pay \{");
 
+        // An untap lock GIVEN to the creature a Wall blocked, in the words of
+        // the creature itself — "the creature gains 'This creature doesn't
+        // untap during your untap step if it has a fungus counter on it'". The
+        // quoted "this creature" made it read as the card taxing itself. Ruled
+        // 2026-10-16, "entrambe Pacify": Mindbender Spores (tagged) and Glyph of
+        // Delusion (untagged, handed back), the instant that does it once.
+        // Declared before PacifyOutward, which holds it.
+        private static readonly Regex GrantsAnUntapLock = Rx(
+            @"(?:that|the) creature gains ""this creature does(?:n'?t| not) untap");
+
         // The word boundary in front of "tap" is load-bearing: UNTAP target
         // creature contains the letters of tap target creature, and without it
         // every untapper in the library — Fyndhorn Brownie, Jandor's Saddlebags,
@@ -1192,13 +1226,19 @@ namespace ScatoloneDownloader.Cube
         // 2026-09-15 by bucketing the over-tags; it was a quarter of them.
         private static readonly Regex[] PacifyOutward =
         [
-            Rx(@"can'?t attack or block"),
+            // "Can't attack or block ALONE" is a statline's price, printed on
+            // the card or on its token (Toby's 4/4 Beast, Pipsqueak; Mogg
+            // Flunkies and Wojek Bodyguard among the unreviewed), read
+            // 2026-10-16: 0 of 2 reviewed.
+            Rx(@"can'?t attack or block(?! alone)"),
             // "Creatures can't attack YOU unless their controller pays" is the
             // Propaganda tax, and the rule could not read it because it wanted
             // the punctuation immediately after the verb. Propaganda, Koskun
             // Falls and Elephant Grass all say it, and all three are tagged
             // (2026-09-22).
-            Rx(@"can'?t attack(?: you)?(\.|,| unless)"),
+            // "OTHER creatures can't attack" is Oracle en-Vec forcing the
+            // chosen ones in, untagged (2026-10-16).
+            Rx(@"(?<!other creatures )can'?t attack(?: you)?(\.|,| unless)"),
             // A TAP, in every shape the game prints it. Ruled 2026-09-22 after
             // the hand tags were found contradicting themselves on identical
             // wording — Twiddle against Twitch, Riptide against Blinding Light,
@@ -1224,7 +1264,11 @@ namespace ScatoloneDownloader.Cube
             // Ring of the Lucii "nonland permanent", and both are.
             Rx(@"\btaps? (?:up to [\w ]{0,12}|another|each|[\dXx]+|\w+) target[\w ,'-]{0,35}"
                 + @"(?:creature|permanent)"),
-            Rx(@"\btaps? target[\w ,'-]{0,35}(?:creature|permanent)"),
+            // A tap that makes the creature DEAL damage is the price of the
+            // shot, not a lock: Deadshot's "Tap target creature. It deals
+            // damage equal to its power to another target creature", Removal
+            // alone by hand (2026-10-16).
+            Rx(@"\btaps? target[\w ,'-]{0,35}(?:creature|permanent)(?!\. it deals damage)"),
             // The mass tap names CREATURES on purpose: "tap all Islands" is the
             // land lock of ruling 7, which is not this tag.
             Rx(@"\btaps? all [\w ,'-]{0,35}creatures"),
@@ -1255,6 +1299,17 @@ namespace ScatoloneDownloader.Cube
             // creature an opponent controls. If it's tapped, put a stun counter
             // on it"), both tagged.
             Rx(@"(?:target creature(?! you control)|creature you don'?t control)[^\n]{0,120}stun counters? on it\b"),
+            GrantsAnUntapLock,
+            ExileEndsWithTheSaga,
+            // Three more read 2026-10-16, one reviewed card each, tagged and
+            // never proposed: an attacker made BLOCKED (Dazzling Beauty), an
+            // Aura that taps its creature and REMOVES IT FROM COMBAT whenever it
+            // attacks or blocks (Imprison), and damage dealt to you sent back to
+            // the creature that dealt it (Mangara's Equity — Backfire's Aura
+            // sends it to the CONTROLLER, which is Burn).
+            Rx(@"target unblocked attacking creature becomes blocked"
+                + @"|whenever enchanted creature attacks or blocks[^\n]{0,60}tap the creature, remove it from combat"
+                + @"|deals damage to you\b[^.\n]{0,60}, this enchantment deals that much damage to that creature"),
         ];
 
         // …and the drawback version, which is the same counter aimed inward:
@@ -1280,9 +1335,12 @@ namespace ScatoloneDownloader.Cube
         // Tapping a creature as an ATTACK TRIGGER is a combat trick, not a
         // lock: it pushes one blocker out of the way for the swing that is
         // already happening, and by the defender's next untap step it is gone.
-        // Seven reviewed cards do exactly this — Seasoned Marshal, Sidar
+        // Six reviewed cards do exactly this — Seasoned Marshal, Sidar
         // Jabari, Conformer Shuriken, Thunder Lasso, Web-Shooters, Vengeful
-        // Villagers, Wayspeaker Bodyguard — and not one of them is tagged.
+        // Villagers — and not one of them is tagged. (Wayspeaker Bodyguard was
+        // listed here as a seventh; its tap is a Flurry CAST trigger, which is
+        // Pacify like Grappling Kraken's landfall, and it was handed back
+        // +Pacify on 2026-10-16.)
         //
         // "At the beginning of combat on your turn" is the same trigger written
         // from the other side (Kimahri), and a card may name the victim first
@@ -1743,10 +1801,18 @@ namespace ScatoloneDownloader.Cube
         // still keeps the tag. The pronoun form — Apes of Rath's "whenever this
         // creature attacks, IT doesn't untap" — and the card naming itself —
         // Merieke Ri Berit — are the same self-tax written two other ways.
+        // Read 2026-10-16: an EQUIPMENT's lock holds down the creature it is
+        // equipped to, which is yours (T-45 Power Armor, untagged; Cement Shoes,
+        // Vulshok Gauntlets and Heavy Arbalest among the unreviewed), and so
+        // does an Aura's once the creature is put under your control (Dance of
+        // the Dead). Shield of the Righteous locks the creature equipped one
+        // BLOCKS and is not this.
         private static readonly Regex SelfUntapClause = Rx(
             @"th(?:is|e) (?:artifact|creature|permanent|enchantment|land|vehicle)[\w ]{0,25}does(?:n'?t| not) untap"
             + @"|\bit does(?:n'?t| not) untap"
-            + @"|does(?:n'?t| not) untap during your (?:next )?untap step");
+            + @"|does(?:n'?t| not) untap during your (?:next )?untap step"
+            + @"|(?m:^)equipped creature (?:gets [+-][\dX]+/[+-][\dX]+ and )?does(?:n'?t| not) untap"
+            + @"|under your control[\s\S]*\nenchanted creature (?:gets [+-][\dX]+/[+-][\dX]+ and )?does(?:n'?t| not) untap");
 
         // ---- Buff: how big, how often, and whether it is the point ----------
         //

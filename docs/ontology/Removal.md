@@ -105,3 +105,10 @@ with flying" (Winter Blast). Not this tag: "and this creature assigns no combat 
 victim (Goblin Vandal), an exile that ends when the card UNTAPS is Pacify (Tawnos's Coffin), and a
 pure Wipe stays Wipe alone (Misfortune, Withering Wisps: 200 of the 212 reviewed Wipes carry no
 Removal).
+
+Ruled 2026-10-16 in the Pacify pass, two boundaries. An O-RING ON A SAGA is NOT this tag but Pacify
+alone ("Sì, solo Pacify"): the creature comes back when the Saga is sacrificed after its last
+chapter (Summon: Ixion and Trial of a Time Lord corrected by name, Vault 13: Dweller's Journey
+handed back); every other O-Ring stays here. And a CUMULATIVE UPKEEP an Aura hands to the creature
+is this tag paid in LIFE as in mana ("Removal, no Pacify"): Decomposition joins Mana Chains, which
+overturns the line above that kept its life payment out.

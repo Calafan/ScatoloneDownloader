@@ -319,9 +319,11 @@ namespace ScatoloneDownloader.Cube
                     // An Aura that taxes the creature out of the game, read
                     // 2026-10-16: Mana Chains' "Enchanted creature has
                     // 'Cumulative upkeep {1}.'" (the one card written so). Paid in
-                    // MANA: Decomposition's "Cumulative upkeep—Pay 1 life" is a
-                    // life drain, Burn and Pacify by hand, and stays out.
-                    Rx(@"enchanted creature has ""cumulative upkeep \{"),
+                    // LIFE it is the same Aura, ruled the same day ("Removal, no
+                    // Pacify"): Decomposition's "Cumulative upkeep—Pay 1 life"
+                    // was Burn and Pacify by hand and is now Burn and Removal —
+                    // a tax the controller can pay is not a lock (2026-09-16).
+                    Rx(@"enchanted creature has ""cumulative upkeep(?: \{|—pay \d+ life)"),
                     // A fireball split between several things still kills one of them.
                     Rx(@"deals? (?:half )?[\dX]+(?: plus \d+)? damage divided "
                         + @"(?:evenly, rounded down, |as you choose )?among"),
