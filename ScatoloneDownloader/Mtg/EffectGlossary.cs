@@ -74,10 +74,10 @@
                 + "discard.",
 
             [CardEffect.CardAdvantage] =
-                "A card the opponent does not get. COUNT IT — the card ITSELF counts, so Ponder nets 0. A one-shot "
-                + "must draw two more than it pays; a REPEATABLE ability bought the card once, so one is enough — even "
-                + "paid with a card or a permanent. Two off and ONE played is Filter; both only on two abilities. "
-                + "Not THEIR draw, nor an unreachable trigger.",
+                "A card the opponent does not get. COUNT IT — the card ITSELF counts: Ponder nets 0. A one-shot "
+                + "must draw two more than it pays; a REPEATABLE ability needs one, even paid with a card or a "
+                + "permanent, even THEIR card. Two off and ONE played is Filter; both only on two abilities. "
+                + "Not THEIR draw, a tribe's graveyard, an unreachable trigger.",
 
             [CardEffect.Filter] =
                 "Cards changing places at NO net gain: keep one of a few looked at, milled or revealed, rearrange "

@@ -85,6 +85,22 @@ namespace ScatoloneDownloader.Cube
             + @"|exchange life totals[^\n]{0,80}draws? that many cards"
             + @"|becomes? the target of an (?:aura spell|activated ability)[^\n]{0,80}draws? (?:a|one) card"
             + @"|become the target of an activated ability, draws? (?:a|one) card"
+            // A creature dealing combat damage to its OWNER needs a creature
+            // that was handed to somebody else, a trigger the card cannot count
+            // on (the trigger-difficulty family, one card at a time): The Beast,
+            // Deathless Prince, the one reviewed card that says it, is Steal
+            // alone by hand (read 2026-10-16).
+            + @"|combat damage to its owner,[^\n]{0,40}draws? (?:a|one) card"
+            // THE CARD ITSELF becoming the target of an opponent's spell or
+            // ability is a tax they pay, not a card you gained: Altanak and
+            // Cactarantula, 0 of 2 tagged (read 2026-10-16). "A creature you
+            // control" is the other reading and stays (Surrak, Elusive Hunter
+            // and Elrond, Master of Healing, 2 of 2 tagged): it happens by
+            // itself, to any of a board of creatures. The subject may not open
+            // with an article or a count, which is what separates the card
+            // from the board.
+            + @"|\bwhenever (?!an? |another |one or more |each |creatures? |you\b)[^,\n]{0,40}? becomes? the target of a spell or ability "
+            + @"an opponent controls, (?:you may )?draws? (?:a|one) card"
             // Handing a permanent of yours to another player for the card left
             // this list on 2026-10-14 ("Tutti e due CA"): Discerning Financier
             // gives away a Treasure and Stiltzkin, Moogle Merchant any permanent,
@@ -150,7 +166,13 @@ namespace ScatoloneDownloader.Cube
             // exiled card without paying its mana cost" (Etrata).
             + @"|you may cast the exiled cards?"
             + @"|exiles? the top card of your library face down[^\n]{0,90}(?:put )?that card into your hand"
-            + @"|cards?[\w ]{0,12}exiled with this [\w]+ into (?:your|their owner'?s?) hand"
+            // "Into their OWNERS' HANDS", the plural, and "exiled with IT":
+            // Connecting the Dots and Expert-Level Safe, CardAdvantage by
+            // hand, were missed on those two words (read 2026-10-16, 2 of 2).
+            // Only "ALL cards exiled with it": Toluz, Clever Conductor returns
+            // what its discards left behind when it dies, and is a Filter.
+            + @"|cards?[\w ]{0,12}exiled with this [\w]+ into (?:your|their owners?'?s?'?) hands?"
+            + @"|all cards exiled with it into (?:your|their owners?'?s?'?) hands?"
             + @"|(?:cast|play) (?:a |any number of )?(?:spells?|cards?)[\w ,'-]{0,40}"
             + @"from among (?:the |cards )?exiled"
             // The count is optional here too: Vaan exiles THE TOP CARD of the
@@ -193,7 +215,12 @@ namespace ScatoloneDownloader.Cube
             // Bloodbender). Six reviewed cards reach into a named opponent's
             // graveyard and not one of them is CardAdvantage — they are
             // Reanimate and Steal, because the card was already somebody's.
-            + @"|cards? from (?:that|target|an) (?:player|opponent)'?s graveyard");
+            + @"|cards? from (?:that|target|an) (?:player|opponent)'?s graveyard"
+            // …and their SPELL, exiled off the stack and cast for free:
+            // Smirking Spelljacker, the one reviewed card written this way,
+            // is Counter and Steal by hand and not CardAdvantage (read
+            // 2026-10-16, 0 of 1 tagged).
+            + @"|exile target spell an opponent controls");
 
         //   An ability that sacrifices the permanent runs once, so it is not the
         //   repeatable draw the 2026-09-11 ruling asked for — the same reading
@@ -309,6 +336,9 @@ namespace ScatoloneDownloader.Cube
         //   2026-09-20 alongside the Loot patterns that read the same shape).
         private static readonly Regex DrawsThenDiscards = Rx(
             @"draws? (\w+) cards?[.,]? (?:then |and |if you do, )?(?:you may )?discards? (\w+)(?: of them| cards?)");
+
+        private static readonly Regex DrawsThenPutsBack = Rx(
+            @"draws? (\w+) cards?, then put (\w+) cards? from your hand on top of your library");
 
         private static readonly Regex DiscardsThenDraws = Rx(
             @"discards? (\w+) cards?[.,]?(?: if you do,)?[^\n.]{0,30}draws? (\w+) cards?");
@@ -459,7 +489,13 @@ namespace ScatoloneDownloader.Cube
             Rx(@"(?<!whenever you )(?:may )?cast (?!this card\b|this spell\b|it\b)"
                 + @"(?!cards with (?:retrace|flashback|escape|harmonize|jump-start|mayhem)\b)"
                 + @"(?!(?:[\w ,'\-/]{0,40})?for each)[\w ,'\-/]{0,50}(?:spells?|cards?)\b[\w ,'\-/]{0,80}? "
-                + @"from (?:among )?(?:cards in )?(?:your|a|their|that player's) graveyard"),
+                + @"from (?:among )?(?:cards in )?(?:your|a|any|their|that player's) graveyard"),
+            // "From ANY graveyard" is the same cast, ruled 2026-10-16: Urabrask //
+            // The Great Work's chapter III ("Until end of turn, you may cast
+            // instant and sorcery spells from any graveyard") is Regrowth like
+            // Forgotten Cellar's one-turn "you may cast spells from your
+            // graveyard this turn", and it is not CardAdvantage.
+            //
             // MEASURED AND DROPPED 2026-10-13: the card described between
             // "graveyard" and "gains" (Desdemona, Freedom's Edge) and the keyword
             // given in quotes (The Grim Captain's Locker's "Escape—") reached no
@@ -746,7 +782,14 @@ namespace ScatoloneDownloader.Cube
             + @"|at the beginning of each opponent'?s [\w ]{0,20}step, that player draws"
             // The player whose permanent was exiled shuffles and draws for what
             // it lost (The End, Deadly Cover-Up), untagged by hand 2026-10-14.
-            + @"|that player shuffles, then draws");
+            + @"|that player shuffles, then draws"
+            // "THAT PLAYER" is an opponent when the sentence before has just
+            // named one: Red Death, Shipwrecker goads a creature "an opponent
+            // controls. That player draws a card", and you add the mana. Read
+            // 2026-10-16 on the one reviewed card written this way (untagged for
+            // it, hand: Ramp). Howling Mine's "that player draws an additional
+            // card" follows "each player's draw step" and is not this.
+            + @"|an opponent controls\. that player draws (?:a|one) card");
 
         // Asked by STRIPPING, not by a lookbehind. "Defending player may draw a
         // card" puts "may " between the subject and the verb, so a lookbehind
@@ -762,6 +805,29 @@ namespace ScatoloneDownloader.Cube
         // the 10 cards written this way carry no tag.
         private static readonly Regex TriggersOffDrawing = Rx(
             @"whenever (?:you|an opponent|a player|another player|one or more players) draws?");
+
+        // "Activate only once." closes an ability that runs once a GAME, so the
+        // activated draw is a one-shot, not the repeatable draw of the
+        // 2026-09-11 ruling: Thought Shucker ("Activate only if there are seven
+        // or more cards in your graveyard and only once."), the one reviewed
+        // card whose draw says it, untagged (read 2026-10-16). Asked of the
+        // line that DRAWS: Duggan, Private Detective prints the same words on
+        // its damage ability and keeps the tag from its investigate. "Only
+        // once EACH TURN" does not end the line, so it is not this.
+        private static readonly Regex DrawOnceOnly = Rx(
+            @"^[^\n:]{1,70}:[^\n]*\bdraws? (?:a|one) card[^\n]*\bonly once\.?$", RegexOptions.Multiline);
+
+        // A trigger that waits for a spell or ability to TARGET a creature, with
+        // no opponent named, needs a second card of your own to pull it (the
+        // reading ADrawYouCannotCount gives the Aura and the activated ability):
+        // Nadu, Winged Wisdom hands "whenever this creature becomes the target
+        // of a spell or ability, reveal the top card … put it into your hand" to
+        // every creature and was tagged by the rule that reads a repeated
+        // look-and-take. Read 2026-10-16; Fugitive Druid (untagged) is the
+        // same difficulty said for an Aura, and Nadu is the one reviewed card
+        // written without the opponent (hand: Ramp alone).
+        private static readonly Regex TargetedByYourOwnSecondCard = Rx(
+            @"\bbecomes? the target of a spell or ability,");
 
         // The sibling of DrawBySacrificingItself, and the same reading: a card
         // that exiles ITSELF out of your graveyard to draw runs exactly once.
@@ -788,7 +854,14 @@ namespace ScatoloneDownloader.Cube
         // 15 cards fire, 14 of them tagged.
         private static readonly Regex SecondHandOnTop = Rx(
             @"(?:play|cast|plot)[\w ,'\d]{0,60}from the top of your library"
-            + @"|look at the top card of your library any time"
+            // The bare LOOK ("you may look at the top card of your library any
+            // time") is no second hand without a permission to play or cast
+            // from it: Vesuvan Drifter, untagged (read 2026-10-16). The look
+            // here stays only where the same card also plays from the top, or
+            // explores (Glowcap Lantern, tagged: it looks and then keeps what
+            // it finds); 23 of the 24 reviewed cards written this way have
+            // the permission, and Glowcap Lantern is the 24th.
+            + @"|look at the top card of your library any time(?=[\s\S]*(?:\b(?:play|cast)\b[^\n]{0,60}\b(?:top card|from the top)\b|\bexplores\b))"
             + @"|you may (?:play|cast)[^\n]{0,60}top card of your library"
             // The same permission with the LOOK first and the cast after, which
             // is how a card that turns the top over as a trigger writes it:
@@ -867,8 +940,18 @@ namespace ScatoloneDownloader.Cube
         // Circle, both tagged.
         private static readonly Regex SeveralClues = Rx(
             @"create (?:two|three|four|five|x|\d+) clue tokens"
-            + @"|investigates? (?:twice|three times|x times)"
+            // "Four times" and up are the same count as three: Carnage
+            // Interpreter ("discard your hand, then investigate four times",
+            // CardAdvantage by hand) was missed because only twice, three and
+            // X were listed (read 2026-10-16; the family is 8 of 8 tagged).
+            + @"|investigates? (?:twice|(?:three|four|five|six|seven|eight|nine|ten|x|\d+) times)"
             + @"|clue tokens?,? where x|investigate for each|clue token for each");
+
+        // A draw AND a Clue in one spell is two cards for one: Deduce, "Draw a
+        // card. Investigate.", is CardAdvantage by hand (read 2026-10-16, 1 of 1
+        // reviewed card written this way). The Clue is the second card, which
+        // is why the single Clue alone stays a rider.
+        private static readonly Regex DrawAndInvestigate = Rx(@"\bdraw a card\. investigate\b");
 
         // "Draw that many cards" is a draw-for-each written the other way round,
         // and the count is never one: Niv-Mizzet, Starwinder, Voracious
@@ -1217,6 +1300,17 @@ namespace ScatoloneDownloader.Cube
             + @"draw (?:a|one|two) cards?",
             RegexOptions.Multiline);
 
+        // …and a sacrifice that buys MORE THAN ONE mode, one of them the draw,
+        // ruled 2026-10-16: Caesar, Legion's Emperor ("you may sacrifice another
+        // creature. When you do, choose TWO —", a draw among the bullets) is
+        // CardAdvantage where Gorbag of Minas Morgul's "choose ONE" is the
+        // sacrifice for a card and stays out. The measure found no other card
+        // written this way.
+        private static readonly Regex SacrificeBuysSeveralModes = Rx(
+            @"^(?:[\w ]+ — )?whenever[^\n]*you may sacrifice[^\n.]*\. when you do, choose (?:two|three)[^\n]*—"
+            + @"(?:\n•[^\n]*)*?\n•\s*(?:you )?draws? (?:a|one|two) cards?",
+            RegexOptions.Multiline);
+
         private static readonly Regex LooksAndKeepsTheRest = Rx(
             @"look at the top \w+ cards? of your library[^\n]{0,200}put the rest into your hand");
 
@@ -1266,12 +1360,16 @@ namespace ScatoloneDownloader.Cube
         // say it that way (Six too) are hand-tagged CardAdvantage.
         private static readonly Regex TopFewIntoYourHand = Rx(
             @"(?:(?:looks? at|reveals?) (?:the top (?:\w+ )?cards?|that many cards|twice \w+ cards) "
-            + @"(?:of|from the top of) your library|\bmills? (?:\w+|x) cards)"
+            // Read 2026-10-16: "mill A card" (Leyline Dowser, Sparring Dummy),
+            // "mill THAT MANY cards" (Nashi, Searcher in the Dark) and the
+            // keep said as "from among THOSE CARDS" (Ripples of Undeath) or
+            // "a card milled this way" (Leyline Dowser), all repeating.
+            + @"(?:of|from the top of) your library|\bmills? (?:(?:\w+|x|that many) cards?|a card))"
             // 200, not 160: Radagast the Brown qualifies the card at length ("a
             // creature card that doesn't share a creature type with a creature
             // you control from among those cards"), tagged by the human on
             // 2026-09-29.
-            + @"[^\n]{0,200}put (?:one of them|it|that card|[\w /,'-]{0,80}from among (?:them|the cards milled this way)"
+            + @"[^\n]{0,200}put (?:one of them|it|that card|[\w /,'-]{0,80}from among (?:them|those cards|the cards milled this way)|[\w /,'-]{0,60} milled this way"
             // "Exile one of them and put THE OTHER into your hand" (Ashiok,
             // Wicked Manipulator's +1, tagged, 2026-10-14).
             + @"|\w+ of those cards|the other(?: one)?) into your hand");
@@ -1309,8 +1407,65 @@ namespace ScatoloneDownloader.Cube
         // because the hand you paid can be empty — Case of the Crimson Pulse
         // solves itself on "You have no cards in hand" and then draws two for
         // nothing every upkeep. 3 reviewed cards say it, all 3 tagged.
+        // …and the count read off the board, "draw cards equal to the number
+        // of stash counters", even behind a self-sacrifice (Hoarder's Overflow,
+        // read 2026-10-16; 9 of 9 cards in the family tagged).
         private static readonly Regex DiscardYourHandThenDrawSeveral = Rx(
-            @"discard your hand, then draws? (?:two|three|four|five|six|seven|x|\d+) cards");
+            @"discard your hand, then draws? (?:two|three|four|five|six|seven|x|\d+) cards"
+            + @"|discard your hand, then draws? cards equal to");
+
+        // Read 2026-10-16, five shapes the human tagged CardAdvantage by hand
+        // and that no rule read:
+        //  - a reveal-until into the hand under an attack trigger the card
+        //    fires itself: Songbirds' Blessing. Spinner of Souls (a creature
+        //    dying), House Cartographer (a condition) and Nissa (a second
+        //    resolution) are untagged and do not say "attacks".
+        //  - "If you don't cast a spell this way, investigate" on an attack
+        //    trigger: The Seventh Doctor.
+        //  - an Aura that hands the enchanted permanent "{T}: Target player
+        //    adds … The next spell they cast this turn has cascade": Bigger on
+        //    the Inside. Smoldering Stagecoach and TARDIS give no mana and stay out.
+        //  - gravestorm and a Clue on one spell: Follow the Bodies.
+        //  - the controller of a damaged creature exiling that many off the top
+        //    and playing them: Expedited Inheritance.
+        private static readonly Regex AttackRevealsUntilIntoHand = Rx(
+            @"^whenever [\w ]{0,30}\battacks, reveal cards from the top of your library until you reveal [^.\n]{0,80}\.[^\n]{0,80}\bput (?:that card|it) into your hand",
+            RegexOptions.Multiline);
+
+        private static readonly Regex AttackInvestigatesWhenNotCast = Rx(
+            @"^whenever [\w ,]{0,40}\battacks,[^\n]*if you don't cast a spell this way, investigate",
+            RegexOptions.Multiline);
+
+        private static readonly Regex GrantedManaAndCascade = Rx(
+            @"""\{t\}: target player adds [^""\n]{0,60}\. the next spell they cast this turn has cascade");
+
+        private static readonly Regex GravestormAndAClue = Rx(
+            @"\bgravestorm\b[\s\S]{0,300}\binvestigate\b");
+
+        private static readonly Regex ControllerExilesThatManyAndPlays = Rx(
+            @"its controller may exile that many cards from the top of their library\. they may play those cards");
+
+        // A printed Token card whose body draws as it enters: Sicarian
+        // Infiltrator, tagged by hand. The token is made for free by the card
+        // that makes it, so its cantrip is a card the maker did not pay for.
+        // Read 2026-10-16: 1 reviewed Token card draws on entering, 1 tagged,
+        // and no unreviewed one does.
+        private static readonly Regex TokenCardDrawsOnEntering = Rx(
+            @"^when [^\n,]{0,60} enters(?: the battlefield)?, draw a card\.$", RegexOptions.Multiline);
+
+        // Mill a few and take TWO back, once: Greenhouse // Rickety Gazebo
+        // ("return up to two permanent cards from among them"), tagged by hand.
+        // Read 2026-10-16. A one-shot that keeps ONE (Cache Grab, Town Greeter,
+        // Tomakul Scrapsmith) is selection and stays out.
+        private static readonly Regex MillsAndTakesTwoBack = Rx(
+            @"\bmills? \w+ cards?, then return up to (?:two|three|four|five) [\w -]{0,30}cards? from among them to your hand");
+
+        // An enters trigger that lets you sacrifice something and, when you do,
+        // pays a card on top of its other reward: Selfcraft Mechan (tagged by
+        // hand, read 2026-10-16). Unscrupulous Contractor draws two and already
+        // had the tag.
+        private static readonly Regex EntersSacrificeThenDraws = Rx(
+            @"\bwhen this [\w]+ enters, you may sacrifice an? [\w ]{1,20}\. when you do,[^\n]{0,100}\bdraw (?:a|one) card");
 
         // A triggered draw printed INSIDE QUOTES has been handed to a body that
         // keeps it — Thief's Knife writes it onto the Hero it makes, Herd
@@ -1487,6 +1642,150 @@ namespace ScatoloneDownloader.Cube
             return Regex.IsMatch(text,
                 @"^[^\n:]{0,60}sacrifice " + Regex.Escape(name) + @"[^\n:]{0,30}:[^\n]{0,60}\bdraw a card\.?$",
                 RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant);
+        }
+
+        // "Until end of turn, WHENEVER …" on an instant or a sorcery is a window
+        // of one turn, not an ability that comes back: Waltz of Rage exiles a
+        // card for each creature of yours that dies this turn and lets you play
+        // it, and it is a rider on a Wipe (hand: Wipe alone, read 2026-10-16).
+        // The word is blanked for a SPELL before the repeat gate is asked. A
+        // Saga's chapter II, III does repeat (Summon: Leviathan keeps the tag
+        // by its own chapters), and so does a permanent's.
+        private static readonly Regex ForOneTurnOnly = Rx(@"(?<=until end of turn, )whenever ");
+
+        // A card type JOINED to a creature type — "an artifact or Human spell"
+        // (Arcade Gannon, tagged) — is open to more than the tribe, so the
+        // tribal strip is not asked of it. Ruled 2026-10-16 with the tribal
+        // graveyard cast (C6); case-sensitive on the type, as TribalCard is.
+        private static readonly Regex TribeOrACardType = new(
+            @"\b(?:artifact|enchantment|instant|sorcery|planeswalker|land|permanent) (?:or|and/or) [A-Z]",
+            RegexOptions.CultureInvariant);
+
+        // Exiling a creature YOU CONTROL and playing that card back is the same
+        // card returning, not a card gained: Norin, Swift Survivalist exiles
+        // the creature that was blocked and lets you play it from exile this
+        // turn (untagged, read 2026-10-16, 0 of 1).
+        private static readonly Regex ExilesYourOwnAndPlaysItBack = Rx(
+            @"\byou control\b[^.\n]{0,60}, you may exile it\. you may (?:play|cast) that card from exile");
+
+        // A flashback (or a cast) bought by SACRIFICING A CLUE trades a card for
+        // a card: The Fugitive Doctor, hand Regrowth alone (read 2026-10-16,
+        // 0 of 1). Written for that wording only — "you may sacrifice a Clue.
+        // When you do, … gains flashback" — and measured not to move Lazav,
+        // Piper Wright, Alquist Proft, Lonis or Unshakable Tail.
+        private static readonly Regex PaysAClueForTheCast = Rx(
+            @"you may sacrifice a clue\. when you do,[^\n]{0,120}\b(?:flashback|cast)\b");
+
+        // A cast out of a graveyard, or a keyword granted to the graveyard, that
+        // CHARGES OTHER CARDS FROM THAT GRAVEYARD — forage ("exile three cards
+        // from your graveyard or sacrifice a Food") or escape ("Exile four
+        // other cards from your graveyard") — pays cards for the card it gets
+        // back: 0 of 11 reviewed cards written this way are tagged CardAdvantage
+        // (read 2026-10-16: The Grim Captain's Locker, Osteomancer Adept).
+        // Tarrian's Journal // Tomb of Aclazotz casts for nothing and keeps the
+        // tag from the stream it already had.
+        private static readonly Regex ChargesOtherGraveyardCards = Rx(
+            @"\bforag(?:e|ing)\b|\bescape—[^""\n]{0,40}exile \w+ other cards from your graveyard");
+
+        // An ability paid by sacrificing the card BY ITS SHORT NAME runs once,
+        // like "Sacrifice this artifact:" does — and the self-sacrifice veto
+        // (DrawBySacrificingItself) reads only the words "this artifact",
+        // so Vohar, Vodalian Desecrator's "{2}, Sacrifice Vohar: You may cast
+        // target instant or sorcery card from your graveyard this turn" was
+        // taken for a stream of casts. Hand: Filter, Burn, Regrowth, no
+        // CardAdvantage (read 2026-10-16, 0 of 1 tagged). The line is blanked
+        // and the cast stream asked again, so a card that casts on another
+        // line keeps the tag.
+        private static string WithoutSelfSacrificeByName(Card card, string text)
+        {
+            string name = ShortName(card);
+            if (name.Length == 0)
+            {
+                return text;
+            }
+
+            return Regex.Replace(text,
+                @"^[^\n:]{0,60}sacrifice " + Regex.Escape(name) + @"\b[^\n:]{0,30}:[^\n]*$", " ",
+                RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant);
+        }
+
+        // A card off the top of an OPPONENT's library that you may play or cast,
+        // under an ability that REPEATS, is CardAdvantage next to Steal. Ruled
+        // 2026-10-16 (C1): the trigger ("whenever", "at the beginning of") or the
+        // activated cost can be paid again, so the pile keeps growing for you,
+        // and the same ruling covers the two wordings the older impulse rules
+        // could not read — "look at the top card of that player's library, then
+        // exile it face down. You may play that card" (Rev, Tithe Extractor,
+        // Blightwing Bandit, Edward Kenway, Dream-Thief's Bandana) and "that
+        // player exiles cards from the top of their library until they exile …
+        // You may cast that card" (Bismuth Mindrender, Gríma, Strago and Relm) —
+        // plus the exile with a price or a count in between (Reno and Rude,
+        // Fire Lord Ozai, Rakdos, the Muscle's mana value in cards).
+        //
+        // Out, by the gate rather than the wording: a one-shot single card
+        // (Ensnared by the Mara; Crabomination, whose pile is theirs by the
+        // graveyard half), a repeat that spends the card itself (Grinning Totem
+        // sacrifices itself), and a repeat PAID WITH A CARD (Synthesis Pod:
+        // "Exile a spell you control" is a card for a card, parity).
+        private static readonly Regex TheirTopForYou = Rx(
+            // The LOOK first, then the exile face down (the sentence about the
+            // play may follow the exile by a sentence of its own).
+            @"look at the top (?:\w+ )?cards? of (?:that|target|each|their) ?(?:player|opponent)?'?s? ?library"
+            + @"[^\n]{0,60}\bexile (?:it|those cards|them)\b[^\n]{0,120}\byou may (?:play|cast)"
+            // The EXILE of the top card, with a sentence or a price before the
+            // permission: Reno and Rude's "Then you may sacrifice another
+            // creature or artifact. If you do, you may play the exiled card",
+            // Fire Lord Ozai's "Until end of turn, you may play one of those
+            // cards".
+            + @"|\bexile the top card of (?:that|target|each) (?:player|opponent)'?s library\.[^\n]{0,160}\byou may (?:play|cast)"
+            // …as many as the mana value of what was sacrificed (Rakdos, the Muscle).
+            + @"|\bexile cards equal to [^.\n]{0,40} from the top of (?:that|target|each) (?:player|opponent)'?s library\."
+            + @"[^\n]{0,80}\byou may (?:play|cast) those cards"
+            // THEY dig until they find the card, and you cast it. A sentence
+            // of its own for the cast, not the villainous choice's ", then you
+            // may cast" (Ensnared by the Mara, a one-shot in any case).
+            + @"|\bexiles? cards from the top of their library until (?:they|that player) exile [^.\n]{0,80}\. "
+            + @"you may (?:cast|play) (?:that card|it)\b");
+
+        // Their top several, taken in one go: a draw-two wearing a different coat
+        // (the "take more than one" reading, as Petty Larceny's two cards and
+        // Black Cat, Cunning Thief's two of nine). Needs no repeat.
+        private static readonly Regex SeveralOffTheirTop = Rx(
+            @"look at the top (?:\w+ )?cards of (?:that|target|each) (?:player|opponent)'?s library"
+            + @"[^\n]{0,60}\bexile (?:those cards|them|(?:two|three|four|five|x|\d+) of them)\b"
+            + @"[^\n]{0,200}\byou may (?:play|cast) (?:those|them|the exiled) cards");
+
+        // A card out of an opponent's GRAVEYARD that you may then cast, under an
+        // ability that repeats, ruled 2026-10-16 (C2). Saruman of Many Colors
+        // copies a spell from their graveyard on every second spell; a
+        // one-shot stays Steal alone (Hama, the Bloodbender; Shadow of the
+        // Enemy), and so do the cards that put theirs onto the battlefield
+        // (Ashen Powder, Fire Nation Salvagers: Reanimate) and the pile that is
+        // theirs already (Azula, Cunning Usurper; Crabomination).
+        private static readonly Regex TheirGraveyardCardForYou = Rx(
+            @"from (?:an|that|target|each) (?:opponent|player)'?s graveyard\.(?: copy the exiled card\.)? "
+            + @"you may (?:cast|play) (?:the copy|that card|it|the exiled card)\b");
+
+        // Cards you do not own, exiled out of an opponent's graveyard and played
+        // from exile on every one of your turns: Tinybones, Bauble Burglar's
+        // stash counters. A standing permission, so it needs no repeat gate.
+        private static readonly Regex TheirCardsFromExile = Rx(
+            @"you may play cards you don't own with [\w ]{1,20} counters on them from exile");
+
+        // A repeat that does not pay a CARD for the card: the ability repeats at
+        // no cost to the permanent itself, and its cost does not exile a spell
+        // or card or discard one (Synthesis Pod).
+        private static readonly Regex PaysACardToRepeat = Rx(
+            @"^[^\n:]{0,80}\b(?:exile an? (?:[\w ]{0,20} )?(?:spell|card)|discard (?:a|an|\w+) cards?)\b[^\n:]{0,40}:",
+            RegexOptions.Multiline);
+
+        // Reminder text and quoted abilities are not the card's own cost: Rev,
+        // Tithe Extractor's Treasure reminder sacrifices "this token", and
+        // Strago and Relm's creature is sacrificed at the end step.
+        private static bool RepeatsWithoutPayingACard(string ability)
+        {
+            string own = Quoted.Replace(Parenthetical.Replace(ability, " "), " ");
+            return AbilityRepeatsAtNoCostToItself(own) && !PaysACardToRepeat.IsMatch(own);
         }
 
         // A card searched out and EXILED to be cast is the tutor's one card,

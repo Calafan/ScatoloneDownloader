@@ -8347,6 +8347,613 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // CardAdvantage pass 2026-10-16: the readings (C1-C3, M1-M18) and the cards
+    // that keep the tag beside the removals.
+    [InlineData("Dream-Thief's Bandana", "Artifact — Equipment",
+        "Whenever equipped creature deals combat damage to a player, look at the top card of their library, "
+        + "then exile it face down. For as long as it remains exiled, you may play it, and mana of any type can "
+        + "be spent to cast that spell.\nEquip {1}")]
+    [InlineData("Petty Larceny", "Sorcery",
+        "Freerunning {1}{B} (You may cast this spell for its freerunning cost if you dealt combat damage to a "
+        + "player this turn with an Assassin or commander.)\nLook at the top two cards of target opponent's "
+        + "library and exile those cards face down. You may play those cards for as long as they remain exiled, "
+        + "and mana of any type can be spent to cast them. Create a Treasure token.")]
+    [InlineData("Rakdos, the Muscle", "Legendary Creature — Demon Mercenary",
+        "Flying, trample\nWhenever you sacrifice another creature, exile cards equal to its mana value from "
+        + "the top of target player's library. Until your next end step, you may play those cards, and mana of "
+        + "any type can be spent to cast those spells.\nSacrifice another creature: Rakdos gains indestructible "
+        + "until end of turn. Tap it. Activate only once each turn.")]
+    [InlineData("Tinybones, Bauble Burglar", "Legendary Creature — Skeleton Rogue",
+        "Whenever an opponent discards a card, exile it from their graveyard with a stash counter on "
+        + "it.\nDuring your turn, you may play cards you don't own with stash counters on them from exile, and "
+        + "mana of any type can be spent to cast those spells.\n{3}{B}, {T}: Each opponent discards a card. "
+        + "Activate only as a sorcery.")]
+    [InlineData("Bismuth Mindrender", "Creature — Eldrazi",
+        "Devoid (This card has no color.)\nMenace\nWhenever this creature deals combat damage to a player, that "
+        + "player exiles cards from the top of their library until they exile a nonland card. You may cast that "
+        + "card by paying life equal to the spell's mana value rather than paying its mana cost.")]
+    [InlineData("Black Cat, Cunning Thief", "Legendary Creature — Human Rogue Villain",
+        "When Black Cat enters, look at the top nine cards of target opponent's library, exile two of them "
+        + "face down, then put the rest on the bottom of their library in a random order. You may play the "
+        + "exiled cards for as long as they remain exiled. Mana of any type can be spent to cast spells this "
+        + "way.")]
+    [InlineData("Blightwing Bandit", "Creature — Faerie Rogue",
+        "Flying, deathtouch\nWhenever you cast your first spell during each opponent's turn, look at the top "
+        + "card of that player's library, then exile it face down. You may play that card for as long as it "
+        + "remains exiled, and mana of any type can be spent to cast it.")]
+    [InlineData("Edward Kenway", "Legendary Creature — Human Assassin Pirate",
+        "At the beginning of your end step, create a Treasure token for each tapped Assassin, Pirate, and/or "
+        + "Vehicle you control.\nWhenever a Vehicle you control deals combat damage to a player, look at the top "
+        + "card of that player's library, then exile it face down. You may play that card for as long as it "
+        + "remains exiled.")]
+    [InlineData("Fire Lord Ozai", "Legendary Creature — Human Noble",
+        "Whenever Fire Lord Ozai attacks, you may sacrifice another creature. If you do, add an amount of {R} "
+        + "equal to the sacrificed creature's power. Until end of combat, you don't lose this mana as steps "
+        + "end.\n{6}: Exile the top card of each opponent's library. Until end of turn, you may play one of "
+        + "those cards without paying its mana cost.")]
+    [InlineData("Gríma, Saruman's Footman", "Legendary Creature — Human Advisor",
+        "Gríma can't be blocked.\nWhenever Gríma deals combat damage to a player, that player exiles cards "
+        + "from the top of their library until they exile an instant or sorcery card. You may cast that card "
+        + "without paying its mana cost. Then that player puts the exiled cards that weren't cast this way on "
+        + "the bottom of their library in a random order.")]
+    [InlineData("Reno and Rude", "Legendary Creature — Human Assassin",
+        "Menace\nWhenever Reno and Rude deals combat damage to a player, exile the top card of that player's "
+        + "library. Then you may sacrifice another creature or artifact. If you do, you may play the exiled "
+        + "card this turn, and mana of any type can be spent to cast it.")]
+    [InlineData("Rev, Tithe Extractor", "Legendary Creature — Human Rogue",
+        "Whenever you attack, target creature gains deathtouch until end of turn.\nWhenever one or more "
+        + "creatures you control deal combat damage to a player, create a Treasure token, then look at the top "
+        + "card of that player's library and exile it face down. You may cast that card for as long as it "
+        + "remains exiled. (A Treasure token is an artifact with \"{T}, Sacrifice this token: Add one mana of "
+        + "any color.\")")]
+    [InlineData("Saruman of Many Colors", "Legendary Creature — Avatar Wizard",
+        "Ward—Discard an enchantment, instant, or sorcery card.\nWhenever you cast your second spell each "
+        + "turn, each opponent mills two cards. When one or more cards are milled this way, exile target "
+        + "enchantment, instant, or sorcery card with equal or lesser mana value than that spell from an "
+        + "opponent's graveyard. Copy the exiled card. You may cast the copy without paying its mana cost.")]
+    [InlineData("Strago and Relm", "Legendary Creature — Human Wizard",
+        "Sketch and Lore — {2}{R}, {T}: Target opponent exiles cards from the top of their library until they "
+        + "exile an instant, sorcery, or creature card. You may cast that card without paying its mana cost. If "
+        + "you cast a creature spell this way, it gains haste and \"At the beginning of the end step, sacrifice "
+        + "this creature.\" Activate only as a sorcery.")]
+    [InlineData("Caesar, Legion's Emperor", "Legendary Creature — Human Soldier",
+        "Whenever you attack, you may sacrifice another creature. When you do, choose two —\n• Create two 1/1 "
+        + "red and white Soldier creature tokens with haste that are tapped and attacking.\n• You draw a card "
+        + "and you lose 1 life.\n• Caesar deals damage equal to the number of creature tokens you control to "
+        + "target opponent.")]
+    [InlineData("Brainsurge", "Instant",
+        "Draw four cards, then put two cards from your hand on top of your library in any order.")]
+    [InlineData("Deduce", "Instant",
+        "Draw a card. Investigate. (Create a Clue token. It's an artifact with \"{2}, Sacrifice this token: "
+        + "Draw a card.\")")]
+    [InlineData("Carnage Interpreter", "Creature — Devil Detective",
+        "When this creature enters, discard your hand, then investigate four times. (To investigate, create a "
+        + "Clue token. It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")\nAs long as you have one "
+        + "or fewer cards in hand, this creature gets +2/+2 and has menace.")]
+    [InlineData("Connecting the Dots", "Enchantment",
+        "Whenever a creature you control attacks, exile the top card of your library face down. (You can't "
+        + "look at it.)\n{1}{R}, Discard your hand, Sacrifice this enchantment: Put all cards exiled with this "
+        + "enchantment into their owners' hands.")]
+    [InlineData("Expert-Level Safe", "Artifact",
+        "When this artifact enters, exile the top two cards of your library face down.\n{1}, {T}: You and "
+        + "target opponent each secretly choose 1, 2, or 3. Then those choices are revealed. If they match, "
+        + "sacrifice this artifact and put all cards exiled with it into their owners' hands. Otherwise, exile "
+        + "the top card of your library face down.")]
+    [InlineData("Fireglass Mentor", "Creature — Lizard Warlock",
+        "At the beginning of your second main phase, if an opponent lost life this turn, exile the top two "
+        + "cards of your library. Choose one of them. Until end of turn, you may play that card.")]
+    [InlineData("Fisher's Talent", "Enchantment — Class",
+        "(Gain the next level as a sorcery to add its ability.)\nAt the beginning of your upkeep, look at the "
+        + "top card of your library. You may reveal it if it's a land card. Create a 1/1 blue Fish creature "
+        + "token if you revealed it this way. Then draw a card.\n{G}{U}: Level 2\nIf you would create a Fish "
+        + "token, create a 3/3 blue Shark creature token instead.\n{2}{G}{U}: Level 3\nIf you would create a "
+        + "Shark token, create an 8/8 blue Octopus creature token instead.")]
+    [InlineData("Hoarder's Overflow", "Enchantment",
+        "When this enchantment enters and whenever you expend 4, put a stash counter on it. (You expend 4 as "
+        + "you spend your fourth total mana to cast spells during a turn.)\n{1}{R}, Sacrifice this enchantment: "
+        + "Discard your hand, then draw cards equal to the number of stash counters on this enchantment.")]
+    [InlineData("Selfcraft Mechan", "Artifact Creature — Robot Artificer",
+        "When this creature enters, you may sacrifice an artifact. When you do, put a +1/+1 counter on target "
+        + "creature and draw a card.")]
+    [InlineData("Shadow of the Second Sun", "Enchantment — Aura",
+        "Enchant player\nAt the beginning of each of enchanted player's postcombat main phases, there is an "
+        + "additional beginning phase after this phase. (The end step happens after the added untap, upkeep, "
+        + "and draw steps.)")]
+    [InlineData("Leyline Dowser", "Artifact",
+        "{1}, {T}: Mill a card. You may put an instant or sorcery card milled this way into your hand.\nTap an "
+        + "untapped legendary creature you control: Untap this artifact.")]
+    [InlineData("Nashi, Searcher in the Dark", "Legendary Creature — Rat Ninja Wizard",
+        "Menace\nWhenever Nashi deals combat damage to a player, you mill that many cards. You may put any "
+        + "number of legendary and/or enchantment cards from among them into your hand. If you put no cards "
+        + "into your hand this way, put a +1/+1 counter on Nashi.")]
+    [InlineData("Ripples of Undeath", "Enchantment",
+        "At the beginning of your first main phase, mill three cards. Then you may pay {1} and 3 life. If you "
+        + "do, put a card from among those cards into your hand.")]
+    [InlineData("Greenhouse // Rickety Gazebo", "Enchantment — Room // Enchantment — Room",
+        "Lands you control have \"{T}: Add one mana of any color.\"\n(You may cast either half. That door "
+        + "unlocks on the battlefield. As a sorcery, you may pay the mana cost of a locked door to unlock "
+        + "it.)\nWhen you unlock this door, mill four cards, then return up to two permanent cards from among "
+        + "them to your hand.\n(You may cast either half. That door unlocks on the battlefield. As a sorcery, "
+        + "you may pay the mana cost of a locked door to unlock it.)")]
+    [InlineData("Sparring Dummy", "Artifact Creature — Scarecrow",
+        "Defender\n{T}: Mill a card. You may put a land card milled this way into your hand. You gain 2 life "
+        + "if a Lesson card is milled this way. (To mill a card, put the top card of your library into your "
+        + "graveyard.)")]
+    [InlineData("Songbirds' Blessing", "Enchantment — Aura",
+        "Enchant creature\nWhenever enchanted creature attacks, reveal cards from the top of your library "
+        + "until you reveal an Aura card. You may put that card onto the battlefield. If you don't, put it into "
+        + "your hand. Put the rest on the bottom of your library in a random order.")]
+    [InlineData("The Seventh Doctor", "Legendary Creature — Time Lord Doctor",
+        "Whenever The Seventh Doctor attacks, choose a card in your hand. Defending player guesses whether "
+        + "that card's mana value is greater than the number of artifacts you control. If they guessed wrong, "
+        + "you may cast it without paying its mana cost. If you don't cast a spell this way, investigate. "
+        + "(Create a Clue token. It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")")]
+    [InlineData("Bigger on the Inside", "Enchantment — Aura",
+        "Enchant artifact or land\nEnchanted permanent has \"{T}: Target player adds two mana of any one color. "
+        + "The next spell they cast this turn has cascade.\" (When they cast their next spell, they exile cards "
+        + "from the top of their library until they exile a nonland card that costs less. They may cast it "
+        + "without paying its mana cost. They put the exiled cards on the bottom in a random order.)")]
+    [InlineData("Follow the Bodies", "Sorcery",
+        "Gravestorm (When you cast this spell, copy it for each permanent put into a graveyard from the "
+        + "battlefield this turn.)\nInvestigate. (Create a Clue token. It's an artifact with \"{2}, Sacrifice "
+        + "this token: Draw a card.\")")]
+    [InlineData("Expedited Inheritance", "Enchantment",
+        "Whenever a creature is dealt damage, its controller may exile that many cards from the top of their "
+        + "library. They may play those cards until the end of their next turn.")]
+    [InlineData("Éowyn, Shieldmaiden", "Legendary Creature — Human Knight",
+        "First strike\nAt the beginning of combat on your turn, if another Human entered the battlefield under "
+        + "your control this turn, create two 2/2 red Human Knight creature tokens with trample and haste. Then "
+        + "if you control six or more Humans, draw a card.")]
+    [InlineData("Galadriel, Elven-Queen", "Legendary Creature — Elf Noble",
+        "Will of the council — At the beginning of combat on your turn, if another Elf entered the "
+        + "battlefield under your control this turn, starting with you, each player votes for dominion or "
+        + "guidance. If dominion gets more votes, the Ring tempts you, then you put a +1/+1 counter on your "
+        + "Ring-bearer. If guidance gets more votes or the vote is tied, draw a card.")]
+    [InlineData("Arcane Bombardment", "Enchantment",
+        "Whenever you cast your first instant or sorcery spell each turn, exile an instant or sorcery card at "
+        + "random from your graveyard. Then copy each card exiled with this enchantment. You may cast any "
+        + "number of the copies without paying their mana costs.")]
+    [InlineData("Sicarian Infiltrator", "Token Artifact Creature — Human Soldier",
+        "When Sicarian Infiltrator enters the battlefield, draw a card.")]
+    [InlineData("Arcade Gannon", "Legendary Creature — Human Doctor",
+        "{T}: Draw a card, then discard a card. Put a quest counter on Arcade Gannon.\nFor Auld Lang Syne — "
+        + "Once during each of your turns, you may cast an artifact or Human spell from your graveyard with "
+        + "mana value less than or equal to the number of quest counters on Arcade Gannon.")]
+    [InlineData("Tarrian's Journal // The Tomb of Aclazotz", "Legendary Artifact — Book // Legendary Land — Cave",
+        "{T}, Sacrifice another artifact or creature: Draw a card. Activate only as a sorcery.\n{2}, {T}, "
+        + "Discard your hand: Transform Tarrian's Journal.\n(Transforms from Tarrian's Journal.)\n{T}: Add "
+        + "{B}.\n{T}: You may cast a creature spell from your graveyard this turn. If you do, it enters with a "
+        + "finality counter on it and is a Vampire in addition to its other types. (If a creature with a "
+        + "finality counter on it would die, exile it instead.)")]
+    [InlineData("Chandra, Flameshaper", "Legendary Planeswalker — Chandra",
+        "+2: Add {R}{R}{R}. Exile the top three cards of your library. Choose one. You may play that card "
+        + "this turn.\n+1: Create a token that's a copy of target creature you control, except it has haste and "
+        + "\"At the beginning of the end step, sacrifice this token.\"\n−4: Chandra deals 8 damage divided as you "
+        + "choose among any number of target creatures and/or planeswalkers.")]
+    [InlineData("Jaya, Fiery Negotiator", "Legendary Planeswalker — Jaya",
+        "+1: Create a 1/1 red Monk creature token with prowess.\n−1: Exile the top two cards of your library. "
+        + "Choose one of them. You may play that card this turn.\n−2: Choose target creature an opponent "
+        + "controls. Whenever you attack this turn, Jaya deals damage equal to the number of attacking "
+        + "creatures to that creature.\n−8: You get an emblem with \"Whenever you cast a red instant or sorcery "
+        + "spell, copy it twice. You may choose new targets for the copies.\"")]
+    [InlineData("Bomat Courier", "Artifact Creature — Construct",
+        "Haste\nWhenever this creature attacks, exile the top card of your library face down. (You can't look "
+        + "at it.)\n{R}, Discard your hand, Sacrifice this creature: Put all cards exiled with this creature "
+        + "into their owners' hands.")]
+    [InlineData("Jace, the Mind Sculptor", "Legendary Planeswalker — Jace",
+        "+2: Look at the top card of target player's library. You may put that card on the bottom of that "
+        + "player's library.\n0: Draw three cards, then put two cards from your hand on top of your library in "
+        + "any order.\n−1: Return target creature to its owner's hand.\n−12: Exile all cards from target player's "
+        + "library, then that player shuffles their hand into their library.")]
+    [InlineData("Survivor of the Unseen", "Creature — Human Wizard",
+        "Cumulative upkeep {2} (At the beginning of your upkeep, put an age counter on this permanent, then "
+        + "sacrifice it unless you pay its upkeep cost for each age counter on it.)\n{T}: Draw two cards, then "
+        + "put a card from your hand on top of your library.")]
+    [InlineData("Vivien on the Hunt", "Legendary Planeswalker — Vivien",
+        "+2: You may sacrifice a creature. If you do, search your library for a creature card with mana value "
+        + "equal to 1 plus the sacrificed creature's mana value, put it onto the battlefield, then shuffle.\n+1: "
+        + "Mill five cards, then put any number of creature cards milled this way into your hand.\n−1: Create a "
+        + "4/4 green Rhino Warrior creature token.")]
+    [InlineData("Surrak, Elusive Hunter", "Legendary Creature — Human Warrior",
+        "This spell can't be countered.\nTrample\nWhenever a creature you control or a creature spell you "
+        + "control becomes the target of a spell or ability an opponent controls, draw a card.")]
+    [InlineData("Elrond, Master of Healing", "Legendary Creature — Elf Noble",
+        "Whenever you scry, put a +1/+1 counter on each of up to X target creatures, where X is the number of "
+        + "cards looked at while scrying this way.\nWhenever a creature you control with a +1/+1 counter on it "
+        + "becomes the target of a spell or ability an opponent controls, you may draw a card.")]
+    [InlineData("Lazav, Wearer of Faces", "Legendary Creature — Shapeshifter Detective",
+        "Whenever Lazav attacks, exile target card from a graveyard, then investigate. (Create a Clue token. "
+        + "It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")\nWhenever you sacrifice a Clue, you "
+        + "may have Lazav become a copy of a creature card exiled with it until end of turn.")]
+    [InlineData("Piper Wright, Publick Reporter", "Legendary Creature — Human Detective",
+        "Whenever Piper Wright deals combat damage to a player, investigate that many times. (To investigate, "
+        + "create a Clue token. It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")\nWhenever you "
+        + "sacrifice a Clue, put a +1/+1 counter on target creature you control.")]
+    [InlineData("Alquist Proft, Master Sleuth", "Legendary Creature — Human Detective",
+        "Vigilance\nWhen Alquist Proft enters, investigate. (Create a Clue token. It's an artifact with \"{2}, "
+        + "Sacrifice this token: Draw a card.\")\n{X}{W}{U}{U}, {T}, Sacrifice a Clue: You draw X cards and gain "
+        + "X life.")]
+    [InlineData("Lonis, Cryptozoologist", "Legendary Creature — Snake Elf Scout",
+        "Whenever another nontoken creature you control enters, investigate.\n{T}, Sacrifice X Clues: Target "
+        + "opponent reveals the top X cards of their library. You may put a nonland permanent card with mana "
+        + "value X or less from among them onto the battlefield under your control. That player puts the rest "
+        + "on the bottom of their library in a random order.")]
+    [InlineData("Unshakable Tail", "Creature — Zombie Detective",
+        "When this creature enters and at the beginning of your upkeep, surveil 1.\nWhenever one or more "
+        + "creature cards are put into your graveyard from your library, investigate. (Create a Clue token. "
+        + "It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")\n{2}, Sacrifice a Clue: Return this "
+        + "card from your graveyard to your hand.")]
+    [InlineData("Duggan, Private Detective", "Legendary Creature — Human Detective",
+        "Duggan's power and toughness are each equal to the number of cards in your hand.\nWhenever Duggan "
+        + "enters or attacks, investigate.\nThe Most Important Punch in History — {1}{G}, {T}: Duggan deals "
+        + "damage equal to twice its power to another target creature. Activate only once.")]
+    [InlineData("Kaito, Bane of Nightmares", "Legendary Planeswalker — Kaito",
+        "Ninjutsu {1}{U}{B} ({1}{U}{B}, Return an unblocked attacker you control to hand: Put this card onto "
+        + "the battlefield from your hand tapped and attacking.)\nDuring your turn, as long as Kaito has one or "
+        + "more loyalty counters on him, he's a 3/4 Ninja creature and has hexproof.\n+1: You get an emblem with "
+        + "\"Ninjas you control get +1/+1.\"\n0: Surveil 2. Then draw a card for each opponent who lost life this "
+        + "turn.\n−2: Tap target creature. Put two stun counters on it.")]
+    [InlineData("Glowcap Lantern", "Artifact — Equipment",
+        "Equipped creature has \"You may look at the top card of your library any time\" and \"Whenever this "
+        + "creature attacks, it explores.\" (Reveal the top card of your library. Put that card into your hand "
+        + "if it's a land. Otherwise, put a +1/+1 counter on that creature, then put the card back or put it "
+        + "into your graveyard.)\nEquip {2}")]
+    public void Classify_TheOctober16CardAdvantagePassGains_AreCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // CardAdvantage pass 2026-10-16: V1-V12 and C6 removals, plus the one-shots
+    // every reading must leave out.
+    [InlineData("Altanak, the Thrice-Called", "Legendary Creature — Insect Beast",
+        "Trample\nWhenever Altanak becomes the target of a spell or ability an opponent controls, draw a "
+        + "card.\n{1}{G}, Discard this card: Return target land card from your graveyard to the battlefield "
+        + "tapped.")]
+    [InlineData("Cactarantula", "Creature — Plant Spider",
+        "This spell costs {1} less to cast if you control a Desert.\nReach\nWhenever this creature becomes the "
+        + "target of a spell or ability an opponent controls, you may draw a card.")]
+    [InlineData("Nadu, Winged Wisdom", "Legendary Creature — Bird Wizard",
+        "Flying\nCreatures you control have \"Whenever this creature becomes the target of a spell or ability, "
+        + "reveal the top card of your library. If it's a land card, put it onto the battlefield. Otherwise, "
+        + "put it into your hand. This ability triggers only twice each turn.\"")]
+    [InlineData("Red Death, Shipwrecker", "Legendary Creature — Crab Mutant",
+        "Alluring Eyes — {T}: Goad target creature an opponent controls. That player draws a card. You add "
+        + "{R}. (Until your next turn, that creature attacks each combat if able and attacks a player other "
+        + "than you if able.)")]
+    [InlineData("Smirking Spelljacker", "Creature — Djinn Wizard Rogue",
+        "Flash\nFlying\nWhen this creature enters, exile target spell an opponent controls.\nWhenever this "
+        + "creature attacks, if a card is exiled with it, you may cast the exiled card without paying its mana "
+        + "cost.")]
+    [InlineData("Thought Shucker", "Creature — Rat Rogue",
+        "Threshold — {1}{U}: Put a +1/+1 counter on this creature and draw a card. Activate only if there are "
+        + "seven or more cards in your graveyard and only once.")]
+    [InlineData("Vesuvan Drifter", "Creature — Shapeshifter",
+        "Flying\nYou may look at the top card of your library any time.\nAt the beginning of each combat, you "
+        + "may reveal the top card of your library. If you reveal a creature card this way, this creature "
+        + "becomes a copy of that card until end of turn, except it has flying.")]
+    [InlineData("Vohar, Vodalian Desecrator", "Legendary Creature — Phyrexian Merfolk Wizard",
+        "{T}: Draw a card, then discard a card. If you discarded an instant or sorcery card this way, each "
+        + "opponent loses 1 life and you gain 1 life.\n{2}, Sacrifice Vohar: You may cast target instant or "
+        + "sorcery card from your graveyard this turn. If that spell would be put into your graveyard, exile it "
+        + "instead. Activate only as a sorcery.")]
+    [InlineData("Osteomancer Adept", "Creature — Squirrel Warlock",
+        "Deathtouch\n{T}: Until end of turn, you may cast creature spells from your graveyard by foraging in "
+        + "addition to paying their other costs. If you cast a spell this way, that creature enters with a "
+        + "finality counter on it. (To forage, exile three cards from your graveyard or sacrifice a Food. If a "
+        + "creature with a finality counter on it would die, exile it instead.)")]
+    [InlineData("The Grim Captain's Locker", "Legendary Artifact",
+        "{T}: Surveil 1. (Look at the top card of your library. You may put it into your graveyard.)\n{T}: "
+        + "Until end of turn, each creature card in your graveyard gains \"Escape—{3}{B}, Exile four other cards "
+        + "from your graveyard.\" (You may cast a card with escape from your graveyard for its escape cost.)")]
+    [InlineData("Waltz of Rage", "Sorcery",
+        "Target creature you control deals damage equal to its power to each other creature. Until end of "
+        + "turn, whenever a creature you control dies, exile the top card of your library. You may play it "
+        + "until the end of your next turn.")]
+    [InlineData("Norin, Swift Survivalist", "Legendary Creature — Human Coward",
+        "Norin can't block.\nWhenever a creature you control becomes blocked, you may exile it. You may play "
+        + "that card from exile this turn.")]
+    [InlineData("Refurbished Familiar", "Artifact Creature — Zombie Rat",
+        "Affinity for artifacts (This spell costs {1} less to cast for each artifact you "
+        + "control.)\nFlying\nWhen this creature enters, each opponent discards a card. For each opponent who "
+        + "can't, you draw a card.")]
+    [InlineData("The Beast, Deathless Prince", "Legendary Creature — Demon",
+        "When you cast this spell, gain control of target creature until end of turn. Untap it. It gains "
+        + "menace and haste until end of turn.\nThe Beast enters tapped with six stun counters on it. (If it "
+        + "would become untapped, remove a stun counter from it instead.)\nWhenever a creature deals combat "
+        + "damage to its owner, untap The Beast and draw a card.")]
+    [InlineData("The Fugitive Doctor", "Legendary Creature — Time Lord Doctor",
+        "When The Fugitive Doctor enters, investigate.\nWhenever The Fugitive Doctor attacks, you may "
+        + "sacrifice a Clue. When you do, target instant or sorcery card in your graveyard gains flashback "
+        + "{2}{R}{G} until end of turn. (You may cast that card from your graveyard for its flashback cost. "
+        + "Then exile it.)")]
+    [InlineData("Zul Ashur, Lich Lord", "Legendary Creature — Zombie Warlock",
+        "Ward—Pay 2 life. (Whenever this creature becomes the target of a spell or ability an opponent "
+        + "controls, counter it unless that player pays 2 life.)\n{T}: You may cast target Zombie creature card "
+        + "from your graveyard this turn.")]
+    [InlineData("Solemn Doomguide", "Creature — Tiefling Cleric",
+        "Flying\nEach creature card in your graveyard that's a Cleric, Rogue, Warrior, and/or Wizard has "
+        + "unearth {1}{B}. ({1}{B}: Return the card to the battlefield. The creature gains haste. Exile it at "
+        + "the beginning of the next end step or if it would leave the battlefield. Unearth only as a sorcery.)")]
+    [InlineData("Deeproot Historian", "Creature — Merfolk Druid",
+        "Merfolk and Druid cards in your graveyard have retrace. (You may cast cards with retrace from your "
+        + "graveyard by discarding a land card in addition to paying their other costs.)")]
+    [InlineData("Ensnared by the Mara", "Sorcery",
+        "Each opponent faces a villainous choice — They exile cards from the top of their library until they "
+        + "exile a nonland card, then you may cast that card without paying its mana cost, or that player "
+        + "exiles the top four cards of their library and Ensnared by the Mara deals damage equal to the total "
+        + "mana value of those exiled cards to that player.")]
+    [InlineData("Grinning Totem", "Artifact",
+        "{2}, {T}, Sacrifice this artifact: Search target opponent's library for a card and exile it. Then "
+        + "that player shuffles. Until the beginning of your next upkeep, you may play that card. At the "
+        + "beginning of your next upkeep, if you haven't played it, put it into its owner's graveyard.")]
+    [InlineData("Synthesis Pod", "Artifact",
+        "({U/P} can be paid with either {U} or 2 life.)\n{1}{U/P}, {T}, Exile a spell you control: Target "
+        + "opponent reveals cards from the top of their library until they reveal a card with mana value equal "
+        + "to 1 plus the exiled spell's mana value. Exile that card, then that player shuffles. You may cast "
+        + "that exiled card without paying its mana cost.")]
+    [InlineData("Crabomination", "Creature — Crab Demon",
+        "Emerge from artifact {5}{B}{B} (You may cast this spell by sacrificing an artifact and paying the "
+        + "emerge cost reduced by that artifact's mana value.)\nWhen this creature enters, target opponent "
+        + "exiles the top card of their library, a card at random from their graveyard, and a card at random "
+        + "from their hand. You may cast a spell from among cards exiled this way without paying its mana cost.")]
+    [InlineData("Azula, Cunning Usurper", "Legendary Creature — Human Noble Rogue",
+        "Firebending 2 (Whenever this creature attacks, add {R}{R}. This mana lasts until end of "
+        + "combat.)\nWhen Azula enters, target opponent exiles a nontoken creature they control, then they exile "
+        + "a nonland card from their graveyard.\nDuring your turn, you may cast cards exiled with Azula and you "
+        + "may cast them as though they had flash. Mana of any type can be spent to cast those spells.")]
+    [InlineData("Ashen Powder", "Sorcery",
+        "Put target creature card from an opponent's graveyard onto the battlefield under your control.")]
+    [InlineData("Fire Nation Salvagers", "Creature — Human Soldier",
+        "Menace\nWhen this creature enters, put a +1/+1 counter on target creature or Vehicle you "
+        + "control.\nWhenever one or more creatures you control with counters on them deal combat damage to a "
+        + "player, put target creature or Vehicle card from that player's graveyard onto the battlefield under "
+        + "your control.")]
+    [InlineData("Gorbag of Minas Morgul", "Legendary Creature — Orc Soldier",
+        "Whenever a Goblin or Orc you control deals combat damage to a player, you may sacrifice it. When you "
+        + "do, choose one —\n• Draw a card.\n• Create a Treasure token. (It's an artifact with \"{T}, Sacrifice "
+        + "this token: Add one mana of any color.\")")]
+    [InlineData("Riverwheel Sweep", "Sorcery",
+        "Tap target creature. Put three stun counters on it. (If a permanent with a stun counter would become "
+        + "untapped, remove one from it instead.)\nExile the top two cards of your library. Choose one of them. "
+        + "Until the end of your next turn, you may play that card.")]
+    [InlineData("Heroes' Hangout", "Sorcery",
+        "Choose one —\n• Date Night — Exile the top two cards of your library. Choose one of them. Until the "
+        + "end of your next turn, you may play that card.\n• Patrol Night — One or two target creatures each get "
+        + "+1/+0 and gain first strike until end of turn.")]
+    [InlineData("Case of the Burning Masks", "Enchantment — Case",
+        "When this Case enters, it deals 3 damage to target creature an opponent controls.\nTo solve — Three "
+        + "or more sources you controlled dealt damage this turn. (If unsolved, solve at the beginning of your "
+        + "end step.)\nSolved — Sacrifice this Case: Exile the top three cards of your library. Choose one of "
+        + "them. You may play that card this turn.")]
+    [InlineData("Mishra's Research Desk", "Artifact",
+        "{1}, {T}, Sacrifice this artifact: Exile the top two cards of your library. Choose one of them. "
+        + "Until the end of your next turn, you may play that card.\nUnearth {1}{R} ({1}{R}: Return this card "
+        + "from your graveyard to the battlefield. Exile it at the beginning of the next end step or if it "
+        + "would leave the battlefield. Unearth only as a sorcery.)")]
+    [InlineData("Strongbox Raider", "Creature — Orc Pirate",
+        "Raid — When this creature enters, if you attacked this turn, exile the top two cards of your "
+        + "library. Choose one of them. Until the end of your next turn, you may play that card.")]
+    [InlineData("Tectonic Giant", "Creature — Elemental Giant",
+        "Whenever this creature attacks or becomes the target of a spell an opponent controls, choose one —\n• "
+        + "This creature deals 3 damage to each opponent.\n• Exile the top two cards of your library. Choose one "
+        + "of them. Until the end of your next turn, you may play that card.")]
+    [InlineData("Party Thrasher", "Creature — Lizard Wizard",
+        "Noncreature spells you cast from exile have convoke. (Each creature you tap while casting a "
+        + "noncreature spell from exile pays for {1} or one mana of that creature's color.)\nAt the beginning of "
+        + "your first main phase, you may discard a card. If you do, exile the top two cards of your library, "
+        + "then choose one of them. You may play that card this turn.")]
+    [InlineData("Feral Encounter", "Sorcery",
+        "Look at the top five cards of your library. You may exile a creature card from among them. Put the "
+        + "rest on the bottom of your library in a random order. You may cast the exiled card this turn. At the "
+        + "beginning of the next combat phase this turn, target creature you control deals damage equal to its "
+        + "power to up to one target creature you don't control.")]
+    [InlineData("Magmatic Channeler", "Creature — Human Wizard",
+        "As long as there are four or more instant and/or sorcery cards in your graveyard, this creature gets "
+        + "+3/+1.\n{T}, Discard a card: Exile the top two cards of your library, then choose one of them. You "
+        + "may play that card this turn.")]
+    [InlineData("Cache Grab", "Instant",
+        "Mill four cards. You may put a permanent card from among the cards milled this way into your hand. "
+        + "If you control a Squirrel or returned a Squirrel card to your hand this way, create a Food token. "
+        + "(To mill four cards, put the top four cards of your library into your graveyard. A Food token is an "
+        + "artifact with \"{2}, {T}, Sacrifice this token: You gain 3 life.\")")]
+    [InlineData("Dredger's Insight", "Enchantment",
+        "Whenever one or more artifact and/or creature cards leave your graveyard, you gain 1 life.\nWhen this "
+        + "enchantment enters, mill four cards. You may put an artifact, creature, or land card from among the "
+        + "milled cards into your hand. (To mill four cards, put the top four cards of your library into your "
+        + "graveyard.)")]
+    [InlineData("Town Greeter", "Creature — Human Citizen",
+        "When this creature enters, mill four cards. You may put a land card from among them into your hand. "
+        + "If you put a Town card into your hand this way, you gain 2 life. (To mill four cards, a player puts "
+        + "the top four cards of their library into their graveyard.)")]
+    [InlineData("Tomakul Scrapsmith", "Creature — Human Artificer",
+        "When this creature enters, mill three cards. You may put an artifact card from among the cards "
+        + "milled this way into your hand. If you don't, put a +1/+1 counter on this creature. (To mill a card, "
+        + "put the top card of your library into your graveyard.)")]
+    [InlineData("Ainok Wayfarer", "Creature — Dog Scout",
+        "When this creature enters, mill three cards. You may put a land card from among them into your hand. "
+        + "If you don't, put a +1/+1 counter on this creature. (To mill three cards, put the top three cards of "
+        + "your library into your graveyard.)")]
+    [InlineData("Rosheen, Roaring Prophet", "Legendary Creature — Giant Shaman",
+        "When Rosheen enters, mill six cards. You may put a card with {X} in its mana cost from among them "
+        + "into your hand.\n{T}: Reveal any number of cards with {X} in their mana cost in your hand. Add {C}{C} "
+        + "for each card revealed this way. Spend this mana only on costs that contain {X}.")]
+    [InlineData("Picklock Prankster // Free the Fae", "Creature — Faerie Rogue // Instant — Adventure",
+        "Flying, vigilance\nMill four cards. Then put an instant, sorcery, or Faerie card from among the "
+        + "milled cards into your hand.")]
+    [InlineData("Scout the City", "Sorcery",
+        "Choose one —\n• Look Around — Mill three cards. You may put a permanent card from among them into "
+        + "your hand. You gain 3 life. (To mill three cards, put the top three cards of your library into your "
+        + "graveyard.)\n• Bring Down — Destroy target creature with flying.")]
+    [InlineData("Wrenn and Realmbreaker", "Legendary Planeswalker — Wrenn",
+        "Lands you control have \"{T}: Add one mana of any color.\"\n+1: Up to one target land you control "
+        + "becomes a 3/3 Elemental creature with vigilance, hexproof, and haste until your next turn. It's "
+        + "still a land.\n−2: Mill three cards. You may put a permanent card from among the milled cards into "
+        + "your hand.\n−7: You get an emblem with \"You may play lands and cast permanent spells from your "
+        + "graveyard.\"")]
+    [InlineData("Spinner of Souls", "Creature — Spider Spirit",
+        "Reach\nWhenever another nontoken creature you control dies, you may reveal cards from the top of your "
+        + "library until you reveal a creature card. Put that card into your hand and the rest on the bottom of "
+        + "your library in a random order.")]
+    [InlineData("Nissa, Resurgent Animist", "Legendary Creature — Elf Scout",
+        "Landfall — Whenever a land you control enters, add one mana of any color. Then if this is the second "
+        + "time this ability has resolved this turn, reveal cards from the top of your library until you reveal "
+        + "an Elf or Elemental card. Put that card into your hand and the rest on the bottom of your library in "
+        + "a random order.")]
+    [InlineData("House Cartographer", "Creature — Human Scout Survivor",
+        "Survival — At the beginning of your second main phase, if this creature is tapped, reveal cards from "
+        + "the top of your library until you reveal a land card. Put that card into your hand and the rest on "
+        + "the bottom of your library in a random order.")]
+    [InlineData("Sacred Guide", "Creature — Human Cleric",
+        "{1}{W}, Sacrifice this creature: Reveal cards from the top of your library until you reveal a white "
+        + "card. Put that card into your hand and exile all other cards revealed this way.")]
+    [InlineData("Yuna's Whistle", "Instant",
+        "Reveal cards from the top of your library until you reveal a creature card. Put that card into your "
+        + "hand and the rest on the bottom of your library in a random order. When you reveal a creature card "
+        + "this way, put X +1/+1 counters on target creature you control, where X is the mana value of that "
+        + "card.")]
+    [InlineData("Demonic Consultation", "Instant",
+        "Choose a card name. Exile the top six cards of your library, then reveal cards from the top of your "
+        + "library until you reveal a card with the chosen name. Put that card into your hand and exile all "
+        + "other cards revealed this way.")]
+    [InlineData("Smoldering Stagecoach", "Artifact — Vehicle",
+        "Smoldering Stagecoach's power is equal to the number of instant and sorcery cards in your "
+        + "graveyard.\nWhenever this Vehicle attacks, the next instant spell and the next sorcery spell you cast "
+        + "this turn each have cascade.\nCrew 2")]
+    [InlineData("TARDIS", "Artifact — Vehicle",
+        "Flying\nWhenever this Vehicle attacks, if you control a Time Lord, the next spell you cast this turn "
+        + "has cascade and you may planeswalk.\nCrew 2 (Tap any number of creatures you control with total power "
+        + "2 or more: This Vehicle becomes an artifact creature until end of turn.)")]
+    [InlineData("Oil-Gorger Troll", "Creature — Phyrexian Troll Warrior",
+        "When this creature enters, you gain 3 life. Then if you control a permanent with an oil counter on "
+        + "it, draw a card.")]
+    [InlineData("Wand of Wonder", "Artifact",
+        "{4}, {T}: Roll a d20. Each opponent exiles cards from the top of their library until they exile an "
+        + "instant or sorcery card, then shuffles the rest into their library. You may cast up to X instant "
+        + "and/or sorcery spells from among cards exiled this way without paying their mana costs.\n1—9 | X is "
+        + "one.\n10—19 | X is two.\n20 | X is three.")]
+    [InlineData("Brainstorm", "Instant",
+        "Draw three cards, then put two cards from your hand on top of your library in any order.")]
+    [InlineData("Dream Cache", "Sorcery",
+        "Draw three cards, then put two cards from your hand both on top of your library or both on the "
+        + "bottom of your library.")]
+    [InlineData("Hidetsugu and Kairi", "Legendary Creature — Ogre Demon Dragon",
+        "Flying\nWhen Hidetsugu and Kairi enters, draw three cards, then put two cards from your hand on top "
+        + "of your library in any order.\nWhen Hidetsugu and Kairi dies, exile the top card of your library. "
+        + "Target opponent loses life equal to its mana value. If it's an instant or sorcery card, you may cast "
+        + "it without paying its mana cost.")]
+    // C2 is a REPEAT: a card out of an opponent's graveyard cast ONCE, on
+    // entering, stays Steal alone. Without the repeat gate in
+    // RepeatsWithoutPayingACard this one gains CardAdvantage (measured
+    // 2026-10-16).
+    [InlineData("Dire Fleet Daredevil", "Creature — Human Pirate",
+        "First strike\nWhen this creature enters, exile target instant or sorcery card from an opponent's "
+        + "graveyard. You may cast it this turn, and mana of any type can be spent to cast that spell. If that "
+        + "spell would be put into a graveyard, exile it instead.")]
+    public void Classify_TheOctober16CardAdvantagePassRemovals_AreNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // V3, 2026-10-16: exile target spell an opponent controls and play it is a
+    // theft.
+    [InlineData("Smirking Spelljacker", "Creature — Djinn Wizard Rogue",
+        "Flash\nFlying\nWhen this creature enters, exile target spell an opponent controls.\nWhenever this "
+        + "creature attacks, if a card is exiled with it, you may cast the exiled card without paying its mana "
+        + "cost.")]
+    public void Classify_TheOctober16Pass_TheirSpellTaken_IsSteal(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Steal));
+    }
+
+    [Theory]
+    // M1/M5, 2026-10-16: draw-then-put-back that nets cards, and a repeating
+    // exile-two-play-one, are CardAdvantage and no Filter.
+    [InlineData("Brainsurge", "Instant",
+        "Draw four cards, then put two cards from your hand on top of your library in any order.")]
+    [InlineData("Fireglass Mentor", "Creature — Lizard Warlock",
+        "At the beginning of your second main phase, if an opponent lost life this turn, exile the top two "
+        + "cards of your library. Choose one of them. Until end of turn, you may play that card.")]
+    public void Classify_TheOctober16Pass_ALootThatComesOutAhead_IsNotFilter(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // M5, 2026-10-16: one-shot and modal exile-two-play-one stay Filter.
+    [InlineData("Riverwheel Sweep", "Sorcery",
+        "Tap target creature. Put three stun counters on it. (If a permanent with a stun counter would become "
+        + "untapped, remove one from it instead.)\nExile the top two cards of your library. Choose one of them. "
+        + "Until the end of your next turn, you may play that card.")]
+    [InlineData("Heroes' Hangout", "Sorcery",
+        "Choose one —\n• Date Night — Exile the top two cards of your library. Choose one of them. Until the "
+        + "end of your next turn, you may play that card.\n• Patrol Night — One or two target creatures each get "
+        + "+1/+0 and gain first strike until end of turn.")]
+    [InlineData("Case of the Burning Masks", "Enchantment — Case",
+        "When this Case enters, it deals 3 damage to target creature an opponent controls.\nTo solve — Three "
+        + "or more sources you controlled dealt damage this turn. (If unsolved, solve at the beginning of your "
+        + "end step.)\nSolved — Sacrifice this Case: Exile the top three cards of your library. Choose one of "
+        + "them. You may play that card this turn.")]
+    [InlineData("Mishra's Research Desk", "Artifact",
+        "{1}, {T}, Sacrifice this artifact: Exile the top two cards of your library. Choose one of them. "
+        + "Until the end of your next turn, you may play that card.\nUnearth {1}{R} ({1}{R}: Return this card "
+        + "from your graveyard to the battlefield. Exile it at the beginning of the next end step or if it "
+        + "would leave the battlefield. Unearth only as a sorcery.)")]
+    [InlineData("Strongbox Raider", "Creature — Orc Pirate",
+        "Raid — When this creature enters, if you attacked this turn, exile the top two cards of your "
+        + "library. Choose one of them. Until the end of your next turn, you may play that card.")]
+    [InlineData("Tectonic Giant", "Creature — Elemental Giant",
+        "Whenever this creature attacks or becomes the target of a spell an opponent controls, choose one —\n• "
+        + "This creature deals 3 damage to each opponent.\n• Exile the top two cards of your library. Choose one "
+        + "of them. Until the end of your next turn, you may play that card.")]
+    [InlineData("Party Thrasher", "Creature — Lizard Wizard",
+        "Noncreature spells you cast from exile have convoke. (Each creature you tap while casting a "
+        + "noncreature spell from exile pays for {1} or one mana of that creature's color.)\nAt the beginning of "
+        + "your first main phase, you may discard a card. If you do, exile the top two cards of your library, "
+        + "then choose one of them. You may play that card this turn.")]
+    [InlineData("Feral Encounter", "Sorcery",
+        "Look at the top five cards of your library. You may exile a creature card from among them. Put the "
+        + "rest on the bottom of your library in a random order. You may cast the exiled card this turn. At the "
+        + "beginning of the next combat phase this turn, target creature you control deals damage equal to its "
+        + "power to up to one target creature you don't control.")]
+    public void Classify_TheOctober16Pass_OneOfTwoOnce_IsFilter(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // C4, 2026-10-16: a card cast from any or their graveyard counts for Regrowth.
+    [InlineData("Urabrask // The Great Work", "Legendary Creature — Phyrexian Praetor // Enchantment — Saga",
+        "First strike\nWhenever you cast an instant or sorcery spell, Urabrask deals 1 damage to target "
+        + "opponent. Add {R}.\n{R}: Exile Urabrask, then return it to the battlefield transformed under its "
+        + "owner's control. Activate only as a sorcery and only if you've cast three or more instant and/or "
+        + "sorcery spells this turn.\n(As this Saga enters and after your draw step, add a lore counter.)\nI — "
+        + "This Saga deals 3 damage to target opponent and each creature they control.\nII — Create three "
+        + "Treasure tokens.\nIII — Until end of turn, you may cast instant and sorcery spells from any "
+        + "graveyard. If a spell cast this way would be put into a graveyard, exile it instead. Exile this "
+        + "Saga, then return it to the battlefield (front face up).")]
+    public void Classify_TheOctober16Pass_AGraveyardOfTheirsCast_IsRegrowth(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Regrowth));
+    }
+
+    [Theory]
+    // C5, 2026-10-16: exile that many from the top, play one free.
+    [InlineData("Vault 112: Sadistic Simulation", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI, II — Tap "
+        + "up to one target creature and put a stun counter on it. You get {E}{E} (two energy counters).\nIII — "
+        + "Pay any amount of {E}. If you paid one or more {E} this way, shuffle your library, then exile that "
+        + "many cards from the top. You may play one of those cards without paying its mana cost.")]
+    public void Classify_TheOctober16Pass_ExileThatManyAndPlayOne_IsFilterAndCheat(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Filter));
+        Assert.True(result.HasFlag(CardEffect.Cheat));
+    }
+
+    [Theory]
     // A TAP, in every shape the game prints it. Ruled 2026-09-22 after the hand
     // tags were found contradicting themselves on identical wording; the human
     // resolved six pairs the same way and rejected both proposed lines — the

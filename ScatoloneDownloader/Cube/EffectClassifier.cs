@@ -702,6 +702,7 @@ namespace ScatoloneDownloader.Cube
                     || AdditionalCostDiscard.IsMatch(text) || ActivationCostDiscard.IsMatch(text)
                     || DrawPaidForWithACard.IsMatch(text)
                     || DrawsOnceBySacrificingItsName(card, text)
+                    || DrawOnceOnly.IsMatch(text)
                     || (BloodReminder.IsMatch(text) && !YouDraw.IsMatch(BloodReminder.Replace(text, " ")))))
             {
                 result &= ~CardEffect.CardAdvantage;
@@ -745,6 +746,7 @@ namespace ScatoloneDownloader.Cube
             // Explore's reminder is not asked (see Explores).
             if (Abilities(ExploreReminder.Replace(text, " ")).Any(a =>
                     (TopFewIntoYourHand.IsMatch(a) || SearchesSeveralIntoYourHand.IsMatch(a))
+                    && !TargetedByYourOwnSecondCard.IsMatch(a)
                     && (AbilityRepeatsAtNoCostToItself(a) || EntersTwiceWithOffspring(text, a))))
             {
                 result |= CardEffect.CardAdvantage;
@@ -754,8 +756,18 @@ namespace ScatoloneDownloader.Cube
             // can go back to it. Added here rather than in the table so a loot
             // elsewhere on the card cannot withdraw it — the cards are coming
             // from a different zone and nothing is being paid out of hand.
-            if (CastsAStreamFromElsewhere.IsMatch(text)
-                && (RepeatableWording.IsMatch(text) || StandingPermission.IsMatch(text)))
+            string notSpentByName = WithoutSelfSacrificeByName(card, text);
+            // …and not a stream only a creature TYPE can use, ruled 2026-10-16
+            // (WithoutTribalRecursion): Zul Ashur casts "target Zombie creature
+            // card from your graveyard".
+            // A type joined to a card type — "an artifact or Human spell" (Arcade
+            // Gannon, tagged) — is not only the tribe's.
+            if (CastsAStreamFromElsewhere.IsMatch(
+                    TribeOrACardType.IsMatch(notSpentByName) ? notSpentByName : WithoutTribalRecursion(notSpentByName))
+                && !ChargesOtherGraveyardCards.IsMatch(notSpentByName)
+                && !ExilesYourOwnAndPlaysItBack.IsMatch(notSpentByName)
+                && !PaysAClueForTheCast.IsMatch(notSpentByName)
+                && (RepeatableWording.IsMatch(notSpentByName) || StandingPermission.IsMatch(notSpentByName)))
             {
                 result |= CardEffect.CardAdvantage;
             }
@@ -764,14 +776,22 @@ namespace ScatoloneDownloader.Cube
             // should be withdrawn by a loot or a cycling cost elsewhere on the card.
             bool impulseIsACard = ImpulseDraw.IsMatch(text)
                 && (ImpulseOfSeveralCards.IsMatch(text)
-                    || Abilities(text).Any(a => ImpulseDraw.IsMatch(a) && AbilityRepeats(a)));
+                    || Abilities(text).Any(a => ImpulseDraw.IsMatch(a)
+                        && AbilityRepeats(card.MacroType == MacroType.Spell ? ForOneTurnOnly.Replace(a, "") : a)));
 
             // Exiling several and playing only one is a count of zero. Asked of
             // the whole card rather than of the ability, because it has to
             // withdraw the several-cards claim that ImpulseOfSeveralCards and
             // ExileSeveralAndPlayThem both make on those same words; no reviewed
             // card carries this shape and a real multi-card impulse as well.
-            bool onlyOneOfThem = ExileSeveralAndChooseOne.IsMatch(text);
+            // Read 2026-10-16: unless the ability that says it comes round again
+            // (Fireglass Mentor, every second main phase) — one of two, every
+            // turn, is a card each time. A modal bullet never counts as coming
+            // round (Tectonic Giant, Heroes' Hangout stay Filter).
+            bool onlyOneOfThem = Abilities(text).Any(a => ExileSeveralAndChooseOne.IsMatch(a)
+                && !(!a.Contains('•') && a.StartsWith("At the beginning of", StringComparison.OrdinalIgnoreCase)
+                    && !a.Contains("discard", StringComparison.OrdinalIgnoreCase)
+                    && RepeatsWithoutPayingACard(a)));
 
             if (onlyOneOfThem)
             {
@@ -794,11 +814,22 @@ namespace ScatoloneDownloader.Cube
                 || (OneDrawButTwoCasts.IsMatch(text) && CastsItselfASecondTime.IsMatch(text))
                 || SelfSacrificeBuysSeveral.IsMatch(text)
                 || DiscardYourHandThenDrawSeveral.IsMatch(text)
+                || EntersSacrificeThenDraws.IsMatch(text)
+                || MillsAndTakesTwoBack.IsMatch(text)
+                || AttackRevealsUntilIntoHand.IsMatch(text)
+                || ((card.TypeLine ?? string.Empty).StartsWith("Token", StringComparison.OrdinalIgnoreCase)
+                    && TokenCardDrawsOnEntering.IsMatch(text))
+                || AttackInvestigatesWhenNotCast.IsMatch(text)
+                || GrantedManaAndCascade.IsMatch(text)
+                || GravestormAndAClue.IsMatch(text)
+                || ControllerExilesThatManyAndPlays.IsMatch(text)
                 || GrantedTriggeredDraw.IsMatch(text)
                 || BecomesTheMonarch.IsMatch(text)
                 || SeveralTokensThatDraw.IsMatch(BloodReminder.Replace(text, " "))
                 || SacrificesAPileForCards.IsMatch(text)
                 || DrawModeEveryTurn.IsMatch(text) || DrawModeOnARepeatingTrigger.IsMatch(text)
+                || SacrificeBuysSeveralModes.IsMatch(text)
+                || DrawAndInvestigate.IsMatch(Parenthetical.Replace(text, " "))
                 || LooksAndKeepsTheRest.IsMatch(text)
                 || WarpPaysOnTheWayOutTwice.IsMatch(text)
                 || CopiesYourOwnSpell.IsMatch(text)
@@ -807,7 +838,14 @@ namespace ScatoloneDownloader.Cube
                 // The readings of 2026-10-14 — see PileFromTheTopIntoYourHand.
                 || PileFromTheTopIntoYourHand.IsMatch(text) || SeveralKeptFromALook.IsMatch(text)
                 || ChaptersRepeatACard.IsMatch(text) || JunkAgainOrSeveral.IsMatch(text)
-                || DrawModeChosenAgain.IsMatch(text) || GrantsRebound.IsMatch(text))
+                || DrawModeChosenAgain.IsMatch(text) || GrantsRebound.IsMatch(text)
+                // A card off the top of an OPPONENT's library, or out of their
+                // graveyard, that you may play: a stream when the ability
+                // comes back, and a draw-two when it takes more than one.
+                // Ruled 2026-10-16 (C1, C2) — see TheirTopForYou.
+                || Abilities(text).Any(a => (TheirTopForYou.IsMatch(a) || TheirGraveyardCardForYou.IsMatch(a))
+                    && RepeatsWithoutPayingACard(a))
+                || SeveralOffTheirTop.IsMatch(text) || TheirCardsFromExile.IsMatch(text))
             {
                 result |= CardEffect.CardAdvantage;
             }

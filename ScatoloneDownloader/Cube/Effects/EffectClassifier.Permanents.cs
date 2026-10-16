@@ -358,8 +358,14 @@ namespace ScatoloneDownloader.Cube
                     && AndPlaysThem.IsMatch(spoken) && !yours)
                 || (SomebodyElsesZone.IsMatch(LandCardFromAGraveyard.Replace(spoken, " "))
                     && OntoYourSideOfTheBoard.IsMatch(spoken))
-                || (SomebodyElsesNamedZone.IsMatch(spoken) && AndSomebodyPlaysThem.IsMatch(spoken) && !yours);
+                || (SomebodyElsesNamedZone.IsMatch(spoken) && AndSomebodyPlaysThem.IsMatch(spoken) && !yours)
+                || (TheirSpellExiled.IsMatch(spoken) && AndPlaysThem.IsMatch(spoken) && !yours);
         }
+
+        /// <summary>Their SPELL exiled off the stack and cast by you: the card is
+        /// somebody else's with no zone named (Smirking Spelljacker, Counter and
+        /// Steal by hand). Read 2026-10-16.</summary>
+        private static readonly Regex TheirSpellExiled = Rx(@"exile target spell an opponent controls");
 
         private static readonly Regex[] MillPatterns =
         [

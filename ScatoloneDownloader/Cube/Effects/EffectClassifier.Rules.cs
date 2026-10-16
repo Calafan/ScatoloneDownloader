@@ -686,8 +686,24 @@ namespace ScatoloneDownloader.Cube
                     // guard, so a comma written in front of "draw" for it was
                     // MEASURED AND DROPPED.
                     Rx(@"^when [^\n,]{0,60} and (?:whenever|at the beginning of)[^\n]{0,160}\bdraw (?:a|one) card"
-                        + @"|^(?:whenever|at the beginning of)[^\n]*(?:\band you draw (?:a|one) card|\. draw (?:a|one) card\.$)",
+                        // …and "Then draw a card." closing a long upkeep trigger
+                        // (Fisher's Talent, read 2026-10-16).
+                        + @"|^(?:whenever|at the beginning of)[^\n]*(?:\band you draw (?:a|one) card|\. (?:then )?draw (?:a|one) card\.$)",
                         RegexOptions.Multiline),
+                    // A combat trigger of your own whose draw sits past the 160 as a
+                    // closing sentence, "Then if you control six or more Humans,
+                    // draw a card." (Éowyn, Shieldmaiden), or as the vote's tied
+                    // branch (Galadriel, Elven-Queen), both tagged by hand (read
+                    // 2026-10-16). Oil-Gorger Troll's draw is an enters trigger.
+                    Rx(@"^(?:will of the council — )?at the beginning of combat on your turn,[^\n]*(?:\. then if you control [^,\n]{0,40}, draw (?:a|one) card\.$"
+                        + @"|guidance gets more votes or the vote is tied, draw (?:a|one) card\.$)",
+                        RegexOptions.Multiline),
+                    // Arcane Bombardment copies what it exiled and casts any number
+                    // of the copies, every first spell of the turn (read 2026-10-16).
+                    Rx(@"then copy each card exiled with this \w+\. you may cast any number of the copies"),
+                    // An extra upkeep, draw step and everything else every turn:
+                    // Shadow of the Second Sun, tagged by hand (read 2026-10-16).
+                    Rx(@"there is an additional beginning phase"),
                     // "An ADDITIONAL card" is a card, ruled 2026-09-21. Howling
                     // Mine and Sylvan Library say it and are tagged; the one
                     // card that says it and is not — Anvil of Bogardan — takes
@@ -715,7 +731,12 @@ namespace ScatoloneDownloader.Cube
                     // Verdict pays a card per vote you took, Tempt with Bunnies
                     // one per opponent who accepted. Both tagged, and they are
                     // the only two reviewed cards written this way.
-                    Rx(@"for each [\w ']{0,40}, (?:you )?draws? (?:a|one) card"),
+                    //
+                    // Not "for each opponent who CAN'T, you draw a card", read
+                    // 2026-10-16: it follows a discard and pays you only when an
+                    // opponent has no card to give, a conditional rider
+                    // (Refurbished Familiar, 0 of 1 tagged; hand: Discard alone).
+                    Rx(@"for each (?![\w ']{0,40}\bcan't, )[\w ']{0,40}, (?:you )?draws? (?:a|one) card"),
                     // ONE trigger word covering TWO events is two cards, not
                     // one: Cryogen Relic draws when it enters and again when it
                     // leaves, so the artifact replaces itself and pays a card
@@ -940,7 +961,13 @@ namespace ScatoloneDownloader.Cube
                     // the library (Ugin, Eye of the Storms' −11, 2026-09-29).
                     Rx(@"search your library for [^.\n]{0,40}cards?, exile them, then shuffle"
                         + @"(?!\.[^\n]{0,30}you may (?:cast|play) (?:those cards|them))"),
-                    Rx(@"put that many cards from the top of your library into your hand")]),
+                    Rx(@"put that many cards from the top of your library into your hand"),
+                    // Vault 112: Sadistic Simulation's chapter III exiles that
+                    // many off the top and lets you play ONE of them free: a
+                    // look and one kept, so Filter, and also Cheat (next to
+                    // the Cheat patterns). Ruled 2026-10-16; the one card
+                    // written this way, 0 of 1 tagged by rule.
+                    Rx(@"exile that many cards from the top\. you may play one of those cards without paying its mana cost")]),
 
                 // The [\w ] runs still cannot cross a FULL STOP, which is what keeps
                 // a card that exiles from a graveyard in one sentence and bounces a
@@ -1302,7 +1329,11 @@ namespace ScatoloneDownloader.Cube
                     // the same card. Asked of a LOOK or a REVEAL only: the EXILE
                     // version is the impulse rider above, which is a card.
                     Rx(@"(?:look at|reveal) the top [\w ]{1,20} of your library[^\n]{0,200}"
-                        + @"cast [^\n]{0,80}from among them without paying")]),
+                        + @"cast [^\n]{0,80}from among them without paying"),
+                    // Vault 112: Sadistic Simulation plays one of the cards it
+                    // exiled for free: Filter and Cheat, not CardAdvantage.
+                    // Ruled 2026-10-16.
+                    Rx(@"exile that many cards from the top\. you may play one of those cards without paying its mana cost")]),
             ];
 
             FilterPatterns = Rules.First(rule => rule.Effect == CardEffect.Filter).Patterns;

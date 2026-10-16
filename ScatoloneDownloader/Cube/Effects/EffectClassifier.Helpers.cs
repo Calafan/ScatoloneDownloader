@@ -329,6 +329,17 @@ namespace ScatoloneDownloader.Cube
                     if (drew > 0 && paid > 0) { net = Math.Max(net, drew - paid); }
                 }
 
+                // The cards handed back from your hand ON TOP of the library are
+                // counted the same, read 2026-10-16: Brainsurge draws four and
+                // puts two back, -1 +4 -2 = +1, and is CardAdvantage by hand;
+                // Brainstorm (-1 +3 -2), Hidetsugu and Kairi and Dream Cache
+                // net nothing and stay Filter alone.
+                foreach (Match m in DrawsThenPutsBack.Matches(line))
+                {
+                    int drew = CardCount(m.Groups[1].Value), paid = CardCount(m.Groups[2].Value);
+                    if (drew > 0 && paid > 0) { net = Math.Max(net, drew - paid); }
+                }
+
                 if (net == int.MinValue)
                 {
                     continue;
