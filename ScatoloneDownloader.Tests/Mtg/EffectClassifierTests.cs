@@ -8235,6 +8235,286 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // The Removal pass of 2026-10-16. R1 PUNISHER: an opponent or each player
+    // choosing between a creature and something else is an edict (Fandaniel, Fatal
+    // Lore, Bellowing Mauler; Mogis, Tomb Blade, Unnatural Hunger, Demanding
+    // Dragon; Pillar Tombs of Aku). R3: Chandra's emblem. R4: a removal ability
+    // granted for one turn (Dead Before Sunrise, Vorinclex, Gaze of Pain). R2
+    // keeps Chaos Charm and Reign of Chaos on their other clause. The majority
+    // outliers the code already proposed, and the twenty readings F3-F20.
+    [InlineData("Fandaniel, Telophoroi Ascian", "Legendary Creature — Elder Wizard",
+        "Whenever you cast an instant or sorcery spell, surveil 1.\nAt the beginning of your end step, each "
+        + "opponent may sacrifice a nontoken creature of their choice. Each opponent who doesn't loses 2 life "
+        + "for each instant and sorcery card in your graveyard.")]
+    [InlineData("Fatal Lore", "Sorcery",
+        "An opponent chooses one —\n• You draw three cards.\n• You destroy up to two target creatures that "
+        + "player controls. They can't be regenerated. That player draws up to three cards.")]
+    [InlineData("Bellowing Mauler", "Creature — Ogre Warrior",
+        "At the beginning of your end step, each player loses 4 life unless they sacrifice a nontoken "
+        + "creature of their choice.")]
+    [InlineData("Mogis, God of Slaughter", "Legendary Enchantment Creature — God",
+        "Indestructible\nAs long as your devotion to black and red is less than seven, Mogis isn't a "
+        + "creature.\nAt the beginning of each opponent's upkeep, Mogis deals 2 damage to that player unless "
+        + "they sacrifice a creature of their choice.")]
+    [InlineData("Tomb Blade", "Artifact Creature — Necron",
+        "Flying\nWhenever this creature deals combat damage to a player, that player loses life equal to the "
+        + "number of creatures they control unless they sacrifice a creature of their choice.\nUnearth {6}{B}{B}")]
+    [InlineData("Unnatural Hunger", "Enchantment — Aura",
+        "Enchant creature\nAt the beginning of the upkeep of enchanted creature's controller, this Aura deals "
+        + "damage equal to that creature's power to that player unless they sacrifice another creature of their "
+        + "choice.")]
+    [InlineData("Demanding Dragon", "Creature — Dragon",
+        "Flying\nWhen this creature enters, it deals 5 damage to target opponent unless that player sacrifices "
+        + "a creature of their choice.")]
+    [InlineData("Pillar Tombs of Aku", "World Enchantment",
+        "At the beginning of each player's upkeep, that player may sacrifice a creature of their choice. If "
+        + "that player doesn't, they lose 5 life and you sacrifice this enchantment.")]
+    [InlineData("Chaos Charm", "Instant",
+        "Choose one —\n• Destroy target Wall.\n• Chaos Charm deals 1 damage to target creature.\n• Target "
+        + "creature gains haste until end of turn.")]
+    [InlineData("Reign of Chaos", "Sorcery",
+        "Choose one —\n• Destroy target Plains and target white creature.\n• Destroy target Island and target "
+        + "blue creature.")]
+    [InlineData("Chandra, Spark Hunter", "Legendary Planeswalker — Chandra",
+        "At the beginning of combat on your turn, choose up to one target Vehicle you control. Until end of "
+        + "turn, it becomes an artifact creature and gains haste.\n+2: You may sacrifice an artifact or discard "
+        + "a card. If you do, draw a card.\n0: Create a 3/2 colorless Vehicle artifact token with crew 1.\n−7: "
+        + "You get an emblem with \"Whenever an artifact you control enters, this emblem deals 3 damage to any "
+        + "target.\"")]
+    [InlineData("Dead Before Sunrise", "Instant",
+        "Until end of turn, outlaw creatures you control get +1/+0 and gain \"{T}: This creature deals damage "
+        + "equal to its power to target creature.\" (Assassins, Mercenaries, Pirates, Rogues, and Warlocks are "
+        + "outlaws.)")]
+    [InlineData("Vorinclex // The Grand Evolution", "Legendary Creature — Phyrexian Praetor // Enchantment — Saga",
+        "Reach, trample\nWhen Vorinclex enters, search your library for up to two Forest cards, reveal them, "
+        + "put them into your hand, then shuffle.\n{6}{G}{G}: Exile Vorinclex, then return it to the battlefield "
+        + "transformed under its owner's control. Activate only as a sorcery.\n(As this Saga enters and after "
+        + "your draw step, add a lore counter.)\nI — Mill ten cards. Put up to two creature cards from among the "
+        + "milled cards onto the battlefield.\nII — Distribute seven +1/+1 counters among any number of target "
+        + "creatures you control.\nIII — Until end of turn, creatures you control gain \"{1}: This creature "
+        + "fights target creature you don't control.\" Exile this Saga, then return it to the battlefield (front "
+        + "face up).")]
+    [InlineData("Gaze of Pain", "Sorcery",
+        "Until end of turn, whenever a creature you control attacks and isn't blocked, you may choose to have "
+        + "it deal damage equal to its power to a target creature. If you do, it assigns no combat damage this "
+        + "turn.")]
+    [InlineData("Spider-Man 2099", "Legendary Creature — Spider Human Hero",
+        "From the Future — You can't cast Spider-Man 2099 during your first, second, or third turns of the "
+        + "game.\nDouble strike, vigilance\nAt the beginning of your end step, if you've played a land or cast a "
+        + "spell this turn from anywhere other than your hand, Spider-Man 2099 deals damage equal to his power "
+        + "to any target.")]
+    [InlineData("Sawblade Skinripper", "Creature — Human Assassin",
+        "Menace\n{2}, Sacrifice another creature or enchantment: Put a +1/+1 counter on this creature.\nAt the "
+        + "beginning of your end step, if you sacrificed one or more permanents this turn, this creature deals "
+        + "that much damage to any target.")]
+    [InlineData("Crimson Manticore", "Creature — Manticore",
+        "Flying\n{R}, {T}: This creature deals 1 damage to target attacking or blocking creature.")]
+    [InlineData("Marjhan", "Creature — Serpent",
+        "This creature doesn't untap during your untap step.\n{U}{U}, Sacrifice a creature: Untap this "
+        + "creature. Activate only during your upkeep.\nThis creature can't attack unless defending player "
+        + "controls an Island.\n{U}{U}: This creature gets -1/-0 until end of turn and deals 1 damage to target "
+        + "attacking creature without flying.\nWhen you control no Islands, sacrifice this creature.")]
+    [InlineData("Sawback Manticore", "Creature — Manticore",
+        "{4}: This creature gains flying until end of turn.\n{1}: This creature deals 2 damage to target "
+        + "attacking or blocking creature. Activate only if this creature is attacking or blocking and only "
+        + "once each turn.")]
+    [InlineData("Gargantuan Gorilla", "Creature — Ape",
+        "At the beginning of your upkeep, you may sacrifice a Forest. If you sacrifice a snow Forest this "
+        + "way, this creature gains trample until end of turn. If you don't sacrifice a Forest, sacrifice this "
+        + "creature and it deals 7 damage to you.\n{T}: This creature deals damage equal to its power to another "
+        + "target creature. That creature deals damage equal to its power to this creature.")]
+    [InlineData("Papalymo Totolymo", "Legendary Creature — Dwarf Wizard",
+        "Whenever you cast a noncreature spell, Papalymo Totolymo deals 1 damage to each opponent and you "
+        + "gain 1 life.\n{4}, {T}, Sacrifice Papalymo Totolymo: Each opponent who lost life this turn sacrifices "
+        + "a creature with the greatest power among creatures they control.")]
+    [InlineData("Case of the Gateway Express", "Enchantment — Case",
+        "When this Case enters, choose target creature you don't control. Each creature you control deals 1 "
+        + "damage to that creature.\nTo solve — Three or more creatures attacked this turn. (If unsolved, solve "
+        + "at the beginning of your end step.)\nSolved — Creatures you control get +1/+0.")]
+    [InlineData("Transforming Flourish", "Instant",
+        "Demonstrate (When you cast this spell, you may copy it. If you do, choose an opponent to also copy "
+        + "it. Players may choose new targets for their copies.)\nDestroy target artifact or creature you don't "
+        + "control. If that permanent is destroyed this way, its controller exiles cards from the top of their "
+        + "library until they exile a nonland card, then they may cast that card without paying its mana cost.")]
+    [InlineData("Farrel's Mantle", "Enchantment — Aura",
+        "Enchant creature\nWhenever enchanted creature attacks and isn't blocked, its controller may have it "
+        + "deal damage equal to its power plus 2 to another target creature. If that player does, the attacking "
+        + "creature assigns no combat damage this turn.")]
+    [InlineData("Hearth Charm", "Instant",
+        "Choose one —\n• Destroy target artifact creature.\n• Attacking creatures get +1/+0 until end of "
+        + "turn.\n• Target creature with power 2 or less can't be blocked this turn.")]
+    [InlineData("Summon: Magus Sisters", "Enchantment Creature — Saga Faerie",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI, II, III "
+        + "— Choose one at random —\n• Combine Powers! — Put three +1/+1 counters on target creature.\n• Defense! "
+        + "— Put a shield counter on target creature. You gain 3 life.\n• Fight! — This creature fights up to "
+        + "one target creature an opponent controls.\nHaste")]
+    [InlineData("Beastie Beatdown", "Sorcery",
+        "Choose target creature you control and target creature an opponent controls.\nDelirium — If there are "
+        + "four or more card types among cards in your graveyard, put two +1/+1 counters on the creature you "
+        + "control.\nThe creature you control deals damage equal to its power to the creature an opponent "
+        + "controls.")]
+    [InlineData("Blood Frenzy", "Instant",
+        "Cast this spell only before the combat damage step.\nTarget attacking or blocking creature gets +4/+0 "
+        + "until end of turn. Destroy that creature at the beginning of the next end step.")]
+    [InlineData("Depressurize", "Instant",
+        "Target creature gets -3/-0 until end of turn. Then if that creature's power is 0 or less, destroy "
+        + "it.")]
+    [InlineData("Drop of Honey", "Enchantment",
+        "At the beginning of your upkeep, destroy the creature with the least power. It can't be regenerated. "
+        + "If two or more creatures are tied for least power, you choose one of them.\nWhen there are no "
+        + "creatures on the battlefield, sacrifice this enchantment.")]
+    [InlineData("Expel the Unworthy", "Sorcery",
+        "Kicker {2}{W} (You may pay an additional {2}{W} as you cast this spell.)\nChoose target creature with "
+        + "mana value 3 or less. If this spell was kicked, instead choose target creature. Exile the chosen "
+        + "creature, then its controller gains life equal to its mana value.")]
+    [InlineData("V.A.T.S.", "Instant",
+        "Split second (As long as this spell is on the stack, players can't cast spells or activate abilities "
+        + "that aren't mana abilities.)\nChoose any number of target creatures with equal toughness. Destroy the "
+        + "chosen creatures.")]
+    [InlineData("Sadistic Shell Game", "Sorcery",
+        "Starting with the next opponent in turn order, each player chooses a creature you don't control. "
+        + "Destroy the chosen creatures.")]
+    [InlineData("Fear of Burning Alive", "Enchantment Creature — Nightmare",
+        "When this creature enters, it deals 4 damage to each opponent.\nDelirium — Whenever a source you "
+        + "control deals noncombat damage to an opponent, if there are four or more card types among cards in "
+        + "your graveyard, this creature deals that amount of damage to target creature that player controls.")]
+    [InlineData("Torch the Witness", "Sorcery",
+        "Torch the Witness deals twice X damage to target creature. If excess damage was dealt to that "
+        + "creature this way, investigate. (Create a Clue token. It's an artifact with \"{2}, Sacrifice this "
+        + "token: Draw a card.\")")]
+    [InlineData("Floodpits Drowner", "Creature — Merfolk",
+        "Flash\nVigilance\nWhen this creature enters, tap target creature an opponent controls and put a stun "
+        + "counter on it.\n{1}{U}, {T}: Shuffle this creature and target creature with a stun counter on it into "
+        + "their owners' libraries.")]
+    [InlineData("Galvanic Discharge", "Instant",
+        "Choose target creature or planeswalker. You get {E}{E}{E} (three energy counters), then you may pay "
+        + "any amount of {E}. Galvanic Discharge deals that much damage to that permanent.")]
+    [InlineData("Giant Oyster", "Creature — Oyster",
+        "You may choose not to untap this creature during your untap step.\n{T}: For as long as this creature "
+        + "remains tapped, target tapped creature doesn't untap during its controller's untap step, and at the "
+        + "beginning of each of your draw steps, put a -1/-1 counter on that creature. When this creature "
+        + "leaves the battlefield or becomes untapped, remove all -1/-1 counters from the creature.")]
+    [InlineData("Mana Chains", "Enchantment — Aura",
+        "Enchant creature\nEnchanted creature has \"Cumulative upkeep {1}.\" (At the beginning of its "
+        + "controller's upkeep, that player puts an age counter on it, then sacrifices it unless they pay its "
+        + "upkeep cost for each age counter on it.)")]
+    [InlineData("Retribution", "Sorcery",
+        "Choose two target creatures controlled by the same opponent. That player chooses and sacrifices one "
+        + "of those creatures. Put a -1/-1 counter on the other.")]
+    [InlineData("Rush of Dread", "Sorcery",
+        "Spree (Choose one or more additional costs.)\n+ {1} — Target opponent sacrifices half the creatures "
+        + "they control of their choice, rounded up.\n+ {2} — Target opponent discards half the cards in their "
+        + "hand, rounded up.\n+ {2} — Target opponent loses half their life, rounded up.")]
+    [InlineData("Soltari Guerrillas", "Creature — Soltari Soldier",
+        "Shadow (This creature can block or be blocked by only creatures with shadow.)\n{0}: The next time "
+        + "this creature would deal combat damage to an opponent this turn, it deals that damage to target "
+        + "creature instead.")]
+    [InlineData("Sonar Strike", "Instant",
+        "Sonar Strike deals 4 damage to target attacking, blocking, or tapped creature. You gain 3 life if "
+        + "you control a Bat.")]
+    [InlineData("Vault 11: Voter's Dilemma", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — For "
+        + "each opponent, you create a 1/1 white Human Soldier creature token.\nII, III — Each player secretly "
+        + "votes for up to one creature, then those votes are revealed. If no creature got votes, each player "
+        + "draws a card. Otherwise, destroy each creature with the most votes or tied for most votes.")]
+    [InlineData("Vile Mutilator", "Creature — Demon",
+        "As an additional cost to cast this spell, sacrifice a creature or enchantment.\nFlying, trample\nWhen "
+        + "this creature enters, each opponent sacrifices a nontoken enchantment of their choice, then "
+        + "sacrifices a nontoken creature of their choice.")]
+    [InlineData("Winter Blast", "Sorcery",
+        "Tap X target creatures. Winter Blast deals 2 damage to each of those creatures with flying.")]
+    public void Classify_TheOctober16RemovalPassGains_AreRemoval(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
+    // The Removal pass of 2026-10-16, what stays out. R2: a target limited to a
+    // creature type is never Removal (Rashida Scalebane, Phoenix Down, Tunnel,
+    // Word of Blasting, King Suleiman, Human Frailty, Thraben Exorcism). F1:
+    // Goblin Vandal's own creature is not a second victim (Floral Spuzzem as it
+    // was). Tomb of Annihilation asks for a card or a creature, artifact or land.
+    // F4/F7/F18 neighbours: Mogg Cannon and Stone Giant sentence a creature YOU
+    // control, Plasma Caster chooses only the creature blocking it, Sail into the
+    // West votes on a mode. Misfortune and Withering Wisps are the pure Wipe pins.
+    [InlineData("Rashida Scalebane", "Legendary Creature — Human Soldier",
+        "{T}: Destroy target attacking or blocking Dragon. It can't be regenerated. You gain life equal to "
+        + "its power.")]
+    [InlineData("Phoenix Down", "Artifact",
+        "{1}{W}, {T}, Exile this artifact: Choose one —\n• Return target creature card with mana value 4 or "
+        + "less from your graveyard to the battlefield tapped.\n• Exile target Skeleton, Spirit, or Zombie.")]
+    [InlineData("Tunnel", "Instant",
+        "Destroy target Wall. It can't be regenerated.")]
+    [InlineData("Word of Blasting", "Instant",
+        "Destroy target Wall. It can't be regenerated. Word of Blasting deals damage equal to that Wall's "
+        + "mana value to the Wall's controller.")]
+    [InlineData("King Suleiman", "Creature — Human Noble",
+        "{T}: Destroy target Djinn or Efreet.")]
+    [InlineData("Human Frailty", "Instant",
+        "Destroy target Human creature.")]
+    [InlineData("Thraben Exorcism", "Instant",
+        "Exile target Spirit, creature with disturb, or enchantment.")]
+    [InlineData("Goblin Vandal", "Creature — Goblin Rogue",
+        "Whenever this creature attacks and isn't blocked, you may pay {R}. If you do, destroy target "
+        + "artifact defending player controls and this creature assigns no combat damage this turn.")]
+    [InlineData("Floral Spuzzem", "Creature — Elemental",
+        "Whenever this creature attacks and isn't blocked, you may destroy target artifact defending player "
+        + "controls. If you do, this creature assigns no combat damage this turn.")]
+    [InlineData("Tomb of Annihilation", "Dungeon",
+        "Trapped Entry — Each player loses 1 life. (Leads to: Veils of Fear, Oubliette)\nVeils of Fear — Each "
+        + "player loses 2 life unless they discard a card. (Leads to: Sandfall Cell)\nSandfall Cell — Each "
+        + "player loses 2 life unless they sacrifice a creature, artifact, or land of their choice. (Leads to: "
+        + "Cradle of the Death God)\nOubliette — Discard a card and sacrifice a creature, an artifact, and a "
+        + "land. (Leads to: Cradle of the Death God)\nCradle of the Death God — Create The Atropal, a legendary "
+        + "4/4 black God Horror creature token with deathtouch.")]
+    [InlineData("Mogg Cannon", "Artifact",
+        "{T}: Target creature you control gets +1/+0 and gains flying until end of turn. Destroy that "
+        + "creature at the beginning of the next end step.")]
+    [InlineData("Stone Giant", "Creature — Giant",
+        "{T}: Target creature you control with toughness less than this creature's power gains flying until "
+        + "end of turn. Destroy that creature at the beginning of the next end step.")]
+    [InlineData("Plasma Caster", "Artifact — Equipment",
+        "Equipped creature gets +1/+1.\nWhenever equipped creature attacks, you get {E}{E} (two energy "
+        + "counters).\nPay {E}{E}: Choose target creature that's blocking equipped creature. Flip a coin. If you "
+        + "win the flip, exile the chosen creature. Otherwise, this Equipment deals 1 damage to it.\nEquip {2}")]
+    [InlineData("Sail into the West", "Instant",
+        "Will of the council — Starting with you, each player votes for return or embark. If return gets more "
+        + "votes, each player returns up to two cards from their graveyard to their hand, then you exile Sail "
+        + "into the West. If embark gets more votes or the vote is tied, each player may discard their hand and "
+        + "draw seven cards.")]
+    [InlineData("Misfortune", "Sorcery",
+        "An opponent chooses one —\n• You put a +1/+1 counter on each creature you control and gain 4 life.\n• "
+        + "You put a -1/-1 counter on each creature that player controls and Misfortune deals 4 damage to that "
+        + "player.")]
+    [InlineData("Withering Wisps", "Enchantment",
+        "At the beginning of the end step, if no creatures are on the battlefield, sacrifice this "
+        + "enchantment.\n{B}: This enchantment deals 1 damage to each creature and each player. Activate no more "
+        + "times each turn than the number of snow Swamps you control.")]
+    public void Classify_TheOctober16RemovalPassRemovals_AreNotRemoval(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
+    // Tawnos's Coffin exiles a creature until the Coffin LEAVES OR BECOMES
+    // UNTAPPED: a tapper's lock, Pacify's, not Removal (read 2026-10-16, with the
+    // 10-14 reading that remains tapped is Pacify's). An O-Ring that gives the
+    // card back only when it leaves stays Removal.
+    [InlineData("Tawnos's Coffin", "Artifact",
+        "You may choose not to untap this artifact during your untap step.\n{3}, {T}: Exile target creature "
+        + "and all Auras attached to it. Note the number and kind of counters that were on that creature. When "
+        + "this artifact leaves the battlefield or becomes untapped, return that exiled card to the battlefield "
+        + "under its owner's control tapped with the noted number and kind of counters on it. If you do, return "
+        + "the other exiled cards to the battlefield under their owner's control attached to that permanent.")]
+    public void Classify_TheOctober16Pass_AnExileThatEndsOnUntap_IsPacify(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Pacify));
+        Assert.False(result.HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
     // CUMULATIVE UPKEEP paid in CARDS draws one more every turn it survives,
     // and it is written where a cost goes, so no rule was looking there.
     [InlineData("Psychic Vortex", "Enchantment",

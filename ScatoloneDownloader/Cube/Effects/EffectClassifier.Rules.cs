@@ -285,7 +285,18 @@ namespace ScatoloneDownloader.Cube
                     // reach "4 damage to target ATTACKING, BLOCKING, OR TAPPED
                     // creature" (Sonar Strike) also lets it run past a sentence into
                     // the next clause: measured 2026-09-19, two right for two wrong.
-                    Rx(@"deals? [\dX]+ damage to [\w ]{0,20}target [\w -]{0,28}(?<!non)creature"),
+                    // "Deals TWICE X damage to target creature" (Torch the Witness),
+                    // read 2026-10-16.
+                    Rx(@"deals? (?:twice )?[\dX]+ damage to [\w ]{0,20}target [\w -]{0,28}(?<!non)creature"),
+                    // …and the ONE qualifier that does cross commas, spelled out
+                    // so the qualifier above need not: Sonar Strike's "4 damage
+                    // to target attacking, blocking, or tapped creature" (read
+                    // 2026-10-16).
+                    Rx(@"deals? [\dX]+ damage to target attacking, blocking, or tapped creature"),
+                    // Creatures NAMED by an earlier clause and hit as a group, read
+                    // 2026-10-16: Winter Blast's "Tap X target creatures. Winter
+                    // Blast deals 2 damage to each of those creatures with flying".
+                    Rx(@"\btap x target creatures\.[^\n]*deals? [\dX]+ damage to each of those creatures"),
                     // "That much damage" is an amount too — Screaming Nemesis hands
                     // back whatever it was dealt.
                     // And at a target CREATURE, however the amount was reached —
@@ -294,8 +305,23 @@ namespace ScatoloneDownloader.Cube
                     // combat damage just dealt (The Sea Devils). Ruled 2026-10-14,
                     // "Tutte Removal".
                     Rx(@"deals? that much damage to any (?:other )?target"
-                        + @"|deals? (?:twice )?that much damage to target [\w ]{0,20}(?<!non)creature"),
+                        // "Deals THAT AMOUNT of damage to target creature that
+                        // player controls" (Fear of Burning Alive), read 2026-10-16.
+                        + @"|deals? (?:twice )?that (?:much|amount of) damage to target [\w ]{0,20}(?<!non)creature"
+                        // "It deals THAT damage to target creature INSTEAD" (Soltari
+                        // Guerrillas), read 2026-10-16.
+                        + @"|deals? that damage to target [\w ]{0,20}(?<!non)creature instead"),
                     Rx(@"deals damage to [\w ]{0,20}target [\w -]{0,28}(?<!non)creature equal to"),
+                    // A target CHOSEN first and hit after, read 2026-10-16:
+                    // "Choose target creature or planeswalker. … deals that much
+                    // damage to that permanent" (Galvanic Discharge).
+                    Rx(@"choose target creature or planeswalker\.[^\n]*deals? that much damage to that permanent"),
+                    // An Aura that taxes the creature out of the game, read
+                    // 2026-10-16: Mana Chains' "Enchanted creature has
+                    // 'Cumulative upkeep {1}.'" (the one card written so). Paid in
+                    // MANA: Decomposition's "Cumulative upkeep—Pay 1 life" is a
+                    // life drain, Burn and Pacify by hand, and stays out.
+                    Rx(@"enchanted creature has ""cumulative upkeep \{"),
                     // A fireball split between several things still kills one of them.
                     Rx(@"deals? (?:half )?[\dX]+(?: plus \d+)? damage divided "
                         + @"(?:evenly, rounded down, |as you choose )?among"),
@@ -303,6 +329,37 @@ namespace ScatoloneDownloader.Cube
                     // in the NAME of a mode — School Daze offers "Fight Crime", which
                     // counters a spell and draws a card.
                     Rx(@"\bfights? [\w ,'-]{0,30}target|\bfights? (?:each|it)\b"),
+                    // A pump that SENTENCES the creature, read 2026-10-16: Blood
+                    // Frenzy's "Target attacking or blocking creature gets +4/+0
+                    // until end of turn. Destroy that creature at the beginning
+                    // of the next end step." The target is directly "creature
+                    // gets", so Mogg Cannon and Stone Giant ("target creature
+                    // YOU CONTROL gets …") stay out.
+                    Rx(@"target [\w -]{0,28}(?<!non)creature gets [+-][\dX]+/[+-][\dX]+ until end of turn\. destroy that creature at the beginning of the next end step"),
+                    // …and the shrink that KILLS only if the power runs out,
+                    // read 2026-10-16: Depressurize's "Target creature gets
+                    // -3/-0 until end of turn. Then if that creature's power
+                    // is 0 or less, destroy it." (-N/-0 alone is Pacify's.)
+                    Rx(@"target [\w -]{0,28}(?<!non)creature gets -[\dX]+/-0 until end of turn\. then if that creature's power is 0 or less, destroy it"),
+                    // An edict by STATISTIC, read 2026-10-16: Drop of Honey's "At
+                    // the beginning of your upkeep, destroy the creature with the
+                    // least power" kills whoever is smallest, every turn.
+                    Rx(@"destroy the creature with the (?:least|lowest|greatest|highest|most) (?:power|toughness)"),
+                    // The creature the table VOTES out, read 2026-10-16: Vault 11:
+                    // Voter's Dilemma's "destroy each creature with the most votes
+                    // or tied for most votes". Sail into the West's votes pick a
+                    // mode, not a victim, and stay out.
+                    Rx(@"destroy each creature with the most votes"),
+                    // A creature CHOSEN first and killed later, read 2026-10-16:
+                    // "Choose target creature with mana value 3 or less … Exile
+                    // the chosen creature" (Expel the Unworthy), "Choose any number
+                    // of target creatures with equal toughness. Destroy the chosen
+                    // creatures" (V.A.T.S.), and "each player chooses a creature
+                    // you don't control. Destroy the chosen creatures" (Sadistic
+                    // Shell Game). Not Plasma Caster, whose "chosen creature" is
+                    // only the one blocking its wearer.
+                    Rx(@"choose (?:any number of )?target [\w ]{0,40}creatures?(?! that's)[^\n]*?(?:exile|destroy) the chosen creatures?"
+                        + @"|each player chooses a creature you don't control\. destroy the chosen creatures"),
                     // An edict, in every wording. "EACH PLAYER sacrifices A creature"
                     // costs you one too, and was declined here until 2026-09-27, when
                     // the hand tags were found split three to two between this and
@@ -333,14 +390,43 @@ namespace ScatoloneDownloader.Cube
                         + @"|each player sacrifices (?:a|an|one|the) [\w ]{0,25}(?<!non)creature"
                         + @"|(?:each|target) opponent chooses (?:a|an|one) [\w ,-]{0,30}creature they control and (?:exiles|sacrifices) it"
                         + @"|villainous choice — that player sacrifices a [\w ]{0,25}(?<!non)creature"
-                        + @"|loses? [\dX]+ life unless they sacrifice a (?:nontoken )?creature\b(?!,)"),
+                        + @"|loses? [\dX]+ life unless they sacrifice a (?:nontoken )?creature\b(?!,)"
+                        // PUNISHER = Removal, ruled 2026-10-16: an opponent (or each
+                        // player) choosing between losing a creature and something
+                        // else is an edict like Bellowing Mauler's. "Unless THEY /
+                        // THAT PLAYER sacrifice a creature" reaches Mogis, Tomb
+                        // Blade, Unnatural Hunger and Demanding Dragon; Pillar Tombs
+                        // of Aku asks the same as "may sacrifice … If that player
+                        // doesn't". Never "unless YOU sacrifice" (your own cost),
+                        // never "defending player" (Ogre Marauder's price for
+                        // evasion), and the comma keeps Tomb of Annihilation's "a
+                        // creature, artifact, or land" out.
+                        // Read 2026-10-16: the edict between TWO named creatures —
+                        // Retribution's "Choose two target creatures controlled by
+                        // the same opponent. That player chooses and sacrifices one
+                        // of those creatures."
+                        // …and HALF of them, read 2026-10-16: Rush of Dread's "Target
+                        // opponent sacrifices half the creatures they control".
+                        + @"|target opponent sacrifices half the creatures they control"
+                        // …and the edict that takes a permanent FIRST, read 2026-10-16:
+                        // Vile Mutilator's "each opponent sacrifices a nontoken
+                        // enchantment of their choice, then sacrifices a nontoken
+                        // creature of their choice".
+                        + @"|each opponent sacrifices an? [\w ]{0,30} of their choice, then sacrifices an? (?:nontoken )?creature"
+                        + @"|choose two target creatures controlled by the same opponent\. that player chooses and sacrifices one of those creatures"
+                        + @"|\bunless (?:they|that player) sacrifices? (?:a|an|another) (?:nontoken )?creature\b(?!,)"
+                        + @"|that player may sacrifice a [\w ]{0,25}(?<!non)creature of their choice\. if that player doesn't"),
                     // A creature that ends up in a LIBRARY is as answered as one that
                     // is destroyed, and the Auras are the only place this wording
                     // appears: The Spot's Portal puts it on the bottom, Dramatic
                     // Accusation, Stay Hidden Stay Silent and Watery Grasp shuffle it
                     // in. Added 2026-09-19.
                     Rx(@"put target[\w ,'-]{0,30}(?<!non)creature[\w ,'-]{0,25}on the bottom of[\w ']{0,25}library"),
-                    Rx(@"shuffles? enchanted creature into[\w ']{0,25}library"
+                    // Read 2026-10-16: "Shuffle THIS CREATURE and target creature
+                    // with a stun counter on it into their owners' libraries"
+                    // (Floodpits Drowner).
+                    Rx(@"shuffle this creature and target [\w ,-]{0,40}(?<!non)creature[\w ,-]{0,40} into their owners' libraries"
+                        + @"|shuffles? enchanted creature into[\w ']{0,25}library"
                         + @"|enchanted creature'?s owner shuffles it into"
                         // …and from a spell or an ability, read 2026-10-14 (4 of 4 in
                         // the sitting of 10-09): "target creature's owner shuffles it

@@ -435,6 +435,31 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Removal;
             }
 
+            // …nor a creature that is only the SUBJECT of "and this creature
+            // assigns no combat damage". See AndThisCreatureAssigns.
+            if (result.HasFlag(CardEffect.Removal) && AndThisCreatureAssigns.IsMatch(text)
+                && !Classify(new OneAbility(card, AndThisCreatureAssigns.Replace(text, " "))).HasFlag(CardEffect.Removal))
+            {
+                result &= ~CardEffect.Removal;
+            }
+
+            // …nor a target limited to a creature TYPE. See
+            // TargetLimitedToACreatureType; the card is asked again without it.
+            if (result.HasFlag(CardEffect.Removal) && TargetLimitedToACreatureType.IsMatch(text)
+                && !Classify(new OneAbility(card, TargetLimitedToACreatureType.Replace(text, " "))).HasFlag(CardEffect.Removal))
+            {
+                result &= ~CardEffect.Removal;
+            }
+
+            // …nor an exile that ends when the card UNTAPS: that is a tapper's
+            // lock, Pacify's. See ExileEndsOnUntap.
+            if (result.HasFlag(CardEffect.Removal) && ExileEndsOnUntap.IsMatch(text)
+                && !Classify(new OneAbility(card, ExileEndsOnUntap.Replace(text, " "))).HasFlag(CardEffect.Removal))
+            {
+                result &= ~CardEffect.Removal;
+                result |= CardEffect.Pacify;
+            }
+
             // REMINDER TEXT does not lock anybody down. Primal Clay explains
             // defender with "(A creature with defender can't attack.)" and
             // Balduvian Shaman prints a worked EXAMPLE of text-changing that

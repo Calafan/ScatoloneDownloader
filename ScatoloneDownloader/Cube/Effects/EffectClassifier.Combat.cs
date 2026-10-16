@@ -219,6 +219,16 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex KillsAcrossCommas = Rx(
             @"(?:destroy|exile) (?:[\w -]{0,20})?target[\w ,-]{0,45}(?<!non)creature");
 
+        // THIS creature is never the victim, read 2026-10-16. Goblin Vandal's
+        // "destroy target artifact defending player controls AND THIS CREATURE
+        // ASSIGNS no combat damage" found its creature at the far end of the
+        // sentence, in both the table's destroy rules and KillsAcrossCommas.
+        // Blanked and the card asked again, so one guard serves all three.
+        // Floral Spuzzem, which breaks the sentence with a full stop, never
+        // had the problem.
+        private static readonly Regex AndThisCreatureAssigns = Rx(
+            @"and this creature assigns no combat damage");
+
 
         // Every clause that points a destroy or an exile at a creature, with
         // enough of the tail to see WHOSE creature it is and WHERE it is. Used by
@@ -247,6 +257,37 @@ namespace ScatoloneDownloader.Cube
             @"you control|you own|cards? (?:from|in)[\w ']{0,25}graveyard|\bcreature cards? from\b"
             + @"|\breturn (?:it|that card|them|those cards)\b|\bits owner may play it\b");
 
+        // A TARGET LIMITED TO A CREATURE TYPE is never Removal, ruled 2026-10-16
+        // (7 of the 9 reviewed cards were untagged: the Walls, King Suleiman's
+        // Djinn or Efreet, Knight of the Mists; the same spirit as the tribal
+        // rulings of 10-15). The subtype is the capitalised noun after "target"
+        // — "target Human creature" (Human Frailty), "target Spirit, creature
+        // with disturb, or enchantment" (Thraben Exorcism) — which is why this
+        // one pattern is CASE-SENSITIVE; "target non-Human creature" and
+        // "target nonWall creature" begin in lower case and stay broad. Blanked
+        // and the card asked again, so Chaos Charm keeps its damage mode. A
+        // capitalised LAND type followed by another target is a different
+        // sentence (Reign of Chaos: "Destroy target Plains and target white
+        // creature") and is left alone. A NONCREATURE subtype reads the same and
+        // is meant to: "destroy target Aura attached to a creature" (Devout
+        // Harpist, Piety Charm) owed its Removal to the words "a creature", and
+        // these two were the only non-creature subtypes it reached when measured
+        // on 2026-10-16.
+        private static readonly Regex TargetLimitedToACreatureType = new(
+            @"(?:[Dd]estroy|[Ee]xile|deals? [\dX]+ damage to) target (?:(?:attacking|blocking|tapped|untapped|other|another)(?: or)? )*"
+            + @"(?>[A-Z][a-z]+(?:,? (?:or )?[A-Z][a-z]+)*)(?! and target)",
+            RegexOptions.CultureInvariant);
+
+        // An exile that ends when the card UNTAPS is a tapper's lock and
+        // Pacify's, not Removal — read 2026-10-16 with the 10-14 reading that
+        // "for as long as it remains tapped" is Pacify's (Tawnos's Coffin:
+        // "When this artifact leaves the battlefield or becomes untapped,
+        // return that exiled card to the battlefield"). An O-Ring that gives
+        // the card back only when it LEAVES stays Removal.
+        private static readonly Regex ExileEndsOnUntap = Rx(
+            @"exile target [\w ,-]{0,30}creature[^\n]*?\bwhen [^.\n]*\bbecomes untapped\b[^.\n]*, return "
+            + @"(?:it|that exiled card|that card)\b");
+
         // It comes back: a blink is not an answer.
         private static readonly Regex ReturnsItToPlay = Rx(
             @"return (?:it|them|that card|those cards)[\w ,']{0,40}to the battlefield");
@@ -274,10 +315,20 @@ namespace ScatoloneDownloader.Cube
         // Read again 2026-10-14: "to each of X target creatures" (Spinning
         // Wheel Kick) and "to target creature OR PLANESWALKER equal to" (Fires
         // of Victory).
+        // Read 2026-10-16: "to A target creature" — the article is allowed,
+        // for the removal a spell GRANTS for one turn (Gaze of Pain: "Until
+        // end of turn, whenever a creature you control attacks and isn't
+        // blocked, you may choose to have it deal damage equal to its power
+        // to a target creature"), ruled Removal under R4.
         private static readonly Regex DamageEqualTo = Rx(
             @"deals? damage equal to [\w' ,\-]{0,110}to (?:any (?:other )?target|itself"
-            + @"|(?:each of )?(?:two |three |X )?(?:any |another |other |up to \w+ )*target[\w ,'-]{0,30}creature"
-            + @"|that creature(?!'s))"
+            + @"|(?:each of )?(?:two |three |X )?(?:any |another |other |a |up to \w+ )*target[\w ,'-]{0,30}creature"
+            + @"|that creature(?!'s)"
+            // Read 2026-10-16: "choose target creature you control and target
+            // creature an opponent controls … The creature you control deals
+            // damage equal to its power to THE CREATURE AN OPPONENT CONTROLS"
+            // (Beastie Beatdown, Removal by hand).
+            + @"|the creature an opponent controls)"
             + @"|deals? damage to (?:itself|any (?:other )?target|that creature(?!'s)"
             + @"|target[\w ,'-]{0,30}creature(?: or planeswalker)?) equal to");
 
@@ -317,9 +368,14 @@ namespace ScatoloneDownloader.Cube
         // counters", and under the 2026-09-19 ruling the size does not matter, so
         // the rule reads any counter that takes toughness. DISTRIBUTE is the other
         // verb the game uses for the same thing.
+        // Read 2026-10-16: the counter that arrives LATER on a creature the
+        // ability already named — Giant Oyster's "target tapped creature
+        // doesn't untap … and at the beginning of each of your draw steps,
+        // put a -1/-1 counter on that creature".
         private static readonly Regex ShrinkCounters = Rx(
             @"put(?:s)? (?:a|an|two|three|four|\d+|x) -[\dX]+/-[1-9X] counters? on "
             + @"(?:[\w ,'\-/]{0,40}(?:target|up to)|enchanted creature)"
+            + @"|at the beginning of each of your draw steps, put a -1/-1 counter on that creature"
             + @"|distributes? (?:a|an|two|three|four|\d+|x) -[\dX]+/-[1-9X] counters? among");
 
         // Pacify's own version of the self-versus-other question, and the largest
