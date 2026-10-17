@@ -103,6 +103,26 @@ namespace ScatoloneDownloader.Mtg
             };
         }
 
+        /// <summary>The identity columns a card counts in: each of its W/U/B/R/G
+        /// letters, or "Colorless" when it has none. Never "Multi".</summary>
+        private static List<string> IdentityColumns(Card card)
+        {
+            List<string> colours = card.ColorIdentity
+                .Where(c => c is "W" or "U" or "B" or "R" or "G")
+                .Distinct()
+                .ToList();
+
+            return colours.Count > 0 ? colours : ["Colorless"];
+        }
+
+        /// <summary>The same analysis over the bench (rating-2) cards of this analyzer
+        /// instead of the pool, so the live stats page and <c>build-views</c> report the
+        /// bench with exactly the same code.</summary>
+        internal AnalysisReport AnalyzeBench()
+        {
+            return new CardAnalyzer(benchCards).Analyze();
+        }
+
         private static int GetPercentage(int value, int total)
         {
             return total != 0 ? (int)Math.Round(value * 100.0 / total) : 0;
@@ -705,6 +725,45 @@ namespace ScatoloneDownloader.Mtg
                 }
             }
 
+            // Second tally, by colour identity: a card counts once in EVERY colour of
+            // its identity (only the five letters), and an empty identity is Colorless.
+            Dictionary<string, int> cardsByIdentity = [];
+            Dictionary<string, int> reviewedByIdentity = [];
+            Dictionary<string, int> untaggedByIdentity = [];
+            Dictionary<string, Dictionary<CardEffect, int>> effectsByIdentity = [];
+            foreach (Card c in nonLands)
+            {
+                foreach (string colour in IdentityColumns(c))
+                {
+                    cardsByIdentity[colour] = cardsByIdentity.GetValueOrDefault(colour, 0) + 1;
+
+                    if (c.Reviewed)
+                    {
+                        reviewedByIdentity[colour] = reviewedByIdentity.GetValueOrDefault(colour, 0) + 1;
+                    }
+
+                    if (c.Effects == CardEffect.None)
+                    {
+                        untaggedByIdentity[colour] = untaggedByIdentity.GetValueOrDefault(colour, 0) + 1;
+                        continue;
+                    }
+
+                    if (!effectsByIdentity.TryGetValue(colour, out Dictionary<CardEffect, int>? colourEffects))
+                    {
+                        colourEffects = [];
+                        effectsByIdentity[colour] = colourEffects;
+                    }
+
+                    foreach (CardEffect flag in Enum.GetValues<CardEffect>())
+                    {
+                        if (flag != CardEffect.None && c.Effects.HasFlag(flag))
+                        {
+                            colourEffects[flag] = colourEffects.GetValueOrDefault(flag, 0) + 1;
+                        }
+                    }
+                }
+            }
+
             int creatureTargets = nonLands.Count(c => c.MacroType == MacroType.Creature);
             int artifactEnchantmentTargets = nonLands.Count(c => c.MacroType != MacroType.Creature
                 && (c.TypeLine.Contains("Artifact", StringComparison.Ordinal)
@@ -718,6 +777,15 @@ namespace ScatoloneDownloader.Mtg
                 {
                     string column = EffectColumn(c.ColorCategory);
                     byColumn[column] = byColumn.GetValueOrDefault(column, 0) + 1;
+                }
+
+                Dictionary<string, int> byIdentity = [];
+                foreach (Card c in nonLands.Where(c => (c.Effects & groupEffects) != CardEffect.None))
+                {
+                    foreach (string colour in IdentityColumns(c))
+                    {
+                        byIdentity[colour] = byIdentity.GetValueOrDefault(colour, 0) + 1;
+                    }
                 }
 
                 int? targets = targetKind switch
@@ -734,6 +802,7 @@ namespace ScatoloneDownloader.Mtg
                     Effects = groupEffects,
                     Targets = targets,
                     ByColumn = byColumn,
+                    ByIdentity = byIdentity,
                     Total = byColumn.Values.Sum(),
                 });
             }
@@ -802,6 +871,10 @@ namespace ScatoloneDownloader.Mtg
                 ReviewedByColumn = reviewedByColumn,
                 UntaggedByColumn = untaggedByColumn,
                 EffectCountsByColumn = effectsByColumn,
+                CardsByIdentity = cardsByIdentity,
+                ReviewedByIdentity = reviewedByIdentity,
+                UntaggedByIdentity = untaggedByIdentity,
+                EffectCountsByIdentity = effectsByIdentity,
                 AnswerGroups = answerGroups,
                 TotalCards = total,
             };

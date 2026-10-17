@@ -29,6 +29,21 @@
   .field { display:flex; flex-direction:column; gap:3px; }
   .field label { font-size:11px; color:var(--muted); }
   select { width:100%; background:#0d0f14; color:var(--txt); border:1px solid var(--line); border-radius:6px; padding:6px 7px; font:13px system-ui,Segoe UI,sans-serif; }
+  #statsLink { font-size:12px; color:var(--accent); text-decoration:none; margin-top:-6px; }
+  #statsLink:hover { text-decoration:underline; }
+
+  /* Multi-select effect filter. A <details> so it costs one rail row when shut;
+     the list inside scrolls on its own so a two-dozen-name panel never pushes the
+     other pickers off the screen. */
+  #effectBox { background:#0d0f14; border:1px solid var(--line); border-radius:6px; font:13px system-ui,Segoe UI,sans-serif; }
+  #effectBox summary { padding:6px 7px; cursor:pointer; user-select:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #effectPanel { border-top:1px solid var(--line); padding:6px 7px; }
+  #effectMode { display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; margin-bottom:6px; }
+  #effectMode label, .effopt { display:flex; align-items:center; gap:6px; font-size:13px; color:var(--txt); cursor:pointer; }
+  #effectClear { margin-left:auto; background:none; color:var(--accent); border:1px solid var(--line); border-radius:5px; padding:2px 8px; font:12px system-ui,Segoe UI,sans-serif; cursor:pointer; }
+  #effectList { max-height:260px; overflow-y:auto; display:flex; flex-direction:column; }
+  .effopt { padding:3px 2px; }
+  .effopt.pseudo { color:var(--muted); }
   #filter { font-size:11px; color:var(--accent); line-height:1.35; }
   #filter.fellback { color:#e0a33e; }
   #stats { display:grid; grid-template-columns:1fr auto; gap:3px 8px; font-size:12px; color:var(--muted); border-top:1px solid var(--line); padding-top:12px; }
@@ -148,6 +163,11 @@
     #rating { gap:2px; }
     .star { font-size:34px; padding:2px 5px; }
     .stat, .eff { padding:12px; border-radius:10px; }
+    /* Thumb-sized rows in the effect picker, text at 16px like .eff. */
+    #effectBox summary, .effopt, #effectMode label { min-height:40px; font-size:16px; }
+    #effectBox summary { display:flex; align-items:center; }
+    #effectClear { min-height:40px; font-size:16px; padding:2px 14px; }
+    #effectList { max-height:50vh; }
     #effects { grid-template-columns:repeat(auto-fill, minmax(148px,1fr)); gap:7px; }
     /* The same text in a third of the width needs about twice the rows. 150px
        is measured, not guessed: the longest line in the glossary (Tokens, 340
@@ -182,12 +202,25 @@
 
   <div id="rail">
     <div class="railhead">Scope</div>
+    <a id="statsLink" href="/stats">Cube stats &#8599;</a>
     <div class="field"><label for="reviewSel">Review</label><select id="reviewSel"></select></div>
     <div class="field"><label for="rateSel">Rating</label><select id="rateSel"></select></div>
     <div class="field"><label for="statusSel">Status</label><select id="statusSel"></select></div>
     <div class="field"><label for="colorSel">Colour</label><select id="colorSel"></select></div>
     <div class="field"><label for="typeSel">Type</label><select id="typeSel"></select></div>
-    <div class="field"><label for="effectSel">Effect</label><select id="effectSel"></select></div>
+    <div class="field"><label>Effect</label>
+      <details id="effectBox">
+        <summary id="effectSummary">any effect</summary>
+        <div id="effectPanel">
+          <div id="effectMode">
+            <label><input type="radio" name="effectMode" value="all" checked> all of them</label>
+            <label><input type="radio" name="effectMode" value="any"> any of them</label>
+            <button type="button" id="effectClear">clear</button>
+          </div>
+          <div id="effectList"></div>
+        </div>
+      </details>
+    </div>
     <div class="field"><label for="costSel">Cost</label><select id="costSel"></select></div>
     <div class="field"><label for="yearSel">Year</label><select id="yearSel"></select></div>
     <div class="field"><label for="folderSel">Set</label><select id="folderSel"></select></div>
@@ -262,7 +295,11 @@ let cards = [], effects = [], glossary = [], order = [], pos = 0;
 // every key. Each effect keeps the key it has always had, and only the position
 // on screen changes.
 let effectOrder = [];
-let filterMode = 0, ratingMode = 0, effectFilter = "", filterFellBack = false;
+let filterMode = 0, ratingMode = 0, filterFellBack = false;
+// The effect axis is a set of names plus how to combine them, or one of the two
+// pseudo-questions a name cannot ask (see effectMatch). Ticking a pseudo clears
+// the names and the other pseudo; ticking a name clears the pseudo.
+let effectNames = new Set(), effectMatchMode = "all", effectSpecial = "";
 let yearSel = "", folderSel = "", typeSel = "", listOpen = false;
 let statusSel = "", colorSel = "", costSel = "";
 
@@ -292,7 +329,7 @@ function shuffle(xs) {
 // manual change, so only classify produces effects-without-review).
 function isAutoPending(c) { return c.effects.size > 0 && !c.reviewed; }
 
-// Filter cycles with "f" and STARTS on mode 0, the working queue: every card
+// The review filter STARTS on mode 0, the working queue: every card
 // no human has confirmed yet — untagged cards AND auto-tagged suggestions in
 // one pass. The union is the whole point: `classify` writes effects only when
 // it has something to propose, so a card it read and found nothing for stays
@@ -302,28 +339,28 @@ function isAutoPending(c) { return c.effects.size > 0 && !c.reviewed; }
 // confirmed leaves the queue for good, even if it was confirmed to zero
 // effects (that is what "c" is for) — which is what makes the queue finite.
 const FILTERS = [
-  { short: "to review", label: "to review — untagged + auto-tagged", match: c => !c.reviewed },
-  { short: "",          label: "all cards",                          match: () => true },
-  { short: "untagged",  label: "untagged only",                      match: c => c.effects.size === 0 },
-  { short: "auto",      label: "auto — pending review",              match: isAutoPending },
+  { id: "review",   short: "to review", label: "to review — untagged + auto-tagged", match: c => !c.reviewed },
+  { id: "all",      short: "",          label: "all cards",                          match: () => true },
+  { id: "untagged", short: "untagged",  label: "untagged only",                      match: c => c.effects.size === 0 },
+  { id: "auto",     short: "auto",      label: "auto — pending review",              match: isAutoPending },
 ];
 
-// The rating axis, cycled with ",". Separate from the review filter on purpose:
+// The rating axis. Separate from the review filter on purpose:
 // the two questions ("what still needs a human?" and "which part of the library
 // am I working on?") are independent, and collapsing them into one list would
 // force choosing between "pool" and "to review" instead of asking for both. The
 // first three groups mirror the store's own tier files (pool 3-5, fringe 1-2,
 // unrated 0), so "pool" here means the same thing it means in pool.json.
 const RATING_FILTERS = [
-  { short: "",        label: "any rating", match: () => true },
-  { short: "pool",    label: "pool ★3-5",  match: c => c.rating >= 3 },
-  { short: "fringe",  label: "fringe ★1-2",match: c => c.rating >= 1 && c.rating <= 2 },
-  { short: "unrated", label: "unrated",    match: c => c.rating === 0 },
-  { short: "★1",      label: "exactly ★1", match: c => c.rating === 1 },
-  { short: "★2",      label: "exactly ★2 (bench)", match: c => c.rating === 2 },
-  { short: "★3",      label: "exactly ★3", match: c => c.rating === 3 },
-  { short: "★4",      label: "exactly ★4", match: c => c.rating === 4 },
-  { short: "★5",      label: "exactly ★5", match: c => c.rating === 5 },
+  { id: "any",     short: "",        label: "any rating", match: () => true },
+  { id: "pool",    short: "pool",    label: "pool ★3-5",  match: c => c.rating >= 3 },
+  { id: "fringe",  short: "fringe",  label: "fringe ★1-2",match: c => c.rating >= 1 && c.rating <= 2 },
+  { id: "unrated", short: "unrated", label: "unrated",    match: c => c.rating === 0 },
+  { id: "r1",      short: "★1",      label: "exactly ★1", match: c => c.rating === 1 },
+  { id: "r2",      short: "★2",      label: "exactly ★2 (bench)", match: c => c.rating === 2 },
+  { id: "r3",      short: "★3",      label: "exactly ★3", match: c => c.rating === 3 },
+  { id: "r4",      short: "★4",      label: "exactly ★4", match: c => c.rating === 4 },
+  { id: "r5",      short: "★5",      label: "exactly ★5", match: c => c.rating === 5 },
 ];
 
 // Folders arrive as "2000/Invasion" (see TagCommand.RelativeFolder). The first
@@ -337,10 +374,13 @@ function yearOf(folder) { return (folder || "").split("/")[0]; }
 const EFFECT_ANY = "", EFFECT_NONE = "*none", EFFECT_SOME = "*some";
 
 function effectMatch(c) {
-  if (effectFilter === EFFECT_ANY) return true;
-  if (effectFilter === EFFECT_NONE) return c.effects.size === 0;
-  if (effectFilter === EFFECT_SOME) return c.effects.size > 0;
-  return c.effects.has(effectFilter);
+  if (effectSpecial === EFFECT_NONE) return c.effects.size === 0;
+  if (effectSpecial === EFFECT_SOME) return c.effects.size > 0;
+  if (effectNames.size === 0) return true;
+  const names = [...effectNames];
+  return effectMatchMode === "any"
+    ? names.some(n => c.effects.has(n))
+    : names.every(n => c.effects.has(n));
 }
 
 // The coarse type axis, sent as MacroType by the server. Its buckets answer
@@ -356,9 +396,17 @@ const MACRO_LABELS = {
   Land: "lands",
 };
 
-function typeMatch(c) { return !typeSel || c.macro === typeSel; }
+// "*nonland" is the pseudo-value the stats page links with: its counts are of
+// non-land cards, so the cards it opens must not include lands.
+const TYPE_NONLAND = "*nonland";
 
-function typeLabel() { return MACRO_LABELS[typeSel] || typeSel; }
+function typeMatch(c) {
+  if (!typeSel) return true;
+  if (typeSel === TYPE_NONLAND) return c.macro !== "Land";
+  return c.macro === typeSel;
+}
+
+function typeLabel() { return typeSel === TYPE_NONLAND ? "all but lands" : (MACRO_LABELS[typeSel] || typeSel); }
 
 // The axes build-views files a card under besides type and effect, so any view
 // folder can be reproduced as a scope here: 4_ByColor/1 White/Creature/Cost 2
@@ -369,7 +417,26 @@ function typeLabel() { return MACRO_LABELS[typeSel] || typeSel; }
 // "pool" is exactly the pool the browse roots show, and "exactly ★2 (bench)"
 // with "no status" is 6_Bench.
 function statusMatch(c) { return !statusSel || c.status === statusSel; }
-function colorMatch(c) { return !colorSel || c.color === colorSel; }
+// Besides the folder names, two pseudo-values the stats page links with:
+// "*multi" is the report's Multi column (every gold card), and "*has:X" is
+// "any card with X in its colour identity", gold cards included.
+function colorMatch(c) {
+  if (!colorSel) return true;
+  if (colorSel === "*multi") return c.column === "Multi";
+  if (colorSel.startsWith("*has:")) return (c.identity || "").includes(colorSel.slice(5));
+  return c.color === colorSel;
+}
+
+const IDENTITY_LETTERS = [["W", "White"], ["U", "Blue"], ["B", "Black"], ["R", "Red"], ["G", "Green"]];
+
+function colorLabel() {
+  if (colorSel === "*multi") return "multicolour";
+  if (colorSel.startsWith("*has:")) {
+    const hit = IDENTITY_LETTERS.find(([l]) => l === colorSel.slice(5));
+    return `${hit ? hit[1] : colorSel.slice(5)} incl. multi`;
+  }
+  return colorName(colorSel);
+}
 
 // The colour is still matched on the folder name, but the picker shows only
 // the readable part: the leading digit ("2 Azorius") exists to sort the view
@@ -407,6 +474,11 @@ function fillColorSelect() {
     }
     group.appendChild(new Option(colorName(f), f));
   }
+  const incl = document.createElement("optgroup");
+  incl.label = "Including multicolour";
+  incl.appendChild(new Option("Multicolour (2+ colours)", "*multi"));
+  for (const [letter, name] of IDENTITY_LETTERS) incl.appendChild(new Option(`${name} + multi`, "*has:" + letter));
+  el.appendChild(incl);
   el.value = colorSel;
 }
 function costMatch(c) { return !costSel || c.cost === costSel; }
@@ -432,9 +504,72 @@ async function boot() {
     ...c, effects: new Set(c.effects), folder: c.folder || "",
     turns: c.turns && c.turns.length ? c.turns : [0], turnAt: 0,
   }));
+  readScopeFromUrl();
   buildScopeControls();
   buildOrder();
   render();
+}
+
+// The scope lives in the query string so the stats page can open the tagger on
+// exactly the cards behind a number, and so a reload — or the back button from
+// the tagger to /stats and back — lands on the same scope. Anything unknown or
+// invalid is ignored and the default kept: a stale link must open the tagger,
+// not break it. Called after the cards are loaded because the colour, cost, year
+// and set values are checked against what the library actually holds.
+function readScopeFromUrl() {
+  const q = new URLSearchParams(location.search);
+
+  const review = FILTERS.findIndex(f => f.id === q.get("review"));
+  if (review >= 0) filterMode = review;
+  const rating = RATING_FILTERS.findIndex(f => f.id === q.get("rating"));
+  if (rating >= 0) ratingMode = rating;
+
+  const status = q.get("status");
+  if (STATUS_ORDER.some(s => s.name === status)) statusSel = status;
+
+  const color = q.get("color");
+  if (color && (color === "*multi" || /^\*has:[WUBRG]$/.test(color) || cards.some(c => c.color === color))) colorSel = color;
+
+  const type = q.get("type");
+  if (type && (type === TYPE_NONLAND || cards.some(c => c.macro === type))) typeSel = type;
+
+  const eff = q.get("effects");
+  if (eff === EFFECT_NONE || eff === EFFECT_SOME) {
+    effectSpecial = eff;
+  } else if (eff) {
+    effectNames = new Set(eff.split(",").filter(n => effects.includes(n)));
+  }
+  const match = q.get("match");
+  if (match === "all" || match === "any") effectMatchMode = match;
+
+  const cost = q.get("cost");
+  if (cost && cards.some(c => c.cost === cost)) costSel = cost;
+  const year = q.get("year");
+  if (year && cards.some(c => yearOf(c.folder) === year)) yearSel = year;
+  const set = q.get("set");
+  if (set && cards.some(c => c.folder === set)) folderSel = set;
+}
+
+// The mirror of readScopeFromUrl, with the defaults left out so the default
+// scope is the bare "/". replaceState, not pushState: a filter click is not a
+// page the back button should step through.
+function writeScopeToUrl() {
+  const q = new URLSearchParams();
+  if (filterMode !== 0) q.set("review", FILTERS[filterMode].id);
+  if (ratingMode !== 0) q.set("rating", RATING_FILTERS[ratingMode].id);
+  if (statusSel) q.set("status", statusSel);
+  if (colorSel) q.set("color", colorSel);
+  if (typeSel) q.set("type", typeSel);
+  if (effectSpecial) q.set("effects", effectSpecial);
+  else if (effectNames.size) {
+    q.set("effects", [...effectNames].join(","));
+    if (effectMatchMode !== "all") q.set("match", effectMatchMode);
+  }
+  if (costSel) q.set("cost", costSel);
+  if (yearSel) q.set("year", yearSel);
+  if (folderSel) q.set("set", folderSel);
+  const qs = q.toString();
+  try { history.replaceState(null, "", location.pathname + (qs ? "?" + qs : "")); } catch { /* sandboxed or file: ignore */ }
 }
 
 // Rebuilt on boot and on any filter change — never on a save. A card reviewed
@@ -455,6 +590,7 @@ function buildOrder() {
   if (shuffled) shuffle(order);
   if (pos >= order.length) pos = order.length - 1;
   if (pos < 0) pos = 0;
+  writeScopeToUrl();
 }
 
 // Populated once from the cards themselves, so the pickers can only ever offer
@@ -471,19 +607,14 @@ function buildScopeControls() {
   const costs = [...new Set(cards.map(c => c.cost).filter(Boolean))]
     .sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
   fillSelect("costSel", [["", "any cost"], ...costs.map(x => [x, costLabel(x)])], costSel);
-  fillSelect("effectSel", [
-    [EFFECT_ANY, "any effect"],
-    [EFFECT_NONE, "— no effect at all —"],
-    [EFFECT_SOME, "— any effect at all —"],
-    ...effectOrder.map(i => [effects[i], effects[i]]),
-  ], effectFilter);
+  buildEffectBox();
   const macros = [...new Set(cards.map(c => c.macro).filter(Boolean))];
   const known = Object.keys(MACRO_LABELS);
   macros.sort((a, b) => {
     const ra = known.indexOf(a), rb = known.indexOf(b);
     return (ra < 0 ? known.length : ra) - (rb < 0 ? known.length : rb) || a.localeCompare(b);
   });
-  fillSelect("typeSel", [["", "all types"], ...macros.map(m => [m, MACRO_LABELS[m] || m])], typeSel);
+  fillSelect("typeSel", [["", "all types"], [TYPE_NONLAND, "all but lands"], ...macros.map(m => [m, MACRO_LABELS[m] || m])], typeSel);
   const years = [...new Set(cards.map(c => yearOf(c.folder)))].filter(Boolean).sort();
   fillSelect("yearSel", [["", "all years"], ...years.map(y => [y, y])], yearSel);
   buildFolderSelect();
@@ -508,10 +639,65 @@ function fillSelect(id, pairs, selected) {
   el.value = selected;
 }
 
+// One label for the picker's summary and the "Showing" line.
 function effectLabel() {
-  if (effectFilter === EFFECT_NONE) return "no effect";
-  if (effectFilter === EFFECT_SOME) return "any effect";
-  return effectFilter;
+  if (effectSpecial === EFFECT_NONE) return "no effect";
+  if (effectSpecial === EFFECT_SOME) return "any effect at all";
+  if (effectNames.size === 0) return "any effect";
+  // List in the order the picker shows them, not the order they were ticked.
+  const names = effectOrder.map(i => effects[i]).filter(n => effectNames.has(n));
+  return names.join(effectMatchMode === "any" ? " or " : " + ");
+}
+
+// The checkboxes are built once; their state is pushed from effectNames /
+// effectSpecial by syncEffectBox, so a URL-restored scope and a click go the same way.
+function buildEffectBox() {
+  const list = document.getElementById("effectList");
+  list.innerHTML = "";
+  const add = (value, text, pseudo) => {
+    const label = document.createElement("label");
+    label.className = "effopt" + (pseudo ? " pseudo" : "");
+    const box = document.createElement("input");
+    box.type = "checkbox";
+    box.value = value;
+    box.dataset.pseudo = pseudo ? "1" : "";
+    box.onchange = () => onEffectTick(box);
+    label.appendChild(box);
+    label.appendChild(document.createTextNode(text));
+    list.appendChild(label);
+  };
+  add(EFFECT_NONE, "— no effect at all —", true);
+  add(EFFECT_SOME, "— any effect at all —", true);
+  effectOrder.forEach(i => add(effects[i], effects[i], false));
+  syncEffectBox();
+}
+
+function syncEffectBox() {
+  document.querySelectorAll("#effectList input").forEach(box => {
+    box.checked = box.dataset.pseudo ? effectSpecial === box.value : effectNames.has(box.value);
+  });
+  document.querySelectorAll("#effectMode input[type=radio]").forEach(r => { r.checked = r.value === effectMatchMode; });
+  document.getElementById("effectSummary").textContent = effectLabel();
+}
+
+// Every change hands the keyboard back to the tagger: hotkeys are ignored while
+// an INPUT has focus (see inFormField), so a ticked box would otherwise swallow
+// the next effect key.
+function afterEffectChange(el) {
+  if (el && el.blur) el.blur();
+  syncEffectBox();
+  requeue();
+}
+
+function onEffectTick(box) {
+  if (box.dataset.pseudo) {
+    effectNames.clear();
+    effectSpecial = box.checked ? box.value : "";
+  } else {
+    effectSpecial = "";
+    if (box.checked) effectNames.add(box.value); else effectNames.delete(box.value);
+  }
+  afterEffectChange(box);
 }
 
 function cur() { return cards[order[pos]]; }
@@ -593,9 +779,9 @@ function render() {
     ? "Nothing matches this combination — showing every card."
     : `Showing: ${FILTERS[filterMode].label} · ${RATING_FILTERS[ratingMode].label}`
       + (statusSel ? ` · ${statusLabel()}` : "")
-      + (colorSel ? ` · ${colorName(colorSel)}` : "")
+      + (colorSel ? ` · ${colorLabel()}` : "")
       + (typeSel ? ` · ${typeLabel()}` : "")
-      + (effectFilter ? ` · ${effectLabel()}` : "")
+      + (effectSpecial || effectNames.size ? ` · ${effectLabel()}` : "")
       + (costSel ? ` · ${costLabel(costSel)}` : "")
       + (folderSel || yearSel ? ` · ${folderSel || yearSel}` : "");
   filterEl.className = filterFellBack ? "fellback" : "";
@@ -809,7 +995,19 @@ function requeue() { pos = 0; buildOrder(); render(); }
 // instead of moving to the next card.
 document.getElementById("reviewSel").onchange = e => { filterMode = Number(e.target.value); e.target.blur(); requeue(); };
 document.getElementById("rateSel").onchange = e => { ratingMode = Number(e.target.value); e.target.blur(); requeue(); };
-document.getElementById("effectSel").onchange = e => { effectFilter = e.target.value; e.target.blur(); requeue(); };
+document.querySelectorAll("#effectMode input[type=radio]").forEach(r => {
+  r.onchange = () => { if (r.checked) { effectMatchMode = r.value; afterEffectChange(r); } };
+});
+document.getElementById("effectClear").onclick = e => {
+  effectNames.clear();
+  effectSpecial = "";
+  afterEffectChange(e.target);
+};
+// Enter/space on the <summary> would otherwise be taken by the details control and
+// leave the focus there; hand it back when the box opens or shuts.
+document.getElementById("effectBox").addEventListener("toggle", () => {
+  document.getElementById("effectSummary").blur();
+});
 document.getElementById("typeSel").onchange = e => { typeSel = e.target.value; e.target.blur(); requeue(); };
 document.getElementById("statusSel").onchange = e => { statusSel = e.target.value; e.target.blur(); requeue(); };
 document.getElementById("colorSel").onchange = e => { colorSel = e.target.value; e.target.blur(); requeue(); };

@@ -216,6 +216,22 @@ namespace ScatoloneDownloader.Cli.Cube
                 return;
             }
 
+            if (path == "/stats")
+            {
+                TryWrite(ctx, 200, "text/html; charset=utf-8", Encoding.UTF8.GetBytes(GetStatsPageHtml()));
+                return;
+            }
+
+            if (path == "/api/stats")
+            {
+                // Recomputed per request from the live cards: requests are served one
+                // at a time, so no save can land halfway through the tally.
+                byte[] bytes = JsonSerializer.SerializeToUtf8Bytes(
+                    StatsPayload.Build(matched.Select(m => m.Card)), StatsJsonOpts);
+                TryWrite(ctx, 200, "application/json; charset=utf-8", bytes);
+                return;
+            }
+
             if (path == "/api/cards")
             {
                 var dto = matched.Select((m, i) => new
@@ -236,6 +252,11 @@ namespace ScatoloneDownloader.Cli.Cube
                     // "Cost N" bucket), so a scope picked here is the same set
                     // of cards as the matching view folder in Bridge.
                     color = ColorCategoryClassifier.ViewFolderName(m.Card.ColorCategory),
+                    // The stats page's two colour views: the one-column split the
+                    // report uses ("Multi" for every gold card) and the raw identity
+                    // letters ("BG", "" for colourless) for "any card with this colour".
+                    column = CardAnalyzer.EffectColumn(m.Card.ColorCategory),
+                    identity = string.Concat(m.Card.ColorIdentity),
                     cost = ViewGenerator.CmcBucket(m.Card.Cmc),
                     turns = ReadingTurns(m.Card),
                     reviewed = !IsPendingReview(m.Card),
@@ -440,6 +461,9 @@ namespace ScatoloneDownloader.Cli.Cube
             card.Rating = rating;
             card.Status = status;
             card.Effects = flags;
+            // Saved means a human looked at it; the live /stats page counts Reviewed,
+            // so it must not wait for the next import to notice.
+            card.Reviewed = true;
 
             lock (saveLock)
             {
@@ -504,6 +528,14 @@ namespace ScatoloneDownloader.Cli.Cube
         private static readonly JsonSerializerOptions JsonOpts = new()
         {
             PropertyNameCaseInsensitive = true,
+        };
+
+        // The stats payload is camelCase (its records are PascalCase); kept apart from
+        // JsonOpts because /api/cards and /api/save use anonymous lower-case objects.
+        // Dictionary keys (W, Multi, 1 White) are left exactly as they are.
+        private static readonly JsonSerializerOptions StatsJsonOpts = new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         };
 
         private static void WriteJson(HttpListenerContext ctx, object payload)
@@ -585,6 +617,23 @@ namespace ScatoloneDownloader.Cli.Cube
             }
 
             return pageHtml;
+        }
+
+        // The live /stats page (Cli/StatsPage.html), loaded and cached like the tagger page.
+        private static string? statsPageHtml;
+
+        internal static string GetStatsPageHtml()
+        {
+            if (statsPageHtml == null)
+            {
+                const string resourceName = "ScatoloneDownloader.Cli.StatsPage.html";
+                using Stream stream = typeof(TagCommand).Assembly.GetManifestResourceStream(resourceName)
+                    ?? throw new InvalidOperationException($"Embedded stats page '{resourceName}' not found.");
+                using StreamReader reader = new(stream);
+                statsPageHtml = reader.ReadToEnd();
+            }
+
+            return statsPageHtml;
         }
     }
 }

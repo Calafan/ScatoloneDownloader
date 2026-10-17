@@ -45,6 +45,10 @@
 	  <EmbeddedResource Include="Cli\TaggerPage.html">
 	    <LogicalName>ScatoloneDownloader.Cli.TaggerPage.html</LogicalName>
 	  </EmbeddedResource>
+	  <!-- Live cube stats page served by the tagger at /stats. -->
+	  <EmbeddedResource Include="Cli\StatsPage.html">
+	    <LogicalName>ScatoloneDownloader.Cli.StatsPage.html</LogicalName>
+	  </EmbeddedResource>
 	</ItemGroup>
 
 	<ItemGroup>

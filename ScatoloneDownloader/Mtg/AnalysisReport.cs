@@ -86,6 +86,24 @@ namespace ScatoloneDownloader.Mtg
         /// <see cref="EffectCounts"/>.</summary>
         internal Dictionary<string, Dictionary<CardEffect, int>> EffectCountsByColumn { get; init; } = [];
 
+        /// <summary>Non-land cards per colour IDENTITY (W, U, B, R, G, Colorless). Unlike
+        /// <see cref="CardsByColumn"/> a card counts once in EVERY colour of its
+        /// <see cref="Card.ColorIdentity"/> (a WU card is in W and in U), and a card
+        /// with an empty identity counts in "Colorless". There is no "Multi" key, so
+        /// the sum exceeds <see cref="TotalCards"/>. Answers the question "how much of
+        /// this can a W drafter play" which the one-column split cannot.</summary>
+        internal Dictionary<string, int> CardsByIdentity { get; init; } = [];
+
+        /// <summary>Of <see cref="CardsByIdentity"/>, the cards a human reviewed.</summary>
+        internal Dictionary<string, int> ReviewedByIdentity { get; init; } = [];
+
+        /// <summary>Of <see cref="CardsByIdentity"/>, the cards with no effect tagged.</summary>
+        internal Dictionary<string, int> UntaggedByIdentity { get; init; } = [];
+
+        /// <summary>[identity colour][flag] = cards carrying the flag; a multicolour
+        /// card adds to each of its colours. Overlapping, like <see cref="EffectCounts"/>.</summary>
+        internal Dictionary<string, Dictionary<CardEffect, int>> EffectCountsByIdentity { get; init; } = [];
+
         /// <summary>Answers-vs-targets groups, in report order.</summary>
         internal List<AnswerGroupCount> AnswerGroups { get; init; } = [];
 
@@ -110,6 +128,10 @@ namespace ScatoloneDownloader.Mtg
         internal int? Targets { get; init; }
 
         internal Dictionary<string, int> ByColumn { get; init; } = [];
+
+        /// <summary>Distinct cards of the group per colour identity (a WU card counts
+        /// in W and in U, once each); see <see cref="AnalysisReport.CardsByIdentity"/>.</summary>
+        internal Dictionary<string, int> ByIdentity { get; init; } = [];
 
         internal int Total { get; init; }
     }
