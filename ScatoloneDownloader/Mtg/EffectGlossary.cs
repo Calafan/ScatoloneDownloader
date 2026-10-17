@@ -46,9 +46,9 @@
 
             [CardEffect.Wipe] =
                 "Mass removal: the board emptied — destroyed, exiled, damaged (players too), shrunk, airbent, "
-                + "returned, two or more sacrificed each, or an edict every turn. Lands count: \"destroy all lands\", "
-                + "\"all Islands\". An adjective does not narrow it; a creature TYPE does. Not what fights it or "
-                + "didn't attack, your own, a graveyard, X target lands.",
+                + "returned, two or more sacrificed each, or an edict every turn. An adjective does not narrow it; "
+                + "a creature TYPE does. Not what fights it or didn't attack, your own, a graveyard, lands alone "
+                + "(Armageddon is LandDestruction).",
 
             [CardEffect.Bounce] =
                 "Returns a NAMED permanent to its owner's hand (\"return target …\", or a mass \"return each/all\"), "

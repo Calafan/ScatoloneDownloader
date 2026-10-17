@@ -29,11 +29,12 @@ Storm). Also excluded, each at 0 tagged among the reviewed cards written that wa
 ATTACK, was BLOCKED BY that Wall, blocks ENCHANTED creature, or was named as "X target creatures …
 each of those creatures" (Season of the Witch, Total War, Coils of the Medusa, Choking Vines, Winter
 Blast); a DEXTERITY flip (Chaos Orb, Falling Star); your OWN creatures (Cinder Giant, Vampirism);
-creature CARDS in a graveyard (Zombie Mob, Yggdrasil); a pile of LANDS kept (Natural Balance —
-overturned 2026-10-16, see below); Auras or Equipment ATTACHED to one thing (Scarab of the
-Unseen, Blastfire Bolt); a CHOSEN type that can only be artifact or enchantment (Season of Gathering
-is Disenchant); and a NAME or a VOTE that picks one thing (Eye of Singularity, Bile Blight,
-Council's Judgment, Vault 11). Five rulings the same day, each settling a split in the hand tags.
+creature CARDS in a graveyard (Zombie Mob, Yggdrasil); a pile of LANDS kept (Natural Balance — Wipe
+only from 2026-10-16 to 2026-10-17, see below); Auras or Equipment ATTACHED to one thing (Scarab of
+the Unseen, Blastfire Bolt); a CHOSEN type that can only be artifact or enchantment (Season of
+Gathering is Disenchant); and a NAME or a VOTE that picks one thing (Eye of Singularity, Bile
+Blight, Council's Judgment, Vault 11). Five rulings the same day, each settling a split in the hand
+tags.
 Damage to EACH CREATURE AND EACH PLAYER is Wipe and Burn, however small and however often — twelve
 to seven before, Pestilence against Withering Wisps and Winter Sky against Dry Spell on the same
 sentence.
@@ -53,9 +54,10 @@ lands on the OPPONENTS is Removal however often it comes back (Sothera). And ONE
 tribal card's business, not a board (Goblin Shrine, Scorch the Fields), read case-sensitively
 because the game capitalises a type and never an adjective — "non-Dragon" stays a sweeper.
 
-Ruled 2026-10-16 ("mettiamo wipe a tutti questi spacca terra ad area"), on Omen of Fire (Wipe and
-LandDestruction) against Boil (LandDestruction alone): THE LANDS SWEPT ARE A BOARD TOO, and "lands
-alone" no longer keeps a card out. All lands or all of a basic type destroyed, exiled or returned
+Ruled 2026-10-16 ("mettiamo wipe a tutti questi spacca terra ad area"), OVERTURNED 2026-10-17 (see
+the last paragraph), on Omen of Fire (Wipe and LandDestruction) against Boil (LandDestruction
+alone): THE LANDS SWEPT ARE A BOARD TOO, and "lands alone" no longer keeps a card out. All lands or
+all of a basic type destroyed, exiled or returned
 (Armageddon, Ravages of War, Boil, Flashfires, Ruination, Sunder, Ajani Vengeant's "all lands target
 player controls"), every land sharing the name (Wake of Destruction), a pile of lands kept, the
 rest sacrificed (Natural Balance, Global Ruin, Limited Resources), and two or more each, all, or one
@@ -70,3 +72,16 @@ or coloured permanent, sacrificed whenever a player's turn comes round or one en
 LandDestruction alone. Nature's Wrath, "that player sacrifices an Island or blue permanent" whenever
 one enters, leaves this tag, which it had held since 2026-09-27 with Dystopia and The Abyss; Mana
 Vortex never had it. The two creature edicts every turn stay.
+
+Overturned 2026-10-17 ("ribaltiamo il lavoro sui soli LandDestruction Wipe"), once the cube report
+and the tagger's /stats page counted Wipe among the creature answers: A SWEEP THAT TAKES ONLY LANDS
+ANSWERS NO CREATURE and is LandDestruction alone again, every card the 2026-10-16 ruling above
+reached through the lands (Armageddon, Ravages of War, Boil, Sunder, Ajani Vengeant, Wake of
+Destruction, Natural Balance, Global Ruin, Tectonic Break, Wave of Vitriol, Thoughts of Ruin). The
+seven reviewed cards it had realigned (Acid Rain, Armageddon, Boil, Boiling Seas, Flashfires,
+Natural Balance, Tsunami) go back to the human's own tags. A sweep that takes the creatures WITH the
+lands keeps both tags through the creatures' own lines (Jokulhaups, Apocalypse, Balance, Wildfire's
+damage), and Omen of Fire keeps this one through its permanent sacrificed FOR EACH permanent
+(2026-09-28). Read the same day, each Wipe until then only because it took the lands too: Balance's
+line the other way round, "sacrifice creatures and discard cards the same way" (Restore Balance),
+and X creatures each closing a list of what each player loses (Death Cloud).

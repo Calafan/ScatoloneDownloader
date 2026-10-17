@@ -40,10 +40,10 @@ public sealed class EffectClassifierTests
     [InlineData("Control Magic", "Enchantment — Aura", "Enchant creature. You control enchanted creature.", CardEffect.Steal)]
     [InlineData("Stone Rain", "Sorcery", "Destroy target land.", CardEffect.LandDestruction)]
     [InlineData("Wasteland", "Land", "{T}, Sacrifice Wasteland: Destroy target nonbasic land.", CardEffect.LandDestruction)]
-    // "Destroy all lands" is land destruction AND a wipe since 2026-10-16: the
-    // lands swept are a board too. It was LandDestruction alone before, when
-    // Wipe's patterns listed creatures, permanents and nonland only.
-    [InlineData("Armageddon", "Sorcery", "Destroy all lands.", CardEffect.LandDestruction | CardEffect.Wipe)]
+    // "Destroy all lands" is land destruction alone: it answers no creature. It
+    // was a wipe too from 2026-10-16, when the lands swept were a board, until
+    // that ruling was overturned on 2026-10-17.
+    [InlineData("Armageddon", "Sorcery", "Destroy all lands.", CardEffect.LandDestruction)]
     [InlineData("Rain of Salt", "Sorcery", "Destroy two target lands.", CardEffect.LandDestruction)]
     [InlineData("Sinkhole", "Sorcery", "Destroy target land.", CardEffect.LandDestruction)]
     [InlineData("Glimpse the Unthinkable", "Sorcery", "Target player mills ten cards.", CardEffect.Mill)]
@@ -563,16 +563,28 @@ public sealed class EffectClassifierTests
         + "non-Dalek creatures.")]
     [InlineData("Crux of Fate", "Sorcery",
         "Choose one —\n• Destroy all Dragon creatures.\n• Destroy all non-Dragon creatures.")]
+    // Read 2026-10-17, both Wipe until then only because they take the lands
+    // too: Balance's line the other way round, and X creatures each closing a
+    // list of what each player loses.
+    [InlineData("Restore Balance", "Sorcery",
+        "Suspend 6—{W}\nEach player chooses a number of lands they control equal to the number of lands "
+        + "controlled by the player who controls the fewest, then sacrifices the rest. Players sacrifice "
+        + "creatures and discard cards the same way.")]
+    [InlineData("Death Cloud", "Sorcery",
+        "Each player loses X life, discards X cards, sacrifices X creatures of their choice, then sacrifices "
+        + "X lands of their choice.")]
     public void Classify_ASweeperRuledIn_IsWipe(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Wipe));
     }
 
     [Theory]
-    // The lands swept are a board too, ruled 2026-10-16 on Omen of Fire against
-    // Boil: all lands or all of a basic type destroyed, exiled or returned, every
-    // land sharing the name, a pile of lands kept, and two or more each, all, or
-    // one per card, sacrificed.
+    // A sweep that takes ONLY lands answers no creature and is LandDestruction
+    // alone, ruled 2026-10-17 ("ribaltiamo il lavoro sui soli LandDestruction
+    // Wipe"): all lands or all of a basic type destroyed, exiled or returned,
+    // every land sharing the name, a pile of lands kept, and two or more each,
+    // all, or one per card, sacrificed. These were pinned as Wipe from
+    // 2026-10-16, ruled on Omen of Fire against Boil, until that day.
     [InlineData("Boil", "Instant",
         "Destroy all Islands.")]
     [InlineData("Flashfires", "Sorcery",
@@ -602,9 +614,12 @@ public sealed class EffectClassifierTests
         + "the battlefield tapped. Then each player who searched their library this way shuffles.")]
     [InlineData("Thoughts of Ruin", "Sorcery",
         "Each player sacrifices a land of their choice for each card in your hand.")]
-    public void Classify_ALandSweep_IsWipe(string name, string typeLine, string oracle)
+    public void Classify_ALandSweep_IsLandDestructionNotWipe(string name, string typeLine, string oracle)
     {
-        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Wipe));
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.LandDestruction));
+        Assert.False(result.HasFlag(CardEffect.Wipe));
     }
 
     [Theory]

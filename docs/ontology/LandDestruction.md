@@ -39,8 +39,8 @@ Natural Balance is in with them, and a basic offered back is consolation, as it 
 Sandworm. Not this: what a NAME, a COLOUR, a mana value or a chosen type picks (Wirefly Hive, Wash
 Out, Celestial Kirin, Season of Gathering), a pile of NONLAND permanents (Cataclysmic Gearhulk), all
 permanents EXCEPT FOR LANDS (Cyclone Summoner, Elspeth Tirel), and your own (Glimpse of Tomorrow,
-Return of the Nightstalkers's "destroy all Swamps you control"). Every land sweep is Wipe too since
-the same day — see Wipe.
+Return of the Nightstalkers's "destroy all Swamps you control"). Every land sweep was Wipe too from
+the same day until 2026-10-17, when a sweep of lands alone went back to this tag alone — see Wipe.
 
 Read the same day: lands returned to their owners' hands (Sunder), a land closing a TYPE LIST
 after "sacrifices all" (Wave of Vitriol) or after "an artifact and" (Structural Collapse), a land

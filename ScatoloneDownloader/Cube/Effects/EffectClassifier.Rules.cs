@@ -132,11 +132,17 @@ namespace ScatoloneDownloader.Cube
                     // after the hand tags split three to two on the same sentence
                     // (Abyssal Gatekeeper against Accursed Marauder): "un singolo
                     // sacrifice lo mettiamo removal". Two or more each, or all, or
-                    // the rest, empties the board.
+                    // the rest, empties the board. Two wordings read on 2026-10-17,
+                    // each of which had held Wipe only through the land-sweep
+                    // alternative overturned that day: Restore Balance puts
+                    // Balance's line the other way round ("sacrifice creatures and
+                    // discard cards the same way"), and Death Cloud's "sacrifices X
+                    // creatures" closes a list of what each player loses.
                     Rx(@"each player[^.\n]{0,120}\b(?:creatures?|permanents?)\b[^.\n]{0,120}sacrifices the rest"
-                        + @"|sacrifice creatures the same way"
+                        + @"|sacrifice creatures (?:and discard cards )?the same way"
                         + @"|each player[^.\n]{0,160}\bsacrifices? (?:all|half|a third of) (?:the |other )?(?:[\w-]+ )?creatures"
                         + @"|each player sacrifices (?!(?:a|an|one|the)\b)[\w ]{0,20}(?:creature|permanent)"
+                        + @"|each player [^.\n]{1,100}, (?:then )?sacrifices (?!(?:a|an|one|the|that)\b)[\w ]{0,20}creatures\b"
                         + @"|each player chooses (?:two|three|\d+|x)\b[^.\n]{0,40}creatures they control\. (?:exile|destroy) them"),
                     // …but the SAME edict every turn, for every player, grinds the
                     // board away and is Wipe: Dystopia, The Abyss, ruled 2026-09-27.
@@ -157,25 +163,24 @@ namespace ScatoloneDownloader.Cube
                     // Wipe on 2026-09-28. A LAND paid per creature is a tax (Flooded
                     // Woodlands, Reclamation) and names no permanent here.
                     Rx(@"sacrifices? [^.\n]{0,60}\bpermanent\b[^.\n]{0,30} for each [\w ]{0,20}permanent they control"),
-                    // The LANDS swept are a board too, ruled 2026-10-16 ("mettiamo
-                    // wipe a tutti questi spacca terra ad area") on Omen of Fire
-                    // against Boil: all lands or all of a basic type destroyed,
-                    // exiled or returned (Armageddon, Boil, Flashfires, Sunder),
-                    // every land that shares the name (Wake of Destruction), a pile
-                    // of lands kept (Natural Balance, Global Ruin), and two or more
-                    // each, all, or one per card, sacrificed (Wildfire, Keldon
-                    // Firebombers, Thoughts of Ruin) — the creatures' own line. Not
-                    // your own (Return of the Nightstalkers), nor X TARGET lands,
-                    // which point at them one by one (Rain of Salt, Orcish
-                    // Settlers), nor one land each (Hurloon Shaman, Mana Vortex).
-                    Rx(@"(?:destroy|exile) (?:all|each)(?:(?!except\b|attached\b)[\w ,'\-]){0,30}"
-                        + @"(?:\blands?\b|" + BasicLandType + @")(?! you control)"
-                        + @"|destroy target land and all other lands"
-                        + @"|return (?:all|each) (?:[\w-]+ )?(?:lands|" + BasicLandType + @")(?! you control)"
-                        + @"[^.\n]{0,30}to (?:their owners'|its owner's) hands?"
-                        + @"|each player[^.\n]{0,120}\blands?\b[^.\n]{0,120}sacrifices the rest"
-                        + @"|each player[^.\n]{0,160}\bsacrifices? (?!(?:a|an|one|that|the)\b)(?:[\w-]+,? ){1,5}?lands\b"
-                        + @"|each player sacrifices an? land (?:of their choice )?for each")]),
+                    // The LANDS swept were a board too from 2026-10-16 ("mettiamo
+                    // wipe a tutti questi spacca terra ad area", on Omen of Fire
+                    // against Boil) until the ruling was overturned on 2026-10-17
+                    // ("ribaltiamo il lavoro sui soli LandDestruction Wipe"), once
+                    // the cube report counted Wipe among the creature answers: a
+                    // sweep that takes ONLY lands — all lands or all of a basic type
+                    // destroyed, exiled or returned (Armageddon, Boil, Sunder), every
+                    // land sharing the name (Wake of Destruction), a pile of lands
+                    // kept (Natural Balance, Global Ruin), lands sacrificed two or
+                    // more each (Tectonic Break, Thoughts of Ruin) — answers no
+                    // creature and is LandDestruction alone. The alternative that
+                    // read them is gone, and 31 cards left the tag with it, 7 of
+                    // them reviewed (Armageddon, Boil, Natural Balance …), which
+                    // the human had tagged LandDestruction alone before that day.
+                    // A sweep that takes the creatures WITH the lands (Jokulhaups,
+                    // Devastation, Balance, Apocalypse, Wildfire's damage) is still
+                    // Wipe through the patterns above.
+                ]),
 
                 // "Nonland permanent" is how the whole modern O-ring family is worded
                 // (Stormplain Detainment, Web Up, Emergency Eject), and reading only
