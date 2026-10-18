@@ -139,22 +139,22 @@ small even with 30k+ cards:
 The rating scale, the statuses (Banned, Token, Jolly), the entry schema and the
 full effect ontology are described in the
 [ScatoloneQuintet README](https://github.com/Calafan/ScatoloneQuintet#readme).
-The technical reference — tier files, save behaviour, recovery, the `Views/`
-tree — is [`docs/cube-metadata.md`](docs/cube-metadata.md).
+The technical reference — tier files, save behaviour, recovery, the report
+— is [`docs/cube-metadata.md`](docs/cube-metadata.md).
 
 | Command | What it does | Example |
 |---|---|---|
 | `tag <DIR>` | Starts the local web tagger (keyboard-driven) to set rating, status and effects; every change is saved to `metadata/` at once. It opens on the review queue (untagged cards plus classifier proposals not yet confirmed), shuffled. Filters, picked in the left rail, combine by review state, rating (pool 3–5 / fringe 1–2 / unrated / exact stars), status, colour, type, effect, cost and folder (year, then set); `/` opens the card list with a name search. The effect filter is multi-select (all of the ticked effects, or any of them) and the scope is kept in the page address. `/stats` shows the cube's effects by colour, answers against targets and the bench, computed live from the tagger's memory, and every count there opens the tagger on exactly those cards. Each effect button carries the tag's **definition** as a tooltip (and as a fixed line above the list on a phone). `-p, --port` sets the port (default 8765); `--host` adds a host name to answer to besides localhost, e.g. a Tailscale name | `ScatoloneDownloader tag .\Source` |
 | `classify` | Proposes effect tags from each card's Scryfall rules text. Proposals only: it writes `effects` but never `reviewedAt`, and never touches a reviewed card. `--overwrite` re-proposes over unreviewed entries, `--dry-run` reports without writing | `ScatoloneDownloader classify -m metadata --overwrite` |
 | `audit` | Lists **reviewed** cards that say the same thing but were tagged differently — the slips repetitive tagging produces. Read-only. `--since` limits the report to recent sittings, `--limit` the number of groups | `ScatoloneDownloader audit -m metadata --since 2026-09-12` |
-| `build-views <DIR>` | Rebuilds the `Views/` tree (symlinks and hardlinks, several roots) and the `Cubo_Analysis.md` report from `metadata/` | `ScatoloneDownloader build-views .\Source -v .\Views` |
+| `report <DIR>` | Writes the `Cubo_Analysis.md` report (default `Views/Cubo_Analysis.md` beside `<DIR>`, or `-o <FILE>`) from `metadata/`. Writes nothing else | `ScatoloneDownloader report .\Source` |
+| `register <DIR>` | Adds the library's new PNGs to `metadata/` as unrated entries. Never touches an existing entry; run `classify` after it to propose the new cards' effects. `--dry-run` reports without writing. Don't run it while `tag` is open | `ScatoloneDownloader register .\Source` |
 | `make-list` | Writes, offline, a download list for `files` with the pool only (rating 3–5). Cards with a status go in `-- Banned` / `-- Token` / `-- Jolly` sections, so `files` sorts them into sub-folders | `ScatoloneDownloader make-list -m metadata -o pool.txt` |
-| `restore --images <DIR>` | Recovery: rebuilds the image folder from every file in `metadata/` plus Scryfall's bulk data. Writes no XMP | `ScatoloneDownloader restore --images .\Source -m metadata` |
-| `import <DIR>` | Brings the ratings and labels written by Adobe Bridge into `metadata/` (the only command that still reads XMP). `--incremental` re-reads only the files changed since the last import | `ScatoloneDownloader import .\Source --overwrite --incremental` |
+| `restore --images <DIR>` | Recovery: rebuilds the image folder from every file in `metadata/` plus Scryfall's bulk data | `ScatoloneDownloader restore --images .\Source -m metadata` |
 
 All of them take `-m, --metadata <DIR>`. Left out, it defaults to a `metadata`
 folder **beside the image library** (the sibling of `SOURCE_DIR`, the same rule
-`build-views` uses to place `Views/`), so the metadata stays next to the images
+`report` uses to place `Views/`), so the metadata stays next to the images
 it describes instead of following the directory the command runs from.
 `classify`, `audit`, `make-list` and `restore` take no `SOURCE_DIR`, so they
 fall back to `./metadata` and print the path they resolved at start-up.
@@ -183,22 +183,6 @@ It is rule-based and only proposes: a person confirms every card in the tagger,
 and those reviewed cards are the ground truth each rule is measured against.
 How a ruling is measured and applied is written up in the Claude Code skill
 [`.claude/skills/ontology-pass`](.claude/skills/ontology-pass/SKILL.md).
-
-### Still using Adobe Bridge
-
-The tagger and `metadata/` are the source of truth, but ratings and labels can
-still be set in Adobe Bridge on the library's PNGs and brought in with
-`import --overwrite`. The round trip loses nothing in either direction: `import`
-never lowers a saved rating to 0, never rewrites the status of a card already
-reviewed in the tagger, and leaves effects, `scryfallId` and `reviewedAt` alone.
-At the end it prints `Changed: n ratings, n labels, n statuses`, so it is plain
-at once whether the Bridge session actually landed.
-
-The library sits on a mechanical disk and a full XMP scan is seek-bound (about
-15 minutes for 30k files). After the first import use `--incremental`, which
-re-reads only the files touched since the previous run (watermark in
-`metadata/import-state.json`) and finishes in seconds. Cards not yet in the
-store are always read.
 
 ## Notes
 

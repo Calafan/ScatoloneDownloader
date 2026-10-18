@@ -6,7 +6,7 @@ namespace ScatoloneDownloader.Cli.Cube
     /// What the tagger's <c>/stats</c> page shows: sections 5-7 of
     /// <c>Cubo_Analysis.md</c> (effects by colour, answers against targets, bench by
     /// effect and colour), for the pool and for the bench. Built from the very same
-    /// <see cref="CardAnalyzer"/> that <c>build-views</c> uses (<c>ForPool</c>, then
+    /// <see cref="CardAnalyzer"/> that <c>report</c> uses (<c>ForPool</c>, then
     /// <c>Analyze</c> / <c>AnalyzeBench</c>), so the page and the Markdown report
     /// cannot disagree; the only difference is that the tagger feeds it its live
     /// in-memory cards instead of the ones read from disk.

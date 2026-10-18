@@ -6,8 +6,7 @@ namespace ScatoloneDownloader.Tests.Mtg;
 
 /// <summary>
 /// Coverage for <see cref="StatusResolver"/>: single-valued (not flags) string
-/// &lt;-&gt; <see cref="CardStatus"/> conversion, unknown-safe parsing, and the
-/// legacy XMP-label default mapping used once by the <c>import</c> seed command.
+/// &lt;-&gt; <see cref="CardStatus"/> conversion and unknown-safe parsing.
 /// </summary>
 public sealed class StatusResolverTests
 {
@@ -27,7 +26,7 @@ public sealed class StatusResolverTests
     [InlineData("")]
     [InlineData("   ")]
     [InlineData("Unknown")]
-    [InlineData("Red")] // raw XMP label strings are not status names
+    [InlineData("Red")] // colour names are not status names
     public void Parse_BlankOrUnknown_ReturnsNone(string? raw)
     {
         Assert.Equal(CardStatus.None, StatusResolver.Parse(raw));
@@ -56,29 +55,5 @@ public sealed class StatusResolverTests
     {
         string? name = StatusResolver.ToName(status);
         Assert.Equal(status, StatusResolver.Parse(name));
-    }
-
-    [Theory]
-    [InlineData("Red", CardStatus.Banned)]
-    [InlineData("red", CardStatus.Banned)]
-    [InlineData("Yellow", CardStatus.Token)]
-    [InlineData("Green", CardStatus.Jolly)]
-    [InlineData("Blue", CardStatus.None)]
-    [InlineData("", CardStatus.None)]
-    [InlineData(null, CardStatus.None)]
-    // Bridge stores the NAME the user gave a colour slot, not the colour. This
-    // library's labels are words, which is why reading colours alone left every
-    // banned card at status None.
-    [InlineData("Banned", CardStatus.Banned)]
-    [InlineData("banned", CardStatus.Banned)]
-    [InlineData("Token", CardStatus.Token)]
-    [InlineData("Jolly", CardStatus.Jolly)]
-    [InlineData(" Banned ", CardStatus.Banned)]
-    // A label set that names something which is not a status stays None.
-    [InlineData("Revisione", CardStatus.None)]
-    [InlineData("Seleziona", CardStatus.None)]
-    public void FromXmpLabel_MapsBridgeColorsToStatus(string? label, CardStatus expected)
-    {
-        Assert.Equal(expected, StatusResolver.FromXmpLabel(label));
     }
 }

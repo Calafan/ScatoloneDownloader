@@ -74,25 +74,16 @@ namespace ScatoloneDownloader.Mtg
         // --- Cube management fields ------------------------------------------
         // Rating/Status/Effects are the tagger-authored evaluation: loaded from
         // the git-tracked metadata directory's rating-tier files by
-        // MetadataJsonSynchronizer (see property docs below), never from XMP.
-        // XmpLabel is legacy Adobe Bridge color-label data, read only once by the
-        // `import` seed command (via XmpManager) to migrate an existing Bridge
-        // label into the metadata; no other code path reads it. MacroType
-        // and ColorCategory are derived from Scryfall fields at construction.
+        // MetadataJsonSynchronizer (see property docs below), never from image
+        // files. MacroType and ColorCategory are derived from Scryfall fields at
+        // construction.
         // ManaPips is parsed from ManaCost.
 
         /// <summary>Cube rating (0 = unrated, 1-5 stars). Loaded from the
         /// metadata directory by <see cref="Cube.MetadataJsonSynchronizer"/>; authored
-        /// in the web tagger, never derived from XMP after the initial
-        /// <c>import</c> seed. Also the field that decides which rating-tier
+        /// in the web tagger. Also the field that decides which rating-tier
         /// file (<see cref="Metadata.CubeMetadataStore"/>) the card is stored in.</summary>
         internal int Rating { get; set; }
-
-        /// <summary>Legacy Adobe Bridge color-label text, read once by the
-        /// <c>import</c> command (via <see cref="Metadata.XmpManager"/>) and used
-        /// only to default <see cref="Status"/> when a metadata entry has none
-        /// yet. Not read by the tagger or view generation.</summary>
-        internal string XmpLabel { get; set; } = string.Empty;
 
         /// <summary>Ban/Token/Jolly pool status. Loaded from the metadata
         /// directory by <see cref="Cube.MetadataJsonSynchronizer"/>; defaults to

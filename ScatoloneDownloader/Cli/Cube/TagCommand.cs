@@ -20,8 +20,8 @@ namespace ScatoloneDownloader.Cli.Cube
     /// git-tracked metadata directory's rating-tier files, keyed by
     /// <see cref="Card.OracleId"/> (see <see cref="CubeMetadataStore"/>). This
     /// tool is the authoring authority: rating/status/effects are loaded from
-    /// there at startup (never from XMP — Adobe Bridge is optional, and XMP is
-    /// read only by the <c>import</c> command, which folds Bridge sessions back in).
+    /// there at startup. New cards reach the store through the <c>register</c>
+    /// command, which must not run while this tool is open.
     /// The page opens on the "to review" filter — see <see cref="IsPendingReview"/>.
     /// </summary>
     internal sealed class TagCommand : AsyncCommand<TagCommand.Settings>
@@ -84,8 +84,7 @@ namespace ScatoloneDownloader.Cli.Cube
             if (matched.Count == 0) return 0;
 
             // Rating/status/effects are authored here and loaded straight from the
-            // metadata directory's tier files — XMP is legacy input only, read
-            // once by the `import` command.
+            // metadata directory's tier files, never from the image files.
             metadata = CubeMetadataStore.Load(metadataDir);
             MetadataJsonSynchronizer.SyncFromJson(matched.Select(m => m.Card), metadata);
 
@@ -247,17 +246,15 @@ namespace ScatoloneDownloader.Cli.Cube
                     // ontology does and a reordered enum cannot silently
                     // re-point the filter at a different bucket.
                     macro = m.Card.MacroType.ToString(),
-                    // Colour and cost are sent as the very folder names
-                    // build-views files the card under ("2 Azorius", and the
-                    // "Cost N" bucket), so a scope picked here is the same set
-                    // of cards as the matching view folder in Bridge.
+                    // Colour and cost are sent as display names ("2 Azorius",
+                    // and the cost bucket), which the page filters on directly.
                     color = ColorCategoryClassifier.ViewFolderName(m.Card.ColorCategory),
                     // The stats page's two colour views: the one-column split the
                     // report uses ("Multi" for every gold card) and the raw identity
                     // letters ("BG", "" for colourless) for "any card with this colour".
                     column = CardAnalyzer.EffectColumn(m.Card.ColorCategory),
                     identity = string.Concat(m.Card.ColorIdentity),
-                    cost = ViewGenerator.CmcBucket(m.Card.Cmc),
+                    cost = CostBucket.Of(m.Card.Cmc),
                     turns = ReadingTurns(m.Card),
                     reviewed = !IsPendingReview(m.Card),
                     folder = RelativeFolder(masterDir, m.Path),
@@ -364,8 +361,8 @@ namespace ScatoloneDownloader.Cli.Cube
 
         /// <summary>The card's folder relative to the master library, with forward
         /// slashes ("2000/Invasion"), or "" for a file sitting in the root. This is
-        /// what the page's folder filter groups on — the equivalent of picking a
-        /// folder in Adobe Bridge. Derived from the path rather than from the card,
+        /// what the page's folder filter groups on — the library's own
+        /// folder layout on disk. Derived from the path rather than from the card,
         /// because the folder is a property of how the library is laid out on disk,
         /// not of the printing Scryfall matched.</summary>
         internal static string RelativeFolder(string masterDir, string filePath)
@@ -462,13 +459,11 @@ namespace ScatoloneDownloader.Cli.Cube
             card.Status = status;
             card.Effects = flags;
             // Saved means a human looked at it; the live /stats page counts Reviewed,
-            // so it must not wait for the next import to notice.
+            // so it must not wait for the next reload to notice.
             card.Reviewed = true;
 
             lock (saveLock)
             {
-                // Label is legacy XMP-mirror data this tool no longer authors;
-                // preserve whatever the `import` seed (or a prior save) left there.
                 metadata.Cards.TryGetValue(card.OracleId, out CardMetadataEntry? existing);
                 int? previousRating = existing?.Rating;
 
@@ -476,7 +471,6 @@ namespace ScatoloneDownloader.Cli.Cube
                 {
                     Name = card.Name,
                     Rating = rating,
-                    Label = existing?.Label ?? string.Empty,
                     ScryfallId = card.Id,
                     Status = StatusResolver.ToName(status),
                     Effects = EffectResolver.ToNames(flags),

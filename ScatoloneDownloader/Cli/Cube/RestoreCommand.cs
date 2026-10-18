@@ -14,7 +14,7 @@ namespace ScatoloneDownloader.Cli.Cube
     /// but the git-tracked metadata directory (see <see cref="CubeMetadataStore"/>
     /// — <see cref="CubeMetadataStore.Load"/> merges the UNION of all rating-tier
     /// files, so every card in the library is restored, not just the pool) and
-    /// the Scryfall bulk download. No XMP is written — rating/status/effects live
+    /// the Scryfall bulk download. No metadata is written into the images — rating/status/effects live
     /// only in the metadata and are edited in the web tagger, never on the images
     /// themselves. Idempotent: existing files are left untouched.
     /// </summary>

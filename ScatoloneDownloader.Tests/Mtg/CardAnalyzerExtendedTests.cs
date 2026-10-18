@@ -150,7 +150,6 @@ public sealed class CardAnalyzerExtendedTests : IDisposable
         string typeLine = "Instant",
         double cmc = 1,
         int rating = 0,
-        string xmpLabel = "",
         string manaCost = "",
         string scryfallId = "")
     {
@@ -181,7 +180,6 @@ public sealed class CardAnalyzerExtendedTests : IDisposable
 
         Card card = Card.CreateCard(json);
         card.Rating = rating;
-        card.XmpLabel = xmpLabel;
         return card;
     }
 }

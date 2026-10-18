@@ -113,7 +113,8 @@ namespace ScatoloneDownloader.Mtg
             };
         }
 
-        /// <summary>By-color view folder name: a group-index prefix (so a filesystem
+        /// <summary>Colour display name (it began as the by-color view folder name, hence the
+        /// method name): a group-index prefix (so a filesystem
         /// name sort groups by color count) followed by the readable guild/shard name,
         /// e.g. "1 White", "2 Azorius", "3 Esper", "5 Colorless".</summary>
         internal static string ViewFolderName(string category)

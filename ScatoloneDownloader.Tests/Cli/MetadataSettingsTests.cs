@@ -19,7 +19,7 @@ public sealed class MetadataSettingsTests
     [Fact]
     public void ExplicitOption_AlwaysWins_EvenWithAMasterFolder()
     {
-        ImportCommand.Settings settings = new()
+        RegisterCommand.Settings settings = new()
         {
             SourceDirectory = Path.Combine(Path.GetTempPath(), "Quintet", "Source"),
             MetadataDirectory = Path.Combine(Path.GetTempPath(), "Elsewhere", "meta"),
@@ -31,28 +31,28 @@ public sealed class MetadataSettingsTests
     }
 
     [Fact]
-    public void ImportWithoutOption_ResolvesBesideTheMasterFolder()
+    public void RegisterWithoutOption_ResolvesBesideTheMasterFolder()
     {
         string source = Path.Combine(Path.GetTempPath(), "Quintet", "Source");
-        ImportCommand.Settings settings = new() { SourceDirectory = source };
+        RegisterCommand.Settings settings = new() { SourceDirectory = source };
 
         // Sibling of Source, not a child of it, and not the working directory.
         Assert.Equal(Path.Combine(Path.GetTempPath(), "Quintet", "metadata"), settings.ResolveDirectory());
     }
 
     [Fact]
-    public void BuildViewsAndTag_ResolveToTheSamePlaceAsImport()
+    public void ReportAndTag_ResolveToTheSamePlaceAsRegister()
     {
         string source = Path.Combine(Path.GetTempPath(), "Quintet", "Source");
 
-        string fromImport = new ImportCommand.Settings { SourceDirectory = source }.ResolveDirectory();
-        string fromBuildViews = new BuildViewsCommand.Settings { SourceDirectory = source }.ResolveDirectory();
+        string fromRegister = new RegisterCommand.Settings { SourceDirectory = source }.ResolveDirectory();
+        string fromReport = new ReportCommand.Settings { SourceDirectory = source }.ResolveDirectory();
         string fromTag = new TagCommand.Settings { SourceDirectory = source }.ResolveDirectory();
 
         // The three commands that share a master library must never disagree about
         // which store they are reading and writing.
-        Assert.Equal(fromImport, fromBuildViews);
-        Assert.Equal(fromImport, fromTag);
+        Assert.Equal(fromRegister, fromReport);
+        Assert.Equal(fromRegister, fromTag);
     }
 
     [Fact]

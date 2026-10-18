@@ -272,11 +272,35 @@ public sealed class CubeMetadataStoreTests : IDisposable
 
         // Change only the unrated entry and re-save the whole (merged) document.
         CubeMetadata reloaded = CubeMetadataStore.Load(tempDir);
-        reloaded.Cards["oracle-unrated"].Label = "touched";
+        reloaded.Cards["oracle-unrated"].Effects = ["Ramp"];
         CubeMetadataStore.Save(tempDir, reloaded);
 
         byte[] poolBytesAfter = File.ReadAllBytes(Path.Combine(tempDir, "pool.json"));
         Assert.Equal(poolBytesBefore, poolBytesAfter);
+    }
+
+    [Fact]
+    public void Load_LegacyTierFileWithLabelKey_Loads_AndSaveWritesNoLabel()
+    {
+        // Tier files written before the field was dropped still carry "label".
+        // The unknown key must be ignored on load, not treated as an error, and
+        // must not come back out on the next save.
+        Directory.CreateDirectory(tempDir);
+        File.WriteAllText(Path.Combine(tempDir, "pool.json"),
+            "{ \"version\": 1, \"cards\": { \"oracle-1\": { \"name\": \"Old Card\", \"rating\": 4, \"label\": \"Red\", \"effects\": [\"Ramp\"] } } }");
+        File.WriteAllText(Path.Combine(tempDir, "unrated.json"),
+            "{ \"version\": 1, \"cards\": { \"oracle-2\": { \"name\": \"Blank Label\", \"rating\": 0, \"label\": \"\" } } }");
+
+        CubeMetadata loaded = CubeMetadataStore.Load(tempDir);
+
+        Assert.Equal("Old Card", loaded.Cards["oracle-1"].Name);
+        Assert.Equal(["Ramp"], loaded.Cards["oracle-1"].Effects);
+        Assert.Equal("Blank Label", loaded.Cards["oracle-2"].Name);
+
+        CubeMetadataStore.Save(tempDir, loaded);
+
+        Assert.DoesNotContain("\"label\"", File.ReadAllText(Path.Combine(tempDir, "pool.json")));
+        Assert.DoesNotContain("\"label\"", File.ReadAllText(Path.Combine(tempDir, "unrated.json")));
     }
 
     // --- review fixes: strict load + incremental SaveEntry -------------------

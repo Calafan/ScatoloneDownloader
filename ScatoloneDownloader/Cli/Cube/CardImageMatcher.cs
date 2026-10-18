@@ -6,7 +6,7 @@ namespace ScatoloneDownloader.Cli.Cube
 {
     /// <summary>
     /// Matches physical master image files to Scryfall cards by NAME, shared by
-    /// <c>import</c>, <c>tag</c>, and <c>build-views</c> (<c>restore</c> matches in
+    /// <c>register</c>, <c>tag</c>, and <c>report</c> (<c>restore</c> matches in
     /// reverse — from metadata to bulk by id/oracle_id — and stays separate). The
     /// forward name match was previously copy-pasted into each of the three
     /// commands, which had already drifted apart; this is the single implementation.

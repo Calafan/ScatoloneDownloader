@@ -10,8 +10,8 @@ using Xunit;
 namespace ScatoloneDownloader.Tests.Cli;
 
 /// <summary>
-/// Covers the shared image-to-card name matcher extracted from import/tag/
-/// build-views (#19): normalized-name matching, DFC underscore handling,
+/// Covers the image-to-card name matcher shared by register/tag/report
+/// (#19): normalized-name matching, DFC underscore handling,
 /// first-wins name dedup, and skipping unmatched files. Files need not exist —
 /// the matcher only parses the filename.
 /// </summary>

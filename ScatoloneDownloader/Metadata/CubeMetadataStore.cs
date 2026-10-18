@@ -13,8 +13,7 @@ namespace ScatoloneDownloader.Metadata
     /// <c>oracle_id</c> in <see cref="CubeMetadata.Cards"/>. This is the complete,
     /// git-shareable source of truth: rating, status, and effects are authored in
     /// the web tagger and persisted here, so a clone without the image files still
-    /// has every evaluation. Adobe Bridge / XMP is legacy input only, read once by
-    /// the <c>import</c> command to seed this data; it is never read again.
+    /// has every evaluation. New cards enter it through the <c>register</c> command.
     /// Physically split across the rating-tier files in the metadata directory
     /// (<see cref="CubeMetadataStore"/>) — this type is the merged, in-memory view.
     /// </summary>
@@ -25,20 +24,13 @@ namespace ScatoloneDownloader.Metadata
         public string Name { get; set; } = string.Empty;
 
         /// <summary>Cube rating: 0 = unrated, 1-5 stars. Authored in the web
-        /// tagger (or seeded once from XMP by <c>import</c>); rating 1-2 is
-        /// deliberately never surfaced in the generated views (D7) but still
+        /// tagger (<c>register</c> adds new cards at 0); rating 1-2 is
+        /// deliberately kept out of the analysis pool (D7) but still
         /// lives here so it round-trips and can be bumped later. This is also
         /// the field <see cref="CubeMetadataStore.Save"/> reads to route the
         /// entry to its tier file (B1/B2) — changing it moves the card.</summary>
         [JsonPropertyName("rating")]
         public int Rating { get; set; }
-
-        /// <summary>Legacy Adobe Bridge color-label text, carried over verbatim by
-        /// <c>import</c>/the tagger for reference. Superseded by <see cref="Status"/>
-        /// for anything that drives behavior; nothing derives logic from this
-        /// field anymore.</summary>
-        [JsonPropertyName("label")]
-        public string Label { get; set; } = string.Empty;
 
         /// <summary>Scryfall printing <c>id</c> (not <c>oracle_id</c>) pinning the
         /// exact art/printing this evaluation was made against, so <c>restore</c>
@@ -108,7 +100,7 @@ namespace ScatoloneDownloader.Metadata
     /// <item><description><c>unrated.json</c> — rating 0 (the bulk library manifest; changes only when new cards appear).</description></item>
     /// </list>
     /// <see cref="Save"/> rewrites all three files from the full in-memory set
-    /// (used by batch commands like <c>import</c>), while <see cref="SaveEntry"/>
+    /// (used by batch commands like <c>register</c>), while <see cref="SaveEntry"/>
     /// persists one card incrementally by touching only the tier file(s) it
     /// belongs in (the hot path for the web tagger). Either way a rating change
     /// transparently moves a card from one tier file to another. Every file is
@@ -139,7 +131,7 @@ namespace ScatoloneDownloader.Metadata
         /// <summary>Routes a card to its tier file by its CURRENT rating (B1),
         /// using the shared <see cref="RatingTierClassifier"/> so the rating
         /// boundaries live in exactly one place (also read by
-        /// <see cref="Cube.ViewGenerator"/>). <see cref="RatingTier.Fringe"/> and
+        /// <see cref="CardAnalyzer"/>). <see cref="RatingTier.Fringe"/> and
         /// <see cref="RatingTier.Bench"/> deliberately share one file: they are
         /// browsed differently but stored identically, so splitting them moved no
         /// entry on disk.</summary>
@@ -366,7 +358,6 @@ namespace ScatoloneDownloader.Metadata
             {
                 Name = entry.Name,
                 Rating = entry.Rating,
-                Label = entry.Label,
                 ScryfallId = entry.ScryfallId,
                 Status = StatusResolver.ToName(StatusResolver.Parse(entry.Status)),
                 Effects = EffectResolver.ToNames(EffectResolver.Parse(entry.Effects)),

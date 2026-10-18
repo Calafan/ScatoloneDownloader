@@ -4,12 +4,11 @@ namespace ScatoloneDownloader.Mtg
     /// The rating bands the cube is partitioned into. This is the SINGLE source of
     /// truth for the rating boundaries, shared by metadata storage
     /// (<see cref="Metadata.CubeMetadataStore.TierFileName"/> routes each band to
-    /// its tier file) and view generation (<see cref="Cube.ViewGenerator"/> shows
-    /// <see cref="Pool"/> in the browse tree, keeps <see cref="Unrated"/> in the
-    /// year/set backlog view, gives <see cref="Bench"/> its own recovery root, and
-    /// excludes <see cref="Fringe"/> entirely per D7). Change the boundaries in
-    /// <see cref="RatingTierClassifier.Classify"/> once and both storage and views
-    /// follow.
+    /// its tier file) and the analysis (<see cref="CardAnalyzer.ForPool"/> counts
+    /// <see cref="Pool"/>, reports <see cref="Bench"/> only as the availability
+    /// appendix, and leaves <see cref="Unrated"/> and <see cref="Fringe"/> out per
+    /// D7). Change the boundaries in <see cref="RatingTierClassifier.Classify"/>
+    /// once and both storage and analysis follow.
     /// </summary>
     internal enum RatingTier
     {
@@ -17,14 +16,14 @@ namespace ScatoloneDownloader.Mtg
         Unrated,
 
         /// <summary>Rating 1 — evaluated and rejected outright; kept for
-        /// round-tripping, never surfaced in the generated views (D7).</summary>
+        /// round-tripping, never counted in the analysis (D7).</summary>
         Fringe,
 
-        /// <summary>Rating 2 — cut, but only just. Browsable in its own recovery
-        /// root so a card can be promoted back when the pool turns out to be short
-        /// somewhere (a top-heavy curve needing more two-drops, a color missing
-        /// removal). Shares <c>fringe.json</c> with <see cref="Fringe"/>: this
-        /// split is a VIEW distinction, deliberately not a storage one, so
+        /// <summary>Rating 2 — cut, but only just. Listed in the report's bench
+        /// appendix so a card can be promoted back when the pool turns out to be
+        /// short somewhere (a top-heavy curve needing more two-drops, a color
+        /// missing removal). Shares <c>fringe.json</c> with <see cref="Fringe"/>:
+        /// this split is an ANALYSIS distinction, deliberately not a storage one, so
         /// introducing it moved no entry between tier files.</summary>
         Bench,
 

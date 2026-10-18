@@ -8,7 +8,6 @@ entry per `oracle_id`, so a card is one entry however many printings it has.
 "646f9ad8-9d18-4b42-954a-e21a62e9f0e8": {
   "name": "Aang's Iceberg",
   "rating": 4,
-  "label": "",
   "scryfallId": "6cd25a10-...",
   "effects": ["Filter"],
   "reviewedAt": "2026-09-10T15:29:..."

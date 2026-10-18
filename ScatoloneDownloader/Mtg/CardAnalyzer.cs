@@ -116,7 +116,7 @@ namespace ScatoloneDownloader.Mtg
         }
 
         /// <summary>The same analysis over the bench (rating-2) cards of this analyzer
-        /// instead of the pool, so the live stats page and <c>build-views</c> report the
+        /// instead of the pool, so the live stats page and <c>report</c> report the
         /// bench with exactly the same code.</summary>
         internal AnalysisReport AnalyzeBench()
         {
@@ -462,9 +462,8 @@ namespace ScatoloneDownloader.Mtg
 
             sb.AppendLine($"## 7. Bench Availability ({bench.TotalCards + bench.LandCount} Cards, Rating 2)");
             sb.AppendLine("*Cards cut by a hair. They are NOT counted in any section above — this is the");
-            sb.AppendLine("shortlist to promote from when a section above shows a hole, browsable under");
-            sb.AppendLine("`Views/6_Bench/`. Raise a card to 3 in the tagger and the next `build-views`");
-            sb.AppendLine("moves it into the pool.*");
+            sb.AppendLine("shortlist to promote from when a section above shows a hole.");
+            sb.AppendLine("Raise a card to 3 in the tagger and the next `report` counts it in the pool.*");
             sb.AppendLine($"*   **Non-Land:** {bench.TotalCards} | **Lands:** {bench.LandCount} | **Tagged:** {tagged} ({GetPercentage(tagged, bench.TotalCards)}%)");
             sb.AppendLine();
 
