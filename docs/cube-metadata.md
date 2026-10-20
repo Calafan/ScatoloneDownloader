@@ -103,20 +103,21 @@ rewrites that whole ~26k-entry file once. But the common case — editing a card
 already in the pool — now rewrites only the small `pool.json`, so working
 through the pool no longer pays the backlog's cost on every keystroke.
 
-Every command below takes `-m|--metadata <DIR>` for this directory. Omitted,
-it defaults to a `metadata` folder **beside the master library** — the sibling of
-`SOURCE_DIR`, the same rule `report` uses to place `Views/` — so the store
-travels with the images it describes rather than following whatever directory
-the command was launched from. `classify`, `audit`, `make-list` and `restore` take no
-`SOURCE_DIR`, so they have nothing to sit beside and fall back to `./metadata`;
-each prints the directory it resolved before touching it, so a mismatch with the
-registering command shows up on the first line instead of as a mysteriously empty
-store. Pass `-m` explicitly to those three whenever the master library is not a
-sibling of the working directory.
+Every command below works against one **library root** holding `Source\` (the
+images), `metadata\` (this directory) and `Views\` (the report). The root is
+`"root"` in `scatolone.json`, copied beside the executable, or `--root <DIR>` for
+one run; without either the command stops and says where to set it. `tag`,
+`register`, `report` and `sync` read the images from `<root>\Source`. `-m|--metadata
+<DIR>` overrides only this directory (default `<root>\metadata`); with it,
+`classify`, `audit`, `make-list` and `restore` need no root at all. Each command
+prints the directory it resolved before touching it, so a mismatch shows up on
+the first line instead of as a mysteriously empty store.
 
 ## Command lifecycle
 
 ```
+        sync       (download what is missing + register + propose, in one go)
+           |
         register   (new PNGs -> unrated entries, never touches existing ones)
            |
            v
@@ -134,9 +135,9 @@ sibling of the working directory.
    restore  <-- metadata/ (union of all tiers) + Scryfall bulk   (disaster recovery)
 ```
 
-1. **`register <SOURCE_DIR> [-m metadata] [--dry-run]`** — adds the library's
+1. **`register [--root dir] [-m metadata] [--dry-run]`** — adds the library's
    new cards to the metadata directory. It matches every PNG under
-   `SOURCE_DIR` to a Scryfall card by name, and for each `oracle_id` the store
+   `<root>\Source` to a Scryfall card by name, and for each `oracle_id` the store
    does not hold yet it adds an entry with the card's name and printing id,
    rating `0`, no status, no effects and no `reviewedAt`. It **never modifies an
    existing entry** (not its name, `scryfallId`, rating or anything else), and
@@ -147,7 +148,7 @@ sibling of the working directory.
    reports without writing. Don't run it while the tagger is open, since the
    tagger holds its own snapshot of the store in memory and would write it back
    on the next keystroke; restart `tag` afterwards.
-2. **`tag <SOURCE_DIR> [-m metadata] [-p port]`** — the authoring tool going
+2. **`tag [--root dir] [-m metadata] [-p port]`** — the authoring tool going
    forward. Launches a local web UI (keyboard-driven, one card at a time) to
    set rating (0-5), status (None/Banned/Token/Jolly), and effect tags. Every
    change autosaves immediately (incrementally, via `SaveEntry` — only the
@@ -186,7 +187,7 @@ sibling of the working directory.
    - **Effect** (picker): one effect, or the two questions a name cannot ask
      - which cards carry nothing at all, and which carry anything at all.
    - **Folder** (two pickers): year, then set. Taken from each file's path
-     relative to `SOURCE_DIR` (`TagCommand.RelativeFolder`), not from the
+     relative to `<root>\Source` (`TagCommand.RelativeFolder`), not from the
      card, because the folder describes how the library is laid out on disk.
      A layout deeper or shallower than `<year>/<set>` still groups by
      whatever levels it has.
@@ -198,11 +199,11 @@ sibling of the working directory.
    so any name is reachable) because putting 30k rows in the DOM would freeze
    the page for no gain. Keys typed while a picker or the search box has
    focus go to the field, not to the tagger.
-3. **`report <SOURCE_DIR> [-m metadata] [-o file]`** — writes the analysis
+3. **`report [--root dir] [-m metadata] [-o file]`** — writes the analysis
    report, `Cubo_Analysis.md`, by loading rating/status/effects from the
    metadata directory (the merged view of all three tier files) and analysing
-   the pool (see below). By default it lands in `Views/` beside the master
-   folder, created if missing; `-o` names another file. Read-only toward the
+   the pool (see below). By default it lands in `<root>\Views`, created
+   if missing; `-o` names another file. Read-only toward the
    library and the store, and it deletes nothing. Safe to re-run any time the
    metadata changes.
 4. **`restore -m metadata --images <dir>`** — disaster recovery. Loads the

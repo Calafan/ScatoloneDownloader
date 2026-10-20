@@ -1,6 +1,7 @@
 using System.ComponentModel;
 
 using ScatoloneDownloader.Cube;
+using ScatoloneDownloader.Metadata;
 using ScatoloneDownloader.Mtg;
 
 using Spectre.Console;
@@ -19,33 +20,21 @@ namespace ScatoloneDownloader.Cli.Cube
     {
         public sealed class Settings : MetadataSettings
         {
-            [CommandArgument(0, "<SOURCE_DIR>")]
-            [Description("Source folder containing the physical master files (.png).")]
-            public string SourceDirectory { get; set; } = string.Empty;
-
-            internal override string MasterDirectory => SourceDirectory;
+            internal override bool NeedsSource => true;
 
             [CommandOption("-o|--output")]
-            [Description("Report file to write. Defaults to Views/Cubo_Analysis.md beside the master folder.")]
+            [Description("Report file to write. Defaults to Views\\Cubo_Analysis.md in the library root.")]
             public string? OutputFile { get; set; }
         }
 
         protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrWhiteSpace(settings.SourceDirectory) || !Directory.Exists(settings.SourceDirectory))
-            {
-                AnsiConsole.MarkupLine($"[red]Error: source folder '{settings.SourceDirectory}' does not exist.[/]");
-                return 1;
-            }
-
-            string masterDir = Path.GetFullPath(settings.SourceDirectory);
+            string masterDir = settings.ResolveSourceDirectory();
             string reportPath;
 
             if (string.IsNullOrWhiteSpace(settings.OutputFile))
             {
-                DirectoryInfo sourceInfo = new(masterDir);
-                string parentDir = sourceInfo.Parent?.FullName ?? masterDir;
-                reportPath = Path.Combine(parentDir, "Views", "Cubo_Analysis.md");
+                reportPath = Path.Combine(LibraryRoot.Views(settings.ResolveRoot()), "Cubo_Analysis.md");
             }
             else
             {

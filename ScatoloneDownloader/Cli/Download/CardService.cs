@@ -263,7 +263,7 @@ namespace ScatoloneDownloader.Cli.Download
             return value ?? throw new InvalidOperationException($"A {mode} request carries no {field}.");
         }
 
-        private static async Task DownloadAllAsync(CardDownloader downloader, List<Card> cards, Mode mode, string? file, string specificText, bool skipExisting)
+        internal static async Task DownloadAllAsync(CardDownloader downloader, List<Card> cards, Mode mode, string? file, string specificText, bool skipExisting)
         {
             int downloaded = 0;
             int skipped = 0;

@@ -149,6 +149,21 @@ public sealed class OutputPathsTests : IDisposable
     }
 
     [Fact]
+    public void CardDirectory_EqualsBuildCardDirectory_ButCreatesNothing()
+    {
+        string library = Path.Combine(tempRoot, "Library");
+        OutputPaths.UseLibrary(library);
+        Card delver = MakeCard("Delver of Secrets", set: "ISD", setName: "Innistrad", releasedAt: "2011-09-30");
+
+        string pure = OutputPaths.CardDirectory(delver, Mode.All, fileName: null);
+
+        Assert.Equal(Path.Combine(library, "2011", "Innistrad"), pure);
+        Assert.False(Directory.Exists(library));
+        Assert.Equal(pure, OutputPaths.BuildCardDirectory(delver, Mode.All, fileName: null));
+        Assert.True(Directory.Exists(pure));
+    }
+
+    [Fact]
     public void UseLibrary_SetMode_StillBuildsUnderRootSets()
     {
         OutputPaths.UseLibrary(Path.Combine(tempRoot, "Library"));

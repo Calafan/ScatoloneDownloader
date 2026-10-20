@@ -29,11 +29,7 @@ namespace ScatoloneDownloader.Cli.Cube
     {
         public sealed class Settings : MetadataSettings
         {
-            [CommandArgument(0, "<SOURCE_DIR>")]
-            [Description("Source folder containing the physical master files (.png).")]
-            public string SourceDirectory { get; set; } = string.Empty;
-
-            internal override string MasterDirectory => SourceDirectory;
+            internal override bool NeedsSource => true;
 
             [CommandOption("-p|--port")]
             [Description("Local port for the tagger web server. Default 8765.")]
@@ -57,13 +53,7 @@ namespace ScatoloneDownloader.Cli.Cube
 
         protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrWhiteSpace(settings.SourceDirectory) || !Directory.Exists(settings.SourceDirectory))
-            {
-                AnsiConsole.MarkupLine($"[red]Error: source folder '{settings.SourceDirectory}' does not exist.[/]");
-                return 1;
-            }
-
-            masterDir = Path.GetFullPath(settings.SourceDirectory);
+            masterDir = settings.ResolveSourceDirectory();
             metadataDir = settings.ResolveDirectory();
 
             List<(Card Card, string FilePath)>? scanned = await CardImageMatcher.ScanAndMatchAsync(masterDir);

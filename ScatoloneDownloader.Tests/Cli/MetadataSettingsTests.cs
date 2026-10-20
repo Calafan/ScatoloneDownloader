@@ -1,61 +1,125 @@
+using System.Text.Json;
+
 using ScatoloneDownloader.Cli.Cube;
 
 namespace ScatoloneDownloader.Tests.Cli;
 
 /// <summary>
-/// Pins where the metadata store lands when <c>-m|--metadata</c> is omitted. The
-/// default is not the working directory for commands that know their master
-/// library: the store sits BESIDE it, so it travels with the images it describes
-/// instead of following whatever shell the command was launched from. Commands
-/// with no master folder have nothing to sit beside and keep the old
-/// <c>./metadata</c> fallback.
+/// Pins how the cube commands find the library: <c>--root</c> or the settings
+/// file, with <c>-m|--metadata</c> overriding only the metadata folder. The
+/// settings folder is always a temp one, never the real <c>scatolone.json</c>.
 /// </summary>
-public sealed class MetadataSettingsTests
+public sealed class MetadataSettingsTests : IDisposable
 {
-    [Fact]
-    public void ExplicitOption_AlwaysWins_EvenWithAMasterFolder()
+    private readonly string temp = Path.Combine(Path.GetTempPath(), "ScatoloneSettings_" + Guid.NewGuid().ToString("N"));
+    private readonly string settingsDir;
+    private readonly string root;
+
+    public MetadataSettingsTests()
     {
-        RegisterCommand.Settings settings = new()
+        settingsDir = Path.Combine(temp, "exe");
+        root = Path.Combine(temp, "Quintet");
+        Directory.CreateDirectory(settingsDir);
+        Directory.CreateDirectory(root);
+        File.WriteAllText(Path.Combine(settingsDir, "scatolone.json"), JsonSerializer.Serialize(new { root }));
+    }
+
+    public void Dispose()
+    {
+        Directory.Delete(temp, recursive: true);
+    }
+
+    [Fact]
+    public void ExplicitOption_AlwaysWins_OverTheRootMetadata()
+    {
+        string elsewhere = Path.Combine(temp, "Elsewhere", "meta");
+        ClassifyCommand.Settings settings = new() { SettingsDirectory = settingsDir, MetadataDirectory = elsewhere };
+
+        Assert.Equal(Path.GetFullPath(elsewhere), settings.ResolveDirectory());
+    }
+
+    [Fact]
+    public void WithoutOption_MetadataIsTheRootsMetadataFolder()
+    {
+        ClassifyCommand.Settings settings = new() { SettingsDirectory = settingsDir };
+
+        Assert.Equal(Path.Combine(root, "metadata"), settings.ResolveDirectory());
+    }
+
+    [Fact]
+    public void SourceDirectory_IsTheRootsSourceFolder()
+    {
+        TagCommand.Settings settings = new() { SettingsDirectory = settingsDir };
+
+        Assert.Equal(Path.Combine(root, "Source"), settings.ResolveSourceDirectory());
+    }
+
+    [Fact]
+    public void RootOption_WinsOverTheSettingsFile()
+    {
+        string other = Path.Combine(temp, "Other");
+        Directory.CreateDirectory(other);
+        ClassifyCommand.Settings settings = new() { SettingsDirectory = settingsDir, Root = other };
+
+        Assert.Equal(Path.Combine(other, "metadata"), settings.ResolveDirectory());
+    }
+
+    [Fact]
+    public void TagRegisterReportSync_ResolveToTheSameStoreAndSource()
+    {
+        MetadataSettings[] all =
+        [
+            new RegisterCommand.Settings { SettingsDirectory = settingsDir },
+            new ReportCommand.Settings { SettingsDirectory = settingsDir },
+            new TagCommand.Settings { SettingsDirectory = settingsDir },
+            new SyncCommand.Settings { SettingsDirectory = settingsDir },
+        ];
+
+        Assert.All(all, s => Assert.Equal(Path.Combine(root, "metadata"), s.ResolveDirectory()));
+        Assert.All(all, s => Assert.Equal(Path.Combine(root, "Source"), s.ResolveSourceDirectory()));
+    }
+
+    [Fact]
+    public void Validate_FailsWithoutARoot_WhenMetadataIsBlank()
+    {
+        ClassifyCommand.Settings settings = new() { SettingsDirectory = Path.Combine(temp, "nofile") };
+
+        Assert.False(settings.Validate().Successful);
+    }
+
+    [Fact]
+    public void Validate_PassesWithoutARoot_ForAClassifyWithMetadata()
+    {
+        ClassifyCommand.Settings settings = new()
         {
-            SourceDirectory = Path.Combine(Path.GetTempPath(), "Quintet", "Source"),
-            MetadataDirectory = Path.Combine(Path.GetTempPath(), "Elsewhere", "meta"),
+            SettingsDirectory = Path.Combine(temp, "nofile"),
+            MetadataDirectory = Path.Combine(temp, "meta"),
         };
 
-        Assert.Equal(
-            Path.GetFullPath(Path.Combine(Path.GetTempPath(), "Elsewhere", "meta")),
-            settings.ResolveDirectory());
+        Assert.True(settings.Validate().Successful);
     }
 
     [Fact]
-    public void RegisterWithoutOption_ResolvesBesideTheMasterFolder()
+    public void Validate_FailsForASourceCommand_WhenTheSourceFolderIsMissing()
     {
-        string source = Path.Combine(Path.GetTempPath(), "Quintet", "Source");
-        RegisterCommand.Settings settings = new() { SourceDirectory = source };
+        TagCommand.Settings settings = new() { SettingsDirectory = settingsDir };
 
-        // Sibling of Source, not a child of it, and not the working directory.
-        Assert.Equal(Path.Combine(Path.GetTempPath(), "Quintet", "metadata"), settings.ResolveDirectory());
+        Assert.False(settings.Validate().Successful);
+
+        Directory.CreateDirectory(Path.Combine(root, "Source"));
+
+        Assert.True(settings.Validate().Successful);
     }
 
     [Fact]
-    public void ReportAndTag_ResolveToTheSamePlaceAsRegister()
+    public void Validate_FailsForASourceCommand_EvenWithMetadata_WhenThereIsNoRoot()
     {
-        string source = Path.Combine(Path.GetTempPath(), "Quintet", "Source");
+        SyncCommand.Settings settings = new()
+        {
+            SettingsDirectory = Path.Combine(temp, "nofile"),
+            MetadataDirectory = Path.Combine(temp, "meta"),
+        };
 
-        string fromRegister = new RegisterCommand.Settings { SourceDirectory = source }.ResolveDirectory();
-        string fromReport = new ReportCommand.Settings { SourceDirectory = source }.ResolveDirectory();
-        string fromTag = new TagCommand.Settings { SourceDirectory = source }.ResolveDirectory();
-
-        // The three commands that share a master library must never disagree about
-        // which store they are reading and writing.
-        Assert.Equal(fromRegister, fromReport);
-        Assert.Equal(fromRegister, fromTag);
-    }
-
-    [Fact]
-    public void CommandWithNoMasterFolder_FallsBackToTheWorkingDirectory()
-    {
-        ClassifyCommand.Settings settings = new();
-
-        Assert.Equal(Path.GetFullPath("metadata"), settings.ResolveDirectory());
+        Assert.False(settings.Validate().Successful);
     }
 }

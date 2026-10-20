@@ -23,11 +23,7 @@ namespace ScatoloneDownloader.Cli.Cube
 
         public sealed class Settings : MetadataSettings
         {
-            [CommandArgument(0, "<SOURCE_DIR>")]
-            [Description("Source folder containing the physical master files (.png).")]
-            public string SourceDirectory { get; set; } = string.Empty;
-
-            internal override string MasterDirectory => SourceDirectory;
+            internal override bool NeedsSource => true;
 
             [CommandOption("--dry-run")]
             [Description("Report what would be registered without writing the metadata directory.")]
@@ -36,13 +32,7 @@ namespace ScatoloneDownloader.Cli.Cube
 
         protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrWhiteSpace(settings.SourceDirectory) || !Directory.Exists(settings.SourceDirectory))
-            {
-                AnsiConsole.MarkupLine($"[red]Error: source folder '{settings.SourceDirectory}' does not exist.[/]");
-                return 1;
-            }
-
-            string masterDir = Path.GetFullPath(settings.SourceDirectory);
+            string masterDir = settings.ResolveSourceDirectory();
             string metadataDir = settings.ResolveDirectory();
 
             AnsiConsole.MarkupLineInterpolated($"[cyan]Master folder:[/] {masterDir}");
@@ -110,6 +100,7 @@ namespace ScatoloneDownloader.Cli.Cube
             CubeMetadata metadata, IEnumerable<(Card Card, string FilePath)> matched)
         {
             List<string> addedNames = [];
+            List<string> addedOracleIds = [];
             HashSet<string> addedIds = new(StringComparer.Ordinal);
             HashSet<string> alreadyInStore = new(StringComparer.Ordinal);
             int skippedNoOracleId = 0;
@@ -141,10 +132,11 @@ namespace ScatoloneDownloader.Cli.Cube
                     ScryfallId = card.Id,
                 };
                 addedIds.Add(card.OracleId);
+                addedOracleIds.Add(card.OracleId);
                 addedNames.Add(card.Name);
             }
 
-            return new RegisterResult(addedNames, alreadyInStore.Count, skippedNoOracleId);
+            return new RegisterResult(addedNames, alreadyInStore.Count, skippedNoOracleId, addedOracleIds);
         }
     }
 
@@ -153,7 +145,10 @@ namespace ScatoloneDownloader.Cli.Cube
     /// <param name="AlreadyInStore">Distinct oracle ids that were already in the store
     /// before the call.</param>
     /// <param name="SkippedNoOracleId">Matched files whose card has no oracle id.</param>
-    internal sealed record RegisterResult(IReadOnlyList<string> AddedNames, int AlreadyInStore, int SkippedNoOracleId)
+    /// <param name="AddedOracleIds">Oracle ids of the entries added, in the same order as
+    /// <paramref name="AddedNames"/>.</param>
+    internal sealed record RegisterResult(
+        IReadOnlyList<string> AddedNames, int AlreadyInStore, int SkippedNoOracleId, IReadOnlyList<string> AddedOracleIds)
     {
         internal int Added => AddedNames.Count;
     }

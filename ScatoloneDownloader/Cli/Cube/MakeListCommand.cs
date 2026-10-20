@@ -30,6 +30,12 @@ namespace ScatoloneDownloader.Cli.Cube
 
             public override ValidationResult Validate()
             {
+                ValidationResult baseResult = base.Validate();
+                if (!baseResult.Successful)
+                {
+                    return baseResult;
+                }
+
                 if (string.IsNullOrWhiteSpace(OutputFile))
                 {
                     return ValidationResult.Error("--output <FILE> is required.");

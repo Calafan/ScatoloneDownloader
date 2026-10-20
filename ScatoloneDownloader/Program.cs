@@ -31,11 +31,14 @@ namespace ScatoloneDownloader
                 config.AddCommand<LandsCommand>("lands")
                     .WithDescription("Download every basic land artwork, grouped by land type.");
 
+                config.AddCommand<SyncCommand>("sync")
+                    .WithDescription("Bring the library up to the library rules: download the missing cards into Source, register them and propose their effects; list (never delete) extra files and store entries with no image.");
+
                 config.AddCommand<AnalyzeCommand>("analyze")
                     .WithDescription("Analyze list file(s) without downloading images.");
 
                 config.AddCommand<ReportCommand>("report")
-                    .WithDescription("Write the cube analysis report (Cubo_Analysis.md) from the metadata directory.");
+                    .WithDescription("Write the cube analysis report (Cubo_Analysis.md) from the library root and its metadata.");
 
                 config.AddCommand<TagCommand>("tag")
                     .WithDescription("Launch the local web tagger to assign card rating/status/effects and autosave to the metadata directory.");

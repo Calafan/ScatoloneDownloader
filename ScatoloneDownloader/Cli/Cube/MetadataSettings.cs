@@ -1,45 +1,94 @@
 using System.ComponentModel;
 
+using ScatoloneDownloader.Metadata;
+
+using Spectre.Console;
 using Spectre.Console.Cli;
 
 namespace ScatoloneDownloader.Cli.Cube
 {
     /// <summary>
-    /// Base settings for every cube command that reads or writes the metadata
-    /// directory (<c>register</c>/<c>tag</c>/<c>classify</c>/<c>report</c>/
-    /// <c>restore</c>/<c>make-list</c>). Owns the single <c>-m|--metadata</c>
-    /// option, its help text, and the default resolution, so none of that is
-    /// copy-pasted per command.
+    /// Base settings for every cube command that reads or writes the library
+    /// (<c>register</c>/<c>tag</c>/<c>classify</c>/<c>report</c>/<c>restore</c>/
+    /// <c>make-list</c>/<c>audit</c>/<c>sync</c>). Owns the <c>--root</c> and
+    /// <c>-m|--metadata</c> options and their resolution, so none of that is
+    /// copy-pasted per command. The library root (see <see cref="LibraryRoot"/>)
+    /// holds <c>Source\</c>, <c>metadata\</c> and <c>Views\</c>; it comes from
+    /// <c>--root</c> or from <c>scatolone.json</c> beside the executable. An
+    /// explicit <c>-m</c> overrides only the metadata folder.
     /// </summary>
     internal class MetadataSettings : CommandSettings
     {
         internal const string MetadataDescription =
             "Path to the git-tracked metadata directory (pool.json/fringe.json/unrated.json). "
-            + "Defaults to a 'metadata' folder beside the master library, or ./metadata for commands that take no master folder.";
+            + "Defaults to the 'metadata' folder of the library root.";
+
+        [CommandOption("--root <DIR>")]
+        [Description("The library root holding Source\\, metadata\\ and Views\\. Defaults to \"root\" in scatolone.json beside the executable.")]
+        public string? Root { get; set; }
 
         [CommandOption("-m|--metadata")]
         [Description(MetadataDescription)]
         public string? MetadataDirectory { get; set; }
 
+        /// <summary>Where <c>scatolone.json</c> is looked up. Tests point it at a temp folder.</summary>
+        internal string SettingsDirectory { get; init; } = AppContext.BaseDirectory;
+
         /// <summary>
-        /// The master library this command works against, or <c>null</c> when it
-        /// has none. <c>register</c>, <c>report</c> and <c>tag</c> override this
-        /// with their <c>SOURCE_DIR</c> argument; overriding it (rather than
-        /// passing the path in at each call site) means a new command cannot
-        /// silently fall back to the wrong default by forgetting an argument.
+        /// Whether the command works on the images of <c>Source\</c> (<c>tag</c>,
+        /// <c>register</c>, <c>report</c>, <c>sync</c> override this to
+        /// <c>true</c>). Those need a root and its <c>Source</c> folder even when
+        /// <c>-m</c> is given; the others need a root only to default the metadata.
         /// </summary>
-        internal virtual string? MasterDirectory => null;
+        internal virtual bool NeedsSource => false;
+
+        private string? resolvedRoot;
+
+        public override ValidationResult Validate()
+        {
+            if (NeedsSource || string.IsNullOrWhiteSpace(MetadataDirectory))
+            {
+                string? root = LibraryRoot.Resolve(Root, SettingsDirectory, out string? error);
+                if (root is null)
+                {
+                    return ValidationResult.Error(error ?? "No library root.");
+                }
+
+                resolvedRoot = root;
+
+                if (NeedsSource && !Directory.Exists(LibraryRoot.Source(root)))
+                {
+                    return ValidationResult.Error($"Source folder not found: {LibraryRoot.Source(root)}");
+                }
+            }
+
+            return ValidationResult.Success();
+        }
+
+        /// <summary>The library root as an absolute path (cached after the first resolution).
+        /// Throws when there is none: <see cref="Validate"/> reports that first.</summary>
+        internal string ResolveRoot()
+        {
+            if (resolvedRoot is null)
+            {
+                resolvedRoot = LibraryRoot.Resolve(Root, SettingsDirectory, out string? error)
+                    ?? throw new InvalidOperationException(error);
+            }
+
+            return resolvedRoot;
+        }
+
+        /// <summary>The folder of the master images, <c>&lt;root&gt;\Source</c>.</summary>
+        internal string ResolveSourceDirectory()
+        {
+            return LibraryRoot.Source(ResolveRoot());
+        }
 
         /// <summary>
         /// The metadata directory as an absolute path. An explicit
-        /// <c>-m|--metadata</c> always wins. Otherwise the store sits BESIDE the
-        /// master library (<c>&lt;parent of SOURCE_DIR&gt;/metadata</c>, the same
-        /// rule <c>report</c> uses to place <c>Views/</c>), so the metadata
-        /// travels with the images it describes instead of landing wherever the
-        /// shell happened to be. Commands that take no master folder
-        /// (<c>classify</c>, <c>make-list</c>, <c>restore</c>) have nothing to sit
-        /// beside and fall back to <c>./metadata</c> — they print the path they
-        /// resolved, so a mismatch with the registering command is visible at once.
+        /// <c>-m|--metadata</c> always wins (so scripts that pass it keep working
+        /// without a root); otherwise it is <c>&lt;root&gt;\metadata</c>. Commands
+        /// print the path they resolved, so a mismatch is visible at once.
         /// </summary>
         internal string ResolveDirectory()
         {
@@ -48,13 +97,7 @@ namespace ScatoloneDownloader.Cli.Cube
                 return Path.GetFullPath(MetadataDirectory);
             }
 
-            if (!string.IsNullOrWhiteSpace(MasterDirectory))
-            {
-                DirectoryInfo master = new(Path.GetFullPath(MasterDirectory));
-                return Path.Combine(master.Parent?.FullName ?? master.FullName, "metadata");
-            }
-
-            return Path.GetFullPath("metadata");
+            return LibraryRoot.Metadata(ResolveRoot());
         }
     }
 }

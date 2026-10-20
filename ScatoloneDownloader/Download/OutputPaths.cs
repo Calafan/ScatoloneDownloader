@@ -84,10 +84,19 @@ namespace ScatoloneDownloader.Download
         /// <summary>Builds (and creates) the directory a card's image belongs in.</summary>
         internal static string BuildCardDirectory(Card card, Mode mode, string? fileName)
         {
-            bool inLibrary = LibraryRoot != null && mode is Mode.All or Mode.Years;
-            string path = inLibrary ? LibraryRoot! : BasePath(mode);
+            string path = CardDirectory(card, mode, fileName);
 
             Directory.CreateDirectory(path);
+
+            return path;
+        }
+
+        /// <summary>The directory a card's image belongs in, with no IO: the path
+        /// <see cref="BuildCardDirectory"/> creates and returns.</summary>
+        internal static string CardDirectory(Card card, Mode mode, string? fileName)
+        {
+            bool inLibrary = LibraryRoot != null && mode is Mode.All or Mode.Years;
+            string path = inLibrary ? LibraryRoot! : BasePath(mode);
 
             switch (mode)
             {
@@ -95,8 +104,6 @@ namespace ScatoloneDownloader.Download
                 case Mode.Years:
                     {
                         path = Path.Combine(path, card.ReleasedAt.Year.ToString());
-                        Directory.CreateDirectory(path);
-
                         path = Path.Combine(path, Sanitize(card.SetName));
                         break;
                     }
@@ -128,8 +135,6 @@ namespace ScatoloneDownloader.Download
                         break;
                     }
             }
-
-            Directory.CreateDirectory(path);
 
             return path;
         }

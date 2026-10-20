@@ -28,6 +28,12 @@ namespace ScatoloneDownloader.Cli.Cube
 
             public override ValidationResult Validate()
             {
+                ValidationResult baseResult = base.Validate();
+                if (!baseResult.Successful)
+                {
+                    return baseResult;
+                }
+
                 if (string.IsNullOrWhiteSpace(ImagesDirectory))
                 {
                     return ValidationResult.Error("--images <DIR> is required.");

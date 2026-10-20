@@ -53,6 +53,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<!-- Library root settings, read from beside the executable by LibraryRoot. -->
+		<None Update="scatolone.json" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<InternalsVisibleTo Include="ScatoloneDownloader.Tests" />
 	</ItemGroup>
 

@@ -38,9 +38,8 @@ namespace ScatoloneDownloader.Cli.Cube
         {
             string metadataDir = settings.ResolveDirectory();
 
-            // This command takes no master folder, so -m decides everything and
-            // the default is the working directory rather than the store beside
-            // the images. Say which one was picked before touching it.
+            // -m wins; otherwise the store of the library root. Say which one was
+            // picked before touching it.
             AnsiConsole.MarkupLineInterpolated($"[cyan]Metadata:[/] {metadataDir}");
 
             CubeMetadata metadata = CubeMetadataStore.Load(metadataDir);
