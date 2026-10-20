@@ -32,7 +32,6 @@ namespace ScatoloneDownloader.Mtg
         /// evaluation metadata so re-downloads that match a different printing
         /// still resolve to the same card.</summary>
         internal string OracleId { get; init; }
-        internal string CollectorNumber { get; init; }
         internal string Language { get; init; }
         internal string Layout { get; init; }
 
@@ -65,7 +64,6 @@ namespace ScatoloneDownloader.Mtg
         internal string BorderColor { get; init; }
 
         internal double Cmc { get; init; }
-        internal List<string> Colors { get; init; }
         internal List<string> ColorIdentity { get; init; }
         internal string ManaCost { get; init; }
 
@@ -119,7 +117,6 @@ namespace ScatoloneDownloader.Mtg
             Name = jsonCard.Name ?? string.Empty;
             Id = jsonCard.Id ?? string.Empty;
             OracleId = jsonCard.OracleId ?? string.Empty;
-            CollectorNumber = jsonCard.CollectorNumber ?? string.Empty;
             Language = jsonCard.Language ?? string.Empty;
             Layout = jsonCard.Layout ?? string.Empty;
 
@@ -147,7 +144,6 @@ namespace ScatoloneDownloader.Mtg
             FrameEffects = jsonCard.FrameEffects ?? [];
 
             Cmc = jsonCard.Cmc;
-            Colors = jsonCard.Colors ?? [];
             ColorIdentity = jsonCard.ColorIdentity ?? [];
             ManaCost = jsonCard.ManaCost ?? string.Empty;
             PromoTypes = jsonCard.PromoTypes ?? [];

@@ -4,9 +4,6 @@ namespace ScatoloneDownloader.Mtg
 {
     internal class DoubleFaceCard : Card
     {
-        internal string FrontName { get; init; }
-        internal string RearName { get; init; }
-
         /// <summary>Face image URL, or null when Scryfall lists the face without
         /// its own <c>image_uris</c> block. <see cref="Download.CardDownloader"/>
         /// rejects such a card rather than composing half a picture.</summary>
@@ -32,11 +29,6 @@ namespace ScatoloneDownloader.Mtg
 
             JsonCardFace front = jsonCard.CardFaces[0];
             JsonCardFace rear = jsonCard.CardFaces[1];
-
-            FrontName = front.Name ?? string.Empty;
-            RearName = rear.Name ?? string.Empty;
-
-            Colors = [.. front.Colors ?? [], .. rear.Colors ?? []];
 
             FrontImageUri = front.ImageUris?.Png;
             RearImageUri = rear.ImageUris?.Png;

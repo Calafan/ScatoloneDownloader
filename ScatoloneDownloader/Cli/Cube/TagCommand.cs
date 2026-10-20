@@ -22,7 +22,7 @@ namespace ScatoloneDownloader.Cli.Cube
     /// tool is the authoring authority: rating/status/effects are loaded from
     /// there at startup. New cards reach the store through the <c>register</c>
     /// command, which must not run while this tool is open.
-    /// The page opens on the "to review" filter — see <see cref="IsPendingReview"/>.
+    /// The page opens on the "to review" filter — see <see cref="Card.Reviewed"/>.
     /// </summary>
     internal sealed class TagCommand : AsyncCommand<TagCommand.Settings>
     {
@@ -104,7 +104,11 @@ namespace ScatoloneDownloader.Cli.Cube
             }
 
             int tagged = matched.Count(m => m.Card.Effects != CardEffect.None);
-            int pending = matched.Count(m => IsPendingReview(m.Card));
+            // The review queue is every card no human has confirmed: untagged AND
+            // auto-tagged together, because classify writes effects only when it has
+            // a suggestion, so a card it read and found nothing for stays effect-less.
+            // The page's default filter inverts the same Reviewed flag.
+            int pending = matched.Count(m => !m.Card.Reviewed);
             AnsiConsole.MarkupLine($"[cyan]Already tagged:[/] {tagged} / {matched.Count}");
             AnsiConsole.MarkupLine(
                 $"[cyan]To review:[/] {pending} / {matched.Count} [grey](untagged + auto-tagged — the tagger's default filter)[/]");
@@ -256,7 +260,7 @@ namespace ScatoloneDownloader.Cli.Cube
                     identity = string.Concat(m.Card.ColorIdentity),
                     cost = CostBucket.Of(m.Card.Cmc),
                     turns = ReadingTurns(m.Card),
-                    reviewed = !IsPendingReview(m.Card),
+                    reviewed = m.Card.Reviewed,
                     folder = RelativeFolder(masterDir, m.Path),
                 });
                 // The glossary rides alongside the names, same order, so the
@@ -413,21 +417,6 @@ namespace ScatoloneDownloader.Cli.Cube
 
             return [0];
         }
-
-        /// <summary>
-        /// True when no human has confirmed this card yet — its metadata entry is
-        /// missing, or present with no <c>reviewedAt</c>. This single predicate
-        /// backs both the startup "To review" count and the page's <c>reviewed</c>
-        /// flag, which the tagger's DEFAULT filter inverts: the review queue is
-        /// untagged cards AND auto-tagged ones together, because <c>classify</c>
-        /// writes effects only when it has a suggestion — a card it read and found
-        /// nothing for stays effect-less, so it is invisible in an auto-only view
-        /// while an untagged-only view hides every auto suggestion.
-        /// </summary>
-        private bool IsPendingReview(Card card)
-            => string.IsNullOrEmpty(card.OracleId)
-                || !metadata.Cards.TryGetValue(card.OracleId, out CardMetadataEntry? entry)
-                || entry.ReviewedAt == null;
 
         /// <summary>
         /// Handles one <c>POST /api/save</c>: applies rating/status/effects to the

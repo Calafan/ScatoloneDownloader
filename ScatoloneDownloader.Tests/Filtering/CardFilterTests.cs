@@ -320,7 +320,6 @@ public sealed class CardFilterTests
             SetType = setType,
             BorderColor = borderColor,
             Cmc = 1,
-            Colors = ["R"],
             ImageUris = new JsonImageUris { Png = "https://test/img.png" },
             PromoTypes = promoTypes,
         };

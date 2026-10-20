@@ -43,13 +43,11 @@ public sealed class CardFactoryTests
             new JsonCardFace
             {
                 Name = "Delver of Secrets",
-                Colors = ["U"],
                 ImageUris = MakePngUri("https://test/front.png"),
             },
             new JsonCardFace
             {
                 Name = "Insectile Aberration",
-                Colors = ["U"],
                 ImageUris = MakePngUri("https://test/rear.png"),
             },
         ];
@@ -57,12 +55,8 @@ public sealed class CardFactoryTests
         ScatoloneDownloader.Mtg.Card card = ScatoloneDownloader.Mtg.Card.CreateCard(json);
 
         DoubleFaceCard doubleFace = Assert.IsType<DoubleFaceCard>(card);
-        Assert.Equal("Delver of Secrets", doubleFace.FrontName);
-        Assert.Equal("Insectile Aberration", doubleFace.RearName);
         Assert.Equal("https://test/front.png", doubleFace.FrontImageUri);
         Assert.Equal("https://test/rear.png", doubleFace.RearImageUri);
-        // Colors are unioned from both faces (face0 colors + face1 colors).
-        Assert.Equal(["U", "U"], doubleFace.Colors);
     }
 
     [Fact]
@@ -74,8 +68,8 @@ public sealed class CardFactoryTests
         JsonCard json = MakeCard(imageUris: null);
         json.CardFaces =
         [
-            new JsonCardFace { Name = "Front", Colors = ["R"], ImageUris = MakePngUri("https://test/front.png") },
-            new JsonCardFace { Name = "Rear", Colors = ["R"], ImageUris = null! },
+            new JsonCardFace { Name = "Front", ImageUris = MakePngUri("https://test/front.png") },
+            new JsonCardFace { Name = "Rear", ImageUris = null! },
         ];
 
         ScatoloneDownloader.Mtg.Card card = ScatoloneDownloader.Mtg.Card.CreateCard(json);
@@ -124,7 +118,6 @@ public sealed class CardFactoryTests
             SetType = "core",
             BorderColor = "white",
             Cmc = 2.5,
-            Colors = ["W"],
             ImageUris = MakePngUri("https://test/wog.png"),
         };
 
@@ -145,7 +138,6 @@ public sealed class CardFactoryTests
         Assert.Equal("core", card.SetType);
         Assert.Equal("white", card.BorderColor);
         Assert.Equal(2.5, card.Cmc);
-        Assert.Equal(["W"], card.Colors);
     }
 
     [Fact]
@@ -169,8 +161,8 @@ public sealed class CardFactoryTests
         json.OracleText = null;
         json.CardFaces =
         [
-            new JsonCardFace { Name = "Front", Colors = ["U"], OracleText = "Front text.", ImageUris = MakePngUri("https://test/f.png") },
-            new JsonCardFace { Name = "Rear", Colors = ["U"], OracleText = "Rear text.", ImageUris = MakePngUri("https://test/r.png") },
+            new JsonCardFace { Name = "Front", OracleText = "Front text.", ImageUris = MakePngUri("https://test/f.png") },
+            new JsonCardFace { Name = "Rear", OracleText = "Rear text.", ImageUris = MakePngUri("https://test/r.png") },
         ];
 
         ScatoloneDownloader.Mtg.Card card = ScatoloneDownloader.Mtg.Card.CreateCard(json);
@@ -216,7 +208,6 @@ public sealed class CardFactoryTests
             SetType = "core",
             BorderColor = "black",
             Cmc = 1,
-            Colors = ["R"],
             ImageUris = imageUris,
         };
     }

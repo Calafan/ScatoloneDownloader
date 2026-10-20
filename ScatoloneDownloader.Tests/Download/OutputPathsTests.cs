@@ -244,7 +244,6 @@ public sealed class OutputPathsTests : IDisposable
             SetType = "core",
             BorderColor = "black",
             Cmc = 1,
-            Colors = ["R"],
             ImageUris = new JsonImageUris { Png = "https://test/img.png" },
         };
 

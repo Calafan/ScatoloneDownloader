@@ -4,9 +4,6 @@ namespace ScatoloneDownloader.Json.Sets
 {
     public class Set
     {
-        [JsonPropertyName("code")]
-        public string? Code { get; set; }
-
         [JsonPropertyName("name")]
         public string? Name { get; set; }
 

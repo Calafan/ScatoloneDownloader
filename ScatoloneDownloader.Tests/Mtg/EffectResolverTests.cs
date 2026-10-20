@@ -7,35 +7,18 @@ using Xunit;
 namespace ScatoloneDownloader.Tests.Mtg;
 
 /// <summary>
-/// Covers <see cref="EffectResolver"/>: exact member-name parsing, human
-/// aliases (including the Steal / threaten family), numeric rejection, unknown
-/// skipping, and stable declared-order serialization.
+/// Covers <see cref="EffectResolver"/>: exact member-name parsing (case-insensitive),
+/// numeric rejection, unknown skipping, and stable declared-order serialization.
 /// </summary>
 public sealed class EffectResolverTests
 {
     [Theory]
     [InlineData("Steal", CardEffect.Steal)]
     [InlineData("steal", CardEffect.Steal)]           // case-insensitive member name
-    [InlineData("threaten", CardEffect.Steal)]
-    [InlineData("act of treason", CardEffect.Steal)]
-    [InlineData("control magic", CardEffect.Steal)]
-    [InlineData("mind control", CardEffect.Steal)]
-    [InlineData("board wipe", CardEffect.Wipe)]
-    [InlineData("vindicate", CardEffect.RemovePermanent)]
-    [InlineData("direct damage", CardEffect.Burn)]
     [InlineData("Tutor", CardEffect.Tutor)]
-    [InlineData("search library", CardEffect.Tutor)]
-    [InlineData("search your library", CardEffect.Tutor)]
     [InlineData("ManaFixing", CardEffect.ManaFixing)]
-    [InlineData("Fixing", CardEffect.ManaFixing)]       // pre-rename canonical name
-    [InlineData("mana fixing", CardEffect.ManaFixing)]
-    [InlineData("colour fixing", CardEffect.ManaFixing)]
     [InlineData("Pacify", CardEffect.Pacify)]
-    [InlineData("pacifism", CardEffect.Pacify)]
-    [InlineData("arrest", CardEffect.Pacify)]
-    [InlineData("detain", CardEffect.Pacify)]
-    [InlineData("tapper", CardEffect.Pacify)]
-    public void TryParseSingle_MemberNamesAndAliases_Resolve(string raw, CardEffect expected)
+    public void TryParseSingle_MemberNames_Resolve(string raw, CardEffect expected)
     {
         Assert.True(EffectResolver.TryParseSingle(raw, out CardEffect effect));
         Assert.Equal(expected, effect);
@@ -48,6 +31,7 @@ public sealed class EffectResolverTests
     [InlineData("65536")]      // Steal's numeric value must NOT parse either
     [InlineData("None")]       // None is not a real effect
     [InlineData("not an effect")]
+    [InlineData("threaten")]   // former alias: the canonical name is the only spelling read
     public void TryParseSingle_InvalidOrNumeric_ReturnsFalse(string raw)
     {
         Assert.False(EffectResolver.TryParseSingle(raw, out CardEffect effect));
@@ -57,7 +41,7 @@ public sealed class EffectResolverTests
     [Fact]
     public void Parse_CombinesFlags_AndSkipsUnknown()
     {
-        CardEffect result = EffectResolver.Parse(["Ramp", "not-real", "threaten"]);
+        CardEffect result = EffectResolver.Parse(["Ramp", "not-real", "steal"]);
 
         Assert.Equal(CardEffect.Ramp | CardEffect.Steal, result);
     }
@@ -66,11 +50,11 @@ public sealed class EffectResolverTests
     public void ToNames_ManaFixing_SerializesUnderItsNewCanonicalName()
     {
         // The rename is what the tagger and the tier files show; the old "Fixing"
-        // spelling must survive on READ only, never come back on write.
+        // spelling no longer parses and never comes back on write.
         Assert.Equal(["ManaFixing"], EffectResolver.ToNames(CardEffect.ManaFixing));
         Assert.Equal(
             CardEffect.ManaFixing,
-            EffectResolver.Parse(EffectResolver.ToNames(EffectResolver.Parse(["Fixing"]))));
+            EffectResolver.Parse(EffectResolver.ToNames(EffectResolver.Parse(["ManaFixing"]))));
     }
 
     [Fact]

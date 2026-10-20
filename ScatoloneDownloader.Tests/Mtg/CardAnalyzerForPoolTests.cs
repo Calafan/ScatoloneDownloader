@@ -160,7 +160,6 @@ public sealed class CardAnalyzerForPoolTests : IDisposable
             SetType = "expansion",
             BorderColor = "black",
             Cmc = cmc,
-            Colors = ["G"],
             ColorIdentity = ["G"],
             ManaCost = "{1}{G}",
             ImageUris = new JsonImageUris { Png = "https://test/x.png" },

@@ -370,7 +370,7 @@ function yearOf(folder) { return (folder || "").split("/")[0]; }
 
 // The effect axis. "" is any; the two pseudo-entries ask the questions a name
 // cannot: which cards carry nothing at all, and which carry anything at all.
-const EFFECT_ANY = "", EFFECT_NONE = "*none", EFFECT_SOME = "*some";
+const EFFECT_NONE = "*none", EFFECT_SOME = "*some";
 
 function effectMatch(c) {
   if (effectSpecial === EFFECT_NONE) return c.effects.size === 0;

@@ -149,7 +149,6 @@ public sealed class GetJsonLinesAsyncTests
             SetType = "core",
             BorderColor = "black",
             Cmc = 1,
-            Colors = ["R"],
             ImageUris = new JsonImageUris { Png = "https://test/img.png" },
         };
     }
@@ -173,18 +172,15 @@ public sealed class GetJsonLinesAsyncTests
             SetType = "expansion",
             BorderColor = "black",
             Cmc = 1,
-            Colors = ["U"],
             CardFaces = [
                 new JsonCardFace
                 {
                     Name = "Delver of Secrets",
-                    Colors = ["U"],
                     ImageUris = new JsonImageUris { Png = "https://test/front.png" },
                 },
                 new JsonCardFace
                 {
                     Name = "Insectile Aberration",
-                    Colors = ["U"],
                     ImageUris = new JsonImageUris { Png = "https://test/rear.png" },
                 },
             ],

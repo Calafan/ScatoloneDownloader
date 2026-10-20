@@ -38,11 +38,11 @@ public sealed class CardAnalyzerExtendedTests : IDisposable
     {
         List<Card> cards =
         [
-            MakeCard("Bolt", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 1),
-            MakeCard("Shock", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 1),
-            MakeCard("Bear", colors: ["G"], colorIdentity: ["G"], typeLine: "Creature — Bear", cmc: 2),
-            MakeCard("Angel", colors: ["W"], colorIdentity: ["W"], typeLine: "Creature — Angel", cmc: 5),
-            MakeCard("Sol Ring", colors: [], colorIdentity: [], typeLine: "Artifact", cmc: 1),
+            MakeCard("Bolt", colorIdentity: ["R"], typeLine: "Instant", cmc: 1),
+            MakeCard("Shock", colorIdentity: ["R"], typeLine: "Instant", cmc: 1),
+            MakeCard("Bear", colorIdentity: ["G"], typeLine: "Creature — Bear", cmc: 2),
+            MakeCard("Angel", colorIdentity: ["W"], typeLine: "Creature — Angel", cmc: 5),
+            MakeCard("Sol Ring", colorIdentity: [], typeLine: "Artifact", cmc: 1),
         ];
 
         CardAnalyzer analyzer = new(cards);
@@ -61,10 +61,10 @@ public sealed class CardAnalyzerExtendedTests : IDisposable
     {
         List<Card> cards =
         [
-            MakeCard("Azorius1", colors: ["W", "U"], colorIdentity: ["W", "U"], typeLine: "Instant"),
-            MakeCard("Azorius2", colors: ["W", "U"], colorIdentity: ["W", "U"], typeLine: "Creature"),
-            MakeCard("Boros1", colors: ["R", "W"], colorIdentity: ["R", "W"], typeLine: "Instant"),
-            MakeCard("MonoR", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant"),
+            MakeCard("Azorius1", colorIdentity: ["W", "U"], typeLine: "Instant"),
+            MakeCard("Azorius2", colorIdentity: ["W", "U"], typeLine: "Creature"),
+            MakeCard("Boros1", colorIdentity: ["R", "W"], typeLine: "Instant"),
+            MakeCard("MonoR", colorIdentity: ["R"], typeLine: "Instant"),
         ];
 
         CardAnalyzer analyzer = new(cards);
@@ -80,10 +80,10 @@ public sealed class CardAnalyzerExtendedTests : IDisposable
     {
         List<Card> cards =
         [
-            MakeCard("Bolt3", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", rating: 3),
-            MakeCard("Bolt4", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", rating: 4),
-            MakeCard("Bolt5", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", rating: 5),
-            MakeCard("U3", colors: ["U"], colorIdentity: ["U"], typeLine: "Instant", rating: 3),
+            MakeCard("Bolt3", colorIdentity: ["R"], typeLine: "Instant", rating: 3),
+            MakeCard("Bolt4", colorIdentity: ["R"], typeLine: "Instant", rating: 4),
+            MakeCard("Bolt5", colorIdentity: ["R"], typeLine: "Instant", rating: 5),
+            MakeCard("U3", colorIdentity: ["U"], typeLine: "Instant", rating: 3),
         ];
 
         CardAnalyzer analyzer = new(cards);
@@ -100,10 +100,10 @@ public sealed class CardAnalyzerExtendedTests : IDisposable
     {
         List<Card> cards =
         [
-            MakeCard("Bolt", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 1, manaCost: "{R}"),       // 1 pip
-            MakeCard("Shock", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 1, manaCost: "{R}"),       // 1 pip
-            MakeCard("FBolt", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 2, manaCost: "{1}{R}"),  // 1 pip
-            MakeCard("Dragon", colors: ["R"], colorIdentity: ["R"], typeLine: "Creature", cmc: 4, manaCost: "{2}{R}{R}"), // 2 pips
+            MakeCard("Bolt", colorIdentity: ["R"], typeLine: "Instant", cmc: 1, manaCost: "{R}"),       // 1 pip
+            MakeCard("Shock", colorIdentity: ["R"], typeLine: "Instant", cmc: 1, manaCost: "{R}"),       // 1 pip
+            MakeCard("FBolt", colorIdentity: ["R"], typeLine: "Instant", cmc: 2, manaCost: "{1}{R}"),  // 1 pip
+            MakeCard("Dragon", colorIdentity: ["R"], typeLine: "Creature", cmc: 4, manaCost: "{2}{R}{R}"), // 2 pips
         ];
 
         CardAnalyzer analyzer = new(cards);
@@ -118,11 +118,11 @@ public sealed class CardAnalyzerExtendedTests : IDisposable
     {
         List<Card> cards =
         [
-            MakeCard("C1", colors: ["R"], colorIdentity: ["R"], typeLine: "Creature", cmc: 1),
-            MakeCard("C2", colors: ["R"], colorIdentity: ["R"], typeLine: "Creature", cmc: 2),
-            MakeCard("C6", colors: ["R"], colorIdentity: ["R"], typeLine: "Creature", cmc: 8), // bucket 6+
-            MakeCard("S1", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 1),
-            MakeCard("S3", colors: ["R"], colorIdentity: ["R"], typeLine: "Sorcery", cmc: 3),
+            MakeCard("C1", colorIdentity: ["R"], typeLine: "Creature", cmc: 1),
+            MakeCard("C2", colorIdentity: ["R"], typeLine: "Creature", cmc: 2),
+            MakeCard("C6", colorIdentity: ["R"], typeLine: "Creature", cmc: 8), // bucket 6+
+            MakeCard("S1", colorIdentity: ["R"], typeLine: "Instant", cmc: 1),
+            MakeCard("S3", colorIdentity: ["R"], typeLine: "Sorcery", cmc: 3),
         ];
 
         CardAnalyzer analyzer = new(cards);
@@ -144,8 +144,6 @@ public sealed class CardAnalyzerExtendedTests : IDisposable
     private static Card MakeCard(
         string name,
         string set = "LEA",
-        string collectorNumber = "1",
-        List<string>? colors = null,
         List<string>? colorIdentity = null,
         string typeLine = "Instant",
         double cmc = 1,
@@ -156,7 +154,6 @@ public sealed class CardAnalyzerExtendedTests : IDisposable
         JsonCard json = new()
         {
             Id = scryfallId,
-            CollectorNumber = collectorNumber,
             Name = name,
             Language = "en",
             ReleasedAt = "1993-08-05",
@@ -172,7 +169,6 @@ public sealed class CardAnalyzerExtendedTests : IDisposable
             SetType = "core",
             BorderColor = "black",
             Cmc = cmc,
-            Colors = colors ?? ["R"],
             ColorIdentity = colorIdentity ?? ["R"],
             ManaCost = manaCost,
             ImageUris = new JsonImageUris { Png = "https://test/x.png" },

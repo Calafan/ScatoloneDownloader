@@ -200,7 +200,6 @@ public sealed class TagCommandTests
             SetType = "expansion",
             BorderColor = "black",
             Cmc = 1,
-            Colors = ["U"],
             Keywords = keywords,
             // A double carries its art on the faces and none at the top level,
             // which is what makes CreateCard build a DoubleFaceCard.

@@ -2,57 +2,13 @@ namespace ScatoloneDownloader.Mtg
 {
     /// <summary>
     /// Converts between <see cref="CardEffect"/> flags and their string names.
-    /// Parsing accepts the exact enum member name (case-insensitive) plus a set
-    /// of human aliases (e.g. "vindicate", "board wipe", "direct damage"), so raw
-    /// tags authored by hand or carried over from the earlier free-text list still
-    /// resolve. Unknown tags are skipped, never throw. Serialization always emits
-    /// canonical enum names in declared (bit) order for stable git diffs.
+    /// Parsing accepts the exact enum member name (case-insensitive), which is
+    /// what the tagger sends and the tier files hold. Unknown tags are skipped,
+    /// never throw. Serialization always emits canonical enum names in declared
+    /// (bit) order for stable git diffs.
     /// </summary>
     internal static class EffectResolver
     {
-        /// <summary>Alias (case-insensitive) to flag. Enum member names are handled
-        /// separately by <see cref="Enum.TryParse"/> and need no entry here.</summary>
-        private static readonly Dictionary<string, CardEffect> Aliases = new(StringComparer.OrdinalIgnoreCase)
-        {
-            ["token"]                       = CardEffect.Tokens,
-            ["counterspell"]                = CardEffect.Counter,
-            ["remove permanent"]            = CardEffect.RemovePermanent,
-            ["vindicate"]                   = CardEffect.RemovePermanent,
-            ["vindicate / remove permanent"] = CardEffect.RemovePermanent,
-            ["board wipe"]                  = CardEffect.Wipe,
-            ["boardwipe"]                   = CardEffect.Wipe,
-            ["unsummon"]                    = CardEffect.Bounce,
-            ["boomerang"]                   = CardEffect.Bounce,
-            ["unsummon/boomerang"]          = CardEffect.Bounce,
-            ["card advantage"]              = CardEffect.CardAdvantage,
-            ["draw"]                        = CardEffect.CardAdvantage,
-            ["reanimation"]                 = CardEffect.Reanimate,
-            ["pump"]                        = CardEffect.Buff,
-            ["direct damage"]               = CardEffect.Burn,
-            ["directdamage"]                = CardEffect.Burn,
-            ["sac"]                         = CardEffect.Sacrifice,
-            ["threaten"]                    = CardEffect.Steal,
-            ["act of treason"]              = CardEffect.Steal,
-            ["control magic"]               = CardEffect.Steal,
-            ["mind control"]                = CardEffect.Steal,
-            ["search library"]              = CardEffect.Tutor,
-            ["search your library"]         = CardEffect.Tutor,
-            // "Fixing" was the canonical name before the rename to ManaFixing;
-            // keep it parsing so tier files written earlier still resolve.
-            ["fixing"]                      = CardEffect.ManaFixing,
-            ["mana fixing"]                 = CardEffect.ManaFixing,
-            ["color fixing"]                = CardEffect.ManaFixing,
-            ["colour fixing"]               = CardEffect.ManaFixing,
-            ["cheat into play"]             = CardEffect.Cheat,
-            ["put into play"]               = CardEffect.Cheat,
-            ["free cast"]                   = CardEffect.Cheat,
-            ["pacifism"]                    = CardEffect.Pacify,
-            ["arrest"]                      = CardEffect.Pacify,
-            ["detain"]                      = CardEffect.Pacify,
-            ["tapper"]                      = CardEffect.Pacify,
-            ["tap down"]                    = CardEffect.Pacify,
-        };
-
         /// <summary>All real effect flags in declared (ascending bit) order, cached
         /// once. <see cref="ToNames"/> runs per-entry on every tagger save and
         /// per-card during view generation, so it must not re-allocate the values
@@ -81,9 +37,9 @@ namespace ScatoloneDownloader.Mtg
             return result;
         }
 
-        /// <summary>Resolves one tag string to a single flag. Tries the exact enum
-        /// member name first, then the alias table. Returns false for null/blank/
-        /// unknown input.</summary>
+        /// <summary>Resolves one tag string to a single flag by its exact enum member
+        /// name (case-insensitive). Returns false for null/blank/numeric/unknown
+        /// input.</summary>
         internal static bool TryParseSingle(string raw, out CardEffect effect)
         {
             effect = CardEffect.None;
@@ -101,12 +57,6 @@ namespace ScatoloneDownloader.Mtg
                 && parsed != CardEffect.None)
             {
                 effect = parsed;
-                return true;
-            }
-
-            if (Aliases.TryGetValue(key, out CardEffect aliased))
-            {
-                effect = aliased;
                 return true;
             }
 

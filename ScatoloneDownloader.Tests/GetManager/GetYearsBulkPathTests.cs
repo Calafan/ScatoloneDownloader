@@ -132,7 +132,6 @@ public sealed class GetYearsBulkPathTests
     {
         return new Set
         {
-            Code = code,
             Name = code.ToUpperInvariant(),
             SearchUri = "https://api.scryfall.com/cards/search?order=set&q=e%3A" + code,
             ReleasedAt = releasedAt,
@@ -159,7 +158,6 @@ public sealed class GetYearsBulkPathTests
             SetType = "core",
             BorderColor = "black",
             Cmc = 1,
-            Colors = ["R"],
             ImageUris = new JsonImageUris { Png = "https://test/x.png" },
         };
 

@@ -12,8 +12,5 @@ namespace ScatoloneDownloader.Json.Cards
 
         [JsonPropertyName("image_uris")]
         public JsonImageUris? ImageUris { get; set; }
-
-        [JsonPropertyName("colors")]
-        public List<string>? Colors { get; set; }
     }
 }

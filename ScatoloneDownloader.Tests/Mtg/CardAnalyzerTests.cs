@@ -60,13 +60,13 @@ public sealed class CardAnalyzerTests : IDisposable
     {
         List<Card> cards =
         [
-            Card("Lightning Bolt", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 1),
-            Card("Shock", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 1),
-            Card("Counterspell", colors: ["U"], colorIdentity: ["U"], typeLine: "Instant", cmc: 2),
-            Card("Serra Angel", colors: ["W"], colorIdentity: ["W"], typeLine: "Creature — Angel", cmc: 5),
-            Card("Sol Ring", colors: [], colorIdentity: [], typeLine: "Artifact", cmc: 1),
-            Card("Forest", colors: [], colorIdentity: [], typeLine: "Basic Land — Forest"), // basic land skipped
-            Card("Boros Charm", colors: ["R", "W"], colorIdentity: ["R", "W"], typeLine: "Instant", cmc: 2),
+            Card("Lightning Bolt", colorIdentity: ["R"], typeLine: "Instant", cmc: 1),
+            Card("Shock", colorIdentity: ["R"], typeLine: "Instant", cmc: 1),
+            Card("Counterspell", colorIdentity: ["U"], typeLine: "Instant", cmc: 2),
+            Card("Serra Angel", colorIdentity: ["W"], typeLine: "Creature — Angel", cmc: 5),
+            Card("Sol Ring", colorIdentity: [], typeLine: "Artifact", cmc: 1),
+            Card("Forest", colorIdentity: [], typeLine: "Basic Land — Forest"), // basic land skipped
+            Card("Boros Charm", colorIdentity: ["R", "W"], typeLine: "Instant", cmc: 2),
         ];
 
         CardAnalyzer analyzer = new(cards);
@@ -97,12 +97,12 @@ public sealed class CardAnalyzerTests : IDisposable
     {
         List<Card> cards =
         [
-            Card("Bolt1", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant"),
-            Card("Bolt2", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant"),
-            Card("Bear", colors: ["G"], colorIdentity: ["G"], typeLine: "Creature"),
-            Card("Boros Charm", colors: ["R", "W"], colorIdentity: ["R", "W"], typeLine: "Instant"),
-            Card("Sol Ring", colors: [], colorIdentity: [], typeLine: "Artifact"),
-            Card("Savai Triome", colors: [], colorIdentity: ["W", "B", "R"], typeLine: "Land"),
+            Card("Bolt1", colorIdentity: ["R"], typeLine: "Instant"),
+            Card("Bolt2", colorIdentity: ["R"], typeLine: "Instant"),
+            Card("Bear", colorIdentity: ["G"], typeLine: "Creature"),
+            Card("Boros Charm", colorIdentity: ["R", "W"], typeLine: "Instant"),
+            Card("Sol Ring", colorIdentity: [], typeLine: "Artifact"),
+            Card("Savai Triome", colorIdentity: ["W", "B", "R"], typeLine: "Land"),
         ];
 
         CardAnalyzer analyzer = new(cards);
@@ -132,8 +132,8 @@ public sealed class CardAnalyzerTests : IDisposable
     [Fact]
     public void SaveAnalysis_SkipsBasicLands_AndCardsWithTag()
     {
-        Card basicLand = Card("Plains", colors: ["W"], colorIdentity: ["W"], typeLine: "Basic Land — Plains");
-        Card tagged = Card("Sol Ring", colors: [], colorIdentity: [], typeLine: "Artifact");
+        Card basicLand = Card("Plains", colorIdentity: ["W"], typeLine: "Basic Land — Plains");
+        Card tagged = Card("Sol Ring", colorIdentity: [], typeLine: "Artifact");
         tagged.Tag = "artifacts";
 
         CardAnalyzer analyzer = new([basicLand, tagged]);
@@ -152,10 +152,10 @@ public sealed class CardAnalyzerTests : IDisposable
     {
         List<Card> cards =
         [
-            Card("Bolt", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 4),
-            Card("Bolt", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 1),
-            Card("Bolt", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 2),
-            Card("Bolt", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 8),
+            Card("Bolt", colorIdentity: ["R"], typeLine: "Instant", cmc: 4),
+            Card("Bolt", colorIdentity: ["R"], typeLine: "Instant", cmc: 1),
+            Card("Bolt", colorIdentity: ["R"], typeLine: "Instant", cmc: 2),
+            Card("Bolt", colorIdentity: ["R"], typeLine: "Instant", cmc: 8),
         ];
 
         CardAnalyzer analyzer = new(cards);
@@ -185,9 +185,9 @@ public sealed class CardAnalyzerTests : IDisposable
         // A non-basic land with no color identity (Command Beacon) shouldn't be
         // double-counted in the card stats but must appear in a "Lands" block at
         // the bottom, by its ColorCategory.
-        Card tower = Card("Command Beacon", colors: [], colorIdentity: [], typeLine: "Land", cmc: 0);
-        Card savai = Card("Savai Triome", colors: [], colorIdentity: ["W", "B", "R"], typeLine: "Land", cmc: 0);
-        Card bolt = Card("Bolt", colors: ["R"], colorIdentity: ["R"], typeLine: "Instant", cmc: 1);
+        Card tower = Card("Command Beacon", colorIdentity: [], typeLine: "Land", cmc: 0);
+        Card savai = Card("Savai Triome", colorIdentity: ["W", "B", "R"], typeLine: "Land", cmc: 0);
+        Card bolt = Card("Bolt", colorIdentity: ["R"], typeLine: "Instant", cmc: 1);
 
         CardAnalyzer analyzer = new([tower, savai, bolt]);
 
@@ -216,7 +216,7 @@ public sealed class CardAnalyzerTests : IDisposable
     {
         // A non-basic land with no colors is bucketed as "Colorless" via
         // ColorCategory (Phase 0), not via the old Colors=0 heuristic.
-        Card dualPathLand = Card("Burst Habitat", colors: [], colorIdentity: [], typeLine: "Land", cmc: 0);
+        Card dualPathLand = Card("Burst Habitat", colorIdentity: [], typeLine: "Land", cmc: 0);
 
         CardAnalyzer analyzer = new([dualPathLand]);
 
@@ -235,7 +235,6 @@ public sealed class CardAnalyzerTests : IDisposable
 
     private static Card Card(
         string name,
-        List<string>? colors,
         List<string>? colorIdentity,
         string typeLine,
         double cmc = 0)
@@ -257,7 +256,6 @@ public sealed class CardAnalyzerTests : IDisposable
             SetType = "core",
             BorderColor = "black",
             Cmc = cmc,
-            Colors = colors ?? [],
             ColorIdentity = colorIdentity ?? [],
             ImageUris = new JsonImageUris { Png = "https://test/img.png" },
         };

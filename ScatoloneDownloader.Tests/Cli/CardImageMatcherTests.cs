@@ -107,7 +107,6 @@ public sealed class CardImageMatcherTests
             SetType = "core",
             BorderColor = "black",
             Cmc = 1,
-            Colors = [],
             ColorIdentity = [],
             ManaCost = "",
             ImageUris = new JsonImageUris { Png = "https://test/x.png" },

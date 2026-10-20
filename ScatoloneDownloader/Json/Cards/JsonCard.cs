@@ -37,9 +37,6 @@ namespace ScatoloneDownloader.Json.Cards
         [JsonPropertyName("keywords")]
         public List<string>? Keywords { get; set; }
 
-        [JsonPropertyName("collector_number")]
-        public string? CollectorNumber { get; set; }
-
         [JsonPropertyName("games")]
         public List<string>? Games { get; set; }
 
@@ -69,9 +66,6 @@ namespace ScatoloneDownloader.Json.Cards
 
         [JsonPropertyName("cmc")]
         public double Cmc { get; set; }
-
-        [JsonPropertyName("colors")]
-        public List<string>? Colors { get; set; }
 
         [JsonPropertyName("color_identity")]
         public List<string>? ColorIdentity { get; set; }

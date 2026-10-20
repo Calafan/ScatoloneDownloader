@@ -142,7 +142,6 @@ public sealed class ClassifyCommandTests
             SetType = "expansion",
             BorderColor = "black",
             Cmc = 1,
-            Colors = [],
             ColorIdentity = [],
             ManaCost = "",
             ImageUris = new JsonImageUris { Png = "https://test/x.png" },

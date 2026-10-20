@@ -182,7 +182,6 @@ public sealed class StatsPayloadTests
             SetType = "expansion",
             BorderColor = "black",
             Cmc = 2,
-            Colors = [.. colors],
             ColorIdentity = [.. colors],
             ManaCost = colors.Length == 0 ? "{2}" : "{1}{" + colors[0] + "}",
             ImageUris = new JsonImageUris { Png = "https://test/x.png" },
