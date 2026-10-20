@@ -1,10 +1,4 @@
-using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
-
 using ScatoloneDownloader.Download;
-
-using Xunit;
 
 namespace ScatoloneDownloader.Tests.Download;
 

@@ -1,20 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-
 using ScatoloneDownloader.Download;
 using ScatoloneDownloader.Enums;
 using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Mtg;
-
-using Xunit;
 
 namespace ScatoloneDownloader.Tests.Download;
 
 /// <summary>
 /// Pure-logic + filesystem checks for <see cref="OutputPaths"/>. The static
 /// <see cref="OutputPaths.Root"/> is restored in a fixture so tests do not
-/// leak state across runs. <see cref="BuildCardDirectory"/> creates real
+/// leak state across runs. <see cref="OutputPaths.BuildCardDirectory"/> creates real
 /// folders under a temp root so the path logic and order of operations
 /// (sanitize → Tag trim → neutralize leading dots) is observable.
 /// </summary>

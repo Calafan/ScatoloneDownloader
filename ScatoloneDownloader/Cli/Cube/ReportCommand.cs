@@ -11,7 +11,7 @@ namespace ScatoloneDownloader.Cli.Cube
     /// <summary>
     /// Writes the cube analysis report (<c>Cubo_Analysis.md</c>) from the physical
     /// master folder plus the git-tracked metadata directory (see
-    /// <see cref="CubeMetadataStore"/>). Rating/status/effects are loaded from the
+    /// <see cref="Metadata.CubeMetadataStore"/>). Rating/status/effects are loaded from the
     /// metadata only. Read-only toward the library and the store: it writes the
     /// one report file and deletes nothing.
     /// </summary>

@@ -287,6 +287,9 @@ namespace ScatoloneDownloader.Metadata
         /// file is present but unparseable, refusing to overwrite a corrupt tier.
         /// </para>
         /// </summary>
+        /// <param name="metadataDirectory">The metadata directory holding the tier files.</param>
+        /// <param name="oracleId">Key of the entry, as in <see cref="CubeMetadata.Cards"/>.</param>
+        /// <param name="entry">The entry to write.</param>
         /// <param name="previousRating">The rating the entry had at its last save,
         /// or <c>null</c> if it was not previously persisted (nothing to prune).</param>
         internal static void SaveEntry(string metadataDirectory, string oracleId, CardMetadataEntry entry, int? previousRating)

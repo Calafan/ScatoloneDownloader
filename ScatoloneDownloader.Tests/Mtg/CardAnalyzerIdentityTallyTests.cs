@@ -1,8 +1,6 @@
 using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Mtg;
 
-using Xunit;
-
 namespace ScatoloneDownloader.Tests.Mtg;
 
 /// <summary>

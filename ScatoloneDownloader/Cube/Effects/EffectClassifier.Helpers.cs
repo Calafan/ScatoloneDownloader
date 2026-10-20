@@ -38,10 +38,10 @@ namespace ScatoloneDownloader.Cube
             return sawOne;
         }
 
-        /// <summary>Whether some ONE line of the card searches for a card that is
-        /// not a land and not another copy of itself. See
-        /// <see cref="SearchesOnlyForALand"/> and
-        /// <see cref="SearchesForACardNamed"/> for what each veto costs.</summary>
+        /// <summary>Whether some ONE line of the card searches for something other
+        /// than a land. See <see cref="SearchesOnlyForALand"/> and
+        /// <see cref="SearchesForSomethingElseToo"/> for what the veto costs and
+        /// what keeps a mixed search in.</summary>
         private static bool FetchesSomethingWorthFetching(string text)
         {
             foreach (string line in text.Split('\n'))
@@ -183,7 +183,7 @@ namespace ScatoloneDownloader.Cube
         }
 
         /// <summary>True when every untap lock on the card holds down a LAND and
-        /// no line locks a creature. See <see cref="UntapLockNamesACreature"/>
+        /// no line locks a creature. See <see cref="UntapLockNamesALand"/>
         /// for the ruling; asked per line so a card that stops both keeps the
         /// tag on the creatures.</summary>
         private static bool OnlyLocksLands(string text)

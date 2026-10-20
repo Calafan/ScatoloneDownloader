@@ -1,8 +1,4 @@
-using System.Collections.Generic;
-
 using ScatoloneDownloader.Mtg;
-
-using Xunit;
 
 namespace ScatoloneDownloader.Tests.Mtg;
 

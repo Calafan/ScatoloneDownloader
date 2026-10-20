@@ -1,8 +1,4 @@
-using System.IO;
-
 using ScatoloneDownloader.Cli.Cube;
-
-using Xunit;
 
 namespace ScatoloneDownloader.Tests.Cli;
 

@@ -16,7 +16,7 @@ namespace ScatoloneDownloader.Cli.Cube
     /// flat list into their own <c>-- Banned</c> / <c>-- Token</c> / <c>-- Jolly</c>
     /// sections and written as <c>Name -- Status</c>, so <c>files</c> downloads
     /// them into a matching sub-folder (the inline tag after <c>--</c> becomes
-    /// <see cref="Card.Tag"/>, which <see cref="OutputPaths.BuildCardDirectory"/>
+    /// <see cref="Card.Tag"/>, which <see cref="ScatoloneDownloader.Download.OutputPaths.BuildCardDirectory"/>
     /// turns into an output sub-folder). Offline: reads only the metadata JSON,
     /// no Scryfall call.
     /// </summary>

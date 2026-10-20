@@ -6,7 +6,7 @@ namespace ScatoloneDownloader.Download
     /// <summary>
     /// Owns the on-disk output layout: the output root, per-mode sub-folders,
     /// filename sanitization, and per-card directory building. Paths are built
-    /// with <see cref="Path.Combine"/> so they work on every platform.
+    /// with <c>Path.Combine</c> so they work on every platform.
     /// </summary>
     internal static class OutputPaths
     {

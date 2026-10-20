@@ -1,10 +1,6 @@
-using System.IO;
-
 using ScatoloneDownloader.Imaging;
 
 using SkiaSharp;
-
-using Xunit;
 
 namespace ScatoloneDownloader.Tests.Imaging;
 

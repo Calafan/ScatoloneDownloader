@@ -1,8 +1,6 @@
 using ScatoloneDownloader.Cube;
 using ScatoloneDownloader.Mtg;
 
-using Xunit;
-
 namespace ScatoloneDownloader.Tests.Mtg;
 
 public sealed class TagConsistencyAuditorTests

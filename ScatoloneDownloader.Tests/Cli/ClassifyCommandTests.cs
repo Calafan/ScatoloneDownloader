@@ -1,11 +1,7 @@
-using System;
-
 using ScatoloneDownloader.Cli.Cube;
 using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Metadata;
 using ScatoloneDownloader.Mtg;
-
-using Xunit;
 
 namespace ScatoloneDownloader.Tests.Cli;
 

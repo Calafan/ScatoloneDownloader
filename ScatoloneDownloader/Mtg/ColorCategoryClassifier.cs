@@ -18,38 +18,38 @@ namespace ScatoloneDownloader.Mtg
         private static readonly string WubrgOrder = "WUBRG";
 
         /// <summary>2-color bucket code (guild) by WUBRG-sorted pair key (Plan §3.3 names).
-        /// Ally pairs that wrap around the WUBRG ring (W&G, U&G) are listed explicitly
+        /// Ally pairs that wrap around the WUBRG ring (W&amp;G, U&amp;G) are listed explicitly
         /// since strict sort disagrees with Plan's canonical guild codes.</summary>
         private static readonly Dictionary<string, string> GuildCodes = new()
         {
             { "WU", "WU" },  // Azorius
-			{ "UB", "UB" },  // Dimir
-			{ "BR", "BR" },  // Rakdos
-			{ "RG", "RG" },  // Gruul
-			{ "WG", "GW" },  // Selesnya — strict sort "WG", canonical "GW" (wrap pair)
-			{ "WB", "WB" },  // Orzhov
-			{ "UR", "UR" },  // Izzet
-			{ "BG", "BG" },  // Golgari
-			{ "WR", "RW" },  // Boros — strict sort "WR", canonical "RW"
-			{ "UG", "GU" },  // Simic — strict sort "UG", canonical "GU"
-		};
+            { "UB", "UB" },  // Dimir
+            { "BR", "BR" },  // Rakdos
+            { "RG", "RG" },  // Gruul
+            { "WG", "GW" },  // Selesnya — strict sort "WG", canonical "GW" (wrap pair)
+            { "WB", "WB" },  // Orzhov
+            { "UR", "UR" },  // Izzet
+            { "BG", "BG" },  // Golgari
+            { "WR", "RW" },  // Boros — strict sort "WR", canonical "RW"
+            { "UG", "GU" },  // Simic — strict sort "UG", canonical "GU"
+        };
 
         /// <summary>3-color bucket code by WUBRG-sorted triplet (Plan §3.3 names).</summary>
         private static readonly Dictionary<string, string> TriColorCodes = new()
         {
-			// Shards (3 consecutive WUBRG colors, start at ally).
-			{ "WUB", "WUB" },  // Esper
-			{ "UBR", "UBR" },  // Grixis
-			{ "BRG", "BRG" },  // Jund
-			{ "WRG", "RGW" },  // Naya — strict sort "WRG", canonical "RGW"
-			{ "WUG", "GWU" },  // Bant — strict sort "WUG", canonical "GWU"
-			// Wedges.
-			{ "WBG", "WBG" },  // Abzan
-			{ "WUR", "URW" },  // Jeskai — strict "WUR", canonical "URW"
-			{ "UBG", "BUG" },  // Sultai — strict "UBG", canonical "BUG"
-			{ "WBR", "RWB" },  // Mardu — strict "WBR", canonical "RWB"
-			{ "URG", "GUR" },  // Temur — strict "URG", canonical "GUR"
-		};
+            // Shards (3 consecutive WUBRG colors, start at ally).
+            { "WUB", "WUB" },  // Esper
+            { "UBR", "UBR" },  // Grixis
+            { "BRG", "BRG" },  // Jund
+            { "WRG", "RGW" },  // Naya — strict sort "WRG", canonical "RGW"
+            { "WUG", "GWU" },  // Bant — strict sort "WUG", canonical "GWU"
+            // Wedges.
+            { "WBG", "WBG" },  // Abzan
+            { "WUR", "URW" },  // Jeskai — strict "WUR", canonical "URW"
+            { "UBG", "BUG" },  // Sultai — strict "UBG", canonical "BUG"
+            { "WBR", "RWB" },  // Mardu — strict "WBR", canonical "RWB"
+            { "URG", "GUR" },  // Temur — strict "URG", canonical "GUR"
+        };
 
         internal static string Classify(IReadOnlyList<string>? colorIdentity)
         {

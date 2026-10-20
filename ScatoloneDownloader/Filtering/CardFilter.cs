@@ -112,7 +112,7 @@ namespace ScatoloneDownloader.Filtering
         /// The canonical-artwork selector: a card qualifies for the un-numbered name
         /// slot iff it would be downloaded under the strict (no-reprints, no-tokens,
         /// no-lands) filter AND is not a special print treatment. Both the
-        /// <c>GetManager.PopulateCardsByName</c> dedup and the <c>CardDownloader</c>
+        /// <c>GetManager.BuildCardsByName</c> dedup and the <c>CardDownloader</c>
         /// rename rule route through here, so the policy lives in one place.
         /// </summary>
         internal static bool IsCanonicalArtwork(Card card)

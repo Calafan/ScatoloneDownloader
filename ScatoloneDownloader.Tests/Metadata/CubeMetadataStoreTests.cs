@@ -1,11 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-
 using ScatoloneDownloader.Metadata;
 using ScatoloneDownloader.Mtg;
-
-using Xunit;
 
 namespace ScatoloneDownloader.Tests.Metadata;
 
@@ -14,8 +8,8 @@ namespace ScatoloneDownloader.Tests.Metadata;
 /// <see cref="CubeMetadataStore"/> (Phase 1 + Plan Part B). The store is a
 /// DIRECTORY of three files — <c>pool.json</c> (rating 3-5), <c>fringe.json</c>
 /// (rating 1-2), <c>unrated.json</c> (rating 0) — so besides the original
-/// round-trip/ordering guarantees, <see cref="Save"/> must route every entry to
-/// the right tier file by its CURRENT rating and <see cref="Load"/> must merge
+/// round-trip/ordering guarantees, <see cref="CubeMetadataStore.Save"/> must route every entry to
+/// the right tier file by its CURRENT rating and <see cref="CubeMetadataStore.Load"/> must merge
 /// all present tier files back into one document.
 /// </summary>
 public sealed class CubeMetadataStoreTests : IDisposable

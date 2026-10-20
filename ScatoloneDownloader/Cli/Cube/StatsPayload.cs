@@ -13,6 +13,8 @@ namespace ScatoloneDownloader.Cli.Cube
     /// </summary>
     /// <param name="Effects">Every single effect flag name, enum order.</param>
     /// <param name="Glossary">Tooltip text, same order as <paramref name="Effects"/>.</param>
+    /// <param name="Pool">The active pool: <see cref="RatingTier.Pool"/> cards without a Banned/Token/Jolly status.</param>
+    /// <param name="Bench">The <see cref="RatingTier.Bench"/> cards, shown beside the pool as the availability appendix.</param>
     internal sealed record StatsPayload(
         IReadOnlyList<string> Effects,
         IReadOnlyList<string> Glossary,

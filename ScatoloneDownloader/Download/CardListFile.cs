@@ -21,7 +21,7 @@ namespace ScatoloneDownloader.Download
         /// line is either <c>Name</c> or <c>Name -- tag</c> (the tag is empty when
         /// absent); both name and tag are trimmed. Blank lines and comment lines
         /// (the trimmed line starting with <c>--</c>) are skipped. Throws the usual
-        /// <see cref="IO.IOException"/>s if the file cannot be read — callers that
+        /// <see cref="IOException"/>s if the file cannot be read — callers that
         /// tolerate a missing file check for it first.
         /// </summary>
         internal static async Task<List<CardListEntry>> ReadAsync(string path)

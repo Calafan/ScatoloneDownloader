@@ -2,8 +2,6 @@ using System.Text.Json;
 
 using ScatoloneDownloader.Metadata;
 
-using Xunit;
-
 namespace ScatoloneDownloader.Tests.Metadata;
 
 public sealed class ReviewLogTests : IDisposable

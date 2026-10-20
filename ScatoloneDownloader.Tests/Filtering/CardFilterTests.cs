@@ -1,10 +1,6 @@
-using System.Collections.Generic;
-
 using ScatoloneDownloader.Filtering;
 using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Mtg;
-
-using Xunit;
 
 namespace ScatoloneDownloader.Tests.Filtering;
 

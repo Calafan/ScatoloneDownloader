@@ -1,19 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.IO.Compression;
 using System.Net;
-using System.Net.Http;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 
 using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Mtg;
 using ScatoloneDownloader.Scryfall;
-
-using Xunit;
 
 namespace ScatoloneDownloader.Tests.Scryfall;
 
