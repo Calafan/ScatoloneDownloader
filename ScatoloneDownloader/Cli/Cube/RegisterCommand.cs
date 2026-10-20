@@ -48,23 +48,12 @@ namespace ScatoloneDownloader.Cli.Cube
             AnsiConsole.MarkupLineInterpolated($"[cyan]Master folder:[/] {masterDir}");
             AnsiConsole.MarkupLineInterpolated($"[cyan]Metadata     :[/] {metadataDir}");
 
-            string[] pngFiles = Directory.GetFiles(masterDir, "*.png", SearchOption.AllDirectories);
-            if (pngFiles.Length == 0)
-            {
-                AnsiConsole.MarkupLine($"[yellow]No .png files found in '{masterDir}'.[/]");
-                return 0;
-            }
-
             CubeMetadata metadata = CubeMetadataStore.Load(metadataDir);
 
-            AnsiConsole.MarkupLine($"[yellow]Found {pngFiles.Length} files. Loading bulk data from Scryfall...[/]");
-
-            List<(Card Card, string FilePath)> matched;
-
-            using (GetManager manager = new())
+            List<(Card Card, string FilePath)>? matched = await CardImageMatcher.ScanAndMatchAsync(masterDir);
+            if (matched is null)
             {
-                List<Card> allCards = await manager.GetDefaultCards();
-                matched = CardImageMatcher.Match(allCards, pngFiles, warnUnmatched: true);
+                return 0;
             }
 
             AnsiConsole.MarkupLine($"[green]Matched {matched.Count} cards.[/]");

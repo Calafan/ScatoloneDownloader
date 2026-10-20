@@ -66,24 +66,9 @@ namespace ScatoloneDownloader.Cli.Cube
                 List<Card> allCards = await manager.GetDefaultCards();
 
                 // Index by printing id (scryfallId), and a fallback index by
-                // oracle_id for entries saved before scryfallId existed. Printing
-                // ids are unique; for the oracle_id fallback the first printing
-                // encountered in the bulk download wins (matches the "first
-                // matched printing wins" assumption used when entries are created).
-                Dictionary<string, Card> cardsById = [];
-                Dictionary<string, Card> cardsByOracleId = [];
-                foreach (Card card in allCards)
-                {
-                    if (!string.IsNullOrEmpty(card.Id))
-                    {
-                        cardsById.TryAdd(card.Id, card);
-                    }
-
-                    if (!string.IsNullOrEmpty(card.OracleId))
-                    {
-                        cardsByOracleId.TryAdd(card.OracleId, card);
-                    }
-                }
+                // oracle_id for entries saved before scryfallId existed.
+                Dictionary<string, Card> cardsById = CardIndex.ById(allCards);
+                Dictionary<string, Card> cardsByOracleId = CardIndex.ByOracleId(allCards);
 
                 CardDownloader downloader = new(manager);
 

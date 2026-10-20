@@ -47,7 +47,7 @@ namespace ScatoloneDownloader.Mtg
             return pips;
         }
 
-        [GeneratedRegex(@"\{([^}]+)\}", RegexOptions.Compiled)]
+        [GeneratedRegex(@"\{([^}]+)\}")]
         private static partial Regex PipPattern();
     }
 }

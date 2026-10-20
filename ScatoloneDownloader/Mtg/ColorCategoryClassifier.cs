@@ -15,7 +15,7 @@ namespace ScatoloneDownloader.Mtg
     /// </summary>
     internal static class ColorCategoryClassifier
     {
-        private static readonly string WubrgOrder = "WUBRG";
+        private const string WubrgOrder = "WUBRG";
 
         /// <summary>2-color bucket code (guild) by WUBRG-sorted pair key (Plan §3.3 names).
         /// Ally pairs that wrap around the WUBRG ring (W&amp;G, U&amp;G) are listed explicitly

@@ -22,6 +22,10 @@ namespace ScatoloneDownloader.Mtg
             "4_5_Colors", "Colorless",
         ];
 
+        // Every CardEffect member in declared order, read once: the tallies below
+        // walk it per card, and Enum.GetValues allocates a fresh array each call.
+        private static readonly CardEffect[] AllEffects = Enum.GetValues<CardEffect>();
+
         // Column order of the effect matrix and of the answers table.
         private static readonly string[] EffectColumns =
             ["W", "U", "B", "R", "G", "Multi", "Colorless"];
@@ -146,7 +150,7 @@ namespace ScatoloneDownloader.Mtg
             AppendCategoryAnalysis(sb, report);
             AppendEffectDistribution(sb, report);
             AppendAnswersVsTargets(sb, report);
-            AppendBenchSection(sb, benchCards);
+            AppendBenchSection(sb, benchCards.Count == 0 ? null : AnalyzeBench());
 
             using StreamWriter writer = new(path);
             writer.Write(sb.ToString());
@@ -176,20 +180,11 @@ namespace ScatoloneDownloader.Mtg
             sb.AppendLine();
 
             // Aggregate all CMC buckets for global stats (0 through 6+)
-            Dictionary<int, int> globalCmc = [];
-            for (int i = 0; i <= 6; i++) globalCmc[i] = 0;
-
-            foreach (Dictionary<int, int> macroCurve in report.CurveByMacroType.Values)
-            {
-                foreach ((int cmc, int count) in macroCurve)
-                {
-                    int bucket = cmc >= 6 ? 6 : cmc;
-                    globalCmc[bucket] += count;
-                }
-            }
-
-            string cmcString = string.Join(" | ", globalCmc.OrderBy(k => k.Key)
-                .Select(kvp => kvp.Key == 6 ? $"`6+: {kvp.Value}`" : $"`{kvp.Key}: {kvp.Value}`"));
+            string cmcString = FormatCmcDistribution(
+                report.CurveByMacroType.Values
+                    .SelectMany(macroCurve => macroCurve)
+                    .Select(kvp => new KeyValuePair<double, int>(kvp.Key, kvp.Value)),
+                " | ");
 
             sb.AppendLine($"**Global CMC:** {cmcString}");
             sb.AppendLine();
@@ -420,7 +415,7 @@ namespace ScatoloneDownloader.Mtg
 
             foreach (AnswerGroupCount group in report.AnswerGroups)
             {
-                string tags = string.Join(", ", Enum.GetValues<CardEffect>()
+                string tags = string.Join(", ", AllEffects
                     .Where(f => f != CardEffect.None && group.Effects.HasFlag(f))
                     .Select(f => f.ToString()));
                 string cells = string.Join(" | ", EffectColumns.Select(c => FormatCount(group.ByColumn.GetValueOrDefault(c, 0))));
@@ -445,15 +440,9 @@ namespace ScatoloneDownloader.Mtg
         /// Omitted entirely when there is no bench, so the download
         /// <c>analyze</c>/<c>files</c> report is unchanged.
         /// </summary>
-        private static void AppendBenchSection(StringBuilder sb, List<Card> benchCards)
+        private static void AppendBenchSection(StringBuilder sb, AnalysisReport? bench)
         {
-            if (benchCards.Count == 0)
-            {
-                return;
-            }
-
-            AnalysisReport bench = new CardAnalyzer(benchCards).Analyze();
-            if (bench.TotalCards == 0 && bench.LandCount == 0)
+            if (bench is null || (bench.TotalCards == 0 && bench.LandCount == 0))
             {
                 return;
             }
@@ -523,7 +512,10 @@ namespace ScatoloneDownloader.Mtg
             AppendEffectMatrix(sb, bench);
         }
 
-        private static string FormatCmcDistribution(Dictionary<double, int> rawCmc)
+        /// <summary>Folds raw (cmc, count) pairs into the report's 0..6+ buckets and
+        /// renders them in order, joined by <paramref name="separator"/>. The one
+        /// bucketing both the global line and the per-category tables use.</summary>
+        private static string FormatCmcDistribution(IEnumerable<KeyValuePair<double, int>> rawCmc, string separator = " ")
         {
             Dictionary<int, int> buckets = [];
             for (int i = 0; i <= 6; i++) buckets[i] = 0;
@@ -537,7 +529,7 @@ namespace ScatoloneDownloader.Mtg
             IEnumerable<string> parts = buckets.OrderBy(k => k.Key)
                 .Select(kvp => kvp.Key == 6 ? $"`6+: {kvp.Value}`" : $"`{kvp.Key}: {kvp.Value}`");
 
-            return string.Join(" ", parts);
+            return string.Join(separator, parts);
         }
 
         internal AnalysisReport Analyze()
@@ -662,7 +654,7 @@ namespace ScatoloneDownloader.Mtg
             // Effect distribution over non-land cards. Counts overlap: a card with
             // several effects is tallied under each flag it carries.
             Dictionary<CardEffect, int> effectCounts = [];
-            foreach (CardEffect flag in Enum.GetValues<CardEffect>())
+            foreach (CardEffect flag in AllEffects)
             {
                 if (flag != CardEffect.None)
                 {
@@ -679,7 +671,7 @@ namespace ScatoloneDownloader.Mtg
                     continue;
                 }
 
-                foreach (CardEffect flag in Enum.GetValues<CardEffect>())
+                foreach (CardEffect flag in AllEffects)
                 {
                     if (flag != CardEffect.None && c.Effects.HasFlag(flag))
                     {
@@ -715,7 +707,7 @@ namespace ScatoloneDownloader.Mtg
                     effectsByColumn[column] = columnEffects;
                 }
 
-                foreach (CardEffect flag in Enum.GetValues<CardEffect>())
+                foreach (CardEffect flag in AllEffects)
                 {
                     if (flag != CardEffect.None && c.Effects.HasFlag(flag))
                     {
@@ -753,7 +745,7 @@ namespace ScatoloneDownloader.Mtg
                         effectsByIdentity[colour] = colourEffects;
                     }
 
-                    foreach (CardEffect flag in Enum.GetValues<CardEffect>())
+                    foreach (CardEffect flag in AllEffects)
                     {
                         if (flag != CardEffect.None && c.Effects.HasFlag(flag))
                         {

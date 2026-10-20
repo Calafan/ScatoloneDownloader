@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Net;
@@ -65,20 +66,13 @@ namespace ScatoloneDownloader.Cli.Cube
             masterDir = Path.GetFullPath(settings.SourceDirectory);
             metadataDir = settings.ResolveDirectory();
 
-            string[] pngFiles = Directory.GetFiles(masterDir, "*.png", SearchOption.AllDirectories);
-            if (pngFiles.Length == 0)
+            List<(Card Card, string FilePath)>? scanned = await CardImageMatcher.ScanAndMatchAsync(masterDir);
+            if (scanned is null)
             {
-                AnsiConsole.MarkupLine($"[yellow]No .png files found in '{masterDir}'.[/]");
                 return 0;
             }
 
-            AnsiConsole.MarkupLine($"[yellow]Found {pngFiles.Length} files. Loading bulk data from Scryfall...[/]");
-
-            using (GetManager manager = new())
-            {
-                List<Card> allCards = await manager.GetDefaultCards();
-                matched = CardImageMatcher.Match(allCards, pngFiles, warnUnmatched: true);
-            }
+            matched = scanned;
 
             AnsiConsole.MarkupLine($"[green]Matched {matched.Count} cards.[/]");
             if (matched.Count == 0) return 0;
@@ -276,7 +270,7 @@ namespace ScatoloneDownloader.Cli.Cube
 
             if (path.StartsWith("/img/", StringComparison.Ordinal))
             {
-                if (int.TryParse(path.Substring("/img/".Length), out int idx)
+                if (int.TryParse(path.AsSpan("/img/".Length), out int idx)
                     && idx >= 0 && idx < matched.Count
                     && File.Exists(matched[idx].Path))
                 {
@@ -307,7 +301,7 @@ namespace ScatoloneDownloader.Cli.Cube
         // A scheme, port or path in there builds a prefix that parses but silently
         // never matches, which is the worst failure to debug: the tagger starts
         // clean and the phone still gets a 400.
-        private static readonly char[] InvalidHostChars = ['/', ':', '?', '#', '@', '\\', ' ', '\t'];
+        private static readonly SearchValues<char> InvalidHostChars = SearchValues.Create(['/', ':', '?', '#', '@', '\\', ' ', '\t']);
 
         /// <summary>
         /// The listener prefixes for this run: always localhost, plus one per
@@ -345,7 +339,7 @@ namespace ScatoloneDownloader.Cli.Cube
                     continue;
                 }
 
-                if (host.IndexOfAny(InvalidHostChars) >= 0)
+                if (host.AsSpan().IndexOfAny(InvalidHostChars) >= 0)
                 {
                     throw new ArgumentException(
                         $"--host '{raw}' must be a bare hostname — no scheme, port, path or spaces "

@@ -11,13 +11,39 @@ namespace ScatoloneDownloader.Cli.Cube
     /// forward name match was previously copy-pasted into each of the three
     /// commands, which had already drifted apart; this is the single implementation.
     /// <para>
-    /// Callers scan the <c>.png</c> list themselves and pass it in (rather than
-    /// this method scanning the directory) so they can skip the expensive Scryfall
-    /// bulk download when the folder is empty, before they have any cards to match.
+    /// <see cref="ScanAndMatchAsync"/> is the whole scan-then-match sequence the
+    /// three commands share: it lists the <c>.png</c> files first and returns
+    /// before the expensive Scryfall bulk download when the folder is empty, since
+    /// there are then no cards to match. <see cref="Match"/> alone is the pure
+    /// matching step.
     /// </para>
     /// </summary>
     internal static class CardImageMatcher
     {
+        /// <summary>
+        /// Scans <paramref name="masterDir"/> recursively for <c>.png</c> files,
+        /// loads the Scryfall bulk and matches the files to cards (reporting the
+        /// unmatched ones). Prints the "No .png files" / "Found N files" lines the
+        /// commands share. Returns <c>null</c> when the folder holds no <c>.png</c>
+        /// — the caller then returns 0 — and the (possibly empty) match list
+        /// otherwise; each caller prints its own "Matched ..." line.
+        /// </summary>
+        internal static async Task<List<(Card Card, string FilePath)>?> ScanAndMatchAsync(string masterDir)
+        {
+            string[] pngFiles = Directory.GetFiles(masterDir, "*.png", SearchOption.AllDirectories);
+            if (pngFiles.Length == 0)
+            {
+                AnsiConsole.MarkupLine($"[yellow]No .png files found in '{masterDir}'.[/]");
+                return null;
+            }
+
+            AnsiConsole.MarkupLine($"[yellow]Found {pngFiles.Length} files. Loading bulk data from Scryfall...[/]");
+
+            using GetManager manager = new();
+            List<Card> allCards = await manager.GetDefaultCards();
+            return Match(allCards, pngFiles, warnUnmatched: true);
+        }
+
         /// <summary>
         /// Returns one <c>(Card, filePath)</c> per image file that resolves to a
         /// Scryfall card. A file is matched on its exact name first; only if that

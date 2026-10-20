@@ -766,7 +766,7 @@ namespace ScatoloneDownloader.Cube
                 // A LIST of bodies in one sentence is each of them: Somberwald
                 // Beastmaster makes "a 2/2 green Wolf creature token, a 3/3 green
                 // Beast creature token, and a 4/4 green Beast creature token".
-                n = Math.Max(n, CreatureTokenWording.Matches(rest).Count);
+                n = Math.Max(n, CreatureTokenWording.Count(rest));
 
                 bodies = Math.Max(bodies ?? 0, n);
             }
@@ -779,7 +779,7 @@ namespace ScatoloneDownloader.Cube
             // Counted OUTSIDE the brackets: earthbend's reminder text names the
             // keyword again ("(To earthbend 1, target land …)"), which made Dai
             // Li Agents' two earthbends three.
-            int keywordBodies = OneBodyByKeyword.Matches(Parenthetical.Replace(ability, " ")).Count;
+            int keywordBodies = OneBodyByKeyword.Count(Parenthetical.Replace(ability, " "));
             if (IncubatesSeveralTimes.IsMatch(ability))
             {
                 keywordBodies = int.MaxValue;
