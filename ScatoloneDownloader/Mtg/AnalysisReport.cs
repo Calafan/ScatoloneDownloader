@@ -107,8 +107,86 @@ namespace ScatoloneDownloader.Mtg
         /// <summary>Answers-vs-targets groups, in report order.</summary>
         internal List<AnswerGroupCount> AnswerGroups { get; init; } = [];
 
+        /// <summary>Creature profile per <see cref="CostBucket"/> ("0".."5", "6_Plus"):
+        /// every bucket is present, empty ones zeroed. Population: the non-land cards
+        /// whose <see cref="MacroType"/> is Creature.</summary>
+        internal Dictionary<string, CreatureCostRow> CreatureByCost { get; init; } = [];
+
+        /// <summary>All creatures (the sum of <see cref="CreatureByCost"/>).</summary>
+        internal int CreatureCount { get; init; }
+
+        /// <summary>Creatures with mana value 2 or less.</summary>
+        internal int CreaturesMv2 { get; init; }
+
+        /// <summary>Creatures with mana value 2 or less and power 2 or more. A variable
+        /// power ("*") counts as 0, so it is never aggressive.</summary>
+        internal int AggressiveTwoDrops { get; init; }
+
+        /// <summary>Creatures with mana value 3 or less and power 3 or more; a variable
+        /// power counts as 0.</summary>
+        internal int MvThreePowerThree { get; init; }
+
+        /// <summary>Creature curve by effect column: [column][cost bucket] = creatures.
+        /// Columns as <see cref="CardAnalyzer.EffectColumn"/>.</summary>
+        internal Dictionary<string, Dictionary<string, int>> CreatureCurveByColumn { get; init; } = [];
+
+        /// <summary>Creature curve by colour identity: [colour][cost bucket] = creatures.
+        /// A multicolour creature counts in each of its colours, an empty identity in
+        /// "Colorless"; same rule as <see cref="CardsByIdentity"/>.</summary>
+        internal Dictionary<string, Dictionary<string, int>> CreatureCurveByIdentity { get; init; } = [];
+
         /// <summary>Total card count analyzed (excludes basic lands + tagged cards, per existing rule).</summary>
         internal int TotalCards { get; init; }
+    }
+
+    /// <summary>
+    /// One cost bucket of the creature profile. Power and toughness are summed over
+    /// the creatures whose value is a plain integer only; variable values ("*", "X")
+    /// are left out of the sums and of their counts, so an average is
+    /// Sum / Count (none when Count is 0).
+    /// </summary>
+    internal sealed class CreatureCostRow
+    {
+        internal int Creatures { get; set; }
+
+        /// <summary>Sum of the numeric powers.</summary>
+        internal int PowerSum { get; set; }
+
+        /// <summary>Creatures with a numeric power.</summary>
+        internal int PowerCount { get; set; }
+
+        /// <summary>Sum of the numeric toughnesses.</summary>
+        internal int ToughnessSum { get; set; }
+
+        /// <summary>Creatures with a numeric toughness.</summary>
+        internal int ToughnessCount { get; set; }
+
+        /// <summary>Creatures with <see cref="CreatureStats.IsEvasive"/>.</summary>
+        internal int Evasive { get; set; }
+
+        internal int Haste { get; set; }
+
+        internal int Defender { get; set; }
+
+        /// <summary>The field-by-field sum of <paramref name="rows"/>: the Total row of
+        /// the cost table, in the report and on /stats alike.</summary>
+        internal static CreatureCostRow Sum(IEnumerable<CreatureCostRow> rows)
+        {
+            CreatureCostRow total = new();
+            foreach (CreatureCostRow row in rows)
+            {
+                total.Creatures += row.Creatures;
+                total.PowerSum += row.PowerSum;
+                total.PowerCount += row.PowerCount;
+                total.ToughnessSum += row.ToughnessSum;
+                total.ToughnessCount += row.ToughnessCount;
+                total.Evasive += row.Evasive;
+                total.Haste += row.Haste;
+                total.Defender += row.Defender;
+            }
+
+            return total;
+        }
     }
 
     /// <summary>

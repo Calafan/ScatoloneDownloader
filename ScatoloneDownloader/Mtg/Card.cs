@@ -51,6 +51,14 @@ namespace ScatoloneDownloader.Mtg
         /// for classification. Never null (empty when absent).</summary>
         internal List<string> Keywords { get; init; }
 
+        /// <summary>Scryfall <c>power</c>, a string ("3", "*", "1+*", "-1", "X"): the
+        /// top-level field, else the FRONT face's (never "the first face that has
+        /// one"), else empty. Read it through <see cref="CreatureStats.ParseStat"/>.</summary>
+        internal string Power { get; }
+
+        /// <summary>Scryfall <c>toughness</c>; same rule as <see cref="Power"/>.</summary>
+        internal string Toughness { get; }
+
         internal List<string> Games { get; init; }
         internal List<string> FrameEffects { get; init; }
 
@@ -151,6 +159,10 @@ namespace ScatoloneDownloader.Mtg
             TypeLine = jsonCard.TypeLine ?? string.Empty;
             OracleText = ResolveOracleText(jsonCard);
             Keywords = jsonCard.Keywords ?? [];
+
+            JsonCardFace? front = jsonCard.CardFaces is { Count: > 0 } cardFaces ? cardFaces[0] : null;
+            Power = jsonCard.Power ?? front?.Power ?? string.Empty;
+            Toughness = jsonCard.Toughness ?? front?.Toughness ?? string.Empty;
 
             Games = jsonCard.Games ?? [];
 

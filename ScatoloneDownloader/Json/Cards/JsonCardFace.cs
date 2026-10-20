@@ -13,6 +13,12 @@ namespace ScatoloneDownloader.Json.Cards
         [JsonPropertyName("oracle_text")]
         public string? OracleText { get; set; }
 
+        [JsonPropertyName("power")]
+        public string? Power { get; set; }
+
+        [JsonPropertyName("toughness")]
+        public string? Toughness { get; set; }
+
         [JsonPropertyName("image_uris")]
         public JsonImageUris? ImageUris { get; set; }
     }

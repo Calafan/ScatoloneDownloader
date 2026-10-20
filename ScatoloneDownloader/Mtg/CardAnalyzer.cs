@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Globalization;
+using System.Text;
 
 namespace ScatoloneDownloader.Mtg
 {
@@ -150,7 +151,9 @@ namespace ScatoloneDownloader.Mtg
             AppendCategoryAnalysis(sb, report);
             AppendEffectDistribution(sb, report);
             AppendAnswersVsTargets(sb, report);
-            AppendBenchSection(sb, benchCards.Count == 0 ? null : AnalyzeBench());
+            AnalysisReport? bench = benchCards.Count == 0 ? null : AnalyzeBench();
+            AppendBenchSection(sb, bench);
+            AppendCreatureProfile(sb, report, bench);
 
             using StreamWriter writer = new(path);
             writer.Write(sb.ToString());
@@ -512,6 +515,88 @@ namespace ScatoloneDownloader.Mtg
             AppendEffectMatrix(sb, bench);
         }
 
+        /// <summary>
+        /// Section 8 — the creature profile of the pool: one summary line, the cost
+        /// table (average power/toughness, evasive, haste, defender) and the curve by
+        /// colour, plus the bench's curve when there is a bench. Placed after the bench
+        /// appendix so sections 1-7 keep their numbers.
+        /// </summary>
+        private static void AppendCreatureProfile(StringBuilder sb, AnalysisReport report, AnalysisReport? bench)
+        {
+            CreatureCostRow total = CreatureCostRow.Sum(report.CreatureByCost.Values);
+            int nonLand = report.TotalCards;
+
+            sb.AppendLine("## 8. Creature Profile (Pool)");
+            sb.AppendLine($"*   **Creatures:** {report.CreatureCount} ({FormatPercent(report.CreatureCount, nonLand)} of non-land) | **MV ≤ 2:** {report.CreaturesMv2} ({FormatPercent(report.CreaturesMv2, nonLand)}) | **Aggressive 2-drops (MV ≤ 2, power ≥ 2):** {report.AggressiveTwoDrops} ({FormatPercent(report.AggressiveTwoDrops, nonLand)}) | **MV ≤ 3 with power ≥ 3:** {report.MvThreePowerThree} ({FormatPercent(report.MvThreePowerThree, nonLand)}) | **Evasive:** {total.Evasive} ({FormatPercent(total.Evasive, nonLand)}) | **Haste:** {total.Haste} ({FormatPercent(total.Haste, nonLand)}) | **Defender:** {total.Defender} ({FormatPercent(total.Defender, nonLand)})");
+            sb.AppendLine("*Percentages are of the non-land cards.*");
+            sb.AppendLine();
+
+            sb.AppendLine("| Cost | Creatures | % of creatures | Avg power | Avg toughness | Evasive | Haste | Defender |");
+            sb.AppendLine("| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |");
+
+            foreach (string bucket in CostBucket.All)
+            {
+                CreatureCostRow row = report.CreatureByCost.GetValueOrDefault(bucket) ?? new CreatureCostRow();
+                sb.AppendLine(CreatureCostLine(CostBucket.Label(bucket), row, report.CreatureCount));
+            }
+
+            sb.AppendLine(CreatureCostLine("**Total**", total, report.CreatureCount));
+            sb.AppendLine();
+
+            sb.AppendLine("### Creature Curve by Color");
+            sb.AppendLine();
+            AppendCreatureCurve(sb, report);
+
+            if (bench is not null)
+            {
+                sb.AppendLine("### Creature Curve by Color (Bench, Rating 2)");
+                sb.AppendLine();
+                AppendCreatureCurve(sb, bench);
+            }
+
+            sb.AppendLine("*Variable power/toughness (`*`, `X`) is left out of the averages and counts as 0 in the power thresholds.*");
+            sb.AppendLine();
+        }
+
+        private static string CreatureCostLine(string label, CreatureCostRow row, int creatureTotal)
+        {
+            return $"| {label} | {row.Creatures} | {FormatPercent(row.Creatures, creatureTotal)} | {FormatAverage(row.PowerSum, row.PowerCount)} | {FormatAverage(row.ToughnessSum, row.ToughnessCount)} | {row.Evasive} | {row.Haste} | {row.Defender} |";
+        }
+
+        /// <summary>The cost-by-colour creature table: one row per bucket plus Total, one
+        /// column per effect column plus Total.</summary>
+        private static void AppendCreatureCurve(StringBuilder sb, AnalysisReport report)
+        {
+            sb.AppendLine("| Cost | " + string.Join(" | ", EffectColumnNames) + " | Total |");
+            sb.AppendLine("| :--- | " + string.Concat(Enumerable.Repeat(":--- | ", EffectColumns.Length)) + ":--- |");
+
+            int CellCount(string column, string bucket) =>
+                report.CreatureCurveByColumn.GetValueOrDefault(column)?.GetValueOrDefault(bucket, 0) ?? 0;
+
+            foreach (string bucket in CostBucket.All)
+            {
+                int[] cells = EffectColumns.Select(c => CellCount(c, bucket)).ToArray();
+                sb.AppendLine($"| {CostBucket.Label(bucket)} | {string.Join(" | ", cells.Select(FormatCount))} | {FormatCount(cells.Sum())} |");
+            }
+
+            int[] columnTotals = EffectColumns.Select(c => CostBucket.All.Sum(b => CellCount(c, b))).ToArray();
+            sb.AppendLine($"| **Total** | {string.Join(" | ", columnTotals.Select(FormatCount))} | {FormatCount(columnTotals.Sum())} |");
+            sb.AppendLine();
+        }
+
+        /// <summary>"12.3%" (invariant culture, one decimal); 0.0% when the total is 0.</summary>
+        private static string FormatPercent(int count, int total)
+        {
+            double value = total != 0 ? count * 100.0 / total : 0;
+            return value.ToString("0.0", CultureInfo.InvariantCulture) + "%";
+        }
+
+        /// <summary>Sum / count with one decimal, or an en dash when nothing was counted.</summary>
+        private static string FormatAverage(int sum, int count)
+        {
+            return count == 0 ? "–" : ((double)sum / count).ToString("0.0", CultureInfo.InvariantCulture);
+        }
+
         /// <summary>Folds raw (cmc, count) pairs into the report's 0..6+ buckets and
         /// renders them in order, joined by <paramref name="separator"/>. The one
         /// bucketing both the global line and the per-category tables use.</summary>
@@ -798,6 +883,53 @@ namespace ScatoloneDownloader.Mtg
                 });
             }
 
+            // Creature profile: the non-land creatures by cost bucket, plus the three
+            // summary counts and the curve by colour (both views).
+            Dictionary<string, CreatureCostRow> creatureByCost = CostBucket.All.ToDictionary(b => b, _ => new CreatureCostRow());
+            Dictionary<string, Dictionary<string, int>> creatureCurveByColumn = [];
+            Dictionary<string, Dictionary<string, int>> creatureCurveByIdentity = [];
+            int creatureCount = 0;
+            int creaturesMv2 = 0;
+            int aggressiveTwoDrops = 0;
+            int mvThreePowerThree = 0;
+            foreach (Card c in nonLands.Where(c => c.MacroType == MacroType.Creature))
+            {
+                string bucket = CostBucket.Of(c.Cmc);
+                int? power = CreatureStats.ParseStat(c.Power);
+                int? toughness = CreatureStats.ParseStat(c.Toughness);
+
+                CreatureCostRow row = creatureByCost[bucket];
+                row.Creatures++;
+                if (power is int p)
+                {
+                    row.PowerSum += p;
+                    row.PowerCount++;
+                }
+
+                if (toughness is int t)
+                {
+                    row.ToughnessSum += t;
+                    row.ToughnessCount++;
+                }
+
+                row.Evasive += CreatureStats.IsEvasive(c) ? 1 : 0;
+                row.Haste += CreatureStats.IsHaste(c) ? 1 : 0;
+                row.Defender += CreatureStats.IsDefender(c) ? 1 : 0;
+
+                // A variable power counts as 0 in the thresholds.
+                int thresholdPower = power ?? 0;
+                creatureCount++;
+                creaturesMv2 += c.Cmc <= 2 ? 1 : 0;
+                aggressiveTwoDrops += c.Cmc <= 2 && thresholdPower >= 2 ? 1 : 0;
+                mvThreePowerThree += c.Cmc <= 3 && thresholdPower >= 3 ? 1 : 0;
+
+                AddToCurve(creatureCurveByColumn, EffectColumn(c.ColorCategory), bucket);
+                foreach (string colour in IdentityColumns(c))
+                {
+                    AddToCurve(creatureCurveByIdentity, colour, bucket);
+                }
+            }
+
             double globalPips = nonLands.Sum(c => (double)c.ManaPips);
             double globalPipDensity = total > 0 ? globalPips / total : 0;
 
@@ -867,8 +999,26 @@ namespace ScatoloneDownloader.Mtg
                 UntaggedByIdentity = untaggedByIdentity,
                 EffectCountsByIdentity = effectsByIdentity,
                 AnswerGroups = answerGroups,
+                CreatureByCost = creatureByCost,
+                CreatureCount = creatureCount,
+                CreaturesMv2 = creaturesMv2,
+                AggressiveTwoDrops = aggressiveTwoDrops,
+                MvThreePowerThree = mvThreePowerThree,
+                CreatureCurveByColumn = creatureCurveByColumn,
+                CreatureCurveByIdentity = creatureCurveByIdentity,
                 TotalCards = total,
             };
+        }
+
+        private static void AddToCurve(Dictionary<string, Dictionary<string, int>> curve, string column, string bucket)
+        {
+            if (!curve.TryGetValue(column, out Dictionary<string, int>? byBucket))
+            {
+                byBucket = [];
+                curve[column] = byBucket;
+            }
+
+            byBucket[bucket] = byBucket.GetValueOrDefault(bucket, 0) + 1;
         }
     }
 }

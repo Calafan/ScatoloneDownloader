@@ -33,6 +33,7 @@
   td a { color:var(--txt); }
   td.zero a { color:var(--muted); }
   td.name { cursor:help; }
+  .sum { font-size:12px; color:var(--muted); margin:0 0 8px; }
   td.tags { white-space:normal; font-size:11px; color:var(--muted); min-width:140px; text-align:left; }
 
   #err { position:fixed; top:0; left:0; right:0; z-index:30; background:#8a1f1f; color:#fff; padding:10px 14px; font-weight:600; text-align:center; }
@@ -65,9 +66,11 @@ let view = new URLSearchParams(location.search).get("view") === "identity" ? "id
 
 // Plain links into the tagger, same tab, so the back button returns here with
 // the scope still in the tagger's query string. The tier's rating param plus
-// status=None and type=*nonland reproduce the analyzer's own population.
-function link(tier, colorParam, effectsParam, match) {
-  const q = ["review=all", "rating=" + encodeURIComponent(tier.ratingParam), "status=None", "type=*nonland"];
+// status=None and type=*nonland reproduce the analyzer's own population; the
+// creature tables pass type=Creature and a cost bucket instead.
+function link(tier, colorParam, effectsParam, match, type, cost) {
+  const q = ["review=all", "rating=" + encodeURIComponent(tier.ratingParam), "status=None", "type=" + (type || "*nonland")];
+  if (cost) q.push("cost=" + encodeURIComponent(cost));
   if (colorParam) q.push("color=" + encodeURIComponent(colorParam));
   if (effectsParam) q.push("effects=" + effectsParam.split(",").map(encodeURIComponent).join(","));
   if (match) q.push("match=" + match);
@@ -175,9 +178,88 @@ function answersTable(tier, m) {
   return table;
 }
 
-function section(title, table) {
+// "n (p%)" of the non-land cards, one decimal.
+function ofNonLand(n, nonLand) {
+  return n.toLocaleString() + " (" + (nonLand > 0 ? (n * 100 / nonLand).toFixed(1) : "0.0") + "%)";
+}
+
+function creatureSummary(s) {
+  return "Creatures " + ofNonLand(s.creatures, s.nonLand)
+    + " · MV ≤ 2 " + ofNonLand(s.creaturesMv2, s.nonLand)
+    + " · aggressive 2-drops (MV ≤ 2, power ≥ 2) " + ofNonLand(s.aggressiveTwoDrops, s.nonLand)
+    + " · MV ≤ 3 with power ≥ 3 " + ofNonLand(s.mvThreePowerThree, s.nonLand)
+    + " · evasive " + ofNonLand(s.evasive, s.nonLand)
+    + " · haste " + ofNonLand(s.haste, s.nonLand)
+    + " · defender " + ofNonLand(s.defender, s.nonLand)
+    + " (percent of non-land)";
+}
+
+// The cost table of the creature profile. Only the Creatures cell opens the
+// tagger (type=Creature, one cost bucket); evasive/haste/defender have no
+// tagger filter, so they stay plain numbers.
+function creaturesTable(tier) {
+  const c = tier.creatures;
+  const table = el("table");
+  const thead = el("thead");
+  const hr = el("tr");
+  ["Cost", "Creatures", "Avg power", "Avg toughness", "Evasive", "Haste", "Defender"].forEach(t => hr.appendChild(el("th", null, t)));
+  thead.appendChild(hr);
+  table.appendChild(thead);
+  const body = el("tbody");
+  const avg = v => v == null ? "–" : v.toFixed(1);
+  const plain = n => el("td", n === 0 ? "zero" : null, n === 0 ? "–" : n.toLocaleString());
+  [...c.rows, c.total].forEach((row, i) => {
+    const isTotal = i === c.rows.length;
+    const tr = el("tr", isTotal ? "meta" : null);
+    tr.appendChild(el("td", null, row.label));
+    tr.appendChild(countCell(row.creatures, c.total.creatures,
+      link(tier, "", "", "", "Creature", row.cost), null));
+    tr.appendChild(el("td", null, avg(row.powerAvg)));
+    tr.appendChild(el("td", null, avg(row.toughnessAvg)));
+    tr.appendChild(plain(row.evasive));
+    tr.appendChild(plain(row.haste));
+    tr.appendChild(plain(row.defender));
+    body.appendChild(tr);
+  });
+  table.appendChild(body);
+  return table;
+}
+
+// Creatures by cost (rows) and colour (columns), following the mono/identity
+// toggle. A cell's share is of its column's creatures; the Total row and the
+// Total column drop their cost / colour filter.
+function curveTable(tier, curve) {
+  const total = tier.creatures.total.creatures;
+  const table = el("table");
+  const thead = el("thead");
+  thead.appendChild(headRow("Cost", curve.columns));
+  table.appendChild(thead);
+  const body = el("tbody");
+  curve.rows.forEach(row => {
+    const tr = el("tr");
+    tr.appendChild(el("td", null, row.label));
+    curve.columns.forEach(c => tr.appendChild(countCell(
+      row.byColumn[c.key] || 0, curve.totals[c.key] || 0,
+      link(tier, c.colorParam, "", "", "Creature", row.cost), null)));
+    tr.appendChild(countCell(row.total, total, link(tier, "", "", "", "Creature", row.cost), null));
+    body.appendChild(tr);
+  });
+  const tr = el("tr", "meta");
+  tr.appendChild(el("td", null, "Total"));
+  curve.columns.forEach(c => tr.appendChild(countCell(
+    curve.totals[c.key] || 0, curve.totals[c.key] || 0,
+    link(tier, c.colorParam, "", "", "Creature"), null)));
+  tr.appendChild(countCell(total, total, link(tier, "", "", "", "Creature"), null));
+  body.appendChild(tr);
+  table.appendChild(body);
+  return table;
+}
+
+// A muted explanatory line above the table, optional.
+function section(title, table, note) {
   const out = document.getElementById("out");
   out.appendChild(el("h2", null, title));
+  if (note) out.appendChild(el("div", "sum", note));
   const wrap = el("div", "wrap");
   wrap.appendChild(table);
   out.appendChild(wrap);
@@ -193,6 +275,10 @@ function render() {
   section("Pool — effects by colour", matrixTable(payload.pool, pm));
   section("Pool — answers vs targets", answersTable(payload.pool, pm));
   section("Bench (★2) — available by effect and colour", matrixTable(payload.bench, bm));
+  const key = view === "identity" ? "curveIdentity" : "curveMono";
+  section("Pool — creatures by cost", creaturesTable(payload.pool), creatureSummary(payload.pool.creatures.summary));
+  section("Pool — creature curve by colour", curveTable(payload.pool, payload.pool.creatures[key]));
+  section("Bench (★2) — creature curve by colour", curveTable(payload.bench, payload.bench.creatures[key]));
 }
 
 async function load() {

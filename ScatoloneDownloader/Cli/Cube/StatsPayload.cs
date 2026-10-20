@@ -85,7 +85,70 @@ namespace ScatoloneDownloader.Cli.Cube
                     g.Targets))
                 .ToList();
 
-            return new StatsTier(label, ratingParam, report.TotalCards, mono, identity, answers);
+            CreatureCostRow creatureTotal = CreatureCostRow.Sum(report.CreatureByCost.Values);
+            StatsCreatures creatures = new(
+                BuildCreatureRows(report),
+                CreatureRow("", "Total", creatureTotal),
+                new StatsCreatureSummary(
+                    report.TotalCards,
+                    report.CreatureCount,
+                    report.CreaturesMv2,
+                    report.AggressiveTwoDrops,
+                    report.MvThreePowerThree,
+                    creatureTotal.Evasive,
+                    creatureTotal.Haste,
+                    creatureTotal.Defender),
+                BuildCurve(report, MonoColumns, key => key == "Multi" ? "*multi" : ColorCategoryClassifier.ViewFolderName(key), report.CreatureCurveByColumn),
+                BuildCurve(report, IdentityColumns, key => key == "Colorless" ? ColorCategoryClassifier.ViewFolderName(key) : "*has:" + key, report.CreatureCurveByIdentity));
+
+            return new StatsTier(label, ratingParam, report.TotalCards, mono, identity, answers, creatures);
+        }
+
+        private static List<StatsCreatureRow> BuildCreatureRows(AnalysisReport report)
+        {
+            return CostBucket.All
+                .Select(b => CreatureRow(b, CostBucket.Label(b), report.CreatureByCost.GetValueOrDefault(b) ?? new CreatureCostRow()))
+                .ToList();
+        }
+
+        private static StatsCreatureRow CreatureRow(string cost, string label, CreatureCostRow row)
+        {
+            return new StatsCreatureRow(
+                cost,
+                label,
+                row.Creatures,
+                row.PowerCount == 0 ? null : (double)row.PowerSum / row.PowerCount,
+                row.ToughnessCount == 0 ? null : (double)row.ToughnessSum / row.ToughnessCount,
+                row.Evasive,
+                row.Haste,
+                row.Defender);
+        }
+
+        /// <summary>The cost-by-colour creature matrix: a row per cost bucket, the count
+        /// per column, the row total and the per-column creature total. The row total is
+        /// the bucket's distinct creatures, not the sum of the columns: in the identity
+        /// view a WU creature sits in two columns but is one creature.</summary>
+        private static StatsCreatureCurve BuildCurve(
+            AnalysisReport report,
+            (string Key, string Name)[] columns,
+            Func<string, string> colorParam,
+            Dictionary<string, Dictionary<string, int>> curve)
+        {
+            int Cell(string column, string bucket) =>
+                curve.GetValueOrDefault(column)?.GetValueOrDefault(bucket, 0) ?? 0;
+
+            List<StatsCurveRow> rows = CostBucket.All
+                .Select(b => new StatsCurveRow(
+                    b,
+                    CostBucket.Label(b),
+                    columns.ToDictionary(c => c.Key, c => Cell(c.Key, b)),
+                    report.CreatureByCost.GetValueOrDefault(b)?.Creatures ?? 0))
+                .ToList();
+
+            return new StatsCreatureCurve(
+                columns.Select(c => new StatsColumn(c.Key, c.Name, colorParam(c.Key))).ToList(),
+                rows,
+                columns.ToDictionary(c => c.Key, c => CostBucket.All.Sum(b => Cell(c.Key, b))));
         }
 
         private static StatsMatrix BuildMatrix(
@@ -136,7 +199,55 @@ namespace ScatoloneDownloader.Cli.Cube
         int NonLand,
         StatsMatrix Mono,
         StatsMatrix Identity,
-        IReadOnlyList<StatsAnswerGroup> Answers);
+        IReadOnlyList<StatsAnswerGroup> Answers,
+        StatsCreatures Creatures);
+
+    /// <summary>The creature profile of a tier: the cost table, its summary counts and
+    /// the cost-by-colour curve in both column views.</summary>
+    /// <param name="Rows">One row per cost bucket, 0 to 6_Plus.</param>
+    /// <param name="Total">The sum over <paramref name="Rows"/>; its Cost is empty.</param>
+    internal sealed record StatsCreatures(
+        IReadOnlyList<StatsCreatureRow> Rows,
+        StatsCreatureRow Total,
+        StatsCreatureSummary Summary,
+        StatsCreatureCurve CurveMono,
+        StatsCreatureCurve CurveIdentity);
+
+    /// <summary>One cost bucket. <paramref name="Cost"/> is the tagger's <c>cost=</c> value
+    /// ("6_Plus" for 6 or more), <paramref name="Label"/> its display form. The averages
+    /// are null when no creature has a numeric value.</summary>
+    internal sealed record StatsCreatureRow(
+        string Cost,
+        string Label,
+        int Creatures,
+        double? PowerAvg,
+        double? ToughnessAvg,
+        int Evasive,
+        int Haste,
+        int Defender);
+
+    internal sealed record StatsCreatureSummary(
+        int NonLand,
+        int Creatures,
+        int CreaturesMv2,
+        int AggressiveTwoDrops,
+        int MvThreePowerThree,
+        int Evasive,
+        int Haste,
+        int Defender);
+
+    /// <summary>Creatures per cost bucket (rows) and colour column; <paramref name="Totals"/>
+    /// is the creature count of each column.</summary>
+    internal sealed record StatsCreatureCurve(
+        IReadOnlyList<StatsColumn> Columns,
+        IReadOnlyList<StatsCurveRow> Rows,
+        IReadOnlyDictionary<string, int> Totals);
+
+    internal sealed record StatsCurveRow(
+        string Cost,
+        string Label,
+        IReadOnlyDictionary<string, int> ByColumn,
+        int Total);
 
     internal sealed record StatsMatrix(
         IReadOnlyList<StatsColumn> Columns,
