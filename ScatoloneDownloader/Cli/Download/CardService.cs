@@ -1,8 +1,11 @@
 using System.Diagnostics;
 
+using Microsoft.Extensions.Logging;
+
 using ScatoloneDownloader.Download;
 using ScatoloneDownloader.Enums;
 using ScatoloneDownloader.Filtering;
+using ScatoloneDownloader.Logging;
 using ScatoloneDownloader.Mtg;
 
 using Spectre.Console;
@@ -19,6 +22,8 @@ namespace ScatoloneDownloader.Cli.Download
     {
         internal const int MinYear = 1993;
         internal const int MaxYear = 2050;
+
+        private static readonly ILogger Logger = AppLogger.CreateLogger(nameof(CardService));
 
         /// <summary>
         /// One download/analyze request. Bundling the inputs replaces a
@@ -45,9 +50,12 @@ namespace ScatoloneDownloader.Cli.Download
             internal bool Download { get; init; }
             internal bool Analyze { get; init; }
             internal bool PrintOnly { get; init; }
+
+            /// <summary>Skip the library rules (Mode.All and Mode.Years only).</summary>
+            internal bool NoRules { get; init; }
         }
 
-        internal static Task RunAllAsync(string? excludeFile, bool reprints, bool tokens, bool lands, bool printOnly)
+        internal static Task RunAllAsync(string? excludeFile, bool reprints, bool tokens, bool lands, bool printOnly, bool noRules)
         {
             return GetCardsAsync(new CardRequest
             {
@@ -58,6 +66,7 @@ namespace ScatoloneDownloader.Cli.Download
                 File = excludeFile,
                 Download = true,
                 PrintOnly = printOnly,
+                NoRules = noRules,
             });
         }
 
@@ -78,7 +87,7 @@ namespace ScatoloneDownloader.Cli.Download
             }
         }
 
-        internal static Task RunYearsAsync(IEnumerable<int> years, bool reprints, bool tokens, bool lands, bool printOnly)
+        internal static Task RunYearsAsync(IEnumerable<int> years, bool reprints, bool tokens, bool lands, bool printOnly, bool noRules)
         {
             List<int> validYears = years.Where(year => year >= MinYear && year <= MaxYear).ToList();
 
@@ -91,6 +100,7 @@ namespace ScatoloneDownloader.Cli.Download
                 Years = validYears,
                 Download = true,
                 PrintOnly = printOnly,
+                NoRules = noRules,
             });
         }
 
@@ -164,26 +174,23 @@ namespace ScatoloneDownloader.Cli.Download
 
             AnsiConsole.MarkupLineInterpolated($"Getting {specificText} cards informations.");
 
-            List<Card> cards = await (req.Mode switch
-            {
-                Mode.All => string.IsNullOrEmpty(req.File) ? getManager.GetUniqueArtwork() : getManager.GetUniqueArtwork(req.File),
-                Mode.Set => getManager.GetSet(Required(req.Set, req.Mode, "set code")),
-                Mode.Years => getManager.GetYears(Required(req.Years, req.Mode, "years")),
-                Mode.Files => getManager.GetCardList(Required(req.File, req.Mode, "list file"), req.Lands),
-                Mode.Lands => getManager.GetUniqueArtwork(),
-                _ => throw new ArgumentOutOfRangeException(nameof(req)),
-            });
+            bool libraryRules = req.Mode is Mode.All or Mode.Years && !req.NoRules;
+
+            List<Card> cards = await FetchCardsAsync(getManager, req, libraryRules);
 
             if (req.Mode == Mode.Lands)
             {
                 AnsiConsole.MarkupLine("Validating basic lands.");
                 cards = CardFilter.ValidateBasicLands(cards);
             }
-            else if (req.Mode != Mode.Files)
+            else if (req.Mode != Mode.Files && !libraryRules)
             {
                 AnsiConsole.MarkupLine("Validating cards.");
-                cards = CardFilter.Validate(cards, req.Reprints, req.Tokens, req.Lands);
+                cards = LibrarySelector.WithFallback(cards, req.Reprints, req.Tokens, req.Lands);
             }
+
+            // One printing per card: an existing <Name>.png means the card is already downloaded.
+            bool skipExisting = libraryRules && !req.Reprints;
 
             if (req.Analyze)
             {
@@ -208,8 +215,42 @@ namespace ScatoloneDownloader.Cli.Download
             }
             else if (req.Download)
             {
-                await DownloadAllAsync(downloader, cards, req.Mode, req.File, specificText);
+                await DownloadAllAsync(downloader, cards, req.Mode, req.File, specificText, skipExisting);
             }
+        }
+
+        /// <summary>Fetches the raw cards for a request and, when the library rules are on,
+        /// selects them (globally, then by year for Mode.Years). Without the rules the
+        /// caller validates the returned list.</summary>
+        private static async Task<List<Card>> FetchCardsAsync(GetManager getManager, CardRequest req, bool libraryRules)
+        {
+            if (libraryRules && req.Mode == Mode.All)
+            {
+                List<Card> selected = LibrarySelector.Select(await getManager.GetDefaultCards(), req.Reprints, req.Tokens, req.Lands);
+
+                return string.IsNullOrEmpty(req.File)
+                    ? selected
+                    : await GetManager.ExcludeListedNamesAsync(selected, req.File);
+            }
+
+            if (libraryRules && req.Mode == Mode.Years)
+            {
+                AnsiConsole.MarkupLine("Using the Default Cards bulk to apply the library rules.");
+
+                List<Card> selected = LibrarySelector.Select(await getManager.GetDefaultCards(), req.Reprints, req.Tokens, req.Lands);
+
+                return GetManager.FilterByYear(selected, [.. Required(req.Years, req.Mode, "years")]);
+            }
+
+            return await (req.Mode switch
+            {
+                Mode.All => string.IsNullOrEmpty(req.File) ? getManager.GetUniqueArtwork() : getManager.GetUniqueArtwork(req.File),
+                Mode.Set => getManager.GetSet(Required(req.Set, req.Mode, "set code")),
+                Mode.Years => getManager.GetYears(Required(req.Years, req.Mode, "years")),
+                Mode.Files => getManager.GetCardList(Required(req.File, req.Mode, "list file"), req.Lands),
+                Mode.Lands => getManager.GetUniqueArtwork(),
+                _ => throw new ArgumentOutOfRangeException(nameof(req)),
+            });
         }
 
         // Set/Years/File on a CardRequest are mode-dependent: each mode fills
@@ -222,8 +263,12 @@ namespace ScatoloneDownloader.Cli.Download
             return value ?? throw new InvalidOperationException($"A {mode} request carries no {field}.");
         }
 
-        private static async Task DownloadAllAsync(CardDownloader downloader, List<Card> cards, Mode mode, string? file, string specificText)
+        private static async Task DownloadAllAsync(CardDownloader downloader, List<Card> cards, Mode mode, string? file, string specificText, bool skipExisting)
         {
+            int downloaded = 0;
+            int skipped = 0;
+            List<(string Name, string Set, string Message)> failures = [];
+
             Stopwatch stopwatch = Stopwatch.StartNew();
 
             await AnsiConsole.Progress()
@@ -234,14 +279,43 @@ namespace ScatoloneDownloader.Cli.Download
 
                     foreach (Card card in cards)
                     {
-                        await downloader.DownloadAsync(card, mode, file);
+                        try
+                        {
+                            DownloadOutcome outcome = await downloader.DownloadAsync(card, mode, file, skipExisting);
+
+                            if (outcome == DownloadOutcome.Downloaded)
+                            {
+                                downloaded++;
+                            }
+                            else
+                            {
+                                skipped++;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            // One bad card (a missing image, a flaky response) must not abort the run.
+                            // No token reaches the download, so an OperationCanceledException here is
+                            // an HTTP timeout (TaskCanceledException), not a cancel: caught like the rest.
+                            Logger.LogError(ex, "Download failed: {Name} - {Set}", card.Name, card.Set);
+                            failures.Add((card.Name, card.Set, ex.Message));
+                        }
+
                         task.Increment(1);
                     }
                 });
 
             stopwatch.Stop();
 
-            ReportThroughput(cards.Count, stopwatch.Elapsed);
+            ReportThroughput(downloaded, stopwatch.Elapsed);
+
+            AnsiConsole.MarkupLineInterpolated(
+                $"Downloaded {downloaded}, skipped {skipped} (already present), failed {failures.Count}.");
+
+            foreach ((string name, string set, string message) in failures)
+            {
+                AnsiConsole.MarkupLineInterpolated($"[red]Failed:[/] {name} ({set}): {message}");
+            }
         }
 
         // Baseline measurement for the (currently sequential) download loop, so any

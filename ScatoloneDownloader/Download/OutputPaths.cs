@@ -16,6 +16,11 @@ namespace ScatoloneDownloader.Download
         // working directory) and can be overridden with the --output option.
         internal static string Root { get; private set; } = Path.Combine(".", "Output");
 
+        /// <summary>When set, <c>all</c> and <c>years</c> write straight into this library
+        /// (<c>LibraryRoot/year/set</c>, no mode sub-folder). Never part of
+        /// <see cref="BasePaths"/>, so <c>--clear</c> cannot touch it.</summary>
+        internal static string? LibraryRoot { get; private set; }
+
         private static readonly IReadOnlyDictionary<Mode, string> SubFolders = new Dictionary<Mode, string>
         {
             { Mode.All, "All" },
@@ -32,6 +37,21 @@ namespace ScatoloneDownloader.Download
             {
                 Root = root;
             }
+        }
+
+        /// <summary>Sets the <see cref="LibraryRoot"/>; ignores null/blank input.</summary>
+        internal static void UseLibrary(string? dir)
+        {
+            if (!string.IsNullOrWhiteSpace(dir))
+            {
+                LibraryRoot = dir;
+            }
+        }
+
+        /// <summary>Clears the <see cref="LibraryRoot"/> (tests restore it with this).</summary>
+        internal static void ResetLibrary()
+        {
+            LibraryRoot = null;
         }
 
         /// <summary>The base folder for a mode, under the configured <see cref="Root"/>.</summary>
@@ -64,7 +84,8 @@ namespace ScatoloneDownloader.Download
         /// <summary>Builds (and creates) the directory a card's image belongs in.</summary>
         internal static string BuildCardDirectory(Card card, Mode mode, string? fileName)
         {
-            string path = BasePath(mode);
+            bool inLibrary = LibraryRoot != null && mode is Mode.All or Mode.Years;
+            string path = inLibrary ? LibraryRoot! : BasePath(mode);
 
             Directory.CreateDirectory(path);
 

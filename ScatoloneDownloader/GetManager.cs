@@ -205,6 +205,18 @@ namespace ScatoloneDownloader
         internal async Task<List<Card>> GetUniqueArtwork(string excludeFile)
         {
             List<Card> uniqueArtworkCards = await GetUniqueArtwork();
+
+            return await ExcludeListedNamesAsync(uniqueArtworkCards, excludeFile);
+        }
+
+        /// <summary>
+        /// Drops the cards whose name is listed in the exclude file. Basic-land inclusion
+        /// is decided centrally by <see cref="CardFilter"/> (via --lands); this only
+        /// removes names. Shared by the Unique Artwork and the library-rules paths so
+        /// both read the file the same way.
+        /// </summary>
+        internal static async Task<List<Card>> ExcludeListedNamesAsync(List<Card> source, string excludeFile)
+        {
             List<Card> cards = [];
 
             HashSet<string> excludedNames = [];
@@ -213,9 +225,7 @@ namespace ScatoloneDownloader
                 excludedNames.Add(entry.Name);
             }
 
-            // Basic-land inclusion is decided centrally by CardFilter (via --lands);
-            // here we only drop the names listed in the exclude file.
-            foreach (Card card in uniqueArtworkCards)
+            foreach (Card card in source)
             {
                 if (!excludedNames.Contains(card.Name))
                 {

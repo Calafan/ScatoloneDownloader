@@ -43,9 +43,9 @@ ScatoloneDownloader <command> [arguments] [options]
 
 | Command | What it downloads | Argument |
 |---|---|---|
-| `all` | Every unique-artwork card, grouped by year and set | — |
-| `set <SETS>` | The given sets | one or more set codes (e.g. `neo dmu`) |
-| `years <YEARS>` | Cards released in the given years (1993–2050) | one or more years |
+| `all` | Every card, one printing each (library rules), grouped by year and set | — |
+| `set <SETS>` | Every valid printing of the given sets | one or more set codes (e.g. `neo dmu`) |
+| `years <YEARS>` | Cards first released in the given years (1993–2050), library rules | one or more years |
 | `files <FILES>` | Cards from hand-written lists, plus a stats file | one or more files |
 | `lands` | **Every** basic land artwork, split by land type | — |
 | `analyze <FILES>` | Analyses the lists **without** downloading images | one or more files |
@@ -60,7 +60,20 @@ ScatoloneDownloader <command> [arguments] [options]
 | `-t, --tokens` | Include tokens (left out by default) |
 | `-l, --lands` | Include basic lands (left out by default) |
 | `-p, --print-only` | Write the card list only, without downloading images |
+| `--no-rules` | Ignore the library rules (`all` and `years` only) |
+| `--library <DIR>` | Write straight into a `<year>\<set>` library (`all` and `years` only) |
 | `-h, --help` | Help, also per command (e.g. `years --help`) |
+
+Library rules: `all` and `years` reproduce the hand-curated library by default.
+They use the Default Cards bulk and download one printing per card, the earliest
+plain one (non-promo set, no promo treatment); a card that exists only as a
+variant takes its earliest variant. Funny and Vanguard sets, planes, and cards
+legal in no format are left out, except dungeons and token-type cards. The pick
+is global, so a card first printed in 2010 and reprinted in 2024 appears in the
+2010 download only. `--no-rules` restores the previous behaviour (every valid
+printing). `--library <DIR>` writes into `<DIR>\<year>\<set>\` with no mode
+sub-folder and skips images already there. `set` downloads every valid printing
+of the set and, for a card with no valid printing there, its variant.
 
 Command-specific options:
 
@@ -74,6 +87,9 @@ Command-specific options:
 ```powershell
 # Cards from 2026
 ScatoloneDownloader years 2026
+
+# Cards from 2026, straight into the curated library
+ScatoloneDownloader years 2026 --library E:\Working\Repos\ScatoloneQuintet\Source
 
 # Several years, onto an external disk
 ScatoloneDownloader years 2024 2025 2026 --output D:\Scryfall

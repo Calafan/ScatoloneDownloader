@@ -5,6 +5,13 @@ using ScatoloneDownloader.Mtg;
 
 namespace ScatoloneDownloader.Download
 {
+    /// <summary>What <see cref="CardDownloader.DownloadAsync"/> did with a card.</summary>
+    internal enum DownloadOutcome
+    {
+        Downloaded,
+        Skipped,
+    }
+
     /// <summary>
     /// Fetches a card's face image(s), composes the printable PNG, and writes it to
     /// disk. Holds the download/path/output behavior that used to live on
@@ -21,13 +28,63 @@ namespace ScatoloneDownloader.Download
             this.getManager = getManager;
         }
 
-        internal async Task DownloadAsync(Card card, Mode mode, string? fileName)
+        /// <summary>
+        /// Downloads one card. With <paramref name="skipExisting"/> (one printing per card) an
+        /// image already on disk means the card is done and nothing is fetched.
+        /// </summary>
+        internal async Task<DownloadOutcome> DownloadAsync(Card card, Mode mode, string? fileName, bool skipExisting)
         {
             string baseDirectory = OutputPaths.BuildCardDirectory(card, mode, fileName);
 
-            int i = 1;
+            string? path = ResolveImagePath(baseDirectory, card, skipExisting);
+
+            if (path == null)
+            {
+                return DownloadOutcome.Skipped;
+            }
+
+            byte[] png = await ComposeAsync(card);
+
+            // Write beside the target and move into place, so a crash never leaves a
+            // truncated PNG that a later skip-existing run would mistake for a finished one.
+            string target = path + ".png";
+            string temp = target + ".tmp";
+
+            try
+            {
+                await File.WriteAllBytesAsync(temp, png);
+                File.Move(temp, target, overwrite: true);
+            }
+            catch
+            {
+                if (File.Exists(temp))
+                {
+                    File.Delete(temp);
+                }
+
+                throw;
+            }
+
+            return DownloadOutcome.Downloaded;
+        }
+
+        /// <summary>
+        /// Decides where a card's image goes, as a path WITHOUT extension, or null to skip it.
+        /// With <paramref name="skipExisting"/> a non-basic card has exactly one slot (the
+        /// un-numbered name): present means skip. Otherwise collisions are numbered
+        /// ("Name1", "Name2", ...) and the canonical artwork takes the un-numbered name.
+        /// </summary>
+        internal static string? ResolveImagePath(string baseDirectory, Card card, bool skipExisting)
+        {
             string validName = OutputPaths.Sanitize(card.Name);
             string path = Path.Combine(baseDirectory, validName);
+
+            if (skipExisting && !card.IsBasicLand)
+            {
+                return File.Exists(path + ".png") ? null : path;
+            }
+
+            int i = 1;
 
             while (File.Exists(path + ".png"))
             {
@@ -52,8 +109,7 @@ namespace ScatoloneDownloader.Download
                 path = Path.Combine(baseDirectory, validName);
             }
 
-            byte[] png = await ComposeAsync(card);
-            await File.WriteAllBytesAsync(path + ".png", png);
+            return path;
         }
 
         internal static void WriteToList(Card card)

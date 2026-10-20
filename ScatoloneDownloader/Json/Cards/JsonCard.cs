@@ -75,6 +75,12 @@ namespace ScatoloneDownloader.Json.Cards
 
         [JsonPropertyName("promo_types")]
         public List<string>? PromoTypes { get; set; }
+
+        [JsonPropertyName("legalities")]
+        public Dictionary<string, string>? Legalities { get; set; }
+
+        [JsonPropertyName("collector_number")]
+        public string? CollectorNumber { get; set; }
     }
 
 }

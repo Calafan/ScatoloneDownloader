@@ -62,14 +62,16 @@ namespace ScatoloneDownloader.Filtering
         /// <summary>Only English printings.</summary>
         internal static bool IsEnglish(Card card) => card.Language == "en";
 
-        /// <summary>Excludes emblems, schemes, and — unless tokens are requested — tokens.</summary>
+        /// <summary>Excludes emblems, schemes, and — unless tokens are requested — tokens.
+        /// Dungeons are token-layout cards but are wanted in every mode, so they pass the
+        /// token gate even when tokens are not requested.</summary>
         internal static bool HasValidLayout(Card card, bool downloadTokens)
         {
             bool isToken = card.Layout.Contains("token");
             bool isEmblem = card.Layout.Contains("emblem");
             bool isScheme = card.Layout.Contains("scheme");
 
-            return !((isToken && !downloadTokens) || isEmblem || isScheme);
+            return !((isToken && !downloadTokens && !card.IsDungeon) || isEmblem || isScheme);
         }
 
         /// <summary>Paper printings only (or cards with no game listed).</summary>

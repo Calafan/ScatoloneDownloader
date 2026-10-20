@@ -1,11 +1,13 @@
 using System.ComponentModel;
 
+using ScatoloneDownloader.Download;
+
 using Spectre.Console;
 using Spectre.Console.Cli;
 
 namespace ScatoloneDownloader.Cli.Download
 {
-    internal sealed class AllSettings : DownloadSettings
+    internal sealed class AllSettings : LibrarySettings
     {
         [CommandOption("-e|--exclude <FILE>")]
         [Description("Exclude the cards listed in the given file.")]
@@ -13,6 +15,13 @@ namespace ScatoloneDownloader.Cli.Download
 
         public override ValidationResult Validate()
         {
+            ValidationResult baseResult = base.Validate();
+
+            if (!baseResult.Successful)
+            {
+                return baseResult;
+            }
+
             if (!string.IsNullOrEmpty(ExcludeFile) && !File.Exists(ExcludeFile))
             {
                 return ValidationResult.Error("File not found: " + ExcludeFile);
@@ -31,7 +40,9 @@ namespace ScatoloneDownloader.Cli.Download
                 FolderCleaner.Clear();
             }
 
-            await CardService.RunAllAsync(settings.ExcludeFile, settings.Reprints, settings.Tokens, settings.Lands, settings.PrintOnly);
+            OutputPaths.UseLibrary(settings.Library);
+
+            await CardService.RunAllAsync(settings.ExcludeFile, settings.Reprints, settings.Tokens, settings.Lands, settings.PrintOnly, settings.NoRules);
 
             return 0;
         }

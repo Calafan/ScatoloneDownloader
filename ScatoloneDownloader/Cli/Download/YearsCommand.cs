@@ -1,11 +1,13 @@
 using System.ComponentModel;
 
+using ScatoloneDownloader.Download;
+
 using Spectre.Console;
 using Spectre.Console.Cli;
 
 namespace ScatoloneDownloader.Cli.Download
 {
-    internal sealed class YearsSettings : DownloadSettings
+    internal sealed class YearsSettings : LibrarySettings
     {
         [CommandArgument(0, "<YEARS>")]
         [Description("One or more release years to download.")]
@@ -13,6 +15,13 @@ namespace ScatoloneDownloader.Cli.Download
 
         public override ValidationResult Validate()
         {
+            ValidationResult baseResult = base.Validate();
+
+            if (!baseResult.Successful)
+            {
+                return baseResult;
+            }
+
             if (Years.Length == 0)
             {
                 return ValidationResult.Error("At least one year is required.");
@@ -36,7 +45,9 @@ namespace ScatoloneDownloader.Cli.Download
                 FolderCleaner.Clear();
             }
 
-            await CardService.RunYearsAsync(settings.Years, settings.Reprints, settings.Tokens, settings.Lands, settings.PrintOnly);
+            OutputPaths.UseLibrary(settings.Library);
+
+            await CardService.RunYearsAsync(settings.Years, settings.Reprints, settings.Tokens, settings.Lands, settings.PrintOnly, settings.NoRules);
 
             return 0;
         }

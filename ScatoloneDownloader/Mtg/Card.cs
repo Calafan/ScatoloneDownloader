@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 using ScatoloneDownloader.Json.Cards;
 
 namespace ScatoloneDownloader.Mtg
@@ -7,7 +9,7 @@ namespace ScatoloneDownloader.Mtg
     /// live in their own components; this type only holds the card's fields and
     /// the small derived facts (<see cref="IsBasicLand"/>) read across the app.
     /// </summary>
-    public abstract class Card
+    public abstract partial class Card
     {
         internal static readonly List<string> BasicLandTypes =
         [
@@ -68,6 +70,26 @@ namespace ScatoloneDownloader.Mtg
         internal string ManaCost { get; init; }
 
         internal List<string> PromoTypes { get; init; }
+
+        /// <summary>Scryfall <c>collector_number</c> (may carry letters or a star, e.g. "12a", "★").</summary>
+        internal string CollectorNumber { get; init; }
+
+        /// <summary><c>oracle_id</c> of the first card face; reversible cards carry the
+        /// oracle id only on their faces, so <see cref="OracleId"/> is empty for them.
+        /// Empty when there are no faces.</summary>
+        internal string FirstFaceOracleId { get; init; }
+
+        /// <summary>True when the printing is legal in no format: it has legalities and every
+        /// one is "not_legal". Missing or empty legalities are not "never legal".</summary>
+        internal bool NeverLegal { get; init; }
+
+        /// <summary>True when the front type line (before " // " and before the " — " subtype
+        /// dash) contains the word Dungeon.</summary>
+        internal bool IsDungeon { get; init; }
+
+        /// <summary>True when the front type line (before " // " and before the " — " subtype
+        /// dash) starts with "Token".</summary>
+        internal bool IsTokenType { get; init; }
 
         // --- Cube management fields ------------------------------------------
         // Rating/Status/Effects are the tagger-authored evaluation: loaded from
@@ -148,10 +170,33 @@ namespace ScatoloneDownloader.Mtg
             ManaCost = jsonCard.ManaCost ?? string.Empty;
             PromoTypes = jsonCard.PromoTypes ?? [];
 
+            CollectorNumber = jsonCard.CollectorNumber ?? string.Empty;
+            FirstFaceOracleId = jsonCard.CardFaces is { Count: > 0 } faces ? faces[0].OracleId ?? string.Empty : string.Empty;
+            NeverLegal = jsonCard.Legalities is { Count: > 0 } legalities
+                && legalities.Values.All(value => string.Equals(value, "not_legal", StringComparison.Ordinal));
+
+            string frontType = FrontType(TypeLine);
+            IsDungeon = DungeonWord().IsMatch(frontType);
+            IsTokenType = frontType.StartsWith("Token", StringComparison.Ordinal);
+
             // Derived cube-design fields.
             MacroType = MacroTypeResolver.Resolve(TypeLine);
             ColorCategory = ColorCategoryClassifier.Classify(ColorIdentity);
             ManaPips = ManaPipsParser.CountColoredPips(ManaCost);
+        }
+
+        [GeneratedRegex(@"\bDungeon\b")]
+        private static partial Regex DungeonWord();
+
+        /// <summary>The type line cut before the first " // " (back face) and then before
+        /// the first " — " (subtypes).</summary>
+        private static string FrontType(string typeLine)
+        {
+            int slash = typeLine.IndexOf(" // ", StringComparison.Ordinal);
+            string front = slash >= 0 ? typeLine[..slash] : typeLine;
+            int dash = front.IndexOf(" — ", StringComparison.Ordinal);
+
+            return dash >= 0 ? front[..dash] : front;
         }
 
         /// <summary>Rules text for classification: the top-level

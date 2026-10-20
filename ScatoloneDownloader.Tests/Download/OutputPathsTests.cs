@@ -27,6 +27,7 @@ public sealed class OutputPathsTests : IDisposable
     public void Dispose()
     {
         OutputPaths.UseRoot(OriginalRoot);
+        OutputPaths.ResetLibrary();
 
         if (Directory.Exists(tempRoot))
         {
@@ -131,6 +132,38 @@ public sealed class OutputPathsTests : IDisposable
 
         Assert.Equal(Path.Combine(tempRoot, "Years", "2011", "Innistrad"), dir);
         Assert.True(Directory.Exists(dir));
+    }
+
+    [Fact]
+    public void UseLibrary_YearsAndAll_BuildYearSetUnderTheLibraryItself()
+    {
+        string library = Path.Combine(tempRoot, "Library");
+        Directory.CreateDirectory(library);
+        OutputPaths.UseLibrary(library);
+        Card delver = MakeCard("Delver of Secrets", set: "ISD", setName: "Innistrad", releasedAt: "2011-09-30");
+
+        string expected = Path.Combine(library, "2011", "Innistrad");
+
+        Assert.Equal(expected, OutputPaths.BuildCardDirectory(delver, Mode.Years, fileName: ""));
+        Assert.Equal(expected, OutputPaths.BuildCardDirectory(delver, Mode.All, fileName: ""));
+    }
+
+    [Fact]
+    public void UseLibrary_SetMode_StillBuildsUnderRootSets()
+    {
+        OutputPaths.UseLibrary(Path.Combine(tempRoot, "Library"));
+        Card delver = MakeCard("Delver of Secrets", set: "ISD", setName: "Innistrad", releasedAt: "2011-09-30");
+
+        Assert.Equal(Path.Combine(tempRoot, "Sets", "Innistrad"), OutputPaths.BuildCardDirectory(delver, Mode.Set, fileName: ""));
+    }
+
+    [Fact]
+    public void UseLibrary_BasePathsDoNotContainTheLibrary()
+    {
+        string library = Path.Combine(tempRoot, "Library");
+        OutputPaths.UseLibrary(library);
+
+        Assert.DoesNotContain(library, OutputPaths.BasePaths);
     }
 
     [Fact]

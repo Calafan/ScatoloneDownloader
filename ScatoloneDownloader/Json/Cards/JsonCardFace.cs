@@ -7,6 +7,9 @@ namespace ScatoloneDownloader.Json.Cards
         [JsonPropertyName("name")]
         public string? Name { get; set; }
 
+        [JsonPropertyName("oracle_id")]
+        public string? OracleId { get; set; }
+
         [JsonPropertyName("oracle_text")]
         public string? OracleText { get; set; }
 
