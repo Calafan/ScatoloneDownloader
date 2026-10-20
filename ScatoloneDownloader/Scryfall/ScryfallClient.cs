@@ -40,18 +40,27 @@ namespace ScatoloneDownloader.Scryfall
         // jumps (DST, NTP corrections) that a DateTime.Now-based gate would suffer.
         private long minNextRequestTickMs;
 
-        internal ScryfallClient()
+        // Every wait (throttle gate and retry backoff) goes through this, so tests
+        // can observe the delays and skip them. Production passes Task.Delay.
+        private readonly Func<TimeSpan, Task> delay;
+
+        internal ScryfallClient() : this(new HttpClient(), Task.Delay)
         {
-            httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
-            httpClient.DefaultRequestHeaders.Add("User-Agent", "ScatoloneDownloader");
         }
 
         /// <summary>Test seam: inject a custom handler (e.g. a stub that returns a
-        /// canned gzip JSONL stream) without touching the production path.</summary>
-        internal ScryfallClient(HttpMessageHandler handler)
+        /// canned gzip JSONL stream) and, optionally, a replacement for
+        /// <see cref="Task.Delay(TimeSpan)"/> that every throttle and backoff wait goes
+        /// through, without touching the production path.</summary>
+        internal ScryfallClient(HttpMessageHandler handler, Func<TimeSpan, Task>? delay = null)
+            : this(new HttpClient(handler), delay ?? Task.Delay)
         {
-            httpClient = new HttpClient(handler);
+        }
+
+        private ScryfallClient(HttpClient client, Func<TimeSpan, Task> delay)
+        {
+            httpClient = client;
+            this.delay = delay;
             httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
             httpClient.DefaultRequestHeaders.Add("User-Agent", "ScatoloneDownloader");
         }
@@ -62,7 +71,7 @@ namespace ScatoloneDownloader.Scryfall
 
             if (wait > 0)
             {
-                await Task.Delay((int)wait);
+                await delay(TimeSpan.FromMilliseconds(wait));
             }
 
             minNextRequestTickMs = Environment.TickCount64 + (long)MinRequestInterval.TotalMilliseconds;
@@ -155,7 +164,7 @@ namespace ScatoloneDownloader.Scryfall
                 {
                     if (attempt <= MaxRetries)
                     {
-                        await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt) * 0.5));
+                        await delay(TimeSpan.FromSeconds(Math.Pow(2, attempt) * 0.5));
                         continue;
                     }
 
@@ -171,10 +180,10 @@ namespace ScatoloneDownloader.Scryfall
 
                 if (transient && attempt <= MaxRetries)
                 {
-                    TimeSpan delay = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(Math.Pow(2, attempt) * 0.5);
+                    TimeSpan backoff = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(Math.Pow(2, attempt) * 0.5);
                     response.Dispose();
 
-                    await Task.Delay(delay);
+                    await delay(backoff);
                     continue;
                 }
 

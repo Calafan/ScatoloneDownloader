@@ -43,7 +43,7 @@ public sealed class GetJsonLinesAsyncTests
 
         byte[] gzBody = GzipJsonl([lightning, taiga, sea]);
 
-        using ScryfallClient client = new(new StubHandler(gzBody, HttpStatusCode.OK));
+        using ScryfallClient client = new(new StubHandler(gzBody, HttpStatusCode.OK), _ => Task.CompletedTask);
 
         List<Card> cards = [];
         await foreach (Card card in client.GetJsonLinesAsync<Card>("https://test/bulk", Options))
@@ -67,7 +67,7 @@ public sealed class GetJsonLinesAsyncTests
             ? SampleCard("Sol Ring", "LEB", "artifact")
             : SampleDoubleFace("Delver of Secrets", "ISD", "creature");
 
-        using ScryfallClient client = new(new StubHandler(GzipJsonl([target]), HttpStatusCode.OK));
+        using ScryfallClient client = new(new StubHandler(GzipJsonl([target]), HttpStatusCode.OK), _ => Task.CompletedTask);
 
         List<Card> cards = [];
         await foreach (Card c in client.GetJsonLinesAsync<Card>("https://test/bulk", Options))
@@ -95,7 +95,7 @@ public sealed class GetJsonLinesAsyncTests
             SampleCard("Beta", "LEA", "creature"),
         ]);
 
-        using ScryfallClient client = new(new StubHandler(body, HttpStatusCode.OK));
+        using ScryfallClient client = new(new StubHandler(body, HttpStatusCode.OK), _ => Task.CompletedTask);
 
         List<Card> cards = [];
         await foreach (Card c in client.GetJsonLinesAsync<Card>("https://test/bulk", Options))
@@ -111,7 +111,7 @@ public sealed class GetJsonLinesAsyncTests
     [Fact]
     public async Task Throws_HttpRequestException_On5xx()
     {
-        using ScryfallClient client = new(new StubHandler(Array.Empty<byte>(), HttpStatusCode.InternalServerError));
+        using ScryfallClient client = new(new StubHandler(Array.Empty<byte>(), HttpStatusCode.InternalServerError), _ => Task.CompletedTask);
 
         await Assert.ThrowsAsync<HttpRequestException>(async () =>
         {
