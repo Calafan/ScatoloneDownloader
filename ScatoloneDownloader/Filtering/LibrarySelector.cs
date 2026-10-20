@@ -5,8 +5,10 @@ namespace ScatoloneDownloader.Filtering
     /// <summary>
     /// The "library rules": reproduces how the hand-curated library was built. One
     /// printing per card (the earliest plain one), no funny/Vanguard/planar cards, no
-    /// card that is legal in no format (dungeons and token-type cards excepted), and a
-    /// fallback to the earliest variant for cards that exist only as a variant.
+    /// card that is legal in no format (dungeons and token-type cards excepted), no
+    /// creature token and only the token-layout cards of <see cref="KeptTokens"/> unless
+    /// tokens are requested, nothing not yet released, and a fallback to the earliest
+    /// variant for cards that exist only as a variant.
     /// <see cref="Select"/> applies the rules; <see cref="WithFallback"/> keeps the
     /// plain validation (used by <c>set</c> and <c>--no-rules</c>) and only adds the
     /// variant fallback.
@@ -14,15 +16,37 @@ namespace ScatoloneDownloader.Filtering
     internal static class LibrarySelector
     {
         /// <summary>
+        /// The token-layout cards the library keeps without tokens being requested, by
+        /// name (the user's list, 2026-10-20): the reminders of a rule — The Monarch, day
+        /// and night, the city's blessing, the Ring, speed — and the Treasure, Clue and
+        /// Food tokens. Dungeons (the Initiative's Undercity too) pass the token gate on
+        /// their type and the Role tokens have a flip layout, so neither is listed.
+        /// Creature tokens are not wanted; the other reminders (energy, poison,
+        /// experience, foretell, plot, emblems) were offered and not chosen.
+        /// </summary>
+        internal static readonly HashSet<string> KeptTokens = new(StringComparer.Ordinal)
+        {
+            "The Monarch",
+            "Day // Night",
+            "City's Blessing",
+            "The Ring // The Ring Tempts You",
+            "Start Your Engines! // Max Speed",
+            "Treasure",
+            "Clue",
+            "Food",
+        };
+
+        /// <summary>
         /// Library exclusions: funny and Vanguard set types, planar and Vanguard layouts,
-        /// and cards legal in no format. Dungeons and token-type cards are never legal
-        /// anywhere but are wanted, so they are exempt from the never-legal rule.
+        /// and cards legal in no format. Dungeons, token-type cards and the
+        /// <see cref="KeptTokens"/> are never legal anywhere but are wanted, so they are
+        /// exempt from the never-legal rule.
         /// </summary>
         internal static bool IsExcluded(Card c)
         {
             bool excludedSetType = c.SetType is "funny" or "vanguard";
             bool excludedLayout = c.Layout is "planar" or "vanguard";
-            bool neverLegalUnwanted = c.NeverLegal && !c.IsDungeon && !c.IsTokenType;
+            bool neverLegalUnwanted = c.NeverLegal && !c.IsDungeon && !c.IsTokenType && !KeptTokens.Contains(c.Name);
 
             return excludedSetType || excludedLayout || neverLegalUnwanted;
         }
@@ -149,22 +173,33 @@ namespace ScatoloneDownloader.Filtering
         /// fallback rank among the fallback candidates). The selection is global: callers
         /// filter by year after selecting, so a card first printed in 2010 and reprinted
         /// in 2024 is picked in 2010 and absent from a 2024 download.
+        /// <para>
+        /// Without <paramref name="tokens"/>, creature tokens are dropped (Spirit Sorcerer
+        /// Token has a normal layout, so the token gate alone lets it through) and the
+        /// <see cref="KeptTokens"/> pass the token gate. A printing released after
+        /// <paramref name="releasedBy"/> is dropped before the pick, so a preview never
+        /// displaces a printing already out; <c>null</c> keeps every printing.
+        /// </para>
         /// </summary>
-        internal static List<Card> Select(IEnumerable<Card> cards, bool reprints, bool tokens, bool lands)
+        internal static List<Card> Select(IEnumerable<Card> cards, bool reprints, bool tokens, bool lands, DateTime? releasedBy = null)
         {
-            List<Card> kept = cards.Where(c => !IsExcluded(c)).ToList();
+            List<Card> kept = cards.Where(c => !IsExcluded(c)
+                && (tokens || !c.IsCreatureToken)
+                && (releasedBy is null || c.ReleasedAt <= releasedBy)).ToList();
             List<Card> result = [];
+
+            bool Eligible(Card c) => CardFilter.IsDownloadable(c, reprints, tokens || KeptTokens.Contains(c.Name), lands);
 
             if (reprints)
             {
-                result.AddRange(kept.Where(c => CardFilter.IsDownloadable(c, reprints, tokens, lands)));
+                result.AddRange(kept.Where(Eligible));
                 return Sorted(result);
             }
 
             foreach (IGrouping<string, Card> group in kept.Where(c => !c.IsBasicLand).GroupBy(GroupKey))
             {
-                Card? pick = Best(group.Where(c => CardFilter.IsDownloadable(c, reprints, tokens, lands)), CompareStrict)
-                    ?? Best(group.Where(c => IsFallbackCandidate(c, tokens, lands)), CompareFallback);
+                Card? pick = Best(group.Where(Eligible), CompareStrict)
+                    ?? Best(group.Where(c => IsFallbackCandidate(c, tokens || KeptTokens.Contains(c.Name), lands)), CompareFallback);
 
                 if (pick != null)
                 {
@@ -173,7 +208,7 @@ namespace ScatoloneDownloader.Filtering
             }
 
             // Basic lands are exempt from one-per-card: every eligible printing stays.
-            result.AddRange(kept.Where(c => c.IsBasicLand && CardFilter.IsDownloadable(c, reprints, tokens, lands)));
+            result.AddRange(kept.Where(c => c.IsBasicLand && Eligible(c)));
 
             return Sorted(result);
         }

@@ -86,6 +86,16 @@ public sealed class LibrarySelectorTests
         Assert.Equal(expected, Make("A", typeLine: typeLine).IsTokenType);
     }
 
+    [Theory]
+    [InlineData("Token Enchantment Creature — Spirit Sorcerer", true)]
+    [InlineData("Token Artifact — Incubator // Token Artifact Creature — Phyrexian", false)]
+    [InlineData("Creature — Elf", false)]
+    [InlineData("Token Artifact — Treasure", false)]
+    public void IsCreatureToken_ReadsOnlyTheFrontTokenType(string typeLine, bool expected)
+    {
+        Assert.Equal(expected, Make("A", typeLine: typeLine).IsCreatureToken);
+    }
+
     // --- HasValidLayout -------------------------------------------------------
 
     [Fact]
@@ -142,6 +152,18 @@ public sealed class LibrarySelectorTests
     public void IsExcluded_KeepsNeverLegalTokenType()
     {
         Assert.False(LibrarySelector.IsExcluded(Make("A", typeLine: "Token Creature — Goblin", legalities: NotLegal())));
+    }
+
+    [Fact]
+    public void IsExcluded_KeepsNeverLegalKeptToken()
+    {
+        Assert.False(LibrarySelector.IsExcluded(Make("The Monarch", typeLine: "Card", legalities: NotLegal())));
+    }
+
+    [Fact]
+    public void IsExcluded_DropsNeverLegalUnlistedReminder()
+    {
+        Assert.True(LibrarySelector.IsExcluded(Make("Energy Reserve", typeLine: "Card", legalities: NotLegal())));
     }
 
     [Fact]
@@ -308,6 +330,76 @@ public sealed class LibrarySelectorTests
         Card funny = Make("Silly", oracle: "o", setType: "funny");
 
         Assert.Empty(LibrarySelector.Select([funny], false, false, false));
+    }
+
+    [Fact]
+    public void Select_DropsCreatureTokenOnANormalLayout()
+    {
+        Card spirit = Make("Spirit Sorcerer Token", oracle: "o", typeLine: "Token Enchantment Creature — Spirit Sorcerer", legalities: NotLegal());
+
+        Assert.Empty(LibrarySelector.Select([spirit], false, false, false));
+    }
+
+    [Fact]
+    public void Select_KeepsCreatureTokenWhenTokensAreRequested()
+    {
+        Card spirit = Make("Spirit Sorcerer Token", oracle: "o", typeLine: "Token Enchantment Creature — Spirit Sorcerer", legalities: NotLegal());
+
+        Assert.Single(LibrarySelector.Select([spirit], false, true, false));
+    }
+
+    [Fact]
+    public void Select_KeepsListedTokenOnATokenLayout()
+    {
+        Card monarch = Make("The Monarch", oracle: "o", layout: "token", typeLine: "Card", legalities: NotLegal());
+
+        Assert.Single(LibrarySelector.Select([monarch], false, false, false));
+    }
+
+    [Fact]
+    public void Select_ListedTokenTakesTheStrictPick()
+    {
+        // Through the fallback alone the earlier promo-set printing would win.
+        Card promo = Make("Treasure", id: "1", oracle: "o", layout: "token", typeLine: "Token Artifact — Treasure", released: "2015-01-01", setType: "promo");
+        Card plain = Make("Treasure", id: "2", oracle: "o", layout: "token", typeLine: "Token Artifact — Treasure", released: "2017-09-29", setType: "token");
+
+        Assert.Same(plain, Assert.Single(LibrarySelector.Select([promo, plain], false, false, false)));
+    }
+
+    [Fact]
+    public void Select_KeepsListedTokenThatExistsOnlyAsAVariant()
+    {
+        Card treasure = Make("Treasure", oracle: "o", layout: "token", typeLine: "Token Artifact — Treasure", borderColor: "borderless");
+
+        Assert.Single(LibrarySelector.Select([treasure], false, false, false));
+    }
+
+    [Fact]
+    public void Select_DropsUnlistedTokenOnATokenLayout()
+    {
+        Card blood = Make("Blood", oracle: "o", layout: "token", typeLine: "Token Artifact — Blood");
+
+        Assert.Empty(LibrarySelector.Select([blood], false, false, false));
+    }
+
+    [Fact]
+    public void Select_DropsAPrintingNotYetReleased()
+    {
+        Card preview = Make("Bolt", oracle: "o", released: "2027-04-09");
+
+        Assert.Empty(LibrarySelector.Select([preview], false, false, false, new DateTime(2026, 10, 20)));
+        Assert.Single(LibrarySelector.Select([preview], false, false, false));
+    }
+
+    [Fact]
+    public void Select_PreviewNeverDisplacesAReleasedPrinting()
+    {
+        // The strict rank prefers a non-promo set, so without the cut-off the
+        // unreleased plain printing would win and then be missing on disk.
+        Card promo = Make("Bolt", id: "1", oracle: "o", released: "2025-01-01", setType: "promo");
+        Card preview = Make("Bolt", id: "2", oracle: "o", released: "2027-04-09");
+
+        Assert.Same(promo, Assert.Single(LibrarySelector.Select([promo, preview], false, false, false, new DateTime(2026, 10, 20))));
     }
 
     [Fact]

@@ -1,3 +1,4 @@
+using ScatoloneDownloader.Download;
 using ScatoloneDownloader.Mtg;
 
 using Spectre.Console;
@@ -51,15 +52,23 @@ namespace ScatoloneDownloader.Cli.Cube
         /// <see cref="CardNameKey"/>, which recovers the names a Windows filename
         /// cannot spell (<c>Summon: Choco/Mog</c>, <c>Henzie "Toolbox" Torre</c>,
         /// <c>Fire // Ice</c>). Cards are indexed first-wins (case-insensitive),
-        /// mirroring the bulk's own printing order. When
-        /// <paramref name="warnUnmatched"/> is set, files with no match are
-        /// reported to the console (otherwise silently skipped).
+        /// mirroring the bulk's own printing order, but a printing from the set the
+        /// file's folder is named after wins first: a library file sits in
+        /// <c>&lt;year&gt;\&lt;set&gt;</c>, and the bulk lists tokens, front cards and
+        /// planes of the same name before the card itself (the Coruscation Mage token,
+        /// the Inferno front card — 26 library files went to the wrong object,
+        /// measured 2026-10-20). When <paramref name="warnUnmatched"/> is set, files
+        /// with no match are reported to the console (otherwise silently skipped).
         /// </summary>
         internal static List<(Card Card, string FilePath)> Match(
             IEnumerable<Card> cards, IEnumerable<string> pngFiles, bool warnUnmatched)
         {
             Dictionary<string, Card> cardsByName = new(StringComparer.OrdinalIgnoreCase);
             Dictionary<string, Card> cardsByKey = new(StringComparer.Ordinal);
+
+            // Keyed "<set folder>\<name or key>", the shape of a library file's path.
+            Dictionary<string, Card> cardsBySetName = new(StringComparer.OrdinalIgnoreCase);
+            Dictionary<string, Card> cardsBySetKey = new(StringComparer.OrdinalIgnoreCase);
 
             // A handful of distinct cards do collapse to the same key (tokens and
             // silver-border jokes such as "Waste Land" / "Wasteland"). Matching one
@@ -71,7 +80,11 @@ namespace ScatoloneDownloader.Cli.Cube
             {
                 cardsByName.TryAdd(card.Name, card);
 
+                string setFolder = OutputPaths.Sanitize(card.SetName);
                 string cardKey = CardNameKey.Collapse(card.Name);
+                cardsBySetName.TryAdd(setFolder + @"\" + card.Name, card);
+                cardsBySetKey.TryAdd(setFolder + @"\" + cardKey, card);
+
                 if (cardsByKey.TryGetValue(cardKey, out Card? indexed))
                 {
                     if (!string.Equals(indexed.Name, card.Name, StringComparison.OrdinalIgnoreCase))
@@ -90,8 +103,12 @@ namespace ScatoloneDownloader.Cli.Cube
             {
                 string fileName = Path.GetFileNameWithoutExtension(file);
                 string fileKey = CardNameKey.Collapse(fileName);
+                string folder = Path.GetFileName(Path.GetDirectoryName(file)) ?? string.Empty;
 
-                if (!cardsByName.TryGetValue(fileName, out Card? card) && !ambiguousKeys.Contains(fileKey))
+                if (!cardsBySetName.TryGetValue(folder + @"\" + fileName, out Card? card)
+                    && !cardsByName.TryGetValue(fileName, out card)
+                    && !ambiguousKeys.Contains(fileKey)
+                    && !cardsBySetKey.TryGetValue(folder + @"\" + fileKey, out card))
                 {
                     cardsByKey.TryGetValue(fileKey, out card);
                 }

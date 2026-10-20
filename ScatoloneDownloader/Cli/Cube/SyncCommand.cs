@@ -54,7 +54,7 @@ namespace ScatoloneDownloader.Cli.Cube
             List<Card> bulk = await manager.GetDefaultCards();
 
             // The same selection `all --library` and `years --library` make.
-            List<Card> selected = LibrarySelector.Select(bulk, reprints: false, tokens: false, lands: false);
+            List<Card> selected = LibrarySelector.Select(bulk, reprints: false, tokens: false, lands: false, releasedBy: DateTime.Today);
 
             // The expected file is the path `years --library` would write.
             OutputPaths.UseLibrary(source);

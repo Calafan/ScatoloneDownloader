@@ -137,7 +137,9 @@ the first line instead of as a mysteriously empty store.
 
 1. **`register [--root dir] [-m metadata] [--dry-run]`** — adds the library's
    new cards to the metadata directory. It matches every PNG under
-   `<root>\Source` to a Scryfall card by name, and for each `oracle_id` the store
+   `<root>\Source` to a Scryfall card by name — a printing from the set the
+   file's folder is named after first, since the bulk lists tokens and front
+   cards of the same name earlier — and for each `oracle_id` the store
    does not hold yet it adds an entry with the card's name and printing id,
    rating `0`, no status, no effects and no `reviewedAt`. It **never modifies an
    existing entry** (not its name, `scryfallId`, rating or anything else), and

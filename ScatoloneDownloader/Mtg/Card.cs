@@ -99,6 +99,11 @@ namespace ScatoloneDownloader.Mtg
         /// dash) starts with "Token".</summary>
         internal bool IsTokenType { get; init; }
 
+        /// <summary>True when the front type line is a token type and also says Creature
+        /// ("Token Enchantment Creature — Spirit Sorcerer"). A back face does not count:
+        /// the Incubator token turns into a creature only on its back.</summary>
+        internal bool IsCreatureToken { get; init; }
+
         // --- Cube management fields ------------------------------------------
         // Rating/Status/Effects are the tagger-authored evaluation: loaded from
         // the git-tracked metadata directory's rating-tier files by
@@ -190,6 +195,7 @@ namespace ScatoloneDownloader.Mtg
             string frontType = FrontType(TypeLine);
             IsDungeon = DungeonWord().IsMatch(frontType);
             IsTokenType = frontType.StartsWith("Token", StringComparison.Ordinal);
+            IsCreatureToken = IsTokenType && frontType.Contains("Creature", StringComparison.Ordinal);
 
             // Derived cube-design fields.
             MacroType = MacroTypeResolver.Resolve(TypeLine);

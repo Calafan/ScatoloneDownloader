@@ -7,8 +7,8 @@ namespace ScatoloneDownloader.Tests.Cli;
 /// <summary>
 /// Covers the image-to-card name matcher shared by register/tag/report
 /// (#19): normalized-name matching, DFC underscore handling,
-/// first-wins name dedup, and skipping unmatched files. Files need not exist —
-/// the matcher only parses the filename.
+/// first-wins name dedup, the set-folder preference, and skipping unmatched
+/// files. Files need not exist — the matcher only parses the path.
 /// </summary>
 public sealed class CardImageMatcherTests
 {
@@ -84,7 +84,45 @@ public sealed class CardImageMatcherTests
         Assert.Equal(["Black Lotus", "Ancestral Recall"], matched.Select(m => m.Card.Name));
     }
 
-    private static Card MakeCard(string id, string name)
+    [Fact]
+    public void Match_PrintingFromTheFileSetFolder_WinsOverAnEarlierObject()
+    {
+        // The bulk lists the Bloomburrow token before the card; the file sits in
+        // the card's set folder, so the card wins.
+        Card token = MakeCard(id: "token", name: "Coruscation Mage", setName: "Bloomburrow Tokens");
+        Card mage = MakeCard(id: "card", name: "Coruscation Mage", setName: "Bloomburrow");
+        string[] files = [@"C:\Source\2024\Bloomburrow\Coruscation Mage.png"];
+
+        List<(Card Card, string FilePath)> matched = CardImageMatcher.Match([token, mage], files, warnUnmatched: false);
+
+        Assert.Same(mage, Assert.Single(matched).Card);
+    }
+
+    [Fact]
+    public void Match_SetFolderIsTheSanitizedSetName()
+    {
+        Card frontCard = MakeCard(id: "front", name: "Inferno", setName: "Foundations Front Cards");
+        Card inferno = MakeCard(id: "card", name: "Inferno", setName: "Duel Decks: Elves vs. Goblins");
+        string[] files = [@"C:\Source\2007\Duel Decks Elves vs. Goblins\Inferno.png"];
+
+        List<(Card Card, string FilePath)> matched = CardImageMatcher.Match([frontCard, inferno], files, warnUnmatched: false);
+
+        Assert.Same(inferno, Assert.Single(matched).Card);
+    }
+
+    [Fact]
+    public void Match_CollapsedKeyAlsoPrefersTheFileSetFolder()
+    {
+        Card frontCard = MakeCard(id: "front", name: "Fire // Ice", setName: "Front Cards");
+        Card fireIce = MakeCard(id: "card", name: "Fire // Ice", setName: "Apocalypse");
+        string[] files = [@"C:\Source\2001\Apocalypse\Fire_Ice.png"];
+
+        List<(Card Card, string FilePath)> matched = CardImageMatcher.Match([frontCard, fireIce], files, warnUnmatched: false);
+
+        Assert.Same(fireIce, Assert.Single(matched).Card);
+    }
+
+    private static Card MakeCard(string id, string name, string setName = "Alpha")
     {
         JsonCard json = new()
         {
@@ -98,7 +136,7 @@ public sealed class CardImageMatcherTests
             Games = ["paper"],
             FrameEffects = [],
             Set = "LEA",
-            SetName = "Alpha",
+            SetName = setName,
             SetType = "core",
             BorderColor = "black",
             Cmc = 1,

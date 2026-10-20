@@ -226,7 +226,7 @@ namespace ScatoloneDownloader.Cli.Download
         {
             if (libraryRules && req.Mode == Mode.All)
             {
-                List<Card> selected = LibrarySelector.Select(await getManager.GetDefaultCards(), req.Reprints, req.Tokens, req.Lands);
+                List<Card> selected = LibrarySelector.Select(await getManager.GetDefaultCards(), req.Reprints, req.Tokens, req.Lands, DateTime.Today);
 
                 return string.IsNullOrEmpty(req.File)
                     ? selected
@@ -237,7 +237,7 @@ namespace ScatoloneDownloader.Cli.Download
             {
                 AnsiConsole.MarkupLine("Using the Default Cards bulk to apply the library rules.");
 
-                List<Card> selected = LibrarySelector.Select(await getManager.GetDefaultCards(), req.Reprints, req.Tokens, req.Lands);
+                List<Card> selected = LibrarySelector.Select(await getManager.GetDefaultCards(), req.Reprints, req.Tokens, req.Lands, DateTime.Today);
 
                 return GetManager.FilterByYear(selected, [.. Required(req.Years, req.Mode, "years")]);
             }
