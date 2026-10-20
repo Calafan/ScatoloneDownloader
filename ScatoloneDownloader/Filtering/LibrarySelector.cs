@@ -18,9 +18,10 @@ namespace ScatoloneDownloader.Filtering
         /// <summary>
         /// The token-layout cards the library keeps without tokens being requested, by
         /// name (the user's list, 2026-10-20): the reminders of a rule — The Monarch, day
-        /// and night, the city's blessing, the Ring, speed — and the Treasure, Clue and
-        /// Food tokens. Dungeons (the Initiative's Undercity too) pass the token gate on
-        /// their type and the Role tokens have a flip layout, so neither is listed.
+        /// and night, the city's blessing, the Ring, speed — and the predefined
+        /// non-creature tokens, each named after its own subtype (Treasure, Clue, Food
+        /// and the like). Dungeons (the Initiative's Undercity too) pass the token gate
+        /// on their type and the Role tokens have a flip layout, so neither is listed.
         /// Creature tokens are not wanted; the other reminders (energy, poison,
         /// experience, foretell, plot, emblems) were offered and not chosen.
         /// </summary>
@@ -34,6 +35,17 @@ namespace ScatoloneDownloader.Filtering
             "Treasure",
             "Clue",
             "Food",
+            "Blood",
+            "Gold",
+            "Map",
+            "Powerstone",
+            "Junk",
+            "Incubator // Phyrexian",
+            "Shard",
+            "Lander",
+            "Mutagen",
+            "Vibranium",
+            "Heartwood",
         };
 
         /// <summary>

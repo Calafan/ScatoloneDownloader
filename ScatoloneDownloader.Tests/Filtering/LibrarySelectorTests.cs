@@ -377,9 +377,9 @@ public sealed class LibrarySelectorTests
     [Fact]
     public void Select_DropsUnlistedTokenOnATokenLayout()
     {
-        Card blood = Make("Blood", oracle: "o", layout: "token", typeLine: "Token Artifact — Blood");
+        Card cell = Make("Etherium Cell", oracle: "o", layout: "token", typeLine: "Token Artifact");
 
-        Assert.Empty(LibrarySelector.Select([blood], false, false, false));
+        Assert.Empty(LibrarySelector.Select([cell], false, false, false));
     }
 
     [Fact]

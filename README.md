@@ -70,8 +70,9 @@ plain one (non-promo set, no promo treatment); a card that exists only as a
 variant takes its earliest variant. Funny and Vanguard sets, planes, and cards
 legal in no format are left out, except dungeons and token-type cards. Without
 `--tokens` creature tokens stay out and only a short list of tokens comes in: The
-Monarch, Day // Night, City's Blessing, The Ring, Start Your Engines!, Treasure,
-Clue and Food (`LibrarySelector.KeptTokens`), besides dungeons and Role tokens.
+Monarch, Day // Night, City's Blessing, The Ring, Start Your Engines! and the
+predefined tokens such as Treasure, Clue and Food (`LibrarySelector.KeptTokens`),
+besides dungeons and Role tokens.
 Cards of a set not yet released are left out until it is. The pick
 is global, so a card first printed in 2010 and reprinted in 2024 appears in the
 2010 download only. `--no-rules` restores the previous behaviour (every valid
