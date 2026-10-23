@@ -106,7 +106,7 @@
             [CardEffect.Burn] =
                 "Damage or life loss aimed at a FACE, however counted and however slow: \"damage equal to the number "
                 + "of Swamps\", an upkeep tax, life PAID to stop the card, two or more life, one point AGAIN and "
-                + "again, a hasty token gone at end step. Damage at a creature is Removal; \"any target\" is both. "
+                + "again, a hasty attacker gone at end step. Damage at a creature is Removal; \"any target\" is both. "
                 + "Not damage to YOURSELF, nor a TOKEN's own ability.",
 
             [CardEffect.Sacrifice] =

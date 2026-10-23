@@ -6659,14 +6659,9 @@ public sealed class EffectClassifierTests
         + "than only once.\n+1: Up to one target creature can't attack or block until your next turn.\n0: Draw "
         + "a card.\n−2: Create a 2/2 colorless Drone artifact creature token with deathtouch and \"When this "
         + "token leaves the battlefield, each opponent loses 2 life and you gain 2 life.\"")]
-    // A subject that runs past the window without "who" stays out.
-    [InlineData("Scarring Memories", "Sorcery — Lesson",
-        "You may cast this spell as though it had flash if you control an attacking legendary creature.\n"
-        + "Target opponent sacrifices a creature of their choice, discards a card, and loses 3 life.")]
-    // A token copy given haste is not the Viashino's burn.
-    [InlineData("Kiki-Jiki, Mirror Breaker", "Legendary Creature — Goblin Shaman",
-        "Haste\n{T}: Create a token that's a copy of target nonlegendary creature you control, except it has "
-        + "haste. Sacrifice it at the beginning of the next end step.")]
+    // Scarring Memories and Kiki-Jiki were here until 2026-10-23, when the list
+    // that ends in a life loss and the hasty token copy were both ruled Burn —
+    // see Classify_TheOctober23BurnPass_IsBurn.
     public void Classify_TheOctoberBurnMisreadings_AreNotBurn(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
@@ -7841,7 +7836,7 @@ public sealed class EffectClassifierTests
     // ONE card off the top, into your hand, every turn. The put-into-hand rule
     // wanted a count where these cards write none, and it is the same second
     // hand either way (2026-09-21). 13 reviewed cards, 11 tagged.
-    [InlineData("Darkstar Augur", "Token Creature — Bat Warlock",
+    [InlineData("Darkstar Augur", "Creature — Bat Warlock",
         "Flying\nAt the beginning of your upkeep, reveal the top card of your library and put that card "
         + "into your hand. You lose life equal to its mana value.")]
     [InlineData("Traveling Botanist", "Creature — Dog Scout",
@@ -9133,8 +9128,6 @@ public sealed class EffectClassifierTests
         "Whenever you cast your first instant or sorcery spell each turn, exile an instant or sorcery card at "
         + "random from your graveyard. Then copy each card exiled with this enchantment. You may cast any "
         + "number of the copies without paying their mana costs.")]
-    [InlineData("Sicarian Infiltrator", "Token Artifact Creature — Human Soldier",
-        "When Sicarian Infiltrator enters the battlefield, draw a card.")]
     [InlineData("Arcade Gannon", "Legendary Creature — Human Doctor",
         "{T}: Draw a card, then discard a card. Put a quest counter on Arcade Gannon.\nFor Auld Lang Syne — "
         + "Once during each of your turns, you may cast an artifact or Human spell from your graveyard with "
@@ -10061,6 +10054,193 @@ public sealed class EffectClassifierTests
     public void Classify_TheOctober16BurnPass_IsNotBurn(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
+    // Ruled 2026-10-23: haste and gone at the next end step is Burn for the card
+    // itself and for every token or copy it makes ("tutto allineato"), which
+    // overturned the Kiki-Jiki exclusion of 2026-10-14: a copy (Kiki-Jiki), a
+    // plain hasty token (Lagomos, Chandra), the populate token (Determined
+    // Iteration), encore and unearth and blitz handed to other cards (Graywater's
+    // Fixer, Sedris, Henzie). A life loss at the end of a list is Burn (Dusk
+    // Mangler, Scarring Memories corrected with it). Readings of the same day: a
+    // source's controller in a punisher, damage equal to a count divided among any
+    // number of targets, a who clause before equal to, an emblem handed to an
+    // opponent, an upkeep drain handed to an enchanted permanent, and/or players,
+    // a creature token or player.
+    [InlineData("Kiki-Jiki, Mirror Breaker", "Legendary Creature — Goblin Shaman",
+        "Haste\n{T}: Create a token that's a copy of target nonlegendary creature you control, except it has "
+        + "haste. Sacrifice it at the beginning of the next end step.")]
+    [InlineData("Lagomos, Hand of Hatred", "Legendary Creature — Human Shaman",
+        "At the beginning of combat on your turn, create a 2/1 red Elemental creature token with trample and "
+        + "haste. Sacrifice it at the beginning of the next end step.\n{T}: Search your library for a card, put "
+        + "it into your hand, then shuffle. Activate only if five or more creatures died this turn.")]
+    [InlineData("Chandra, Acolyte of Flame", "Legendary Planeswalker — Chandra",
+        "0: Put a loyalty counter on each red planeswalker you control.\n0: Create two 1/1 red Elemental "
+        + "creature tokens. They gain haste. Sacrifice them at the beginning of the next end step.\n−2: You may "
+        + "cast target instant or sorcery card with mana value 3 or less from your graveyard. If that spell "
+        + "would be put into your graveyard, exile it instead.")]
+    [InlineData("Determined Iteration", "Enchantment",
+        "At the beginning of combat on your turn, populate. The token created this way gains haste. Sacrifice "
+        + "it at the beginning of the next end step. (To populate, create a token that's a copy of a creature "
+        + "token you control.)")]
+    [InlineData("Graywater's Fixer", "Creature — Lizard Mercenary",
+        "Each outlaw creature card in your graveyard has encore {X}, where X is its mana value. (Exile it and "
+        + "pay its encore cost: For each opponent, create a token copy that attacks that opponent this turn if "
+        + "able. They gain haste. Sacrifice them at the beginning of the next end step. Activate only as a "
+        + "sorcery.)")]
+    [InlineData("Sedris, the Traitor King", "Legendary Creature — Zombie Warrior",
+        "Each creature card in your graveyard has unearth {2}{B}. ({2}{B}: Return the card to the "
+        + "battlefield. The creature gains haste. Exile it at the beginning of the next end step or if it would "
+        + "leave the battlefield. Unearth only as a sorcery.)")]
+    [InlineData("Henzie \"Toolbox\" Torre", "Legendary Creature — Devil Rogue",
+        "Each creature spell you cast with mana value 4 or greater has blitz. The blitz cost is equal to its "
+        + "mana cost. (You may choose to cast that spell for its blitz cost. If you do, it gains haste and "
+        + "\"When this creature dies, draw a card.\" Sacrifice it at the beginning of the next end step.)\nBlitz "
+        + "costs you pay cost {1} less for each time you've cast your commander from the command zone this "
+        + "game.")]
+    [InlineData("Dusk Mangler", "Creature — Horror",
+        "As an additional cost to cast this spell, sacrifice a creature, discard a card, or pay 4 life.\nWhen "
+        + "this creature enters, each opponent sacrifices a creature of their choice, discards a card, and "
+        + "loses 4 life.")]
+    [InlineData("Scarring Memories", "Sorcery — Lesson",
+        "You may cast this spell as though it had flash if you control an attacking legendary "
+        + "creature.\nTarget opponent sacrifices a creature of their choice, discards a card, and loses 3 life.")]
+    [InlineData("Archfiend of Spite", "Creature — Demon",
+        "Flying\nWhenever a source an opponent controls deals damage to this creature, that source's "
+        + "controller loses that much life unless they sacrifice that many permanents of their choice.\nMadness "
+        + "{3}{B}{B} (If you discard this card, discard it into exile. When you do, cast it for its madness "
+        + "cost or put it into your graveyard.)")]
+    [InlineData("Orca, Siege Demon", "Legendary Creature — Demon",
+        "Trample\nWhenever another creature dies, put a +1/+1 counter on Orca.\nWhen Orca dies, it deals damage "
+        + "equal to its power divided as you choose among any number of targets.")]
+    [InlineData("Spiteful Repossession", "Sorcery",
+        "Spiteful Repossession deals damage to each opponent who controls more lands than you equal to the "
+        + "difference. Then create a number of Treasure tokens equal to the damage dealt this way.")]
+    [InlineData("Chandra, Awakened Inferno", "Legendary Planeswalker — Chandra",
+        "This spell can't be countered.\n+2: Each opponent gets an emblem with \"At the beginning of your "
+        + "upkeep, this emblem deals 1 damage to you.\"\n−3: Chandra deals 3 damage to each non-Elemental "
+        + "creature.\n−X: Chandra deals X damage to target creature or planeswalker. If a permanent dealt damage "
+        + "this way would die this turn, exile it instead.")]
+    [InlineData("Clawing Torment", "Enchantment — Aura",
+        "Enchant artifact or creature\nAs long as enchanted permanent is a creature, it gets -1/-1 and can't "
+        + "block.\nEnchanted permanent has \"At the beginning of your upkeep, you lose 1 life.\"")]
+    [InlineData("Soulfire Eruption", "Sorcery",
+        "Choose any number of target creatures, planeswalkers, and/or players. For each of them, exile the "
+        + "top card of your library, then Soulfire Eruption deals damage equal to that card's mana value to "
+        + "that permanent or player. You may play the exiled cards until the end of your next turn.")]
+    [InlineData("Coalborn Entity", "Creature — Elemental",
+        "{2}{R}: This creature deals 1 damage to target creature token, player, or planeswalker.")]
+    public void Classify_TheOctober23BurnPass_IsBurn(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
+    // Ruled 2026-10-23 with it: a creature the card only TAKES, from a graveyard
+    // or a hand, keeps its Reanimate or Cheat and is not burn ("solo ciò che la
+    // carta crea o è"). The shield that counters a spell unless its player pays
+    // life is Parnesse's Protection, as ward is. "If it has unearth" grants
+    // nothing, an emblem you get is yours, and one point at the end of a list
+    // stays under the threshold.
+    [InlineData("Corpse Dance", "Instant",
+        "Buyback {2} (You may pay an additional {2} as you cast this spell. If you do, put this card into "
+        + "your hand as it resolves.)\nReturn the top creature card of your graveyard to the battlefield. That "
+        + "creature gains haste until end of turn. Exile it at the beginning of the next end step.")]
+    [InlineData("Through the Breach", "Instant — Arcane",
+        "You may put a creature card from your hand onto the battlefield. That creature gains haste. "
+        + "Sacrifice that creature at the beginning of the next end step.\nSplice onto Arcane {2}{R}{R} (As you "
+        + "cast an Arcane spell, you may reveal this card from your hand and pay its splice cost. If you do, "
+        + "add this card's effects to that spell.)")]
+    [InlineData("Parnesse, the Subtle Brush", "Legendary Creature — Vampire Wizard",
+        "Whenever you or a permanent you control becomes the target of a spell or ability an opponent "
+        + "controls, counter that spell or ability unless that player pays 4 life.\nWhenever you copy a spell, "
+        + "up to one target opponent may also copy that spell. They may choose new targets for that copy.")]
+    [InlineData("Meticulous Excavation", "Enchantment",
+        "{2}{W}: Return target permanent you control to its owner's hand. If it has unearth, instead exile "
+        + "it, then return that card to its owner's hand. Activate only during your turn.")]
+    [InlineData("Ajani Steadfast", "Legendary Planeswalker — Ajani",
+        "+1: Until end of turn, up to one target creature gets +1/+1 and gains first strike, vigilance, and "
+        + "lifelink.\n−2: Put a +1/+1 counter on each creature you control and a loyalty counter on each other "
+        + "planeswalker you control.\n−7: You get an emblem with \"If a source would deal damage to you or a "
+        + "planeswalker you control, prevent all but 1 of that damage.\"")]
+    [InlineData("Mind Drain", "Sorcery",
+        "Target opponent discards two cards, mills a card, and loses 1 life. You gain 1 life. (To mill a "
+        + "card, a player puts the top card of their library into their graveyard.)")]
+    public void Classify_TheOctober23BurnPass_IsNotBurn(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
+    // The same ruling by KEYWORD, because these four print unearth, blitz, encore
+    // and dash without the reminder text. Mask of the Jadecrafter's unearth
+    // returns an artifact nobody attacks with, so the keyword asks for a creature.
+    [InlineData("Phyrexian Dragon Engine", "Artifact Creature — Phyrexian Dragon",
+        "Double strike\nWhen this creature enters from your graveyard, you may discard your hand. If you do, "
+        + "draw three cards.\nUnearth {3}{R}{R}\n(Melds with Mishra, Claimed by Gix.)")]
+    [InlineData("Ziatora's Envoy", "Creature — Lizard Warrior",
+        "Trample\nWhenever this creature deals combat damage to a player, look at the top card of your "
+        + "library. You may play a land from the top of your library or cast a spell with mana value less than "
+        + "or equal to the damage dealt from the top of your library without paying its mana cost. If you "
+        + "don't, put that card into your hand.\nBlitz {2}{B}{R}{G}")]
+    [InlineData("Broodmate Tyrant", "Creature — Dragon",
+        "Flying\nWhen this creature enters, create a 5/5 red Dragon creature token with flying.\nEncore "
+        + "{5}{B}{R}{G}")]
+    [InlineData("Death-Greeter's Champion", "Creature — Human Warrior",
+        "Dash {3}{R} (You may cast this spell for its dash cost. If you do, it gains haste, and it's returned "
+        + "from the battlefield to its owner's hand at the beginning of the next end step.)\nBackup 1 (When this "
+        + "creature enters, put a +1/+1 counter on target creature. If that's another creature, it gains the "
+        + "following ability until end of turn.)\nDouble strike")]
+    [InlineData("Mask of the Jadecrafter", "Artifact",
+        "{X}, {T}, Sacrifice this artifact: Create an X/X colorless Golem artifact creature token. Activate "
+        + "only as a sorcery.\nUnearth {2}{G} ({2}{G}: Return this card from your graveyard to the battlefield. "
+        + "Exile it at the beginning of the next end step or if it would leave the battlefield. Unearth only as "
+        + "a sorcery.)")]
+    public void Classify_AHastyAndGoneKeyword_IsBurnOnlyOnACreature(string name, string typeLine, string oracle)
+    {
+        string keyword = name switch
+        {
+            "Phyrexian Dragon Engine" or "Mask of the Jadecrafter" => "Unearth",
+            "Ziatora's Envoy" => "Blitz",
+            "Broodmate Tyrant" => "Encore",
+            _ => "Dash",
+        };
+        bool creature = typeLine.Contains("Creature", StringComparison.Ordinal);
+
+        Assert.Equal(creature, EffectClassifier.Classify(MakeCard(name, typeLine, oracle, [keyword])).HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
+    // A card nobody casts carries no tags (2026-10-23): a token, a dungeon, an
+    // emblem, a designation. 29 reviewed, all untagged; Treasure's Ramp is the
+    // Ramp of the card that makes it.
+    [InlineData("Treasure", "Token Artifact — Treasure",
+        "{T}, Sacrifice this token: Add one mana of any color.")]
+    [InlineData("The Ring // The Ring Tempts You", "Emblem // Card",
+        "Your Ring-bearer is legendary and can't be blocked by creatures with greater power.\nWhenever your "
+        + "Ring-bearer attacks, draw a card, then discard a card.\nWhenever your Ring-bearer becomes blocked by "
+        + "a creature, that creature's controller sacrifices it at end of combat.\nWhenever your Ring-bearer "
+        + "deals combat damage to a player, each opponent loses 3 life.\nAs the Ring tempts you, you get an "
+        + "emblem named The Ring if you don't have one. Then your emblem gains its next ability and you choose "
+        + "a creature you control to become or remain your Ring-bearer.\n• The Ring can tempt you even if you "
+        + "don't control a creature.\n• The Ring gains its abilities in order from top to bottom. Once it gains "
+        + "an ability, it has that ability for the rest of the game.\n• Each time the Ring tempts you, you must "
+        + "choose a creature if you control one.\n• Each player can have only one emblem named The Ring and only "
+        + "one Ring-bearer at a time.")]
+    [InlineData("The Monarch", "Card",
+        "At the beginning of your end step, draw a card.\nWhenever a creature deals combat damage to you, its "
+        + "controller becomes the monarch.")]
+    [InlineData("Lost Mine of Phandelver", "Dungeon",
+        "Cave Entrance — Scry 1. (Leads to: Goblin Lair, Mine Tunnels)\nGoblin Lair — Create a 1/1 red Goblin "
+        + "creature token. (Leads to: Storeroom, Dark Pool)\nMine Tunnels — Create a Treasure token. (Leads to: "
+        + "Dark Pool, Fungi Cavern)\nStoreroom — Put a +1/+1 counter on target creature. (Leads to: Temple of "
+        + "Dumathoin)\nDark Pool — Each opponent loses 1 life and you gain 1 life. (Leads to: Temple of "
+        + "Dumathoin)\nFungi Cavern — Target creature gets -4/-0 until your next turn. (Leads to: Temple of "
+        + "Dumathoin)\nTemple of Dumathoin — Draw a card.")]
+    public void Classify_AReferenceCard_HasNoTags(string name, string typeLine, string oracle)
+    {
+        Assert.Equal(CardEffect.None, EffectClassifier.Classify(MakeCard(name, typeLine, oracle)));
     }
 
     [Theory]

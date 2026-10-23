@@ -1487,14 +1487,6 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex ControllerExilesThatManyAndPlays = Rx(
             @"its controller may exile that many cards from the top of their library\. they may play those cards");
 
-        // A printed Token card whose body draws as it enters: Sicarian
-        // Infiltrator, tagged by hand. The token is made for free by the card
-        // that makes it, so its cantrip is a card the maker did not pay for.
-        // Read 2026-10-16: 1 reviewed Token card draws on entering, 1 tagged,
-        // and no unreviewed one does.
-        private static readonly Regex TokenCardDrawsOnEntering = Rx(
-            @"^when [^\n,]{0,60} enters(?: the battlefield)?, draw a card\.$", RegexOptions.Multiline);
-
         // Mill a few and take TWO back, once: Greenhouse // Rickety Gazebo
         // ("return up to two permanent cards from among them"), tagged by hand.
         // Read 2026-10-16. A one-shot that keeps ONE (Cache Grab, Town Greeter,

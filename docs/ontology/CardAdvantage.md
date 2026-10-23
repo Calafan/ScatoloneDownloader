@@ -356,4 +356,6 @@ cascade granted beside mana (Bigger on the Inside; the Vehicles, Smoldering Stag
 stay out); gravestorm and a Clue (Follow the Bodies); "that many" exiled by its controller and
 played (Expedited Inheritance); a combat trigger closing on a draw (Éowyn, Shieldmaiden; Galadriel,
 Elven-Queen); the copies Arcane Bombardment casts; a Token card that draws on entering (Sicarian
-Infiltrator, 1 of 1). Left as known disagreements: Lich, Innocent Bystander.
+Infiltrator, 1 of 1 — WITHDRAWN 2026-10-23: it read the token printing the store held until the
+set-aware re-key of 2026-10-20, and a printed token now carries no tags at all, see `CardEffect`).
+Left as known disagreements: Lich, Innocent Bystander.

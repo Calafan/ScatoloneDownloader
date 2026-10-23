@@ -58,7 +58,10 @@ namespace ScatoloneDownloader.Cube
             // and Invasion of Regatha's "another target BATTLE OR opponent".
             + @"|(?:another )?target battle or opponent"
             // 2026-10-16: Aurelia, the Law Above's "to each of your opponents".
-            + @"|each of your opponents)";
+            + @"|each of your opponents"
+            // 2026-10-23: Coalborn Entity's "target creature token, player, or
+            // planeswalker".
+            + @"|target creature token, player)";
 
         /// <summary>The players a life-loss clause can name, with room for the
         /// relative clause the modern templating puts between the subject and
@@ -69,7 +72,9 @@ namespace ScatoloneDownloader.Cube
         /// "who" or "dealt" may run longer (Gollum, Obsessed Stalker's "each
         /// opponent DEALT COMBAT DAMAGE THIS GAME BY A CREATURE NAMED …", 2026-10-14);
         /// widening every subject to 90 instead reached Scarring Memories'
-        /// "sacrifices …, discards a card, and loses 3 life", untagged. "Its
+        /// "sacrifices …, discards a card, and loses 3 life", then untagged and
+        /// ruled Burn on 2026-10-23 — that list has a rule of its own in the
+        /// Burn table, so the subjects stay at 45. "Its
         /// OWNER" joined the same day, for a spell cast from an opponent's
         /// library (The Ruinous Powers). "Half their life" is read apart, with a
         /// narrower subject list — see the Burn table.</summary>
@@ -144,6 +149,11 @@ namespace ScatoloneDownloader.Cube
         /// veto at the top of <see cref="Classify"/>.</summary>
         private static readonly Regex LieutenantAbility = Rx(@"^lieutenant — [^\n]*", RegexOptions.Multiline);
 
+        /// <summary>The front type line of a card nobody casts: a token, a
+        /// dungeon, an emblem or a designation ("Card"). See the veto at the
+        /// top of <see cref="Classify"/>.</summary>
+        private static readonly Regex ReferenceCard = Rx(@"^(?:token|dungeon|emblem|card)\b");
+
         /// <summary>Proposes the effect flags for a card from its
         /// <see cref="Card.OracleText"/> and <see cref="Card.Keywords"/>. Returns
         /// <see cref="CardEffect.None"/> when nothing matches (leave it untagged).</summary>
@@ -167,9 +177,17 @@ namespace ScatoloneDownloader.Cube
             // A printed ROLE token is the same: the reference card for a token
             // another card makes, never cast. Its +1/+1 is the Buff of the card
             // that makes it (GivesARole). Five reviewed, all five untagged
-            // (Monster // Sorcerer, Wicked // Cursed, …; 2026-10-14). Other
-            // printed tokens keep their tags.
-            if ((card.TypeLine ?? string.Empty).Contains("Aura Role", StringComparison.OrdinalIgnoreCase))
+            // (Monster // Sorcerer, Wicked // Cursed, …; 2026-10-14).
+            // So is every other reference card the library keeps, measured
+            // 2026-10-23: the tokens (Treasure, Blood, Map), the dungeons, the
+            // emblem of The Ring and the designations (The Monarch, City's
+            // Blessing). 29 reviewed, all 29 untagged, and 16 of them had
+            // proposals — Treasure's Ramp is the Ramp of the card that makes it.
+            // The CardAdvantage rule for a printed Token card that draws as it
+            // enters (2026-10-16) went with this veto: it read the token
+            // printing of Sicarian Infiltrator, which the store held until the
+            // set-aware re-key of 2026-10-20 put the card itself in its place.
+            if (ReferenceCard.IsMatch(card.TypeLine ?? string.Empty))
             {
                 return CardEffect.None;
             }
@@ -687,7 +705,8 @@ namespace ScatoloneDownloader.Cube
             {
                 string itsOwnText = Quoted.Replace(text, " ");
 
-                if (GoneAtEndOfTheTurn.IsMatch(itsOwnText) && Hasty.IsMatch(itsOwnText))
+                if ((GoneAtEndOfTheTurn.IsMatch(itsOwnText) && Hasty.IsMatch(itsOwnText))
+                    || card.Keywords?.Any(HastyAndGoneKeywords.Contains) == true)
                 {
                     result |= CardEffect.Burn;
                 }
@@ -877,8 +896,6 @@ namespace ScatoloneDownloader.Cube
                 || EntersSacrificeThenDraws.IsMatch(text)
                 || MillsAndTakesTwoBack.IsMatch(text)
                 || AttackRevealsUntilIntoHand.IsMatch(text)
-                || ((card.TypeLine ?? string.Empty).StartsWith("Token", StringComparison.OrdinalIgnoreCase)
-                    && TokenCardDrawsOnEntering.IsMatch(text))
                 || AttackInvestigatesWhenNotCast.IsMatch(text)
                 || GrantedManaAndCascade.IsMatch(text)
                 || GravestormAndAClue.IsMatch(text)

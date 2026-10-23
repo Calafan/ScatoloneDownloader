@@ -79,12 +79,12 @@ that tribe itself (Aatchik's Insects, Boggart Mischief's Goblins), or is of it a
 (Thunder of Unity). A hasty TOKEN sacrificed or exiled at the next end step is the Viashino's burn
 made by another card, ruled 2026-10-14 for the whole family ("tutta la famiglia Burn"): Urabrask's
 Forge was tagged, Balduvian Dead and Daring Piracy were not and were handed back with it; a token
-COPY given haste is not this (Kiki-Jiki).
+COPY given haste is not this (Kiki-Jiki) — overturned on 2026-10-23, below.
 
 Read the same day: "each of UP TO TWO targets" (Chandra, Hope's Beacon), "another target battle or
 opponent" (Invasion of Regatha), "its OWNER loses life equal to" for a spell cast from an opponent's
 library (The Ruinous Powers), a relative clause opened by "who" or "dealt" up to 90 characters
-(Gollum, Obsessed Stalker — widening every subject reached Scarring Memories, untagged), EXCESS
+(Gollum, Obsessed Stalker — widening every subject reached Scarring Memories, then untagged), EXCESS
 damage handed on to the controller, which is not a charge for the kill (Gandalf's Sanction), and an
 Aura handing its creature "unless you pay 2 life" every upkeep (Morgul-Knife Wound); Kaito, Dancing
 Shadow's Drone keeps its drain to itself. Measured: Burn F1 98.1 to 98.6 before the store pass.
@@ -107,3 +107,35 @@ with "that much life" lost (Enduring Tenacity; the broad "loses that much life" 
 (Intimidation Campaign) and damage divided among "up to eight targets" (Blaster Hulk). A WARD paid
 in life ("counter it unless that player pays 2 life") taxes their spell: 0 of the 6 reviewed are
 tagged. Arbiter of Woe, whose entering drain the rules already read, is handed back with the tag.
+
+Ruled 2026-10-23 ("Sì, sempre Burn" for encore, then "Sì, tutto allineato"): HASTE AND GONE AT THE
+NEXT END STEP is Burn whatever the mechanism. It holds for the card itself — encore, unearth, blitz
+and dash, asked by keyword because Phyrexian Dragon Engine, Ziatora's Envoy and Broodmate Tyrant
+print theirs without the reminder, and the same keywords handed to other cards (Graywater's Fixer,
+Dregscape Sliver, Sedris, Henzie "Toolbox" Torre) — and for every token or COPY the card makes
+(Kiki-Jiki, Hate Mirage, Lagomos, Chandra, Acolyte of Flame, the populate of Determined Iteration).
+That overturns the Kiki-Jiki exclusion of 2026-10-14, which was a narrowing made in the code rather
+than a ruling. A creature the card only TAKES — from a graveyard, a hand, a library or an opponent
+(Corpse Dance, Shallow Grave, Through the Breach, Zirilan, Slave of Bolas) — is not burn and keeps
+its Reanimate, Cheat or Steal ("No, solo ciò che la carta crea o è"); nor is unearth on an artifact
+(Mask of the Jadecrafter). Measured: 17 reviewed cards tagged by hand are now read (the thirteen
+encore of 2026-10-20, Hate Mirage, Araumi, Dregscape Sliver, First-Sphere Gargantua), and 59
+untagged ones are reached: Amphin Mutineer, Briarblade Adept, Graywater's Fixer and Mist Dancer,
+named in the question, are corrected, and the other 55 are handed back.
+
+Ruled the same day ("Sì, Burn"): a life loss at the END OF A LIST of what the opponent does —
+"sacrifices a creature of their choice, discards a card, and loses 4 life" — is Burn. Dusk Mangler
+was tagged; Scarring Memories was not and is corrected by name; Mind Drain's one point stays under
+the threshold. Unleash Shell's 2 damage to the controller of what it kills was a slip ("Svista"),
+the B3 rule, and is corrected by name. Every printed token, dungeon and emblem is untagged for every
+tag (`CardEffect`), which also takes the proposals off The Ring and Tomb of Annihilation.
+
+Read the same day: "that SOURCE'S CONTROLLER loses that much life unless they sacrifice" (Archfiend
+of Spite), damage EQUAL TO a count divided among any number of targets (Orca, Siege Demon), a "who"
+clause before "equal to" (Spiteful Repossession), an EMBLEM handed to an opponent (Chandra, Awakened
+Inferno — an emblem you get stays yours, Ajani Steadfast), an upkeep drain handed to an enchanted
+permanent (Clawing Torment), "creatures, planeswalkers, and/or players" (Soulfire Eruption) and
+"target creature token, player, or planeswalker" (Coalborn Entity). The shield that counters a
+spell "unless that player pays 4 life" is Parnesse, the Subtle Brush's Protection, as ward is.
+Left as known disagreements, tagged by hand on wordings no other card shares: Blim, Comedic Genius
+(life lost per permanent controlled but not owned) and Yurlok of Scorch Thrash (unspent mana).

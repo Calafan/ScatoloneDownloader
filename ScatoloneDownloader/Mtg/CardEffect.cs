@@ -19,6 +19,13 @@
     /// ENABLES itself, which counts: Blossoming Tortoise mills its own
     /// graveyard before returning a land from it, and is Ramp.
     ///
+    /// A card nobody CASTS carries no tags at all: the printed tokens the
+    /// library keeps (Treasure, Blood, Map, the Roles), the dungeons, the
+    /// emblem of The Ring and the designations (The Monarch, City's Blessing).
+    /// What they do is the effect of the card that makes them. Measured
+    /// 2026-10-23: 29 reviewed, all 29 untagged. Ante cards are the same
+    /// (docs/ontology/CardAdvantage.md).
+    ///
     /// Deliberately absent, decided 2026-09-05 — every tag is a question asked of
     /// 30k cards, so one that never changes a design decision costs and returns
     /// nothing:

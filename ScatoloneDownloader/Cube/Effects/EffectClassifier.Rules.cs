@@ -1217,7 +1217,10 @@ namespace ScatoloneDownloader.Cube
                     // player. The lookahead is Fiery Justice, the sixth, which the
                     // human ruled an exception ON PURPOSE: it hands the opponent
                     // back exactly the five life it dealt, so the count is zero.
-                    Rx(@"damage divided (?:evenly,? )?(?:rounded down,? )?(?:as you choose )?"
+                    // The amount may be a count: Orca, Siege Demon's "damage equal
+                    // to its power divided … among any number of targets"
+                    // (2026-10-23, tagged by hand).
+                    Rx(@"damage (?:equal to [\w' ,+/]{0,70}? )?divided (?:evenly,? )?(?:rounded down,? )?(?:as you choose )?"
                         // "among UP TO EIGHT targets" (Blaster Hulk, 2026-10-16).
                         + @"among (?:any number of|one, two, or three|up to \w+|\w+) targets\b"
                         + @"(?![^\n]{0,40}gains? [\dX]+ life)"),
@@ -1227,7 +1230,10 @@ namespace ScatoloneDownloader.Cube
                     // Twelve of the eighteen reviewed cards written this way were
                     // already tagged and the human ruled the other six in on
                     // 2026-09-20, the upkeep punishers among them.
-                    Rx(@"deals? damage to [\w ,'-]{0,40}" + BurnTarget + @"[\w ,'-]{0,20} equal to"),
+                    // A "who" clause may run longer: Spiteful Repossession's "to
+                    // each opponent WHO CONTROLS MORE LANDS THAN YOU equal to the
+                    // difference" (2026-10-23).
+                    Rx(@"deals? damage to [\w ,'-]{0,40}" + BurnTarget + @"(?: who\b[\w ,'-]{0,50}|[\w ,'-]{0,20}) equal to"),
                     // Damage sized by a COUNT rather than a digit. The rule for this
                     // already existed and fed Removal alone, so Cat-Gator's "damage
                     // equal to the number of Swamps to any target" was read as a kill
@@ -1258,18 +1264,64 @@ namespace ScatoloneDownloader.Cube
                     // burning anybody: 0 of the 6 reviewed ward-life cards are
                     // tagged for it (Zul Ashur, Sire of Seven Deaths, Nine-Fingers
                     // Keene …), Gev and Invasion of Karsus for other lines. 2026-10-16.
-                    Rx(@"(?<!counter it )unless (?:that player|they|any player|its controller) pays? (?:[2-9]|\d\d+|x) life"
+                    // The same shield written out for the player and every permanent
+                    // ("counter THAT SPELL OR ABILITY unless that player pays 4
+                    // life") is Parnesse, the Subtle Brush, tagged Protection only
+                    // (2026-10-23).
+                    Rx(@"(?<!counter (?:it|that spell(?: or ability)?) )unless (?:that player|they|any player|its controller) pays? (?:[2-9]|\d\d+|x) life"
                         + @"|for each[^\n.]{0,70}unless (?:that player|they|any player|its controller) pays? [\dX]+ life"),
                     // …and the same charge handed in quotes to the creature an
                     // Aura is on, whose controller is the "you" who pays every
-                    // upkeep (Morgul-Knife Wound, 2026-10-14).
-                    Rx(@"enchanted creature\b[^""\n]{0,40}\bhas ""[^""\n]*\bunless you pay (?:[2-9]|\d\d+|x) life"),
+                    // upkeep (Morgul-Knife Wound, 2026-10-14). The plain upkeep
+                    // drain handed over the same way is the repeated point of
+                    // 2026-09-29: Clawing Torment's enchanted PERMANENT has "At the
+                    // beginning of your upkeep, you lose 1 life" (tagged 2026-10-23;
+                    // Relic Bane gives it to an artifact).
+                    Rx(@"enchanted (?:creature|permanent|artifact|land)\b[^""\n]{0,40}\bhas ""[^""\n]*"
+                        + @"\b(?:unless you pay (?:[2-9]|\d\d+|x) life|you lose [\dX]+ life)"),
+                    // An EMBLEM handed to an opponent burns them on every upkeep
+                    // (Chandra, Awakened Inferno, tagged 2026-10-20). One that YOU
+                    // get is your own (Ajani Steadfast's prevention).
+                    Rx(@"(?:each|target) (?:opponent|player) gets an emblem with ""[^""]*"
+                        + @"\b(?:deals? [\dX]+ damage to you|you lose [\dX]+ life)"),
+                    // Life or a sacrifice, whoever is asked: the punisher above with
+                    // the source's controller named as the victim (Archfiend of
+                    // Spite, "loses that much life unless they sacrifice that many
+                    // permanents", 2026-10-20). Seven reviewed punishers written
+                    // this way, all seven tagged.
+                    Rx(@"\bloses? (?:that much|[\dX]+) life unless (?:they|that player) sacrifices?\b"),
+                    // The life loss at the END of a list of things the opponent
+                    // does: "sacrifices a creature of their choice, discards a
+                    // card, and loses 4 life" (Dusk Mangler). Ruled 2026-10-23
+                    // ("Sì, Burn"), Scarring Memories corrected with it. The
+                    // threshold holds: Mind Drain's one point is not here.
+                    Rx(@"\b(?:each|target|an) (?:opponent|player)s? (?:sacrifices?|discards?|mills?)\b[^.\n]{0,90}, and loses? (?:[2-9]|\d\d+|x) life"),
+                    // "Any number of target creatures, planeswalkers, AND/OR
+                    // PLAYERS", then the damage (Soulfire Eruption, 2026-10-20).
+                    Rx(@"\btarget [\w ,]{0,40}\band/or players\b[^\n]{0,200}\bdeals? damage\b"),
                     // A hasty TOKEN gone at the next end step is the Viashino's
                     // burn made by another card, ruled 2026-10-14 for the whole
                     // family ("tutta la famiglia Burn"): Urabrask's Forge, and
-                    // Balduvian Dead and Daring Piracy handed back with it. A
-                    // token COPY ("except it has haste") is not this.
-                    Rx(@"\btokens? with [^""\n.]*\bhaste\b[^\n]{0,120}?\b(?:sacrifice|exile) (?:it|that token|them|those tokens) at the beginning of the next end step"),
+                    // Balduvian Dead and Daring Piracy handed back with it.
+                    // A token COPY given haste is the same since 2026-10-23
+                    // ("tutto allineato" with Ball Lightning, encore and unearth):
+                    // Kiki-Jiki, Hate Mirage, Mimic Vat, encore handed out by
+                    // Graywater's Fixer, and the token populate makes (Determined
+                    // Iteration). It has to be MADE: a creature the card only
+                    // TAKES — from a graveyard, a hand, a library or an opponent
+                    // (Corpse Dance, Through the Breach, Slave of Bolas) — keeps
+                    // its Reanimate, Cheat or Steal and is not burn ("solo ciò
+                    // che la carta crea o è", same day).
+                    Rx(@"\b(?:create\b[^\n]{0,200}?\btokens?|populate)\b[^\n]{0,200}?\bhaste\b[^\n]{0,160}?"
+                        + @"\b(?:(?:sacrifice|exile) (?:it|them|that token|those tokens|the token|the tokens)"
+                        + @"|return (?:it|them|that token|those tokens) to (?:its|their) owner'?s hand)"
+                        + @" at the beginning of the next end step"),
+                    // …and the keyword that does it, handed to OTHER cards: unearth
+                    // in the graveyard (Dregscape Sliver, Sedris, Ghost Ark), blitz
+                    // on the creature spells you cast (Henzie). The cards that have
+                    // it themselves are asked by keyword (HastyAndGoneKeywords).
+                    // "If it has unearth" (Meticulous Excavation) gives nothing.
+                    Rx(@"\b(?:cards?|spells?)\b[^.\n]{0,60}?\b(?:has|have|gains?) (?:unearth|blitz|encore|dash)\b"),
                     // "Loses 1 life FOR EACH card type" is not the one-point rider
                     // the threshold above refuses — the count is what it is
                     // multiplied by (Polluted Cistern, Fandaniel). The subject is
@@ -1605,8 +1657,10 @@ namespace ScatoloneDownloader.Cube
         // that is the Frog's, the same evening the human ruled Smaug's Treasures
         // Smaug's and not There and Back Again's. A keyword may come before the
         // quotes (Kaito, Dancing Shadow's Drone "with deathtouch and", 2026-10-14).
+        // An emblem handed to an OPPONENT is not something the card made for
+        // itself: it is the burn (Chandra, Awakened Inferno, 2026-10-23).
         private static readonly Regex DamageFromSomethingItMade = Rx(
-            @"""[^""]{0,160}\bthis (?:token|emblem)[^""]{0,60}deals? [\dX]+ damage"
+            @"(?<!\b(?:opponents?|players?|they) gets? an emblem with )""[^""]{0,160}\bthis (?:token|emblem)[^""]{0,60}deals? [\dX]+ damage"
             + @"|\btokens? with (?:[\w ,]{0,40} and )?""[^""]{0,200}\bloses? [\dX]+ life[^""]*""");
 
         // Removal's side of the same question, narrower: the ONE point a token
@@ -1696,6 +1750,16 @@ namespace ScatoloneDownloader.Cube
             + @"|return this creature to (?:its|their) owner'?s hand)");
 
         private static readonly Regex Hasty = Rx(@"\bhaste\b");
+
+        // The same creature by keyword, ruled 2026-10-23 ("Sì, sempre Burn" for
+        // encore, then "tutto allineato" for the rest): each of these gives the
+        // card haste and takes it away at the next end step — dead, exiled or
+        // back in hand. Asked by KEYWORD because Phyrexian Dragon Engine,
+        // Ziatora's Envoy and Broodmate Tyrant print theirs without the
+        // reminder. Creatures only: Mask of the Jadecrafter's unearth returns
+        // an artifact nobody attacks with.
+        private static readonly HashSet<string> HastyAndGoneKeywords =
+            new(["Unearth", "Encore", "Blitz", "Dash"], StringComparer.OrdinalIgnoreCase);
 
         // Three shapes that look like selection and are not, all ruled
         // 2026-09-20 off the nine cards where the classifier said Filter and the
