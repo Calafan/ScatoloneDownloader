@@ -490,8 +490,15 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex AnyTokenCopy = Rx(
             @"token that's a copy|token cop(?:y|ies)|tokens that are copies");
 
+        // A PERMANENT CARD copied without asking for a creature is no body
+        // either, ruled 2026-10-24 ("No Tokens se non chiede creature"):
+        // Tamiyo, Compleated Sage copies a "nonland permanent card" from your
+        // graveyard, untagged by hand; Nahiri's "creature or Equipment card"
+        // names a creature and keeps the tag. Not a permanent on the
+        // battlefield: "permanent" alone took the tag from Doppelgang,
+        // Extravagant Replication and Moonlit Meditation, all tagged.
         private static readonly Regex NoncreatureBeingCopied = Rx(
-            @"\b(?:artifact|equipment|enchantment|land|vehicle|clue|treasure|food)\b");
+            @"\b(?:artifact|equipment|enchantment|land|vehicle|clue|treasure|food|permanent card)\b");
 
         // Four keywords that put a BODY on the board and never say "token" in a
         // shape the rules above can read. Ruled 2026-09-19. Cloak and manifest
@@ -566,8 +573,10 @@ namespace ScatoloneDownloader.Cube
 
         // A LAND cast face down is a 2/2 creature the land makes of itself,
         // the 2026-10-13 ruling on self-animating lands (Branch of Vitu-Ghazi,
-        // tagged, 2026-10-15).
-        private static readonly Regex LandCastFaceDown = Rx(@"^(?:disguise|morph)\b", RegexOptions.Multiline);
+        // tagged, 2026-10-15). Any NONCREATURE card too, ruled 2026-10-24
+        // ("Tokens, come le terre"): Gift of Doom tagged, Concealed Weapon and
+        // True Identity realigned.
+        private static readonly Regex NoncreatureCastFaceDown = Rx(@"^(?:disguise|morph)\b", RegexOptions.Multiline);
 
         // DASH returns the creature to hand every turn it is cast that way, so
         // its enters trigger repeats, ruled 2026-10-13 on Riders of Rohan

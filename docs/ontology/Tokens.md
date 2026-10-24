@@ -107,3 +107,19 @@ Left as disagreements on purpose: Graywater's Fixer, Writhing Chrysalis (ruled 2
 Veteran (a tribal trigger, 4 to 2), Chandra, Spark Hunter (a Vehicle token, one card), Niko (Shards
 become copies), Random Encounter, Tribute to Horobi. A Vehicle is not a body it makes: 17 of 108
 reviewed Vehicles are tagged, and the rules read a body on 13 of them.
+
+Ruled 2026-10-24, four questions. Any NONCREATURE card cast face down by morph or disguise is a 2/2
+body, like the land of 2026-10-15 ("Tokens, come le terre"): Gift of Doom tagged, Concealed Weapon
+and True Identity realigned and handed back. A token copy of a nonland PERMANENT CARD out of a
+graveyard asks for no creature and is no body ("No Tokens se non chiede creature"): Tamiyo,
+Compleated Sage, untagged by hand, while Nahiri's "creature or Equipment card" keeps the tag; a
+copy of a permanent on the battlefield is still a body, which "permanent" alone would have taken
+from Doppelgang, Extravagant Replication and Moonlit Meditation. Weatherlight Compleated, a Vehicle
+made a creature by its own counters, was a slip: 19 reviewed Vehicles that animate themselves
+other than by crew are untagged, War Balloon on the same sentence. Sicarian Infiltrator's squad
+was a slip against the six other squad cards.
+
+Read the same day: "you AND that player each create" makes one for you too, like "each player"
+(Master of Ceremonies, tagged; Benevolent Offering, Sylvan Offering), and the veto written for "you
+and target opponent each create" goes, since all it reached were Food, Treasures and Powerstones
+(Oath of the Grey Host, Bloodroot Apothecary, Thran Spider). The seven disagreements above stay.

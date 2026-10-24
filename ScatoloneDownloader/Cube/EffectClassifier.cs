@@ -388,7 +388,7 @@ namespace ScatoloneDownloader.Cube
                 || FaceDownFromYourSide.IsMatch(Parenthetical.Replace(text, " "))
                 || CopiesYourCreatureSpell.IsMatch(text)
                 || (FrontFaceIsACreature(card) && StormCopiesBecomeTokens.IsMatch(text))
-                || (card.MacroType == MacroType.Land && LandCastFaceDown.IsMatch(Parenthetical.Replace(text, " ")))
+                || (!FrontFaceIsACreature(card) && NoncreatureCastFaceDown.IsMatch(Parenthetical.Replace(text, " ")))
                 || Incubates.IsMatch(text))
             {
                 result |= CardEffect.Tokens;

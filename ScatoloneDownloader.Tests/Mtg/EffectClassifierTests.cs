@@ -10672,6 +10672,79 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // Ruled 2026-10-24. Any NONCREATURE card cast face down is a 2/2 body, like
+    // the land (Gift of Doom tagged; Concealed Weapon and True Identity
+    // realigned). You AND that player each creating is one for you too (Master of
+    // Ceremonies, Sylvan Offering). Squad keeps its bodies (Sicarian Infiltrator,
+    // a slip). A copy of a permanent on the battlefield is still a body: the
+    // PERMANENT CARD veto must not reach Doppelgang or Extravagant Replication.
+    [InlineData("Gift of Doom", "Enchantment — Aura",
+        "Enchant creature\nEnchanted creature has deathtouch and indestructible.\nMorph—Sacrifice another "
+        + "creature. (You may cast this card face down as a 2/2 creature for {3}. Turn it face up any time for "
+        + "its morph cost.)\nAs this Aura is turned face up, you may attach it to a creature.")]
+    [InlineData("Concealed Weapon", "Artifact — Equipment",
+        "Equipped creature gets +3/+0.\nDisguise {2}{R} (You may cast this card face down for {3} as a 2/2 "
+        + "creature with ward {2}. Turn it face up any time for its disguise cost.)\nWhen this Equipment is "
+        + "turned face up, attach it to target creature you control.\nEquip {1}{R}")]
+    [InlineData("True Identity", "Enchantment",
+        "Whenever this enchantment or another permanent you control is turned face up, scry 1, then draw a "
+        + "card. This ability triggers only once each turn.\nDisguise {W} (You may cast this card face down for "
+        + "{3} as a 2/2 creature with ward {2}. Turn it face up any time for its disguise cost.)")]
+    [InlineData("Master of Ceremonies", "Creature — Rhino Druid",
+        "At the beginning of your upkeep, each opponent chooses money, friends, or secrets. For each player "
+        + "who chose money, you and that player each create a Treasure token. For each player who chose "
+        + "friends, you and that player each create a 1/1 green and white Citizen creature token. For each "
+        + "player who chose secrets, you and that player each draw a card.")]
+    [InlineData("Sylvan Offering", "Sorcery",
+        "Choose an opponent. You and that player each create an X/X green Treefolk creature token.\nChoose an "
+        + "opponent. You and that player each create X 1/1 green Elf Warrior creature tokens.")]
+    [InlineData("Sicarian Infiltrator", "Artifact Creature — Human Soldier",
+        "Flash\nSquad {2} (As an additional cost to cast this spell, you may pay {2} any number of times. When "
+        + "this creature enters, create that many tokens that are copies of it.)\nBenediction of the Omnissiah — "
+        + "When this creature enters, draw a card.")]
+    [InlineData("Doppelgang", "Sorcery",
+        "For each of X target permanents, create X tokens that are copies of that permanent.")]
+    [InlineData("Extravagant Replication", "Enchantment",
+        "At the beginning of your upkeep, create a token that's a copy of another target nonland permanent "
+        + "you control.")]
+    public void Classify_TheOctober24TokensPass_IsTokens(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    // Ruled 2026-10-24. A token copy of a nonland PERMANENT CARD from a graveyard
+    // asks for no creature (Tamiyo, Compleated Sage, untagged by hand). A Vehicle
+    // that becomes a creature on its own is not a body it makes, against 19
+    // reviewed (Weatherlight Compleated a slip, War Balloon). The Treasure you and
+    // an opponent each create is still no body (Bloodroot Apothecary).
+    [InlineData("Tamiyo, Compleated Sage", "Legendary Planeswalker — Tamiyo",
+        "Compleated ({G/U/P} can be paid with {G}, {U}, or 2 life. If life was paid, this planeswalker enters "
+        + "with two fewer loyalty counters.)\n+1: Tap up to one target artifact or creature. It doesn't untap "
+        + "during its controller's next untap step.\n−X: Exile target nonland permanent card with mana value X "
+        + "from your graveyard. Create a token that's a copy of that card.\n−7: Create Tamiyo's Notebook, a "
+        + "legendary colorless Book artifact token with \"Spells you cast cost {2} less to cast\" and \"{T}: Draw "
+        + "a card.\"")]
+    [InlineData("Weatherlight Compleated", "Legendary Artifact — Vehicle",
+        "Flying\nAs long as Weatherlight Compleated has four or more phyresis counters on it, it's a Phyrexian "
+        + "creature in addition to its other types.\nWhenever a creature you control dies, put a phyresis "
+        + "counter on Weatherlight Compleated. Then draw a card if it has seven or more phyresis counters on "
+        + "it. If it doesn't, scry 1.")]
+    [InlineData("War Balloon", "Artifact — Vehicle",
+        "Flying\n{1}: Put a fire counter on this Vehicle.\nAs long as this Vehicle has three or more fire "
+        + "counters on it, it's an artifact creature.\nCrew 3 (Tap any number of creatures you control with "
+        + "total power 3 or more: This Vehicle becomes an artifact creature until end of turn.)")]
+    [InlineData("Bloodroot Apothecary", "Creature — Squirrel Druid",
+        "Toxic 2 (Players dealt combat damage by this creature also get two poison counters. A player with "
+        + "ten or more poison counters loses the game.)\nWhen this creature enters, you and target opponent each "
+        + "create a Treasure token.\nWhenever an opponent sacrifices a noncreature token, that player gets two "
+        + "poison counters.")]
+    public void Classify_TheOctober24TokensPass_IsNotTokens(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
     // The same ruling by KEYWORD, because these four print unearth, blitz, encore
     // and dash without the reminder text. Mask of the Jadecrafter's unearth
     // returns an artifact nobody attacks with, so the keyword asks for a creature.

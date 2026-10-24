@@ -452,11 +452,16 @@ namespace ScatoloneDownloader.Cube
         // gets its consolation body on their side (Ovinomancer, Rapid
         // Hybridization: 14 reviewed, none tagged); "that creature's
         // controller" anywhere else may be you (Bramble Sovereign).
+        //
+        // YOU AND that player each create is one for you too, read 2026-10-24:
+        // Master of Ceremonies' Citizens, tagged by hand; the Food, Treasures
+        // and Powerstones handed over the same way (Oath of the Grey Host,
+        // Bloodroot Apothecary, Thran Spider) are still no body.
         private const string SomebodyElseCreatesWording =
-            @"(?:its controller|that player|each opponent|target opponent|an opponent"
+            @"(?<!\byou and )(?:its controller|that player|each opponent|target opponent|an opponent"
             + @"|the exiled card's owner|they|opponents?)\s+(?:may have you |each )?creates?\b"
             + @"|(?<=(?:destroy|exile)[^\n]{0,120}\.\s)that (?:creature|permanent)'s controller creates\b"
-            + @"|have an opponent create|you and target opponent each create";
+            + @"|have an opponent create";
 
         private static readonly Regex WhatSomebodyElseCreates = Rx(
             @"[^.\n]*(?:" + SomebodyElseCreatesWording + @")[^.\n]*");
