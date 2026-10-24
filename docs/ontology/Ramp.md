@@ -107,3 +107,30 @@ beside "you can't cast spells" (Innocuous Researcher), extra mana spent only on 
 lands (Zhao, the Moon Slayer) or to the land a dead card becomes (Princess Yue). Handed back: Savvy
 Trader, Strong Back, Astrolabe, Alchemist's Talent, Boneyard Desecrator and Natural Balance with the
 tag; Town Greeter and Dazzling Theater without it; Gift of Estates and Tithe move to ManaFixing.
+
+Ruled 2026-10-24 (the Ramp pass, 696 reviewed: 9 proposed wrongly and 9 missed before, 1 and 6
+after, every one of them a ruling below or a known disagreement): a cost reduction for a TRIBE's
+spells is not this tag ("No Ramp, è tribale", the free cast of a tribe of 2026-10-16). The human had
+untagged Gargos, Vicious Watcher's Hydras and Herald of Slaanesh's Demons; Nogi, Draco-Zealot,
+Sarkhan, Soul Aflame, Slinza, the Spiked Stampede, Tombstone, Career Criminal and The Eleventh
+Hour's Doctor token, all tagged before that ruling, went back for review. A spell's own subtype is
+no tribe (Uncle Iroh's Lesson spells), nor is face-down (Dream Chisel). Mana KEPT from one step to
+the next for good is this tag ("Ramp se è standing": Horizon Stone, tagged by hand; Kruphix,
+Upwelling, Omnath, Locus of Mana with it; Ashling, Flame Dancer went back for review), but not when
+what is kept is mana from attacking ("mai Ramp dall'attacco": Fangorn, Tree Shepherd; Ozai, the
+Phoenix King's firebending) nor for the one turn a spell or a death keeps it (The Last Agni Kai,
+Su-Chi Cave Guard).
+
+Read the same day — this tag: a spell's MODE that adds mana (Jeska's Will; a one-time mode on a
+permanent's trigger is not, Zuko, Conflicted); the lands each opponent searches and puts under your
+control (Rootweaver Druid); mana for each player (Yurlok of Scorch Thrash); X mana a sentence after
+a charge counter (Empowered Autogenerator); a token with its own mana ability made by an activation,
+not named Treasure (Kibo, Uktabi Prince's Bananas); lands searched and then a d20 rolled (Druid of
+the Emerald Grove); "until you EXILE a land card" (Venture Forth). Not this tag: the land the owner
+of a shuffled permanent finds on top, their consolation (Audacious Swap); one land sacrificed by an
+activation for one land, a swap (Elvish Reclaimer); one Treasure from exiling the card from the
+graveyard (Halo Scarab) or when its last counter is gone (Reckoner Bankbuster), both riders; the
+lands each player short of them may search for after a sweep (Natural Balance); "all lands have
+'{T}: Add one mana of any color'", the one mana granted to lands, which fixes (Toxicrene); Treasures
+a TARGET OPPONENT creates, theirs (Vazi, Keen Negotiator, neither Ramp nor ManaFixing). Left as a
+known disagreement: The Last Agni Kai.

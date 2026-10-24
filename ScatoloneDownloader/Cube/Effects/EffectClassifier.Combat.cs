@@ -145,9 +145,14 @@ namespace ScatoloneDownloader.Cube
         // Spoils of Evil) or counted before the symbol ("Add X mana in any
         // combination of {B} and/or {R}" — Burnt Offering, Metamorphosis). All
         // five are Ramp by hand, read 2026-09-29, asked of spells only.
+        // A spell's MODE that adds mana too, "• Add {R} for each card in target
+        // opponent's hand" (Jeska's Will, Ramp by hand, read 2026-10-24). Of a
+        // spell only: Zuko, Conflicted's one-time "• Add {R}." on a permanent's
+        // trigger is untagged.
         private static readonly Regex SpellAddsMana = Rx(
             @", (?:you )?add (?:\{|x mana|an amount of|that much|one mana|two mana|three mana)"
-            + @"|\badd (?:x|\w+) mana (?:in any combination|of any)");
+            + @"|\badd (?:x|\w+) mana (?:in any combination|of any)"
+            + @"|(?:^|\n)• add [\w ]{0,20}\{[wubrgc]");
 
         // …and a spell's mana that RIDES ON AN ANSWER is not Ramp: Narset's
         // Rebuke, Sorceress's Schemes, Mana Drain and Reckless Blaze add mana
@@ -1501,15 +1506,55 @@ namespace ScatoloneDownloader.Cube
         // above and still never proposed), a count past five (The
         // Aetherspark's "−10: Add ten mana") and "an amount of mana" (Nyx
         // Lotus).
+        // Read 2026-10-24, Ramp by hand: mana for EACH PLAYER (Yurlok of Scorch
+        // Thrash's "{1}, {T}: Each player adds {B}{R}{G}"), and X mana a
+        // sentence after a charge counter (Empowered Autogenerator).
         private static readonly Regex ActivatedManaAbility = Rx(
             @"(?:^[^\n:]{1,70}|""(?![^""\n:]*\b(?:this token|sacrifice this artifact)\b)[^""\n:]{1,70}): "
-            + @"(?:choose a colou?r\. )?(?:target player adds|add) "
+            + @"(?:choose a colou?r\. )?(?:target player adds|each player adds|add) "
             + @"(?:[\w ]{0,20}\{|(?:one|two|three|four|five|six|seven|eight|nine|ten|x|\d+|an amount of) mana\b)"
             // …and the mana at the END of the ability, "{T}: Goad target
             // creature … That player draws a card. YOU ADD {R}" (Red Death,
             // Shipwrecker, Ramp by hand; 2026-10-16).
-            + @"|^(?:[^\n:—]{1,40} — )?\{t\}: [^\n]{0,150}?\. you add \{",
+            + @"|^(?:[^\n:—]{1,40} — )?\{t\}: [^\n]{0,150}?\. you add \{"
+            + @"|^\{t\}: put a charge counter on this \w+\. add (?:x|\w+) mana\b",
             RegexOptions.Multiline);
+
+        // A token with a mana ability of its own, made by an ACTIVATED ability:
+        // the Treasure's reading for a token not named Treasure (Kibo, Uktabi
+        // Prince's "{T}: Each player creates … Banana with '{T}, Sacrifice this
+        // token: Add {R} or {G}'", Ramp by hand, read 2026-10-24).
+        private static readonly Regex ActivatedManaTokenMaker = Rx(
+            @"^[^\n:""]{1,70}: (?:each player|you) creates? [^\n""]{0,80}\btoken[^\n""]{0,40} with ""\{t\}, sacrifice this token: add ",
+            RegexOptions.Multiline);
+
+        // Mana KEPT from one step to the next for good is more mana, ruled
+        // 2026-10-24 ("Ramp se è standing"): Horizon Stone, tagged by hand, and
+        // Kruphix, Upwelling and Omnath, Locus of Mana with it. Not when what is
+        // kept is mana from attacking ("mai Ramp dall'attacco": Fangorn, Tree
+        // Shepherd and Ozai, the Phoenix King, untagged), and not the one turn
+        // a spell or a death keeps it ("until end of turn, you don't lose":
+        // The Last Agni Kai, Su-Chi Cave Guard).
+        private static readonly Regex ManaKeptForGood = Rx(
+            @"^(?:if you would lose unspent mana, that mana becomes \w+ instead"
+            + @"|(?:you|players) don't lose unspent (?:\w+ )?mana as steps and phases end)",
+            RegexOptions.Multiline);
+
+        private static readonly Regex KeepsAttackMana = Rx(
+            @"\bfirebending\b|^whenever [^\n]{0,60}\battacks?\b[^\n]{0,40}, add\b", RegexOptions.Multiline);
+
+        // A cost reduction for a TRIBE's spells is nothing, ruled 2026-10-24 ("No
+        // Ramp, è tribale", the free cast of a tribe of 2026-10-16): Gargos's
+        // Hydras and Herald of Slaanesh's Demons untagged by hand, and Nogi,
+        // Sarkhan, Soul Aflame, Slinza, Tombstone and The Eleventh Hour, tagged
+        // before that ruling, handed back. A spell's own subtype is no tribe:
+        // Uncle Iroh's Lesson spells stay Ramp, and so do face-down creature
+        // spells (Dream Chisel). Blanked before CostsLessToCast is asked;
+        // case-sensitive, like TribalCard.
+        private static readonly Regex TribalCostReduction = new(
+            @"(?!(?:Instant|Sorcery|Lesson|Arcane|Adventure|Historic|Aura|Equipment|Vehicle|Kicked|Spells|Face-down)\b)"
+            + ACreatureType + @" (?:creature )?spells you cast cost \{(?:\d+|[WUBRG])\} less to cast",
+            RegexOptions.CultureInvariant);
 
         private static readonly Regex ExtraLandDrop = Rx(
             @"play an additional land|play any number of lands|play up to \w+ additional lands"
@@ -1570,8 +1615,10 @@ namespace ScatoloneDownloader.Cube
         // Adjudicators are ManaFixing alone by hand, 5 of 5. TWO or three
         // mana granted (Grafted Growth, Discreet Retreat, Tectonic Split) is
         // Ramp, 3 of 3, and is not this.
+        // "ALL lands have" is the same grant (Toxicrene, ManaFixing alone by
+        // hand, read 2026-10-24).
         private static readonly Regex OneManaGrantedToLands = Rx(
-            @"(?:\blands? you control have|\benchanted land has|\btarget land gains) [""']\{t\}: add "
+            @"(?:\blands? you control have|\ball lands have|\benchanted land has|\btarget land gains) [""']\{t\}: add "
             + @"(?:one mana of any colou?r|\{[wubrg]\}(?:, \{[wubrg]\})*,? or \{[wubrg]\})\.?[""']");
 
         // Lands out of a GRAVEYARD the card has just FILLED itself are Ramp,
@@ -1621,9 +1668,19 @@ namespace ScatoloneDownloader.Cube
             // Analyst, Summon: Titan, Will of the Sultai). Lumra stopped being
             // the exception on 2026-10-13: a card that FILLS the graveyard
             // first is Ramp — see LandsBackAfterFillingTheGraveyard.
-            + @"|until you reveal a land card\. put that card onto the battlefield"
+            // "Until you EXILE a land card" too (Venture Forth, Ramp by hand,
+            // read 2026-10-24).
+            + @"|until you (?:reveal|exile) a land card\. put that card onto the battlefield"
             + @"|search your library for [^.\n]{0,80}(?<!non)(?:land|forest|plains|island|swamp|mountain) cards?[^.\n]{0,60}\. "
             + @"put (?:those cards|them|one of them|two of them|that card|it) onto the battlefield"
+            // Read 2026-10-24, one reviewed card each, Ramp by hand: the lands
+            // searched and then a d20 rolled, two of whose results put them onto
+            // the battlefield (Druid of the Emerald Grove), and the lands each
+            // OPPONENT searches and puts "onto the battlefield tapped under your
+            // control" (Rootweaver Druid).
+            + @"|search your library for [^.\n]{0,80}\bland cards?[^.\n]{0,40}, then roll a d20\.[\s\S]{0,200}"
+            + @"\bput (?:those cards|one of those cards) onto the battlefield"
+            + @"|\bthey each put [^.\n]{0,30}onto the battlefield tapped under your control"
             // A land CREATURE token is a land too (Awaken the Woods' Forest
             // Dryads), and so are the copies of a target land (Rebuild the
             // City); both Ramp by hand, read 2026-10-15. Not one counted by
@@ -1642,9 +1699,16 @@ namespace ScatoloneDownloader.Cube
         // TARGET player is not in it: you point the fetch at yourself, and the
         // one reviewed card written that way is Ramp (Fertilid's Favor, tagged
         // by the human on 2026-09-29), while "its controller" is 0 of 12.
+        // Read 2026-10-24, untagged by hand, one card each: the land the OWNER
+        // of a shuffled-away permanent finds on top (Audacious Swap, Removal
+        // alone), and the lands EACH PLAYER short of them may search for after
+        // a sweep (Natural Balance, LandDestruction alone after its hand-back
+        // of 2026-10-16).
         private static readonly Regex LandForSomebodyElse = Rx(
             @"its controller (?:creates|may search|searches|puts)"
-            + @"|(?:that|defending) player (?:creates|may search|searches|puts)");
+            + @"|(?:that|defending) player (?:creates|may search|searches|puts)"
+            + @"|\bif it's a land card, they put it onto the battlefield"
+            + @"|\beach player who controls [^.\n]{0,40}\blands? may search their library");
 
         // A Treasure is a Lotus Petal in token form, so it always FIXES. Whether
         // it also RAMPS is a question of how many you get: one, once, is a rider
@@ -1686,8 +1750,11 @@ namespace ScatoloneDownloader.Cube
         // (LandForSomebodyElse). "You and target opponent each create" is
         // yours too, and Gonti's "that player" is whoever casts your stolen
         // cards; neither is here. The reminder that follows goes with it.
+        // "Target opponent creates X Treasure tokens, where X is …" too (Vazi,
+        // Keen Negotiator, CardAdvantage and Buff by hand, read 2026-10-24).
         private static readonly Regex TreasureForSomebodyElse = Rx(
             @"(?:\bits controller|\beach opponent [^.,\n]{0,50}?) creates? [^.\n]{0,20}\btreasure tokens?\.(?: \([^)\n]*\))?"
+            + @"|\btarget opponent creates [^.\n]{0,20}\btreasure tokens?\b[^.\n]*\.(?: \([^)\n]*\))?"
             + @"|\bgift an? treasure\b(?: \([^)\n]*\))?");
 
         // A Treasure in a quoted ability a creature has UNTIL END OF TURN is
@@ -1740,8 +1807,12 @@ namespace ScatoloneDownloader.Cube
         // a rider (Volatile Fault, Contested Game Ball, untagged by hand),
         // ruled 2026-10-15 ("No Ramp") against Pictures of Spider-Man and
         // Reckless Lackey, tagged by hand before the 09-18 families ruling.
+        // Read 2026-10-24 by the same ruling, ManaFixing alone by hand: one that
+        // EXILES the card from the graveyard (Halo Scarab), and the one Treasure
+        // made when the last counter is gone (Reckoner Bankbuster).
         private static readonly Regex ActivatedTreasureMaker = Rx(
-            @"^(?![^\n]*\bsacrifice (?:this (?:land|artifact|creature|enchantment)|it)\b)[^\n:""]{1,70}:[^\n]*\btreasure tokens?\b"
+            @"^(?![^\n]*\b(?:sacrifice (?:this (?:land|artifact|creature|enchantment)|it)|exile this card from your graveyard"
+            + @"|if there are no \w+ counters on this \w+, create a treasure)\b)[^\n:""]{1,70}:[^\n]*\btreasure tokens?\b"
             + @"|""[^""\n:]{1,60}:[^""\n]*\btreasure tokens?\b",
             RegexOptions.Multiline);
 
@@ -1775,9 +1846,12 @@ namespace ScatoloneDownloader.Cube
         //
         // The swap is the colour, though: Renewal's one land for one is
         // ManaFixing, read as such 2026-10-15.
+        // …and a land sacrificed by an ACTIVATION for one land (Elvish Reclaimer,
+        // Tutor and ManaFixing by hand, read 2026-10-24).
         private static readonly Regex PaysALandForTheLand = Rx(
             @"as an additional cost to cast this spell, sacrifice a land"
-            + @"[\s\S]{0,140}search your library for an? basic land card");
+            + @"[\s\S]{0,140}search your library for an? basic land card"
+            + @"|\bsacrifice an? land: search your library for an? (?:basic )?land card, put it onto the battlefield");
 
         // …and lands sacrificed for the lands among the cards they reveal is
         // the same swap, X for at most X: Hew the Entwood, Cheat alone by
@@ -1867,7 +1941,7 @@ namespace ScatoloneDownloader.Cube
         // 2026-10-15: Spara's Adjudicators' "{T}: Add {G}, {W}, or {U}",
         // ManaFixing by hand.
         private static readonly Regex ManaGrantedToLands = Rx(
-            @"(?:\blands? you control have\b|\benchanted land has\b|\btarget land gains\b)[^\n]*\badd "
+            @"(?:\blands? you control have\b|\ball lands have\b|\benchanted land has\b|\btarget land gains\b)[^\n]*\badd "
             + @"(?:one mana of any colou?r|\{[wubrg]\}(?:, \{[wubrg]\})*,? or \{[wubrg]\})");
 
         private static readonly Regex SacrificesATokenForMana = Rx(@"sacrifice an? (?<token>[\w-]+) token: add ");

@@ -290,7 +290,7 @@ namespace ScatoloneDownloader.Cube
 
             string ownLandDrops = OnSomebodyElsesExplore.Replace(text, " ");
 
-            if (CostsLessToCast.IsMatch(CostsLessForItself.Replace(text, " "))
+            if (CostsLessToCast.IsMatch(TribalCostReduction.Replace(CostsLessForItself.Replace(text, " "), " "))
                 || (card.MacroType != MacroType.Land && ActivatedManaAbility.IsMatch(ownMana))
                 || ExtraLandDrop.IsMatch(text)
                 || (ManaMultiplier.IsMatch(text) && !ManaOnlyForUpkeep.IsMatch(text))
@@ -305,7 +305,9 @@ namespace ScatoloneDownloader.Cube
                     && !SwapsLandsForLands.IsMatch(text))
                 || LandsBackAfterFillingTheGraveyard.IsMatch(text)
                 || (MakesAPowerstone.IsMatch(text) && !PowerstoneForSomebodyElse.IsMatch(text))
-                || TreasureAlsoRamps(text))
+                || TreasureAlsoRamps(text)
+                || ActivatedManaTokenMaker.IsMatch(text)
+                || (ManaKeptForGood.IsMatch(text) && !KeepsAttackMana.IsMatch(text)))
             {
                 result |= CardEffect.Ramp;
             }

@@ -10380,6 +10380,157 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // Ruled 2026-10-24: mana KEPT from one step to the next for good is Ramp
+    // (Horizon Stone, tagged by hand; Kruphix with it). Read the same day, one
+    // reviewed card each, Ramp by hand: a spell's mode that adds mana (Jeska's
+    // Will), lands an opponent searches put under your control (Rootweaver Druid),
+    // mana for each player (Yurlok of Scorch Thrash), X mana a sentence after a
+    // charge counter (Empowered Autogenerator), a mana token made by an activated
+    // ability (Kibo, Uktabi Prince), lands searched before a d20 (Druid of the
+    // Emerald Grove), and 'until you exile a land card' (Venture Forth). A spell's
+    // own subtype is no tribe, and neither is face-down: Uncle Iroh and Dream
+    // Chisel keep their cost reduction.
+    [InlineData("Horizon Stone", "Artifact",
+        "If you would lose unspent mana, that mana becomes colorless instead.")]
+    [InlineData("Kruphix, God of Horizons", "Legendary Enchantment Creature — God",
+        "Indestructible\nAs long as your devotion to green and blue is less than seven, Kruphix isn't a "
+        + "creature.\nYou have no maximum hand size.\nIf you would lose unspent mana, that mana becomes colorless "
+        + "instead.")]
+    [InlineData("Jeska's Will", "Sorcery",
+        "Choose one. If you control a commander as you cast this spell, you may choose both instead.\n• Add "
+        + "{R} for each card in target opponent's hand.\n• Exile the top three cards of your library. You may "
+        + "play them this turn.")]
+    [InlineData("Rootweaver Druid", "Creature — Elf Druid",
+        "When this creature enters, each opponent may search their library for up to three basic land cards. "
+        + "They each put one of those cards onto the battlefield tapped under your control and the rest onto "
+        + "the battlefield tapped under their control. Then each player who searched their library this way "
+        + "shuffles.")]
+    [InlineData("Yurlok of Scorch Thrash", "Legendary Creature — Lizard Shaman",
+        "Vigilance\nA player losing unspent mana causes that player to lose that much life.\n{1}, {T}: Each "
+        + "player adds {B}{R}{G}.")]
+    [InlineData("Empowered Autogenerator", "Artifact",
+        "This artifact enters tapped.\n{T}: Put a charge counter on this artifact. Add X mana of any one "
+        + "color, where X is the number of charge counters on this artifact.")]
+    [InlineData("Kibo, Uktabi Prince", "Legendary Creature — Monkey Noble",
+        "{T}: Each player creates a colorless artifact token named Banana with \"{T}, Sacrifice this token: "
+        + "Add {R} or {G}. You gain 2 life.\"\nWhenever an artifact an opponent controls is put into a graveyard "
+        + "from the battlefield, put a +1/+1 counter on each creature you control that's an Ape or a "
+        + "Monkey.\nWhenever Kibo attacks, defending player sacrifices an artifact of their choice.")]
+    [InlineData("Druid of the Emerald Grove", "Creature — Dwarf Druid",
+        "When this creature enters, search your library for up to two basic land cards and reveal them, then "
+        + "roll a d20.\n9 or less | Put those cards into your hand, then shuffle.\n10—19 | Put one of those cards "
+        + "onto the battlefield tapped and the other into your hand, then shuffle.\n20+ | Put those cards onto "
+        + "the battlefield tapped, then shuffle.")]
+    [InlineData("Venture Forth", "Sorcery",
+        "Exile cards from the top of your library until you exile a land card. Put that card onto the "
+        + "battlefield and the rest on the bottom of your library in a random order. Exile Venture Forth with "
+        + "three time counters on it.\nSuspend 3—{1}{G}")]
+    [InlineData("Uncle Iroh", "Legendary Creature — Human Noble Ally",
+        "Firebending 1 (Whenever this creature attacks, add {R}. This mana lasts until end of combat.)\nLesson "
+        + "spells you cast cost {1} less to cast.")]
+    [InlineData("Dream Chisel", "Artifact",
+        "Face-down creature spells you cast cost {1} less to cast.")]
+    // The same ruling in its other wording, 'Players don't lose unspent mana as
+    // steps and phases end'.
+    [InlineData("Upwelling", "Enchantment",
+        "Players don't lose unspent mana as steps and phases end.")]
+    public void Classify_TheOctober24RampPass_IsRamp(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // Ruled 2026-10-24: a cost reduction for a TRIBE's spells is nothing (Gargos's
+    // Hydras, Herald of Slaanesh's Demons, Nogi's Dragons), and kept mana is not
+    // Ramp when what is kept comes from attacking (Fangorn, Tree Shepherd; Ozai,
+    // the Phoenix King's firebending). Read the same day, untagged by hand: the
+    // land the owner of a shuffled permanent finds (Audacious Swap), one land
+    // sacrificed for one (Elvish Reclaimer), one Treasure from exiling the card
+    // (Halo Scarab) or when its last counter is gone (Reckoner Bankbuster), the
+    // lands each player short of them searches for (Natural Balance), and a one-
+    // time mana mode on a permanent's trigger (Zuko, Conflicted).
+    [InlineData("Gargos, Vicious Watcher", "Legendary Creature — Hydra",
+        "Vigilance\nHydra spells you cast cost {4} less to cast.\nWhenever a creature you control becomes the "
+        + "target of a spell, Gargos fights up to one target creature you don't control.")]
+    [InlineData("Herald of Slaanesh", "Creature — Demon",
+        "Locus of Slaanesh — Demon spells you cast cost {2} less to cast.\nOther Demons you control have "
+        + "haste.")]
+    [InlineData("Nogi, Draco-Zealot", "Legendary Creature — Kobold Shaman",
+        "Dragon spells you cast cost {1} less to cast.\nWhenever Nogi attacks, if you control three or more "
+        + "Dragons, until end of turn, Nogi becomes a Dragon with base power and toughness 5/5 and gains "
+        + "flying.")]
+    [InlineData("Fangorn, Tree Shepherd", "Legendary Creature — Treefolk",
+        "Treefolk you control have vigilance.\nWhenever one or more Treefolk you control attack, add twice "
+        + "that much {G}.\nYou don't lose unspent green mana as steps and phases end.")]
+    [InlineData("Ozai, the Phoenix King", "Legendary Creature — Human Noble",
+        "Trample, firebending 4, haste\nIf you would lose unspent mana, that mana becomes red instead.\nOzai "
+        + "has flying and indestructible as long as you have six or more unspent mana.")]
+    [InlineData("Audacious Swap", "Instant",
+        "Casualty 2 (As you cast this spell, you may sacrifice a creature with power 2 or greater. When you "
+        + "do, copy this spell and you may choose a new target for the copy.)\nThe owner of target "
+        + "nonenchantment permanent shuffles it into their library, then exiles the top card of their library. "
+        + "If it's a land card, they put it onto the battlefield. Otherwise, they may cast it without paying "
+        + "its mana cost.")]
+    [InlineData("Elvish Reclaimer", "Creature — Elf Warrior",
+        "This creature gets +2/+2 as long as there are three or more land cards in your graveyard.\n{2}, {T}, "
+        + "Sacrifice a land: Search your library for a land card, put it onto the battlefield tapped, then "
+        + "shuffle.")]
+    [InlineData("Halo Scarab", "Artifact Creature — Insect",
+        "{2}, Exile this card from your graveyard: Create a Treasure token. (It's an artifact with \"{T}, "
+        + "Sacrifice this token: Add one mana of any color.\")")]
+    [InlineData("Reckoner Bankbuster", "Artifact — Vehicle",
+        "This Vehicle enters with three charge counters on it.\n{2}, {T}, Remove a charge counter from this "
+        + "Vehicle: Draw a card. Then if there are no charge counters on this Vehicle, create a Treasure token "
+        + "and a 1/1 colorless Pilot creature token with \"This token crews Vehicles as though its power were 2 "
+        + "greater.\"\nCrew 3")]
+    [InlineData("Natural Balance", "Sorcery",
+        "Each player who controls six or more lands chooses five lands they control and sacrifices the rest. "
+        + "Each player who controls four or fewer lands may search their library for up to X basic land cards "
+        + "and put them onto the battlefield, where X is five minus the number of lands they control. Then each "
+        + "player who searched their library this way shuffles.")]
+    [InlineData("Zuko, Conflicted", "Legendary Creature — Human Rogue",
+        "At the beginning of your first main phase, choose one that hasn't been chosen and you lose 2 life "
+        + "—\n• Draw a card.\n• Put a +1/+1 counter on Zuko.\n• Add {R}.\n• Exile Zuko, then return him to the "
+        + "battlefield under an opponent's control.")]
+    public void Classify_TheOctober24RampPass_IsNotRamp(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // 'All lands have "{T}: Add one mana of any color"' is the one mana granted to
+    // lands, which fixes (Toxicrene, ManaFixing alone by hand, read 2026-10-24).
+    [InlineData("Toxicrene", "Creature — Tyranid",
+        "Reach, deathtouch\nHypertoxic Miasma — All lands have \"{T}: Add one mana of any color\" and lose all "
+        + "other abilities.")]
+    public void Classify_TheOctober24RampPass_OneManaForAllLands_IsManaFixingNotRamp(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.False(result.HasFlag(CardEffect.Ramp));
+        Assert.True(result.HasFlag(CardEffect.ManaFixing));
+    }
+
+    [Theory]
+    // Treasures 'target opponent creates' are theirs (Vazi, Keen Negotiator,
+    // CardAdvantage and Buff by hand, read 2026-10-24; Wanted Scoundrels with it).
+    [InlineData("Vazi, Keen Negotiator", "Legendary Creature — Human Advisor",
+        "Haste\n{T}: Target opponent creates X Treasure tokens, where X is the number of Treasure tokens you "
+        + "created this turn.\nWhenever an opponent casts a spell or activates an ability, if mana from a "
+        + "Treasure was spent to cast it or activate it, put a +1/+1 counter on target creature, then draw a "
+        + "card.")]
+    [InlineData("Wanted Scoundrels", "Creature — Human Pirate",
+        "When this creature dies, target opponent creates two Treasure tokens. (They're artifacts with \"{T}, "
+        + "Sacrifice this token: Add one mana of any color.\")")]
+    public void Classify_TheOctober24RampPass_TreasuresForATargetOpponent_AreNeitherRampNorManaFixing(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.False(result.HasFlag(CardEffect.Ramp));
+        Assert.False(result.HasFlag(CardEffect.ManaFixing));
+    }
+
+    [Theory]
     // The same ruling by KEYWORD, because these four print unearth, blitz, encore
     // and dash without the reminder text. Mask of the Jadecrafter's unearth
     // returns an artifact nobody attacks with, so the keyword asks for a creature.

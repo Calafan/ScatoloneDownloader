@@ -58,8 +58,9 @@
 
             [CardEffect.Ramp] =
                 "More mana, or sooner: a mana ability on a creature or rock, a land onto the battlefield, a ritual, "
-                + "a cost reduction, an extra land drop, untapping lands, several Treasures. Mana that COSTS mana "
-                + "fixes colour instead. A land tapping for one is just a land, its own mana or one GRANTED to it.",
+                + "a cost reduction (not a tribe's), an extra land drop, untapping lands, several Treasures, mana kept "
+                + "for good. Mana that COSTS mana fixes colour instead. A land tapping for one is just a land, its own "
+                + "mana or one GRANTED to it.",
 
             [CardEffect.Disenchant] =
                 "Answers an artifact or enchantment, at any count — \"up to one\", \"X target\", \"another\", "
