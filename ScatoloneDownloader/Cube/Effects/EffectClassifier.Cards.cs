@@ -1159,16 +1159,47 @@ namespace ScatoloneDownloader.Cube
 
         // A LOOT tacked onto a SPELL that does something else is the same rider,
         // ruled 2026-09-27 on Refute — "non ha Filter, solo counter" — which is
-        // Deny Entry, Broadside Barrage and Transpose written the same way. Asked
-        // of spells only: a creature that loots as it enters was not asked about.
+        // Deny Entry, Broadside Barrage and Transpose written the same way.
         private const string OneLoot =
             @"draw (?:a|one) card,? then discard a card\.?|discard a card, then draw a card\.?";
+
+        // …and a loot, a rummage or a CONNIVE made once by a PERMANENT, ruled
+        // 2026-10-24 — "No Filter, come lo scry singolo" — on Revel Ruiner and
+        // Echo Inspector, untagged on 10-23 the day Raffine's Informant kept
+        // the tag on the same words. The body (or the artifact, the Saga) is
+        // what the card is for, the scry ruling of 2026-09-27. Counted before
+        // it was ruled: 6 of 10 reviewed connives on entering were tagged, 16
+        // of 18 loots, 6 of 6 rummages, all from before the question was put.
+        // A loot that COMES AGAIN keeps the tag (Dreadwing Scavenger's "enters
+        // or attacks", Prowler's connive on every Villain). Any count, since
+        // the scry ruling read any number: Kiora, the Rising Tide's "draw two
+        // cards, then discard two cards". A connive selects only through its
+        // reminder, which is a loot the first alternative blanks wherever it
+        // sits on the line; blanking the keyword too was tried and moved
+        // nothing.
+        // Only on a TRIGGER that fires once (OnceTrigger): a bare loot line on
+        // a creature card is its Adventure or Omen spell (Tempest Hart's Scan
+        // the Clouds, tagged), an activated loot repeats (Oracle of Dust), and
+        // a connive in quotes is one the card hands over to come again
+        // (Copycrook, Security Bypass, both tagged). Nor a trigger on TWO
+        // events, which loots twice: Oracle of Tragedy's "when this creature
+        // enters or dies" (tagged 2026-09-29).
+        private static readonly Regex OnceTrigger = Rx(
+            @"^\s*(?:when\b(?![^,\n]* or (?:dies|leaves|attacks|is put into)\b)|[ivx]+ —)");
+
+        private const string OneLootOnAPermanent =
+            @"\bdraws? (?:a|one|two|three|x|\d+) cards?,? then discards? (?:a|one|two|three|x|\d+) cards?\.?"
+            + @"|\bdiscards? (?:a|one|two|x|\d+) cards?, then draws? (?:a|one|two|three|x|\d+) cards?\.?"
+            + @"|\byou may discard a card\. if you do, draw a card\.?";
 
         // Whatever sits in QUOTES belongs to something else — Transpose's Wizard
         // token carries its own "Whenever you cast …" — so it neither makes the
         // line repeatable nor gets blanked: the quoted alternative is matched
         // first and handed back untouched.
         private static readonly Regex QuotedOrOneScry = Rx("\"[^\"\n]*\"|" + OneScryOrSurveil);
+
+        private static readonly Regex QuotedOrOneScryOrPermanentLoot = Rx(
+            "\"[^\"\n]*\"|" + OneScryOrSurveil + "|" + OneLootOnAPermanent);
 
         private static readonly Regex QuotedOrOneScryOrLoot = Rx("\"[^\"\n]*\"|" + OneScryOrSurveil + "|" + OneLoot);
 
@@ -1199,7 +1230,7 @@ namespace ScatoloneDownloader.Cube
                 AbilityRepeatsOutsideTheGraveyard(Quoted.Replace(Parenthetical.Replace(a, " "), " ")) ? a
                 : spell ? string.Join('\n', a.Split('\n').Select(line =>
                     line.TrimStart().StartsWith('•') ? line : BlankOutsideQuotes(QuotedOrOneScryOrLoot, line)))
-                : BlankOutsideQuotes(QuotedOrOneScry, a)));
+                : BlankOutsideQuotes(OnceTrigger.IsMatch(a) ? QuotedOrOneScryOrPermanentLoot : QuotedOrOneScry, a)));
 
             if (repeating == text)
             {
@@ -1954,6 +1985,20 @@ namespace ScatoloneDownloader.Cube
 
         private static readonly Regex DeathDrawRepeatedByEncore = Rx(
             @"\bwhen this creature dies, draw (?:a|one) card\b[\s\S]*\bencore\b");
+
+        // A dig until a card TYPE turns up, made ONCE, the one card into your
+        // hand and the rest to the bottom: a card for a card, so Filter by the
+        // count (Yuna's Whistle, a spell, and Artificer Class's level 2, tagged
+        // 2026-09-10 and 2026-10-23 — 2 of 2 reviewed). The same dig AGAIN is a
+        // card each time (Vivien, Nature's Avenger's −3 is CardAdvantage; see
+        // LoyaltyRevealsUntilIntoHand), so the caller asks the ability whether
+        // it repeats. That gate is also what keeps out the LAND dug for (House
+        // Cartographer, ManaFixing) and the TRIBE's (Nissa, Resurgent Animist):
+        // both repeat, and vetoes for a land and a chosen type were tried and
+        // moved no card.
+        private static readonly Regex RevealsUntilATypeIntoHand = Rx(
+            @"reveal cards from the top of your library until you reveal an? "
+            + @"[\w ]{0,30}card\. put (?:that|the revealed) card into your hand and the rest on the bottom of your library");
 
         private static readonly Regex LoyaltyRevealsUntilIntoHand = Rx(
             @"^[+−-]?\d+: reveal cards from the top of your library until you reveal [^.\n]{0,80}\.[^\n]{0,80}\bput (?:that card|it) into your hand",

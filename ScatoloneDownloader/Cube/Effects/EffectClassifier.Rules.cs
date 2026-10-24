@@ -997,7 +997,13 @@ namespace ScatoloneDownloader.Cube
                     Rx(@"(?<!\bthat player )discards? (?!this card)(?:a|one|two|three|four|five|x|\d+) cards?,? (?:then |and )(?:you )?draws?"),
                     Rx(@"you may discard (?:a|one|up to \w+|any number of) cards?\.? ?(?:if you do, )?draws?"),
                     Rx(@"discards? (?:a|one|up to \w+|any number of|that many) cards?, then draws? that many"),
-                    Rx(@"^[^\n:]{0,50}discard (?!this card)(?:a|one|\w+) cards?[^\n:]{0,30}: ?draw",
+                    // The card discarded may be NAMED by a word — "Discard a
+                    // Mountain card or a red card: Draw a card" (Chandra's
+                    // Regulator, tagged 2026-10-20). One card only: Sphinx of the
+                    // Chimes discards two named cards for four. A veto for a LAND
+                    // card (Soul of Windgrace, CardAdvantage alone) was tried and
+                    // moved no card.
+                    Rx(@"^[^\n:]{0,50}discard (?!this card)(?:(?:a|an|one) [\w-]+ card|(?:a|one|\w+) cards?)[^\n:]{0,30}: ?draw",
                         RegexOptions.Multiline),
                     // The two halves change hands without the word "discard": you may
                     // draw and then hand one back (Oblivious Bookworm, Rook Turret),
@@ -1055,11 +1061,14 @@ namespace ScatoloneDownloader.Cube
                     // the MILLED CARDS" is the same words (Seed of Hope, Picklock
                     // Prankster, Wrenn and Realmbreaker's −2, 2026-10-14).
                     // "Put up to one enchantment card MILLED THIS WAY into your
-                    // hand" (Terra, Magical Adept, 2026-10-16).
+                    // hand" (Terra, Magical Adept, 2026-10-16). "Then RETURN a
+                    // creature card milled this way to your hand" (Monster
+                    // Manual's Zoological Study, 2026-10-23).
                     Rx(@"(?:\bmill|reveal the top) (?:\w+|x) cards?[^\n]{0,120}?"
                         + @"(?:put [^\n]{0,60}from among (?:them|the cards milled this way|the milled cards) into your hand"
                         + @"|put all of them with that name into your hand"
-                        + @"|put (?:up to one|a|an|one) [\w ,'\-]{0,40}cards? milled this way into your hand)"),
+                        + @"|put (?:up to one|a|an|one) [\w ,'\-]{0,40}cards? milled this way into your hand"
+                        + @"|return (?:up to one|a|an|one) [\w ,'\-]{0,40}cards? milled this way to your hand)"),
                     // …and the one kept CAST free or put ONTO THE BATTLEFIELD, read
                     // 2026-10-16, each the one reviewed card that says it: "mill X
                     // cards. You may cast an instant or sorcery spell … from among
@@ -1070,10 +1079,16 @@ namespace ScatoloneDownloader.Cube
                     // among them onto the battlefield" (Knickknack Ouphe; the
                     // look-at form of it is 7 of 7 reviewed). Not a LAND alone,
                     // which is Ramp (Shigeki, the 2026-09-20 ruling below).
+                    // Without the "may" and with a long cap: Smelting Vat puts
+                    // "up to two noncreature artifact cards with total mana value
+                    // less than or equal to the sacrificed artifact's mana value"
+                    // (tagged 2026-10-22). Not ALL of a kind, which is no choice
+                    // (Animist's Awakening's lands, Muxus's Goblins), nor A
+                    // RANDOM one (Getaway Barrel).
                     Rx(@"\bmill (?:\w+|x) cards?\. you may cast [^.\n]{0,80}from among them without paying"
                         + @"|\bmill (?:\w+|x) cards?\. then put [^.\n]{0,60}from among the milled cards onto the battlefield"
-                        + @"|reveal the top (?:\w+|x) cards? of your library\. you may put (?!(?:a|up to one) (?:basic )?land cards?\b)"
-                        + @"[^.\n]{0,80}from among them onto the battlefield"),
+                        + @"|reveal the top (?:\w+|x) cards? of your library\. (?:you may )?put (?!all\b|a random\b|(?:a|up to one) (?:basic )?land cards?\b)"
+                        + @"[^.\n]{0,120}from among them onto the battlefield"),
                     // …and CHOSEN from among them before they go to hand: Green
                     // Sun's Twilight reveals X plus one and keeps a creature
                     // and/or a land (Filter by hand, 2026-10-14).
@@ -1822,10 +1837,27 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex SorcererRoleScry = Rx(
             @"sorcerer role token[^\n]*?""whenever this creature attacks, scry 1\.""");
 
+        // An OPPONENT's loot, read 2026-10-24: Balor makes "target opponent
+        // draw three cards, then discard three cards at random" (untagged by
+        // hand, 2026-10-23) — Memory Worm's reading of 2026-10-14 with the
+        // victim named. "Target PLAYER" can still be you (Forget).
+        private static readonly Regex TheirLoot = Rx(
+            @"\b(?:target|each) opponent draws [^.\n]{0,20}cards?, then discards [^.\n]*");
+
+        // A scry only a TRIBE's spell pays out, the tribal ruling of 2026-10-16:
+        // Lapis Orb of Dragonkind's "when you spend this mana to cast a Dragon
+        // creature spell, scry 2" (untagged by hand, 2026-10-22). Case-sensitive
+        // on the type, as TribalCard is.
+        private static readonly Regex ScryForATribe = new(
+            @"\b[Ww]hen you spend this mana to cast an? " + ACreatureType
+            + @" (?:creature )?spell, (?:scry|surveil) \d+\.?(?: ?\([^()]*\))?",
+            RegexOptions.CultureInvariant);
+
         // Every shape above blanked, for the tag to be asked again.
         private static string WithoutFalseSelection(string text) =>
+            ScryForATribe.Replace(TheirLoot.Replace(
             SorcererRoleScry.Replace(ConniveBesideACounter.Replace(LandFromAmongThemToHand.Replace(TheirDiscardYourDraw.Replace(
-                LooksAtTopForALand.Replace(LooksAtTopAndMakesBodies.Replace(text, " "), " "), " "), " "), " "), " ");
+                LooksAtTopForALand.Replace(LooksAtTopAndMakesBodies.Replace(text, " "), " "), " "), " "), " "), " "), " "), " ");
 
         //   AND A LOOT THAT IS NOT YOURS. "Each opponent discards a card AND YOU
         //   DRAW a card" is two different players doing two different things,

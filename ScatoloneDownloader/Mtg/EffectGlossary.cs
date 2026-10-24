@@ -81,9 +81,9 @@
                 + "Not THEIR draw, a tribe's graveyard, an unreachable trigger.",
 
             [CardEffect.Filter] =
-                "Cards changing places at NO net gain: keep one of a few looked at, milled or revealed, rearrange "
-                + "ANY player's top, every rummage or wheel, hideaway, a scry LAND, a scry, Blood or Map that comes "
-                + "AGAIN. Not one made ONCE in passing, nor a LAND kept (ManaFixing), nor a CLOAK. With "
+                "Cards changing places at NO net gain: keep one of a few seen, milled or revealed, rearrange "
+                + "ANY player's top, a wheel, hideaway, a scry LAND, a loot SPELL, a scry, loot, Blood or Map that "
+                + "comes AGAIN. Not one made ONCE in passing, nor a LAND kept (ManaFixing), nor a CLOAK. With "
                 + "CardAdvantage only on its own repeating ability, or hideaway.",
 
             [CardEffect.Reanimate] =

@@ -167,3 +167,29 @@ battlefield from among the revealed (Knickknack Ouphe), but not a land alone, wh
 (Shigeki, Jukai Visionary). A connive beside a spell bounced is the rider of a counterspell (Obscura
 Interceptor). Handed back without the tag: Thrill-Kill Disciple, Candy Trail and Invasion of
 Pyrulea.
+
+Ruled 2026-10-24 (the Filter pass, 488 reviewed: 5 proposed wrongly and 12 missed before, 0 and 7
+after the 28 cards the ruling reaches were handed back): A LOOT, A RUMMAGE OR A CONNIVE A PERMANENT
+MAKES ONCE is the rider a one-shot scry is — "No Filter, come lo scry singolo" — which answers what
+the 09-27 ruling had left open for a creature that loots as it enters. Revel Ruiner and Echo
+Inspector were untagged on 10-23 while Raffine's Informant kept the tag on the same words; counted
+before the question was put, 6 of 10 reviewed connives on entering carried it, 16 of 18 loots and
+6 of 6 rummages, every one tagged before anyone had asked. At any count (Kiora, the Rising Tide
+draws two and discards two) and on a Saga's chapter (Founding of Omashu). Only on a trigger that
+fires ONCE: a loot on two events (Oracle of Tragedy's "enters or dies"), a loot activated or paid
+from the graveyard (Oracle of Dust, Merfolk Pupil), a connive handed over in quotes to come again
+(Copycrook, Security Bypass) and an Adventure's spell (Tempest Hart's Scan the Clouds) keep it.
+
+Read the same day: a discard cost that names its card by a word (Chandra's Regulator — one card
+only, since Sphinx of the Chimes discards two for four), the revealed put onto the battlefield
+without a "may" (Smelting Vat
+— not ALL of a kind, Animist's Awakening, nor a RANDOM one, Getaway Barrel), a creature card milled
+this way RETURNED to hand (Monster Manual's Zoological Study), and a dig until a card type turns up,
+made once, its one card to hand and the rest to the bottom (Artificer Class's level 2, Yuna's
+Whistle, 2 of 2 by hand — the same dig again is CardAdvantage, Vivien, Nature's Avenger, and a land
+dug for is ManaFixing, House Cartographer). Not this tag: an OPPONENT's loot (Balor, the Memory
+Worm reading with the victim named) and a scry only a TRIBE's spell pays out (Lapis Orb of
+Dragonkind). Seven stay against the rules, each known: Hei Bai, Kellan, Rumor Gatherer and Sword of
+Once and Future by name, Sidequest: Catch a Fish, and Candy Trail and Invasion of Pyrulea, put back
+by hand after the 10-16 hand-back — a noncreature's one-shot scry on entering is 1 of 6 tagged
+(Lembas, the same Food, is not).

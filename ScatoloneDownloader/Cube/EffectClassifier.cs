@@ -1174,6 +1174,15 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Filter;
             }
 
+            // A dig until a card type turns up, made once, is a card for a card.
+            // Added after the in-passing gate, which only blanks a scry or a
+            // loot, so it is not asked again. See RevealsUntilATypeIntoHand.
+            if (Abilities(text).Any(a => RevealsUntilATypeIntoHand.IsMatch(a)
+                    && !AbilityRepeats(Quoted.Replace(Parenthetical.Replace(a, " "), " "))))
+            {
+                result |= CardEffect.Filter;
+            }
+
             // The two tags are EXCLUSIVE, ruled 2026-09-27 — "se ha CardAdvantage
             // non ha Filter" — overturning 2026-09-19, which had a card that
             // selects AND comes out ahead carry both. The hand tags had split on

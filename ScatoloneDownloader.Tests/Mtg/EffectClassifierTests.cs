@@ -1459,8 +1459,9 @@ public sealed class EffectClassifierTests
     // The rummage: "you may discard a card. If you do, draw a card". The
     // plainest Filter shape printed and it had never been read — 14 cards fire
     // on it and 12 were already tagged by hand. Ruled 2026-09-19.
-    [InlineData("Yuyan Archers", "Creature — Human Archer",
-        "Reach\nWhen this creature enters, you may discard a card. If you do, draw a card.")]
+    // Yuyan Archers' rummage on entering moved to
+    // Classify_TheOctober24FilterPass_IsNotFilter on 2026-10-24, when a
+    // permanent's one-shot loot was ruled a rider like its one-shot scry.
     [InlineData("Rescue Leopard", "Creature — Cat",
         "Whenever this creature becomes tapped, you may discard a card. If you do, draw a card.")]
     // The activated version. The rule carries a lookahead for "this card"
@@ -10528,6 +10529,146 @@ public sealed class EffectClassifierTests
 
         Assert.False(result.HasFlag(CardEffect.Ramp));
         Assert.False(result.HasFlag(CardEffect.ManaFixing));
+    }
+
+    [Theory]
+    // The Filter pass of 2026-10-24. A discard cost naming its card by a word
+    // (Chandra's Regulator), the revealed put onto the battlefield without a may
+    // (Smelting Vat), a creature card milled this way returned to hand (Monster
+    // Manual), and a dig until a card type turns up made once (Artificer Class,
+    // Yuna's Whistle) are read. The one-shot loot ruling of the same day stops at
+    // a trigger that fires once: a loot on two events (Oracle of Tragedy), an
+    // Adventure's spell (Tempest Hart), a connive handed over in quotes
+    // (Copycrook, Security Bypass) and an activated loot (Oracle of Dust) keep the
+    // tag.
+    [InlineData("Chandra's Regulator", "Legendary Artifact",
+        "Whenever you activate a loyalty ability of a Chandra planeswalker, you may pay {1}. If you do, copy "
+        + "that ability. You may choose new targets for the copy.\n{1}, {T}, Discard a Mountain card or a red "
+        + "card: Draw a card.")]
+    [InlineData("Smelting Vat", "Artifact",
+        "{1}, {T}, Sacrifice another artifact: Reveal the top eight cards of your library. Put up to two "
+        + "noncreature artifact cards with total mana value less than or equal to the sacrificed artifact's "
+        + "mana value from among them onto the battlefield and the rest on the bottom of your library in a "
+        + "random order.")]
+    [InlineData("Monster Manual // Zoological Study", "Artifact — Book // Sorcery — Adventure",
+        "{1}{G}, {T}: You may put a creature card from your hand onto the battlefield.\nMill five cards, then "
+        + "return a creature card milled this way to your hand. (Then exile this card. You may cast the "
+        + "artifact later from exile.)")]
+    [InlineData("Artificer Class", "Enchantment — Class",
+        "(Gain the next level as a sorcery to add its ability.)\nThe first artifact spell you cast each turn "
+        + "costs {1} less to cast.\n{1}{U}: Level 2\nWhen this Class becomes level 2, reveal cards from the top "
+        + "of your library until you reveal an artifact card. Put that card into your hand and the rest on the "
+        + "bottom of your library in a random order.\n{5}{U}: Level 3\nAt the beginning of your end step, create "
+        + "a token that's a copy of target artifact you control.")]
+    [InlineData("Yuna's Whistle", "Instant",
+        "Reveal cards from the top of your library until you reveal a creature card. Put that card into your "
+        + "hand and the rest on the bottom of your library in a random order. When you reveal a creature card "
+        + "this way, put X +1/+1 counters on target creature you control, where X is the mana value of that "
+        + "card.")]
+    [InlineData("Oracle of Tragedy", "Creature — Human Wizard",
+        "When this creature enters or dies, choose one —\n• Draw a card, then discard a card.\n• Shuffle up to "
+        + "four target cards with mana value 3 or greater from your graveyard into your library.")]
+    [InlineData("Tempest Hart // Scan the Clouds", "Creature — Elemental Elk // Instant — Adventure",
+        "Trample\nWhenever you cast a spell with mana value 5 or greater, put a +1/+1 counter on this "
+        + "creature.\nDraw two cards, then discard two cards. (Then exile this card. You may cast the creature "
+        + "later from exile.)")]
+    [InlineData("Copycrook", "Creature — Shapeshifter Rogue",
+        "You may have this creature enter as a copy of any creature on the battlefield, except it has "
+        + "\"Whenever this creature attacks, it connives.\" (Draw a card, then discard a card. If you discarded a "
+        + "nonland card, put a +1/+1 counter on this creature.)")]
+    [InlineData("Security Bypass", "Enchantment — Aura",
+        "Enchant creature\nAs long as enchanted creature is attacking alone, it can't be blocked.\nEnchanted "
+        + "creature has \"Whenever this creature deals combat damage to a player, it connives.\" (Its controller "
+        + "draws a card, then discards a card. If they discarded a nonland card, they put a +1/+1 counter on "
+        + "this creature.)")]
+    [InlineData("Oracle of Dust", "Creature — Eldrazi Processor",
+        "Devoid (This card has no color.)\n{2}, Put a card an opponent owns from exile into that player's "
+        + "graveyard: Draw a card, then discard a card.")]
+    public void Classify_TheOctober24FilterPass_IsFilter(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Ruled 2026-10-24, No Filter, come lo scry singolo: a loot, a rummage or a
+    // connive a permanent makes once is a rider, at any count and on a Saga's
+    // chapter too (Revel Ruiner, Echo Inspector, Psychic Pickpocket, Raffine's
+    // Informant, Kiora, Yuyan Archers, Founding of Omashu). Read the same day: an
+    // opponent's loot (Balor), a scry only a tribe's spell pays out (Lapis Orb of
+    // Dragonkind), two cards discarded for four (Sphinx of the Chimes), all of a
+    // kind or a random one put onto the battlefield (Animist's Awakening, Getaway
+    // Barrel), and a dig that repeats or is only a tribe's (Spinner of Souls,
+    // Nissa, Resurgent Animist).
+    [InlineData("Revel Ruiner", "Creature — Octopus Rogue",
+        "Menace (This creature can't be blocked except by two or more creatures.)\nWhen this creature enters, "
+        + "it connives. (Draw a card, then discard a card. If you discarded a nonland card, put a +1/+1 counter "
+        + "on this creature.)")]
+    [InlineData("Echo Inspector", "Creature — Bird Rogue",
+        "Flying\nWhen this creature enters, it connives. (Draw a card, then discard a card. If you discarded a "
+        + "nonland card, put a +1/+1 counter on this creature.)")]
+    [InlineData("Psychic Pickpocket", "Creature — Octopus Rogue",
+        "When this creature enters, it connives. When it connives this way, return up to one target nonland "
+        + "permanent to its owner's hand. (To have a creature connive, draw a card, then discard a card. If you "
+        + "discarded a nonland card, put a +1/+1 counter on that creature.)")]
+    [InlineData("Raffine's Informant", "Creature — Human Wizard",
+        "When this creature enters, it connives. (Draw a card, then discard a card. If you discarded a "
+        + "nonland card, put a +1/+1 counter on this creature.)")]
+    [InlineData("Kiora, the Rising Tide", "Legendary Creature — Merfolk Noble",
+        "When Kiora enters, draw two cards, then discard two cards.\nThreshold — Whenever Kiora attacks, if "
+        + "there are seven or more cards in your graveyard, you may create Scion of the Deep, a legendary 8/8 "
+        + "blue Octopus creature token.")]
+    [InlineData("Yuyan Archers", "Creature — Human Archer",
+        "Reach\nWhen this creature enters, you may discard a card. If you do, draw a card.")]
+    [InlineData("Founding of Omashu", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Create "
+        + "two 1/1 white Ally creature tokens.\nII — You may discard a card. If you do, draw a card.\nIII — "
+        + "Creatures you control get +1/+0 until end of turn.")]
+    [InlineData("Balor", "Creature — Demon",
+        "Flying\nWhenever this creature attacks or dies, choose one or more. Each mode must target a different "
+        + "player.\n• Target opponent draws three cards, then discards three cards at random.\n• Target opponent "
+        + "sacrifices a nontoken artifact of their choice.\n• This creature deals damage to target opponent "
+        + "equal to the number of cards in their hand.")]
+    [InlineData("Lapis Orb of Dragonkind", "Artifact",
+        "{T}: Add {U}. When you spend this mana to cast a Dragon creature spell, scry 2. (Look at the top two "
+        + "cards of your library, then put any number of them on the bottom and the rest on top in any order.)")]
+    [InlineData("Sphinx of the Chimes", "Creature — Sphinx",
+        "Flying\nDiscard two nonland cards with the same name: Draw four cards.")]
+    [InlineData("Animist's Awakening", "Sorcery",
+        "Reveal the top X cards of your library. Put all land cards from among them onto the battlefield "
+        + "tapped and the rest on the bottom of your library in a random order.\nSpell mastery — If there are "
+        + "two or more instant and/or sorcery cards in your graveyard, untap those lands.")]
+    [InlineData("Getaway Barrel", "Artifact",
+        "When this artifact is put into a graveyard from the battlefield, reveal the top thirteen cards of "
+        + "your library. Put a random creature card from among them onto the battlefield. Put the rest on the "
+        + "bottom of your library in a random order.")]
+    [InlineData("Spinner of Souls", "Creature — Spider Spirit",
+        "Reach\nWhenever another nontoken creature you control dies, you may reveal cards from the top of your "
+        + "library until you reveal a creature card. Put that card into your hand and the rest on the bottom of "
+        + "your library in a random order.")]
+    [InlineData("Nissa, Resurgent Animist", "Legendary Creature — Elf Scout",
+        "Landfall — Whenever a land you control enters, add one mana of any color. Then if this is the second "
+        + "time this ability has resolved this turn, reveal cards from the top of your library until you reveal "
+        + "an Elf or Elemental card. Put that card into your hand and the rest on the bottom of your library in "
+        + "a random order.")]
+    // A land card discarded for the draw (Soul of Windgrace, CardAdvantage alone),
+    // a discard-first loot made once (Seasoned Pyromancer), and a dig for a land,
+    // which is ManaFixing (House Cartographer).
+    [InlineData("Soul of Windgrace", "Legendary Creature — Cat Avatar",
+        "Whenever Soul of Windgrace enters or attacks, you may put a land card from a graveyard onto the "
+        + "battlefield tapped under your control.\n{G}, Discard a land card: You gain 3 life.\n{1}{R}, Discard a "
+        + "land card: Draw a card.\n{2}{B}, Discard a land card: Soul of Windgrace gains indestructible until "
+        + "end of turn. Tap it.")]
+    [InlineData("Seasoned Pyromancer", "Creature — Human Shaman",
+        "When this creature enters, discard two cards, then draw two cards. For each nonland card discarded "
+        + "this way, create a 1/1 red Elemental creature token.\n{3}{R}{R}, Exile this card from your graveyard: "
+        + "Create two 1/1 red Elemental creature tokens.")]
+    [InlineData("House Cartographer", "Creature — Human Scout Survivor",
+        "Survival — At the beginning of your second main phase, if this creature is tapped, reveal cards from "
+        + "the top of your library until you reveal a land card. Put that card into your hand and the rest on "
+        + "the bottom of your library in a random order.")]
+    public void Classify_TheOctober24FilterPass_IsNotFilter(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
     }
 
     [Theory]
