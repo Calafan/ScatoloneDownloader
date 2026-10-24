@@ -359,3 +359,39 @@ Elven-Queen); the copies Arcane Bombardment casts; a Token card that draws on en
 Infiltrator, 1 of 1 — WITHDRAWN 2026-10-23: it read the token printing the store held until the
 set-aware re-key of 2026-10-20, and a printed token now carries no tags at all, see `CardEffect`).
 Left as known disagreements: Lich, Innocent Bystander.
+
+Ruled 2026-10-23 (the CardAdvantage pass, 1181 reviewed: 17 proposed wrongly and 24 missed before, 2
+and 5 after, 2 and 1 once the named cards were corrected): CASCADE is one card, once, like a
+discover ("No CA, come discover"). The human had untagged 11 of the 14 reviewed cards that cascade
+once, and the three left (Forceful Denial, Sakashima's Protege, Heralds of Tzeentch) were corrected
+by name; it had been tagged by accident, the cascade reminder read as a second hand. Cascade that
+comes round again stays this tag: printed more than once (Apex Devastator), beside a second cast of
+the card (Into the Time Vortex, Bloodbraid Challenger), handed to your spells (Abaddon the
+Despoiler, Flamekin Herald, Bigger on the Inside), or the same exile-until on every legendary spell
+(Jodah, the Unifier); "this spell has cascade as long as" is once (Bloodbraid Marauder). Diviner's
+Lockbox, which names a card and draws three when the top one matches, is not this tag: it is
+difficulty, like the other guessed draws ("No CA, è difficoltà"). Forging the Anchor, kept as
+CardAdvantage and Filter, is CardAdvantage alone by the ruling of 2026-09-27 ("Solo CA").
+
+Read the same day — this tag: a self-sacrifice for X cards or for "you draw two" (All-Fates Scroll,
+Infernal Idol: 8 of 10 reviewed, the two others handing a card back, Conch Horn and Starting
+Column); "for each {U}{U} spent" (Bladecoil Serpent); the top card of each opponent's library
+(Breeches, Brazen Plunderer); a cantrip that splices (Everdream); an impulse on entering and on
+leaving (Experimental Synthesizer); every card of a card type kept from a look (Forging the Anchor,
+where Rat cards stay Filter: Karumonix); a graveyard card on every hit (Ghost of Ramirez DePietro);
+a draw the spell repeats (Invoke Despair); four exiled every upkeep with one played (Journey to the
+Lost City); each player drawing on a repeating trigger (Master of Ceremonies); squad copies that
+each draw (Sicarian Infiltrator, the real card this time); a mill handed back by an activation
+(Sivriss, Nightmare Speaker); a land card paid for a draw by a card that brings lands back (Soul of
+Windgrace); a card off the top per target, all playable (Soulfire Eruption); a token that taps to
+draw (Tamiyo, Compleated Sage); up to two kept from a look (The Mana Rig); a death draw that encore
+repeats (Trove Tracker); the same mode chosen for a target player (Unite the Coalition); a loyalty
+reveal-until into the hand (Vivien, Nature's Avenger); a life cost before a land's draw (War Room).
+Not this tag: a curse watching the enchanted player draw (Curse of Fool's Wisdom); a tutor into
+exile cast from there (Evolving Door); ANY target spell exiled and cast, which is Steal (Gale's
+Redirection); a draw an opponent pays for to free their creature (Hold for Ransom); an impulse only
+a Goblin may be cast from (Rundvelt Hordemaster, the tribal ruling of 2026-10-16), where an Otter
+spell that triggers it (Harnesser of Storms) or a Hero card that pumps (Daredevil) is no tribe.
+Measured and rejected: a repeated MANIFEST of the top card as this tag, 1 tagged of 9 (Cryptic
+Pursuit against Abhorrent Oculus and Hauntwoods Shrieker). Left as known disagreements: Lich,
+Innocent Bystander, Cryptic Pursuit.

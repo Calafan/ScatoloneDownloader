@@ -850,7 +850,9 @@ namespace ScatoloneDownloader.Cube
                     // 2026-10-16: it follows a discard and pays you only when an
                     // opponent has no card to give, a conditional rider
                     // (Refurbished Familiar, 0 of 1 tagged; hand: Discard alone).
-                    Rx(@"for each (?![\w ']{0,40}\bcan't, )[\w ']{0,40}, (?:you )?draws? (?:a|one) card"),
+                    // A mana symbol is a word here too, read 2026-10-23: "for each
+                    // {U}{U} spent to cast it, draw a card" (Bladecoil Serpent).
+                    Rx(@"for each (?![\w '{}]{0,40}\bcan't, )[\w '{}]{0,40}, (?:you )?draws? (?:a|one) card"),
                     // ONE trigger word covering TWO events is two cards, not
                     // one: Cryogen Relic draws when it enters and again when it
                     // leaves, so the artifact replaces itself and pays a card
@@ -922,9 +924,10 @@ namespace ScatoloneDownloader.Cube
                     // named "from among them", and the look can be written the
                     // other way round — Stargaze says "Look at TWICE X cards
                     // FROM THE TOP of your library. Put X cards from among them
-                    // into your hand".
+                    // into your hand". "Put UP TO two of them" is the same, read
+                    // 2026-10-23 (The Mana Rig).
                     Rx(@"look at (?:the top \w+ cards?|twice \w+ cards?) (?:of|from the top of) your library"
-                        + @"[^\n]{0,60}put (?:two|three|four|five|x|\d+) "
+                        + @"[^\n]{0,60}put (?:up to )?(?:two|three|four|five|x|\d+) "
                         + @"(?:of them|of those cards|cards? from among them) into your hand"),
                     // …and taking ALL of a kind is more than one too, however many
                     // that turns out to be: Marina Vendrell reveals seven and keeps

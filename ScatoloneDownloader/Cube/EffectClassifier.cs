@@ -855,7 +855,10 @@ namespace ScatoloneDownloader.Cube
             // should be withdrawn by a loot or a cycling cost elsewhere on the card.
             bool impulseIsACard = ImpulseDraw.IsMatch(text)
                 && (ImpulseOfSeveralCards.IsMatch(text)
-                    || Abilities(text).Any(a => ImpulseDraw.IsMatch(a)
+                    // …and not when only a creature TYPE may be cast: Rundvelt
+                    // Hordemaster's "if it's a Goblin creature card" (untagged,
+                    // read 2026-10-23, the tribal ruling of 2026-10-16).
+                    || Abilities(text).Any(a => ImpulseDraw.IsMatch(a) && !ImpulseOnlyForATribe.IsMatch(a)
                         && AbilityRepeats(card.MacroType == MacroType.Spell ? ForOneTurnOnly.Replace(a, "") : a)));
 
             // Exiling several and playing only one is a count of zero. Asked of
@@ -897,7 +900,10 @@ namespace ScatoloneDownloader.Cube
                 || MillsAndTakesTwoBack.IsMatch(text)
                 || AttackRevealsUntilIntoHand.IsMatch(text)
                 || AttackInvestigatesWhenNotCast.IsMatch(text)
-                || GrantedManaAndCascade.IsMatch(text)
+                // Cascade twice, or cascade and a second cast; one cascade is a
+                // discover (ruled 2026-10-23, see CascadeMoreThanOnce).
+                || CascadeMoreThanOnce.IsMatch(text)
+                || (OwnCascade.IsMatch(text) && CastsItselfASecondTime.IsMatch(Parenthetical.Replace(text, " ")))
                 || GravestormAndAClue.IsMatch(text)
                 || ControllerExilesThatManyAndPlays.IsMatch(text)
                 || GrantedTriggeredDraw.IsMatch(text)
@@ -922,7 +928,16 @@ namespace ScatoloneDownloader.Cube
                 // Ruled 2026-10-16 (C1, C2) — see TheirTopForYou.
                 || Abilities(text).Any(a => (TheirTopForYou.IsMatch(a) || TheirGraveyardCardForYou.IsMatch(a))
                     && RepeatsWithoutPayingACard(a))
-                || SeveralOffTheirTop.IsMatch(text) || TheirCardsFromExile.IsMatch(text))
+                || SeveralOffTheirTop.IsMatch(text) || TheirCardsFromExile.IsMatch(text)
+                // The readings of 2026-10-23 — see EntersOrLeavesImpulse.
+                || EntersOrLeavesImpulse.IsMatch(text)
+                || Abilities(text).Any(a => RevealsAnyNumberIntoHand.IsMatch(a) && !TribalCard.IsMatch(a))
+                || GraveyardCardOnEveryHit.IsMatch(text) || DrawThenRepeat.IsMatch(text)
+                || UpkeepExilesSeveralIntoPlay.IsMatch(text) || EachPlayerDrawsEveryTurn.IsMatch(text)
+                || SquadCopiesDraw.IsMatch(text) || MillHandedBack.IsMatch(text)
+                || ExilesOnePerTargetAndPlays.IsMatch(text) || TokenThatTapsToDraw.IsMatch(text)
+                || DeathDrawRepeatedByEncore.IsMatch(text) || LoyaltyRevealsUntilIntoHand.IsMatch(text)
+                || LifePaidForADraw.IsMatch(text) || SplicedCantrip.IsMatch(text))
             {
                 result |= CardEffect.CardAdvantage;
             }

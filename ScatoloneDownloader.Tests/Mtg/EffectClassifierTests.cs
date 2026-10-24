@@ -7928,13 +7928,11 @@ public sealed class EffectClassifierTests
         "Lifelink\nDance — At the beginning of your end step, each player may discard a card. Each player "
         + "who discarded a card this way draws a card. If a creature card was discarded this way, you "
         + "create a 1/2 white Moogle creature token with lifelink.")]
-    // The self-sacrifice trade only wins when the count is READABLE and the
-    // line hands nothing back. All-Fates Scroll draws "X cards, where X is …"
-    // and Conch Horn puts one from your hand back on top; both are untagged.
-    [InlineData("All-Fates Scroll", "Artifact",
-        "{T}: Add one mana of any color.\n"
-        + "{7}, {T}, Sacrifice this artifact: Draw X cards, where X is the number of differently named "
-        + "lands you control.")]
+    // The self-sacrifice trade only wins when the line hands nothing back:
+    // Conch Horn puts one from your hand back on top, and is untagged.
+    // All-Fates Scroll was here too, for its "X cards", until 2026-10-23: the
+    // human had tagged it CardAdvantage on 2026-10-16, see
+    // Classify_TheOctober23CardAdvantagePass_IsCardAdvantage.
     [InlineData("Conch Horn", "Artifact",
         "{1}, {T}, Sacrifice this artifact: Draw two cards, then put a card from your hand on top of your "
         + "library.")]
@@ -10170,6 +10168,215 @@ public sealed class EffectClassifierTests
     public void Classify_TheOctober23BurnPass_IsNotBurn(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
+    // Read and ruled 2026-10-23 from the sitting of 2026-10-20..23. Cascade is a
+    // card only when it comes round again: granted to other spells (Abaddon), cast
+    // twice (Bloodbraid Challenger's escape), or the same exile-until on every
+    // legendary spell (Jodah); one cascade is a discover. Then one card per
+    // wording the rules could not read: a self-sacrifice for X or for 'you draw
+    // two' (All-Fates Scroll, Infernal Idol), a mana symbol in 'for each'
+    // (Bladecoil Serpent), each opponent's top card (Breeches), a spliced cantrip
+    // (Everdream), an impulse on entering and on leaving (Experimental
+    // Synthesizer), every card of a type kept from a look (Forging the Anchor), a
+    // graveyard card on every hit (Ghost of Ramirez), a draw repeated by the spell
+    // (Invoke Despair), four exiled every upkeep with one played (Journey to the
+    // Lost City), each player drawing on a repeating trigger (Master of
+    // Ceremonies), squad copies that draw (Sicarian Infiltrator), a mill handed
+    // back (Sivriss), a land card paid for a draw by a card that brings lands back
+    // (Soul of Windgrace), one card per target (Soulfire Eruption), a token that
+    // taps to draw (Tamiyo, Compleated Sage), up to two kept from a look (The Mana
+    // Rig), a death draw encore repeats (Trove Tracker), the same mode for a
+    // target player (Unite the Coalition), a loyalty reveal-until into the hand
+    // (Vivien), a life cost before a draw (War Room). Harnesser of Storms casts on
+    // an Otter spell and plays any card: the tribal veto is not its.
+    [InlineData("Abaddon the Despoiler", "Legendary Creature — Astartes Warrior",
+        "Trample\nMark of Chaos Ascendant — During your turn, spells you cast from your hand with mana value X "
+        + "or less have cascade, where X is the total amount of life your opponents have lost this turn.")]
+    [InlineData("Bloodbraid Challenger", "Creature — Elf Berserker",
+        "Cascade\nHaste\nEscape—{3}{R}{G}, Exile three other cards from your graveyard. (You may cast this card "
+        + "from your graveyard for its escape cost.)")]
+    [InlineData("Jodah, the Unifier", "Legendary Creature — Human Wizard",
+        "Legendary creatures you control get +X/+X, where X is the number of legendary creatures you "
+        + "control.\nWhenever you cast a legendary spell from your hand, exile cards from the top of your "
+        + "library until you exile a legendary nonland card with lesser mana value. You may cast that card "
+        + "without paying its mana cost. Put the rest on the bottom of your library in a random order.")]
+    [InlineData("All-Fates Scroll", "Artifact",
+        "{T}: Add one mana of any color.\n{7}, {T}, Sacrifice this artifact: Draw X cards, where X is the "
+        + "number of differently named lands you control.")]
+    [InlineData("Infernal Idol", "Artifact",
+        "{T}: Add {B}.\n{1}{B}{B}, {T}, Sacrifice this artifact: You draw two cards and lose 2 life.")]
+    [InlineData("Bladecoil Serpent", "Artifact Creature — Serpent",
+        "When this creature enters, for each {U}{U} spent to cast it, draw a card.\nWhen this creature enters, "
+        + "for each {B}{B} spent to cast it, each opponent discards a card.\nWhen this creature enters, for each "
+        + "{R}{R} spent to cast it, it gets +1/+0 and gains trample and haste until end of turn.")]
+    [InlineData("Breeches, Brazen Plunderer", "Legendary Creature — Goblin Pirate",
+        "Menace\nWhenever one or more Pirates you control deal damage to your opponents, exile the top card of "
+        + "each of those opponents' libraries. You may play those cards this turn, and you may spend mana as "
+        + "though it were mana of any color to cast those spells.\nPartner (You can have two commanders if both "
+        + "have partner.)")]
+    [InlineData("Everdream", "Instant",
+        "Draw a card.\nSplice onto instant or sorcery {2}{U} (As you cast an instant or sorcery spell, you may "
+        + "reveal this card from your hand and pay its splice cost. If you do, add this card's effects to that "
+        + "spell.)")]
+    [InlineData("Experimental Synthesizer", "Artifact",
+        "When this artifact enters or leaves the battlefield, exile the top card of your library. Until end "
+        + "of turn, you may play that card.\n{2}{R}, Sacrifice this artifact: Create a 2/2 white Samurai "
+        + "creature token with vigilance. Activate only as a sorcery.")]
+    [InlineData("Forging the Anchor", "Sorcery",
+        "Look at the top five cards of your library. You may reveal any number of artifact cards from among "
+        + "them and put the revealed cards into your hand. Put the rest on the bottom of your library in a "
+        + "random order.")]
+    [InlineData("Ghost of Ramirez DePietro", "Legendary Creature — Spirit Pirate",
+        "Ghost of Ramirez DePietro can't be blocked by creatures with toughness 3 or greater.\nWhenever Ghost "
+        + "of Ramirez DePietro deals combat damage to a player, choose up to one target card in a graveyard "
+        + "that was discarded or put there from a library this turn. Put that card into its owner's "
+        + "hand.\nPartner (You can have two commanders if both have partner.)")]
+    [InlineData("Invoke Despair", "Sorcery",
+        "Target opponent sacrifices a creature of their choice. If they can't, they lose 2 life and you draw "
+        + "a card. Then repeat this process for an enchantment and a planeswalker.")]
+    [InlineData("Journey to the Lost City", "Enchantment",
+        "At the beginning of your upkeep, exile the top four cards of your library, then roll a d20.\n1—9 | "
+        + "You may put a land card from among those cards onto the battlefield.\n10—19 | Create a 2/2 green Wolf "
+        + "creature token, then put a +1/+1 counter on it for each creature card among those cards.\n20 | Put "
+        + "all permanent cards exiled with this enchantment onto the battlefield, then sacrifice it.")]
+    [InlineData("Master of Ceremonies", "Creature — Rhino Druid",
+        "At the beginning of your upkeep, each opponent chooses money, friends, or secrets. For each player "
+        + "who chose money, you and that player each create a Treasure token. For each player who chose "
+        + "friends, you and that player each create a 1/1 green and white Citizen creature token. For each "
+        + "player who chose secrets, you and that player each draw a card.")]
+    [InlineData("Sicarian Infiltrator", "Artifact Creature — Human Soldier",
+        "Flash\nSquad {2} (As an additional cost to cast this spell, you may pay {2} any number of times. When "
+        + "this creature enters, create that many tokens that are copies of it.)\nBenediction of the Omnissiah — "
+        + "When this creature enters, draw a card.")]
+    [InlineData("Sivriss, Nightmare Speaker", "Legendary Creature — Snake Cleric Warlock",
+        "{T}, Sacrifice another creature or an artifact: For each opponent, you mill a card, then return that "
+        + "card from your graveyard to your hand unless that player pays 3 life. (To mill a card, put the top "
+        + "card of your library into your graveyard.)\nChoose a Background (You can have a Background as a "
+        + "second commander.)")]
+    [InlineData("Soul of Windgrace", "Legendary Creature — Cat Avatar",
+        "Whenever Soul of Windgrace enters or attacks, you may put a land card from a graveyard onto the "
+        + "battlefield tapped under your control.\n{G}, Discard a land card: You gain 3 life.\n{1}{R}, Discard a "
+        + "land card: Draw a card.\n{2}{B}, Discard a land card: Soul of Windgrace gains indestructible until "
+        + "end of turn. Tap it.")]
+    [InlineData("Soulfire Eruption", "Sorcery",
+        "Choose any number of target creatures, planeswalkers, and/or players. For each of them, exile the "
+        + "top card of your library, then Soulfire Eruption deals damage equal to that card's mana value to "
+        + "that permanent or player. You may play the exiled cards until the end of your next turn.")]
+    [InlineData("Tamiyo, Compleated Sage", "Legendary Planeswalker — Tamiyo",
+        "Compleated ({G/U/P} can be paid with {G}, {U}, or 2 life. If life was paid, this planeswalker enters "
+        + "with two fewer loyalty counters.)\n+1: Tap up to one target artifact or creature. It doesn't untap "
+        + "during its controller's next untap step.\n−X: Exile target nonland permanent card with mana value X "
+        + "from your graveyard. Create a token that's a copy of that card.\n−7: Create Tamiyo's Notebook, a "
+        + "legendary colorless Book artifact token with \"Spells you cast cost {2} less to cast\" and \"{T}: Draw "
+        + "a card.\"")]
+    [InlineData("The Mana Rig", "Legendary Artifact",
+        "Whenever you cast a multicolored spell, create a tapped Powerstone token. (It's an artifact with "
+        + "\"{T}: Add {C}. This mana can't be spent to cast a nonartifact spell.\")\n{X}{X}{X}, {T}: Look at the "
+        + "top X cards of your library. Put up to two of them into your hand and the rest on the bottom of your "
+        + "library in a random order.")]
+    [InlineData("Trove Tracker", "Creature — Human Pirate",
+        "When this creature dies, draw a card.\nEncore {5}{U}{U} ({5}{U}{U}, Exile this card from your "
+        + "graveyard: For each opponent, create a token copy that attacks that opponent this turn if able. They "
+        + "gain haste. Sacrifice them at the beginning of the next end step. Activate only as a sorcery.)")]
+    [InlineData("Unite the Coalition", "Instant",
+        "Choose five. You may choose the same mode more than once.\n• Target permanent phases out.\n• Target "
+        + "player draws a card.\n• Exile target player's graveyard.\n• Unite the Coalition deals 2 damage to any "
+        + "target.\n• Destroy target artifact or enchantment.")]
+    [InlineData("Vivien, Nature's Avenger", "Legendary Planeswalker — Vivien",
+        "+1: Put three +1/+1 counters on up to one target creature.\n−1: Reveal cards from the top of your "
+        + "library until you reveal a creature card. Put that card into your hand and the rest on the bottom of "
+        + "your library in a random order.\n−6: Target creature gets +10/+10 and gains trample until end of "
+        + "turn.")]
+    [InlineData("War Room", "Land",
+        "{T}: Add {C}.\n{3}, {T}, Pay life equal to the number of colors in your commanders' color identity: "
+        + "Draw a card.")]
+    [InlineData("Harnesser of Storms", "Creature — Otter Wizard",
+        "Whenever you cast a noncreature or Otter spell, you may exile the top card of your library. Until "
+        + "end of turn, you may play that card. This ability triggers only once each turn.")]
+    // Cascade printed twice (Apex Devastator) and cascade beside a rebound (Into
+    // the Time Vortex), both tagged.
+    [InlineData("Apex Devastator", "Creature — Chimera Hydra",
+        "Cascade, cascade, cascade, cascade (When you cast this spell, exile cards from the top of your "
+        + "library until you exile a nonland card that costs less. You may cast it without paying its mana "
+        + "cost. Put the exiled cards on the bottom in a random order. Multiple instances of cascade each "
+        + "trigger separately.)")]
+    [InlineData("Into the Time Vortex", "Sorcery",
+        "Cascade (When you cast this spell, exile cards from the top of your library until you exile a "
+        + "nonland card that costs less. You may cast it without paying its mana cost. Put the exiled cards on "
+        + "the bottom in a random order.)\nRebound (If you cast this spell from your hand, exile it as it "
+        + "resolves. At the beginning of your next upkeep, you may cast this card from exile without paying its "
+        + "mana cost.)")]
+    public void Classify_TheOctober23CardAdvantagePass_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Ruled 2026-10-23: one cascade is one card, once, like a discover (Forceful
+    // Denial, Sakashima's Protege, Heralds of Tzeentch; Bloodbraid Marauder's
+    // 'this spell has cascade' is its own), and Diviner's Lockbox guessing the top
+    // card by name is difficulty, not a card. Read with them: a curse watching the
+    // enchanted player draw (Curse of Fool's Wisdom), a tutor into exile cast from
+    // there (Evolving Door), any target spell exiled and cast (Gale's
+    // Redirection), a draw an opponent buys to free their creature (Hold for
+    // Ransom), an impulse only a Goblin may be cast from (Rundvelt Hordemaster),
+    // Rat cards kept from a look (Karumonix), and a self-sacrifice that discards
+    // one of the two (Starting Column).
+    [InlineData("Forceful Denial", "Instant",
+        "Cascade (When you cast this spell, exile cards from the top of your library until you exile a "
+        + "nonland card that costs less. You may cast it without paying its mana cost. Put the exiled cards on "
+        + "the bottom in a random order.)\nCounter target spell.")]
+    [InlineData("Sakashima's Protege", "Creature — Shapeshifter",
+        "Flash\nCascade (When you cast this spell, exile cards from the top of your library until you exile a "
+        + "nonland card that costs less. You may cast it without paying its mana cost. Put the exiled cards on "
+        + "the bottom in a random order.)\nYou may have this creature enter as a copy of any permanent that "
+        + "entered this turn.")]
+    [InlineData("Heralds of Tzeentch", "Creature — Demon",
+        "Flying\nCascade (When you cast this spell, exile cards from the top of your library until you exile a "
+        + "nonland card that costs less. You may cast it without paying its mana cost. Put the exiled cards on "
+        + "the bottom in a random order.)")]
+    [InlineData("Bloodbraid Marauder", "Creature — Human Berserker",
+        "This creature can't block.\nDelirium — This spell has cascade as long as there are four or more card "
+        + "types among cards in your graveyard. (When you cast this spell, exile cards from the top of your "
+        + "library until you exile a nonland card that costs less. You may cast it without paying its mana "
+        + "cost. Put the exiled cards on the bottom in a random order.)")]
+    [InlineData("Diviner's Lockbox", "Artifact",
+        "{1}, {T}: Choose a card name, then reveal the top card of your library. If that card has the chosen "
+        + "name, sacrifice this artifact and draw three cards. Activate only as a sorcery.")]
+    [InlineData("Curse of Fool's Wisdom", "Enchantment — Aura Curse",
+        "Enchant player\nWhenever enchanted player draws a card, they lose 2 life and you gain 2 life.\nMadness "
+        + "{3}{B} (If you discard this card, discard it into exile. When you do, cast it for its madness cost "
+        + "or put it into your graveyard.)")]
+    [InlineData("Evolving Door", "Artifact",
+        "{1}, {T}, Sacrifice a creature: Count the colors of the sacrificed creature, then search your "
+        + "library for a creature card that's exactly that many colors plus one. Exile that card, then shuffle. "
+        + "You may cast the exiled card. Activate only as a sorcery.")]
+    [InlineData("Gale's Redirection", "Instant",
+        "Exile target spell, then roll a d20 and add that spell's mana value.\n1—14 | You may cast the exiled "
+        + "card for as long as it remains exiled, and you may spend mana as though it were mana of any color to "
+        + "cast that spell.\n15+ | You may cast the exiled card without paying its mana cost for as long as it "
+        + "remains exiled.")]
+    [InlineData("Hold for Ransom", "Enchantment — Aura",
+        "Enchant creature\nEnchanted creature can't attack or block and has \"{7}: Hold for Ransom's controller "
+        + "sacrifices it and draws a card. Activate only as a sorcery.\"")]
+    [InlineData("Rundvelt Hordemaster", "Creature — Goblin Warrior",
+        "Other Goblins you control get +1/+1.\nWhenever this creature or another Goblin you control dies, "
+        + "exile the top card of your library. If it's a Goblin creature card, you may cast that card until the "
+        + "end of your next turn.")]
+    [InlineData("Karumonix, the Rat King", "Legendary Creature — Phyrexian Rat",
+        "Toxic 1 (Players dealt combat damage by this creature also get a poison counter.)\nOther Rats you "
+        + "control have toxic 1.\nWhen Karumonix enters, look at the top five cards of your library. You may "
+        + "reveal any number of Rat cards from among them and put the revealed cards into your hand. Put the "
+        + "rest on the bottom of your library in a random order.")]
+    [InlineData("Starting Column", "Artifact",
+        "Start your engines! (If you have no speed, it starts at 1. It increases once on each of your turns "
+        + "when an opponent loses life. Max speed is 4.)\n{T}: Add one mana of any color.\nMax speed — {T}, "
+        + "Sacrifice this artifact: Draw two cards, then discard a card.")]
+    public void Classify_TheOctober23CardAdvantagePass_IsNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
     }
 
     [Theory]
