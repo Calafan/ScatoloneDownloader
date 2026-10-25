@@ -302,13 +302,14 @@ probes above do all the searching exactly, for no tokens, and the repo is
 CodeGraph-indexed so a `codegraph_explore` beats a spawned agent for any code
 question. Running a probe is one command with short output, so it stays on the
 main thread like any such command. What is left is the judgement, which AGENTS.md
-keeps on Opus. So here the orchestrator delegates the two jobs in the table below
-and little else.
+keeps on Opus. So here the orchestrator delegates the jobs in the table below and
+little else.
 
 **Never delegate** (AGENTS.md §3, and each has bitten here): deciding whether a
 disagreement is real; choosing a threshold; reading a measurement run; **any number
 that ends up in a commit message or in an answer to the human** — those are
-measured, never estimated; and commits.
+measured, never estimated; and commits. A worker that runs a whole pass (below)
+makes these calls only as proposals: each is decided again in the review.
 
 **Worth delegating**, when the volume justifies a cold start:
 
@@ -316,6 +317,7 @@ measured, never estimated; and commits.
 |---|---|
 | implement an already-written pattern spec + its tests | `Agent` with `model: "sonnet"`, `isolation: "worktree"`; the worktree starts from `main`, so the spec names the base commit and the agent runs `git switch -c <branch> <sha>` first |
 | sweep many files for one conclusion, outside this repo | `Agent` with `model: "haiku"` |
+| a whole pass on one tag, when the human is away and the run covers several tags | a Sonnet worker per tag in its own clone, see "A whole pass to a worker" |
 
 On return from the Sonnet agent, the third column of AGENTS.md's table is the part
 that gets forgotten: build, the whole suite, and **verification by neutralisation**
@@ -323,6 +325,69 @@ that gets forgotten: build, the whole suite, and **verification by neutralisatio
 yourself; a subagent's accuracy figure is raw material, not a result. And never let
 an agent loop on a test until it passes: a test written green proves nothing, and
 the loop optimises for green rather than for right.
+
+### A whole pass to a worker
+
+Measured on 2026-10-24 with two A/B runs: the same prompt, the same base commit,
+one tag each, the human away.
+
+| tag | Opus worker | Sonnet worker |
+|---|---|---|
+| Tokens | $2.74, FP 3 FN 8 | $1.17, FP 2 FN 8 |
+| Protection | $4.35, FP 1 FN 2 | $2.28, FP 1 FN 4 |
+
+Both kept the suite green and every neutralisation case red, and neither shipped
+a change the human later overturned. The difference was in the questions. Against
+the human's answers on Protection, Opus had 5 of 7 right and Sonnet 4 of 7: Sonnet
+asked about two cards a recorded ruling already covered (Gift of Doom, Livio) and
+missed a hand-tag slip outside the score (Cryptek). Both got Dawnglade Regent
+wrong, which is why the questions still go to the human. In the first run, before
+the prompt had its judgement rules, Sonnet shipped a veto nobody had asked for
+(Tamiyo) and re-opened five disagreements `Tokens.md` records as left on purpose.
+
+So when the human is away and the run covers more than one tag, each tag goes to
+a fresh Sonnet worker with `references/worker-prompt.md`, and the orchestrator
+reviews. A fresh worker per tag also keeps the context small: the 11-tag run of
+October cost $51.6 on one main thread that compacted seven times. A single tag
+with the human present stays on the main thread: their own Tokens pass cost $2.89
+there, against $1.17 for the Sonnet worker before its review, and the human
+answers each question as it comes.
+
+Setup, one tag at a time, each from the commit the previous tag landed on:
+
+- **a clone, not a worktree.** The git stash is shared across worktrees and
+  `measure.py` stashes and pops, so a worker in a worktree can pop the human's
+  stash. `git -c safe.directory=E:/Working/Repos/Scryfall/ScatoloneDownloader/.git
+  clone <repo> <dir>`, then `git -C <dir> switch -c ontology/<tag> <sha>` and
+  `git -C <dir> remote remove origin`, outside the repo folder.
+- copy `state/handed-back.json` into the clone's `state/`: it is gitignored, so
+  the clone starts without it.
+- the probes read the live store. If the human may tag cards during the run, copy
+  the store's `metadata` folder and write its path into the clone's
+  `state/work/store.txt`, so the score does not move under the worker.
+- `Agent` with `model: "sonnet"`, `effort: "high"`, and the prompt with its
+  placeholders filled. The worker does not commit and never writes a store.
+
+Review on return, in this order. Each item is something a worker got wrong in the
+A/B runs:
+
+1. Re-measure in the clone: `Score` (the tag's line, the exact-match count, every
+   other line against the baseline), the full suite, `neutralise.py` on the
+   worker's cases file, `git status`, `git stash list` empty, store unchanged.
+2. Every shipped rule is a clean majority with its count, or a reading that quotes
+   a ruling already in `docs/ontology/<Tag>.md`. A rule that changes what counts
+   as the tag goes back to being a question, however clean its count (Tamiyo).
+3. Every question: when a recorded ruling answers it, it is a reading, so write it
+   (Gift of Doom, Livio); when the doc records it as left on purpose, drop it.
+4. A neutralisation case that turns nothing red is a dead alternative kept beside
+   its replacement: remove it after checking with `measure.py` that no card moves.
+5. Rejected hypotheses are in the source, not only in the report.
+
+Then `git -C <clone> diff` becomes a patch in the work directory, `git apply` on
+`main`, re-measure there, and commit as `references/store.md` says. The worker's
+proposed hand-tag changes are applied here, with the scripts, after the review.
+The next tag's clone starts from that commit. The final report lists the clones;
+they are deleted after the human's OK.
 
 Use the `Agent` tool, not a nested `claude` CLI process — a spawned session
 re-reads the repo instructions cold and returns unstructured text. Model names are
@@ -334,6 +399,8 @@ re-reads the repo instructions cold and returns unstructured text. Model names a
   the rule that the human's in-progress reviewed entries are never committed
 - `references/hazards.md` — the traps that have cost real time, each with the
   symptom that identifies it
+- `references/worker-prompt.md` — the prompt for a worker that runs a whole pass
+  on one tag while the human is away
 - `scripts/` — the table under "The work directory"; each script's docstring
   says how to call it. `common.py` names the durable paths once
 - `state/` — gitignored working state: `handed-back.json` and `work/`
