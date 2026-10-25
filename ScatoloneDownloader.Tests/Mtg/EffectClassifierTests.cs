@@ -11006,6 +11006,141 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // Readings of 2026-10-24, each under a ruling docs/ontology/Protection.md
+    // already holds: a granted return from death that also comes back from exile,
+    // to the hand; a morph Aura attached as it is turned face up; a blink whose
+    // return opens a d20 table; an exile its controller may accept, brought back
+    // by a second activation; target creatures phased out in the plural, and a
+    // target permanent; ward over you and your permanents written out in full.
+    [InlineData("Ashnod's Intervention", "Instant",
+        "Until end of turn, target creature gets +2/+0 and gains \"When this creature dies or is put into "
+        + "exile from the battlefield, return it to its owner's hand.\"")]
+    [InlineData("Gift of Doom", "Enchantment — Aura",
+        "Enchant creature\nEnchanted creature has deathtouch and indestructible.\nMorph—Sacrifice another "
+        + "creature. (You may cast this card face down as a 2/2 creature for {3}. Turn it face up any time for "
+        + "its morph cost.)\nAs this Aura is turned face up, you may attach it to a creature.")]
+    [InlineData("Lae'zel's Acrobatics", "Instant",
+        "Exile all nontoken creatures you control, then roll a d20.\n1—9 | Return those cards to the "
+        + "battlefield under their owner's control at the beginning of the next end step.\n10—20 | Return those "
+        + "cards to the battlefield under their owner's control, then exile them again. Return those cards to "
+        + "the battlefield under their owner's control at the beginning of the next end step.")]
+    [InlineData("Livio, Oathsworn Sentinel", "Legendary Creature — Human Knight",
+        "{1}{W}: Choose another target creature. Its controller may exile it with an aegis counter on "
+        + "it.\n{2}{W}, {T}: Return all exiled cards with aegis counters on them to the battlefield under their "
+        + "owners' control.\nPartner (You can have two commanders if both have partner.)")]
+    [InlineData("March of Swirling Mist", "Instant",
+        "As an additional cost to cast this spell, you may exile any number of blue cards from your hand. "
+        + "This spell costs {2} less to cast for each card exiled this way.\nUp to X target creatures phase out. "
+        + "(While they're phased out, they're treated as though they don't exist. Each one phases in before its "
+        + "controller untaps during their next untap step.)")]
+    [InlineData("Unite the Coalition", "Instant",
+        "Choose five. You may choose the same mode more than once.\n• Target permanent phases out.\n• Target "
+        + "player draws a card.\n• Exile target player's graveyard.\n• Unite the Coalition deals 2 damage to any "
+        + "target.\n• Destroy target artifact or enchantment.")]
+    [InlineData("Parnesse, the Subtle Brush", "Legendary Creature — Vampire Wizard",
+        "Whenever you or a permanent you control becomes the target of a spell or ability an opponent "
+        + "controls, counter that spell or ability unless that player pays 4 life.\nWhenever you copy a spell, "
+        + "up to one target opponent may also copy that spell. They may choose new targets for that copy.")]
+    public void Classify_TheOctober24ProtectionReadings_AreProtection(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // Misreadings of 2026-10-24: IT opening a sentence after an activation cost
+    // that names a land you control is still the card itself; a tribe's prevention
+    // is a tribe's shield; a permanent that cannot phase in for as long as
+    // something holds it is the O-ring shape, not a save.
+    [InlineData("Trench Behemoth", "Creature — Kraken",
+        "Return a land you control to its owner's hand: Untap this creature. It gains hexproof until end of "
+        + "turn.\nLandfall — Whenever a land you control enters, target creature an opponent controls attacks "
+        + "during its controller's next combat phase if able.")]
+    [InlineData("Rescue Retriever", "Creature — Dog Soldier",
+        "Flash\nWhen this creature enters, put a +1/+1 counter on each other Soldier you control.\nPrevent all "
+        + "damage that would be dealt to other attacking Soldiers you control.")]
+    [InlineData("The Pandorica", "Legendary Artifact",
+        "You may choose not to untap The Pandorica during your untap step.\n{1}{W}, {T}: Untap another target "
+        + "nonland permanent, then it phases out. It can't phase in for as long as The Pandorica remains "
+        + "tapped. When The Pandorica becomes untapped or leaves the battlefield, that permanent phases in. "
+        + "Activate only as a sorcery.")]
+    [InlineData("The Phasing of Zhalfir", "Enchantment — Saga",
+        "Read ahead (Choose a chapter and start with that many lore counters. Add one after your draw step. "
+        + "Skipped chapters don't trigger. Sacrifice after III.)\nI, II — Another target nonland permanent "
+        + "phases out. It can't phase in for as long as you control this Saga.\nIII — Destroy all creatures. For "
+        + "each creature destroyed this way, its controller creates a 2/2 black Phyrexian creature token.")]
+    public void Classify_TheOctober24ProtectionMisreadings_AreNotProtection(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // Ruled 2026-10-25: a condition the card makes true itself as it enters is no
+    // condition, so Dawnglade Regent's monarch shield is static; a return held up
+    // for one creature that dies this turn is a save (Cryptek).
+    [InlineData("Dawnglade Regent", "Creature — Elk",
+        "When this creature enters, you become the monarch.\nAs long as you're the monarch, permanents you "
+        + "control have hexproof.")]
+    [InlineData("Cryptek", "Artifact Creature — Necron Wizard",
+        "{1}{B}, {T}: Choose another target artifact creature you control. When that creature dies this turn, "
+        + "return it to the battlefield tapped under your control.")]
+    public void Classify_TheOctober25ProtectionRulings_AreProtection(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // Ruled 2026-10-25: protection from a creature type over the area is no shield
+    // of this tag (Gor Muldrak's Salamanders), and a death trigger that returns
+    // your creature is not one either (Magnanimous Magistrate).
+    [InlineData("Gor Muldrak, Amphinologist", "Legendary Creature — Human Scout",
+        "You and permanents you control have protection from Salamanders.\nAt the beginning of your end step, "
+        + "each player who controls the fewest creatures creates a 4/3 blue Salamander Warrior creature token.")]
+    [InlineData("Magnanimous Magistrate", "Creature — Human Advisor",
+        "This creature enters with five reprieve counters on it.\nWhenever another nontoken creature you "
+        + "control dies, if its mana value was 1 or greater, you may remove that many reprieve counters from "
+        + "this creature. If you do, return that card to the battlefield under its owner's control.")]
+    public void Classify_TheOctober25ProtectionRulings_AreNotProtection(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // Ruled 2026-10-25: target creatures phased out in the plural, with no
+    // controller named, are Pacify beside Protection, the 2026-09-22 phasing
+    // ruling (March of Swirling Mist).
+    [InlineData("March of Swirling Mist", "Instant",
+        "As an additional cost to cast this spell, you may exile any number of blue cards from your hand. "
+        + "This spell costs {2} less to cast for each card exiled this way.\nUp to X target creatures phase out. "
+        + "(While they're phased out, they're treated as though they don't exist. Each one phases in before its "
+        + "controller untaps during their next untap step.)")]
+    public void Classify_TheOctober25PhasingRuling_IsPacifyAndProtection(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Pacify));
+        Assert.True(result.HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // The plural you control is a save of your own and not Pacify (2026-10-25).
+    [InlineData("Gallifrey Falls // No More", "Instant // Instant",
+        "Gallifrey Falls deals 4 damage to each creature. If a creature dealt damage this way would die this "
+        + "turn, exile it instead.\nFuse (You may cast one or both halves of this card from your hand.)\nAny "
+        + "number of target creatures you control phase out.\nFuse (You may cast one or both halves of this card "
+        + "from your hand.)")]
+    [InlineData("Guardian of Faith", "Creature — Spirit Knight",
+        "Flash\nVigilance\nWhen this creature enters, any number of other target creatures you control phase "
+        + "out. (Treat them and anything attached to them as though they don't exist until their controller's "
+        + "next turn.)")]
+    public void Classify_TheOctober25PhasingRuling_YourOwnIsProtectionAlone(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.False(result.HasFlag(CardEffect.Pacify));
+        Assert.True(result.HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
     // Readings of 2026-10-16: a look and a free cast is Filter beside its Cheat,
     // since the 10-13 ruling made Kiora both; a milled card put into your hand,
     // cast free or put onto the battlefield from among the milled; and a revealed

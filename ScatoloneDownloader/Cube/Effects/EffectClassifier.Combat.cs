@@ -788,7 +788,14 @@ namespace ScatoloneDownloader.Cube
         // exists to avoid, and it threw the moment it was written the other way
         // round.
         private static readonly Regex PhasesSomethingOut = Rx(
-            @"target [\w ,]{0,35}creature[\w ,]{0,25} phases out(?![^\n]{0,20}until)");
+            @"target [\w ,]{0,35}creature[\w ,]{0,25} phases out(?![^\n]{0,20}until)"
+            // …and target creatures in the PLURAL with no controller named,
+            // ruled 2026-10-25 on March of Swirling Mist ("Up to X target
+            // creatures phase out"), given Pacify by hand beside its
+            // Protection: 1 of 1 reviewed, no unreviewed card. Not the plural
+            // YOU CONTROL (Gallifrey Falls // No More, Guardian of Faith), a
+            // save of your own that PhasesOthersOut reads for Protection alone.
+            + @"|\btarget creatures phase out(?![^\n]{0,20}until)");
 
         // NB: no bare "regenerate" — "can't be regenerated" (Wrath) would false-positive.
         private static readonly Regex[] ProtectionPatterns =
@@ -884,13 +891,24 @@ namespace ScatoloneDownloader.Cube
         // (Scrollshift's "artifact, creature, or enchantment you control").
         private static readonly Regex BlinksToSave = Rx(
             @"exile (?:up to \w+ |x |any number of |another )?(?:other )?target [\w ,]{0,30}?(?:creatures?|permanents?)(?:,? [\w ]{0,20})? you (?:control|own)\b[\s\S]{0,120}?\breturn"
-            + @"|exile (?:any number of|each|all) [\w ,-]{0,30}creatures? you control[^\n]{0,120}\b(?:return|cloak)"
+            // The return may open the first row of a d20 TABLE on the next line
+            // (Lae'zel's Acrobatics' "Exile all nontoken creatures you control,
+            // then roll a d20. / 1—9 | Return those cards", 2026-10-24, 1 of 1
+            // reviewed tagged). A reading of the 2026-09-28 blink ruling.
+            + @"|exile (?:any number of|each|all) [\w ,-]{0,30}creatures? you control[^\n]{0,120}(?:\n\d+[—–-]\d+ \| )?\b(?:return|cloak)"
             + @"|exile (?:up to \w+ |x |another )?(?:other )?target [\w ,/]{0,40}\.[^.\n]{0,60}\breturn (?:it|that card|the exiled cards?|those cards)"
             + @"[^.\n]{0,80}at the beginning of the next end step"
             // …and the same with the clock first: "At the beginning of the next
             // end step, return that card" (Phelia, ruled 2026-09-29).
             + @"|exile (?:up to \w+ |x |another )?(?:other )?target [\w ,/]{0,40}\. at the beginning of the next end step, return (?:it|that card|the exiled cards?|those cards)"
             + @"|(?<!additional cost to cast this spell, )\breturn (?:up to one |another |an? )?(?:other )?(?:target )?(?:nonland )?(?:permanent|creature)s? you control to (?:its|their) owner'?s? hands?(?!:)"
+            // …and an exile its CONTROLLER may accept, marked with a counter and
+            // brought back by a second activation, the way Safe Haven's is
+            // (Livio, Oathsworn Sentinel's aegis counters, 2026-10-24, 1 of 1
+            // reviewed tagged; the six other cards that "exile it with a …
+            // counter", all unreviewed, exile from a graveyard or by suspend,
+            // and none is read).
+            + @"|\bits controller may exile it with an? [\w-]+ counters? on it\b[\s\S]{0,80}?\breturn all exiled cards with"
             + @"|you may airbend that creature"
             // …and airbending YOUR OWN outright, ruled 2026-09-29 ("su di te è
             // protection"): Airbender's Reversal, Appa, Steadfast Guardian.
@@ -907,8 +925,15 @@ namespace ScatoloneDownloader.Cube
         // source's controller (Reflect Damage, Reverberation) or to a martyr
         // (Martyrdom). Redirection that only spares YOU is Pacify's, like the
         // player-only prevention above (Kjeldoran Royal Guard).
+        // The return from death may also come back from EXILE and go to the
+        // HAND, read 2026-10-24 under the same ruling: Ashnod's Intervention, an
+        // instant, hands target creature "When this creature dies or is put into
+        // exile from the battlefield, return it to its owner's hand" (1 of 1
+        // reviewed tagged; a granted "when this creature dies, return it" is
+        // tagged on 5 of 6 reviewed cards, the sixth Perigee Beckoner's, on an
+        // enters trigger that is not held up).
         private static readonly Regex SavesFromDeathOrDamage = Rx(
-            @"gains? ""when this creature dies, return it to the battlefield"
+            @"gains? ""when this creature dies(?: or is put into exile from the battlefield)?, return it to (?:the battlefield|its owner's hand)"
             + @"|damage would be dealt to (?:any|target|each) creature[^.\n]{0,40}dealt to you instead"
             + @"|that damage is dealt to (?:that source's|that spell's) controller instead"
             + @"|is dealt to that spell's controller instead"
@@ -922,6 +947,24 @@ namespace ScatoloneDownloader.Cube
         // An ARTIFACT phased out is saved like a creature is (Vision Charm), but
         // is not the Pacify that phasing out a creature also is.
         private static readonly Regex PhasesAnArtifactOut = Rx(@"target [\w ,]{0,35}artifact[\w ,]{0,25} phases out(?![^\n]{0,20}until)");
+
+        // Two more wordings of the 2026-09-22 phasing ruling, read 2026-10-24
+        // for Protection alone: target creatures in the PLURAL (March of
+        // Swirling Mist's "Up to X target creatures phase out"), and a target
+        // PERMANENT, which is a creature or an artifact (Unite the Coalition's
+        // "Target permanent phases out"); 2 of 2 reviewed cards tagged each. It
+        // also reads the plural targets YOU CONTROL (Clever Concealment,
+        // Guardian of Faith), which PhasesYourPermanentsOut used to.
+        // Kept out of PhasesSomethingOut, which Pacify also reads: Unite the
+        // Coalition and Gallifrey Falls are not hand-tagged Pacify, and the
+        // whole plural folded in took Pacify from 6 wrong to 10 (2026-10-24).
+        // March, ruled Pacify on 2026-10-25, is read there by a narrower
+        // alternative of its own. A permanent that "can't phase
+        // in" for as long as something holds it is the O-ring shape the
+        // "until" guard keeps out (The Pandorica, The Phasing of Zhalfir — 0
+        // of 2 tagged).
+        private static readonly Regex PhasesOthersOut = Rx(
+            @"target [\w ,]{0,35}(?:creatures|permanents?)[\w ,]{0,25} phases? out(?![^\n]{0,20}until)(?![^\n]{0,25}\bcan'?t phase in)");
 
         // A shield handed to ONE TRIBE — or to TOKENS, which the Buff ruling of
         // 2026-09-21 calls a tribe by another name — belongs to that deck's
@@ -944,6 +987,19 @@ namespace ScatoloneDownloader.Cube
             // Torgal's counter is to Buff. Hexproof's reminder goes with it,
             // since it says "can't be the target".
             + @"|\bcast an? " + NotATribe + @"[A-Z][\w']+ creature spell, it\b[^.\n]*\.?(?:\s*\([^)\n]*\))?",
+            RegexOptions.CultureInvariant);
+
+        // …and the same tribe in the PREVENTION vocabulary, which the two-
+        // vocabularies ruling of 2026-09-15 made equal to the keyword one, so the
+        // tribal ruling above reaches it unchanged: Rescue Retriever's flash
+        // "prevent all damage that would be dealt to other attacking Soldiers you
+        // control" and Goldbug's attacking Humans, 0 of 2 reviewed cards tagged
+        // (2026-10-24). Blanked from what PreventsDamageForSomebodyElse reads.
+        // Case-SENSITIVE: the type is what is capitalised.
+        private static readonly Regex PreventsForATribe = new(
+            @"[Pp]revent [^.\n]{0,40}damage that would be dealt (?:this turn )?to (?:other |each |target )?"
+            + StateBeforeATribe + @"(?:other )?" + NotATribe + NotACardType
+            + @"[A-Z][\w']+s?(?: creatures?)? you control\b[^.\n]*",
             RegexOptions.CultureInvariant);
 
         // …and TAKING a shield away is the opposite of this tag: Nowhere to Run,
@@ -969,6 +1025,12 @@ namespace ScatoloneDownloader.Cube
         // (the tribal reading above), nor a CONDITION — tapped or untapped, with
         // a counter on it, during your turn, as long as (Innkeeper's Talent,
         // Cathedral Acolyte, Saryth, The Seriema).
+        // Protection from a creature TYPE over the area is not this tag either,
+        // ruled 2026-10-25 ("veto"): Gor Muldrak's "You and permanents you
+        // control have protection from Salamanders", the very tokens it hands
+        // its opponents, like Lord of the Nazgûl's Ring-bearers and Haytham
+        // Kenway's Assassins — 0 of 3 reviewed cards tagged, and no unreviewed
+        // one proposed. Blanked first (ProtectionFromAType).
         private static readonly Regex AreaShield = Rx(
             @"^(?:[^.\n]{0,60}\b)?(?:(?:non\w+|white|blue|black|red|green|colorless|multicolored|artifact|enchantment|legendary|other) )*"
             + @"(?:creatures|permanents|artifacts|lands|enchantments|planeswalkers) you control (?:have|has)\b[^.\n]{0,60}"
@@ -976,7 +1038,13 @@ namespace ScatoloneDownloader.Cube
             + @"|^each (?:other )?creature you control has\b[^.\n]{0,40}\b(?:hexproof|shroud|indestructible|protection from|ward)"
             + @"|^(?:creatures|permanents) can'?t be the targets? of"
             + @"|^prevent all (?:noncombat |combat )?damage that would be dealt to (?:other )?(?:creatures|permanents)\b"
-            + @"|damage that would be dealt to you and other permanents you control is dealt to this creature instead",
+            + @"|damage that would be dealt to you and other permanents you control is dealt to this creature instead"
+            // …and WARD over the same area written out in full, read 2026-10-24
+            // under the same ruling: Parnesse, the Subtle Brush's "Whenever you
+            // or a permanent you control becomes the target of a spell or
+            // ability an opponent controls, counter that spell or ability unless
+            // that player pays 4 life" (1 of 1 reviewed, tagged).
+            + @"|^whenever (?:you or )?(?:a|another) (?:permanent|creature) you control becomes the target of a spell or ability an opponent controls, counter that spell or ability",
             RegexOptions.Multiline);
 
         // …and a creature TYPE in front of "creatures" is a tribe, not an area
@@ -985,9 +1053,27 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex TribeInFrontOfTheArea = new(
             @"\b" + NotATribe + NotACardType + @"[A-Z][\w']+ creatures you control\b", RegexOptions.CultureInvariant);
 
+        // A condition the card makes TRUE ITSELF as it enters is no condition,
+        // ruled 2026-10-25: Dawnglade Regent makes you the monarch on entering,
+        // so its "As long as you're the monarch, permanents you control have
+        // hexproof" keeps Protection (1 of 1 reviewed; the initiative is read
+        // the same way, on no card yet). Every other condition stands —
+        // Bedrock Tortoise's "during your turn", K-9's "as long as K-9 is
+        // untapped", Yuna and Zamriel, 0 of 4 tagged (measured 2026-10-25).
         private static readonly Regex ShieldCondition = Rx(
             @"\b(?:untapped|tapped|with (?:a|an|one or more) [\w+/-]+ counters? on|counters on them|during (?:your|each)"
             + @"|as long as|while|if)\b");
+
+        private static readonly Regex CrownsYouOnEntering = Rx(
+            @"\bwhen [^.\n]{0,40}\benters\b[^.\n]{0,40}, you (?:become the monarch|take the initiative)\b");
+
+        private static readonly Regex TheCardsOwnCondition = Rx(
+            @"\bas long as you(?:'re| are) the monarch\b|\bas long as you have the initiative\b");
+
+        // Case-SENSITIVE: the type is what is capitalised ("protection from
+        // red" is a colour, "protection from Salamanders" a tribe).
+        private static readonly Regex ProtectionFromAType = new(
+            @"\bprotection from [A-Z][\w'-]+", RegexOptions.CultureInvariant);
 
         // A shield for the PLAYER ALONE is neither this tag nor Pacify, ruled
         // 2026-09-29 ("nessuno dei due"): Absolute Virtue's "you have protection
@@ -1011,8 +1097,11 @@ namespace ScatoloneDownloader.Cube
         // Gallifrey Falls // No More) and Ripples of Potential's "permanents you
         // control that had a counter put on them this way. Those permanents
         // phase out". Your own lands alone (Taniwha) are an upkeep cost.
+        // The "any number of (other) target" form was taken out again on
+        // 2026-10-24: PhasesOthersOut reads every plural target phased out
+        // since, and dumping the store with and without it moved no card.
         private static readonly Regex PhasesYourPermanentsOut = Rx(
-            @"\b(?:all|any number of (?:other )?target) (?:nonland )?(?:permanents|creatures) you control phase out"
+            @"\ball (?:nonland )?(?:permanents|creatures) you control phase out"
             + @"|\bpermanents you control\b[^.\n]{0,80}\. those permanents phase out");
 
         // BACKUP hands the abilities printed below it to the creature it lands
@@ -1026,8 +1115,22 @@ namespace ScatoloneDownloader.Cube
         // flash, Gerrard's Hourglass Pendant's activation; 2026-10-14). Moira,
         // Urborg Haunt does it on entering at sorcery speed, and Lobelia from an
         // opponent's graveyard; neither is tagged.
+        // A death TRIGGER that returns your creature is NOT here, ruled
+        // 2026-10-25: Magnanimous Magistrate's "whenever another nontoken
+        // creature you control dies, … return that card to the battlefield"
+        // lost Protection by hand, like Valkyrie's Call and Yarus (0 of 3
+        // reviewed since). The broad "dies … return it to the battlefield" is
+        // tagged on 5 of 22, mostly a creature's own return (Bogardan Phoenix,
+        // Nine-Lives Familiar) and an Aura's reanimation (2026-10-24).
+        // A return HELD UP for one creature that dies this turn is, ruled the
+        // same day on Cryptek's "{1}{B}, {T}: Choose another target artifact
+        // creature you control. When that creature dies this turn, return it
+        // to the battlefield tapped", tagged by hand: 1 of 1 reviewed.
+        // Reincarnation, which returns a creature card from that graveyard
+        // instead, is not read.
         private static readonly Regex ReturnsWhatDiedThisTurn = Rx(
-            @"\bin your graveyard that (?:was|were) put there from the battlefield this turn\b");
+            @"\bin your graveyard that (?:was|were) put there from the battlefield this turn\b"
+            + @"|\bwhen (?:that|target) creature(?: other than this creature)? dies this turn, return (?:it|that card) to (?:the battlefield|its owner's hand)");
 
         // Three returns to hand that answer nobody, found 2026-09-29, each
         // untagged on every reviewed card: a permanent YOU CONTROL or own (0 of

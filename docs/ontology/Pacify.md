@@ -155,3 +155,9 @@ among the attack-trigger taps since), Summon: Yojimbo +Pacify (a Propaganda tax 
 III, 3 of 4 with Propaganda, Koskun Falls and Elephant Grass; also before 09-22), Harrier Strix
 +Pacify (the one "when ... enters, tap target" card of 19 reviewed left untagged), and Nature's
 Chosen -Pacify (an untapper, tagged before the 09-15 ruling; Infuse says the same and is untagged).
+
+Ruled 2026-10-25: target creatures phased out in the PLURAL, with no controller named, are this tag
+beside Protection like the single creature (March of Swirling Mist's "Up to X target creatures
+phase out", given Pacify by hand). The plural YOU CONTROL is a save of your own and Protection alone
+(Gallifrey Falls // No More, Guardian of Faith), and a target PERMANENT stays out (Unite the
+Coalition): folding every plural in took Pacify from 6 wrong to 10 (measured 2026-10-24).

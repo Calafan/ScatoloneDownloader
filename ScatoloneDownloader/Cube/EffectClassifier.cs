@@ -1041,7 +1041,9 @@ namespace ScatoloneDownloader.Cube
             // (Bubble Matrix) sits on the board rather than being held up, and
             // requiring an instant, flash or an activated ability withdrew five
             // false positives at no cost in recall.
-            if (PreventsDamageForSomebodyElse(card, protectable) && IsInstantSpeed(card))
+            // A tribe's prevention is blanked first, like a tribe's keyword
+            // shield above (PreventsForATribe).
+            if (PreventsDamageForSomebodyElse(card, PreventsForATribe.Replace(protectable, " ")) && IsInstantSpeed(card))
             {
                 result |= CardEffect.Protection;
             }
@@ -1052,7 +1054,7 @@ namespace ScatoloneDownloader.Cube
             // clause names its victim INSIDE the match ("TARGET creature
             // phases out"), so there is nothing in front of it for the
             // self-versus-other gate to inspect and that gate was stripping it.
-            if (PhasesSomethingOut.IsMatch(text) || PhasesAnArtifactOut.IsMatch(text))
+            if (PhasesSomethingOut.IsMatch(text) || PhasesAnArtifactOut.IsMatch(text) || PhasesOthersOut.IsMatch(text))
             {
                 result |= CardEffect.Protection;
             }

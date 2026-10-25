@@ -107,3 +107,26 @@ and a tribe's creature spell entering with hexproof is a tribe's shield (Jade Or
 Measured: Protection F1 97.9 to 99.5 before the store pass.
 
 Read 2026-10-16: "all abilities" lost names no beneficiary (Monument to Perfection).
+
+Read 2026-10-24, each under a ruling above: a granted return from death that also comes back from
+EXILE and goes to the HAND (Ashnod's Intervention); a MORPH Aura attached as it is turned face up,
+which lands like a flash Aura (Gift of Doom); a blink whose return opens a d20 TABLE (Lae'zel's
+Acrobatics); an exile its CONTROLLER may accept, marked with a counter and brought back by a second
+activation the way Safe Haven's is (Livio, Oathsworn Sentinel); target creatures phased out in the
+PLURAL and a target PERMANENT phased out (March of Swirling Mist, Unite the Coalition), but not one
+that "can't phase in" for as long as something holds it (The Pandorica, The Phasing of Zhalfir);
+WARD written out over you and your permanents (Parnesse, the Subtle Brush). Out: "IT" after an
+activation cost that names a land you control is still the card (Trench Behemoth), and a TRIBE's
+prevention is a tribe's shield (Rescue Retriever, Goldbug — 0 of 2 tagged).
+
+Ruled 2026-10-25, on the three cards those readings left wrong and one more: protection from a
+creature TYPE over the area is not this tag (Gor Muldrak's "You and permanents you control have
+protection from Salamanders", like Lord of the Nazgûl's Ring-bearers and Haytham Kenway's Assassins,
+0 of 3 tagged); a condition the card makes TRUE ITSELF as it enters is no condition (Dawnglade
+Regent makes you the monarch, so its hexproof over your permanents is static, and the initiative
+reads the same way); a death TRIGGER that returns your creature is no save (Magnanimous Magistrate,
+untagged by hand like Valkyrie's Call and Yarus), while a return HELD UP for one creature that dies
+this turn is (Cryptek, tagged by hand; Reincarnation, which returns another card, stays out). Gift
+of Doom and Livio, Oathsworn Sentinel keep the tag ("una specie di Protection"), Rescue Retriever
+stays out, and March of Swirling Mist gains Pacify beside it (Pacify.md). Measured with the readings
+of 2026-10-24: Protection 12 wrong to none, F1 97.6 to 100.

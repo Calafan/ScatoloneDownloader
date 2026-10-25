@@ -641,7 +641,7 @@ namespace ScatoloneDownloader.Cube
         /// in the sentence that does it. See AreaShield for the ruling.</summary>
         private static bool ShieldsAnAreaStatically(string text)
         {
-            string plain = Parenthetical.Replace(text, " ");
+            string plain = ProtectionFromAType.Replace(Parenthetical.Replace(text, " "), " ");
 
             foreach (Match match in AreaShield.Matches(plain))
             {
@@ -650,6 +650,13 @@ namespace ScatoloneDownloader.Cube
                 start = Math.Max(start < 0 ? 0 : start + 2, lineStart);
                 int end = plain.IndexOfAny(['.', '\n'], match.Index + match.Length);
                 string sentence = plain[start..(end < 0 ? plain.Length : end)];
+
+                // The monarch the card makes you as it enters is no condition
+                // (Dawnglade Regent, see ShieldCondition).
+                if (CrownsYouOnEntering.IsMatch(plain))
+                {
+                    sentence = TheCardsOwnCondition.Replace(sentence, " ");
+                }
 
                 if (!ShieldCondition.IsMatch(sentence) && !TribeInFrontOfTheArea.IsMatch(sentence))
                 {
@@ -709,9 +716,20 @@ namespace ScatoloneDownloader.Cube
                     // protection" shields itself, while Lightfoot Technique's "put
                     // a counter on TARGET CREATURE. IT gains indestructible"
                     // shields the target. Added 2026-09-29.
+                    // The sentence before is cut at its COLON too, for the reason
+                    // the clause above is: an activation cost is not what the
+                    // sentence is about. Trench Behemoth's "Return a land YOU
+                    // CONTROL to its owner's hand: Untap this creature. It gains
+                    // hexproof" let the cost's "land you control" pass for a
+                    // beneficiary and kept a self-shield tagged. A reading of the
+                    // 2026-09-29 ruling ("IT opening a sentence after 'this
+                    // creature' was read as the card itself"), 2026-10-24.
+                    string sentenceBefore = previous[(Math.Max(previous.LastIndexOf(". ", StringComparison.Ordinal),
+                        previous.LastIndexOf(':')) + 1)..];
+
                     if (ItOpensTheSentence.IsMatch(before)
-                        && SelfReference.IsMatch(previous[(previous.LastIndexOf(". ", StringComparison.Ordinal) + 1)..])
-                        && !Beneficiary.IsMatch(previous[(previous.LastIndexOf(". ", StringComparison.Ordinal) + 1)..]))
+                        && SelfReference.IsMatch(sentenceBefore)
+                        && !Beneficiary.IsMatch(sentenceBefore))
                     {
                         sawSelf = true;
                         continue;
@@ -867,8 +885,16 @@ namespace ScatoloneDownloader.Cube
 
             string text = card.OracleText ?? string.Empty;
 
-            return FlashLine.IsMatch(text) || CastAsThoughItHadFlash.IsMatch(text);
+            return FlashLine.IsMatch(text) || CastAsThoughItHadFlash.IsMatch(text) || AttachedAsItTurnsFaceUp.IsMatch(text);
         }
+
+        // A MORPH Aura goes on the creature as it is turned face up, a special
+        // action taken any time, so it lands at instant speed like a flash Aura:
+        // Gift of Doom's "As this Aura is turned face up, you may attach it to a
+        // creature" (1 of 1 reviewed, tagged). A reading of two 2026-09-28/29
+        // lines in docs/ontology/Protection.md: a card "turned FACE UP (Essence
+        // of Antiquity) ... counts as held up", and "A FLASH Aura still answers".
+        private static readonly Regex AttachedAsItTurnsFaceUp = Rx(@"\bas this aura is turned face up, you may attach it\b");
 
         // The keyword as printed, for a card whose keyword list is missing.
         private static readonly Regex FlashLine = Rx(@"^flash\b", RegexOptions.Multiline);
