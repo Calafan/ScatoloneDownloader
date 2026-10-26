@@ -1,4 +1,5 @@
 using ScatoloneDownloader.Download;
+using ScatoloneDownloader.Filtering;
 using ScatoloneDownloader.Mtg;
 
 using Spectre.Console;
@@ -42,7 +43,20 @@ namespace ScatoloneDownloader.Cli.Cube
 
             using GetManager manager = new();
             List<Card> allCards = await manager.GetDefaultCards();
-            return Match(allCards, pngFiles, warnUnmatched: true);
+            return Match(LibraryPicksFirst(allCards), pngFiles, warnUnmatched: true);
+        }
+
+        /// <summary>
+        /// The bulk with the printings the library rules pick moved to the front, so
+        /// the first-wins indexes of <see cref="Match"/> give a library file the
+        /// printing that was downloaded for it, not whichever printing of that set
+        /// the bulk lists first: a showcase or a star promo went into the store's
+        /// <c>scryfallId</c> for 3501 library files (measured 2026-10-26).
+        /// </summary>
+        internal static IEnumerable<Card> LibraryPicksFirst(IReadOnlyCollection<Card> bulk)
+        {
+            return LibrarySelector.Select(bulk, reprints: false, tokens: false, lands: false, releasedBy: DateTime.Today)
+                .Concat(bulk);
         }
 
         /// <summary>

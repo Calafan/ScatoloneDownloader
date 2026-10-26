@@ -122,13 +122,28 @@ public sealed class CardImageMatcherTests
         Assert.Same(fireIce, Assert.Single(matched).Card);
     }
 
-    private static Card MakeCard(string id, string name, string setName = "Alpha")
+    [Fact]
+    public void Match_LibraryPicksFirst_GivesTheFileThePrintingTheRulesPick()
+    {
+        // The bulk lists the set's borderless printing first; the library
+        // downloaded the plain one, so the file resolves to the plain one.
+        Card borderless = MakeCard(id: "showcase", name: "Oko", oracleId: "oko", borderColor: "borderless");
+        Card plain = MakeCard(id: "plain", name: "Oko", oracleId: "oko");
+        string[] files = [@"C:\Source\1993\Alpha\Oko.png"];
+
+        List<(Card Card, string FilePath)> matched =
+            CardImageMatcher.Match(CardImageMatcher.LibraryPicksFirst([borderless, plain]), files, warnUnmatched: false);
+
+        Assert.Same(plain, Assert.Single(matched).Card);
+    }
+
+    private static Card MakeCard(string id, string name, string setName = "Alpha", string? oracleId = null, string borderColor = "black")
     {
         JsonCard json = new()
         {
             Name = name,
             Id = id,
-            OracleId = id + "-oracle",
+            OracleId = oracleId ?? id + "-oracle",
             Language = "en",
             ReleasedAt = "1993-08-05",
             Layout = "normal",
@@ -138,7 +153,7 @@ public sealed class CardImageMatcherTests
             Set = "LEA",
             SetName = setName,
             SetType = "core",
-            BorderColor = "black",
+            BorderColor = borderColor,
             Cmc = 1,
             ColorIdentity = [],
             ManaCost = "",

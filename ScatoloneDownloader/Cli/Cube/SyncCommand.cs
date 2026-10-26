@@ -81,7 +81,8 @@ namespace ScatoloneDownloader.Cli.Cube
             // Dry run still computes the registration, from the files now plus the
             // cards that would arrive, without touching the store.
             string[] files = Directory.GetFiles(source, "*.png", SearchOption.AllDirectories);
-            List<(Card Card, string FilePath)> matched = CardImageMatcher.Match(bulk, files, warnUnmatched: false);
+            // The rules' picks first, as CardImageMatcher.LibraryPicksFirst orders them.
+            List<(Card Card, string FilePath)> matched = CardImageMatcher.Match([.. selected, .. bulk], files, warnUnmatched: false);
             Dictionary<string, Card> cardsByOracleId = CardIndex.ByOracleId(bulk);
 
             HashSet<string> presentOracleIds = new(
