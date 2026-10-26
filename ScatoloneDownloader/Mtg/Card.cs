@@ -161,7 +161,7 @@ namespace ScatoloneDownloader.Mtg
                 ?? throw new ArgumentException(
                     $"Card '{jsonCard.Name}' has no released_at.", nameof(jsonCard)));
 
-            TypeLine = jsonCard.TypeLine ?? string.Empty;
+            TypeLine = ResolveTypeLine(jsonCard);
             OracleText = ResolveOracleText(jsonCard);
             Keywords = jsonCard.Keywords ?? [];
 
@@ -242,6 +242,27 @@ namespace ScatoloneDownloader.Mtg
             }
 
             return string.Join("\n", faceTexts);
+        }
+
+        /// <summary>The top-level <c>type_line</c> when present, otherwise the per-face
+        /// type lines joined with " // ", the way Scryfall writes it for the other
+        /// multi-face layouts (reversible cards carry it only on the faces, so the
+        /// Jurassic World double basics read as basic lands).</summary>
+        private static string ResolveTypeLine(JsonCard jsonCard)
+        {
+            if (!string.IsNullOrEmpty(jsonCard.TypeLine))
+            {
+                return jsonCard.TypeLine;
+            }
+
+            if (jsonCard.CardFaces == null)
+            {
+                return string.Empty;
+            }
+
+            return string.Join(" // ", jsonCard.CardFaces
+                .Select(face => face.TypeLine)
+                .Where(typeLine => !string.IsNullOrEmpty(typeLine)));
         }
 
         internal static Card CreateCard(JsonCard jsonCard)

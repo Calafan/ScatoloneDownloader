@@ -7,8 +7,9 @@ namespace ScatoloneDownloader.Filtering
     /// printing per card (the earliest plain one), no funny/Vanguard/planar cards, no
     /// card that is legal in no format (dungeons and token-type cards excepted), no
     /// creature token and only the token-layout cards of <see cref="KeptTokens"/> unless
-    /// tokens are requested, nothing not yet released, and a fallback to the earliest
-    /// variant for cards that exist only as a variant.
+    /// tokens are requested, no Alchemy card, nothing not yet released, and for a card
+    /// with no plain printing a fallback to a plain-looking printing from any set, else
+    /// to the earliest variant.
     /// <see cref="Select"/> applies the rules; <see cref="WithFallback"/> keeps the
     /// plain validation (used by <c>set</c> and <c>--no-rules</c>) and only adds the
     /// variant fallback.
@@ -50,17 +51,19 @@ namespace ScatoloneDownloader.Filtering
 
         /// <summary>
         /// Library exclusions: funny and Vanguard set types, planar and Vanguard layouts,
-        /// and cards legal in no format. Dungeons, token-type cards and the
-        /// <see cref="KeptTokens"/> are never legal anywhere but are wanted, so they are
-        /// exempt from the never-legal rule.
+        /// Alchemy cards printed on paper (the Mystery Booster 2 playtest slot; the user
+        /// wants none, 2026-10-26) and cards legal in no format. Dungeons, token-type
+        /// cards and the <see cref="KeptTokens"/> are never legal anywhere but are
+        /// wanted, so they are exempt from the never-legal rule.
         /// </summary>
         internal static bool IsExcluded(Card c)
         {
             bool excludedSetType = c.SetType is "funny" or "vanguard";
             bool excludedLayout = c.Layout is "planar" or "vanguard";
+            bool alchemy = c.PromoTypes.Contains("alchemy");
             bool neverLegalUnwanted = c.NeverLegal && !c.IsDungeon && !c.IsTokenType && !KeptTokens.Contains(c.Name);
 
-            return excludedSetType || excludedLayout || neverLegalUnwanted;
+            return excludedSetType || excludedLayout || alchemy || neverLegalUnwanted;
         }
 
         /// <summary>
@@ -179,10 +182,55 @@ namespace ScatoloneDownloader.Filtering
         }
 
         /// <summary>
+        /// A plain-looking printing that stands in for a card with no valid printing:
+        /// English, paper, a valid layout and border, not etched,
+        /// <see cref="CardFilter.HasPlainLook"/> and legal somewhere, whatever its set
+        /// type and reprint flag. Scryfall can flag the set's own printing a reprint
+        /// (Elesh Norn, Mother of Machines: the borderless Concept Praetor is dated a
+        /// week earlier), a crossover's in-universe art can exist only in a masters set
+        /// (Zilortha in Commander Masters, the Secret Lair crossovers in Universes
+        /// Within), and some cards were printed only there (the Commander Masters
+        /// newcomers) or first in an excluded set (Saw in Half in Unfinity); the user
+        /// wants all of them (2026-10-26). Legal somewhere keeps out what the
+        /// never-legal exemptions let through, like the Jumpstart 2022 front card named
+        /// Treasure.
+        /// </summary>
+        internal static bool IsPlainStandIn(Card c, bool tokens)
+        {
+            return CardFilter.IsEnglish(c)
+                && CardFilter.HasValidLayout(c, tokens)
+                && CardFilter.IsPaperGame(c)
+                && CardFilter.HasValidBorder(c)
+                && !CardFilter.IsEtched(c)
+                && CardFilter.HasPlainLook(c)
+                && !c.NeverLegal;
+        }
+
+        /// <summary>
+        /// The pick for a card with no valid printing: its best plain-looking stand-in
+        /// (strict rank), else its best fallback candidate (fallback rank). With
+        /// <paramref name="onlyOverAVariant"/> a stand-in only replaces a variant the
+        /// fallback would take, and a card with no fallback candidate gets nothing:
+        /// <see cref="WithFallback"/> sees one set's printings, where a plain reprint is
+        /// the normal case and not a card to add.
+        /// </summary>
+        private static Card? FallbackPick(IEnumerable<Card> group, Func<Card, bool> tokensFor, bool lands, bool onlyOverAVariant)
+        {
+            Card? fallback = Best(group.Where(c => IsFallbackCandidate(c, tokensFor(c), lands)), CompareFallback);
+
+            if (fallback == null && onlyOverAVariant)
+            {
+                return null;
+            }
+
+            return Best(group.Where(c => IsPlainStandIn(c, tokensFor(c))), CompareStrict) ?? fallback;
+        }
+
+        /// <summary>
         /// Library rules ON. Drops excluded cards; with <paramref name="reprints"/> returns
         /// every eligible printing; otherwise keeps every eligible basic land plus one
-        /// printing per card (the best strict rank among the eligible, else the best
-        /// fallback rank among the fallback candidates). The selection is global: callers
+        /// printing per card (the best strict rank among the eligible, else the
+        /// <see cref="FallbackPick"/>). The selection is global: callers
         /// filter by year after selecting, so a card first printed in 2010 and reprinted
         /// in 2024 is picked in 2010 and absent from a 2024 download.
         /// <para>
@@ -211,7 +259,7 @@ namespace ScatoloneDownloader.Filtering
             foreach (IGrouping<string, Card> group in kept.Where(c => !c.IsBasicLand).GroupBy(GroupKey))
             {
                 Card? pick = Best(group.Where(Eligible), CompareStrict)
-                    ?? Best(group.Where(c => IsFallbackCandidate(c, tokens || KeptTokens.Contains(c.Name), lands)), CompareFallback);
+                    ?? FallbackPick(group, c => tokens || KeptTokens.Contains(c.Name), lands, onlyOverAVariant: false);
 
                 if (pick != null)
                 {
@@ -228,8 +276,8 @@ namespace ScatoloneDownloader.Filtering
         /// <summary>
         /// Library rules OFF (<c>set</c> and <c>--no-rules</c>): the plain validation, no
         /// exclusions and no dedupe, plus, for every non-basic card with no valid
-        /// printing at all, its fallback pick (so a card that exists only as a variant
-        /// still downloads that variant).
+        /// printing at all, its <see cref="FallbackPick"/> (so a card that exists only as
+        /// a variant still downloads that variant).
         /// </summary>
         internal static List<Card> WithFallback(IEnumerable<Card> cards, bool reprints, bool tokens, bool lands)
         {
@@ -245,7 +293,7 @@ namespace ScatoloneDownloader.Filtering
                     continue;
                 }
 
-                Card? pick = Best(group.Where(c => IsFallbackCandidate(c, tokens, lands)), CompareFallback);
+                Card? pick = FallbackPick(group, _ => tokens, lands, onlyOverAVariant: true);
 
                 if (pick != null)
                 {

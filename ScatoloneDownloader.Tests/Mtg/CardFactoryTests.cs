@@ -166,6 +166,24 @@ public sealed class CardFactoryTests
     }
 
     [Fact]
+    public void CreateCard_Reversible_JoinsFaceTypeLines_WhenTopLevelMissing()
+    {
+        // Reversible cards (the Jurassic World double basics) carry type_line only on the faces.
+        JsonCard json = MakeCard(imageUris: null);
+        json.TypeLine = null;
+        json.CardFaces =
+        [
+            new JsonCardFace { Name = "Forest", TypeLine = "Basic Land — Forest", ImageUris = MakePngUri("https://test/f.png") },
+            new JsonCardFace { Name = "Forest", TypeLine = "Basic Land — Forest", ImageUris = MakePngUri("https://test/r.png") },
+        ];
+
+        ScatoloneDownloader.Mtg.Card card = ScatoloneDownloader.Mtg.Card.CreateCard(json);
+
+        Assert.Equal("Basic Land — Forest // Basic Land — Forest", card.TypeLine);
+        Assert.True(card.IsBasicLand);
+    }
+
+    [Fact]
     public void CreateCard_NoOracleTextOrKeywords_DefaultToEmpty()
     {
         JsonCard json = MakeCard(imageUris: MakePngUri("https://test/x.png"));

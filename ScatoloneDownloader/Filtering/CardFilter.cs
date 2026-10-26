@@ -94,6 +94,17 @@ namespace ScatoloneDownloader.Filtering
             return card.Reprint || card.Variation || hasInvalidFrameEffect || card.Textless || card.BorderColor == "borderless";
         }
 
+        /// <summary>
+        /// A printing that looks like the plain card: no variation, no inverted, showcase
+        /// or extended-art frame, not borderless. Unlike <see cref="IsReprintLike"/> it
+        /// ignores the reprint flag, and textless too: Scryfall flags the vanilla Future
+        /// Sight originals textless.
+        /// </summary>
+        internal static bool HasPlainLook(Card card)
+        {
+            return !card.Variation && !card.FrameEffects.Any(InvalidFrameEffects.Contains) && card.BorderColor != "borderless";
+        }
+
         /// <summary>Basic lands keep their own border gate: no white or silver borders.</summary>
         internal static bool IsBasicLandBorderAllowed(Card card) => card.BorderColor != "white" && card.BorderColor != "silver";
 

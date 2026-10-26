@@ -66,9 +66,12 @@ ScatoloneDownloader <command> [arguments] [options]
 
 Library rules: `all` and `years` reproduce the hand-curated library by default.
 They use the Default Cards bulk and download one printing per card, the earliest
-plain one (non-promo set, no promo treatment); a card that exists only as a
-variant takes its earliest variant. Funny and Vanguard sets, planes, and cards
-legal in no format are left out, except dungeons and token-type cards. Without
+plain one (non-promo set, no promo treatment). A card with no such printing
+takes a plain-looking printing from any set, even one Scryfall flags a reprint
+or a masters set (Commander Masters, Universes Within, The List), as long as it
+is legal somewhere; a card that exists only as a variant takes its earliest
+variant. Funny and Vanguard sets, planes, Alchemy cards, and cards legal in no
+format are left out, except dungeons and token-type cards. Without
 `--tokens` creature tokens stay out and only a short list of tokens comes in: The
 Monarch, Day // Night, City's Blessing, The Ring, Start Your Engines! and the
 predefined tokens such as Treasure, Clue and Food (`LibrarySelector.KeptTokens`),

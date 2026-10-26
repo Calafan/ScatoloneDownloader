@@ -137,6 +137,12 @@ public sealed class LibrarySelectorTests
     }
 
     [Fact]
+    public void IsExcluded_AlchemyPrinting()
+    {
+        Assert.True(LibrarySelector.IsExcluded(Make("A", setType: "masters", promoTypes: ["alchemy"])));
+    }
+
+    [Fact]
     public void IsExcluded_NeverLegalPlainCard()
     {
         Assert.True(LibrarySelector.IsExcluded(Make("A", legalities: NotLegal())));
@@ -273,6 +279,97 @@ public sealed class LibrarySelectorTests
 
         Assert.Empty(LibrarySelector.Select([token], false, false, false));
     }
+
+    // --- Select: plain-looking stand-in ----------------------------------------
+
+    [Fact]
+    public void Select_StandIn_PlainReprintBeatsEarlierBorderlessVariant()
+    {
+        // Elesh Norn, Mother of Machines: the Concept Praetor (#416) is dated a week
+        // before the set, so Scryfall flags the set's own #10 a reprint.
+        Card variant = Make("Norn", id: "1", oracle: "o", borderColor: "borderless", setType: "expansion", released: "2023-02-03");
+        Card plain = Make("Norn", id: "2", oracle: "o", setType: "expansion", reprint: true, released: "2023-02-10");
+
+        Assert.Same(plain, Assert.Single(LibrarySelector.Select([variant, plain], false, false, false)));
+    }
+
+    [Fact]
+    public void Select_StandIn_ComesFromAnExcludedSetTypeAndSkipsAnInvertedFrame()
+    {
+        // The Secret Lair crossovers: a black-bordered inverted frame, the in-universe
+        // art only in Universes Within (a masters set).
+        Card crossover = Make("Greymond", id: "1", oracle: "o", setType: "box", frameEffects: ["inverted"], released: "2020-10-13");
+        Card inUniverse = Make("Greymond", id: "2", oracle: "o", setType: "masters", reprint: true, released: "2023-09-08");
+
+        Assert.Same(inUniverse, Assert.Single(LibrarySelector.Select([crossover, inUniverse], false, false, false)));
+    }
+
+    [Fact]
+    public void Select_StandIn_SkipsAVariation()
+    {
+        Card variation = Make("Bolt", id: "1", oracle: "o", variation: true, released: "2020-01-01");
+        Card plain = Make("Bolt", id: "2", oracle: "o", reprint: true, released: "2022-01-01");
+
+        Assert.Same(plain, Assert.Single(LibrarySelector.Select([variation, plain], false, false, false)));
+    }
+
+    [Fact]
+    public void Select_StandIn_KeepsATextlessOriginal()
+    {
+        // Scryfall flags the vanilla Future Sight originals textless.
+        Card original = Make("Courser", id: "1", oracle: "o", textless: true, released: "2007-05-04");
+        Card later = Make("Courser", id: "2", oracle: "o", reprint: true, released: "2013-09-27");
+
+        Assert.Same(original, Assert.Single(LibrarySelector.Select([original, later], false, false, false)));
+    }
+
+    [Fact]
+    public void Select_StandIn_RanksLikeStrict_NonPromoSetFirst()
+    {
+        Card variant = Make("Bolt", id: "1", oracle: "o", borderColor: "borderless", released: "2018-01-01");
+        Card promo = Make("Bolt", id: "2", oracle: "o", setType: "promo", reprint: true, released: "2019-01-01");
+        Card other = Make("Bolt", id: "3", oracle: "o", reprint: true, released: "2020-01-01");
+
+        Assert.Same(other, Assert.Single(LibrarySelector.Select([variant, promo, other], false, false, false)));
+    }
+
+    [Fact]
+    public void Select_StandIn_PicksACardPrintedOnlyInAnExcludedSetType()
+    {
+        // The Commander Masters newcomers exist only in a masters set.
+        Card mastersOnly = Make("Guff", oracle: "o", setType: "masters", released: "2023-08-04");
+
+        Assert.Same(mastersOnly, Assert.Single(LibrarySelector.Select([mastersOnly], false, false, false)));
+    }
+
+    [Fact]
+    public void Select_StandIn_SkipsANeverLegalPrinting()
+    {
+        // The Jumpstart 2022 front card named Treasure passes IsExcluded on its name.
+        Card frontCard = Make("Treasure", oracle: "o", setType: "memorabilia", typeLine: "Card", reprint: true, legalities: NotLegal());
+
+        Assert.Empty(LibrarySelector.Select([frontCard], false, false, false));
+    }
+
+    [Fact]
+    public void Select_StandIn_SkipsANonPaperPrinting() =>
+        AssertStandInSkips(Make("Bolt", id: "f", oracle: "o", reprint: true, games: ["arena"], released: "2021-01-01"));
+
+    [Fact]
+    public void Select_StandIn_SkipsAnEtchedPrinting() =>
+        AssertStandInSkips(Make("Bolt", id: "f", oracle: "o", reprint: true, frameEffects: ["etched"], released: "2021-01-01"));
+
+    [Fact]
+    public void Select_StandIn_SkipsAnInvalidBorder() =>
+        AssertStandInSkips(Make("Bolt", id: "f", oracle: "o", reprint: true, borderColor: "gold", released: "2021-01-01"));
+
+    [Fact]
+    public void Select_StandIn_SkipsANonEnglishPrinting() =>
+        AssertStandInSkips(Make("Bolt", id: "f", oracle: "o", reprint: true, language: "ja", released: "2021-01-01"));
+
+    [Fact]
+    public void Select_StandIn_SkipsATokenLayout() =>
+        AssertStandInSkips(Make("Bolt", id: "f", oracle: "o", reprint: true, layout: "token", released: "2021-01-01"));
 
     // --- GroupKey -------------------------------------------------------------
 
@@ -462,6 +559,24 @@ public sealed class LibrarySelectorTests
         Assert.Same(valid, Assert.Single(LibrarySelector.WithFallback([valid, variant], false, false, false)));
     }
 
+    [Fact]
+    public void WithFallback_PrefersAPlainLookingReprintOverTheVariant()
+    {
+        Card variant = Make("Norn", id: "1", oracle: "o", borderColor: "borderless", released: "2023-02-03");
+        Card plain = Make("Norn", id: "2", oracle: "o", reprint: true, released: "2023-02-10");
+
+        Assert.Same(plain, Assert.Single(LibrarySelector.WithFallback([variant, plain], false, false, false)));
+    }
+
+    [Fact]
+    public void WithFallback_DoesNotAddAPlainReprintAlone()
+    {
+        // One set's printings: a plain reprint is the normal case, not a card to add.
+        Card reprint = Make("Bolt", oracle: "o", reprint: true);
+
+        Assert.Empty(LibrarySelector.WithFallback([reprint], false, false, false));
+    }
+
     // --- CollectorDigits ------------------------------------------------------
 
     [Theory]
@@ -479,6 +594,16 @@ public sealed class LibrarySelectorTests
 
     private static Dictionary<string, string> NotLegal() => new() { ["standard"] = "not_legal", ["modern"] = "not_legal" };
 
+    /// <summary>A plain-looking reprint that fails one stand-in gate, dated between a
+    /// borderless variant and a plain reprint that passes them all: the passing one wins.</summary>
+    private static void AssertStandInSkips(Card failing)
+    {
+        Card variant = Make("Bolt", id: "v", oracle: "o", borderColor: "borderless", released: "2020-01-01");
+        Card plain = Make("Bolt", id: "p", oracle: "o", reprint: true, released: "2022-01-01");
+
+        Assert.Same(plain, Assert.Single(LibrarySelector.Select([variant, failing, plain], false, false, false)));
+    }
+
     private static Card Make(
         string name,
         string id = "id",
@@ -493,19 +618,26 @@ public sealed class LibrarySelectorTests
         string borderColor = "black",
         bool reprint = false,
         List<string>? promoTypes = null,
-        Dictionary<string, string>? legalities = null)
+        Dictionary<string, string>? legalities = null,
+        List<string>? frameEffects = null,
+        bool variation = false,
+        bool textless = false,
+        List<string>? games = null,
+        string language = "en")
     {
         JsonCard json = new()
         {
             Id = id,
             Name = name,
             OracleId = oracle,
-            Language = "en",
+            Language = language,
             ReleasedAt = released,
             Layout = layout,
             TypeLine = typeLine,
-            Games = ["paper"],
-            FrameEffects = [],
+            Games = games ?? ["paper"],
+            FrameEffects = frameEffects ?? [],
+            Variation = variation,
+            Textless = textless,
             Reprint = reprint,
             Set = "set",
             SetName = setName,
