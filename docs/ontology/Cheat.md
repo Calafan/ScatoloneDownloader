@@ -80,3 +80,35 @@ After a look it is Filter alone (Bobblehead, the one reviewed card it reaches, n
 out of an exiled pile it stays CardAdvantage (Collected Conjuring's 3, Hazoret's Undying Fury's 5,
 both unreviewed). An X cap stays, as big as the damage dealt or the mana paid: Kotis, the Fangkeeper
 by hand on 10-15, Villainous Wealth and Epic Experiment proposed.
+
+The 2026-10-25 pass (83/2/8 -> 100/0/0 with its rulings, F1 94.3% -> 100%, four of them then handed
+back) read seven cards by rulings already made, each through the one wording it fell through: a
+reveal UNTIL the first creature, artifact, planeswalker or nonland permanent card, put onto the
+battlefield (Aspiring Champion, Atla Palani; Polymorph's family proposed, 11 unreviewed), all
+permanent cards revealed this way (Over the Top), a noun list ending in a land out of the hand
+(Court of Bounty's "a creature or land card", as Bramble Familiar's out of a mill), a typed spell
+out of the hand or graveyard paid with life (Anrakyr the Traveller), suspend spelled out with time
+counters (Alaundo the Seer), and an exiled pile played free once flashed back (Ignite the Future).
+It asked three questions.
+
+Ruled 2026-10-25 on Covert Technician ("Cheat", against its untagged review and with the same words
+as Broodcaller Scourge): a cap the BOARD sets on a card put from the hand is the X cap — the damage
+dealt, the lands you control (Anticausal Vestige, reviewed on 09-11 before the 10-13 ruling and
+handed back), the counters (Aether Vial), a creature's power (Minn, Wily Illusionist). A strict
+"less than" is the lesser cap and stays out (Arni Metalbrow, as Kodama of the East Tree's "equal or
+lesser").
+
+Ruled 2026-10-25 on Xander's Pact ("Cheat a tutti"): ANOTHER card cast by paying something other
+than its mana cost is this tag wherever it is cast from, Dream Halls' and Cramped Vents' cost paid
+otherwise widened past the hand. Asked with Bismuth Mindrender (the same day as Xander's Pact) and
+Nashi, Moon Sage's Scion against it, then the edge one card at a time: life for cards exiled from an
+opponent (Bismuth, Nashi and Valgavoth handed back; Inside Information), off the top of the library
+(Gwenom, Remorseless; Bolas's Citadel) or out of the graveyard (Eye of Duskmantle, which keeps
+Regrowth), a discard (The Infamous Cruelclaw), energy (Amped Raptor), {1} (Jadzi). Hama, the
+Bloodbender's waterbending {X}, which pays the whole mana value, was left out of the answer. Still
+out: a card casting ITSELF that way (Squee, Worldheart Phoenix), a copy (Blue Mage's Cane), and a
+fixed cap (Primal Prayers' 3, by the 10-16 Bobblehead ruling). The free one-card impulse rider stays
+CardAdvantage, so the same exiled card is Cheat paid with life and CardAdvantage cast free.
+
+Ruled 2026-10-25 on March of Burgeoning Life ("stesso nome"): a tutor for a copy of a creature
+already on the battlefield is Tutor alone, as Bifurcate and Mask of the Mimic already were.

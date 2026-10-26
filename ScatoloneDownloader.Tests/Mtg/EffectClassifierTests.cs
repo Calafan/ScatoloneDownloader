@@ -9644,6 +9644,168 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // Read 2026-10-25 by rulings already made, each the one wording a card fell
+    // through: a reveal UNTIL a creature put onto the battlefield (Aspiring
+    // Champion, Atla Palani), a noun list ending in a land out of the hand (Court
+    // of Bounty), every player's permanents revealed this way (Over the Top), a
+    // typed spell out of the hand or graveyard paid with life (Anrakyr), suspend
+    // spelled out with time counters (Alaundo), a pile played free (Ignite the
+    // Future). Ruled the same day on Covert Technician: a cap the board sets is an
+    // X cap (Anticausal Vestige's lands, handed back).
+    [InlineData("Aspiring Champion", "Creature — Astartes Warrior",
+        "Menace\nRuinous Ascension — When this creature deals combat damage to a player, sacrifice it. If you "
+        + "do, reveal cards from the top of your library until you reveal a creature card. Put that card onto "
+        + "the battlefield, then shuffle the rest into your library. If that creature is a Demon, it deals "
+        + "damage equal to its power to each opponent.")]
+    [InlineData("Atla Palani, Nest Tender", "Legendary Creature — Human Shaman",
+        "{2}, {T}: Create a 0/1 green Egg creature token with defender.\nWhenever an Egg you control dies, "
+        + "reveal cards from the top of your library until you reveal a creature card. Put that card onto the "
+        + "battlefield and the rest on the bottom of your library in a random order.")]
+    [InlineData("Court of Bounty", "Enchantment",
+        "When this enchantment enters, you become the monarch.\nAt the beginning of your upkeep, you may put a "
+        + "land card from your hand onto the battlefield. If you're the monarch, instead you may put a creature "
+        + "or land card from your hand onto the battlefield.")]
+    [InlineData("Over the Top", "Sorcery",
+        "Each player reveals a number of cards from the top of their library equal to the number of nonland "
+        + "permanents they control, puts all permanent cards they revealed this way onto the battlefield, and "
+        + "puts the rest into their graveyard.")]
+    [InlineData("Anrakyr the Traveller", "Legendary Artifact Creature — Necron",
+        "Lord of the Pyrrhian Legions — Whenever Anrakyr the Traveller attacks, you may cast an artifact "
+        + "spell from your hand or graveyard by paying life equal to its mana value rather than paying its mana "
+        + "cost.")]
+    [InlineData("Alaundo the Seer", "Legendary Creature — Human Shaman",
+        "{T}: Draw a card, then exile a card from your hand and put a number of time counters on it equal to "
+        + "its mana value. It gains \"When the last time counter is removed from this card, if it's exiled, you "
+        + "may cast it without paying its mana cost. If you cast a creature spell this way, it gains haste "
+        + "until end of turn.\" Then remove a time counter from each other card you own in exile.")]
+    [InlineData("Ignite the Future", "Sorcery",
+        "Exile the top three cards of your library. Until the end of your next turn, you may play those "
+        + "cards. If this spell was cast from a graveyard, you may play cards this way without paying their "
+        + "mana costs.\nFlashback {7}{R} (You may cast this card from your graveyard for its flashback cost. "
+        + "Then exile it.)")]
+    [InlineData("Covert Technician", "Artifact Creature — Human Ninja",
+        "Ninjutsu {1}{U} ({1}{U}, Return an unblocked attacker you control to hand: Put this card onto the "
+        + "battlefield from your hand tapped and attacking.)\nWhenever this creature deals combat damage to a "
+        + "player, you may put an artifact card with mana value less than or equal to that damage from your "
+        + "hand onto the battlefield.")]
+    [InlineData("Anticausal Vestige", "Creature — Eldrazi",
+        "When this creature leaves the battlefield, draw a card, then you may put a permanent card with mana "
+        + "value less than or equal to the number of lands you control from your hand onto the battlefield "
+        + "tapped.\nWarp {4} (You may cast this card from your hand for its warp cost. Exile this creature at "
+        + "the beginning of the next end step, then you may cast it from exile on a later turn.)")]
+    public void Classify_TheCheatPassOfOctober25_TheReadings_AreCheat(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
+    }
+
+    [Theory]
+    // Ruled 2026-10-25 on Xander's Pact ("Cheat a tutti"): another card cast by
+    // paying something other than its mana cost is Cheat, wherever it is cast
+    // from. Life (Bismuth Mindrender, Nashi and Valgavoth handed back; Gwenom; Eye
+    // of Duskmantle out of the graveyard), a discard (The Infamous Cruelclaw),
+    // energy (Amped Raptor).
+    [InlineData("Xander's Pact", "Sorcery",
+        "Casualty 2 (As you cast this spell, you may sacrifice a creature with power 2 or greater. When you "
+        + "do, copy this spell.)\nEach opponent exiles the top card of their library. You may cast spells from "
+        + "among those cards this turn. If you cast a spell this way, pay life equal to that spell's mana value "
+        + "rather than pay its mana cost.")]
+    [InlineData("Bismuth Mindrender", "Creature — Eldrazi",
+        "Devoid (This card has no color.)\nMenace\nWhenever this creature deals combat damage to a player, that "
+        + "player exiles cards from the top of their library until they exile a nonland card. You may cast that "
+        + "card by paying life equal to the spell's mana value rather than paying its mana cost.")]
+    [InlineData("Nashi, Moon Sage's Scion", "Legendary Creature — Rat Ninja",
+        "Ninjutsu {3}{B} ({3}{B}, Return an unblocked attacker you control to hand: Put this card onto the "
+        + "battlefield from your hand tapped and attacking.)\nWhenever Nashi deals combat damage to a player, "
+        + "exile the top card of each player's library. Until end of turn, you may play one of those cards. If "
+        + "you cast a spell this way, pay life equal to its mana value rather than paying its mana cost.")]
+    [InlineData("Valgavoth, Terror Eater", "Legendary Creature — Elder Demon",
+        "Flying, lifelink\nWard—Sacrifice three nonland permanents.\nIf a card you didn't control would be put "
+        + "into an opponent's graveyard from anywhere, exile it instead.\nDuring your turn, you may play cards "
+        + "exiled with Valgavoth. If you cast a spell this way, pay life equal to its mana value rather than "
+        + "pay its mana cost.")]
+    [InlineData("Gwenom, Remorseless", "Legendary Creature — Symbiote Spider Hero",
+        "Deathtouch, lifelink\nWhenever Gwenom attacks, until end of turn, you may look at the top card of "
+        + "your library any time and you may play cards from the top of your library. If you cast a spell this "
+        + "way, pay life equal to its mana value rather than pay its mana cost.")]
+    [InlineData("Eye of Duskmantle", "Creature — Eye",
+        "Flying, lifelink\nYou may play lands and cast spells from among cards in your graveyard you've "
+        + "surveilled this turn. If you cast a spell this way, you pay life equal to its mana value rather than "
+        + "paying its mana cost.")]
+    [InlineData("The Infamous Cruelclaw", "Legendary Creature — Weasel Mercenary",
+        "Menace\nWhenever The Infamous Cruelclaw deals combat damage to a player, exile cards from the top of "
+        + "your library until you exile a nonland card. You may cast that card by discarding a card rather than "
+        + "paying its mana cost.")]
+    [InlineData("Amped Raptor", "Creature — Dinosaur",
+        "First strike\nWhen this creature enters, you get {E}{E} (two energy counters). Then if you cast it "
+        + "from your hand, exile cards from the top of your library until you exile a nonland card. You may "
+        + "cast that card by paying an amount of {E} equal to its mana value rather than paying its mana cost.")]
+    // Unreviewed, and in the same answer: Jadzi's {1}, the one card that says
+    // 'cast it by'.
+    [InlineData("Jadzi, Oracle of Arcavios // Journey to the Oracle", "Legendary Creature — Human Wizard // Sorcery",
+        "Discard a card: Return Jadzi to its owner's hand.\nMagecraft — Whenever you cast or copy an instant "
+        + "or sorcery spell, reveal the top card of your library. If it's a nonland card, you may cast it by "
+        + "paying {1} rather than paying its mana cost. If it's a land card, put it onto the battlefield.\nYou "
+        + "may put any number of land cards from your hand onto the battlefield. Then if you control eight or "
+        + "more lands, you may discard a card. If you do, return Journey to the Oracle to its owner's hand.")]
+    public void Classify_TheCheatPassOfOctober25_ACostPaidOtherwise_IsCheat(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
+    }
+
+    [Theory]
+    // Ruled 2026-10-25: a tutor for a copy of a creature on the battlefield is
+    // Tutor alone (March of Burgeoning Life, 'stesso nome'), and Hama's
+    // waterbending {X}, which pays the whole mana value, was left out of the cost
+    // paid otherwise. Kept out by the rulings the new wordings sit next to: a
+    // strict 'less than' and 'equal or lesser' are the lesser cap (Arni Metalbrow,
+    // Kodama of the East Tree, Kethek), a land revealed is Ramp (Clifftop
+    // Lookout), and a card casting itself (Squee), a copy (Blue Mage's Cane) or a
+    // fixed cap (Primal Prayers) is not a cost paid otherwise.
+    [InlineData("March of Burgeoning Life", "Instant",
+        "As an additional cost to cast this spell, you may exile any number of green cards from your hand. "
+        + "This spell costs {2} less to cast for each card exiled this way.\nChoose target creature with mana "
+        + "value less than X. Search your library for a creature card with the same name as that creature, put "
+        + "it onto the battlefield tapped, then shuffle.")]
+    [InlineData("Hama, the Bloodbender", "Legendary Creature — Human Warlock",
+        "When Hama enters, target opponent mills three cards. Exile up to one noncreature, nonland card from "
+        + "that player's graveyard. For as long as you control Hama, you may cast the exiled card during your "
+        + "turn by waterbending {X} rather than paying its mana cost, where X is its mana value. (While paying "
+        + "a waterbend cost, you can tap your artifacts and creatures to help. Each one pays for {1}.)")]
+    [InlineData("Arni Metalbrow", "Legendary Creature — Human Berserker",
+        "Whenever a creature you control attacks or enters attacking, you may pay {1}{R}. If you do, you may "
+        + "put a creature card with mana value less than that creature's mana value from your hand onto the "
+        + "battlefield tapped and attacking.")]
+    [InlineData("Kodama of the East Tree", "Legendary Creature — Spirit",
+        "Reach\nWhenever another permanent you control enters, if it wasn't put onto the battlefield with this "
+        + "ability, you may put a permanent card with equal or lesser mana value from your hand onto the "
+        + "battlefield.\nPartner (You can have two commanders if both have partner.)")]
+    [InlineData("Kethek, Crucible Goliath", "Legendary Creature — Phyrexian Beast",
+        "At the beginning of your end step, you may sacrifice another creature. If you do, reveal cards from "
+        + "the top of your library until you reveal a nonlegendary creature card with lesser mana value, put it "
+        + "onto the battlefield, then put the rest on the bottom of your library in a random order.")]
+    [InlineData("Clifftop Lookout", "Creature — Frog Scout",
+        "Reach\nWhen this creature enters, reveal cards from the top of your library until you reveal a land "
+        + "card. Put that card onto the battlefield tapped and the rest on the bottom of your library in a "
+        + "random order.")]
+    [InlineData("Squee, Dubious Monarch", "Legendary Creature — Goblin Noble",
+        "Haste\nWhenever Squee attacks, create a 1/1 red Goblin creature token that's tapped and "
+        + "attacking.\nYou may cast this card from your graveyard by paying {3}{R} and exiling four other cards "
+        + "from your graveyard rather than paying its mana cost.")]
+    [InlineData("Blue Mage's Cane", "Artifact — Equipment",
+        "Job select\nEquipped creature gets +0/+2, is a Wizard in addition to its other types, and has "
+        + "\"Whenever this creature attacks, exile up to one target instant or sorcery card from defending "
+        + "player's graveyard. If you do, copy it. You may cast the copy by paying {3} rather than paying its "
+        + "mana cost.\"\nSpirit of the Whalaqee — Equip {2}")]
+    [InlineData("Primal Prayers", "Enchantment",
+        "When this enchantment enters, you get {E}{E} (two energy counters).\nYou may cast creature spells "
+        + "with mana value 3 or less by paying {E} rather than paying their mana costs. If you cast a spell "
+        + "this way, you may cast it as though it had flash.")]
+    public void Classify_TheCheatPassOfOctober25_AreNotCheat(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
+    }
+
+    [Theory]
     // A TAP, in every shape the game prints it. Ruled 2026-09-22 after the hand
     // tags were found contradicting themselves on identical wording; the human
     // resolved six pairs the same way and rejected both proposed lines — the

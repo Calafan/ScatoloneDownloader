@@ -1488,13 +1488,25 @@ namespace ScatoloneDownloader.Cube
                     // graveyard", Yuna's Decision) — but not a LESSER cap, ruled
                     // the same day (Shadowfax, untagged: "lesser = niente"), and
                     // not an OPPONENT putting from their own hand (Wumpus
-                    // Aberration).
-                    Rx(@"(?<!opponent may )put (?:an?|any number of|up to \w+|one or more) (?![^.\n]{0,80}\blesser\b)"
-                        + @"(?![\w ]{0,25}(?:land|forest|island|swamp|mountain|plains) cards? from)"
-                        + @"[\w ,/-]{0,60}cards?[\w ,/-]{0,50} from (?:your|their) hand(?: or graveyard)? onto the battlefield"),
+                    // Aberration). A noun LIST that ends in a land is no land
+                    // card either, read 2026-10-25 as Bramble Familiar's out of
+                    // the library: Court of Bounty's "a creature or land card",
+                    // the one reviewed card it moves.
+                    // A cap the BOARD sets is the X cap, ruled 2026-10-25 on Covert
+                    // Technician ("Cheat", against its untagged review, the same
+                    // words as Broodcaller Scourge's): the damage dealt, the lands
+                    // you control (Anticausal Vestige, handed back), the counters
+                    // (Aether Vial) or a creature's power (Minn), which the window
+                    // of 50 and no apostrophe had cut off. A strict "less than" is
+                    // the lesser cap (Arni Metalbrow, untagged by hand).
+                    Rx(@"(?<!opponent may )put (?:an?|any number of|up to \w+|one or more) (?![^.\n]{0,80}\b(?:lesser\b|less than (?!or equal)))"
+                        + @"(?![\w ]{0,25}(?<!(?:creature|artifact|enchantment|planeswalker|permanent),? or )(?:land|forest|island|swamp|mountain|plains) cards? from)"
+                        + @"[\w ,/-]{0,60}cards?[\w ,/'-]{0,80} from (?:your|their) hand(?: or graveyard)? onto the battlefield"),
                     // Out of the library. Natural Order, Eldritch Evolution's cousins,
-                    // and since 2026-10-13 "any number of" (Bilbo).
-                    Rx(@"search your library for (?:an?|any number of|up to \w+) [\w ]{0,30}creature cards?"
+                    // and since 2026-10-13 "any number of" (Bilbo). Not a copy of a
+                    // creature already on the battlefield, ruled 2026-10-25 on March
+                    // of Burgeoning Life ("stesso nome"; Tutor alone by hand).
+                    Rx(@"search your library for (?:an?|any number of|up to \w+) [\w ]{0,30}creature cards?(?! with the same name)"
                         + @"[\w ,']{0,40}put (?:it|that card|them|those cards) onto the battlefield"),
                     // Out of the library from among the cards LOOKED AT, REVEALED
                     // or MILLED, ruled 2026-10-13: a nonland permanent with NO
@@ -1513,11 +1525,26 @@ namespace ScatoloneDownloader.Cube
                         + @"[^.\n]{0,20} onto the battlefield"),
                     // …and the same out of a reveal or an exile named "this way"
                     // (Doors of Durin, Eladamri, Anzrag's Rampage, Hew the Entwood,
-                    // Thunderous Debut bargained, The Creation of Avacyn).
+                    // Thunderous Debut bargained, The Creation of Avacyn), and
+                    // since 2026-10-25 every player's permanents revealed this way
+                    // (Over the Top, the one card in the store that says it).
                     Rx(@"library[^\n]{0,80}?if (?:it's a|you reveal a|a) creature card(?: is revealed)?(?: this way)?, put it onto the battlefield"
                         + @"|put (?:a|all) (?:creature|nonland)[^.\n]{0,30}cards? (?:exiled|chosen) this way onto the battlefield"
                         + @"|put the revealed cards onto the battlefield"
-                        + @"|put the exiled card onto the battlefield if it's a creature card"),
+                        + @"|put the exiled card onto the battlefield if it's a creature card"
+                        + @"|puts? all permanent cards (?:they |you )?revealed this way onto the battlefield"),
+                    // …and a reveal UNTIL the first nonland permanent of a kind,
+                    // put onto the battlefield, read 2026-10-25 by the same
+                    // ruling (no mana-value cap): Aspiring Champion and Atla
+                    // Palani by hand, 2 of 2 reviewed, and Polymorph's family
+                    // proposed (11 unreviewed). A land is Ramp (Clifftop
+                    // Lookout, The Regalia), a lesser cap nothing (Kethek), and a
+                    // type before the noun is the tribe the tribal guard reads
+                    // (Time Lord Regeneration, Tom Bombadil's Saga, Hei Bai's
+                    // Shrine): none of them starts with the words below. A guard
+                    // against a cap in the noun was tried and matched no card.
+                    Rx(@"until you reveal an? (?:creature|permanent|nonland|artifact|planeswalker)[^.\n]{0,40}card\. "
+                        + @"put (?:that card|it) onto the battlefield"),
                     // A STANDING permission to cast free, and the discriminator is
                     // GRAMMATICAL NUMBER. A standing permission covers a class of
                     // spells, so its wording is plural — "Dragon spells … without
@@ -1558,17 +1585,44 @@ namespace ScatoloneDownloader.Cube
                     Rx(@"you may cast (?:(?:any number of|up to \w+) )?(?:[\w/-]+ ){0,5}?spells "
                         + @"(?:with mana value (?!\d)[^.\n]{0,20} )?from among (?![^.\n]{0,60}exiled with this)[^.\n]{0,80}"
                         + @"without paying their mana costs"),
+                    // …and the same pile PLAYED free, read 2026-10-25: Ignite the
+                    // Future's three exiled cards once it is flashed back.
+                    Rx(@"you may play cards this way without paying their mana costs"),
                     Rx(@"cast (?:a|an|up to \w+|any number of) [^.\n]{0,40}spells? from your hand"
                         + @"[^.\n]{0,40}without paying (?:its|their) mana costs?"),
                     Rx(@"the next spell you cast [^.\n]{0,40}can be cast without paying its mana cost"),
+                    // The hand's spell may be named by a type and come out of the
+                    // graveyard too, read 2026-10-25: Anrakyr the Traveller's
+                    // "an artifact spell from your hand or graveyard", Cheat and
+                    // Reanimate by hand.
                     Rx(@"rather than pay the mana cost for a spell"
-                        + @"|cast a spell from your hand by paying [^.\n]{0,40} rather than paying its mana cost"),
+                        + @"|cast (?:a|an) (?:[\w-]+ )?spell from your hand(?: or graveyard)? by paying [^.\n]{0,40} rather than paying its mana cost"),
+                    // …and ANY other card's cost paid with something else, wherever
+                    // it is cast from, ruled 2026-10-25 on Xander's Pact ("Cheat a
+                    // tutti"): life (Bismuth Mindrender, Nashi and Valgavoth handed
+                    // back; Gwenom, Bolas's Citadel, Inside Information, and Eye of
+                    // Duskmantle out of the graveyard), a discard (The Infamous
+                    // Cruelclaw), energy (Amped Raptor) or {1} (Jadzi). Not Hama's
+                    // waterbending {X}, which pays the whole mana value ("Hama"
+                    // left out of the answer) and is cast "during your turn by",
+                    // so the shape never reaches it; not the card casting ITSELF
+                    // (Squee, Worldheart Phoenix), nor a copy (Blue Mage's Cane),
+                    // nor Primal Prayers' fixed cap of 3, all three untouched.
+                    // "The exiled card by" was tried as a third noun and matched
+                    // no card.
+                    Rx(@"(?:if you cast a spell this way, (?:you )?pay|you may cast (?:that card|it) by)"
+                        + @"[^.\n]{0,60}rather than pay(?:ing)? its mana cost"),
                     // GRANTING SUSPEND to a card out of your library or hand is a
                     // free cast on a timer, ruled 2026-10-13 (Sibylline Soothsayer,
                     // The Eleventh Doctor, The Parting of the Ways; The Tenth
                     // Doctor realigned). Not the card suspending ITSELF (Rory
                     // Williams), nor the spell you just cast and paid for (Taigam).
                     Rx(@"(?:top of your library|from your hand|of your library)[^\n]{0,250}gains suspend"),
+                    // …and the same suspend spelled out without the keyword, read
+                    // 2026-10-25: Alaundo the Seer's time counters on a card from
+                    // the hand, cast free when the last one is removed.
+                    Rx(@"from your hand and put [^.\n]{0,60}time counters? on it[^\n]{0,200}"
+                        + @"when the last time counter is removed[^\n]{0,80}you may cast it without paying its mana cost"),
                     // LOOKING at the top few and casting one of them free puts a
                     // card into play at no cost, named Cheat by the human on
                     // 2026-09-27 (Perception Bobblehead) — Aetherworks Marvel is

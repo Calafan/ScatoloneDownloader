@@ -157,10 +157,10 @@
                 + "Straight to the battlefield is Reanimate.",
 
             [CardEffect.Cheat] =
-                "Puts a NONLAND permanent onto the battlefield without casting it — from hand (Sneak Attack, "
-                + "Elvish Piper) or library (Natural Order) — or lets you cast free STANDING (Omniscience). Not one "
-                + "only a creature TYPE can use. Out of a graveyard is Reanimate; a land is Ramp; one free exiled "
-                + "card is CardAdvantage.",
+                "Puts a NONLAND permanent onto the battlefield uncast — from hand (Sneak Attack) or library "
+                + "(Natural Order) — or casts free STANDING (Omniscience), or casts another card paying life or a "
+                + "discard for its mana (Bolas's Citadel). Not one only a creature TYPE can use. A graveyard is "
+                + "Reanimate, a land Ramp, one free exiled card CardAdvantage.",
 
             [CardEffect.Redirect] =
                 "Acts on a spell without countering it: changes its targets, takes control of it, or copies it — "
