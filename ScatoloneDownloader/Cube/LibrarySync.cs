@@ -8,7 +8,8 @@ namespace ScatoloneDownloader.Cube
     /// The pure steps of the <c>sync</c> command, separated from its network and
     /// disk work so they are testable without either: comparing the cards the
     /// library rules select with the files on disk, registering and proposing the
-    /// new cards, and finding the store entries with no image. Nothing here ever
+    /// new cards, finding the entries whose <c>scryfallId</c> names another
+    /// printing, and finding the store entries with no image. Nothing here ever
     /// deletes or moves a file or removes a store entry.
     /// </summary>
     internal static class LibrarySync
@@ -105,6 +106,36 @@ namespace ScatoloneDownloader.Cube
         }
 
         /// <summary>
+        /// The existing entries whose <c>scryfallId</c> is not the printing the
+        /// library rules pick for their card, among <paramref name="picks"/> (the
+        /// selected cards whose image is in the library). A rule change that moves
+        /// a card to another printing would otherwise leave the old id until a
+        /// tagger save, and <c>restore</c> would fetch the old art. The first pick
+        /// per oracle id wins; a card the store lacks is left to registration.
+        /// </summary>
+        internal static IReadOnlyList<SyncRestamp> StaleIds(CubeMetadata metadata, IEnumerable<Card> picks)
+        {
+            HashSet<string> seen = new(StringComparer.Ordinal);
+            List<SyncRestamp> stale = [];
+
+            foreach (Card card in picks)
+            {
+                if (string.IsNullOrEmpty(card.OracleId) || !seen.Add(card.OracleId)
+                    || !metadata.Cards.TryGetValue(card.OracleId, out CardMetadataEntry? entry))
+                {
+                    continue;
+                }
+
+                if (!string.Equals(entry.ScryfallId, card.Id, StringComparison.OrdinalIgnoreCase))
+                {
+                    stale.Add(new SyncRestamp(card.OracleId, card.Name, card.Id));
+                }
+            }
+
+            return stale;
+        }
+
+        /// <summary>
         /// The store entries whose oracle id has no image, sorted by name. They are
         /// only reported: removing an entry is always the user's decision.
         /// </summary>
@@ -132,6 +163,12 @@ namespace ScatoloneDownloader.Cube
     /// <param name="NoProposal">Added entries the classifier had nothing to propose for.</param>
     internal sealed record SyncRegistration(
         IReadOnlyList<string> AddedNames, IReadOnlyList<string> AddedOracleIds, int Proposed, int NoProposal);
+
+    /// <summary>An entry <see cref="LibrarySync.StaleIds"/> found with another printing's id.</summary>
+    /// <param name="OracleId">The entry's key.</param>
+    /// <param name="Name">The card's name, for the listing.</param>
+    /// <param name="ScryfallId">The id of the printing the library holds.</param>
+    internal sealed record SyncRestamp(string OracleId, string Name, string ScryfallId);
 
     /// <summary>A store entry with no image, as listed by <c>sync</c>.</summary>
     internal sealed record SyncOrphan(string Name, int Rating, bool Reviewed);

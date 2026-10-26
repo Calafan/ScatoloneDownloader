@@ -9,8 +9,9 @@ namespace ScatoloneDownloader.Tests.Mtg;
 /// <summary>
 /// Pins the pure steps of <c>sync</c>: the plan against the files on disk, the
 /// register-and-propose step (new entries only, never reviewed, never an existing
-/// entry), the count of cards a dry run would register, and the store entries with
-/// no image. No network and no real library.
+/// entry), the count of cards a dry run would register, the entries stamped with
+/// another printing, and the store entries with no image. No network and no real
+/// library.
 /// </summary>
 public sealed class LibrarySyncTests
 {
@@ -18,10 +19,11 @@ public sealed class LibrarySyncTests
 
     private static string PathFor(string file) => Path.Combine(Lib, "1993", "Alpha", file);
 
-    private static Card MakeCard(string name, string oracleId = "", string oracleText = "", string typeLine = "Instant")
+    private static Card MakeCard(string name, string oracleId = "", string oracleText = "", string typeLine = "Instant", string id = "")
     {
         JsonCard json = new()
         {
+            Id = id,
             Name = name,
             OracleId = oracleId,
             OracleText = oracleText,
@@ -181,6 +183,40 @@ public sealed class LibrarySyncTests
 
         Assert.Equal(["a", "b"], fresh);
         Assert.Single(metadata.Cards);
+    }
+
+    // --- StaleIds ----------------------------------------------------------
+
+    [Fact]
+    public void StaleIds_ListsOnlyExistingEntriesStampedWithAnotherPrinting()
+    {
+        CubeMetadata metadata = new();
+        metadata.Cards["moved"] = new CardMetadataEntry { Name = "Moved", ScryfallId = "old" };
+        metadata.Cards["kept"] = new CardMetadataEntry { Name = "Kept", ScryfallId = "same" };
+
+        IReadOnlyList<SyncRestamp> stale = LibrarySync.StaleIds(metadata,
+        [
+            MakeCard("Moved", oracleId: "moved", id: "new"),
+            MakeCard("Kept", oracleId: "kept", id: "same"),
+            MakeCard("Fresh", oracleId: "fresh", id: "x"),
+        ]);
+
+        Assert.Equal([new SyncRestamp("moved", "Moved", "new")], stale);
+    }
+
+    [Fact]
+    public void StaleIds_FirstPickPerOracleIdWins()
+    {
+        CubeMetadata metadata = new();
+        metadata.Cards["oid"] = new CardMetadataEntry { Name = "Card", ScryfallId = "first" };
+
+        IReadOnlyList<SyncRestamp> stale = LibrarySync.StaleIds(metadata,
+        [
+            MakeCard("Card", oracleId: "oid", id: "first"),
+            MakeCard("Card", oracleId: "oid", id: "second"),
+        ]);
+
+        Assert.Empty(stale);
     }
 
     // --- Orphans -----------------------------------------------------------

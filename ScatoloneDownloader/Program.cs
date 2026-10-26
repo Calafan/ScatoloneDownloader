@@ -32,7 +32,7 @@ namespace ScatoloneDownloader
                     .WithDescription("Download every basic land artwork, grouped by land type.");
 
                 config.AddCommand<SyncCommand>("sync")
-                    .WithDescription("Bring the library up to the library rules: download the missing cards into Source, register them and propose their effects; list (never delete) extra files and store entries with no image.");
+                    .WithDescription("Bring the library up to the library rules: download the missing cards into Source, register them and propose their effects, restamp the scryfallId of entries whose printing changed; list (never delete) extra files and store entries with no image.");
 
                 config.AddCommand<AnalyzeCommand>("analyze")
                     .WithDescription("Analyze list file(s) without downloading images.");

@@ -17,7 +17,9 @@ namespace ScatoloneDownloader.Cli.Cube
     /// Brings the library up to the library rules in one go: downloads the cards
     /// the rules select and <c>Source\</c> lacks, registers them in the metadata
     /// store as unrated entries and proposes their effects (never stamping
-    /// <c>reviewedAt</c>, never touching an existing entry). Files no rule selects
+    /// <c>reviewedAt</c>), and restamps the <c>scryfallId</c> of an existing entry
+    /// whose card the rules now pick in another printing (nothing else of an
+    /// existing entry is touched). Files no rule selects
     /// and store entries with no image are only LISTED: nothing here deletes or
     /// moves a file or removes an entry. The Scryfall bulk is downloaded once and
     /// reused by every step.
@@ -88,6 +90,11 @@ namespace ScatoloneDownloader.Cli.Cube
             HashSet<string> presentOracleIds = new(
                 matched.Select(m => m.Card.OracleId).Where(id => !string.IsNullOrEmpty(id)), StringComparer.Ordinal);
 
+            // A dry run counts the cards that would arrive as present.
+            HashSet<string> filesNow = new(files, StringComparer.OrdinalIgnoreCase);
+            IReadOnlyList<SyncRestamp> stale = LibrarySync.StaleIds(
+                metadata, expected.Where(e => settings.DryRun || filesNow.Contains(e.ExpectedPath)).Select(e => e.Card));
+
             if (settings.DryRun)
             {
                 IEnumerable<string> arriving = plan.Missing.Select(m => m.Card.OracleId);
@@ -95,12 +102,18 @@ namespace ScatoloneDownloader.Cli.Cube
 
                 int wouldRegister = LibrarySync.NewOracleIds(metadata, matched.Select(m => m.Card.OracleId).Concat(arriving)).Count;
                 AnsiConsole.MarkupLine($"[green]Would register {wouldRegister} new cards as unrated.[/]");
+                AnsiConsole.MarkupLine($"[green]Would restamp {stale.Count} entries with the printing the library holds.[/]");
             }
             else
             {
                 SyncRegistration registration = LibrarySync.RegisterAndPropose(metadata, matched, cardsByOracleId);
 
-                if (registration.AddedNames.Count > 0)
+                foreach (SyncRestamp restamp in stale)
+                {
+                    metadata.Cards[restamp.OracleId].ScryfallId = restamp.ScryfallId;
+                }
+
+                if (registration.AddedNames.Count > 0 || stale.Count > 0)
                 {
                     CubeMetadataStore.Save(metadataDir, metadata);
                 }
@@ -108,7 +121,10 @@ namespace ScatoloneDownloader.Cli.Cube
                 AnsiConsole.MarkupLine(
                     $"[green]Registered {registration.AddedNames.Count} new cards as unrated;[/] proposed effects for {registration.Proposed} ({registration.NoProposal} with no proposal).");
                 ListLines(registration.AddedNames, "Registered:");
+                AnsiConsole.MarkupLine($"[green]Restamped {stale.Count} entries with the printing the library holds.[/]");
             }
+
+            ListLines([.. stale.Select(restamp => restamp.Name)], settings.DryRun ? "To restamp:" : "Restamped:");
 
             ListLines(
                 [.. plan.Extra.Select(path => Path.GetRelativePath(source, path))],
