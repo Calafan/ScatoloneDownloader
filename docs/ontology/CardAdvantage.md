@@ -395,3 +395,26 @@ spell that triggers it (Harnesser of Storms) or a Hero card that pumps (Daredevi
 Measured and rejected: a repeated MANIFEST of the top card as this tag, 1 tagged of 9 (Cryptic
 Pursuit against Abhorrent Oculus and Hauntwoods Shrieker). Left as known disagreements: Lich,
 Innocent Bystander, Cryptic Pursuit.
+
+Read 2026-10-27, from the sitting of 2026-10-26 (the CardAdvantage pass, 1259 reviewed: 5 proposed
+wrongly and 10 missed before, 3 and 1 after, every one a known disagreement or Finneas below), no
+ruling asked: each card writes a shape this tag already has. This tag: a closing conditional draw
+on a repeating trigger, "If that creature's power is 4 or greater, draw a card." (Aradesh, the
+Founder: 12 of 14 reviewed cards written this way are tagged, Nael, Avizoa Aeronaut stays
+Filter); the BOTTOM card of each opponent's library
+every end step (Arvinox, the Mind Flail, the ruling of 2026-10-16); an activated draw closing a
+move, "If one or more +1/+1 counters are moved this way, you gain that much life and draw a card"
+(Black Panther, Wakandan King); a land and a spell out of ANY graveyard every turn (Coram, the
+Undertaker); "you may look at and play that card" every upkeep (Headliner Scarlett); your spell
+exiled as it resolves and plotted, every time, rebound's reading (Lilah, Undefeated Slickshot); a
+d20 result that draws, on every cast (Mathise, Surge Channeler); a number of cards off the top on
+every attack, all playable (Neriv, Crackling Vanguard); "each draw half that many cards" granted
+on a tap (Sokrates, Athenian Teacher). Not this tag: a second hand on top that only a creature
+TYPE may be cast from (Hakoda, Selfless Commander, the tribal ruling of 2026-10-16; a land beside
+the type stays, Traveling Chocobo, and so does a supertype, Isu the Abominable's snow spells); a
+loot bullet on every attack, which is Filter (Pip-Boy 3000, like Oracle of Tragedy); a draw
+counted by what the card made you discard as it entered, Fable's rummage and Filter (Indominus
+Rex, Alpha). Measured and rejected: every activated draw past the 100 window, 5 tagged and 4 not
+(Kogla and Yidaro, Aladdin's Lamp, Jeweled Bird, Vikya, Scorching Stalwart). Corrected by name:
+Finneas, Ace Archer, untagged on 2026-09-23 before Éowyn, Shieldmaiden's identical "Then if …, draw
+a card" was read as this tag, is this tag and stays reviewed ("Assegnagli CA e basta").

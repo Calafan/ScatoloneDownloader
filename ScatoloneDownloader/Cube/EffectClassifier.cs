@@ -939,7 +939,10 @@ namespace ScatoloneDownloader.Cube
                 || SquadCopiesDraw.IsMatch(text) || MillHandedBack.IsMatch(text)
                 || ExilesOnePerTargetAndPlays.IsMatch(text) || TokenThatTapsToDraw.IsMatch(text)
                 || DeathDrawRepeatedByEncore.IsMatch(text) || LoyaltyRevealsUntilIntoHand.IsMatch(text)
-                || LifePaidForADraw.IsMatch(text) || SplicedCantrip.IsMatch(text))
+                || LifePaidForADraw.IsMatch(text) || SplicedCantrip.IsMatch(text)
+                // The readings of 2026-10-27 — see DrawClosingAMoveThisWay.
+                || DrawClosingAMoveThisWay.IsMatch(text) || SpellExiledToCastAgain.IsMatch(text)
+                || D20DrawOnARepeatingTrigger.IsMatch(text) || EachDrawsHalfThatMany.IsMatch(text))
             {
                 result |= CardEffect.CardAdvantage;
             }
@@ -948,7 +951,7 @@ namespace ScatoloneDownloader.Cube
             // one card. Asked last, after everything that could add the draw
             // back, because the two halves are on different lines and every
             // rule that reads them reads only one.
-            if (PhasingLoot.IsMatch(text))
+            if (PhasingLoot.IsMatch(text) || DrawsForWhatItDiscarded.IsMatch(text))
             {
                 result &= ~CardEffect.CardAdvantage;
                 result |= CardEffect.Filter;

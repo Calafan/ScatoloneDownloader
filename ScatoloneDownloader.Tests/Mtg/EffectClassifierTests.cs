@@ -10543,6 +10543,108 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // Read 2026-10-27 from the sitting of 2026-10-26: each card is the one
+    // reviewed card that writes a shape this tag already has, tagged by hand. A
+    // closing conditional draw on an attack (Aradesh); the bottom of their library
+    // every end step (Arvinox); an activated draw closing a move (Black Panther);
+    // any graveyard every turn (Coram); 'look at and play' every upkeep (Headliner
+    // Scarlett); a spell exiled to be plotted (Lilah); a d20 draw on every cast
+    // (Mathise); a number of cards off the top, all playable (Neriv); 'each draw
+    // half that many' on a tap (Sokrates); and a land beside the tribe keeps the
+    // second hand (Traveling Chocobo).
+    [InlineData("Aradesh, the Founder", "Legendary Creature — Human Soldier",
+        "Enlist (As this creature attacks, you may tap a nonattacking creature you control without summoning "
+        + "sickness. When you do, add its power to this creature's until end of turn.)\nWhenever a creature you "
+        + "control attacks, if it enlisted a creature this combat, the creature that attacked gains double "
+        + "strike until end of turn. If that creature's power is 4 or greater, draw a card.")]
+    [InlineData("Arvinox, the Mind Flail", "Legendary Enchantment Creature — Horror",
+        "Arvinox isn't a creature unless you control three or more permanents you don't own.\nAt the beginning "
+        + "of your end step, exile the bottom card of each opponent's library face down. For as long as those "
+        + "cards remain exiled, you may look at them, you may cast permanent spells from among them, and you "
+        + "may spend mana as though it were mana of any color to cast those spells.")]
+    [InlineData("Black Panther, Wakandan King", "Legendary Creature — Human Noble Hero",
+        "First strike\nSurvey the Realm — Whenever Black Panther or another creature you control enters, put a "
+        + "+1/+1 counter on target land you control.\nMine Vibranium — {3}: Move all +1/+1 counters from target "
+        + "land you control onto target creature. If one or more +1/+1 counters are moved this way, you gain "
+        + "that much life and draw a card.")]
+    [InlineData("Coram, the Undertaker", "Legendary Creature — Human Warrior",
+        "Coram gets +X/+0, where X is the greatest power among creature cards in all graveyards.\nWhenever "
+        + "Coram attacks, each player mills a card.\nDuring each of your turns, you may play a land and cast a "
+        + "spell from among cards in graveyards that were put there from libraries this turn.")]
+    [InlineData("Headliner Scarlett", "Legendary Creature — Human Warlock",
+        "Haste\nWhen Headliner Scarlett enters, creatures target player controls can't block this turn.\nAt the "
+        + "beginning of your upkeep, exile the top card of your library face down. You may look at and play "
+        + "that card this turn.")]
+    [InlineData("Lilah, Undefeated Slickshot", "Legendary Creature — Human Rogue",
+        "Prowess (Whenever you cast a noncreature spell, this creature gets +1/+1 until end of "
+        + "turn.)\nWhenever you cast a multicolored instant or sorcery spell from your hand, exile that spell "
+        + "instead of putting it into your graveyard as it resolves. If you do, it becomes plotted. (You may "
+        + "cast it as a sorcery on a later turn without paying its mana cost.)")]
+    [InlineData("Mathise, Surge Channeler", "Legendary Creature — Human Elf Shaman Sorcerer",
+        "Whenever you cast an instant or sorcery spell with mana value 3 or greater, roll a d20.\n1-9 | Each "
+        + "player draws a card.\n10-19 | You draw a card.\n20 | Copy that spell. You may choose new targets for "
+        + "the copy.")]
+    [InlineData("Neriv, Crackling Vanguard", "Legendary Creature — Spirit Dragon",
+        "Flying, deathtouch\nWhen Neriv enters, create two 1/1 red Goblin creature tokens.\nWhenever Neriv "
+        + "attacks, exile a number of cards from the top of your library equal to the number of differently "
+        + "named tokens you control. During any turn you attacked with a commander, you may play those cards.")]
+    [InlineData("Sokrates, Athenian Teacher", "Legendary Creature — Human Advisor",
+        "Defender\nSokrates has hexproof as long as it's untapped.\nSokratic Dialogue — {T}: Until end of turn, "
+        + "target creature gains \"If this creature would deal combat damage to a player, prevent that damage. "
+        + "This creature's controller and that player each draw half that many cards, rounded down.\"")]
+    [InlineData("Traveling Chocobo", "Creature — Bird",
+        "You may look at the top card of your library any time.\nYou may play lands and cast Bird spells from "
+        + "the top of your library.\nIf a land or Bird you control entering the battlefield causes a triggered "
+        + "ability of a permanent you control to trigger, that ability triggers an additional time.")]
+    public void Classify_TheOctober27CardAdvantagePass_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Read 2026-10-27: a second hand on top that only a creature TYPE may cast
+    // from (Hakoda, the tribal ruling of 2026-10-16); a number exiled and ONE
+    // chosen (End-Blaze Epiphany, the count of a Filter); a draw consoling a copy
+    // not made, 'if you don't' (Shiko and Narset, untagged).
+    [InlineData("Hakoda, Selfless Commander", "Legendary Creature — Human Warrior Ally",
+        "Vigilance\nYou may look at the top card of your library any time.\nYou may cast Ally spells from the "
+        + "top of your library.\nSacrifice Hakoda: Creatures you control get +0/+5 and gain indestructible until "
+        + "end of turn.")]
+    [InlineData("End-Blaze Epiphany", "Instant",
+        "End-Blaze Epiphany deals X damage to target creature. When that creature dies this turn, exile a "
+        + "number of cards from the top of your library equal to its power, then choose a card exiled this way. "
+        + "Until the end of your next turn, you may play that card.")]
+    [InlineData("Shiko and Narset, Unified", "Legendary Creature — Human Spirit Dragon",
+        "Flying, vigilance\nFlurry — Whenever you cast your second spell each turn, copy that spell if it "
+        + "targets a permanent or player, and you may choose new targets for the copy. If you don't copy a "
+        + "spell this way, draw a card.")]
+    public void Classify_TheOctober27CardAdvantagePass_IsNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Read 2026-10-27, Filter by hand: a loot bullet on every attack is no draw
+    // mode (Pip-Boy 3000), and a draw counted by what the card made you discard is
+    // Fable's rummage (Indominus Rex, Alpha).
+    [InlineData("Pip-Boy 3000", "Artifact — Equipment",
+        "Whenever equipped creature attacks, choose one —\n• Sort Inventory — Draw a card, then discard a "
+        + "card.\n• Pick a Perk — Put a +1/+1 counter on that creature.\n• Check Map — Untap up to two target "
+        + "lands.\nEquip {2}")]
+    [InlineData("Indominus Rex, Alpha", "Legendary Creature — Dinosaur Mutant",
+        "As Indominus Rex enters, discard any number of creature cards. It enters with a flying counter on it "
+        + "if a card discarded this way has flying. The same is true for first strike, double strike, "
+        + "deathtouch, hexproof, haste, indestructible, lifelink, menace, reach, trample, and vigilance.\nWhen "
+        + "Indominus Rex enters, draw a card for each counter on it.")]
+    public void Classify_TheOctober27CardAdvantagePass_LootAndRummage_AreFilterNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.False(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.True(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
     // Ruled 2026-10-24: mana KEPT from one step to the next for good is Ramp
     // (Horizon Stone, tagged by hand; Kruphix with it). Read the same day, one
     // reviewed card each, Ramp by hand: a spell's mode that adds mana (Jeska's

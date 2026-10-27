@@ -312,7 +312,11 @@ namespace ScatoloneDownloader.Cube
             + @"[^\n]{0,60}you may play (?:that card|it)\b"
             // The card CHOSEN in your graveyard first and cast after: Conduit
             // of Worlds, on every tap (tagged, 2026-10-14).
-            + @"|choose target [\w ]{0,30}card in your graveyard[^\n]{0,80}you may cast that card");
+            + @"|choose target [\w ]{0,30}card in your graveyard[^\n]{0,80}you may cast that card"
+            // Out of ANY graveyard, every turn (Coram, the Undertaker, tagged,
+            // read 2026-10-27, 1 of 1: their graveyard on a repeat is this tag
+            // by the ruling of 2026-10-16, Saruman of Many Colors).
+            + @"|you may (?:play|cast) [\w ,'-]{0,40}(?:spells?|cards?) from among cards in graveyards");
 
         // "Once during each of your turns" and "During your turn, you may" are
         // permissions that keep standing, so they are repeatable with no trigger
@@ -675,6 +679,10 @@ namespace ScatoloneDownloader.Cube
             @"\b[Ii]f it's an? " + ACreatureType + @" (?:creature )?card, you may (?:cast|play)\b",
             RegexOptions.CultureInvariant);
 
+        // Case-sensitive inside a case-blind Rx, for SecondHandOnTop.
+        private const string NotOnlyATribesSpells =
+            @"(?! (?-i:" + ACreatureType + @") (?:creature )?spells from the top)";
+
         private static readonly Regex TribalCard = new(
             ACreatureType + @" (?:creature |permanent )?(?:cards?|spells?)\b"
             + @"|\bcreature cards? (?:of the chosen type|of that type|that shares? a creature type)\b",
@@ -922,8 +930,15 @@ namespace ScatoloneDownloader.Cube
         // a discover, ruled 2026-10-23 (see CascadeMoreThanOnce). Only "this
         // spell": the same exile-until on EVERY legendary spell (Jodah, the
         // Unifier, tagged) or on every activation (Codie) is a stream.
+        // Not when only a creature TYPE may be cast from the top: Hakoda, Selfless
+        // Commander's "cast Ally spells from the top of your library" (untagged,
+        // read 2026-10-27, the tribal ruling of 2026-10-16 as for Rundvelt
+        // Hordemaster's impulse). A land beside the type is no tribe (Traveling
+        // Chocobo, "play lands and cast Bird spells", tagged), nor a supertype
+        // (Isu the Abominable's snow spells, tagged).
         private static readonly Regex SecondHandOnTop = Rx(
-            @"(?:play|cast|plot)(?! this spell, exile cards from the top of your library until)[\w ,'\d]{0,60}from the top of your library"
+            @"(?:play|cast|plot)(?! this spell, exile cards from the top of your library until)" + NotOnlyATribesSpells
+            + @"[\w ,'\d]{0,60}from the top of your library"
             // The bare LOOK ("you may look at the top card of your library any
             // time") is no second hand without a permission to play or cast
             // from it: Vesuvan Drifter, untagged (read 2026-10-16). The look
@@ -931,7 +946,8 @@ namespace ScatoloneDownloader.Cube
             // explores (Glowcap Lantern, tagged: it looks and then keeps what
             // it finds); 23 of the 24 reviewed cards written this way have
             // the permission, and Glowcap Lantern is the 24th.
-            + @"|look at the top card of your library any time(?=[\s\S]*(?:\b(?:play|cast)\b[^\n]{0,60}\b(?:top card|from the top)\b|\bexplores\b))"
+            + @"|look at the top card of your library any time(?=[\s\S]*(?:\b(?:play|cast)\b" + NotOnlyATribesSpells
+            + @"[^\n]{0,60}\b(?:top card|from the top)\b|\bexplores\b))"
             + @"|you may (?:play|cast)[^\n]{0,60}top card of your library"
             // The same permission with the LOOK first and the cast after, which
             // is how a card that turns the top over as a trigger writes it:
@@ -965,7 +981,11 @@ namespace ScatoloneDownloader.Cube
             + @"|exiles? the top \w+ cards? of (?:target |that )?(?:opponent|player)"
             // THAT MANY off the top, the count carried in from the trigger
             // (Virtue of Courage, tagged, 2026-10-14).
-            + @"|exiles? that many cards from the top of your library[^\n]{0,60}you may play");
+            + @"|exiles? that many cards from the top of your library[^\n]{0,60}you may play"
+            // …and A NUMBER of them, counted from the board (Neriv, Crackling
+            // Vanguard, on every attack, tagged, read 2026-10-27, 1 of 1), all of
+            // them: End-Blaze Epiphany chooses one, the count of a Filter.
+            + @"|exiles? a number of cards from the top of your library[^\n]{0,160}you may play those cards");
 
         // …and the shape that takes several off the top and lets you play only
         // ONE of them. Ruled 2026-09-20: you looked at two and played one, which
@@ -1031,9 +1051,12 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex DrawThatMany = Rx(
             @"you (?:may )?draw that many cards|, draw that many cards");
 
+        // "You may LOOK AT AND play that card" is the same permission (Headliner
+        // Scarlett, every upkeep, tagged, read 2026-10-27; the four reviewed
+        // cards that say it are all tagged).
         private static readonly Regex ImpulseDraw = Rx(
             @"exiles? the top [\w ]{0,20}(?:card|cards) of your library"
-            + @"[^\n]{0,90}(?:you may (?:play|cast)|may play (?:it|them|that card))");
+            + @"[^\n]{0,90}(?:you may (?:look at and )?(?:play|cast)|may play (?:it|them|that card))");
 
         // More than one card off the top is a draw two, whatever it costs to cast.
         // DISCOVER is ONE card off the top, cast for free or kept — the one-card
@@ -1398,7 +1421,11 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex DrawModeOnARepeatingTrigger = Rx(
             @"^(?:[\w ]+ — )?(?:whenever|at the beginning)(?![^\n]*sacrifice)(?![^\n]*hasn't been chosen(?! this turn))"
             + @"[^\n]*choose one(?: or more)?[^\n]*—(?:\n•[^\n]*)*?\n•\s*(?:[\w ]+ — )?(?:you )?(?:scry \d+, then )?"
-            + @"draw (?:a|one|two) cards?",
+            + @"draw (?:a|one|two) cards?"
+            // A LOOT bullet is no draw mode: Pip-Boy 3000's "Sort Inventory — Draw
+            // a card, then discard a card" on every attack (Filter by hand, read
+            // 2026-10-27; Oracle of Tragedy's loot bullet is untagged too, 0 of 2).
+            + @"(?!, then discard)",
             RegexOptions.Multiline);
 
         // …and a sacrifice that buys MORE THAN ONE mode, one of them the draw,
@@ -1855,7 +1882,9 @@ namespace ScatoloneDownloader.Cube
             // creature or artifact. If you do, you may play the exiled card",
             // Fire Lord Ozai's "Until end of turn, you may play one of those
             // cards".
-            + @"|\bexile the top card of (?:that|target|each) (?:player|opponent)'?s library\.[^\n]{0,160}\byou may (?:play|cast)"
+            // The BOTTOM card, face down, is the same card (Arvinox, the Mind
+            // Flail, every end step, tagged, read 2026-10-27, 1 of 1).
+            + @"|\bexile the (?:top|bottom) card of (?:that|target|each) (?:player|opponent)'?s library(?: face down)?\.[^\n]{0,160}\byou may (?:play|cast)"
             // …as many as the mana value of what was sacrificed (Rakdos, the Muscle).
             + @"|\bexile cards equal to [^.\n]{0,40} from the top of (?:that|target|each) (?:player|opponent)'?s library\."
             + @"[^\n]{0,80}\byou may (?:play|cast) those cards"
@@ -2009,5 +2038,44 @@ namespace ScatoloneDownloader.Cube
             RegexOptions.Multiline);
 
         private static readonly Regex SplicedCantrip = Rx(@"^draw (?:a|one) card\.\s*splice onto\b", RegexOptions.Multiline);
+
+        // Read 2026-10-27, from the sitting of 2026-10-26: shapes the human
+        // tagged on the one reviewed card that says them, each a rule this tag
+        // already has in words no rule read (the others — Hakoda, Pip-Boy 3000,
+        // Headliner Scarlett, Neriv, Arvinox, Coram, Aradesh — sit beside the
+        // pattern they widen).
+        //  - an activated draw closing a long line, "If one or more +1/+1
+        //    counters are moved this way, you gain that much life and draw a
+        //    card" (Black Panther, Wakandan King). Every activated draw past
+        //    the 100 window was MEASURED AND REJECTED: 5 tagged, 4 not (Kogla
+        //    and Yidaro, Aladdin's Lamp, Jeweled Bird, Vikya);
+        //  - your spell exiled as it resolves to be cast again, every time
+        //    (rebound's reading): Lilah, Undefeated Slickshot plots it; Forger's
+        //    Foundry, tagged, is the other card written this way;
+        //  - a d20 result that draws, on a trigger that repeats: Mathise, Surge
+        //    Channeler;
+        //  - "each draw half that many cards", granted on a tap (Master of
+        //    Ceremonies' reading, each player drawing again): Sokrates,
+        //    Athenian Teacher.
+        private static readonly Regex DrawClosingAMoveThisWay = Rx(
+            @"^[^\n:]{1,70}:[^\n]*\. if one or more [^.\n]{0,80} this way, [^.\n]{0,40}\band draw (?:a|one) card\.$",
+            RegexOptions.Multiline);
+
+        private static readonly Regex SpellExiledToCastAgain = Rx(
+            @"^whenever you cast [^\n]{0,80}, exile that spell instead of putting it into your graveyard as it resolves",
+            RegexOptions.Multiline);
+
+        private static readonly Regex D20DrawOnARepeatingTrigger = Rx(
+            @"^(?:whenever|at the beginning of)[^\n]*\broll a d20\.(?:\n[^\n]*)*?\n\d+(?:[–-]\d+)? \| (?:you )?draw (?:a|one) card",
+            RegexOptions.Multiline);
+
+        private static readonly Regex EachDrawsHalfThatMany = Rx(@"\beach draw half that many cards");
+
+        // A draw counted by what the card made you DISCARD as it entered is the
+        // rummage of Fable (RummagesThatMany): Indominus Rex, Alpha discards any
+        // number of creature cards and draws one per keyword counter they gave
+        // it (Filter by hand, read 2026-10-27, 1 of 1).
+        private static readonly Regex DrawsForWhatItDiscarded = Rx(
+            @"discard any number of [^.\n]{0,40}cards\b[\s\S]{0,400}\bdraw a card for each counter on it");
     }
 }

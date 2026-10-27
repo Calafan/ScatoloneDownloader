@@ -802,7 +802,16 @@ namespace ScatoloneDownloader.Cube
                     Rx(@"^when [^\n,]{0,60} and (?:whenever|at the beginning of)[^\n]{0,160}\bdraw (?:a|one) card"
                         // …and "Then draw a card." closing a long upkeep trigger
                         // (Fisher's Talent, read 2026-10-16).
-                        + @"|^(?:whenever|at the beginning of)[^\n]*(?:\band you draw (?:a|one) card|\. (?:then )?draw (?:a|one) card\.$)",
+                        + @"|^(?:whenever|at the beginning of)[^\n]*(?:\band you draw (?:a|one) card|\. (?:then )?draw (?:a|one) card\.$"
+                        // …and the same closing draw behind a condition, "If that
+                        // creature's power is 4 or greater, draw a card." (Aradesh,
+                        // the Founder, read 2026-10-27: 12 of 14 reviewed written
+                        // this way are tagged; Finneas, Ace Archer was corrected by
+                        // name and Nael, Avizoa Aeronaut stays Filter). Vetoes for "if
+                        // you do" (a loot: the parity guard reads it) and "if you
+                        // don't" (Shiko and Narset, behind an ability word) were
+                        // tried and moved no card.
+                        + @"|\. (?:then )?if [^.\n]{0,80}, draw (?:a|one) card\.$)",
                         RegexOptions.Multiline),
                     // A combat trigger of your own whose draw sits past the 160 as a
                     // closing sentence, "Then if you control six or more Humans,
