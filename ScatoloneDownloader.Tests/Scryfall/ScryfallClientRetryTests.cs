@@ -67,6 +67,17 @@ public sealed class ScryfallClientRetryTests
         Assert.Equal([TimeSpan.FromSeconds(3)], Backoffs(delays));
     }
 
+    [Fact]
+    public async Task GetStreamAsync_429AfterEveryRetry_ThrowsRateLimit()
+    {
+        StatusHandler handler = new(HttpStatusCode.TooManyRequests);
+        using ScryfallClient client = new(handler, NoDelay);
+
+        await Assert.ThrowsAsync<ScryfallRateLimitException>(() => client.GetStreamAsync("https://test/x"));
+
+        Assert.Equal(6, handler.Calls); // first try + 5 retries, then the run is told to stop
+    }
+
     private static Task NoDelay(TimeSpan _) => Task.CompletedTask;
 
     private static Func<TimeSpan, Task> Record(List<TimeSpan> delays)

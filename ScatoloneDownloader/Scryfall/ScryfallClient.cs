@@ -146,7 +146,9 @@ namespace ScatoloneDownloader.Scryfall
         /// transport-level failure (<see cref="HttpRequestException"/> — TCP reset,
         /// DNS — or a <see cref="TaskCanceledException"/> from HttpClient's timeout)
         /// is retried the same way, so a single network blip during a multi-minute
-        /// bulk download does not abort the whole run. Returns the successful
+        /// bulk download does not abort the whole run. A 429 that outlives the retries
+        /// throws <see cref="ScryfallRateLimitException"/>, so the download loop stops
+        /// instead of asking again for the next card. Returns the successful
         /// response — the caller owns and disposes it.
         /// </summary>
         private async Task<HttpResponseMessage> SendWithRetryAsync(string url, HttpCompletionOption completionOption)
@@ -189,6 +191,11 @@ namespace ScatoloneDownloader.Scryfall
 
                 HttpStatusCode status = response.StatusCode;
                 response.Dispose();
+
+                if (status == HttpStatusCode.TooManyRequests)
+                {
+                    throw new ScryfallRateLimitException(url);
+                }
 
                 throw new HttpRequestException(string.Format("Unable to contact: {0}. Status code: {1}", url, status));
             }

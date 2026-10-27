@@ -7,6 +7,7 @@ using ScatoloneDownloader.Enums;
 using ScatoloneDownloader.Filtering;
 using ScatoloneDownloader.Logging;
 using ScatoloneDownloader.Mtg;
+using ScatoloneDownloader.Scryfall;
 
 using Spectre.Console;
 
@@ -263,59 +264,119 @@ namespace ScatoloneDownloader.Cli.Download
             return value ?? throw new InvalidOperationException($"A {mode} request carries no {field}.");
         }
 
+        /// <summary>What <see cref="DownloadEachAsync"/> did with a list of cards.</summary>
+        internal sealed class DownloadTally
+        {
+            internal int Downloaded { get; set; }
+
+            internal int Skipped { get; set; }
+
+            internal List<(string Name, string Set, string Message)> Failures { get; } = [];
+
+            /// <summary>The card Scryfall refused with a 429 that outlived every retry:
+            /// the run stopped there, and it and every card after it were not attempted.</summary>
+            internal Card? StoppedAt { get; set; }
+
+            internal ScryfallRateLimitException? RateLimit { get; set; }
+        }
+
         internal static async Task DownloadAllAsync(CardDownloader downloader, List<Card> cards, Mode mode, string? file, string specificText, bool skipExisting)
         {
-            int downloaded = 0;
-            int skipped = 0;
-            List<(string Name, string Set, string Message)> failures = [];
-
             Stopwatch stopwatch = Stopwatch.StartNew();
 
-            await AnsiConsole.Progress()
+            DownloadTally tally = await AnsiConsole.Progress()
                 .Columns(new TaskDescriptionColumn(), new ProgressBarColumn(), new PercentageColumn(), new RemainingTimeColumn(), new ElapsedTimeColumn())
-                .StartAsync(async ctx =>
+                .StartAsync(ctx =>
                 {
                     ProgressTask task = ctx.AddTask($"Downloading {specificText}", maxValue: cards.Count);
 
-                    foreach (Card card in cards)
-                    {
-                        try
-                        {
-                            DownloadOutcome outcome = await downloader.DownloadAsync(card, mode, file, skipExisting);
-
-                            if (outcome == DownloadOutcome.Downloaded)
-                            {
-                                downloaded++;
-                            }
-                            else
-                            {
-                                skipped++;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            // One bad card (a missing image, a flaky response) must not abort the run.
-                            // No token reaches the download, so an OperationCanceledException here is
-                            // an HTTP timeout (TaskCanceledException), not a cancel: caught like the rest.
-                            Logger.LogError(ex, "Download failed: {Name} - {Set}", card.Name, card.Set);
-                            failures.Add((card.Name, card.Set, ex.Message));
-                        }
-
-                        task.Increment(1);
-                    }
+                    return DownloadEachAsync(
+                        cards, card => downloader.DownloadAsync(card, mode, file, skipExisting), () => task.Increment(1));
                 });
 
             stopwatch.Stop();
 
-            ReportThroughput(downloaded, stopwatch.Elapsed);
+            ReportTally(tally, cards.Count, skipExisting, stopwatch.Elapsed);
+        }
+
+        /// <summary>
+        /// Prints how the run went and, when Scryfall stopped it with a 429, how far it
+        /// got, then rethrows that 429 so the command ends in an error.
+        /// </summary>
+        internal static void ReportTally(DownloadTally tally, int cardCount, bool skipExisting, TimeSpan elapsed)
+        {
+            ReportThroughput(tally.Downloaded, elapsed);
 
             AnsiConsole.MarkupLineInterpolated(
-                $"Downloaded {downloaded}, skipped {skipped} (already present), failed {failures.Count}.");
+                $"Downloaded {tally.Downloaded}, skipped {tally.Skipped} (already present), failed {tally.Failures.Count}.");
 
-            foreach ((string name, string set, string message) in failures)
+            foreach ((string name, string set, string message) in tally.Failures)
             {
                 AnsiConsole.MarkupLineInterpolated($"[red]Failed:[/] {name} ({set}): {message}");
             }
+
+            if (tally.RateLimit is { } rateLimit)
+            {
+                int notAttempted = cardCount - tally.Downloaded - tally.Skipped - tally.Failures.Count;
+
+                AnsiConsole.MarkupLineInterpolated(
+                    $"[red]Stopped:[/] Scryfall still answered 429 after every retry at {tally.StoppedAt!.Name} ({tally.StoppedAt.Set}); {notAttempted} cards not attempted, that one included.");
+
+                if (skipExisting)
+                {
+                    AnsiConsole.MarkupLine("Wait a while, then run the same command again: it skips the images already present.");
+                }
+
+                throw rateLimit;
+            }
+        }
+
+        /// <summary>
+        /// Downloads the cards one by one. A failure is logged and recorded against its
+        /// card and the loop goes on, except a <see cref="ScryfallRateLimitException"/>:
+        /// that stops the loop at the card it came from.
+        /// </summary>
+        internal static async Task<DownloadTally> DownloadEachAsync(IReadOnlyList<Card> cards, Func<Card, Task<DownloadOutcome>> download, Action afterEach)
+        {
+            DownloadTally tally = new();
+
+            foreach (Card card in cards)
+            {
+                try
+                {
+                    DownloadOutcome outcome = await download(card);
+
+                    if (outcome == DownloadOutcome.Downloaded)
+                    {
+                        tally.Downloaded++;
+                    }
+                    else
+                    {
+                        tally.Skipped++;
+                    }
+                }
+                catch (ScryfallRateLimitException ex)
+                {
+                    // Scryfall has asked us to stop: the next card would be refused too,
+                    // and pressing on is what gets an IP banned.
+                    Logger.LogError(ex, "Rate limited, run stopped: {Name} - {Set}", card.Name, card.Set);
+                    tally.StoppedAt = card;
+                    tally.RateLimit = ex;
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    // One bad card (a missing image, a flaky response) must not abort the run.
+                    // No token reaches the download, so an OperationCanceledException here is
+                    // an HTTP timeout (TaskCanceledException), not a cancel: caught like the rest.
+                    Logger.LogError(ex, "Download failed: {Name} - {Set}", card.Name, card.Set);
+                    tally.Failures.Add((card.Name, card.Set, ex.Message));
+                }
+
+                afterEach();
+            }
+
+            return tally;
         }
 
         // Baseline measurement for the (currently sequential) download loop, so any
