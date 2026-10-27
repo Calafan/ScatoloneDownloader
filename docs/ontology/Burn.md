@@ -139,3 +139,12 @@ permanent (Clawing Torment), "creatures, planeswalkers, and/or players" (Soulfir
 spell "unless that player pays 4 life" is Parnesse, the Subtle Brush's Protection, as ward is.
 Left as known disagreements, tagged by hand on wordings no other card shares: Blim, Comedic Genius
 (life lost per permanent controlled but not owned) and Yurlok of Scorch Thrash (unspent mana).
+
+Ruled 2026-10-27 ("Allarga la regola alla libreria", then "Sì, tutte"): a creature put onto the
+battlefield FROM THE LIBRARY with haste and gone at the next end step is Burn, whether it was milled
+(Random Encounter, tagged by name with CardAdvantage), exiled from the top (Anzrag's Rampage) or
+searched for (Zirilan of the Claw). That overturns the library part of the 2026-10-23 exclusion; a
+creature taken from a graveyard, a hand or an opponent still is not burn. Anzrag's Rampage and
+Zirilan were untagged and are handed back with the tag. Random Encounter's CardAdvantage is not read
+by the rules, which read no card advantage in a creature returned to hand at the end step (Anzrag's
+Rampage, same wording, is untagged): a known disagreement.

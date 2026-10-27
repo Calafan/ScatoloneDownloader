@@ -367,8 +367,11 @@ namespace ScatoloneDownloader.Cube
             // neither earns the tag that means "this deck goes wide". Written as
             // a guard rather than as more regexes because the evidence sits
             // anywhere on the card, not next to the verb.
+            // A body on a tribe's trigger the card cannot set off by itself is
+            // somebody else's doing too (2026-10-27, BlankTribalBodyTriggers).
+            string ownBodies = BlankTribalBodyTriggers(card, text);
             if (result.HasFlag(CardEffect.Tokens)
-                && !MakesACreatureBody(WhatSomebodyElseCreates.Replace(text, " ")))
+                && !MakesACreatureBody(WhatSomebodyElseCreates.Replace(ownBodies, " ")))
             {
                 result &= ~CardEffect.Tokens;
             }
@@ -401,7 +404,7 @@ namespace ScatoloneDownloader.Cube
             // type line, so a Saga or a Sidequest that transforms into a
             // creature ("Enchantment // Creature — Bird") would count as one,
             // and the card you cast is the enchantment.
-            if (result.HasFlag(CardEffect.Tokens) && FrontFaceIsACreature(card) && OnlyAFewBodiesOnce(text))
+            if (result.HasFlag(CardEffect.Tokens) && FrontFaceIsACreature(card) && OnlyAFewBodiesOnce(ownBodies))
             {
                 result &= ~CardEffect.Tokens;
             }

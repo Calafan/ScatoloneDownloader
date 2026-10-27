@@ -141,3 +141,15 @@ Read the same day: "cloak THOSE CARDS", a pile with two library cards in it (Bec
 a Tarmogoyf token printed with no reminder (Disa the Restless), the one named token in the store
 that says no type anywhere. Left as disagreements on purpose: Writhing Chrysalis, Siege Veteran,
 Niko, Random Encounter, Tribute to Horobi.
+
+Ruled the same day, on those five. A body made on a TRIBE's trigger counts only when the card sets
+the trigger off by itself ("i tribali contano solo se generano da soli"): a trigger on ANOTHER or a
+NONTOKEN member, and the cast of a tribe's SPELL, since the tokens are no spells, are not Tokens.
+Siege Veteran stays untagged, and eight cards tagged by hand are untagged and handed back: Baboon
+Spirit, Bishop of Wings, Deeproot Pilgrimage, Knightfisher, Miirym, Rin and Seri, Rohgahh and Urtet.
+A card of the tribe that says "a" or "one or more" (General Kreat, Zeriam, Crimson Cowl) and one
+that makes the tribe's tokens itself (Origin of the Hidden Ones, Elvish Warmaster) keep the tag; a
+land type is no tribe (Hazezon's Deserts, Titania's Forests). Writhing Chrysalis and Niko were slips
+("Errore mio") and Tribute to Horobi's Rats are no Tokens either ("Niente"): each untagged by name.
+Random Encounter is Burn and CardAdvantage instead ("Burn e CA", see Burn.md), untagged by name.
+No disagreement is left on purpose.

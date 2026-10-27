@@ -3255,6 +3255,82 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // A body on a tribe's trigger counts only when the card sets it off by itself,
+    // ruled 2026-10-27 ('i tribali contano solo se generano da soli'): another or
+    // a nontoken member (Siege Veteran, Baboon Spirit, Deeproot Pilgrimage, Black
+    // Panther with its modes), a tribe the card neither is nor makes (Bishop of
+    // Wings), a tribe's spell cast (Urtet, Rin and Seri).
+    [InlineData("Siege Veteran", "Creature — Human Soldier",
+        "At the beginning of combat on your turn, put a +1/+1 counter on target creature you "
+        + "control.\nWhenever another nontoken Soldier you control dies, create a 1/1 colorless Soldier artifact "
+        + "creature token.")]
+    [InlineData("Baboon Spirit", "Creature — Monkey Spirit",
+        "Whenever another nontoken Spirit you control enters, create a 1/1 colorless Spirit creature token "
+        + "with \"This token can't block or be blocked by non-Spirit creatures.\"\n{3}{U}: Exile another target "
+        + "creature you control. Return it to the battlefield under its owner's control at the beginning of the "
+        + "next end step.")]
+    [InlineData("Deeproot Pilgrimage", "Enchantment",
+        "Whenever one or more nontoken Merfolk you control become tapped, create a 1/1 blue Merfolk creature "
+        + "token with hexproof.")]
+    [InlineData("Black Panther, Vanguard", "Legendary Creature — Human Warrior Hero",
+        "Whenever another nontoken Hero you control enters, choose one —\n• Create a 1/1 white Soldier "
+        + "creature token.\n• Creatures you control get +1/+1 until end of turn.")]
+    [InlineData("Bishop of Wings", "Creature — Human Cleric",
+        "Whenever an Angel you control enters, you gain 4 life.\nWhenever an Angel you control dies, create a "
+        + "1/1 white Spirit creature token with flying.")]
+    [InlineData("Urtet, Remnant of Memnarch", "Legendary Artifact Creature — Myr",
+        "Whenever you cast a Myr spell, create a 1/1 colorless Myr artifact creature token.\nAt the beginning "
+        + "of combat on your turn, untap each Myr you control.\n{W}{U}{B}{R}{G}, {T}: Put three +1/+1 counters "
+        + "on each Myr you control. Activate only during your turn.")]
+    [InlineData("Rin and Seri, Inseparable", "Legendary Creature — Dog Cat",
+        "Whenever you cast a Dog spell, create a 1/1 green Cat creature token.\nWhenever you cast a Cat spell, "
+        + "create a 1/1 white Dog creature token.\n{R}{G}{W}, {T}: Rin and Seri deals damage to any target equal "
+        + "to the number of Dogs you control. You gain life equal to the number of Cats you control.")]
+    public void Classify_ABodyOnATribeItCannotSetOff_IsNotTokens(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    // The other side of the 2026-10-27 tribal ruling: a card of the tribe saying
+    // 'a' or 'one or more' (General Kreat, Zeriam), one making the tribe's tokens
+    // itself (Origin of the Hidden Ones), and a land type, which is no tribe
+    // (Hazezon, Titania).
+    [InlineData("General Kreat, the Boltbringer", "Legendary Creature — Goblin Soldier",
+        "Whenever one or more Goblins you control attack, create a 1/1 red Goblin creature token that's "
+        + "tapped and attacking.\nWhenever another creature you control enters, General Kreat deals 1 damage to "
+        + "each opponent.")]
+    [InlineData("Zeriam, Golden Wind", "Legendary Creature — Griffin",
+        "Flying\nWhenever a Griffin you control deals combat damage to a player, create a 2/2 white Griffin "
+        + "creature token with flying.")]
+    [InlineData("Origin of the Hidden Ones", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — This "
+        + "Saga deals 4 damage to any target.\nII — Create two 1/1 black Assassin creature tokens with "
+        + "menace.\nIII — Whenever an Assassin you control attacks this turn, create a 1/1 black Assassin "
+        + "creature token with menace that's tapped and attacking.")]
+    [InlineData("Hazezon, Shaper of Sand", "Legendary Creature — Human Warrior",
+        "Desertwalk (This creature can't be blocked as long as defending player controls a Desert.)\nYou may "
+        + "play Desert lands from your graveyard.\nWhenever a Desert you control enters, create two 1/1 red, "
+        + "green, and white Sand Warrior creature tokens.")]
+    [InlineData("Titania, Nature's Force", "Legendary Creature — Elemental",
+        "You may play Forests from your graveyard.\nWhenever a Forest you control enters, create a 5/3 green "
+        + "Elemental creature token.\nWhenever an Elemental you control dies, you may mill three cards.")]
+    // A nontoken member that the card itself is (Crimson Cowl's Villains), and a
+    // plural the lazy match cuts short, Elves made by an Elf maker (Elvish
+    // Warmaster).
+    [InlineData("Crimson Cowl, Master of Evil", "Legendary Creature — Human Villain",
+        "Whenever one or more nontoken Villains you control attack a player, you create a 2/1 black Villain "
+        + "creature token with menace. (It can't be blocked except by two or more creatures.)")]
+    [InlineData("Elvish Warmaster", "Creature — Elf Warrior",
+        "Whenever one or more other Elves you control enter, create a 1/1 green Elf Warrior creature token. "
+        + "This ability triggers only once each turn.\n{5}{G}{G}: Elves you control get +2/+2 and gain "
+        + "deathtouch until end of turn.")]
+    public void Classify_ABodyOnATribeItSetsOffItself_IsTokens(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
     // …and the creatures that keep it: THREE at once, counted across a list.
     [InlineData("Somberwald Beastmaster", "Creature — Human Ranger",
         "When this creature enters, create a 2/2 green Wolf creature token, a 3/3 green Beast creature token, "
@@ -10366,6 +10442,22 @@ public sealed class EffectClassifierTests
         + "that permanent or player. You may play the exiled cards until the end of your next turn.")]
     [InlineData("Coalborn Entity", "Creature — Elemental",
         "{2}{R}: This creature deals 1 damage to target creature token, player, or planeswalker.")]
+    // Widened 2026-10-27 ('Allarga la regola alla libreria'): a creature out of
+    // your LIBRARY counts as made, milled, exiled off the top or searched for.
+    [InlineData("Random Encounter", "Sorcery",
+        "Shuffle your library, then mill four cards. Put each creature card milled this way onto the "
+        + "battlefield. They gain haste. At the beginning of the next end step, return those creatures to their "
+        + "owner's hand.\nFlashback {6}{R}{R} (You may cast this card from your graveyard for its flashback "
+        + "cost. Then exile it.)")]
+    [InlineData("Anzrag's Rampage", "Sorcery",
+        "Destroy all artifacts you don't control, then exile the top X cards of your library, where X is the "
+        + "number of artifacts that were put into graveyards from the battlefield this turn. You may put a "
+        + "creature card exiled this way onto the battlefield. It gains haste. Return it to your hand at the "
+        + "beginning of the next end step.")]
+    [InlineData("Zirilan of the Claw", "Legendary Creature — Lizard Shaman",
+        "{1}{R}{R}, {T}: Search your library for a Dragon permanent card, put that card onto the battlefield, "
+        + "then shuffle. That Dragon gains haste until end of turn. Exile it at the beginning of the next end "
+        + "step.")]
     public void Classify_TheOctober23BurnPass_IsBurn(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));

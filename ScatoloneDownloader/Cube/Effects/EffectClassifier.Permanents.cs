@@ -890,6 +890,50 @@ namespace ScatoloneDownloader.Cube
             return makesAny;
         }
 
+        // A body made on a TRIBE's trigger counts only when the card sets the
+        // trigger off by itself, ruled 2026-10-27 ("i tribali contano solo se
+        // generano da soli"), as Cheat and Reanimate did on 2026-10-15 and
+        // Burn's drain on a tribe on 2026-10-13. Out: a trigger on ANOTHER or a
+        // NONTOKEN member (Siege Veteran, Baboon Spirit, Knightfisher, Miirym),
+        // one on a tribe the card neither is nor makes (Bishop of Wings'
+        // Angels), and every cast of a tribe's SPELL, since the tokens are no
+        // spells (Rohgahh, Urtet, Rin and Seri). In: a card of the tribe that
+        // says "a" or "one or more" (General Kreat, Zeriam), or one that makes
+        // the tribe's tokens itself (Origin of the Hidden Ones). A land type
+        // is no tribe (Hazezon's and Yuma's Deserts, Titania's Forests).
+        // Blanking the modes such a trigger chooses among ("•" lines) too was
+        // tried and moved no card: Black Panther, Vanguard loses its bodies to
+        // OnlyAFewBodiesOnce once the trigger line is gone.
+        private const string NotACreatureType =
+            @"Desert|Forest|Plains|Island|Swamp|Mountain|Gate|Cave|Shrine|Sphere|Town|Lair|Locus|Aura|Equipment"
+            + @"|Vehicle|Saga|Treasure|Clue|Food|Blood|Map|Powerstone|Arcane|Lesson|Adventure";
+
+        private static readonly Regex BodyOnATribe = Rx(
+            @"^(?:[^—\n]{1,40}— )?whenever (?:(?<another>another|a|an|one or more(?: other)?) (?<nontoken>nontoken )?"
+            + @"|(?<cast>you cast (?:a|an|another)) )"
+            + @"(?!(?-i:" + NotACreatureType + @")\b)(?<tribe>(?-i:[A-Z])[a-z]+?)(?:s|es)? [^\n]*",
+            RegexOptions.Multiline);
+
+        /// <summary>The text with every body-making line on a tribe the card
+        /// cannot set off by itself blanked. See BodyOnATribe.</summary>
+        private static string BlankTribalBodyTriggers(Card card, string text) =>
+            BodyOnATribe.Replace(text, m =>
+            {
+                if (m.Groups["cast"].Success)
+                {
+                    return " ";
+                }
+
+                // "Elves", "Dwarves": the lazy match stops at "Elv".
+                string tribe = m.Groups["tribe"].Value;
+                tribe = Regex.Escape(tribe.EndsWith('v') ? tribe[..^1] + "f" : tribe);
+                bool isIt = !m.Groups["another"].Value.Contains("other", StringComparison.OrdinalIgnoreCase)
+                    && Rx(@"\b" + tribe).IsMatch(card.TypeLine ?? string.Empty);
+                bool makesIt = !m.Groups["nontoken"].Success
+                    && Rx(@"\bcreate[^.\n]*\b" + tribe + @"[^.\n]*\btokens?\b").IsMatch(text);
+                return isIt || makesIt ? m.Value : " ";
+            });
+
         // ENCORE and UNEARTH bring the creature back, and what it makes as it
         // enters is made again: the bodies of every entry are counted
         // together, and three or more is Tokens, ruled 2026-10-27 on Broodmate

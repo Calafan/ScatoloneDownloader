@@ -1376,14 +1376,22 @@ namespace ScatoloneDownloader.Cube
                     // Kiki-Jiki, Hate Mirage, Mimic Vat, encore handed out by
                     // Graywater's Fixer, and the token populate makes (Determined
                     // Iteration). It has to be MADE: a creature the card only
-                    // TAKES — from a graveyard, a hand, a library or an opponent
-                    // (Corpse Dance, Through the Breach, Slave of Bolas) — keeps
-                    // its Reanimate, Cheat or Steal and is not burn ("solo ciò
-                    // che la carta crea o è", same day).
+                    // TAKES — from a graveyard, a hand or an opponent (Corpse
+                    // Dance, Through the Breach, Slave of Bolas) — keeps its
+                    // Reanimate, Cheat or Steal and is not burn ("solo ciò che la
+                    // carta crea o è", same day).
                     Rx(@"\b(?:create\b[^\n]{0,200}?\btokens?|populate)\b[^\n]{0,200}?\bhaste\b[^\n]{0,160}?"
                         + @"\b(?:(?:sacrifice|exile) (?:it|them|that token|those tokens|the token|the tokens)"
                         + @"|return (?:it|them|that token|those tokens) to (?:its|their) owner'?s hand)"
                         + @" at the beginning of the next end step"),
+                    // …and one out of your LIBRARY counts as made, ruled
+                    // 2026-10-27 ("Allarga la regola alla libreria"): milled
+                    // (Random Encounter, by name), exiled off the top (Anzrag's
+                    // Rampage) or searched for (Zirilan of the Claw), the three
+                    // reviewed cards with the wording, two realigned. The command
+                    // zone stays out (Hellkite Courser).
+                    Rx(@"(?:\blibrar(?:y|ies)\b|\bmilled\b)[^\n]{0,250}?\bonto the battlefield\b[^\n]{0,250}?\bhaste\b"
+                        + @"[^\n]{0,250}?\bnext end step\b"),
                     // …and the keyword that does it, handed to OTHER cards: unearth
                     // in the graveyard (Dregscape Sliver, Sedris, Ghost Ark), blitz
                     // on the creature spells you cast (Henzie). The cards that have
