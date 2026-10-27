@@ -1285,13 +1285,27 @@ namespace ScatoloneDownloader.Cube
             // artifact (Sugar Coat's Food, ruled the same day "Aura = +Pacify":
             // it comes back when the Aura goes — Vraska, Betrayal's Sting's
             // Treasure is for good and stays Removal alone).
-            + @"|otherwise, it has base power and toughness [0-2]/"
+            // An Aura for an "artifact or creature" says "AS LONG AS ENCHANTED
+            // PERMANENT IS A CREATURE, it has base power and toughness 1/1"
+            // (Awakened Awareness, Buff and Pacify by hand), read 2026-10-27.
+            + @"|(?:otherwise|as long as enchanted permanent is a creature), it has base power and toughness [0-2]/"
             + @"|target (?![^.\n]{0,60}\byou control\b)[^.\n]{0,60}loses all abilities until your next turn"
             + @"|^enchanted (?:creature|permanent) is an? [^\n]{0,60}artifact\b[^\n]{0,200}loses all other card types and abilities"
             + @"|attacking creatures get -"
             + @"|(?<!(?:under your control|you control enchanted creature)[\s\S]*)"
             + @"(?:gets? -[\dX]+/-0 and loses all abilities|^enchanted creature gets -[\dX]+/-0)"
             + @"|^(?![^\n:]*sacrifice this)[^\n:]{0,40}: [^\n]{0,40}target creature(?! you control)[^\n]{0,40}gets? -[\dX]+/-0"
+            // A shrink UNTIL YOUR NEXT TURN lasts into theirs whatever fires
+            // it, ruled 2026-10-27 ("durano fino al prossimo turno quindi
+            // funzionano sull'attacco avversario"), with no threshold on N:
+            // All-Seeing Arbiter's discard trigger (tagged), Fear of Falling's
+            // attack trigger and Wasp, Shrinking Savior's; Blue Dragon writes
+            // "until your next turn" first. A shield written "until your next
+            // turn, whenever a creature attacks you, it gets -1/-0 until end of
+            // turn" names no target and is not this (Tamiyo, Inquisitive
+            // Student; Tamiyo Meets the Story Circle, untagged).
+            + @"|target creature(?! you control)[^.\n]{0,60}gets? -[\dX]+/-0[^.\n]{0,40}until your next turn"
+            + @"|until your next turn, [^.\n]{0,40}target creature(?! you control)[^.\n]{0,40}gets? -[\dX]+/-0"
             + @"|loses all abilities and (?:doesn'?t untap|can'?t attack)"
             // A CURSED ROLE ("Enchanted creature is 1/1") put on an opponent's
             // creature is the same small body in token form: Diminisher Witch,
@@ -1513,12 +1527,49 @@ namespace ScatoloneDownloader.Cube
         // (Pacify); Vengeful Villagers stuns only behind a sacrifice, which is
         // the price the next pattern blanks (not Pacify) — "Mjölnir lo fa
         // sempre, i Villagers solo dietro un costo".
+        // "Attacks ALONE" is the same trigger (Imperial Subduer, untagged; read
+        // 2026-10-27).
         private static readonly Regex TapsOnItsOwnAttack = Rx(
-            @"(?:whenever|when)[^\n]{0,60}attacks?,[^\n]{0,40}tap (?:up to one )?target[\w ,'-]{0,40}creature"
+            @"(?:whenever|when)[^\n]{0,60}attacks?(?: alone)?,[^\n]{0,40}tap (?:up to one )?target[\w ,'-]{0,40}creature"
             + @"(?![^.\n]{0,40}\band put a stun counter on it)"
             + @"|at the beginning of combat on your turn,[^\n]{0,90}tap target[\w ,'-]{0,40}creature"
             + @"|(?:whenever|when)[^\n]{0,60}attacks?, choose target[\w ,'-]{0,40}creature"
             + @"[^\n]{0,20}tap it\b");
+
+        // A BARE TAP AT SORCERY SPEED is not this tag either, ruled 2026-10-27
+        // on Harrier Strix: "Se tappa e basta è un Pacify ma deve essere
+        // instant. Se è sorcery o sull'attacco (senza mettere uno stun counter)
+        // non è Pacify". A tap on your own turn only clears a blocker, like the
+        // attack trigger above; one at instant speed stops an attacker. The hand
+        // tags already said so on the creatures' own single-target ETB taps:
+        // the three bare ones on a card without flash (Harrier Strix, untagged
+        // twice, the second time after a hand-back; Network Disruptor; Oceanus
+        // Dragon) are untagged, and each of the 25 tagged has flash (Chrome
+        // Prowler, Eddymurk Crab) or a lock on the line (Referee Squad's stun).
+        // Sorcery speed here is the card's own ETB without flash, a sorcery, a
+        // Saga chapter, and a land of yours entering (Tiller Engine, untagged).
+        // A LOCK on the same line keeps the tag at any speed (Summon: Shiva's
+        // stun, Abominable Treefolk's untap, Croaking Curse's Cursed Role). The
+        // nine tagged before the ruling were shown to the human, who untagged
+        // them by name: the sorceries Blinding Light, Falling Star, Tidal Surge,
+        // Winter Blast and Word of Binding, the mass ETB taps of Assassin
+        // Gauntlet, Thundermare and Ultimecia, Temporal Threat, and Crystal
+        // Fragments' chapter III. See OnlyATapAtSorcerySpeed.
+        private static readonly Regex BareTap = Rx(
+            @"\btaps? (?:(?:up to [\w ]{0,12}|another|each|[\dXx]+|\w+) )?target[\w ,'-]{0,35}(?:creature|permanent)"
+            + @"|\btaps? all [\w ,'-]{0,35}creatures");
+
+        // "Can't attack or block", "can't be activated", "loses all abilities",
+        // "phases out" and "remains tapped" were tried here too and removed: no
+        // card has one on the line of a bare tap at sorcery speed (2026-10-27).
+        private static readonly Regex TapWithALock = Rx(
+            @"stun counters?|do(?:es)?(?:n'?t| not) untap|cursed role");
+
+        private static readonly Regex LandOrChapterTrigger = Rx(
+            @"^(?:[\w' ]+ — )?whenever (?:a|another|one or more) (?:[\w ]{1,20} )?lands? (?:you control )?enters?"
+            + @"|^[ivx]+(?:, [ivx]+)* —");
+
+        private static readonly Regex OwnEntering = Rx(@"^(?:[\w' ]+ — )?when(?:ever)? (?<subject>[^,\n]{1,40}?) enters\b");
 
         // "This creature can't attack or block UNLESS <condition>" is a price
         // the card pays for its own statline, which is the same reading
@@ -1540,9 +1591,19 @@ namespace ScatoloneDownloader.Cube
         // So is the creature the card has just reanimated for you, read
         // 2026-10-13 (Extraction Specialist: "That creature can't attack or
         // block for as long as you control this creature", Reanimate alone).
+        // A TRIBE of yours held back is the same drawback (Doomed Artisan's
+        // "Sculptures you control can't attack or block", Tokens alone by hand;
+        // read 2026-10-27).
         private static readonly Regex YourOwnCreaturesCantAttack = Rx(
-            @"creatures you control can'?t attack"
+            @"\b[\w-]+s you control can'?t attack"
             + @"|from your graveyard to the battlefield\. that creature can'?t attack");
+
+        // And a creature of YOURS phased out is a save, Protection alone: the
+        // plural was ruled on 2026-10-25 (Gallifrey Falls // No More, Guardian
+        // of Faith), and Haystack's singular, Protection alone by hand, is read
+        // the same way (2026-10-27). PhasesSomethingOut, which Protection reads
+        // too, is left as it is.
+        private static readonly Regex PhasesOutYourOwn = Rx(@"target creatures? you control phases? out");
 
         private static readonly Regex[] PacifyPatterns = [AnyUntapLock, PreventsWhatACreatureDeals, .. PacifyOutward];
 
@@ -2107,10 +2168,14 @@ namespace ScatoloneDownloader.Cube
         // Vulshok Gauntlets and Heavy Arbalest among the unreviewed), and so
         // does an Aura's once the creature is put under your control (Dance of
         // the Dead). Shield of the Righteous locks the creature equipped one
-        // BLOCKS and is not this.
+        // BLOCKS and is not this. Nor is the pronoun when the sentence names the
+        // ENCHANTED or the COPIED creature first (Stunning Strike's "as long as
+        // enchanted creature isn't legendary, it doesn't untap", Wall of Stolen
+        // Identity's "tap the copied creature and it doesn't untap"), both
+        // tagged; read 2026-10-27.
         private static readonly Regex SelfUntapClause = Rx(
             @"th(?:is|e) (?:artifact|creature|permanent|enchantment|land|vehicle)[\w ]{0,25}does(?:n'?t| not) untap"
-            + @"|\bit does(?:n'?t| not) untap"
+            + @"|(?<!(?:enchanted|copied) creature[^.\n]{0,40})\bit does(?:n'?t| not) untap"
             + @"|does(?:n'?t| not) untap during your (?:next )?untap step"
             + @"|(?m:^)equipped creature (?:gets [+-][\dX]+/[+-][\dX]+ and )?does(?:n'?t| not) untap"
             + @"|under your control[\s\S]*\nenchanted creature (?:gets [+-][\dX]+/[+-][\dX]+ and )?does(?:n'?t| not) untap");

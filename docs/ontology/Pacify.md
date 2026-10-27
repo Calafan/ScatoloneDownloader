@@ -74,12 +74,13 @@ on 2026-10-13, ruled "Pacify solo se dura": a power shrink that LASTS is this ta
 turn (Jace, the Perfected Mind's +1, Pradesh Gypsies, Ghosts of the Damned and Staff of Zegon
 realigned and handed back) — while a one-shot until end of turn is not (Desperate Parry, Deceive the
 Messenger and Sea Hag untagged by name; Shrink, Unagi's Spray never were), nor one on a repeating
-trigger (0 of 6, Fear of Falling), nor an activation that sacrifices the card (Cabal Trainee), nor
-an Aura on a creature that becomes yours (Duskmourn's Domination, Animate Dead).
+trigger (0 of 6, Fear of Falling, which 2026-10-27 moved in because its shrink lasts until your
+next turn), nor an activation that sacrifices the card (Cabal Trainee), nor an Aura on a creature
+that becomes yours (Duskmourn's Domination, Animate Dead).
 
 A TAP fired at sorcery speed, by an enchantment of yours entering, is not this tag either (Rimefur
-Reindeer, 2026-10-13: "gli incantesimi si giocano come sorcery"); a creature's own ETB tap still is
-(20 of 22).
+Reindeer, 2026-10-13: "gli incantesimi si giocano come sorcery"); a creature's own ETB tap still
+was (20 of 22) until 2026-10-27, below, made every bare tap at sorcery speed the same.
 
 Read the same day: a Cursed Role on any creature not yours (Asinine Antics, Gadwick's First Duel), a
 creature that becomes a 1/1 and loses all abilities (Hunted by The Family), an exile until its
@@ -161,3 +162,42 @@ beside Protection like the single creature (March of Swirling Mist's "Up to X ta
 phase out", given Pacify by hand). The plural YOU CONTROL is a save of your own and Protection alone
 (Gallifrey Falls // No More, Guardian of Faith), and a target PERMANENT stays out (Unite the
 Coalition): folding every plural in took Pacify from 6 wrong to 10 (measured 2026-10-24).
+
+Worked again 2026-10-27 from 11 wrong out of 289 reviewed (F1 98.1%) and closed at none wrong out
+of 281: seven false positives and four misses, every one moved by the two rulings and the readings
+below.
+
+A BARE TAP MUST COME AT INSTANT SPEED, ruled 2026-10-27 on Harrier Strix, which the human had
+untagged twice: "Se tappa e basta è un Pacify ma deve essere instant. Se è sorcery o sull'attacco
+(senza mettere uno stun counter) non è Pacify". A tap on your own turn only clears a blocker, like
+the attack trigger of 09-22; one at instant speed stops an attacker. Sorcery speed is a sorcery, a
+creature's own ETB without flash, a Saga chapter and a land of yours entering (Tiller Engine,
+untagged); flash, or a sorcery cast "as though it had flash" (Breaking Wave), makes it instant
+again, and a LOCK on the same line keeps the tag at any speed — a stun counter (Summon: Shiva),
+"doesn't untap" (Abominable Treefolk), a Cursed Role (Croaking Curse). The hand tags already said
+so on the single-target ETB taps: the three bare ones on a card without flash were untagged
+(Harrier Strix, Network Disruptor, Oceanus Dragon), and each of the 25 tagged has flash or a lock.
+This overturns the sorcery side of the 09-22 pairs and the 10-13 "a creature's own ETB tap still
+is": the human was shown the nine reviewed cards tagged the other way and untagged them all by
+name — Blinding Light, Falling Star, Tidal Surge, Winter Blast and Word of Binding, the mass ETB
+taps of Assassin Gauntlet, Thundermare and Ultimecia, Temporal Threat, and Crystal Fragments'
+chapter III. Riptide, an instant, stays. 28 unreviewed proposals lose the tag with them, among
+them Bond of Discipline, Brightmare, Kang Dynasty's chapters, Makindi Ox's landfall and Piercing
+Rays' forecast, which is activated in your upkeep alone.
+
+A -N/-0 UNTIL YOUR NEXT TURN is this tag whatever fires it, ruled the same day with no threshold
+on N ("durano fino al prossimo turno quindi funzionano sull'attacco avversario"; the threshold
+remembered was Buff's +5/+5, and "Pacify solo se dura" never had one): All-Seeing Arbiter's
+discard trigger, tagged by hand, Fear of Falling's attack trigger, corrected by name, and Wasp,
+Shrinking Savior and Blue Dragon among the unreviewed. Tamiyo, Inquisitive Student's "until your
+next turn, whenever a creature attacks you, it gets -1/-0 until end of turn" names no target and
+stays out.
+
+Read the same day. Out: "attacks ALONE" is the same attack trigger (Imperial Subduer); a TRIBE of
+your own that can't attack is the card's drawback like Akron Legionnaire's (Doomed Artisan's
+Sculptures); and a target creature YOU CONTROL phased out is a save, Protection alone, in the
+singular as in the plural of 10-25 (Haystack). In: the "it doesn't untap" that follows ENCHANTED or
+COPIED creature is the victim's, not the card taxing itself (Stunning Strike, Wall of Stolen
+Identity), and an Aura for an "artifact or creature" that says "as long as enchanted permanent is
+a creature, it has base power and toughness 1/1" is Burden of Proof's "otherwise" (Awakened
+Awareness).

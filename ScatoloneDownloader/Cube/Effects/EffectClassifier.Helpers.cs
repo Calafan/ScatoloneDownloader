@@ -277,13 +277,92 @@ namespace ScatoloneDownloader.Cube
         /// first.</summary>
         private static bool OnlyRestrainsYourOwn(string text)
         {
-            if (!TapsACreatureYouControl.IsMatch(text) && !YourOwnCreaturesCantAttack.IsMatch(text))
+            if (!TapsACreatureYouControl.IsMatch(text) && !YourOwnCreaturesCantAttack.IsMatch(text)
+                && !PhasesOutYourOwn.IsMatch(text))
             {
                 return false;
             }
 
-            string rest = YourOwnCreaturesCantAttack.Replace(TapsACreatureYouControl.Replace(text, " "), " ");
+            string rest = PhasesOutYourOwn.Replace(
+                YourOwnCreaturesCantAttack.Replace(TapsACreatureYouControl.Replace(text, " "), " "), " ");
             return !PacifyOutward.Any(p => p.IsMatch(rest)) && !AnyUntapLock.IsMatch(rest);
+        }
+
+        /// <summary>True when everything that read as Pacify is a bare tap at
+        /// sorcery speed. See <see cref="BareTap"/> for the ruling. Read per
+        /// line, with the reminder text out, and a modal bullet takes the timing
+        /// of the line that opens it (Tiller Engine's "Whenever a land you
+        /// control enters tapped, choose one —"). What is left is asked the
+        /// Pacify patterns again, so a card that also locks somebody down on
+        /// another line keeps the tag (Wrath of Marit Lage's "Red creatures don't
+        /// untap"). Blanking the attack-trigger taps from what is left too was
+        /// tried and moved no card (2026-10-27).</summary>
+        private static bool OnlyATapAtSorcerySpeed(Card card)
+        {
+            string text = Parenthetical.Replace(card.OracleText ?? string.Empty, " ");
+            if (!BareTap.IsMatch(text))
+            {
+                return false;
+            }
+
+            // "You may cast this spell as though it had flash if you pay {2}
+            // more" is instant speed too (Breaking Wave).
+            string typeLine = card.TypeLine ?? string.Empty;
+            bool flash = card.Keywords?.Contains("Flash") == true || FlashLine.IsMatch(text)
+                || text.Contains("as though it had flash", StringComparison.OrdinalIgnoreCase);
+            bool sorcery = typeLine.Contains("Sorcery", StringComparison.Ordinal)
+                && !typeLine.Contains("Instant", StringComparison.Ordinal) && !flash;
+            string name = ShortName(card);
+
+            List<string> kept = [];
+            string opener = string.Empty;
+            bool blanked = false;
+
+            foreach (string line in text.Split('\n'))
+            {
+                if (!line.StartsWith('•'))
+                {
+                    opener = line.Trim();
+                }
+
+                if (BareTap.IsMatch(line) && !TapWithALock.IsMatch(line)
+                    && AtSorcerySpeed(opener, sorcery, flash, name))
+                {
+                    blanked = true;
+                    continue;
+                }
+
+                kept.Add(line);
+            }
+
+            string rest = string.Join('\n', kept);
+            return blanked && !PacifyPatterns.Any(p => p.IsMatch(rest));
+        }
+
+        /// <summary>Whether the ability a line opens happens only on your own
+        /// turn: the card's own ETB without flash, a land of yours entering, a
+        /// Saga chapter, or any line of a sorcery (Piercing Rays' forecast is
+        /// activated in your upkeep alone, and it is the one sorcery whose tap
+        /// is not the spell's own text).</summary>
+        private static bool AtSorcerySpeed(string opener, bool sorcery, bool flash, string name)
+        {
+            if (sorcery || LandOrChapterTrigger.IsMatch(opener))
+            {
+                return true;
+            }
+
+            Match entering = OwnEntering.Match(opener);
+            if (entering.Success && !flash)
+            {
+                string subject = entering.Groups["subject"].Value;
+                if (subject.StartsWith("this ", StringComparison.OrdinalIgnoreCase)
+                    || (name.Length > 0 && subject.Equals(name, StringComparison.OrdinalIgnoreCase)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>The number a card-count word stands for, or 0 when it is not

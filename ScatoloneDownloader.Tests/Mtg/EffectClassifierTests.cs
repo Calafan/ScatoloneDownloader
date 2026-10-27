@@ -9960,11 +9960,11 @@ public sealed class EffectClassifierTests
     // tags were found contradicting themselves on identical wording; the human
     // resolved six pairs the same way and rejected both proposed lines — the
     // lock need not LAST ("altrimenti saltano il punto e tutti i tappini") and
-    // tapping need not be the card's main job.
+    // tapping need not be the card's main job. (Word of Binding and Tidal
+    // Surge moved out on 2026-10-27: a bare tap at sorcery speed is not this
+    // tag. See Classify_TheOctober27PacifyPass_IsNotPacify.)
     [InlineData("Twiddle", "Instant", "You may tap or untap target artifact, creature, or land.")]
     [InlineData("Riptide", "Instant", "Tap all blue creatures.")]
-    [InlineData("Word of Binding", "Sorcery", "Tap X target creatures.")]
-    [InlineData("Tidal Surge", "Sorcery", "Tap up to three target creatures without flying.")]
     [InlineData("Starport Security", "Artifact Creature — Robot Soldier",
         "{3}{W}, {T}: Tap another target creature. This ability costs {2} less to activate if you control "
         + "a creature with a +1/+1 counter on it.")]
@@ -10152,16 +10152,15 @@ public sealed class EffectClassifierTests
         + "types. (A creature with defender can't attack.)")]
     // A shrink that does NOT last, ruled 2026-10-13: one-shot until end of
     // turn (Desperate Parry named), an activation that sacrifices the card
-    // (Cabal Trainee), a repeating trigger (Fear of Falling, 0 of 6 tagged),
-    // and an Aura on a creature that becomes yours (Duskmourn's Domination).
+    // (Cabal Trainee), and an Aura on a creature that becomes yours
+    // (Duskmourn's Domination). (Fear of Falling moved out on 2026-10-27: a
+    // shrink until your next turn lasts on any trigger. See
+    // Classify_TheOctober27PacifyPass_IsPacify.)
     [InlineData("Obyra's Attendants // Desperate Parry", "Creature — Faerie Wizard // Instant — Adventure",
         "Flying\nTarget creature gets -4/-0 until end of turn. (Then exile this card. You may cast the "
         + "creature later from exile.)")]
     [InlineData("Cabal Trainee", "Creature — Human Minion",
         "Sacrifice this creature: Target creature gets -2/-0 until end of turn.")]
-    [InlineData("Fear of Falling", "Enchantment Creature — Nightmare",
-        "Flying\nWhenever this creature attacks, target creature defending player controls gets -2/-0 and "
-        + "loses flying until your next turn.")]
     [InlineData("Duskmourn's Domination", "Enchantment — Aura",
         "Enchant creature\nYou control enchanted creature.\nEnchanted creature gets -3/-0 and loses all "
         + "abilities.")]
@@ -11786,6 +11785,164 @@ public sealed class EffectClassifierTests
 
         Assert.True(result.HasFlag(CardEffect.Pacify));
         Assert.True(result.HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // Pacify pass of 2026-10-27. A shrink until your next turn lasts into theirs
+    // whatever fires it, with no threshold on N (All-Seeing Arbiter, Fear of
+    // Falling, Wasp: 'durano fino al prossimo turno quindi funzionano sull'attacco
+    // avversario'). A bare tap at instant speed stays: an activation (Ring of the
+    // Lucii), a flash ETB (Chrome Prowler), an instant (Riptide), a sorcery
+    // castable as though it had flash (Breaking Wave); and a tap at sorcery speed
+    // with a lock stays (Summon: Shiva's stun, Croaking Curse's Cursed Role).
+    // Readings: an Aura's base 1/1 'as long as enchanted permanent is a creature'
+    // (Awakened Awareness), 'it doesn't untap' after the enchanted or copied
+    // creature (Stunning Strike, Wall of Stolen Identity).
+    [InlineData("All-Seeing Arbiter", "Creature — Avatar",
+        "Flying\nWhenever this creature enters or attacks, draw two cards, then discard a card.\nWhenever you "
+        + "discard a card, target creature an opponent controls gets -X/-0 until your next turn, where X is the "
+        + "number of different mana values among cards in your graveyard.")]
+    [InlineData("Fear of Falling", "Enchantment Creature — Nightmare",
+        "Flying\nWhenever this creature attacks, target creature defending player controls gets -2/-0 and "
+        + "loses flying until your next turn.")]
+    [InlineData("Wasp, Shrinking Savior", "Legendary Creature — Human Hero",
+        "Flying\nWhenever Wasp attacks, up to one other target creature gets -3/-0 until your next turn. Then "
+        + "draw a card for each creature with power less than 0 on the battlefield.")]
+    [InlineData("Ring of the Lucii", "Legendary Artifact",
+        "{T}: Add {C}{C}.\n{2}, {T}, Pay 1 life: Tap target nonland permanent.")]
+    [InlineData("Chrome Prowler", "Artifact Creature — Phyrexian Cat",
+        "Flash\nWhen this creature enters, tap target creature an opponent controls.")]
+    [InlineData("Riptide", "Instant",
+        "Tap all blue creatures.")]
+    [InlineData("Breaking Wave", "Sorcery",
+        "You may cast this spell as though it had flash if you pay {2} more to cast it. (You may cast it any "
+        + "time you could cast an instant.)\nSimultaneously untap all tapped creatures and tap all untapped "
+        + "creatures.")]
+    [InlineData("Summon: Shiva", "Enchantment Creature — Saga Elemental",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI, II — "
+        + "Heavenly Strike — Tap target creature an opponent controls. Put a stun counter on it. (If a "
+        + "permanent with a stun counter would become untapped, remove one from it instead.)\nIII — Diamond Dust "
+        + "— Draw a card for each tapped creature your opponents control.")]
+    [InlineData("Vantress Transmuter // Croaking Curse", "Creature — Human Wizard // Sorcery — Adventure",
+        "Tap target creature. Create a Cursed Role token attached to it. (Enchanted creature is 1/1.)")]
+    [InlineData("Awakened Awareness", "Enchantment — Aura",
+        "Enchant artifact or creature\nWhen this Aura enters, put X +1/+1 counters on enchanted permanent.\nAs "
+        + "long as enchanted permanent is a creature, it has base power and toughness 1/1.")]
+    [InlineData("Stunning Strike", "Enchantment — Aura",
+        "Flash\nEnchant creature\nWhen this Aura enters, tap enchanted creature and remove it from combat.\nAs "
+        + "long as enchanted creature isn't legendary, it doesn't untap during its controller's untap step.")]
+    [InlineData("Wall of Stolen Identity", "Creature — Shapeshifter Wall",
+        "You may have this creature enter as a copy of any creature on the battlefield, except it's a Wall in "
+        + "addition to its other types and has defender. When you do, tap the copied creature and it doesn't "
+        + "untap during its controller's untap step for as long as you control this creature.")]
+    // Blue Dragon writes "until your next turn" before the target, the second form
+    // of the -N/-0 that lasts into their turn.
+    [InlineData("Blue Dragon", "Creature — Dragon",
+        "Flying\nLightning Breath — When this creature enters, until your next turn, target creature an "
+        + "opponent controls gets -3/-0, up to one other target creature gets -2/-0, and up to one other target "
+        + "creature gets -1/-0.")]
+    // A lock on the tap's own line keeps the tag at sorcery speed (Abominable
+    // Treefolk's ETB, Illithid Harvester's Adventure), and so does one on another
+    // line (Wrath of Marit Lage, Cone of Cold's higher rolls).
+    [InlineData("Abominable Treefolk", "Snow Creature — Treefolk",
+        "Trample\nAbominable Treefolk's power and toughness are each equal to the number of snow permanents "
+        + "you control.\nWhen this creature enters, tap target creature an opponent controls. That creature "
+        + "doesn't untap during its controller's next untap step.")]
+    [InlineData("Illithid Harvester // Plant Tadpoles", "Creature — Horror // Sorcery — Adventure",
+        "Ceremorphosis — When this creature enters, turn any number of target tapped nontoken creatures face "
+        + "down. They're 2/2 Horror creatures.\nTap X target creatures. They don't untap during their "
+        + "controllers' next untap steps. (Then exile this card. You may cast the creature later from exile.)")]
+    [InlineData("Wrath of Marit Lage", "Enchantment",
+        "When this enchantment enters, tap all red creatures.\nRed creatures don't untap during their "
+        + "controllers' untap steps.")]
+    [InlineData("Cone of Cold", "Sorcery",
+        "Roll a d20.\n1—9 | Tap all creatures your opponents control.\n10—19 | Tap all creatures your opponents "
+        + "control. Those creatures don't untap during their controllers' next untap steps.\n20 | Tap all "
+        + "creatures your opponents control. Those creatures don't untap during their controllers' next untap "
+        + "steps. Until your next turn, creatures your opponents control enter tapped.")]
+    public void Classify_TheOctober27PacifyPass_IsPacify(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
+    }
+
+    [Theory]
+    // Pacify pass of 2026-10-27, ruled on Harrier Strix: 'Se tappa e basta è un
+    // Pacify ma deve essere instant. Se è sorcery o sull'attacco (senza mettere
+    // uno stun counter) non è Pacify'. The card's own ETB without flash (Harrier
+    // Strix, Network Disruptor, Oceanus Dragon, Ultimecia, Thundermare, Assassin
+    // Gauntlet), a land of yours entering (Tiller Engine), a Saga chapter (Summon:
+    // Alexander), a sorcery (Word of Binding, Tidal Surge, Winter Blast, Blinding
+    // Light, Falling Star; the nine reviewed ones named, 'NON sono pacify').
+    // Readings: an attack trigger 'attacks alone' (Imperial Subduer), your own
+    // creature phased out (Haystack), your own tribe held back (Doomed Artisan),
+    // and a shield 'until your next turn, whenever a creature attacks you, it gets
+    // -1/-0' (Tamiyo).
+    [InlineData("Harrier Strix", "Creature — Bird",
+        "Flying\nWhen this creature enters, tap target permanent.\n{2}{U}: Draw a card, then discard a card.")]
+    [InlineData("Network Disruptor", "Artifact Creature — Moonfolk Rogue",
+        "Flying\nWhen this creature enters, tap target permanent.")]
+    [InlineData("Oceanus Dragon", "Creature — Dragon",
+        "Flying\nWhen this creature enters, tap target creature an opponent controls. Goad it. (Until your "
+        + "next turn, that creature attacks each combat if able and attacks a player other than you if able.)")]
+    [InlineData("Ultimecia, Temporal Threat", "Legendary Creature — Human Warlock",
+        "When Ultimecia enters, tap all creatures your opponents control.\nWhenever a creature you control "
+        + "deals combat damage to a player, draw a card.")]
+    [InlineData("Thundermare", "Creature — Elemental Horse",
+        "Haste (This creature can attack and {T} as soon as it comes under your control.)\nWhen this creature "
+        + "enters, tap all other creatures.")]
+    [InlineData("Assassin Gauntlet", "Artifact — Equipment",
+        "When this Equipment enters, attach it to up to one target creature you control. Tap all creatures "
+        + "target opponent controls.\nEquipped creature gets +1/+1 and has \"Whenever this creature deals combat "
+        + "damage to a player, draw a card, then discard a card.\"\nEquip {2}")]
+    [InlineData("Tiller Engine", "Artifact Creature — Construct",
+        "Whenever a land you control enters tapped, choose one —\n• Untap that land.\n• Tap target nonland "
+        + "permanent an opponent controls.")]
+    [InlineData("Crystal Fragments // Summon: Alexander", "Artifact — Equipment // Enchantment Creature — Saga Construct",
+        "Equipped creature gets +1/+1.\n{5}{W}{W}: Exile this Equipment, then return it to the battlefield "
+        + "transformed under its owner's control. Activate only as a sorcery.\nEquip {1}\n(As this Saga enters "
+        + "and after your draw step, add a lore counter. Sacrifice after III.)\nI, II — Prevent all damage that "
+        + "would be dealt to creatures you control this turn.\nIII — Tap all creatures your opponents "
+        + "control.\nFlying")]
+    [InlineData("Word of Binding", "Sorcery",
+        "Tap X target creatures.")]
+    [InlineData("Tidal Surge", "Sorcery",
+        "Tap up to three target creatures without flying.")]
+    [InlineData("Winter Blast", "Sorcery",
+        "Tap X target creatures. Winter Blast deals 2 damage to each of those creatures with flying.")]
+    [InlineData("Blinding Light", "Sorcery",
+        "Tap all nonwhite creatures.")]
+    [InlineData("Falling Star", "Sorcery",
+        "Flip Falling Star onto the playing area from a height of at least one foot. Falling Star deals 3 "
+        + "damage to each creature it lands on. Tap all creatures dealt damage by Falling Star. If Falling Star "
+        + "doesn't turn completely over at least once during the flip, it has no effect.")]
+    [InlineData("Imperial Subduer", "Creature — Human Samurai",
+        "Whenever a Samurai or Warrior you control attacks alone, tap target creature you don't control.")]
+    [InlineData("Haystack", "Artifact",
+        "{2}, {T}: Target creature you control phases out. (Treat it and anything attached to it as though "
+        + "they don't exist until your next turn.)")]
+    [InlineData("Doomed Artisan", "Creature — Human Artificer",
+        "Sculptures you control can't attack or block.\nAt the beginning of your end step, create a colorless "
+        + "Sculpture artifact creature token with \"This token's power and toughness are each equal to the "
+        + "number of Sculptures you control.\"")]
+    [InlineData("Tamiyo, Inquisitive Student // Tamiyo, Seasoned Scholar", "Legendary Creature — Moonfolk Wizard // Legendary Planeswalker — Tamiyo",
+        "Flying\nWhenever Tamiyo attacks, investigate. (Create a Clue token. It's an artifact with \"{2}, "
+        + "Sacrifice this token: Draw a card.\")\nWhen you draw your third card in a turn, exile Tamiyo, then "
+        + "return her to the battlefield transformed under her owner's control.\n+2: Until your next turn, "
+        + "whenever a creature attacks you or a planeswalker you control, it gets -1/-0 until end of turn.\n−3: "
+        + "Return target instant or sorcery card from your graveyard to your hand. If it's a green card, add "
+        + "one mana of any color.\n−7: Draw cards equal to half the number of cards in your library, rounded up. "
+        + "You get an emblem with \"You have no maximum hand size.\"")]
+    // A sorcery's forecast taps in your own upkeep alone: every line of a sorcery
+    // is sorcery speed.
+    [InlineData("Piercing Rays", "Sorcery",
+        "Exile target tapped creature.\nForecast — {2}{W}, Reveal this card from your hand: Tap target "
+        + "untapped creature. (Activate this ability only during your upkeep and only once each turn.)")]
+    // Landfall written with its ability word is the same land of yours entering.
+    [InlineData("Makindi Ox", "Creature — Ox",
+        "Landfall — Whenever a land you control enters, tap target creature an opponent controls.")]
+    public void Classify_TheOctober27PacifyPass_IsNotPacify(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
     }
 
     [Theory]
