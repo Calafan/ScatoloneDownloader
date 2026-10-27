@@ -3205,7 +3205,51 @@ public sealed class EffectClassifierTests
     [InlineData("Sultai Emissary", "Creature — Zombie Warrior",
         "When this creature dies, manifest the top card of your library. (Put that card onto the battlefield "
         + "face down as a 2/2 creature. Turn it face up any time for its mana cost if it's a creature card.)")]
+    // Under the 2026-10-27 encore and unearth count: one body unearthed is two
+    // (Scrapwork Cohort); the exiled creature's 4/3 is its controller's (Amphin
+    // Mutineer); the encore copies themselves are no bodies, 'le copie non
+    // contano' (Graywater's Fixer).
+    [InlineData("Scrapwork Cohort", "Artifact Creature — Soldier",
+        "When this creature enters, create a 1/1 colorless Soldier artifact creature token.\nUnearth {2}{W} "
+        + "({2}{W}: Return this card from your graveyard to the battlefield. It gains haste. Exile it at the "
+        + "beginning of the next end step or if it would leave the battlefield. Unearth only as a sorcery.)")]
+    [InlineData("Amphin Mutineer", "Creature — Salamander Pirate",
+        "When this creature enters, exile up to one target non-Salamander creature. That creature's "
+        + "controller creates a 4/3 blue Salamander Warrior creature token.\nEncore {4}{U}{U} ({4}{U}{U}, Exile "
+        + "this card from your graveyard: For each opponent, create a token copy that attacks that opponent "
+        + "this turn if able. They gain haste. Sacrifice them at the beginning of the next end step. Activate "
+        + "only as a sorcery.)")]
+    [InlineData("Graywater's Fixer", "Creature — Lizard Mercenary",
+        "Each outlaw creature card in your graveyard has encore {X}, where X is its mana value. (Exile it and "
+        + "pay its encore cost: For each opponent, create a token copy that attacks that opponent this turn if "
+        + "able. They gain haste. Sacrifice them at the beginning of the next end step. Activate only as a "
+        + "sorcery.)")]
     public void Classify_ACreatureMakingOneOrTwoBodiesOnce_IsNotTokens(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    // A Vehicle TOKEN needs crew like a Vehicle card, ruled 2026-10-27 ('No, serve
+    // crew come le carte'): Pia Nalaar and Chandra, Spark Hunter untagged by name,
+    // Lita untagged by hand.
+    [InlineData("Pia Nalaar, Chief Mechanic", "Legendary Creature — Human Artificer",
+        "Whenever one or more artifact creatures you control deal combat damage to a player, you get {E}{E} "
+        + "(two energy counters).\nAt the beginning of your end step, you may pay one or more {E}. If you do, "
+        + "create an X/X colorless Vehicle artifact token named Nalaar Aetherjet with flying and crew 2, where "
+        + "X is the amount of {E} paid this way.")]
+    [InlineData("Chandra, Spark Hunter", "Legendary Planeswalker — Chandra",
+        "At the beginning of combat on your turn, choose up to one target Vehicle you control. Until end of "
+        + "turn, it becomes an artifact creature and gains haste.\n+2: You may sacrifice an artifact or discard "
+        + "a card. If you do, draw a card.\n0: Create a 3/2 colorless Vehicle artifact token with crew 1.\n−7: "
+        + "You get an emblem with \"Whenever an artifact you control enters, this emblem deals 3 damage to any "
+        + "target.\"")]
+    [InlineData("Lita, Mechanical Engineer", "Legendary Artifact Creature — Artificer",
+        "Vigilance\nAt the beginning of your end step, untap each other artifact creature you control.\n{3}{W}, "
+        + "{T}: Create a 5/5 colorless Vehicle artifact token named Zeppelin with flying and crew 3. (It has "
+        + "\"Tap any number of creatures you control with total power 3 or more: This token becomes an artifact "
+        + "creature until end of turn.\")")]
+    public void Classify_AVehicleToken_IsNotTokens(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
     }
@@ -3262,6 +3306,29 @@ public sealed class EffectClassifierTests
     [InlineData("Stormscale Scion", "Creature — Dragon",
         "Flying\nOther Dragons you control get +1/+1.\nStorm (When you cast this spell, copy it for each spell "
         + "cast before it this turn. Copies become tokens.)")]
+    // Ruled 2026-10-27: ENCORE and UNEARTH bring the creature back, and the bodies
+    // of every entry count together, three or more is Tokens. Encore at the 2vs2
+    // table is the card plus two copies, entering and dying (Broodmate Tyrant's
+    // Dragon, Exquisite Huntmaster's Elf on death); unearth enters twice (Royal
+    // Warden's two Necrons are four). Read the same day: a Tarmogoyf token printed
+    // with no reminder (Disa the Restless).
+    [InlineData("Broodmate Tyrant", "Creature — Dragon",
+        "Flying\nWhen this creature enters, create a 5/5 red Dragon creature token with flying.\nEncore "
+        + "{5}{B}{R}{G}")]
+    [InlineData("Exquisite Huntmaster", "Creature — Elf Warrior",
+        "When this creature dies, create a 1/1 green Elf Warrior creature token.\nEncore {4}{B} ({4}{B}, Exile "
+        + "this card from your graveyard: For each opponent, create a token copy that attacks that opponent "
+        + "this turn if able. They gain haste. Sacrifice them at the beginning of the next end step. Activate "
+        + "only as a sorcery.)")]
+    [InlineData("Royal Warden", "Artifact Creature — Necron",
+        "Phalanx Commander — When this creature enters, create two tapped 2/2 black Necron Warrior artifact "
+        + "creature tokens.\nUnearth {3}{B} ({3}{B}: Return this card from your graveyard to the battlefield. It "
+        + "gains haste. Exile it at the beginning of the next end step or if it would leave the battlefield. "
+        + "Unearth only as a sorcery.)")]
+    [InlineData("Disa the Restless", "Legendary Creature — Human Scout",
+        "Whenever a Lhurgoyf permanent card is put into your graveyard from anywhere other than the "
+        + "battlefield, put it onto the battlefield.\nWhenever one or more creatures you control deal combat "
+        + "damage to a player, create a Tarmogoyf token.")]
     public void Classify_ACreatureMakingManyOrRepeatedBodies_IsTokens(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
@@ -3287,6 +3354,13 @@ public sealed class EffectClassifierTests
         "Enchant land\nEnchanted land has \"{1}{G}, {T}: Create a Tarmogoyf token.\" (It's a {1}{G} Lhurgoyf "
         + "creature with \"Tarmogoyf's power is equal to the number of card types among cards in all graveyards "
         + "and its toughness is equal to that number plus 1.\")")]
+    // Cloak THOSE CARDS, a pile with library cards in it (Become Anonymous, read
+    // 2026-10-27).
+    [InlineData("Become Anonymous", "Instant",
+        "Exile target nontoken creature you own and the top two cards of your library in a face-down pile, "
+        + "shuffle that pile, then cloak those cards. They enter tapped. (To cloak a card, put it onto the "
+        + "battlefield face down as a 2/2 creature with ward {2}. Turn it face up any time for its mana cost if "
+        + "it's a creature card.)")]
     public void Classify_ANoncreatureMakingOneBody_IsTokens(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));

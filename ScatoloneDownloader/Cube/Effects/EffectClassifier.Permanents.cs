@@ -481,11 +481,15 @@ namespace ScatoloneDownloader.Cube
         // Also inside a QUOTED grant, with the power left to the reminder's
         // own quote: Tarmogoyf Nest's land has "{1}{G}, {T}: Create a
         // Tarmogoyf token." (It's a {1}{G} Lhurgoyf creature with …), tagged,
-        // read 2026-10-15.
+        // read 2026-10-15. And the same Tarmogoyf printed with no reminder at
+        // all: Disa the Restless "create[s] a Tarmogoyf token" on every combat
+        // hit, tagged by hand, the one named token in the store that says no
+        // type anywhere, read 2026-10-27.
         private static readonly Regex NamedTokenIsACreature = Rx(
             @"create[s]? (?:a|an|two|three|four|five|x|\d+)[\w ,'\-]{0,30} tokens?"
             + @"(?:\. \(it'?s? [\w ,'\-{}/]{0,40}\d+/\d+[\w ,'\-]{0,30}creature"
-            + @"|\."" \(it's an? [\w ,'\-{}/]{0,40}creature)");
+            + @"|\."" \(it's an? [\w ,'\-{}/]{0,40}creature)"
+            + @"|\bcreates? an? tarmogoyf token");
 
         private static readonly Regex AnyTokenCopy = Rx(
             @"token that's a copy|token cop(?:y|ies)|tokens that are copies");
@@ -508,9 +512,13 @@ namespace ScatoloneDownloader.Cube
         // was left out then, being one card and untagged, and is read since
         // 2026-10-15 (FaceDownFromYourSide). Not "cloak THEM" (Expose the
         // Culprit re-cloaks creatures already yours), nor a trigger that only
-        // WATCHES a manifest dread (Paranormal Analyst), 2026-10-15.
+        // WATCHES a manifest dread (Paranormal Analyst), 2026-10-15. "Cloak
+        // THOSE CARDS" is a pile with library cards in it: Become Anonymous
+        // exiles your creature and the top two cards of your library and
+        // cloaks all three, tagged by hand like the other 7 reviewed cards
+        // that cloak a card, read 2026-10-27.
         private static readonly Regex MakesABodyByKeyword = Rx(
-            @"\bcloaks? (?:the|two|three|four|\w+ of them|up to)\b|(?<!whenever you )manifest dread"
+            @"\bcloaks? (?:the|two|three|four|\w+ of them|up to|those cards)\b|(?<!whenever you )manifest dread"
             + @"|\bliving weapon\b|\bjob select\b");
 
         // MANIFEST is a body like cloak, ruled 2026-10-15 ("Tokens come
@@ -763,8 +771,9 @@ namespace ScatoloneDownloader.Cube
                 // …or the count comes FIRST, earlier in the same sentence:
                 // "for each nontoken creature you controlled that died this
                 // turn, create a 2/2 black Zombie" (Tobias). Encore's "for each
-                // opponent, create a token copy" is one body at a two-player
-                // table, and stays one.
+                // opponent, create a token copy" stays one: the copies are no
+                // bodies (2026-10-27), and what they make again is counted in
+                // OnlyAFewBodiesOnce.
                 int sentenceStart = Math.Max(
                     ability.LastIndexOfAny(['.', '\n', '•'], Math.Max(m.Index - 1, 0)) + 1, 0);
                 if (CountComesFirst.IsMatch(ability[sentenceStart..m.Index]))
@@ -843,6 +852,8 @@ namespace ScatoloneDownloader.Cube
                 return false;
             }
 
+            int entering = 0;
+            int dying = 0;
             foreach (string ability in Abilities(own))
             {
                 if (BodiesMadeBy(ability) is not int bodies)
@@ -855,10 +866,49 @@ namespace ScatoloneDownloader.Cube
                 {
                     return false;
                 }
+
+                // Counted on your side only: Amphin Mutineer's exiled creature
+                // comes back as its controller's 4/3 (untagged).
+                int yours = BodiesMadeBy(WhatSomebodyElseCreates.Replace(ability, " ")) ?? 0;
+                switch (EntersOrDies.Match(ability).Groups["event"].Value.ToLowerInvariant())
+                {
+                    case "enters": entering += yours; break;
+                    case "dies": dying += yours; break;
+                }
+            }
+
+            if (EncoreKeyword.IsMatch(own) && 3 * (entering + dying) >= 3)
+            {
+                return false;
+            }
+
+            if (UnearthKeyword.IsMatch(own) && 2 * entering >= 3)
+            {
+                return false;
             }
 
             return makesAny;
         }
+
+        // ENCORE and UNEARTH bring the creature back, and what it makes as it
+        // enters is made again: the bodies of every entry are counted
+        // together, and three or more is Tokens, ruled 2026-10-27 on Broodmate
+        // Tyrant ("Sì, se le due entrate fanno 3+"). The cube is played 2vs2,
+        // so encore makes a copy for EACH of two opponents ("encore vale
+        // doppio"): the card enters three times, and dies three times, its
+        // copies sacrificed at the end step — Exquisite Huntmaster's Elf on
+        // death is "1 + 2 token", tagged by name. The copies themselves are no
+        // bodies ("le copie non contano"). Unearth returns the card once and
+        // exiles it, so only its entry counts: Royal Warden's two Necrons are
+        // four. Warp casts it again once too, and no warp card makes two as it
+        // enters (Knight Luminary makes one, untagged).
+        private static readonly Regex EncoreKeyword = Rx(@"^encore\b", RegexOptions.Multiline);
+
+        private static readonly Regex UnearthKeyword = Rx(@"^unearth\b", RegexOptions.Multiline);
+
+        // An ability word may come first: "Phalanx Commander — When this
+        // creature enters" (Royal Warden).
+        private static readonly Regex EntersOrDies = Rx(@"^(?:[^—\n]{1,40}— )?when [^,\n]{1,60}\b(?<event>enters|dies)\b");
 
         // Diabolic Edict and Flare of Malice make the OTHER player sacrifice,
         // which empties their board rather than giving you a place to put yours.

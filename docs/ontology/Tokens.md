@@ -123,3 +123,21 @@ Read the same day: "you AND that player each create" makes one for you too, like
 (Master of Ceremonies, tagged; Benevolent Offering, Sylvan Offering), and the veto written for "you
 and target opponent each create" goes, since all it reached were Food, Treasures and Powerstones
 (Oath of the Grey Host, Bloodroot Apothecary, Thran Spider). The seven disagreements above stay.
+
+Ruled 2026-10-27, three questions. ENCORE and UNEARTH bring a creature back, and the bodies of
+every entry are counted together, three or more being Tokens ("Sì, se le due entrate fanno 3+"):
+Broodmate Tyrant, tagged. The cube is played 2vs2, so encore makes a copy for each of two opponents
+("encore vale doppio") and the card enters three times and dies three times, its copies sacrificed
+at the end step: Exquisite Huntmaster's Elf on death is "1 + 2 token", tagged by name. The copies
+themselves are no bodies ("le copie non contano"), which settles Graywater's Fixer, whose only
+bodies are the copies it hands out: untagged and handed back. Unearth returns the card once and
+exiles it, so only its entry counts (Royal Warden's two Necrons are four); warp casts it again once
+too, and Knight Luminary's one Soldier twice stays out. A body the exiled creature's controller gets
+is not counted (Amphin Mutineer). A Vehicle TOKEN needs crew like a Vehicle card ("No, serve crew
+come le carte"): Pia Nalaar, Chief Mechanic and Chandra, Spark Hunter untagged by name, Lita,
+Mechanical Engineer already was.
+
+Read the same day: "cloak THOSE CARDS", a pile with two library cards in it (Become Anonymous), and
+a Tarmogoyf token printed with no reminder (Disa the Restless), the one named token in the store
+that says no type anywhere. Left as disagreements on purpose: Writhing Chrysalis, Siege Veteran,
+Niko, Random Encounter, Tribute to Horobi.
