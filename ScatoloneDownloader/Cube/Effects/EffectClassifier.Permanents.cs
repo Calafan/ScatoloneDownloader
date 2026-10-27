@@ -567,9 +567,13 @@ namespace ScatoloneDownloader.Cube
         // until end of turn or for good. A creature that does it once as it
         // enters is still taken back by the few-bodies rule (Unctus's
         // Retrofitter), which counts it in OneBodyByKeyword.
+        // Any TOKEN of yours made a creature is the same body, ruled 2026-10-27
+        // on Halsin, Emerald Archdruid's 4/4 Bear ("Tokens, niente Buff"): a
+        // Treasure or a Clue is an artifact by another name. Not a creature
+        // token, which is a body already.
         private static readonly Regex AnimatesAnArtifact = Rx(
-            @"\b(?:target|enchanted) (?:noncreature )?artifacts?(?: token| or creature)?(?: you control)? (?:becomes?|is|are) "
-            + @"(?!a copy\b)(?:an? )?[\w ,/]{0,40}?\bcreatures?\b");
+            @"\b(?:target|enchanted) (?:noncreature )?(?:artifacts?(?: token| or creature)?|(?:(?!creature\b)\w+ )?tokens?)"
+            + @"(?: you control)? (?:becomes?|is|are) (?!a copy\b)(?:an? )?[\w ,/]{0,40}?\bcreatures?\b");
 
         // STORM on a creature card puts its copies on the board as tokens,
         // one for each spell cast before it (Stormscale Scion, tagged,

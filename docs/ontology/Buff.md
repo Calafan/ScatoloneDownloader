@@ -156,3 +156,29 @@ tribe's target (Manifold Mouse), a team base (Sephiroth, Fallen Hero) and a toke
 Island Temple, Unfortunate Accident, We Ride at Dawn); with it, B3 narrowed (Shelinda, Yevon
 Acolyte; Spider-Man Noir). Measured: Buff F1 98.6 to 99.1 before the hand-backs, and the 17 reviewed
 cards still in disagreement are exactly the ones handed back.
+
+RULED 2026-10-27 ("Buff", Tarrian's Soulcleaver against Greatsword of Tyr and Lost Jitte): a +1/+1
+counter put on the EQUIPPED creature again and again is Buff whatever sets it off, anybody's death
+included. Tarrian's, untagged by hand, is corrected by name; Blade of the Bloodchief, Ghost Lantern
+and the five upkeep Rings (Ring of Thune...) follow unreviewed.
+
+RULED 2026-10-27 ("Svista, niente Buff"): The Meep's "creatures you control have base power and
+toughness X/X" is the team base of 2026-10-14 and stays out, corrected by name. And Halsin, Emerald
+Archdruid's token made a 4/4 Bear is Tokens, not Buff (see Tokens.md).
+
+Read 2026-10-27, on the sitting of 10-20..26: a counter on ANY attacking creature the card pays for
+(Anointer of Valor), on the creature CHOSEN the sentence before (Dig Deep, Elspeth Resplendent's
++1), and on the equipped creature after its own trigger (Greatsword of Tyr) or in a mode (Lost
+Jitte). A new BASE for one creature you control is Buff when it is the whole card (Scale Up's 6/4
+Wurm), B2 asked the other way round; as one mode of a Protection spell it is not (Secret Identity).
+A pump beside a return from death OR EXILE is the shield's rider (Ashnod's Intervention). More
+tribes: a hyphen in the type (Autonomous Assembler's Assembly-Worker), the tribe as a condition ("if
+that creature is a Goat, it also gets", Goatnap), as a clause after "each creature you control"
+(Kibo's Apes and Monkeys) and as the plural target of distributed counters (Numa's Elves). The tribe
+a card makes tokens of ITSELF is still a tribe for this tag: the reviewed cards that pump their own
+tokens' type are untagged (Gisa, Arahbo, Krenko, Baron of Tin Street, Corpses of the Lost, Baru),
+and Vault 12: The Necropolis, tagged on 09-12 before the tribe was ruled out, is handed back without
+it. Keyword counters listed without "and" (Scavenged Brawler's four +1/+1, flying, vigilance,
+trample and lifelink) are the keyword handed out on a creature, as measured on 2026-10-16, but a
+SPELL that is only such counters is B2's own example and keeps the tag (Gift of the Viper;
+Unexpected Fangs follows).

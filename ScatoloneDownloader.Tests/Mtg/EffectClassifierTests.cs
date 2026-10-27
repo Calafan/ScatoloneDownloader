@@ -10940,6 +10940,114 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // Buff pass of 2026-10-27, wordings the rules could not read: a counter on any
+    // attacking creature paid for (Anointer of Valor), on the creature chosen the
+    // sentence before (Dig Deep, Elspeth Resplendent's +1), on the equipped
+    // creature by its own trigger, a mode or anybody's death (Greatsword of Tyr,
+    // Lost Jitte; Tarrian's Soulcleaver ruled Buff by name), a new base for one
+    // creature of yours that is the whole card (Scale Up), and an instant that is
+    // only a +1/+1 and keyword counters (Gift of the Viper, B2's own example).
+    [InlineData("Anointer of Valor", "Creature — Angel",
+        "Flying\nWhenever a creature attacks, you may pay {3}. When you do, put a +1/+1 counter on that "
+        + "creature.")]
+    [InlineData("Colossal Badger // Dig Deep", "Creature — Badger // Sorcery — Adventure",
+        "When this creature enters, you gain 3 life.\nChoose target creature. Mill four cards, then put a "
+        + "+1/+1 counter on that creature for each creature card milled this way.")]
+    [InlineData("Elspeth Resplendent", "Legendary Planeswalker — Elspeth",
+        "+1: Choose up to one target creature. Put a +1/+1 counter and a counter from among flying, first "
+        + "strike, lifelink, or vigilance on it.\n−3: Look at the top seven cards of your library. You may put a "
+        + "permanent card with mana value 3 or less from among them onto the battlefield with a shield counter "
+        + "on it. Put the rest on the bottom of your library in a random order.\n−7: Create five 3/3 white Angel "
+        + "creature tokens with flying.")]
+    [InlineData("Greatsword of Tyr", "Artifact — Equipment",
+        "Whenever equipped creature attacks, put a +1/+1 counter on it and tap up to one target creature "
+        + "defending player controls.\nEquip {W} ({W}: Attach to target creature you control. Equip only as a "
+        + "sorcery.)")]
+    [InlineData("Lost Jitte", "Legendary Artifact — Equipment",
+        "Whenever equipped creature deals combat damage, put a charge counter on Lost Jitte.\nRemove a charge "
+        + "counter from Lost Jitte: Choose one —\n• Untap target land.\n• Target creature can't block this "
+        + "turn.\n• Put a +1/+1 counter on equipped creature.\nEquip {1}")]
+    [InlineData("Tarrian's Soulcleaver", "Legendary Artifact — Equipment",
+        "Equipped creature has vigilance.\nWhenever another artifact or creature is put into a graveyard from "
+        + "the battlefield, put a +1/+1 counter on equipped creature.\nEquip {2}")]
+    [InlineData("Scale Up", "Sorcery",
+        "Until end of turn, target creature you control becomes a green Wurm with base power and toughness "
+        + "6/4.\nOverload {4}{G}{G} (You may cast this spell for its overload cost. If you do, change \"target\" "
+        + "in its text to \"each.\")")]
+    [InlineData("Gift of the Viper", "Instant",
+        "Put a +1/+1 counter, a reach counter, and a deathtouch counter on target creature. Untap it.")]
+    public void Classify_TheOctober27BuffPass_IsBuff(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // Buff pass of 2026-10-27: a pump beside a return from death OR exile is the
+    // shield's rider (Ashnod's Intervention); a tribe with a hyphen, as a
+    // condition, as a clause after each creature you control, or as the plural
+    // target of distributed counters (Autonomous Assembler, Goatnap, Kibo, Numa),
+    // including the tribe the card makes itself (Vault 12); a creature's one-shot
+    // counters beside keyword counters (Scavenged Brawler); a team base X/X (The
+    // Meep, ruled a slip by name); a token made a creature (Halsin, Tokens by
+    // name); and a base that is one mode of a Protection spell (Secret Identity).
+    [InlineData("Ashnod's Intervention", "Instant",
+        "Until end of turn, target creature gets +2/+0 and gains \"When this creature dies or is put into "
+        + "exile from the battlefield, return it to its owner's hand.\"")]
+    [InlineData("Autonomous Assembler", "Artifact Creature — Assembly-Worker",
+        "Prototype {1}{W} — 2/2 (You may cast this spell with different mana cost, color, and size. It keeps "
+        + "its abilities and types.)\nVigilance\n{1}, {T}: Put a +1/+1 counter on target Assembly-Worker you "
+        + "control.")]
+    [InlineData("Goatnap", "Sorcery",
+        "Gain control of target creature until end of turn. Untap that creature. It gains haste until end of "
+        + "turn. If that creature is a Goat, it also gets +3/+0 until end of turn.")]
+    [InlineData("Kibo, Uktabi Prince", "Legendary Creature — Monkey Noble",
+        "{T}: Each player creates a colorless artifact token named Banana with \"{T}, Sacrifice this token: "
+        + "Add {R} or {G}. You gain 2 life.\"\nWhenever an artifact an opponent controls is put into a graveyard "
+        + "from the battlefield, put a +1/+1 counter on each creature you control that's an Ape or a "
+        + "Monkey.\nWhenever Kibo attacks, defending player sacrifices an artifact of their choice.")]
+    [InlineData("Numa, Joraga Chieftain", "Legendary Creature — Elf Warrior",
+        "At the beginning of combat on your turn, you may pay {X}{X}. When you do, distribute X +1/+1 "
+        + "counters among any number of target Elves.\nPartner (You can have two commanders if both have "
+        + "partner.)")]
+    [InlineData("Vault 12: The Necropolis", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Each "
+        + "player gets three rad counters.\nII — Create X 2/2 black Zombie Mutant creature tokens, where X is "
+        + "the total number of rad counters among players.\nIII — Put two +1/+1 counters on each creature you "
+        + "control that's a Zombie or Mutant.")]
+    [InlineData("Scavenged Brawler", "Artifact Creature — Construct",
+        "Flying, vigilance, trample, lifelink\n{5}, Exile this card from your graveyard: Choose target "
+        + "creature. Put four +1/+1 counters, a flying counter, a vigilance counter, a trample counter, and a "
+        + "lifelink counter on that creature. Activate only as a sorcery.")]
+    [InlineData("The Meep", "Legendary Creature — Alien",
+        "Ward—Pay 3 life.\nWhenever The Meep attacks, you may sacrifice another creature. If you do, creatures "
+        + "you control have base power and toughness X/X until end of turn, where X is the sacrificed "
+        + "creature's mana value.")]
+    [InlineData("Halsin, Emerald Archdruid", "Legendary Creature — Elf Druid",
+        "{1}: Until end of turn, target token you control becomes a green Bear creature with base power and "
+        + "toughness 4/4 in addition to its other colors and types.\nChoose a Background (You can have a "
+        + "Background as a second commander.)")]
+    [InlineData("Secret Identity", "Instant",
+        "Choose one —\n• Conceal — Until end of turn, target creature you control becomes a Citizen with base "
+        + "power and toughness 1/1 and gains hexproof.\n• Reveal — Until end of turn, target creature you "
+        + "control becomes a Hero with base power and toughness 3/4 and gains flying and vigilance.")]
+    public void Classify_TheOctober27BuffPass_IsNotBuff(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // Any token of yours made a creature is a body like an animated artifact,
+    // ruled 2026-10-27 on Halsin, Emerald Archdruid (Tokens, niente Buff).
+    [InlineData("Halsin, Emerald Archdruid", "Legendary Creature — Elf Druid",
+        "{1}: Until end of turn, target token you control becomes a green Bear creature with base power and "
+        + "toughness 4/4 in addition to its other colors and types.\nChoose a Background (You can have a "
+        + "Background as a second commander.)")]
+    public void Classify_TheOctober27BuffPass_ATokenMadeACreature_IsTokens(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
     // Ruled 2026-10-24: mana KEPT from one step to the next for good is Ramp
     // (Horizon Stone, tagged by hand; Kruphix with it). Read the same day, one
     // reviewed card each, Ramp by hand: a spell's mode that adds mana (Jeska's

@@ -529,6 +529,12 @@ namespace ScatoloneDownloader.Cube
                 + @"|double the number of \+1/\+1 counters"),
         ];
 
+        // The one base the bare phrase's split leaves readable: a creature YOU
+        // control made bigger for the turn. Asked in Classify, only when it is
+        // the whole card.
+        private static readonly Regex BaseForOneOfYours = Rx(
+            @"target creature you control becomes [^.\n]{0,60}with base power and toughness \d+/\d+");
+
         // A +1/+1 COUNTER is Buff, ruled 2026-09-15. It is the second vocabulary
         // for raising power and toughness, and the tag asks only where the stats
         // land, not how long they last: one counter on one creature counts, the
@@ -648,7 +654,18 @@ namespace ScatoloneDownloader.Cube
             // creature that connected, both tagged by hand), and joined by the
             // creature named in the sentence before (The Aetherspark's "target
             // creature you control. Put a +1/+1 counter on that creature").
-            + @"|whenever (?:a|another) (?:nontoken )?creature you control [^\n]{0,80}put (?:a|an|one|two|three) \+1/\+1 counters? on (?:it|that creature)\b"
+            // "You control" may be missing: Anointer of Valor pays {3} for a
+            // counter on ANY attacking creature (tagged 2026-10-20). A token is
+            // still a tribe (Securitron Squadron, untagged).
+            + @"|whenever (?:a|another) (?:nontoken )?creature(?! token)(?: you control)? [^\n]{0,80}put (?:a|an|one|two|three) \+1/\+1 counters? on (?:it|that creature)\b"
+            // The creature CHOSEN in the sentence before, mill or keyword
+            // counters in between (Dig Deep, Elspeth Resplendent's +1, both
+            // tagged 2026-10-16/23).
+            + @"|\bchoose (?:up to one )?target creature(?: you control)?\. [^\n]{0,60}?\+1/\+1 counters?[^.\n]{0,100} on (?:it|that creature)\b"
+            // The EQUIPPED creature, like the enchanted one, and "it" after its
+            // own trigger (Lost Jitte's mode, Greatsword of Tyr's attack).
+            + @"|\+1/\+1 counters? on equipped creature\b"
+            + @"|\bequipped creature [^.\n]{0,40}, put [\w ]{0,20}\+1/\+1 counters? on it\b"
             // Not the creature an opponent has just been handed (Jon Irenicus).
             + @"|(?<!control of (?:up to one )?)target creature you control\. put (?:a|an|one|two|three) \+1/\+1 counters? on (?:it|that creature)\b"
             + @"|for each of them, put [\w ]{0,20}\+1/\+1 counters? on it\b"
@@ -757,6 +774,9 @@ namespace ScatoloneDownloader.Cube
             // …and the counter only a creature OF the tribe gets (Aunt May's
             // "if it's a Spider, put a +1/+1 counter on it").
             + @"|[Ii]f it's an? " + NotATribe + @"[A-Z][\w']+, put [\w ]{0,20}\+1/\+1 counters? on it\b"
+            // …and the pump only (Goatnap's "if that creature is a Goat, it also
+            // gets +3/+0"), read 2026-10-27.
+            + @"|[Ii]f (?:that creature|it) is an? " + NotATribe + @"[A-Z][\w']+, it (?:also )?gets \+"
             // The same lord in the two other vocabularies, ruled not Buff when
             // the human re-reviewed 2024 on 2026-09-25: COUNTERS on a tribe
             // (Camellia's "a +1/+1 counter on each other Squirrel you control",
@@ -765,8 +785,16 @@ namespace ScatoloneDownloader.Cube
             // Dragonstorm Globe's Dragons), and a TARGET that must belong to
             // the tribe (Inside Source's "target Detective you control gets",
             // Rockface Village's "target Lizard, Mouse, Otter, or Raccoon").
+            // A hyphen may stand in the type (Autonomous Assembler's "target
+            // Assembly-Worker you control"), and three more shapes were read
+            // 2026-10-27: the tribe as a clause after "each creature you
+            // control" (Kibo's "that's an Ape or a Monkey") and the counters
+            // distributed among a plural tribe (Numa's "target Elves").
             + @"|\+1/\+1 counters? on (?:each |target |up to one target |another target )(?:other )?" + NotATribe
-            + @"[A-Z][\w']+s?(?: or [A-Z][\w']+s?)?(?: creatures?)?(?: you control\b|(?=[.,]))"
+            + @"[A-Z][\w'-]+s?(?: or [A-Z][\w'-]+s?)?(?: creatures?)?(?: you control\b|(?=[.,]))"
+            + @"|\+1/\+1 counters? on each (?:other )?creature you control that's an? " + NotATribe
+            + @"[A-Z][\w']+(?:,? or (?:an? )?[A-Z][\w']+)*"
+            + @"|\+1/\+1 counters among (?:any number of |up to \w+ )?target " + NotATribe + @"[A-Z][\w']+\b"
             + @"|" + ClauseStart + @"[Ee]ach (?:other )?" + NotATribe + @"[A-Z][\w']+ (?:creature )?you control enters? with\b"
             + @"|[Tt]arget " + NotATribe + @"[A-Z][\w']+(?:, [A-Z][\w']+)*,?(?: or [A-Z][\w']+)? you control gets\b"
             // And TOKENS are a tribe by another name, ruled the same day: a
@@ -2241,8 +2269,14 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex PutsCounters = Rx(@"\bput\b|\bdistribute\b|\bbolster\b");
         private static readonly Regex GetsPlus = Rx(@"\bgets? \+|\bget \+");
         private static readonly Regex PumpBesideAShield = Rx(
-            @"\bgets? \+[\dx]+/[-+][\dx]+ and gains? (?:indestructible|hexproof|shroud|protection from|""when this creature dies, return)");
-        private static readonly Regex CounterWithAKeywordCounter = Rx(@"\+1/\+1 counters?,? and an? [\w ]{1,20}counter\b");
+            // The return may come from EXILE too, as SavesFromDeathOrDamage
+            // reads it (Ashnod's Intervention, Protection alone, 2026-10-27).
+            @"\bgets? \+[\dx]+/[-+][\dx]+ and gains? (?:indestructible|hexproof|shroud|protection from"
+            + @"|""when this creature dies(?: or is put into exile from the battlefield)?, return)");
+        // The keyword counters may be a list without "and" in front of the
+        // first (Scavenged Brawler's four +1/+1, flying, vigilance, trample
+        // and lifelink, untagged; 2026-10-27).
+        private static readonly Regex CounterWithAKeywordCounter = Rx(@"\+1/\+1 counters?,? (?:and )?an? [\w ]{1,20}counter\b");
 
         private enum PumpTiming { Once, Instant, Repeat, Static }
 
@@ -2392,7 +2426,18 @@ namespace ScatoloneDownloader.Cube
             // Goldkeeper, Champion of Dusan), while Agent of Kotis's renew,
             // the same without the reach counter, was tagged the same day as
             // Sagu Pummeler. Repeated it is an engine (Guide of Souls).
-            if (timing is PumpTiming.Once or PumpTiming.Instant && CounterWithAKeywordCounter.IsMatch(piece))
+            // A SPELL that is only the counters is B2's own example and keeps
+            // the tag (Gift of the Viper, 2026-09-25); the three above and
+            // Scavenged Brawler are creatures.
+            // Filter does not count as "something else": a scry or a surveil is
+            // the rider the human called saturating, and Storm Strike is Guided
+            // Strike with a scry 1 on it — the pump is still the card.
+            bool pumpIsTheCard = (otherTags & ~CardEffect.Filter) == CardEffect.None;
+            bool spell = timing == PumpTiming.Instant
+                || (card.TypeLine ?? string.Empty).Split("//")[0].Contains("Sorcery", StringComparison.OrdinalIgnoreCase);
+
+            if (timing is PumpTiming.Once or PumpTiming.Instant && CounterWithAKeywordCounter.IsMatch(piece)
+                && !(spell && pumpIsTheCard))
             {
                 return false;
             }
@@ -2409,11 +2454,6 @@ namespace ScatoloneDownloader.Cube
             {
                 size *= 2;
             }
-
-            // Filter does not count as "something else": a scry or a surveil is
-            // the rider the human called saturating, and Storm Strike is Guided
-            // Strike with a scry 1 on it — the pump is still the card.
-            bool pumpIsTheCard = (otherTags & ~CardEffect.Filter) == CardEffect.None;
 
             if (timing == PumpTiming.Repeat)
             {
@@ -2453,8 +2493,6 @@ namespace ScatoloneDownloader.Cube
             // B2 at either speed: a SPELL that is only the pump is Buff however
             // small — "se la carta fa solo quello … che diventi Buff anche se fa
             // schifo" (Honor, 2026-09-25).
-            bool spell = timing == PumpTiming.Instant
-                || (card.TypeLine ?? string.Empty).Split("//")[0].Contains("Sorcery", StringComparison.OrdinalIgnoreCase);
             return spell && pumpIsTheCard;
         }
 

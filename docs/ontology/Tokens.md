@@ -153,3 +153,11 @@ land type is no tribe (Hazezon's Deserts, Titania's Forests). Writhing Chrysalis
 ("Errore mio") and Tribute to Horobi's Rats are no Tokens either ("Niente"): each untagged by name.
 Random Encounter is Burn and CardAdvantage instead ("Burn e CA", see Burn.md), untagged by name.
 No disagreement is left on purpose.
+
+RULED 2026-10-27 ("Tokens, niente Buff", Halsin, Emerald Archdruid): any TOKEN of yours made a
+creature is a body like an animated artifact (T1), since a Treasure or a Clue is an artifact by
+another name, and a pump only tokens get is the 09-25 Tokens payoff rather than Buff. Halsin's
+"{1}: target token you control becomes a green Bear creature with base power and toughness 4/4" was
+Buff by hand and is corrected by name; Voldaren Bloodcaster's Bloodbat face follows unreviewed. A
+creature token made something else is a body already and stays out, and so does a token made a copy
+(Kaya, Spirits' Justice).

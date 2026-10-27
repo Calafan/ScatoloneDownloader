@@ -1216,6 +1216,16 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Buff;
             }
 
+            // A new BASE for one creature of yours is a pump when it is the whole
+            // card, the same B2 asked the other way round: Scale Up's 6/4 Wurm
+            // (tagged 2026-10-20) is the card, Secret Identity's 3/4 Hero is one
+            // mode of a Protection spell (untagged). Read 2026-10-27.
+            if (!result.HasFlag(CardEffect.Buff) && BaseForOneOfYours.IsMatch(text)
+                && (result & ~CardEffect.Filter) == CardEffect.None)
+            {
+                result |= CardEffect.Buff;
+            }
+
             return result;
         }
     }
