@@ -244,9 +244,13 @@ namespace ScatoloneDownloader.Cube
         // the guard below, which asks whether any of them is a real answer.
         // The tail may run on into the NEXT sentence by exactly one thing: the
         // creature handed back, to the battlefield or to its owner's hand.
+        // Read 2026-10-27: the return may follow "If you do," (Astral Drift,
+        // Protection alone by hand), and the owner's permission may be "For as
+        // long as that card remains exiled" (Prowl, Stoic Strategist, Bounce).
         private static readonly Regex AimedAtACreature = Rx(
             @"(?:destroy|exile) (?:[\w -]{0,20})?target[\w ,'-]{0,45}(?<!non)creature[\w ,'-]{0,30}"
-            + @"(?:\. (?:return (?:it|that card|them|those cards)\b|for each of those cards, its owner may play it\b))?");
+            + @"(?:\. (?:if you do, )?(?:return (?:it|that card|them|those cards)\b"
+            + @"|(?:for each of those cards|for as long as that card remains exiled), its owner may play it\b))?");
 
         // Two ways a clause that reads like a kill answers nothing. YOUR OWN
         // creature is a blink, a sacrifice outlet or a way to hide it from a
@@ -285,9 +289,14 @@ namespace ScatoloneDownloader.Cube
         // Harpist, Piety Charm) owed its Removal to the words "a creature", and
         // these two were the only non-creature subtypes it reached when measured
         // on 2026-10-16.
+        // The FIGHTER limited to a type is the same tribe, read 2026-10-27 with
+        // the tribal rulings: Ayula, Queen Among Bears' "Target Bear you control
+        // fights target creature you don't control", untagged by hand, the one
+        // reviewed card written so.
         private static readonly Regex TargetLimitedToACreatureType = new(
             @"(?:[Dd]estroy|[Ee]xile|deals? [\dX]+ damage to) target (?:(?:attacking|blocking|tapped|untapped|other|another)(?: or)? )*"
-            + @"(?>[A-Z][a-z]+(?:,? (?:or )?[A-Z][a-z]+)*)(?! and target)",
+            + @"(?>[A-Z][a-z]+(?:,? (?:or )?[A-Z][a-z]+)*)(?! and target)"
+            + @"|[Tt]arget (?:[A-Z][a-z]+ )+you control fights\b",
             RegexOptions.CultureInvariant);
 
         // An exile that ends when the card UNTAPS is a tapper's lock and
@@ -378,9 +387,12 @@ namespace ScatoloneDownloader.Cube
         // two whole points of toughness, was reading four hand tags as a rule and
         // they were slips. "-2/-0" remains Pacify, which is the same ruling read
         // from the other side: it is the TOUGHNESS that has to move.
+        // An Aura for an "artifact or creature" says "As long as enchanted
+        // permanent is a creature, it gets -1/-1" (Clawing Torment, read
+        // 2026-10-27).
         private static readonly Regex ShrinksOneCreature = Rx(
             @"target [\w -]{0,28}(?<!non)creature[\w ' -]{0,28}(?<!you control )gets? [+-][\dX]+/-[1-9X]"
-            + @"|(?:enchanted creature|otherwise, it) gets [+-][\dX]+/-[1-9X]");
+            + @"|(?:enchanted creature|otherwise, it|as long as enchanted permanent is a creature, it) gets [+-][\dX]+/-[1-9X]");
 
         // ...and the counter version has the same blind spot, plus one of its own:
         // Serrated Biskelion puts the first counter on ITSELF and the second on

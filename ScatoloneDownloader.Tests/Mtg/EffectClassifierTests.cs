@@ -10645,6 +10645,135 @@ public sealed class EffectClassifierTests
     }
 
     [Theory]
+    // Read 2026-10-27 from the sitting of 10-20..10-26, every card tagged Removal
+    // by hand: damage EQUAL TO something divided among targets (Captain America,
+    // Orca); a target chosen first and hit after, 'damage to it' (Grisly Sigil),
+    // 'the chosen permanent' (Quag Feast), 'each of the chosen creatures' (Mega
+    // Flare); the edict between two targets of the same PLAYER (Incriminate), the
+    // secret choice among theirs (Malik), one creature each player chooses (The
+    // Horus Heresy) and one per opponent by its power (Highcliff Felidar); and the
+    // Aura shrink of an 'artifact or creature' (Clawing Torment).
+    [InlineData("Captain America, First Avenger", "Legendary Creature — Human Soldier Hero",
+        "Throw ... — {3}, Unattach an Equipment from Captain America: He deals damage equal to that "
+        + "Equipment's mana value divided as you choose among one, two, or three targets.\n... Catch — At the "
+        + "beginning of combat on your turn, attach up to one target Equipment you control to Captain America.")]
+    [InlineData("Orca, Siege Demon", "Legendary Creature — Demon",
+        "Trample\nWhenever another creature dies, put a +1/+1 counter on Orca.\nWhen Orca dies, it deals damage "
+        + "equal to its power divided as you choose among any number of targets.")]
+    [InlineData("Grisly Sigil", "Sorcery",
+        "Casualty 1 (As you cast this spell, you may sacrifice a creature with power 1 or greater. When you "
+        + "do, copy this spell and you may choose a new target for the copy.)\nChoose target creature or "
+        + "planeswalker. If it was dealt noncombat damage this turn, Grisly Sigil deals 3 damage to it and you "
+        + "gain 3 life. Otherwise, Grisly Sigil deals 1 damage to it and you gain 1 life.")]
+    [InlineData("Quag Feast", "Sorcery",
+        "Choose target creature, planeswalker, or Vehicle. Mill two cards, then destroy the chosen permanent "
+        + "if its mana value is less than or equal to the number of cards in your graveyard.")]
+    [InlineData("Mega Flare", "Sorcery",
+        "Kicker {3}{R}{R}\nIf this spell was kicked, create a 6/6 red Dragon creature token with flying.\nFor "
+        + "each opponent, choose up to one target creature that player controls. Mega Flare deals damage equal "
+        + "to the greatest power among creatures you control to each of the chosen creatures.")]
+    [InlineData("Incriminate", "Sorcery",
+        "Choose two target creatures controlled by the same player. That player sacrifices one of them of "
+        + "their choice.")]
+    [InlineData("Malik, Grim Manipulator", "Legendary Creature — Human Rogue",
+        "When Malik, Grim Manipulator enters, you and target opponent each secretly choose a creature that "
+        + "player controls. Then those choices are revealed, and that player sacrifices those "
+        + "creatures.\nWhenever an opponent sacrifices a creature, you create a Treasure token.")]
+    [InlineData("The Horus Heresy", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — For "
+        + "each opponent, gain control of up to one target nonlegendary creature that player controls for as "
+        + "long as this Saga remains on the battlefield.\nII — Draw a card for each creature you control but "
+        + "don't own.\nIII — Starting with you, each player chooses a creature. Destroy each creature chosen "
+        + "this way.")]
+    [InlineData("Highcliff Felidar", "Creature — Cat Beast",
+        "Vigilance\nWhen this creature enters, for each opponent, choose a creature with the greatest power "
+        + "among creatures that player controls. Destroy those creatures.")]
+    [InlineData("Clawing Torment", "Enchantment — Aura",
+        "Enchant artifact or creature\nAs long as enchanted permanent is a creature, it gets -1/-1 and can't "
+        + "block.\nEnchanted permanent has \"At the beginning of your upkeep, you lose 1 life.\"")]
+    public void Classify_TheOctober27RemovalPass_IsRemoval(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
+    // Read 2026-10-27: a blink whose return follows 'If you do,' (Astral Drift,
+    // Protection alone by hand); an exile its owner may play 'for as long as that
+    // card remains exiled' (Prowl, Bounce by hand); a FIGHTER limited to a
+    // creature type, with the tribal rulings (Ayula, untagged); and ANNIHILATOR,
+    // ruled not Removal on 2026-10-27 (Nazgul Battle-Mace corrected by name, 6 of
+    // the 7 reviewed untagged).
+    [InlineData("Astral Drift", "Enchantment",
+        "Whenever you cycle this card or cycle another card while this enchantment is on the battlefield, you "
+        + "may exile target creature. If you do, return that card to the battlefield under its owner's control "
+        + "at the beginning of the next end step.\nCycling {2}{W} ({2}{W}, Discard this card: Draw a card.)")]
+    [InlineData("Prowl, Stoic Strategist // Prowl, Pursuit Vehicle", "Legendary Artifact Creature — Robot // Legendary Artifact — Vehicle",
+        "More Than Meets the Eye {2}{W} (You may cast this card converted for {2}{W}.)\nWhenever Prowl "
+        + "attacks, exile up to one other target tapped creature or Vehicle. For as long as that card remains "
+        + "exiled, its owner may play it.\nWhenever a player plays a card exiled with Prowl, you draw a card and "
+        + "convert Prowl.\nLiving metal (During your turn, this Vehicle is also a creature.)\nWhenever another "
+        + "creature or Vehicle you control enters, put a +1/+1 counter on Prowl. If this is the second time "
+        + "this ability has resolved this turn, convert Prowl.")]
+    [InlineData("Ayula, Queen Among Bears", "Legendary Creature — Bear",
+        "Whenever another Bear you control enters, choose one —\n• Put two +1/+1 counters on target Bear.\n• "
+        + "Target Bear you control fights target creature you don't control.")]
+    [InlineData("Nazgûl Battle-Mace", "Artifact — Equipment",
+        "Equipped creature has menace, deathtouch, annihilator 1, and \"Whenever an opponent sacrifices a "
+        + "nontoken permanent, put that card onto the battlefield under your control unless that player pays 3 "
+        + "life.\" (Whenever a creature with annihilator 1 attacks, defending player sacrifices a permanent of "
+        + "their choice.)\nEquip {3}")]
+    public void Classify_TheOctober27RemovalPass_IsNotRemoval(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
+    // 'Destroy those creatures' after ONE creature chosen per opponent is an
+    // edict, not a board (Highcliff Felidar, Removal alone by hand), read
+    // 2026-10-27.
+    [InlineData("Highcliff Felidar", "Creature — Cat Beast",
+        "Vigilance\nWhen this creature enters, for each opponent, choose a creature with the greatest power "
+        + "among creatures that player controls. Destroy those creatures.")]
+    public void Classify_TheOctober27RemovalPass_OneCreaturePerOpponent_IsNotWipe(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Wipe));
+    }
+
+    [Theory]
+    // The owner may play it 'for as long as that card remains exiled', the other
+    // word order of Extraordinary Journey (Prowl, Bounce by hand), read
+    // 2026-10-27.
+    [InlineData("Prowl, Stoic Strategist // Prowl, Pursuit Vehicle", "Legendary Artifact Creature — Robot // Legendary Artifact — Vehicle",
+        "More Than Meets the Eye {2}{W} (You may cast this card converted for {2}{W}.)\nWhenever Prowl "
+        + "attacks, exile up to one other target tapped creature or Vehicle. For as long as that card remains "
+        + "exiled, its owner may play it.\nWhenever a player plays a card exiled with Prowl, you draw a card and "
+        + "convert Prowl.\nLiving metal (During your turn, this Vehicle is also a creature.)\nWhenever another "
+        + "creature or Vehicle you control enters, put a +1/+1 counter on Prowl. If this is the second time "
+        + "this ability has resolved this turn, convert Prowl.")]
+    public void Classify_TheOctober27RemovalPass_OwnerMayPlayWhileExiled_IsBounce(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Bounce));
+    }
+
+    [Theory]
+    // A permanent shuffled into its owner's library, ruled RemovePermanent alone
+    // on 2026-10-27 ('Solo RemovePermanent': Audacious Swap, corrected by name);
+    // Chaos Warp reads the same.
+    [InlineData("Audacious Swap", "Instant",
+        "Casualty 2 (As you cast this spell, you may sacrifice a creature with power 2 or greater. When you "
+        + "do, copy this spell and you may choose a new target for the copy.)\nThe owner of target "
+        + "nonenchantment permanent shuffles it into their library, then exiles the top card of their library. "
+        + "If it's a land card, they put it onto the battlefield. Otherwise, they may cast it without paying "
+        + "its mana cost.")]
+    [InlineData("Chaos Warp", "Instant",
+        "The owner of target permanent shuffles it into their library, then reveals the top card of their "
+        + "library. If it's a permanent card, they put it onto the battlefield.")]
+    public void Classify_TheOctober27RemovalPass_APermanentShuffledAway_IsRemovePermanent(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.RemovePermanent));
+    }
+
+    [Theory]
     // Ruled 2026-10-24: mana KEPT from one step to the next for good is Ramp
     // (Horizon Stone, tagged by hand; Kruphix with it). Read the same day, one
     // reviewed card each, Ramp by hand: a spell's mode that adds mana (Jeska's

@@ -29,3 +29,7 @@ Appa, Steadfast Guardian); the three reviewed cards returning your own permanent
 its owner's hand is this tag, and Regrowth for the graveyard cards exiled with it (Aurelia's
 Vindicator, The Spot); Fleeting Effigy's end-step return is Burn like the Viashinos, and Krile
 Baldesion's tag was a misclick for Regrowth.
+
+Read 2026-10-27: the other word order of Extraordinary Journey, "For as long as that card remains
+exiled, its owner may play it", on "up to one other target tapped creature or Vehicle" (Prowl,
+Stoic Strategist).

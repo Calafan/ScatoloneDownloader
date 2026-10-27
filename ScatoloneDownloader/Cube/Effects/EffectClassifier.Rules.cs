@@ -103,7 +103,12 @@ namespace ScatoloneDownloader.Cube
                         // returned (Golden Argosy, untagged; 2026-10-14).
                         + @"(?![\w ]{0,12}\bcards?\b)(?!s? (?:of the chosen type|you control|chosen this way|that crewed))"
                         + @"(?!s? with (?:the same name|that name|the most votes))"),
-                    Rx(@"(?<!don't )destroy those creatures|airbend all(?: [\w-]{1,15}){0,3} creatures"),
+                    // "Those creatures" is not a board when they are ONE per
+                    // opponent: Highcliff Felidar's "for each opponent, choose a
+                    // creature … Destroy those creatures" is Removal alone by hand
+                    // (2026-10-20), read 2026-10-27.
+                    Rx(@"(?<!don't )(?<!for each opponent, choose a creature [^.\n]{0,80}\. )destroy those creatures"
+                        + @"|airbend all(?: [\w-]{1,15}){0,3} creatures"),
                     Rx(@"(?<!target |attacking |blocking )\bcreatures\b(?:(?! you control\b| with the same name\b)[^.\n]){0,60}? get -[\dX]+/-[1-9X]"),
                     Rx(@"\beach(?: [\w-]{1,15}){0,3} creature\b(?:(?! you control\b)[^.\n]){0,60}? gets (?:twice )?-[\dX]+/-[1-9X]"),
                     Rx(@"-1/-1 counters? on each(?: [\w-]{1,15}){0,3} creature\b(?! you control)"),
@@ -217,6 +222,13 @@ namespace ScatoloneDownloader.Cube
                         + @"(?![\s\S]*\breturn the exiled cards? to (?:their|its) owners?'? hands?)"
                         + @"|destroy up to \w+ other target nonland permanents"),
                     Rx(@"(?:destroy|exile) (?:[\w ]{0,15})?target tokens?\b"),
+                    // A permanent SHUFFLED into its owner's library, as a creature
+                    // is for Removal (2026-10-14): "the owner of target
+                    // nonenchantment permanent shuffles it into their library"
+                    // (Audacious Swap, Removal by hand) ruled RemovePermanent alone
+                    // on 2026-10-27 ("Solo RemovePermanent"); Chaos Warp and
+                    // Oblation follow.
+                    Rx(@"owner of target (?:(?:non[\w-]+|legendary),? )*permanent[\w ,-]{0,40} shuffles it into"),
                     Rx(@"\bchooses an? permanent they control that shares a card type\b[^.\n]{0,60}\bsacrifices it\b"),
                     // The victim named by its mana value, then destroyed on the
                     // reflexive trigger (Behemoth of Vault 0), and the permanents
@@ -341,7 +353,8 @@ namespace ScatoloneDownloader.Cube
                     // A target CHOSEN first and hit after, read 2026-10-16:
                     // "Choose target creature or planeswalker. … deals that much
                     // damage to that permanent" (Galvanic Discharge).
-                    Rx(@"choose target creature or planeswalker\.[^\n]*deals? that much damage to that permanent"),
+                    // …and "deals 3 damage TO IT" (Grisly Sigil), read 2026-10-27.
+                    Rx(@"choose target creature or planeswalker\.[^\n]*deals? (?:that much damage to that permanent|[\dX]+ damage to it\b)"),
                     // An Aura that taxes the creature out of the game, read
                     // 2026-10-16: Mana Chains' "Enchanted creature has
                     // 'Cumulative upkeep {1}.'" (the one card written so). Paid in
@@ -351,8 +364,12 @@ namespace ScatoloneDownloader.Cube
                     // a tax the controller can pay is not a lock (2026-09-16).
                     Rx(@"enchanted creature has ""cumulative upkeep(?: \{|—pay \d+ life)"),
                     // A fireball split between several things still kills one of them.
+                    // The amount may be "equal to" something, read 2026-10-27 (2 of
+                    // 2 reviewed: Captain America, First Avenger's Equipment's mana
+                    // value, Orca, Siege Demon's power).
                     Rx(@"deals? (?:half )?[\dX]+(?: plus \d+)? damage divided "
-                        + @"(?:evenly, rounded down, |as you choose )?among"),
+                        + @"(?:evenly, rounded down, |as you choose )?among"
+                        + @"|deals? damage equal to [^.\n]{0,80}? divided (?:evenly, rounded down, |as you choose )?among"),
                     // A fight has to name what it fights. The bare word also appears
                     // in the NAME of a mode — School Daze offers "Fight Crime", which
                     // counters a spell and draws a card.
@@ -386,8 +403,20 @@ namespace ScatoloneDownloader.Cube
                     // you don't control. Destroy the chosen creatures" (Sadistic
                     // Shell Game). Not Plasma Caster, whose "chosen creature" is
                     // only the one blocking its wearer.
-                    Rx(@"choose (?:any number of )?target [\w ]{0,40}creatures?(?! that's)[^\n]*?(?:exile|destroy) the chosen creatures?"
-                        + @"|each player chooses a creature you don't control\. destroy the chosen creatures"),
+                    // Read 2026-10-27 from the sitting of 10-20..10-26, one card
+                    // each, all tagged: "destroy the chosen PERMANENT" after
+                    // "choose target creature, planeswalker, or Vehicle" (Quag
+                    // Feast); one target per opponent hit "to each of the chosen
+                    // creatures" (Mega Flare); ONE creature each player chooses,
+                    // which is the edict of 2026-09-27 (The Horus Heresy — Call to
+                    // the Void's two each is Wipe by hand); and one creature per
+                    // opponent named by its power and "destroy those creatures"
+                    // (Highcliff Felidar, Removal and not Wipe by hand).
+                    Rx(@"choose (?:any number of )?target [\w ]{0,40}creatures?(?! that's)[^\n]*?(?:exile|destroy) the chosen (?:creature|permanent)s?"
+                        + @"|each player chooses a creature you don't control\. destroy the chosen creatures"
+                        + @"|choose up to one target creature that player controls\.[^\n]*? damage [^.\n]{0,80}?to each of the chosen creatures"
+                        + @"|each player chooses a creature\. destroy each creature chosen this way"
+                        + @"|for each opponent, choose a creature [^.\n]{0,80}\. destroy those creatures"),
                     // An edict, in every wording. "EACH PLAYER sacrifices A creature"
                     // costs you one too, and was declined here until 2026-09-27, when
                     // the hand tags were found split three to two between this and
@@ -441,7 +470,15 @@ namespace ScatoloneDownloader.Cube
                         // enchantment of their choice, then sacrifices a nontoken
                         // creature of their choice".
                         + @"|each opponent sacrifices an? [\w ]{0,30} of their choice, then sacrifices an? (?:nontoken )?creature"
-                        + @"|choose two target creatures controlled by the same opponent\. that player chooses and sacrifices one of those creatures"
+                        // …"the same PLAYER … sacrifices one of THEM" (Incriminate),
+                        // and the creature you and the opponent each choose secretly
+                        // among theirs (Malik, Grim Manipulator), read 2026-10-27.
+                        // Not ANNIHILATOR, whose victim is a permanent of their
+                        // choice: ruled 2026-10-27 ("No, togli Removal"), 6 of the
+                        // 7 reviewed cards untagged, Nazgûl Battle-Mace corrected
+                        // by name.
+                        + @"|choose two target creatures controlled by the same (?:opponent|player)\. that player (?:chooses and )?sacrifices one of (?:those creatures|them)"
+                        + @"|secretly choose a creature that player controls\.[^\n]*?that player sacrifices those creatures"
                         + @"|\bunless (?:they|that player) sacrifices? (?:a|an|another) (?:nontoken )?creature\b(?!,)"
                         + @"|that player may sacrifice a [\w ]{0,25}(?<!non)creature of their choice\. if that player doesn't"),
                     // A creature that ends up in a LIBRARY is as answered as one that
@@ -647,8 +684,12 @@ namespace ScatoloneDownloader.Cube
                         + @"return the exiled cards to their owners' hands"),
                     // …and one its OWNER MAY PLAY for as long as it stays exiled is
                     // the same card back in hand (Extraordinary Journey, Bounce by
-                    // hand, 2026-10-09). Read 2026-10-14.
-                    Rx(@"exile (?:up to (?:\w+|x) )?target [\w ]{0,30}creatures?\.[^.\n]{0,30}\bits owner may play it for as long as it remains exiled")]),
+                    // hand, 2026-10-09). Read 2026-10-14. The other word order,
+                    // "For as long as that card remains exiled, its owner may play
+                    // it", on "up to one other target tapped creature or Vehicle"
+                    // (Prowl, Stoic Strategist, Bounce by hand), read 2026-10-27.
+                    Rx(@"exile (?:up to (?:\w+|x) )?target [\w ]{0,30}creatures?\.[^.\n]{0,30}\bits owner may play it for as long as it remains exiled"
+                        + @"|exile (?:up to (?:\w+|x) )?(?:other )?target [\w ]{0,30}creatures?(?: or vehicles?)?\. for as long as that card remains exiled, its owner may play it")]),
 
                 // The old rule was two lines of `destroy target[\w ]*(artifact|
                 // enchantment)`, and that `[\w ]*` was free to run the length of the

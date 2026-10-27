@@ -115,3 +115,25 @@ overturns the line above that kept its life payment out.
 
 Read 2026-10-16: a "target creature card" is in a graveyard, no creature to answer (Lazotep Quarry).
 Tidal Wave is handed back without the tag.
+
+Read 2026-10-27 from the sitting of 10-20..10-26 (1008 reviewed: 3 proposed wrongly and 12 missed
+before, 0 and 2 after, the 2 the rulings below), one or two cards each, all by the hand tags: damage
+EQUAL TO something divided among targets (Captain America, First Avenger; Orca, Siege Demon); a
+target chosen first and hit after, "deals 3 damage to it" (Grisly Sigil), "destroy the chosen
+permanent" (Quag Feast), "to each of the chosen creatures" (Mega Flare); the edict between two
+targets of the same PLAYER, "sacrifices one of them" (Incriminate), the creature you and the
+opponent each choose secretly among theirs (Malik, Grim Manipulator), ONE creature each player
+chooses (The Horus Heresy, the edict of 2026-09-27; Call to the Void's two each is Wipe by hand),
+one creature per opponent named by its power, "destroy those creatures" (Highcliff Felidar, this
+tag and not Wipe); and an Aura for an "artifact or creature" whose creature "gets -1/-1" (Clawing
+Torment). Out: a blink whose return follows "If you do," (Astral Drift, Astral Slide), an exile
+its owner may play "for as long as that card remains exiled" (Prowl, Stoic Strategist, Bounce by
+hand), and a FIGHTER limited to a creature type (Ayula, Queen Among Bears, untagged), with the
+tribal rulings.
+
+Ruled 2026-10-27, two cards of the same sitting. ANNIHILATOR is not this tag ("No, togli
+Removal"): its victim is a permanent of their choice, and 6 of the 7 reviewed cards carrying it are
+untagged (Eldrazi Ravager, Breaker of Creation, Nulldrifter, Azlask, Idol of False Gods, Hideous
+Taskmaster); Nazgûl Battle-Mace is corrected by name and keeps its Burn. And a PERMANENT shuffled
+into its owner's library is RemovePermanent alone ("Solo RemovePermanent": Audacious Swap,
+corrected by name), the breadth rule of 2026-09-15; a creature shuffled away stays this tag.

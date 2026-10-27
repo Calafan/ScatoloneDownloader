@@ -85,3 +85,6 @@ damage), and Omen of Fire keeps this one through its permanent sacrificed FOR EA
 (2026-09-28). Read the same day, each Wipe until then only because it took the lands too: Balance's
 line the other way round, "sacrifice creatures and discard cards the same way" (Restore Balance),
 and X creatures each closing a list of what each player loses (Death Cloud).
+
+Read 2026-10-27: "destroy those creatures" after ONE creature chosen per opponent is an edict and
+Removal's, not a board (Highcliff Felidar, Removal alone by hand).
