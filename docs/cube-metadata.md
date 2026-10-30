@@ -3,7 +3,7 @@
 This is the reference for the `metadata/` directory — the git-tracked source
 of truth for every card evaluation (rating, ban/token/jolly status, and
 functional effect tags) for the **entire** card library, ~30k+ printings and
-growing — and for the stats page computed from it. It documents
+growing — and for the stats page and report files computed from it. It documents
 the final state produced by
 `docs/plans/2026-08-30-001-feat-card-effect-ontology-plan.md` (including the
 "Part B" follow-up); see that plan for the design rationale (decisions
@@ -129,6 +129,9 @@ the first line instead of as a mysteriously empty store.
            |
            v
         /stats  (live page of the tagger, from its memory)
+           |
+           v
+        report  (the same page frozen + its Markdown twin, as files; also the page's downloads)
 
    restore  <-- metadata/ (union of all tiers) + Scryfall bulk   (disaster recovery)
 ```
@@ -203,7 +206,9 @@ the first line instead of as a mysteriously empty store.
 3. **The stats page** — `/stats` of the running tagger shows the analysis of
    the pool (see below), computed live from the tagger's in-memory cards, so
    it follows every change at once; nothing is written to disk. Every count the
-   tagger can filter on is a link that opens it on exactly those cards.
+   tagger can filter on is a link that opens it on exactly those cards. Two links
+   in its header, `Download .html` and `Download .md`, build the two report
+   files (see below) from the same live cards.
 4. **`restore -m metadata --images <dir>`** — disaster recovery. Loads the
    **union of all three tier files** (the full library manifest, not just the
    pool), downloads the Scryfall bulk card list, resolves each entry to its
@@ -340,6 +345,18 @@ decide who is counted:
   is the exception carved out of the original D7: cut, but only just, and
   therefore worth being able to find again — it feeds the page's **bench**
   tables.
+
+The same analysis comes out in three ways, all from the same `CardAnalyzer.ForPool`
+over the same store and cards: the live page, its two downloads and the
+`report` command. Both the downloads (`/api/report.html`, `/api/report.md`, from
+the tagger's memory) and `report` (which scans `Source\` and loads the store
+itself, read-only) produce `Cubo_Analysis*.md`, the Markdown analysis, and the
+HTML, which is the page frozen with the `/api/stats` payload embedded: it opens in
+any browser, shows plain numbers instead of links to the tagger, keeps the
+mono/identity toggle and prints to a readable PDF. `report` writes
+`Cubo_Analysis.md` and `.html` in the current folder (`-o <FILE>` is a base path
+whose extension is replaced); the downloads are named `Cubo_Analysis_yyyy-MM-dd`.
+Both carry a "Generated ..." line (date, pool and bench definitions, no paths).
 
 The bench tables count the rating-`2` non-land cards by effect and color, and
 their creatures by cost and color, so the page that shows a hole in the

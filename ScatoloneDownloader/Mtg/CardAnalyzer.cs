@@ -145,9 +145,21 @@ namespace ScatoloneDownloader.Mtg
         }
 
         /// <summary>
-        /// Renders the full Markdown analysis from the <see cref="AnalysisReport"/>.
+        /// Writes <see cref="RenderMarkdown"/> to <paramref name="path"/>.
         /// </summary>
         internal void SaveAnalysis(string path)
+        {
+            using StreamWriter writer = new(path);
+            writer.Write(RenderMarkdown());
+        }
+
+        /// <summary>
+        /// Renders the full Markdown analysis from the <see cref="AnalysisReport"/>.
+        /// A <paramref name="subtitle"/>, when given, is written as an italic line
+        /// right under the title (the <c>report</c> command and the stats page's
+        /// download use it for the date and the pool definition).
+        /// </summary>
+        internal string RenderMarkdown(string? subtitle = null)
         {
             AnalysisReport report = Analyze();
 
@@ -155,6 +167,12 @@ namespace ScatoloneDownloader.Mtg
 
             sb.AppendLine("# Scatolone Cube - Analysis Report");
             sb.AppendLine();
+
+            if (!string.IsNullOrEmpty(subtitle))
+            {
+                sb.AppendLine($"*{subtitle}*");
+                sb.AppendLine();
+            }
 
             AppendGlobalSection(sb, report);
             AppendColorDistribution(sb, report);
@@ -166,8 +184,7 @@ namespace ScatoloneDownloader.Mtg
             AppendBenchSection(sb, bench);
             AppendCreatureProfile(sb, report, bench);
 
-            using StreamWriter writer = new(path);
-            writer.Write(sb.ToString());
+            return sb.ToString();
         }
 
         private static void AppendGlobalSection(StringBuilder sb, AnalysisReport report)
@@ -458,7 +475,7 @@ namespace ScatoloneDownloader.Mtg
             sb.AppendLine($"## 7. Bench Availability ({bench.TotalCards + bench.LandCount} Cards, Rating 2)");
             sb.AppendLine("*Cards cut by a hair. They are NOT counted in any section above — this is the");
             sb.AppendLine("shortlist to promote from when a section above shows a hole.");
-            sb.AppendLine("Raise a card to 3 in the tagger and the tagger's /stats page counts it in the pool.*");
+            sb.AppendLine("Raise a card to 3 in the tagger and /stats counts it in the pool at once, the next `report` too.*");
             sb.AppendLine($"*   **Non-Land:** {bench.TotalCards} | **Lands:** {bench.LandCount} | **Tagged:** {tagged} ({GetPercentage(tagged, bench.TotalCards)}%)");
             sb.AppendLine();
 

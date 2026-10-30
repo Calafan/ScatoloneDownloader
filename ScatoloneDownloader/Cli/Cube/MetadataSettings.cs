@@ -9,7 +9,7 @@ namespace ScatoloneDownloader.Cli.Cube
 {
     /// <summary>
     /// Base settings for every cube command that reads or writes the library
-    /// (<c>tag</c>/<c>classify</c>/<c>restore</c>/
+    /// (<c>tag</c>/<c>report</c>/<c>classify</c>/<c>restore</c>/
     /// <c>make-list</c>/<c>audit</c>/<c>sync</c>). Owns the <c>--root</c> and
     /// <c>-m|--metadata</c> options and their resolution, so none of that is
     /// copy-pasted per command. The library root (see <see cref="LibraryRoot"/>)
@@ -35,8 +35,8 @@ namespace ScatoloneDownloader.Cli.Cube
         internal string SettingsDirectory { get; init; } = AppContext.BaseDirectory;
 
         /// <summary>
-        /// Whether the command works on the images of <c>Source\</c> (<c>tag</c>
-        /// and <c>sync</c> override this to <c>true</c>). Those need a root and its <c>Source</c> folder even when
+        /// Whether the command works on the images of <c>Source\</c> (<c>tag</c>,
+        /// <c>report</c> and <c>sync</c> override this to <c>true</c>). Those need a root and its <c>Source</c> folder even when
         /// <c>-m</c> is given; the others need a root only to default the metadata.
         /// </summary>
         internal virtual bool NeedsSource => false;

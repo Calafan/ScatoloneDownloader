@@ -131,7 +131,7 @@ A box di dimensione costante (3878 carte non-terra), l'obiettivo vale circa: Wip
 - **Guadagno vita e fog** sono letti dal testo con una regex, non dai tag.
 - **Il box non è il pool dello store.** Delle 4164 carte, 1689 hanno rating 3-5, 583 rating 1-2
   e 1892 nessun rating; 945 carte che lo store valuta 3-5 non sono nella lista. La pagina
-  /stats misura il pool, non lo scatolone vero.
+  /stats e i file di `report` misurano il pool, non lo scatolone vero.
 - **I numeri cambiano con il tagging.** Ogni carta rivista o valutata sposta le percentuali:
   vanno rimisurate prima di applicare i tagli.
 

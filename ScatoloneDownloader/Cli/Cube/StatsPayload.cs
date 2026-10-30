@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json;
 using ScatoloneDownloader.Mtg;
 
 namespace ScatoloneDownloader.Cli.Cube
@@ -13,7 +14,10 @@ namespace ScatoloneDownloader.Cli.Cube
     /// <c>analyze</c> download command renders the same analysis as Markdown, but
     /// for the cards of a list. The Markdown's "cards per colour" section (a gold
     /// card counted in each of its colours) is not repeated: it is the Non-land row
-    /// of the identity matrix (<c>CardsByIdentity</c>).
+    /// of the identity matrix (<c>CardsByIdentity</c>). The same payload is rendered
+    /// frozen into a self-contained HTML file by <see cref="StatsReport"/> (the
+    /// <c>report</c> command and the page's download), whose Markdown twin is the
+    /// same <c>CardAnalyzer.ForPool</c> analysis.
     /// </summary>
     /// <param name="Effects">Every single effect flag name, enum order.</param>
     /// <param name="Glossary">Tooltip text, same order as <paramref name="Effects"/>.</param>
@@ -27,6 +31,18 @@ namespace ScatoloneDownloader.Cli.Cube
         StatsTier Bench,
         StatsOverview Overview)
     {
+        /// <summary>
+        /// How the payload is serialized: camelCase (the records are PascalCase), with
+        /// dictionary keys (W, Multi, 1 White) left exactly as they are. Shared by
+        /// <c>/api/stats</c> and by the frozen copy <see cref="StatsReport"/> embeds,
+        /// so the page reads the same JSON live and frozen. The default encoder is
+        /// kept: it escapes <c>&lt;</c>, so the JSON can sit inside a script tag.
+        /// </summary>
+        internal static readonly JsonSerializerOptions JsonOptions = new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        };
+
         // The colour columns of the two views. Mono is the analyzer's own one-column
         // split (a gold card is "Multi"); identity counts a card in every colour it has.
         private static readonly (string Key, string Name)[] MonoColumns =

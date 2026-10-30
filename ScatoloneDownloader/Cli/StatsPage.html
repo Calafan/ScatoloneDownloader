@@ -17,6 +17,9 @@
   button { background:#0d0f14; color:var(--txt); border:1px solid var(--line); border-radius:6px; padding:6px 12px; font:13px system-ui,Segoe UI,sans-serif; cursor:pointer; }
   button:hover { border-color:var(--accent); }
   button.on { background:var(--accent); border-color:var(--accent); color:#06121f; font-weight:600; }
+  a.btn { display:inline-block; background:#0d0f14; color:var(--txt); border:1px solid var(--line); border-radius:6px; padding:6px 12px; font:13px system-ui,Segoe UI,sans-serif; }
+  a.btn:hover { border-color:var(--accent); text-decoration:none; }
+  [hidden] { display:none !important; }
   #updated { font-size:12px; color:var(--muted); }
   #note { font-size:12px; color:var(--muted); margin:8px 0 12px; }
   #viewbar { display:flex; align-items:center; gap:6px; font-size:13px; color:var(--muted); }
@@ -45,16 +48,35 @@
     button { padding:10px 14px; font-size:15px; }
     th:first-child, td:first-child { min-width:110px; }
   }
+
+  /* A printed or PDF copy: light, ink-friendly, nothing clipped, nothing to click.
+     The shading of the effect cells stays (print-color-adjust), so the hot spots
+     still show on paper. */
+  @media print {
+    body { background:#fff; color:#000; padding:0; font-size:12px; }
+    a, td a, td.zero a { color:#000; }
+    #updated, #note, .sum, th, tr.meta td, tr.group td, td.zero, td .pct, td.tags, #viewbar { color:#555; }
+    .wrap { overflow:visible; background:#fff; border-color:#ccc; }
+    th, td { border-bottom-color:#ddd; }
+    th, tr.group td { background:#fff; }
+    th:first-child, td:first-child { position:static; background:#fff; }
+    #refresh, #back, #dlHtml, #dlMd, #viewbar button:not(.on) { display:none; }
+    #viewbar button.on { background:none; border:0; color:#555; padding:0; font-weight:400; }
+    td[style*="background"] { print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+  }
 </style>
 </head>
 <body>
 <div id="err" hidden>&#9888; Could not load the stats from the tagger &mdash; is it still running?</div>
 <header>
   <h1>Cube stats</h1>
-  <a href="/">&larr; Tagger</a>
+  <a href="/" id="back">&larr; Tagger</a>
   <button type="button" id="refresh">Refresh</button>
+  <a class="btn" id="dlHtml" href="/api/report.html">Download .html</a>
+  <a class="btn" id="dlMd" href="/api/report.md">Download .md</a>
   <span id="updated"></span>
 </header>
+<noscript><p>This report needs JavaScript: open it in a web browser.</p></noscript>
 <div id="note">Numbers are live from the tagger's memory, so they follow every change at once. The pool is the cards rated 3&ndash;5 with no status; the bench is exactly &#9733;2.</div>
 <div id="viewbar">Columns:
   <button type="button" id="vMono" class="on">mono + Multi</button>
@@ -62,6 +84,10 @@
 </div>
 <div id="out"></div>
 <script>
+// Frozen copy: the `report` command and the download links put the data in
+// window.STATS_SNAPSHOT before this script. The page then renders from it, fetches
+// nothing and links nowhere (there is no tagger to open); the live page has none.
+const SNAPSHOT = window.STATS_SNAPSHOT || null;
 let payload = null;
 let view = new URLSearchParams(location.search).get("view") === "identity" ? "identity" : "mono";
 
@@ -70,7 +96,9 @@ let view = new URLSearchParams(location.search).get("view") === "identity" ? "id
 // status=None and type=*nonland reproduce the analyzer's own population; the
 // creature tables pass type=Creature and a cost bucket instead. A trailing rating
 // ("r3".."r5", the star cells) replaces the tier's rating param.
+// A frozen copy has no tagger to link to: null, so every count is a plain number.
 function link(tier, colorParam, effectsParam, match, type, cost, rating) {
+  if (SNAPSHOT) return null;
   const q = ["review=all", "rating=" + encodeURIComponent(rating || tier.ratingParam), "status=None", "type=" + (type || "*nonland")];
   if (cost) q.push("cost=" + encodeURIComponent(cost));
   if (colorParam) q.push("color=" + encodeURIComponent(colorParam));
@@ -422,6 +450,11 @@ function render() {
 }
 
 async function load() {
+  if (SNAPSHOT) {
+    payload = SNAPSHOT;
+    render();
+    return;
+  }
   try {
     const r = await fetch("/api/stats", { cache: "no-store" });
     if (!r.ok) throw new Error("HTTP " + r.status);
@@ -446,6 +479,12 @@ function setView(v) {
 document.getElementById("vMono").onclick = () => setView("mono");
 document.getElementById("vIdentity").onclick = () => setView("identity");
 document.getElementById("refresh").onclick = () => load();
+if (SNAPSHOT) {
+  ["back", "refresh", "dlHtml", "dlMd"].forEach(id => { document.getElementById(id).hidden = true; });
+  document.getElementById("updated").textContent = window.STATS_SNAPSHOT_INFO || "";
+  document.getElementById("note").textContent =
+    "A snapshot of the cube's statistics. The pool is the cards rated 3–5 with no status; the bench is exactly ★2.";
+}
 // No polling: the numbers refresh when you come back to the tab (typically from
 // the tagger, after tagging) or on demand.
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") load(); });

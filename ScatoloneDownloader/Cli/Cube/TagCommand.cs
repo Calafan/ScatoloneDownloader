@@ -214,8 +214,29 @@ namespace ScatoloneDownloader.Cli.Cube
                 // Recomputed per request from the live cards: requests are served one
                 // at a time, so no save can land halfway through the tally.
                 byte[] bytes = JsonSerializer.SerializeToUtf8Bytes(
-                    StatsPayload.Build(matched.Select(m => m.Card)), StatsJsonOpts);
+                    StatsPayload.Build(matched.Select(m => m.Card)), StatsPayload.JsonOptions);
                 TryWrite(ctx, 200, "application/json; charset=utf-8", bytes);
+                return;
+            }
+
+            // The two downloads of the stats page, built from the live cards like
+            // /api/stats: the page frozen with its data, and the Markdown analysis
+            // with the same numbers. One clock reading names and dates both.
+            if (path == "/api/report.html" || path == "/api/report.md")
+            {
+                DateTime now = DateTime.Now;
+                string subtitle = StatsReport.Subtitle(now);
+                IEnumerable<Card> cards = matched.Select(m => m.Card);
+                bool html = path == "/api/report.html";
+
+                string body = html
+                    ? StatsReport.RenderHtml(StatsPayload.Build(cards), subtitle, now)
+                    : CardAnalyzer.ForPool(cards).RenderMarkdown(subtitle);
+
+                ctx.Response.AddHeader("Content-Disposition",
+                    $"attachment; filename=\"{StatsReport.FileStem(now)}{(html ? ".html" : ".md")}\"");
+                TryWrite(ctx, 200, html ? "text/html; charset=utf-8" : "text/markdown; charset=utf-8",
+                    Encoding.UTF8.GetBytes(body));
                 return;
             }
 
@@ -495,14 +516,6 @@ namespace ScatoloneDownloader.Cli.Cube
         private static readonly JsonSerializerOptions JsonOpts = new()
         {
             PropertyNameCaseInsensitive = true,
-        };
-
-        // The stats payload is camelCase (its records are PascalCase); kept apart from
-        // JsonOpts because /api/cards and /api/save use anonymous lower-case objects.
-        // Dictionary keys (W, Multi, 1 White) are left exactly as they are.
-        private static readonly JsonSerializerOptions StatsJsonOpts = new()
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         };
 
         private static void WriteJson(HttpListenerContext ctx, object payload)

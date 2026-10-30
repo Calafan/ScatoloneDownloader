@@ -14,7 +14,7 @@ namespace ScatoloneDownloader.Cli.Cube
     /// which had already drifted apart; this is the single implementation.
     /// <para>
     /// <see cref="ScanAndMatchAsync"/> is the whole scan-then-match sequence
-    /// <c>tag</c> runs: it lists the <c>.png</c> files first and returns
+    /// <c>tag</c> and <c>report</c> run: it lists the <c>.png</c> files first and returns
     /// before the expensive Scryfall bulk download when the folder is empty, since
     /// there are then no cards to match. <see cref="Match"/> alone is the pure
     /// matching step.
