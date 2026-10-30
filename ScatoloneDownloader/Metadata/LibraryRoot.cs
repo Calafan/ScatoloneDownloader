@@ -4,8 +4,7 @@ namespace ScatoloneDownloader.Metadata
 {
     /// <summary>
     /// Finds the one folder the cube commands work against: the library root,
-    /// holding <c>Source\</c> (the images), <c>metadata\</c> (the store) and
-    /// <c>Views\</c> (the report). The root comes from <c>--root</c> or, by
+    /// holding <c>Source\</c> (the images) and <c>metadata\</c> (the store). The root comes from <c>--root</c> or, by
     /// default, from the <c>"root"</c> property of <c>scatolone.json</c> beside
     /// the executable, so the same path is never typed per command. Pure apart
     /// from reading that one file, and the settings folder is a parameter, so
@@ -66,9 +65,6 @@ namespace ScatoloneDownloader.Metadata
 
         /// <summary>The git-tracked metadata store, <c>&lt;root&gt;\metadata</c>.</summary>
         internal static string Metadata(string root) => Path.Combine(root, "metadata");
-
-        /// <summary>The folder of generated views (the report), <c>&lt;root&gt;\Views</c>.</summary>
-        internal static string Views(string root) => Path.Combine(root, "Views");
 
         private static string? ReadRoot(string settingsPath, out string? error)
         {

@@ -3,7 +3,7 @@
 This is the reference for the `metadata/` directory — the git-tracked source
 of truth for every card evaluation (rating, ban/token/jolly status, and
 functional effect tags) for the **entire** card library, ~30k+ printings and
-growing — and for the analysis report generated from it. It documents
+growing — and for the stats page computed from it. It documents
 the final state produced by
 `docs/plans/2026-08-30-001-feat-card-effect-ontology-plan.md` (including the
 "Part B" follow-up); see that plan for the design rationale (decisions
@@ -35,7 +35,7 @@ lives in exactly one file, chosen by its **current rating**:
 | File | Rating | Contents |
 |---|---|---|
 | `metadata/pool.json` | 3-5 | The active cube — small, the main hand-edit target, tiny diffs. |
-| `metadata/fringe.json` | 1-2 | Evaluated but cut. Grows over time as more of the backlog gets rated and rejected. Rating 1 and rating 2 share this file on purpose: they are reported differently (only `2` appears, as the bench appendix of the report, see below) but stored identically, so the split moves nothing on disk. |
+| `metadata/fringe.json` | 1-2 | Evaluated but cut. Grows over time as more of the backlog gets rated and rejected. Rating 1 and rating 2 share this file on purpose: they are reported differently (only `2` appears, in the stats page's bench tables, see below) but stored identically, so the split moves nothing on disk. |
 | `metadata/unrated.json` | 0 | The bulk library manifest (tens of thousands of entries). Changes only when `sync` adds new cards, not from day-to-day curation. |
 
 Beside the three tiers sits one file that is **not** a tier and holds no card
@@ -104,10 +104,10 @@ already in the pool — now rewrites only the small `pool.json`, so working
 through the pool no longer pays the backlog's cost on every keystroke.
 
 Every command below works against one **library root** holding `Source\` (the
-images), `metadata\` (this directory) and `Views\` (the report). The root is
+images) and `metadata\` (this directory). The root is
 `"root"` in `scatolone.json`, copied beside the executable, or `--root <DIR>` for
-one run; without either the command stops and says where to set it. `tag`,
-`report` and `sync` read the images from `<root>\Source`. `-m|--metadata
+one run; without either the command stops and says where to set it. `tag`
+and `sync` read the images from `<root>\Source`. `-m|--metadata
 <DIR>` overrides only this directory (default `<root>\metadata`); with it,
 `classify`, `audit`, `make-list` and `restore` need no root at all. Each command
 prints the directory it resolved before touching it, so a mismatch shows up on
@@ -128,7 +128,7 @@ the first line instead of as a mysteriously empty store.
           tag  ------------------------------- -+   (autosaves every keystroke)
            |
            v
-       report  --> Views/Cubo_Analysis.md
+        /stats  (live page of the tagger, from its memory)
 
    restore  <-- metadata/ (union of all tiers) + Scryfall bulk   (disaster recovery)
 ```
@@ -200,13 +200,10 @@ the first line instead of as a mysteriously empty store.
    so any name is reachable) because putting 30k rows in the DOM would freeze
    the page for no gain. Keys typed while a picker or the search box has
    focus go to the field, not to the tagger.
-3. **`report [--root dir] [-m metadata] [-o file]`** — writes the analysis
-   report, `Cubo_Analysis.md`, by loading rating/status/effects from the
-   metadata directory (the merged view of all three tier files) and analysing
-   the pool (see below). By default it lands in `<root>\Views`, created
-   if missing; `-o` names another file. Read-only toward the
-   library and the store, and it deletes nothing. Safe to re-run any time the
-   metadata changes.
+3. **The stats page** — `/stats` of the running tagger shows the analysis of
+   the pool (see below), computed live from the tagger's in-memory cards, so
+   it follows every change at once; nothing is written to disk. Every count the
+   tagger can filter on is a link that opens it on exactly those cards.
 4. **`restore -m metadata --images <dir>`** — disaster recovery. Loads the
    **union of all three tier files** (the full library manifest, not just the
    pool), downloads the Scryfall bulk card list, resolves each entry to its
@@ -291,8 +288,8 @@ Each of the three tier files has the same shape:
 |---|---|---|---|
 | `name` | `string` | `sync`, `tag` | Card name. **Informational only, not a key** — safe to leave stale after a rename; the app always looks the entry up by `oracle_id`. |
 | `scryfallId` | `string` (nullable, omitted when absent) | `tag`, `sync` | The Scryfall printing `id` (not `oracle_id`) of the art in the library: the printing the library rules pick, which `sync` restamps when a rule change moves the card to another printing. `restore` prefers this to re-download the *same* printing/art; if it's missing or the printing has vanished from the current bulk data, `restore` falls back to the first printing found for the `oracle_id`. Hand-editing this is fine if you know the correct printing UUID; leaving it blank just means `restore` uses the fallback. |
-| `rating` | `int`, 0-5 | `sync` (always `0`), `tag` (authoritative) | Cube rating; `0` = unrated. **This is also the field that decides which tier file (`pool.json`/`fringe.json`/`unrated.json`) the entry lives in** — the next `Save` moves it if you hand-edit this to cross a tier boundary. Rating `1` is deliberately left out of the analysis (see D7 below) — it still round-trips. Rating `2` appears only in the report's bench appendix. |
-| `status` | `string`, one of `Banned \| Token \| Jolly`, or omitted/null for a normal card | `tag` | Mutually-exclusive pool status. A tagged card (`Banned`/`Token`/`Jolly`) is excluded from the report's pool at any rating. Hand-editable directly as one of the strings (case-insensitive on read); an unrecognized or blank value is treated as no status. |
+| `rating` | `int`, 0-5 | `sync` (always `0`), `tag` (authoritative) | Cube rating; `0` = unrated. **This is also the field that decides which tier file (`pool.json`/`fringe.json`/`unrated.json`) the entry lives in** — the next `Save` moves it if you hand-edit this to cross a tier boundary. Rating `1` is deliberately left out of the analysis (see D7 below) — it still round-trips. Rating `2` appears only in the stats page's bench tables. |
+| `status` | `string`, one of `Banned \| Token \| Jolly`, or omitted/null for a normal card | `tag` | Mutually-exclusive pool status. A tagged card (`Banned`/`Token`/`Jolly`) is excluded from the stats page's pool at any rating. Hand-editable directly as one of the strings (case-insensitive on read); an unrecognized or blank value is treated as no status. |
 | `effects` | `string[]`, canonical `CardEffect` member names | `tag` only | Functional effect tags (a card can carry several). Stored as an array of names, not a packed bitmask, so git diffs show exactly which tag changed. Unknown/duplicate names are dropped on the next `Save` (round-tripped through the resolver). Hand-editable with any of the canonical names in `Mtg/CardEffect.cs` (aliases like `"board wipe"` are also accepted on read, but always re-written canonically). Empty/absent = untagged. |
 | `reviewedAt` | ISO-8601 UTC timestamp (`DateTimeOffset?`), omitted when null | `tag` only | Stamped automatically the instant a human changes anything for a card in the tagger (rating, status, or an effect toggle) — it is the "someone actually looked at this" marker used by the tagger's progress counter and its default to-review filter. `null`/absent = never manually reviewed. The store preserves this verbatim on every `Save` — nothing else re-stamps or clears it, so do not hand-edit it unless you intend to reset the review flag for that card. |
 
@@ -308,8 +305,7 @@ the key disappears from a tier the next time that tier is saved.
   `fringe.json` entry from 2 to 4), it stays in the "wrong" file until a
   command re-saves *that card*: editing it in `tag` moves it (the incremental
   save prunes the old tier), and `sync` (which, when it adds a card, does a
-  full re-partitioning save) moves every mis-filed entry at once. `report` only
-  *reads* the metadata, so it never moves anything. Simplest: just fix the entry in the
+  full re-partitioning save) moves every mis-filed entry at once. Simplest: just fix the entry in the
   correct tier file directly (add it to `pool.json`, remove it from
   `fringe.json`).
 - `effects` must use member names from `Mtg/CardEffect.cs` (or a recognized
@@ -330,27 +326,27 @@ the key disappears from a tier the next time that tier is saved.
   abort, rather than silently dropping it — so fix the JSON (or delete the
   file if you truly mean it to be empty) before re-running anything.
 
-## The analysis report
+## The stats page
 
-`report` writes `Cubo_Analysis.md`, a Markdown analysis of the **pool**: normal
-cards (no status) rated 3-5. It is built by `CardAnalyzer.ForPool`, the same
-code the tagger's live `/stats` page uses, so the two cannot disagree. Two
-rules decide who is counted:
+The tagger's `/stats` page analyses the **pool**: normal cards (no status)
+rated 3-5. It is built by `CardAnalyzer.ForPool` (the `analyze` download
+command renders the same analysis as Markdown, for a list file). Two rules
+decide who is counted:
 
 - **Any status (Banned/Token/Jolly) → left out of every distribution**, at any
   rating. A tagged card is not part of the pool being measured.
 - **D7 — normal rating 0 and 1 are never counted.** The unrated backlog and the
   cards rejected outright cannot skew the distributions of the cube. Rating `2`
   is the exception carved out of the original D7: cut, but only just, and
-  therefore worth being able to find again — it feeds the report's closing
-  **Bench Availability** section.
+  therefore worth being able to find again — it feeds the page's **bench**
+  tables.
 
-The Bench Availability section counts the rating-`2` cards by color and cost
-bucket, by effect, and (for lands) by color identity, so the report that shows
-a hole in the pool (a top-heavy curve, a color short on removal) also shows what
-is on hand to fill it. It counts toward no metric in the sections above and is
-omitted entirely when nothing is rated `2`. To act on it, raise the card to 3
-in the tagger and re-run `report`.
+The bench tables count the rating-`2` non-land cards by effect and color, and
+their creatures by cost and color, so the page that shows a hole in the
+pool (a top-heavy curve, a color short on removal) also shows what is on hand
+to fill it. They count toward no metric of the pool tables and are empty when
+nothing is rated `2`. To act on it, raise the card to 3 in the tagger; the page
+counts it in the pool at once.
 
 `{Color}` names throughout come from `ColorCategoryClassifier.ViewFolderName`
 (e.g. `1 White`, `2 Azorius`, `3 Esper`, `4 4-5 Colors`, `5 Colorless`) — the

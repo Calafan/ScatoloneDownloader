@@ -83,7 +83,7 @@ namespace ScatoloneDownloader.Mtg
 
         /// <summary>Human-readable name per ColorCategory code: single-color words,
         /// guild names, shard/wedge names, plus the 4-5 and Colorless buckets.
-        /// Shared by the analysis report and the by-color view folders.</summary>
+        /// Shared by the analysis and the tagger's colour filter.</summary>
         private static readonly Dictionary<string, string> DisplayNames = new()
         {
             { "W", "White" }, { "U", "Blue" }, { "B", "Black" }, { "R", "Red" }, { "G", "Green" },

@@ -127,7 +127,6 @@ namespace ScatoloneDownloader.Cli.Download
             {
                 if (File.Exists(file))
                 {
-                    // A Files download also writes the stats file (Analyze = true), as before.
                     await GetCardsAsync(new CardRequest
                     {
                         Mode = Mode.Files,
@@ -136,7 +135,6 @@ namespace ScatoloneDownloader.Cli.Download
                         Lands = lands,
                         File = file,
                         Download = true,
-                        Analyze = true,
                         PrintOnly = printOnly,
                         LibrarySource = librarySource,
                     });

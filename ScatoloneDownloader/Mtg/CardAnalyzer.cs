@@ -23,6 +23,17 @@ namespace ScatoloneDownloader.Mtg
             "4_5_Colors", "Colorless",
         ];
 
+        /// <summary>The colour categories grouped as the category analysis shows them
+        /// (the Markdown section 4 and the stats page's by-category tables), in
+        /// display order. The one list both read.</summary>
+        internal static readonly (string Label, string[] Categories)[] CategoryGroups =
+        [
+            ("Monocolor", ["W", "U", "B", "R", "G"]),
+            ("Guilds (2-Color)", ["WU", "UB", "BR", "RG", "GW", "WB", "UR", "BG", "RW", "GU"]),
+            ("Shards & Wedges (3-Color)", ["WUB", "UBR", "BRG", "RGW", "GWU", "WBG", "URW", "BUG", "RWB", "GUR"]),
+            ("4-5 Colors & Colorless", ["4_5_Colors", "Colorless"]),
+        ];
+
         // Every CardEffect member in declared order, read once: the tallies below
         // walk it per card, and Enum.GetValues allocates a fresh array each call.
         private static readonly CardEffect[] AllEffects = Enum.GetValues<CardEffect>();
@@ -79,11 +90,11 @@ namespace ScatoloneDownloader.Mtg
         }
 
         /// <summary>Builds an analyzer over the active pool only — <see cref="RatingTier.Pool"/>
-        /// and no Banned/Token/Jolly status — so the cube report matches what the
-        /// views surface (and the <see cref="CardStatus"/> doc), plus the
+        /// and no Banned/Token/Jolly status — so the cube analysis matches what the
+        /// tagger's pool surfaces (and the <see cref="CardStatus"/> doc), plus the
         /// <see cref="RatingTier.Bench"/> cards for the availability appendix. The
         /// tier boundaries come from <see cref="RatingTierClassifier"/> rather than
-        /// a literal, so the report can never disagree with view generation or
+        /// a literal, so the analysis can never disagree with the tagger or
         /// metadata storage about where a rating belongs. The plain constructor
         /// analyzes whatever it is given, which the download <c>analyze</c>/<c>files</c>
         /// path relies on (those cards carry no rating).</summary>
@@ -121,8 +132,8 @@ namespace ScatoloneDownloader.Mtg
         }
 
         /// <summary>The same analysis over the bench (rating-2) cards of this analyzer
-        /// instead of the pool, so the live stats page and <c>report</c> report the
-        /// bench with exactly the same code.</summary>
+        /// instead of the pool, so the live stats page and the Markdown
+        /// analysis report the bench with exactly the same code.</summary>
         internal AnalysisReport AnalyzeBench()
         {
             return new CardAnalyzer(benchCards).Analyze();
@@ -259,25 +270,17 @@ namespace ScatoloneDownloader.Mtg
             sb.AppendLine("## 4. Category Analysis (Excluding Lands)");
             sb.AppendLine();
 
-            Dictionary<string, string[]> groups = new()
+            foreach ((string label, string[] categories) in CategoryGroups)
             {
-                { "### Monocolor", ["W", "U", "B", "R", "G"] },
-                { "### Guilds (2-Color)", ["WU", "UB", "BR", "RG", "GW", "WB", "UR", "BG", "RW", "GU"] },
-                { "### Shards & Wedges (3-Color)", ["WUB", "UBR", "BRG", "RGW", "GWU", "WBG", "URW", "BUG", "RWB", "GUR"] },
-                { "### 4-5 Colors & Colorless", ["4_5_Colors", "Colorless"] }
-            };
-
-            foreach (KeyValuePair<string, string[]> group in groups)
-            {
-                bool hasCardsInGroup = group.Value.Any(cat => report.ColorCategoryCounts.TryGetValue(cat, out int c) && c > 0);
+                bool hasCardsInGroup = categories.Any(cat => report.ColorCategoryCounts.TryGetValue(cat, out int c) && c > 0);
                 if (!hasCardsInGroup) continue;
 
-                sb.AppendLine(group.Key);
+                sb.AppendLine("### " + label);
                 sb.AppendLine();
                 sb.AppendLine("| Category | Cards | Perms % | Spells % | Creatures % | Avg CMC | Cr. Avg CMC | Pip Dens | All CMC Dist (0-6+) | Cr. CMC Dist (0-6+) | Rating (3★/4★/5★) |");
                 sb.AppendLine("| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |");
 
-                foreach (string category in group.Value)
+                foreach (string category in categories)
                 {
                     if (!report.ColorCategoryCounts.TryGetValue(category, out int catTotal) || catTotal == 0)
                     {
@@ -441,7 +444,7 @@ namespace ScatoloneDownloader.Mtg
         /// out, effect counts overlapping) are exactly the pool's; only the three
         /// axes a hole is actually diagnosed on are shown — color, cost, effect.
         /// Omitted entirely when there is no bench, so the download
-        /// <c>analyze</c>/<c>files</c> report is unchanged.
+        /// <c>analyze</c> report is unchanged.
         /// </summary>
         private static void AppendBenchSection(StringBuilder sb, AnalysisReport? bench)
         {
@@ -455,7 +458,7 @@ namespace ScatoloneDownloader.Mtg
             sb.AppendLine($"## 7. Bench Availability ({bench.TotalCards + bench.LandCount} Cards, Rating 2)");
             sb.AppendLine("*Cards cut by a hair. They are NOT counted in any section above — this is the");
             sb.AppendLine("shortlist to promote from when a section above shows a hole.");
-            sb.AppendLine("Raise a card to 3 in the tagger and the next `report` counts it in the pool.*");
+            sb.AppendLine("Raise a card to 3 in the tagger and the tagger's /stats page counts it in the pool.*");
             sb.AppendLine($"*   **Non-Land:** {bench.TotalCards} | **Lands:** {bench.LandCount} | **Tagged:** {tagged} ({GetPercentage(tagged, bench.TotalCards)}%)");
             sb.AppendLine();
 

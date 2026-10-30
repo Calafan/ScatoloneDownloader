@@ -8,13 +8,13 @@ namespace ScatoloneDownloader.Cli.Cube
 {
     /// <summary>
     /// Matches physical master image files to Scryfall cards by NAME, shared by
-    /// <c>tag</c>, <c>report</c> and <c>sync</c> (<c>restore</c> matches in
+    /// <c>tag</c> and <c>sync</c> (<c>restore</c> matches in
     /// reverse — from metadata to bulk by id/oracle_id — and stays separate). The
     /// forward name match was previously copy-pasted into each of the commands,
     /// which had already drifted apart; this is the single implementation.
     /// <para>
     /// <see cref="ScanAndMatchAsync"/> is the whole scan-then-match sequence
-    /// <c>tag</c> and <c>report</c> share: it lists the <c>.png</c> files first and returns
+    /// <c>tag</c> runs: it lists the <c>.png</c> files first and returns
     /// before the expensive Scryfall bulk download when the folder is empty, since
     /// there are then no cards to match. <see cref="Match"/> alone is the pure
     /// matching step.

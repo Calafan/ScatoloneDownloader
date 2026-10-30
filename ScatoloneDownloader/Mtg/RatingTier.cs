@@ -19,7 +19,7 @@ namespace ScatoloneDownloader.Mtg
         /// round-tripping, never counted in the analysis (D7).</summary>
         Fringe,
 
-        /// <summary>Rating 2 — cut, but only just. Listed in the report's bench
+        /// <summary>Rating 2 — cut, but only just. Listed in the stats page's bench
         /// appendix so a card can be promoted back when the pool turns out to be
         /// short somewhere (a top-heavy curve needing more two-drops, a color
         /// missing removal). Shares <c>fringe.json</c> with <see cref="Fringe"/>:

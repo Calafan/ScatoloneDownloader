@@ -28,6 +28,7 @@
   th:first-child, td:first-child { text-align:left; position:sticky; left:0; background:var(--panel); z-index:1; }
   th:first-child { background:var(--rail); }
   tr.meta td { color:var(--muted); }
+  tr.group td { color:var(--muted); font-weight:600; font-size:12px; text-align:left; background:var(--rail); }
   td.zero { color:var(--muted); }
   td .pct { color:var(--muted); font-size:11px; margin-left:5px; }
   td a { color:var(--txt); }
@@ -54,7 +55,7 @@
   <button type="button" id="refresh">Refresh</button>
   <span id="updated"></span>
 </header>
-<div id="note">Numbers are live from the tagger's memory &mdash; the same counts the next <code>report</code> writes into <code>Cubo_Analysis.md</code>.</div>
+<div id="note">Numbers are live from the tagger's memory, so they follow every change at once. The pool is the cards rated 3&ndash;5 with no status; the bench is exactly &#9733;2.</div>
 <div id="viewbar">Columns:
   <button type="button" id="vMono" class="on">mono + Multi</button>
   <button type="button" id="vIdentity">colour incl. multi</button>
@@ -67,9 +68,10 @@ let view = new URLSearchParams(location.search).get("view") === "identity" ? "id
 // Plain links into the tagger, same tab, so the back button returns here with
 // the scope still in the tagger's query string. The tier's rating param plus
 // status=None and type=*nonland reproduce the analyzer's own population; the
-// creature tables pass type=Creature and a cost bucket instead.
-function link(tier, colorParam, effectsParam, match, type, cost) {
-  const q = ["review=all", "rating=" + encodeURIComponent(tier.ratingParam), "status=None", "type=" + (type || "*nonland")];
+// creature tables pass type=Creature and a cost bucket instead. A trailing rating
+// ("r3".."r5", the star cells) replaces the tier's rating param.
+function link(tier, colorParam, effectsParam, match, type, cost, rating) {
+  const q = ["review=all", "rating=" + encodeURIComponent(rating || tier.ratingParam), "status=None", "type=" + (type || "*nonland")];
   if (cost) q.push("cost=" + encodeURIComponent(cost));
   if (colorParam) q.push("color=" + encodeURIComponent(colorParam));
   if (effectsParam) q.push("effects=" + effectsParam.split(",").map(encodeURIComponent).join(","));
@@ -255,6 +257,137 @@ function curveTable(tier, curve) {
   return table;
 }
 
+const BUCKETS = ["0", "1", "2", "3", "4", "5", "6_Plus"];
+const bucketLabel = b => b === "6_Plus" ? "6+" : b;
+
+function plainHead(labels) {
+  const tr = el("tr");
+  labels.forEach(t => tr.appendChild(el("th", null, t)));
+  const thead = el("thead");
+  thead.appendChild(tr);
+  return thead;
+}
+
+// A group row of the category tables: the group's label across every column.
+function groupRow(label, span) {
+  const tr = el("tr", "group");
+  const td = el("td", null, label);
+  td.colSpan = span;
+  tr.appendChild(td);
+  return tr;
+}
+
+// The pool's global distribution by type and cost. Not part of the mono/identity
+// toggle: the rows are macro types. The shares of the cost cells are of the row.
+function typesTable(tier, o) {
+  const all = o.nonLand + o.lands;
+  const table = el("table");
+  table.appendChild(plainHead(["Type", "Cards", ...BUCKETS.map(bucketLabel)]));
+  const body = el("tbody");
+
+  o.types.forEach(t => {
+    const tr = el("tr");
+    tr.appendChild(el("td", null, t.label));
+    tr.appendChild(countCell(t.cards, all, link(tier, "", "", "", t.macro), null));
+    BUCKETS.forEach(b => tr.appendChild(countCell(
+      t.byCost[b] || 0, t.cards, link(tier, "", "", "", t.macro, b), null)));
+    body.appendChild(tr);
+  });
+
+  const nl = el("tr", "meta");
+  nl.appendChild(el("td", null, "Non-land"));
+  nl.appendChild(countCell(o.nonLand, all, link(tier, "", "", "", "*nonland"), null));
+  BUCKETS.forEach(b => nl.appendChild(countCell(
+    o.curveTotal[b] || 0, o.nonLand, link(tier, "", "", "", "*nonland", b), null)));
+  body.appendChild(nl);
+
+  // Lands carry no mana value in the analysis, so their cost cells stay empty.
+  const ln = el("tr", "meta");
+  ln.appendChild(el("td", null, "Lands"));
+  ln.appendChild(countCell(o.lands, all, link(tier, "", "", "", "Land"), null));
+  BUCKETS.forEach(() => ln.appendChild(el("td", "zero", "–")));
+  body.appendChild(ln);
+
+  table.appendChild(body);
+  return table;
+}
+
+function typesNote(o) {
+  const pct = n => o.nonLand > 0 ? Math.round(n * 100 / o.nonLand) : 0;
+  return (o.nonLand + o.lands).toLocaleString() + " cards: " + o.nonLand.toLocaleString() + " non-land + "
+    + o.lands.toLocaleString() + " lands · permanents " + o.permanents.toLocaleString() + " (" + pct(o.permanents) + "%)"
+    + " · spells " + o.spells.toLocaleString() + " (" + pct(o.spells) + "%) of non-land"
+    + " · average mana value " + o.averageMv.toFixed(2) + " (lands excluded)"
+    + " · pip density " + o.pipDensity.toFixed(2) + " (coloured pips per non-land card)"
+    + " · cards per colour: the Non-land row of “effects by colour”, with “colour incl. multi”";
+}
+
+// The pool by exact colour category, in the analyzer's groups. A category's colour
+// filter is its view folder name; the Total row has none. Shares: the type and star
+// cells of the row's own cards, Cards of the pool's non-land, Lands of the pool's lands.
+function categoriesTable(tier, o) {
+  const heads = ["Category", "Cards", "Creatures", "Other perm.", "Spells", "Avg MV", "Creature avg MV", "Pips", "★3", "★4", "★5", "Lands"];
+  const table = el("table");
+  table.appendChild(plainHead(heads));
+  const body = el("tbody");
+  const avg = v => el("td", null, v == null ? "–" : v.toFixed(2));
+
+  const addRow = (r, cls) => {
+    const c = r.colorParam;
+    const tr = el("tr", cls);
+    tr.appendChild(el("td", null, r.name));
+    tr.appendChild(countCell(r.cards, o.nonLand, link(tier, c), null));
+    tr.appendChild(countCell(r.creatures, r.cards, link(tier, c, "", "", "Creature"), null));
+    tr.appendChild(countCell(r.otherPermanents, r.cards, link(tier, c, "", "", "OtherPermanent"), null));
+    tr.appendChild(countCell(r.spells, r.cards, link(tier, c, "", "", "Spell"), null));
+    tr.appendChild(avg(r.averageMv));
+    tr.appendChild(avg(r.creatureAverageMv));
+    tr.appendChild(avg(r.pipDensity));
+    tr.appendChild(countCell(r.rated3, r.cards, link(tier, c, "", "", null, null, "r3"), null));
+    tr.appendChild(countCell(r.rated4, r.cards, link(tier, c, "", "", null, null, "r4"), null));
+    tr.appendChild(countCell(r.rated5, r.cards, link(tier, c, "", "", null, null, "r5"), null));
+    tr.appendChild(countCell(r.lands, o.lands, link(tier, c, "", "", "Land"), null));
+    body.appendChild(tr);
+  };
+
+  o.groups.forEach(g => {
+    body.appendChild(groupRow(g.label, heads.length));
+    g.rows.forEach(r => addRow(r, null));
+  });
+  addRow(o.total, "meta");
+  table.appendChild(body);
+  return table;
+}
+
+// Mana value (0 to 6+) by colour category. Rows without the counted cards (lands
+// only, or no creatures) are left out; each cell's share is of its row's Total,
+// which is the row's cards (or creatures) and links with the colour alone.
+function costByCategoryTable(tier, o, byCost, count, type) {
+  const table = el("table");
+  table.appendChild(plainHead(["Category", ...BUCKETS.map(bucketLabel), "Total"]));
+  const body = el("tbody");
+
+  const addRow = (r, cls) => {
+    const c = r.colorParam;
+    const n = count(r);
+    const tr = el("tr", cls);
+    tr.appendChild(el("td", null, r.name));
+    BUCKETS.forEach(b => tr.appendChild(countCell(byCost(r)[b] || 0, n, link(tier, c, "", "", type, b), null)));
+    tr.appendChild(countCell(n, n, link(tier, c, "", "", type), null));
+    body.appendChild(tr);
+  };
+
+  o.groups.forEach(g => {
+    const rows = g.rows.filter(r => count(r) > 0);
+    if (rows.length === 0) return;
+    body.appendChild(groupRow(g.label, BUCKETS.length + 2));
+    rows.forEach(r => addRow(r, null));
+  });
+  addRow(o.total, "meta");
+  table.appendChild(body);
+  return table;
+}
+
 // A muted explanatory line above the table, optional.
 function section(title, table, note) {
   const out = document.getElementById("out");
@@ -272,6 +405,13 @@ function render() {
   out.innerHTML = "";
   if (!payload) return;
   const pm = payload.pool[view], bm = payload.bench[view];
+  const o = payload.overview;
+  section("Pool — global distribution", typesTable(payload.pool, o), typesNote(o));
+  section("Pool — by colour category", categoriesTable(payload.pool, o), "Exact colour identity; a land counts only under Lands.");
+  section("Pool — mana value by colour category",
+    costByCategoryTable(payload.pool, o, r => r.byCost, r => r.cards, "*nonland"));
+  section("Pool — creature mana value by colour category",
+    costByCategoryTable(payload.pool, o, r => r.creatureByCost, r => r.creatures, "Creature"));
   section("Pool — effects by colour", matrixTable(payload.pool, pm));
   section("Pool — answers vs targets", answersTable(payload.pool, pm));
   section("Bench (★2) — available by effect and colour", matrixTable(payload.bench, bm));

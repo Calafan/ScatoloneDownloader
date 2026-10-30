@@ -238,7 +238,7 @@ namespace ScatoloneDownloader.Cli.Cube
                     // and the cost bucket), which the page filters on directly.
                     color = ColorCategoryClassifier.ViewFolderName(m.Card.ColorCategory),
                     // The stats page's two colour views: the one-column split the
-                    // report uses ("Multi" for every gold card) and the raw identity
+                    // analyzer uses ("Multi" for every gold card) and the raw identity
                     // letters ("BG", "" for colourless) for "any card with this colour".
                     column = CardAnalyzer.EffectColumn(m.Card.ColorCategory),
                     identity = string.Concat(m.Card.ColorIdentity),

@@ -1,27 +1,33 @@
+using System.Globalization;
 using ScatoloneDownloader.Mtg;
 
 namespace ScatoloneDownloader.Cli.Cube
 {
     /// <summary>
-    /// What the tagger's <c>/stats</c> page shows: sections 5-7 of
-    /// <c>Cubo_Analysis.md</c> (effects by colour, answers against targets, bench by
-    /// effect and colour), for the pool and for the bench. Built from the very same
-    /// <see cref="CardAnalyzer"/> that <c>report</c> uses (<c>ForPool</c>, then
-    /// <c>Analyze</c> / <c>AnalyzeBench</c>), so the page and the Markdown report
-    /// cannot disagree; the only difference is that the tagger feeds it its live
-    /// in-memory cards instead of the ones read from disk.
+    /// What the tagger's <c>/stats</c> page shows, for the pool and for the bench: the
+    /// pool's global distribution, category analysis and mana-value tables
+    /// (<see cref="Overview"/>), then the effects by colour, the answers against
+    /// targets, the bench by effect and colour and the creature profile. Built by
+    /// <see cref="CardAnalyzer"/> (<c>ForPool</c>, then <c>Analyze</c> /
+    /// <c>AnalyzeBench</c>) over the tagger's live in-memory cards; the
+    /// <c>analyze</c> download command renders the same analysis as Markdown, but
+    /// for the cards of a list. The Markdown's "cards per colour" section (a gold
+    /// card counted in each of its colours) is not repeated: it is the Non-land row
+    /// of the identity matrix (<c>CardsByIdentity</c>).
     /// </summary>
     /// <param name="Effects">Every single effect flag name, enum order.</param>
     /// <param name="Glossary">Tooltip text, same order as <paramref name="Effects"/>.</param>
     /// <param name="Pool">The active pool: <see cref="RatingTier.Pool"/> cards without a Banned/Token/Jolly status.</param>
     /// <param name="Bench">The <see cref="RatingTier.Bench"/> cards, shown beside the pool as the availability appendix.</param>
+    /// <param name="Overview">The pool's distribution by type, cost and exact colour category.</param>
     internal sealed record StatsPayload(
         IReadOnlyList<string> Effects,
         IReadOnlyList<string> Glossary,
         StatsTier Pool,
-        StatsTier Bench)
+        StatsTier Bench,
+        StatsOverview Overview)
     {
-        // The colour columns of the two views. Mono is the report's own one-column
+        // The colour columns of the two views. Mono is the analyzer's own one-column
         // split (a gold card is "Multi"); identity counts a card in every colour it has.
         private static readonly (string Key, string Name)[] MonoColumns =
         [
@@ -57,7 +63,119 @@ namespace ScatoloneDownloader.Cli.Cube
                 effects,
                 glossary,
                 BuildTier("Pool", "pool", pool, order),
-                BuildTier("Bench", "r2", bench, order));
+                BuildTier("Bench", "r2", bench, order),
+                BuildOverview(pool));
+        }
+
+        private static readonly (MacroType Macro, string Label)[] OverviewTypes =
+        [
+            (MacroType.Creature, "Creatures"),
+            (MacroType.OtherPermanent, "Other permanents"),
+            (MacroType.Spell, "Spells"),
+        ];
+
+        private static StatsOverview BuildOverview(AnalysisReport report)
+        {
+            List<StatsTypeRow> types = OverviewTypes
+                .Select(t =>
+                {
+                    Dictionary<int, int> curve = report.CurveByMacroType.GetValueOrDefault(t.Macro) ?? [];
+                    Dictionary<string, int> byCost = CostBucket.All.ToDictionary(
+                        b => b,
+                        b => curve.GetValueOrDefault(b == "6_Plus" ? 6 : int.Parse(b, CultureInfo.InvariantCulture), 0));
+                    return new StatsTypeRow(
+                        t.Macro.ToString(), t.Label, report.MacroTypeCounts.GetValueOrDefault(t.Macro, 0), byCost);
+                })
+                .ToList();
+
+            Dictionary<string, int> curveTotal = CostBucket.All.ToDictionary(b => b, b => types.Sum(t => t.ByCost[b]));
+
+            int spells = report.MacroTypeCounts.GetValueOrDefault(MacroType.Spell, 0);
+
+            List<StatsCategoryGroup> groups = [];
+            foreach ((string label, string[] categories) in CardAnalyzer.CategoryGroups)
+            {
+                List<StatsCategoryRow> rows = categories
+                    .Where(c => report.ColorCategoryCounts.GetValueOrDefault(c, 0) > 0
+                        || report.LandsByCategory.GetValueOrDefault(c, 0) > 0)
+                    .Select(c => CategoryRow(report, c))
+                    .ToList();
+                if (rows.Count > 0)
+                {
+                    groups.Add(new StatsCategoryGroup(label, rows));
+                }
+            }
+
+            // The creature average of the whole pool: the per-category creature cmc
+            // distributions summed, over the creature count.
+            double creatureCmcSum = report.CreatureCmcByCategory.Values
+                .Sum(d => d.Sum(kv => kv.Key * kv.Value));
+            StatsCategoryRow total = new(
+                "",
+                "Total",
+                "",
+                report.TotalCards,
+                report.MacroTypeCounts.GetValueOrDefault(MacroType.Creature, 0),
+                report.MacroTypeCounts.GetValueOrDefault(MacroType.OtherPermanent, 0),
+                spells,
+                report.AverageCmc,
+                report.CreatureCount == 0 ? null : creatureCmcSum / report.CreatureCount,
+                report.GlobalPipDensity,
+                report.RatingTiers.Where(kv => kv.Key.Stars == 3).Sum(kv => kv.Value),
+                report.RatingTiers.Where(kv => kv.Key.Stars == 4).Sum(kv => kv.Value),
+                report.RatingTiers.Where(kv => kv.Key.Stars == 5).Sum(kv => kv.Value),
+                report.LandCount,
+                curveTotal,
+                CostBucket.All.ToDictionary(b => b, b => report.CreatureByCost.GetValueOrDefault(b)?.Creatures ?? 0));
+
+            return new StatsOverview(
+                report.TotalCards,
+                report.LandCount,
+                report.TotalCards - spells,
+                spells,
+                report.AverageCmc,
+                report.GlobalPipDensity,
+                types,
+                curveTotal,
+                groups,
+                total);
+        }
+
+        private static StatsCategoryRow CategoryRow(AnalysisReport report, string key)
+        {
+            Dictionary<MacroType, int> byType = report.MacroTypeByCategory.GetValueOrDefault(key) ?? [];
+            int creatures = byType.GetValueOrDefault(MacroType.Creature, 0);
+
+            return new StatsCategoryRow(
+                key,
+                ColorCategoryClassifier.Display(key),
+                ColorCategoryClassifier.ViewFolderName(key),
+                report.ColorCategoryCounts.GetValueOrDefault(key, 0),
+                creatures,
+                byType.GetValueOrDefault(MacroType.OtherPermanent, 0),
+                byType.GetValueOrDefault(MacroType.Spell, 0),
+                report.AverageCmcPerCategory.GetValueOrDefault(key, 0),
+                creatures == 0 ? null : report.AverageCreatureCmcPerCategory.GetValueOrDefault(key, 0),
+                report.PipDensityPerCategory.GetValueOrDefault(key, 0),
+                report.RatingTiers.GetValueOrDefault((key, 3), 0),
+                report.RatingTiers.GetValueOrDefault((key, 4), 0),
+                report.RatingTiers.GetValueOrDefault((key, 5), 0),
+                report.LandsByCategory.GetValueOrDefault(key, 0),
+                FoldByCost(report.CmcByCategory.GetValueOrDefault(key)),
+                FoldByCost(report.CreatureCmcByCategory.GetValueOrDefault(key)));
+        }
+
+        /// <summary>Folds raw (cmc, count) pairs into every <see cref="CostBucket"/>,
+        /// zero included.</summary>
+        private static Dictionary<string, int> FoldByCost(Dictionary<double, int>? byCmc)
+        {
+            Dictionary<string, int> folded = CostBucket.All.ToDictionary(b => b, _ => 0);
+            foreach ((double cmc, int count) in byCmc ?? [])
+            {
+                folded[CostBucket.Of(cmc)] += count;
+            }
+
+            return folded;
         }
 
         private static StatsTier BuildTier(
@@ -192,6 +310,62 @@ namespace ScatoloneDownloader.Cli.Cube
             return columns.ToDictionary(c => c.Key, c => counts.GetValueOrDefault(c.Key, 0));
         }
     }
+
+    /// <summary>The pool's overview: counts, the non-land curve by type, and the exact
+    /// colour categories in their groups. Lands carry no mana value, so they appear
+    /// only in <paramref name="Lands"/> and in each category's own Lands count.</summary>
+    /// <param name="NonLand">Non-land pool cards.</param>
+    /// <param name="Permanents">Non-land cards that are not spells.</param>
+    /// <param name="AverageMv">Average mana value, lands excluded.</param>
+    /// <param name="PipDensity">Coloured pips per non-land card.</param>
+    /// <param name="Types">Creature, OtherPermanent, Spell, in that order.</param>
+    /// <param name="CurveTotal">The non-land curve: the sum of <paramref name="Types"/> per cost bucket.</param>
+    /// <param name="Groups">The category groups that hold at least one row.</param>
+    /// <param name="Total">The whole pool as one row; its Key and ColorParam are empty.</param>
+    internal sealed record StatsOverview(
+        int NonLand,
+        int Lands,
+        int Permanents,
+        int Spells,
+        double AverageMv,
+        double PipDensity,
+        IReadOnlyList<StatsTypeRow> Types,
+        IReadOnlyDictionary<string, int> CurveTotal,
+        IReadOnlyList<StatsCategoryGroup> Groups,
+        StatsCategoryRow Total);
+
+    /// <summary>One macro type. <paramref name="Macro"/> is the tagger's <c>type=</c>
+    /// value; <paramref name="ByCost"/> has every <see cref="CostBucket"/> key.</summary>
+    internal sealed record StatsTypeRow(
+        string Macro,
+        string Label,
+        int Cards,
+        IReadOnlyDictionary<string, int> ByCost);
+
+    internal sealed record StatsCategoryGroup(string Label, IReadOnlyList<StatsCategoryRow> Rows);
+
+    /// <summary>One exact colour category. <paramref name="ColorParam"/> is the tagger's
+    /// <c>color=</c> value (the view folder name). A row exists when the category has
+    /// non-land cards or lands; <paramref name="CreatureAverageMv"/> is null without
+    /// creatures. <paramref name="ByCost"/> and <paramref name="CreatureByCost"/> have
+    /// every <see cref="CostBucket"/> key and leave lands out.</summary>
+    internal sealed record StatsCategoryRow(
+        string Key,
+        string Name,
+        string ColorParam,
+        int Cards,
+        int Creatures,
+        int OtherPermanents,
+        int Spells,
+        double AverageMv,
+        double? CreatureAverageMv,
+        double PipDensity,
+        int Rated3,
+        int Rated4,
+        int Rated5,
+        int Lands,
+        IReadOnlyDictionary<string, int> ByCost,
+        IReadOnlyDictionary<string, int> CreatureByCost);
 
     internal sealed record StatsTier(
         string Label,

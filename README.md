@@ -9,7 +9,7 @@ cube. It does two jobs:
 - **Manages the cube**: a rating, a status and effect tags for every card, kept
   as JSON in the [ScatoloneQuintet](https://github.com/Calafan/ScatoloneQuintet)
   repository, with a web tagger to edit them, a classifier that proposes effect
-  tags from the rules text, and the folders and report used to browse the cube.
+  tags from the rules text, and a live stats page to see the cube's balance.
 
 ## Requirements
 
@@ -46,9 +46,9 @@ ScatoloneDownloader <command> [arguments] [options]
 | `all` | Every card, one printing each (library rules), grouped by year and set | — |
 | `set <SETS>` | Every valid printing of the given sets | one or more set codes (e.g. `neo dmu`) |
 | `years <YEARS>` | Cards first released in the given years (1993–2050), library rules | one or more years |
-| `files <FILES>` | Cards from hand-written lists, plus a stats file. Copies from the library the images it already holds and downloads only the rest (`--root`) | one or more files |
+| `files <FILES>` | Cards from hand-written lists. Copies from the library the images it already holds and downloads only the rest (`--root`) | one or more files |
 | `lands` | **Every** basic land artwork, split by land type | — |
-| `analyze <FILES>` | Analyses the lists **without** downloading images | one or more files |
+| `analyze <FILES>` | Analyses the lists **without** downloading images, writing a `<list>Stats.md` file | one or more files |
 
 ### Common options
 
@@ -168,24 +168,23 @@ small even with 30k+ cards:
 The rating scale, the statuses (Banned, Token, Jolly), the entry schema and the
 full effect ontology are described in the
 [ScatoloneQuintet README](https://github.com/Calafan/ScatoloneQuintet#readme).
-The technical reference — tier files, save behaviour, recovery, the report
+The technical reference — tier files, save behaviour, recovery, the stats page
 — is [`docs/cube-metadata.md`](docs/cube-metadata.md).
 
 | Command | What it does | Example |
 |---|---|---|
-| `tag` | Starts the local web tagger (keyboard-driven) to set rating, status and effects; every change is saved to `metadata/` at once. It opens on the review queue (untagged cards plus classifier proposals not yet confirmed), shuffled. Filters, picked in the left rail, combine by review state, rating (pool 3–5 / fringe 1–2 / unrated / exact stars), status, colour, type, effect, cost and folder (year, then set); `/` opens the card list with a name search. The effect filter is multi-select (all of the ticked effects, or any of them) and the scope is kept in the page address. `/stats` shows the cube's effects by colour, answers against targets, the bench and the creature profile (creatures by cost and by colour), computed live from the tagger's memory, and every count there opens the tagger on exactly those cards. Each effect button carries the tag's **definition** as a tooltip (and as a fixed line above the list on a phone). `-p, --port` sets the port (default 8765); `--host` adds a host name to answer to besides localhost, e.g. a Tailscale name | `ScatoloneDownloader tag` |
+| `tag` | Starts the local web tagger (keyboard-driven) to set rating, status and effects; every change is saved to `metadata/` at once. It opens on the review queue (untagged cards plus classifier proposals not yet confirmed), shuffled. Filters, picked in the left rail, combine by review state, rating (pool 3–5 / fringe 1–2 / unrated / exact stars), status, colour, type, effect, cost and folder (year, then set); `/` opens the card list with a name search. The effect filter is multi-select (all of the ticked effects, or any of them) and the scope is kept in the page address. `/stats` shows the pool's global distribution, its colour categories and mana-value tables, the cube's effects by colour, answers against targets, the bench and the creature profile (creatures by cost and by colour), computed live from the tagger's memory, and every count there opens the tagger on exactly those cards. Each effect button carries the tag's **definition** as a tooltip (and as a fixed line above the list on a phone). `-p, --port` sets the port (default 8765); `--host` adds a host name to answer to besides localhost, e.g. a Tailscale name | `ScatoloneDownloader tag` |
 | `classify` | Proposes effect tags from each card's Scryfall rules text. Proposals only: it writes `effects` but never `reviewedAt`, and never touches a reviewed card. `--overwrite` re-proposes over unreviewed entries, `--dry-run` reports without writing. `classify.cmd` builds Release first and passes its arguments through | `ScatoloneDownloader classify --overwrite` |
 | `audit` | Lists **reviewed** cards that say the same thing but were tagged differently — the slips repetitive tagging produces. Read-only. `--since` limits the report to recent sittings, `--limit` the number of groups | `ScatoloneDownloader audit --since 2026-09-12` |
-| `report` | Writes the `Cubo_Analysis.md` report (section 8 is the creature profile of the pool; default `Views\Cubo_Analysis.md` in the library root, or `-o <FILE>`) from `metadata/`. Writes nothing else | `ScatoloneDownloader report` |
 | `sync` | Brings the library up to the library rules in one go: downloads the cards the rules select and `Source\` lacks (one Scryfall bulk download, reused by every step), registers them in `metadata/` as unrated entries and proposes their effects (never `reviewedAt`), and restamps the `scryfallId` of an existing entry whose card the rules now pick in another printing (nothing else of an existing entry). Files no rule selects and store entries with no image are only **listed** — it never deletes or moves a file or removes an entry. `--dry-run` shows the plan and downloads and writes nothing. Don't run it while `tag` is open | `ScatoloneDownloader sync --dry-run` |
 | `make-list` | Writes, offline, a download list for `files` with the pool only (rating 3–5). Cards with a status go in `-- Banned` / `-- Token` / `-- Jolly` sections, so `files` sorts them into sub-folders | `ScatoloneDownloader make-list -o pool.txt` |
 | `restore --images <DIR>` | Recovery: rebuilds the image folder from every file in `metadata/` plus Scryfall's bulk data | `ScatoloneDownloader restore --images .\Source` |
 
 All of them work against one **library root** holding `Source\` (the images,
-`<year>\<set>\<Name>.png`), `metadata\` (the store) and `Views\` (the report).
+`<year>\<set>\<Name>.png`) and `metadata\` (the store).
 The root is `"root"` in [`scatolone.json`](ScatoloneDownloader/scatolone.json),
 which is copied next to the executable, or `--root <DIR>` for one run; with
-neither, the command stops and says where to set it. `tag`, `report`
+neither, the command stops and says where to set it. `tag`
 and `sync` take no folder argument: their library is `<root>\Source`.
 `-m, --metadata <DIR>` overrides only the metadata folder (default
 `<root>\metadata`), and `classify`, `audit`, `make-list` and `restore` need no

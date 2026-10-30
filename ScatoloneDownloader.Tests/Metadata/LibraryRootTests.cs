@@ -121,12 +121,11 @@ public sealed class LibraryRootTests : IDisposable
     }
 
     [Fact]
-    public void Subfolders_AreSourceMetadataAndViews()
+    public void Subfolders_AreSourceAndMetadata()
     {
         string root = Path.Combine(temp, "Q");
 
         Assert.Equal(Path.Combine(root, "Source"), LibraryRoot.Source(root));
         Assert.Equal(Path.Combine(root, "metadata"), LibraryRoot.Metadata(root));
-        Assert.Equal(Path.Combine(root, "Views"), LibraryRoot.Views(root));
     }
 }

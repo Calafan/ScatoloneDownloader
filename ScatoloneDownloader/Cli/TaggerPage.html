@@ -410,13 +410,13 @@ function typeLabel() { return typeSel === TYPE_NONLAND ? "all but lands" : (MACR
 // The axes besides type and effect, so a scope like white creatures at cost 2
 // is colour + type + cost. Colour and cost arrive as display names (see
 // TagCommand), which keeps the filter and the cost picker from drifting apart.
-// Status is the axis the report applies first — a Banned/Token/Jolly card is
+// Status is the axis the analyzer applies first — a Banned/Token/Jolly card is
 // left out of the analysis at any rating — so "no status" with "pool" is
-// exactly the pool the report counts, and "exactly ★2 (bench)" with "no
-// status" is the bench appendix.
+// exactly the pool the stats page counts, and "exactly ★2 (bench)" with "no
+// status" is its bench.
 function statusMatch(c) { return !statusSel || c.status === statusSel; }
 // Besides the folder names, two pseudo-values the stats page links with:
-// "*multi" is the report's Multi column (every gold card), and "*has:X" is
+// "*multi" is the analyzer's Multi column (every gold card), and "*has:X" is
 // "any card with X in its colour identity", gold cards included.
 function colorMatch(c) {
   if (!colorSel) return true;

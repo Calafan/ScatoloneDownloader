@@ -7,7 +7,7 @@ namespace ScatoloneDownloader.Cube
     /// Loads rating, status, and effect tags from the metadata directory's
     /// rating-tier files (pool/fringe/unrated — see <see cref="CubeMetadataStore"/>)
     /// and applies them to cards by <see cref="Card.OracleId"/>. This is the sole
-    /// source of evaluation data for the tagger and the report; nothing is read
+    /// source of evaluation data for the tagger and its stats; nothing is read
     /// from the image files. Cards absent from every tier file
     /// are reset to the unrated / no-status / no-effects defaults.
     /// </summary>

@@ -65,11 +65,10 @@ public sealed class MetadataSettingsTests : IDisposable
     }
 
     [Fact]
-    public void TagReportSync_ResolveToTheSameStoreAndSource()
+    public void TagSync_ResolveToTheSameStoreAndSource()
     {
         MetadataSettings[] all =
         [
-            new ReportCommand.Settings { SettingsDirectory = settingsDir },
             new TagCommand.Settings { SettingsDirectory = settingsDir },
             new SyncCommand.Settings { SettingsDirectory = settingsDir },
         ];

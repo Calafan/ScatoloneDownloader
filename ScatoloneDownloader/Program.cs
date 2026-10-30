@@ -26,7 +26,7 @@ namespace ScatoloneDownloader
                     .WithDescription("Download cards released in the given years.");
 
                 config.AddCommand<FilesCommand>("files")
-                    .WithDescription("Download cards listed in file(s) and write a stats file.");
+                    .WithDescription("Download cards listed in file(s), copying from the library what it already holds.");
 
                 config.AddCommand<LandsCommand>("lands")
                     .WithDescription("Download every basic land artwork, grouped by land type.");
@@ -36,9 +36,6 @@ namespace ScatoloneDownloader
 
                 config.AddCommand<AnalyzeCommand>("analyze")
                     .WithDescription("Analyze list file(s) without downloading images.");
-
-                config.AddCommand<ReportCommand>("report")
-                    .WithDescription("Write the cube analysis report (Cubo_Analysis.md) from the library root and its metadata.");
 
                 config.AddCommand<TagCommand>("tag")
                     .WithDescription("Launch the local web tagger to assign card rating/status/effects and autosave to the metadata directory.");
