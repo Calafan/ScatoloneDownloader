@@ -34,3 +34,9 @@ your own exiled spells is not a copy: Forger's Foundry is CardAdvantage, and Kef
 not this. Kept as one tag because both do the same job in a deck — they turn an opponent's spell
 into your problem-solver — and because splitting them would give two tags of a few dozen cards each.
 Distinct from Counter, which answers by removing the spell.
+
+Read 2026-10-30: a copy of the NEXT instant or sorcery you cast this turn, with new targets
+(Tzaangor Shaman; Flamehold Grappler, untagged on 2026-09-11, handed back), and of the next ability
+you activate (Dynaheir, Invoker Adept, 2 of 2 with Pit Automaton). A TRIGGER on every activation,
+"whenever you activate …, copy that ability", stays out (0 of 10, Leori, Sparktouched Hunter in the
+same sitting).

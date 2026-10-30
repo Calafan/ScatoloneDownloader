@@ -86,3 +86,5 @@ Treasure maker lent for a turn (Furnace Reins), a source adding the colour its c
 (Sunken Palace), and one mana of any colour only when the card returned is green (Tamiyo,
 Inquisitive Student). Handed back: Land Tax with the tag; Crystal Vein, Metamorphosis, All-Fates
 Scroll, Fellwar Stone, Candelabra of Tawnos and Hall of Gemstone without it.
+
+Read 2026-10-30: "add two mana of different colors" (Interplanar Beacon, Guild Globe; 2 of 2).

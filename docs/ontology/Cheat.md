@@ -46,8 +46,7 @@ TYPE out of the hand had been Cheat (Goblin Wizard, Willow Priestess, Didgeridoo
 ("Kastral è tribale, in questo caso non conta"), widened it the same day ("Vorrei una revisione dei
 tribali. Reanimate e Cheat non dovrebbero contare"): a cheat only a creature TYPE can use is not
 this tag — a type card or spell (Goblin Wizard, Dracogenesis, Kaalia of the Vast), a creature card
-of the chosen type (Belbe's Portal) or sharing a type with the enchanted creature (Call to the
-Kindred) — nor is one behind a tribal trigger, asked with Kiora, Sovereign of the Deep ("Tribale,
+sharing a type with the enchanted creature (Call to the Kindred) — nor is one behind a tribal trigger, asked with Kiora, Sovereign of the Deep ("Tribale,
 niente Cheat"), nor one behind a cost only OTHER members of the type pay (Shadow-Rite Priest's
 "sacrifice another Cleric"). An exclusion is no tribe (Kinnan's non-Human), nor is an Aura or
 Equipment card. The 6 reviewed tribal Cheats were handed back. A tribal trigger the card fires
@@ -112,3 +111,9 @@ CardAdvantage, so the same exiled card is Cheat paid with life and CardAdvantage
 
 Ruled 2026-10-25 on March of Burgeoning Life ("stesso nome"): a tutor for a copy of a creature
 already on the battlefield is Tutor alone, as Bifurcate and Mask of the Mimic already were.
+
+Overturned 2026-10-30 with Buff and Reanimate ("Se scegli tu il tipo quando gioco la carta è diverso
+da un tribale fisso", for every tag): a creature card of the CHOSEN type is any creature, and
+Belbe's Portal is Cheat again. A type printed on the card stays tribal, and so does one SHARED with
+another creature: Call to the Kindred stays out, and Descendants' Fury's dig for a card sharing a
+type with the sacrificed creature is Filter and Sacrifice by hand (2026-10-29), not Cheat.

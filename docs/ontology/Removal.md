@@ -137,3 +137,6 @@ untagged (Eldrazi Ravager, Breaker of Creation, Nulldrifter, Azlask, Idol of Fal
 Taskmaster); Nazgûl Battle-Mace is corrected by name and keeps its Burn. And a PERMANENT shuffled
 into its owner's library is RemovePermanent alone ("Solo RemovePermanent": Audacious Swap,
 corrected by name), the breadth rule of 2026-09-15; a creature shuffled away stays this tag.
+
+Read 2026-10-30: -1/-1 counters put on a creature CHOSEN in the sentence before, here by die roll
+(Attempted Murder, 1 of 1).

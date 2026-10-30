@@ -130,3 +130,8 @@ this turn is (Cryptek, tagged by hand; Reincarnation, which returns another card
 of Doom and Livio, Oathsworn Sentinel keep the tag ("una specie di Protection"), Rescue Retriever
 stays out, and March of Swirling Mist gains Pacify beside it (Pacify.md). Measured with the readings
 of 2026-10-24: Protection 12 wrong to none, F1 97.6 to 100.
+
+Read 2026-10-30: a keyword granted beside the return from death ("gains lifelink and "When this
+creature dies, return it to the battlefield…"", Return to Action; 6 of 7, the seventh Perigee
+Beckoner's on an enters trigger). Its +1/+0 stays Buff, the lifelink being more than the shield's
+rider (Buff.md).

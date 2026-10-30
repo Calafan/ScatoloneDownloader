@@ -161,3 +161,10 @@ another name, and a pump only tokens get is the 09-25 Tokens payoff rather than 
 Buff by hand and is corrected by name; Voldaren Bloodcaster's Bloodbat face follows unreviewed. A
 creature token made something else is a body already and stays out, and so does a token made a copy
 (Kaya, Spirits' Justice).
+
+Ruled 2026-10-30 ("l'avventura conta a sé"): the SPELL face of an Adventure or an Omen is cast on
+its own, and its bodies count as a sorcery's; the 2026-09-24 rule for a creature that makes one or
+two bodies once does not reach them. Animating Faerie's Bring to Life (a noncreature artifact made a
+0/0 with four +1/+1 counters) is Tokens by hand; Ratcatcher Trainee, Riling Dawnbreaker, Hildibrand
+Manderville, Imodane's Recruiter and Devouring Sugarmaw, untagged before the ruling, were realigned
+and handed back.

@@ -43,3 +43,9 @@ later (Cosmic Rebirth), the top card of your graveyard put on top of your librar
 and flashback granted to the instants and sorceries in graveyards (Otaria). Handed back without the
 tag, the rules reading none: Dutiful Knowledge Seeker, Paradigm Shift, Dredger's Insight,
 Undergrowth Recon and Heartless Conscription; Angelic Renewal moves to Reanimate.
+
+Ruled 2026-10-30 (Anikthea, Hand of Erebos, kept Regrowth by hand): a token copy of a NONCREATURE
+card exiled from your graveyard is Regrowth. A creature card's copy stays Reanimate (Ardyn, Mordor
+on the March, Abyssal Harvester), and so does an "artifact or creature" copy (Tawnos, Lorehold
+Archivist). Read the same day: a card of yours put into the graveyard from the battlefield, exiled
+and then cast (Mazzy, Truesword Paladin's Auras, 1 of 1).

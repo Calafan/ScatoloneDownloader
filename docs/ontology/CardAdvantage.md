@@ -418,3 +418,11 @@ Rex, Alpha). Measured and rejected: every activated draw past the 100 window, 5 
 (Kogla and Yidaro, Aladdin's Lamp, Jeweled Bird, Vikya, Scorching Stalwart). Corrected by name:
 Finneas, Ace Archer, untagged on 2026-09-23 before Éowyn, Shieldmaiden's identical "Then if …, draw
 a card" was read as this tag, is this tag and stays reviewed ("Assegnagli CA e basta").
+
+Read 2026-10-30 with the chosen-type ruling (Buff.md): "reveal any number of creature cards of the
+chosen type … put them into your hand" is CardAdvantage like any other (For the Ancestors);
+Karumonix's printed Rats stay Filter. Read the same day: a loot on one ability beside a draw of
+several on another, by the 2026-09-29 two-abilities ruling (The Royal Scions' +1 and −8, 2 of 2 with
+Qiqirn), and a standing permission to play a land or cast from elsewhere (Kagha, Shadow Archdruid; 9
+of 10 reviewed, The Eighth Doctor the exception). Not a cycling reminder's "Discard this card: Draw
+a card", nor a draw that spends the card.

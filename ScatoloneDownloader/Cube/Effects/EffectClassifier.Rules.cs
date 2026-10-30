@@ -109,6 +109,13 @@ namespace ScatoloneDownloader.Cube
                     // (2026-10-20), read 2026-10-27.
                     Rx(@"(?<!don't )(?<!for each opponent, choose a creature [^.\n]{0,80}\. )destroy those creatures"
                         + @"|airbend all(?: [\w-]{1,15}){0,3} creatures"),
+                    // The card swept away WITH the board, read 2026-10-30: Fraying
+                    // Line's "exile this artifact and each creature without a rope
+                    // counter on it" and Gideon, the Oathsworn's −9 "exile Gideon
+                    // and each creature your opponents control", both Wipe by hand
+                    // (2 of 2). Defiant Vanguard's "destroy it and ALL creatures it
+                    // blocked this turn" is its own block, not a board.
+                    Rx(@"\b(?:destroy|exile) (?!target\b)[\w,' ]{1,40} and each (?:other )?creature\b(?! you control)"),
                     Rx(@"(?<!target |attacking |blocking )\bcreatures\b(?:(?! you control\b| with the same name\b)[^.\n]){0,60}? get -[\dX]+/-[1-9X]"),
                     Rx(@"\beach(?: [\w-]{1,15}){0,3} creature\b(?:(?! you control\b)[^.\n]){0,60}? gets (?:twice )?-[\dX]+/-[1-9X]"),
                     Rx(@"-1/-1 counters? on each(?: [\w-]{1,15}){0,3} creature\b(?! you control)"),
@@ -229,6 +236,12 @@ namespace ScatoloneDownloader.Cube
                     // on 2026-10-27 ("Solo RemovePermanent"); Chaos Warp and
                     // Oblation follow.
                     Rx(@"owner of target (?:(?:non[\w-]+|legendary),? )*permanent[\w ,-]{0,40} shuffles it into"),
+                    // …and one per player, the owners named after the targets
+                    // (Guff Rewrites History's "choose target nonenchantment,
+                    // nonland permanent that player controls. Those permanents'
+                    // owners shuffle them into their libraries", RemovePermanent
+                    // by hand, read 2026-10-30).
+                    Rx(@"target (?:(?:non[\w-]+|legendary),? )*permanent[\w ]{0,30}\. those permanents' owners shuffle them into"),
                     Rx(@"\bchooses an? permanent they control that shares a card type\b[^.\n]{0,60}\bsacrifices it\b"),
                     // The victim named by its mana value, then destroyed on the
                     // reflexive trigger (Behemoth of Vault 0), and the permanents
@@ -611,7 +624,18 @@ namespace ScatoloneDownloader.Cube
                     // CREATURE spell is a token and is Tokens, not this — see
                     // CopiesYourCreatureSpell.
                     Rx(@"(?<!\bcast this spell\b[^.\n]{0,80})\bcop(?:y|ies) (?:it|that spell(?: or ability)?|them)\b"
-                        + @"[^.\n]{0,60}?(?:\.|,| and) you may choose new targets for the cop(?:y|ies)"),
+                        + @"[^.\n]{0,60}?(?:\.|,| and) you may choose new targets for the cop(?:y|ies)"
+                        // Two more delayed copies, read 2026-10-30: "copy THE NEXT
+                        // instant or sorcery spell you cast this turn when you cast
+                        // it" (Tzaangor Shaman, tagged; Flamehold Grappler, untagged
+                        // on 2026-09-11 before the ruling of 09-28, handed back), and
+                        // the next ABILITY named "that ability" (Dynaheir, Invoker
+                        // Adept, as Pit Automaton's "copy it" — 2 of 2). A TRIGGER on
+                        // every activation, "whenever you activate …, copy that
+                        // ability", stays out (0 of 10, Leori, Sparktouched Hunter
+                        // in the same sitting).
+                        + @"|\bcopy the next [\w ]{0,40}spell you cast this turn when you cast it\. you may choose new targets for the copy"
+                        + @"|\bwhen you next activate [^.\n]{0,120}, copy that ability\. you may choose new targets for the copy"),
                     Rx(@"\b(?:whenever|when) you (?:next )?cast "
                         + @"(?!this spell\b)(?![^.\n,]{0,60}\b(?:creature|outlaw|permanent) spell)[^.\n,]{0,60}\bspells?\b[^.\n,]{0,40}, "
                         + @"copy (?:it|that spell)\b(?! for each time you've cast your commander)")]),
@@ -1033,6 +1057,13 @@ namespace ScatoloneDownloader.Cube
                 (CardEffect.Filter, [Rx(@"\bempowers? jace\b"),
                     Rx(@"\b(?:scry|scries|surveil|surveils) (?:\d+|x)\b"),
                     Rx(@"look at the top \w+ cards? of your library"),
+                    // A dig for a creature of the SACRIFICED creature's type, which
+                    // TribalCard keeps from being Cheat: Descendants' Fury, Filter
+                    // by hand like Call to the Kindred's look at five (read
+                    // 2026-10-30). Not widened to a printed type: Hei Bai's
+                    // "Shrine card" is Filter by hand and Tom Bombadil's "Saga
+                    // card" untagged, 1 to 1.
+                    Rx(@"until you reveal a creature card that shares a creature type with [^.\n]{0,40}\. put that card onto the battlefield"),
                     Rx(@"discard[\w ]* then draw"), Rx(@"draws? [\w ]{0,20}cards?[.,] ?(?:then |and )?(?:you may )?discards?"),
                     // The same exchange written discard-first WITH a count:
                     // "Discard a card, then draw two cards" (Romantic Rendezvous,
@@ -1438,7 +1469,8 @@ namespace ScatoloneDownloader.Cube
                     // An Aura "ATTACHED TO this creature" is not a creature
                     // sacrificed (Faunsbane Troll, 2026-10-15).
                     Rx(@"sacrifices? (?:a|an|another|two|three|\d+|x\b|one or more\b)(?:(?!\battached to\b)[\w ])*(?:creature|artifact|permanent)"),
-                    Rx(SacrificeKeywordGranted + @"|\bsacrificing (?:a|an|another)[\w ]*(?:creature|artifact|permanent)"),
+                    Rx(SacrificeKeywordGranted + @"|\bsacrificing (?:a|an|another)[\w ]*(?:creature|artifact|permanent)"
+                        + @"|" + SacrificesOneOfThem),
                     Rx(SacrificesYourOwnByAnotherVerb, RegexOptions.Multiline)]),
 
                 // Three patterns of "gain control" saw one third of this tag. The rest
@@ -1472,6 +1504,9 @@ namespace ScatoloneDownloader.Cube
                     // it is withdrawn by EveryFixerIsASource like any other.
                     Rx(@"mana in any combination of colou?rs"),
                     Rx(@"add \{[wubrg]\} or \{[wubrg]\}"), Rx(@"add \{[wubrg]\}, \{[wubrg]\}"),
+                    // Two colours of your choice, read 2026-10-30: Guild Globe and
+                    // Interplanar Beacon, both ManaFixing by hand (2 of 2).
+                    Rx(@"add two mana of different colou?rs"),
                     // Typecycling fetches the colour you are short of, which is the
                     // whole job. Added 2026-09-15; worth 11 on its own.
                     TypeCycling,

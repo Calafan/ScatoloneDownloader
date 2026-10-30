@@ -88,3 +88,7 @@ and X creatures each closing a list of what each player loses (Death Cloud).
 
 Read 2026-10-27: "destroy those creatures" after ONE creature chosen per opponent is an edict and
 Removal's, not a board (Highcliff Felidar, Removal alone by hand).
+
+Read 2026-10-30: the card exiled TOGETHER WITH each creature (Fraying Line's "exile this artifact
+and each creature without a rope counter on it", Gideon, the Oathsworn's −9; 2 of 2). Defiant
+Vanguard's "destroy it and all creatures it blocked this turn" is its own block, not a board.

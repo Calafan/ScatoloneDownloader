@@ -182,3 +182,18 @@ it. Keyword counters listed without "and" (Scavenged Brawler's four +1/+1, flyin
 trample and lifelink) are the keyword handed out on a creature, as measured on 2026-10-16, but a
 SPELL that is only such counters is B2's own example and keeps the tag (Gift of the Viper;
 Unexpected Fangs follows).
+
+Overturned 2026-10-30 ("Se scegli tu il tipo quando gioco la carta è diverso da un tribale fisso",
+for every tag): a creature type CHOSEN as the card enters or is cast is no tribe. Its anthem is Buff
+like any other, as Lifecraft Engine's already was by hand. Patchwork Banner, Banner of Kinship,
+Etchings of the Chosen, Icon of Ancestry, Morophon, the Boundless and Renewed Solidarity, untagged
+by hand, were realigned and handed back. A type PRINTED on the card stays a tribe (Karumonix's
+Rats), and so does one SHARED with another creature.
+
+Read 2026-10-30: counters COPIED from this card onto the creature that enters (Denry Klin, Editor in
+Chief), and a pump with LIFELINK beside a granted shield, which keeps Buff beside Protection where a
+bare pump is the shield's rider (Return to Action, as Scales of Shale; Presumed Dead stays
+Protection alone). Not this: the counters a TRIGGER waits for ("whenever you put one or more +1/+1
+counters on another colorless creature", Omarthis, Ghostfire Initiate; 0 of 4 reviewed), and a
+counter on "target Shrine for each Shrine you control" (Go-Shintai of Boundless Vigor), a tribe like
+Treebeard's (0 of 11).

@@ -22,3 +22,7 @@ nonenchantment permanent shuffles it into their library") is this tag alone ("So
 RemovePermanent": Audacious Swap, Removal by hand, corrected by name), as a creature shuffled away
 is Removal's; Chaos Warp and Oblation follow. Annihilator's sacrifice of a permanent of their choice
 stays out, like the plain edict of 2026-10-15.
+
+Read 2026-10-30: one target per player, the owners named after the targets ("Those permanents'
+owners shuffle them into their libraries", Guff Rewrites History), under the 2026-10-27 shuffle
+rule.

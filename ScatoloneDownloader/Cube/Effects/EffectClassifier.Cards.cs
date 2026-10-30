@@ -292,7 +292,12 @@ namespace ScatoloneDownloader.Cube
             // Almasy casts "target instant or sorcery card WITH MANA VALUE 3 OR
             // LESS from your graveyard" on every hit, and the window stopped at
             // the noun.
-            @"you may cast (?!this card|it\b)[\w ,'-]{0,40}(?:spells?|cards?)[\w ,'-]{0,40} "
+            // A land may come first: Kagha, Shadow Archdruid's "Once during
+            // each of your turns, you may play a land or cast a permanent
+            // spell from among cards in your graveyard …" (read 2026-10-30;
+            // 9 of 10 reviewed standing permissions to cast from the graveyard
+            // are tagged, The Eighth Doctor the one that is not).
+            @"you may (?:play a land or )?cast (?!this card|it\b)[\w ,'-]{0,40}(?:spells?|cards?)[\w ,'-]{0,40} "
             + @"from (?:among )?(?:cards in )?your graveyard"
             // Granting FLASHBACK to a graveyard wholesale is the same standing
             // permission written as a keyword — Iroh, Grand Lotus gives it to
@@ -479,7 +484,18 @@ namespace ScatoloneDownloader.Cube
             // hate, and cast from among what they exiled only later.
             Rx(@"exile[^.\n]{0,80}\bcards?\b[^.\n]{0,80}from (?:your|each) graveyards?\b[\s\S]{0,200}?"
                 + @"(?:you may (?:cast|play) (?!this card)|cast the cop(?:y|ies))"
-                + @"|exile[^.\n]{0,80}\bcards?\b[^.\n]{0,80}from a graveyard\b[^.\n]{0,10}(?:and )?copy (?:it|them)\b"),
+                + @"|exile[^.\n]{0,80}\bcards?\b[^.\n]{0,80}from a graveyard\b[^.\n]{0,10}(?:and )?copy (?:it|them)\b"
+                // …and the card exiled as it reaches your graveyard: Mazzy,
+                // Truesword Paladin's Auras (read 2026-10-30, 1 of 1).
+                + @"|is put into your graveyard from the battlefield, exile it\.[^\n]{0,60}you may cast that card"),
+            // A token COPY of a NONCREATURE card exiled out of your graveyard,
+            // ruled 2026-10-30 on Anikthea, Hand of Erebos's "non-Aura
+            // enchantment card" (Regrowth kept by name). A creature card's copy
+            // stays Reanimate (Ardyn, Mordor on the March, Abyssal Harvester),
+            // and so does "an artifact or creature card" (Tawnos, Lorehold
+            // Archivist).
+            Rx(@"exile (?:up to one )?(?:target )?(?:non-aura )?(?:enchantment|artifact|noncreature|instant|sorcery) card from your graveyard\. "
+                + @"create a token that's a copy of (?:that card|it)\b"),
             // …and cast from among the cards a collect-evidence or escape cost
             // exiled from it (Kylox's Voltstrider, Skyway Robber).
             Rx(@"(?:collect evidence|escape)[\s\S]{0,300}cast [^.\n]{0,60}from among cards exiled with (?:it|this)"),
@@ -644,13 +660,15 @@ namespace ScatoloneDownloader.Cube
         // ruled 2026-10-15 ("Reanimate e Cheat non dovrebbero contare" for the
         // tribal ones): a Pirate card back from the graveyard (Admiral Brass),
         // a Goblin card out of the hand (Goblin Wizard), Dragon spells cast free
-        // (Dracogenesis), a creature card of the CHOSEN type (From the Rubble,
-        // Belbe's Portal) or one that shares a creature type (Call to the
+        // (Dracogenesis), one that shares a creature type (Call to the
         // Kindred), and — asked with Kiora — one behind a tribal trigger: its
         // trigger and its look at the top are one sentence. Before it the hand
         // had tagged 7 such Reanimates and 6 such Cheats, all handed back. An
         // EXCLUSION is no tribe — Junji's "non-Dragon creature card" keeps
-        // Reanimate.
+        // Reanimate. Nor, from 2026-10-30, is a type CHOSEN as the card enters
+        // or resolves ("Se scegli tu il tipo quando gioco la carta è diverso da
+        // un tribale fisso", in every tag): From the Rubble is Reanimate and
+        // Belbe's Portal a Cheat again.
         // NB case-SENSITIVE: the type is what is capitalised, as for the tribal
         // pump and shield (NotATribe, NotACardType). The subtypes of the other
         // card types that these cards name are refused as well: an Aura
@@ -685,7 +703,7 @@ namespace ScatoloneDownloader.Cube
 
         private static readonly Regex TribalCard = new(
             ACreatureType + @" (?:creature |permanent )?(?:cards?|spells?)\b"
-            + @"|\bcreature cards? (?:of the chosen type|of that type|that shares? a creature type)\b",
+            + @"|\bcreature cards? that shares? a creature type\b",
             RegexOptions.CultureInvariant);
 
         // …unless the same sentence names a card ANY creature could be: Thwart
@@ -997,10 +1015,13 @@ namespace ScatoloneDownloader.Cube
         // The same count LOOKED at first and one of them exiled to be cast,
         // once: Feral Encounter (Filter by hand, 2026-10-14). Anchored to the
         // line, so the attack trigger of Djeru and Hazoret, which looks again
-        // every combat and is tagged, stays out.
+        // every combat and is tagged, stays out. The one exiled may be written
+        // "Exile one of them face down" (Discover the Impossible, Filter by
+        // hand, read 2026-10-30); Ashiok, Wicked Manipulator's "Exile one of
+        // them and put the other into your hand" casts nothing and stays out.
         private static readonly Regex ExileSeveralAndChooseOne = Rx(
             @"exiles? the top \w+ cards? of your library[^\n]{0,60}choose one of them"
-            + @"|^look at the top \w+ cards? of your library\. you may exile [^.\n]{0,40}\bcard from among them"
+            + @"|^look at the top \w+ cards? of your library\. (?:you may exile [^.\n]{0,40}\bcard from among them|exile one of them)"
             + @"[^\n]{0,160}you may cast the exiled card",
             RegexOptions.Multiline);
 
@@ -1292,6 +1313,14 @@ namespace ScatoloneDownloader.Cube
         // Revenge, Chakra Meditation).
         private static readonly Regex PlaneswalkerDrawThenDiscardUnless = Rx(
             @"^[+−-]?\d+: draw [^.\n]*\. then discard [^.\n]* unless", RegexOptions.Multiline);
+
+        // The same two abilities when the parity guard has already taken the
+        // draw away: a loot on one ability and a draw of two or more of yours,
+        // with no discard, on ANOTHER — The Royal Scions' "+1: Draw a card,
+        // then discard a card" beside its "−8: Draw four cards" (read
+        // 2026-10-30; 2 of 2 reviewed written so are tagged, Qiqirn Merchant
+        // the other).
+        private static readonly Regex YouDrawSeveral = Rx(@"\bdraw (?:two|three|four|five|six|seven|x) cards");
 
         // A selection written as its own verb inside the ability that gains
         // (a scry, a surveil) was measured the same day as both tags, as asked
@@ -1981,8 +2010,11 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex EntersOrLeavesImpulse = Rx(
             @"enters or leaves the battlefield, exile the top card of your library\. until end of turn, you may play that card");
 
+        // The cards may be of a type CHOSEN first (For the Ancestors, kept
+        // CardAdvantage on 2026-10-30: a chosen type is no tribe), where a
+        // printed one is TribalCard's Filter (Karumonix's Rats).
         private static readonly Regex RevealsAnyNumberIntoHand = Rx(
-            @"reveal any number of [\w ,/-]{0,40}cards from among them and put (?:them|the revealed cards) into your hand");
+            @"reveal any number of [\w ,/-]{0,40}cards (?:of the chosen (?:creature )?type )?from among them and put (?:them|the revealed cards) into your hand");
 
         private static readonly Regex GraveyardCardOnEveryHit = Rx(
             @"^whenever [^\n]{0,60}deals combat damage to a player, choose up to one target card in a graveyard\b"

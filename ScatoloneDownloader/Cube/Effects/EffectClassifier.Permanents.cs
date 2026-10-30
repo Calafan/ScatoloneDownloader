@@ -159,6 +159,11 @@ namespace ScatoloneDownloader.Cube
             // reaches "the number of lands you control" (Lasyd Prowler) and
             // "other than basic land cards" (Haunting Echoes).
             Rx(@"(?:destroy|exile)[^\n]{0,80}target [\w ,'\-]{0,40}\bnonbasic lands?\b"),
+            // …and a land at the end of a list of "up to one" targets too long
+            // for the run of 80 (Chaotic Transformation's five, after
+            // "and/or"; LandDestruction by hand, read 2026-10-30, 2 of 2 with
+            // Boom Box).
+            Rx(@"(?:destroy|exile) [^.\n]{0,160}\bup to one target land\b"),
             // Not "all other permanents EXCEPT FOR LANDS" (Elspeth Tirel) nor
             // "all Swamps YOU CONTROL" (Return of the Nightstalkers), 2026-10-16.
             // "All lands you control" was guarded the same way and moved no card
@@ -837,6 +842,27 @@ namespace ScatoloneDownloader.Cube
             (card.TypeLine ?? string.Empty).Split("//")[0]
                 .Contains("Creature", StringComparison.OrdinalIgnoreCase);
 
+        // The SPELL face of an Adventure or an Omen is cast on its own, and its
+        // bodies count as a sorcery's do, ruled 2026-10-30 ("l'avventura conta
+        // a sé") on Animating Faerie's Bring to Life, Tokens by hand, against
+        // Ratcatcher Trainee's Pest Problem, Riling Dawnbreaker's Signaling
+        // Roar and Hildibrand Manderville's Zombie, untagged before the ruling
+        // and handed back. The face is the type line's second, and its text the
+        // last line: the faces are joined in order, and Bring to Life prints no
+        // reminder to find it by.
+        private static bool SpellFaceMakesABody(Card card, string text)
+        {
+            string[] faces = (card.TypeLine ?? string.Empty).Split(" // ");
+            if (faces.Length < 2 || (!faces[1].Contains("Adventure", StringComparison.Ordinal)
+                && !faces[1].Contains("Omen", StringComparison.Ordinal)))
+            {
+                return false;
+            }
+
+            string face = text[(text.LastIndexOf('\n') + 1)..];
+            return BodiesMadeBy(Parenthetical.Replace(Quoted.Replace(face, " "), " ")) is not null;
+        }
+
         /// <summary>True when the card makes creature bodies and EVERY ability
         /// that does makes one or two of them, once. Asked only of a card whose
         /// FRONT face is a creature — see the call site for why the whole type
@@ -972,6 +998,11 @@ namespace ScatoloneDownloader.Cube
             @"^[^\n:]{0,40}:\s*destroy target (?![\w ]*attached)[\w ,]{0,40}(?:you control|you own)"
             + @"|^[^\n:]{0,40}exile (?:a|another) (?:creature|artifact)[\w ]{0,20}you control[^\n:]{0,20}:(?!\s*harness)";
 
+        // One of YOUR creatures that has just dealt combat damage, every time
+        // it happens (Descendants' Fury, Sacrifice by hand, read 2026-10-30;
+        // the one card that says it).
+        private const string SacrificesOneOfThem = @"\bcreatures you control [^.\n]{0,60}, you may sacrifice one of them\b";
+
         // Exploit, casualty, devour and bargain sacrifice ONCE, as the card is
         // cast or enters — and their reminder text is all the classifier sees
         // of them, which is blanked. HANDED ON, the same keyword comes round
@@ -1030,7 +1061,8 @@ namespace ScatoloneDownloader.Cube
             + @"|^[^\n:]{0,40}\{[^\n:]{0,40}:[^\n]*?\bthen sacrifice (?:a|an|another) [\w ]*(?:creature|artifact)"
             + @"|\bequip\W{1,3}sacrifice (?:a|an) (?:creature|artifact)"
             + @"|" + SacrificeKeywordGranted + @"|\bcast [^\n.]{0,60}\bby [^\n.]{0,30}sacrificing (?:a|an|another)[\w ]*(?:creature|artifact|permanent)"
-            + @"|" + SacrificesYourOwnByAnotherVerb,
+            + @"|" + SacrificesYourOwnByAnotherVerb
+            + @"|" + SacrificesOneOfThem,
             RegexOptions.Multiline);
 
         private static readonly Regex Buyback = Rx(@"^buyback\b", RegexOptions.Multiline);

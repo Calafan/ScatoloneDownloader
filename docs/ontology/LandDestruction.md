@@ -48,3 +48,6 @@ edict following a creature edict, ", then sacrifices a land" (Din of the Fireher
 "all AURAS attached to" a land, plural, which protects it like the singular (Street Sweeper). A land
 that closes a CHOICE, "an artifact, creature, or land of their choice", never has to be a land and
 is not this (Braids, Cabal Minion).
+
+Read 2026-10-30: a land closing a list of "up to one target" too long for the run of 80 (Chaotic
+Transformation's five, after "and/or"; 2 of 2 with Boom Box).

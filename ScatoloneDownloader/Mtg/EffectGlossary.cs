@@ -23,10 +23,10 @@
         private static readonly Dictionary<CardEffect, string> Descriptions = new()
         {
             [CardEffect.Tokens] =
-                "Puts CREATURE bodies on your side, however worded — earthbend, manifest, cloak, living weapon, "
+                "Puts CREATURE bodies on your side — earthbend, manifest, cloak, living weapon, "
                 + "an animated land, artifact, enchantment or token, a token copy of a creature or creature SPELL. "
-                + "A noncreature card counts for one body; a CREATURE only for three at once or a repeating "
-                + "effect. A Treasure, Clue or Food is a resource, not a body.",
+                + "A noncreature card or an Adventure's spell counts for one body; a CREATURE only for three at "
+                + "once or a repeating effect. A Treasure, Clue or Food is no body.",
 
             [CardEffect.Removal] =
                 "Answers ONE creature: destroy, exile, damage however counted, fight, an edict (one each, a "

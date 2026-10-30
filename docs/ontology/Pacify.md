@@ -201,3 +201,9 @@ COPIED creature is the victim's, not the card taxing itself (Stunning Strike, Wa
 Identity), and an Aura for an "artifact or creature" that says "as long as enchanted permanent is
 a creature, it has base power and toughness 1/1" is Burden of Proof's "otherwise" (Awakened
 Awareness).
+
+Read 2026-10-30: a -N/-0 to every creature you don't control UNTIL YOUR NEXT TURN is the 2026-10-27
+rule over an area (Behold the Unspeakable; Mouth of the Storm, untagged on 2026-09-11 before that
+ruling, handed back); the until-end-of-turn wording stays out (0 of 5: Mindwhisker, Bewildering
+Blizzard, Sea Hag). An Aura that makes its creature a noncreature artifact that loses its other card
+types is Sugar Coat's lock (Swift Reconfiguration, 2 of 2).

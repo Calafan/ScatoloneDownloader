@@ -34,3 +34,6 @@ Lich's Tomb with it; damage is the same price, named the same evening ("anche il
 rientra nella categoria"), so Phyrexian Negator, Phyrexian Totem and Lich's "whenever … is dealt
 damage, sacrifice that many" are out too. An upkeep still counts: it comes every turn whatever the
 opponent does.
+
+Read 2026-10-30: one of your creatures that has just dealt combat damage, every time it happens
+("you may sacrifice one of them", Descendants' Fury, 1 of 1).

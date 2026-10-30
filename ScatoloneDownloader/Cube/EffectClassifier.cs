@@ -404,7 +404,10 @@ namespace ScatoloneDownloader.Cube
             // type line, so a Saga or a Sidequest that transforms into a
             // creature ("Enchantment // Creature — Bird") would count as one,
             // and the card you cast is the enchantment.
-            if (result.HasFlag(CardEffect.Tokens) && FrontFaceIsACreature(card) && OnlyAFewBodiesOnce(ownBodies))
+            // Nor when the bodies come from an Adventure's or an Omen's spell
+            // face, which counts on its own (SpellFaceMakesABody).
+            if (result.HasFlag(CardEffect.Tokens) && FrontFaceIsACreature(card) && OnlyAFewBodiesOnce(ownBodies)
+                && !SpellFaceMakesABody(card, ownBodies))
             {
                 result &= ~CardEffect.Tokens;
             }
@@ -814,6 +817,17 @@ namespace ScatoloneDownloader.Cube
             // DrawsThenDiscards above for why this is added back rather than
             // written into the guard.
             if (LootDrawsMoreThanItPays(text))
+            {
+                result |= CardEffect.CardAdvantage;
+            }
+
+            // …or the loot is one ability and a draw of several another. See
+            // YouDrawSeveral. Not a cycling reminder's "Discard this card: Draw
+            // a card" (Boon of the Wish-Giver), nor a draw that spends the card
+            // (Seasoned Cryomancer's out of the graveyard): both moved without
+            // these two and no reviewed card did.
+            if (Loot.IsMatch(Parenthetical.Replace(oneSidedLoot, " ")) && Abilities(text).Any(a => YouDrawSeveral.IsMatch(a)
+                    && !a.Contains("discard", StringComparison.OrdinalIgnoreCase) && AbilityRepeatsAtNoCostToItself(a)))
             {
                 result |= CardEffect.CardAdvantage;
             }

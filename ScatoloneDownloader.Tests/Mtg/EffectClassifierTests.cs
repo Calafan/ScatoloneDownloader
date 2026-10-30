@@ -930,7 +930,8 @@ public sealed class EffectClassifierTests
     // keyword's reminder text and does nothing; an Aura that pumps the creature
     // it just took is paying for it; a pump bundled with a shrink or a fight is
     // a rider on the answer; and a lord is not this tag however the tribe is
-    // named — chosen, listed, or named as a card.
+    // named — listed, or named as a card. (A CHOSEN type was one of them until
+    // 2026-10-30: Patchwork Banner moved to the theory after this one.)
     [InlineData("Gabriel Angelfire", "Legendary Creature — Angel",
         "At the beginning of your upkeep, choose flying, first strike, trample, or rampage 3. Gabriel "
         + "Angelfire gains that ability until your next upkeep. (Whenever a creature with rampage 3 "
@@ -941,9 +942,6 @@ public sealed class EffectClassifierTests
     [InlineData("Gurmag Rakshasa", "Creature — Cat Demon",
         "Menace\nWhen this creature enters, target creature an opponent controls gets -2/-2 until end of "
         + "turn and target creature you control gets +2/+2 until end of turn.")]
-    [InlineData("Patchwork Banner", "Artifact",
-        "As this artifact enters, choose a creature type.\nCreatures you control of the chosen type get "
-        + "+1/+1.\n{T}: Add one mana of any color.")]
     [InlineData("The Swarmweaver", "Legendary Creature — Spider",
         "When The Swarmweaver enters, create two 1/1 black and green Insect creature tokens with flying.\n"
         + "Delirium — As long as there are four or more card types among cards in your graveyard, Insects "
@@ -952,6 +950,23 @@ public sealed class EffectClassifierTests
         string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // A type CHOSEN as the card enters is no tribe in any tag, ruled 2026-10-30
+    // ("Se scegli tu il tipo quando gioco la carta è diverso da un tribale
+    // fisso"): its anthem is Buff like any other. Patchwork Banner pinned the
+    // opposite from 2026-09-21.
+    [InlineData("Patchwork Banner", "Artifact",
+        "As this artifact enters, choose a creature type.\nCreatures you control of the chosen type get "
+        + "+1/+1.\n{T}: Add one mana of any color.")]
+    [InlineData("Banner of Kinship", "Artifact",
+        "As this artifact enters, choose a creature type. This artifact enters with a fellowship counter on "
+        + "it for each creature you control of the chosen type.\nCreatures you control of the chosen type get "
+        + "+1/+1 for each fellowship counter on this artifact.")]
+    public void Classify_AnAnthemOfAChosenType_IsBuff(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
     }
 
     [Theory]
@@ -7304,10 +7319,8 @@ public sealed class EffectClassifierTests
     [InlineData("Kaalia of the Vast", "Legendary Creature — Human Cleric", CardEffect.Cheat,
         "Flying\nWhenever Kaalia attacks an opponent, you may put an Angel, Demon, or Dragon creature card "
         + "from your hand onto the battlefield tapped and attacking that opponent.")]
-    // The chosen type, and a type shared with the enchanted creature.
-    [InlineData("Belbe's Portal", "Artifact", CardEffect.Cheat,
-        "As this artifact enters, choose a creature type.\n{3}, {T}: You may put a creature card of the "
-        + "chosen type from your hand onto the battlefield.")]
+    // A type shared with the enchanted creature. (Belbe's Portal's CHOSEN type
+    // stood here until 2026-10-30, moved to the theory below.)
     [InlineData("Call to the Kindred", "Enchantment — Aura", CardEffect.Cheat,
         "Enchant creature\nAt the beginning of your upkeep, you may look at the top five cards of your "
         + "library. If you do, you may put a creature card that shares a creature type with enchanted creature "
@@ -7329,7 +7342,9 @@ public sealed class EffectClassifierTests
     [InlineData("Meanders Guide", "Creature — Merfolk Scout", CardEffect.Reanimate,
         "Whenever this creature attacks, you may tap another untapped Merfolk you control. When you do, "
         + "return target creature card with mana value 3 or less from your graveyard to the battlefield.")]
-    // A creature TYPE back from the graveyard: alone, in a list, and/or, of the chosen type, of that type.
+    // A creature TYPE back from the graveyard: alone, in a list, and/or. (From
+    // the Rubble's "of the chosen type" and Haunting Voyage's "of that type"
+    // stood here until 2026-10-30, moved to the theory below.)
     [InlineData("Admiral Brass, Unsinkable", "Legendary Creature — Human Pirate", CardEffect.Reanimate,
         "When Admiral Brass enters, mill four cards.\nAt the beginning of combat on your turn, you may return "
         + "target Pirate creature card from your graveyard to the battlefield with a finality counter on it. It "
@@ -7345,15 +7360,6 @@ public sealed class EffectClassifierTests
     [InlineData("Celestial Gatekeeper", "Creature — Bird Cleric", CardEffect.Reanimate,
         "Flying\nWhen this creature dies, exile it, then return up to two target Bird and/or Cleric permanent "
         + "cards from your graveyard to the battlefield.")]
-    [InlineData("From the Rubble", "Enchantment", CardEffect.Reanimate,
-        "As this enchantment enters, choose a creature type.\nAt the beginning of your end step, return "
-        + "target creature card of the chosen type from your graveyard to the battlefield with a finality "
-        + "counter on it. (If a creature with a finality counter on it would die, exile it instead.)")]
-    [InlineData("Haunting Voyage", "Sorcery", CardEffect.Reanimate,
-        "Choose a creature type. Return up to two creature cards of that type from your graveyard to the "
-        + "battlefield. If this spell was foretold, return all creature cards of that type from your graveyard "
-        + "to the battlefield instead.\nForetell {5}{B}{B} (During your turn, you may pay {2} and exile this "
-        + "card from your hand face down. Cast it on a later turn for its foretell cost.)")]
     [InlineData("Kastral, the Windcrested", "Legendary Creature — Bird Scout", CardEffect.Reanimate,
         "Flying\nWhenever one or more Birds you control deal combat damage to a player, choose one —\n• You "
         + "may put a Bird creature card from your hand or graveyard onto the battlefield with a finality "
@@ -7426,9 +7432,320 @@ public sealed class EffectClassifierTests
     [InlineData("Glimpse the Core", "Sorcery", CardEffect.Reanimate,
         "Choose one —\n• Search your library for a basic Forest card, put that card onto the battlefield "
         + "tapped, then shuffle.\n• Return target Cave card from your graveyard to the battlefield tapped.")]
+    // A type CHOSEN as the card enters or resolves is no tribe in any tag,
+    // ruled 2026-10-30 ("Se scegli tu il tipo quando gioco la carta è diverso
+    // da un tribale fisso"); these three pinned the opposite from 2026-10-15.
+    [InlineData("Belbe's Portal", "Artifact", CardEffect.Cheat,
+        "As this artifact enters, choose a creature type.\n{3}, {T}: You may put a creature card of the "
+        + "chosen type from your hand onto the battlefield.")]
+    [InlineData("From the Rubble", "Enchantment", CardEffect.Reanimate,
+        "As this enchantment enters, choose a creature type.\nAt the beginning of your end step, return "
+        + "target creature card of the chosen type from your graveyard to the battlefield with a finality "
+        + "counter on it. (If a creature with a finality counter on it would die, exile it instead.)")]
+    [InlineData("Haunting Voyage", "Sorcery", CardEffect.Reanimate,
+        "Choose a creature type. Return up to two creature cards of that type from your graveyard to the "
+        + "battlefield. If this spell was foretold, return all creature cards of that type from your graveyard "
+        + "to the battlefield instead.\nForetell {5}{B}{B} (During your turn, you may pay {2} and exile this "
+        + "card from your hand face down. Cast it on a later turn for its foretell cost.)")]
     public void Classify_TheTribalReanimateAndCheat_KeepTheTagForAnyCreature(string name, string typeLine, CardEffect effect, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(effect));
+    }
+
+    [Theory]
+    // Any number of cards of a type CHOSEN first is CardAdvantage, ruled with the
+    // chosen type on 2026-10-30 (For the Ancestors, kept by name); a printed type
+    // is TribalCard's Filter (Karumonix).
+    [InlineData("For the Ancestors", "Instant",
+        "Choose a creature type. Look at the top six cards of your library. You may reveal any number of "
+        + "cards of the chosen type from among them and put the revealed cards into your hand. Put the rest on "
+        + "the bottom of your library in a random order.\nFlashback {3}{G} (You may cast this card from your "
+        + "graveyard for its flashback cost. Then exile it.)")]
+    public void Classify_AnyNumberOfAChosenType_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.False(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // A loot on one ability and a draw of several on another is CardAdvantage,
+    // read 2026-10-30: The Royal Scions' +1 beside its -8 draw four, tagged by
+    // hand on 2026-10-29 (2 of 2 with Qiqirn).
+    [InlineData("The Royal Scions", "Legendary Planeswalker — Will Rowan",
+        "+1: Draw a card, then discard a card.\n+1: Target creature gets +2/+0 and gains first strike and "
+        + "trample until end of turn.\n−8: Draw four cards. When you do, The Royal Scions deals damage to any "
+        + "target equal to the number of cards in your hand.")]
+    public void Classify_ALootBesideADrawOfSeveral_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // A standing permission to cast from the graveyard is CardAdvantage, read
+    // 2026-10-30 (Kagha, tagged 2026-10-27; 9 of 10 reviewed, The Eighth Doctor
+    // the exception).
+    [InlineData("Kagha, Shadow Archdruid", "Legendary Creature — Elf Druid",
+        "Whenever Kagha attacks, it gains deathtouch until end of turn. Mill two cards. (Put the top two "
+        + "cards of your library into your graveyard.)\nOnce during each of your turns, you may play a land or "
+        + "cast a permanent spell from among cards in your graveyard that were put there from your library this "
+        + "turn.")]
+    public void Classify_AStandingPermissionToCastFromElsewhere_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Look at the top cards, exile one and cast it is Filter by hand (Discover the
+    // Impossible, 2026-10-27, read 10-30).
+    [InlineData("Discover the Impossible", "Instant",
+        "Look at the top five cards of your library. Exile one of them face down and put the rest on the "
+        + "bottom of your library in a random order. You may cast the exiled card without paying its mana cost "
+        + "if it's an instant spell with mana value 2 or less. If you don't, put that card into your hand.")]
+    public void Classify_LookAtSeveralExileOneAndCastIt_IsFilter(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Filter));
+        Assert.False(result.HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Two ways a noncreature card comes back from the graveyard, read 2026-10-30:
+    // Mazzy's Aura exiled from the graveyard and then cast, and Anikthea's token
+    // copy of a noncreature card (ruled 10-30; creature copies stay Reanimate).
+    [InlineData("Mazzy, Truesword Paladin", "Legendary Creature — Halfling Knight",
+        "Whenever an enchanted creature attacks one of your opponents, it gets +2/+0 and gains trample until "
+        + "end of turn.\nWhenever an Aura you control is put into your graveyard from the battlefield, exile it. "
+        + "Until the end of your next turn, you may cast that card.")]
+    [InlineData("Anikthea, Hand of Erebos", "Legendary Enchantment Creature — Demigod",
+        "Menace\nOther enchantment creatures you control have menace.\nWhenever Anikthea enters or attacks, "
+        + "exile up to one target non-Aura enchantment card from your graveyard. Create a token that's a copy "
+        + "of that card, except it's a 3/3 black Zombie creature in addition to its other types.")]
+    public void Classify_ACardExiledFromTheGraveyardAndCast_IsRegrowth(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Regrowth));
+    }
+
+    [Theory]
+    // Behold the Unspeakable's -2/-0 to their creatures until your next turn
+    // (tagged 2026-10-27; Mouth of the Storm, untagged 09-11 before the ruling,
+    // handed back) and Swift Reconfiguration's creature made a noncreature
+    // artifact (like Sugar Coat), read 2026-10-30.
+    [InlineData("Behold the Unspeakable // Vision of the Unspeakable", "Enchantment — Saga // Enchantment Creature — Spirit",
+        "(As this Saga enters and after your draw step, add a lore counter.)\nI — Creatures you don't control "
+        + "get -2/-0 until your next turn.\nII — If you have one or fewer cards in hand, draw four cards. "
+        + "Otherwise, scry 2, then draw two cards.\nIII — Exile this Saga, then return it to the battlefield "
+        + "transformed under your control.\nFlying, trample\nThis creature gets +1/+1 for each card in your hand.")]
+    [InlineData("Mouth of the Storm", "Creature — Elemental",
+        "Flying\nWard {2} (Whenever this creature becomes the target of a spell or ability an opponent "
+        + "controls, counter it unless that player pays {2}.)\nWhen this creature enters, creatures your "
+        + "opponents control get -3/-0 until your next turn.")]
+    [InlineData("Swift Reconfiguration", "Enchantment — Aura",
+        "Flash\nEnchant creature or Vehicle\nEnchanted permanent is a Vehicle artifact with crew 5 and it loses "
+        + "all other card types. (It's not a creature unless it's crewed.)")]
+    public void Classify_AShrinkUntilYourNextTurnOrANoncreatureArtifact_IsPacify(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
+    }
+
+    [Theory]
+    // A copy of the next spell cast or the next ability activated, with new
+    // targets, is Redirect, read 2026-10-30: Tzaangor Shaman (tagged 10-27;
+    // Flamehold Grappler handed back) and Dynaheir, Invoker Adept (2 of 2 with Pit
+    // Automaton).
+    [InlineData("Tzaangor Shaman", "Creature — Mutant Shaman",
+        "Flying\nSorcerous Elixir — Whenever this creature deals combat damage to a player, copy the next "
+        + "instant or sorcery spell you cast this turn when you cast it. You may choose new targets for the "
+        + "copy.")]
+    [InlineData("Flamehold Grappler", "Creature — Human Monk",
+        "First strike\nWhen this creature enters, copy the next spell you cast this turn when you cast it. You "
+        + "may choose new targets for the copy. (A copy of a permanent spell becomes a token.)")]
+    [InlineData("Dynaheir, Invoker Adept", "Legendary Creature — Human Wizard",
+        "Haste\nYou may activate abilities of other creatures you control as though those creatures had "
+        + "haste.\n{T}: When you next activate an ability that isn't a mana ability this turn by spending four "
+        + "or more mana to activate it, copy that ability. You may choose new targets for the copy.")]
+    public void Classify_TheNextSpellOrAbilityCopied_IsRedirect(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Redirect));
+    }
+
+    [Theory]
+    // The card exiled together with each creature is Wipe, 2 of 2 by hand (read
+    // 2026-10-30).
+    [InlineData("Fraying Line", "Artifact",
+        "When this artifact enters, put a rope counter on target creature you control.\nAt the beginning of "
+        + "each player's upkeep, that player may pay {2}. If they do, they put a rope counter on a creature "
+        + "they control. Otherwise, exile this artifact and each creature without a rope counter on it, then "
+        + "remove all rope counters from all creatures.")]
+    [InlineData("Gideon, the Oathsworn", "Legendary Planeswalker — Gideon",
+        "Whenever you attack with two or more non-Gideon creatures, put a +1/+1 counter on each of those "
+        + "creatures.\n+2: Until end of turn, Gideon becomes a 5/5 white Soldier creature that's still a "
+        + "planeswalker. Prevent all damage that would be dealt to him this turn. (He can't attack if he was "
+        + "cast this turn.)\n−9: Exile Gideon and each creature your opponents control.")]
+    public void Classify_TheCardSweptAwayWithTheBoard_IsWipe(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Wipe));
+    }
+
+    [Theory]
+    // Denry Klin puts the same number of each kind of counter on the creature that
+    // enters, Buff by hand (2026-10-27, read 10-30).
+    [InlineData("Denry Klin, Editor in Chief", "Legendary Creature — Cat Advisor",
+        "Denry Klin enters with your choice of a +1/+1, first strike, or vigilance counter on it.\nWhenever a "
+        + "nontoken creature you control enters, if Denry Klin has counters on it, put the same number of each "
+        + "kind of counter on that creature.")]
+    public void Classify_CountersCopiedOntoTheCreatureThatEnters_IsBuff(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // Omarthis's "whenever you put one or more +1/+1 counters on another colorless
+    // creature" pays Omarthis (0 of 4 reviewed), and Go-Shintai of Boundless
+    // Vigor's counter goes on "target Shrine for each Shrine you control", a tribe
+    // (0 of 11). Both untagged 2026-10-29.
+    [InlineData("Omarthis, Ghostfire Initiate", "Legendary Creature — Spirit Snake",
+        "Omarthis enters with X +1/+1 counters on it.\nWhenever you put one or more +1/+1 counters on another "
+        + "colorless creature, you may put a +1/+1 counter on Omarthis.\nWhen Omarthis dies, manifest a number "
+        + "of cards from the top of your library equal to the number of counters on it.")]
+    [InlineData("Go-Shintai of Boundless Vigor", "Legendary Enchantment Creature — Shrine",
+        "Trample\nAt the beginning of your end step, you may pay {1}. When you do, put a +1/+1 counter on "
+        + "target Shrine for each Shrine you control.")]
+    public void Classify_ACounterTheTriggerWaitsForOrATribesCounter_IsNotBuff(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // Return to Action's +1/+0 and lifelink beside a granted return from death is
+    // Buff and Protection by hand (2026-10-27), as Scales of Shale's is; the same
+    // shield beside a bare pump is Protection alone (Presumed Dead).
+    [InlineData("Return to Action", "Instant",
+        "Until end of turn, target creature gets +1/+0 and gains lifelink and \"When this creature dies, "
+        + "return it to the battlefield tapped under its owner's control.\"")]
+    public void Classify_APumpWithLifelinkBesideAShield_IsBuffAndProtection(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Buff));
+        Assert.True(result.HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // "Add two mana of different colors", ManaFixing by hand on both reviewed
+    // cards (2026-10-29).
+    [InlineData("Interplanar Beacon", "Land",
+        "Whenever you cast a planeswalker spell, you gain 1 life.\n{T}: Add {C}.\n{1}, {T}: Add two mana of "
+        + "different colors. Spend this mana only to cast planeswalker spells.")]
+    [InlineData("Guild Globe", "Artifact",
+        "When this artifact enters, draw a card.\n{2}, {T}, Sacrifice this artifact: Add two mana of different "
+        + "colors.")]
+    public void Classify_TwoManaOfDifferentColours_IsManaFixing(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
+    }
+
+    [Theory]
+    // Guild Globe pays {2} for two mana, which adds none, and Civic Gardener
+    // untaps "target creature or land" (0 of 8 reviewed). Both untagged Ramp
+    // 2026-10-29.
+    [InlineData("Guild Globe", "Artifact",
+        "When this artifact enters, draw a card.\n{2}, {T}, Sacrifice this artifact: Add two mana of different "
+        + "colors.")]
+    [InlineData("Civic Gardener", "Creature — Human Citizen",
+        "Whenever this creature attacks, untap target creature or land.")]
+    public void Classify_TwoManaPaidForWithTwoOrACreatureUntapped_IsNotRamp(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // Attempted Murder's two -1/-1 counters per even result on the creature chosen
+    // first, Removal by hand (2026-10-27).
+    [InlineData("Attempted Murder", "Sorcery",
+        "Choose target creature. Roll X six-sided dice. For each even result, put two -1/-1 counters on that "
+        + "creature. For each odd result, create a 1/2 blue Bird creature token with flying named Storm Crow.")]
+    public void Classify_ACreatureChosenThenShrunkByADieRoll_IsRemoval(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
+    // Chaotic Transformation's "and/or up to one target land" after four other
+    // targets, LandDestruction by hand (2026-10-27; 2 of 2 with Boom Box).
+    [InlineData("Chaotic Transformation", "Sorcery",
+        "Exile up to one target artifact, up to one target creature, up to one target enchantment, up to one "
+        + "target planeswalker, and/or up to one target land. For each permanent exiled this way, its "
+        + "controller reveals cards from the top of their library until they reveal a card that shares a card "
+        + "type with it, puts that card onto the battlefield, then shuffles.")]
+    public void Classify_ALandAtTheEndOfALongListOfTargets_IsLandDestruction(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.LandDestruction));
+    }
+
+    [Theory]
+    // Guff Rewrites History's targets shuffled into their owners' libraries,
+    // RemovePermanent by hand (2026-10-29) like Audacious Swap.
+    [InlineData("Guff Rewrites History", "Instant",
+        "For each player, choose target nonenchantment, nonland permanent that player controls. Those "
+        + "permanents' owners shuffle them into their libraries. Each player who controlled one of those "
+        + "permanents exiles cards from the top of their library until they exile a nonland card, then puts the "
+        + "rest on the bottom of their library in a random order. Each player may cast the nonland card they "
+        + "exiled without paying its mana cost.")]
+    public void Classify_PermanentsShuffledAwayOnePerPlayer_IsRemovePermanent(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.RemovePermanent));
+    }
+
+    [Theory]
+    // An Adventure's or an Omen's spell face counts on its own, ruled 2026-10-30
+    // ("l'avventura conta a sé"): Animating Faerie tagged by hand, and the four
+    // untagged before the ruling handed back.
+    [InlineData("Animating Faerie // Bring to Life", "Creature — Faerie // Sorcery — Adventure",
+        "Flying\nTarget noncreature artifact you control becomes a 0/0 artifact creature. Put four +1/+1 "
+        + "counters on it.")]
+    [InlineData("Ratcatcher Trainee // Pest Problem", "Creature — Human Peasant // Instant — Adventure",
+        "During your turn, this creature has first strike.\nCreate two 1/1 black Rat creature tokens with "
+        + "\"This token can't block.\" (Then exile this card. You may cast the creature later from exile.)")]
+    [InlineData("Riling Dawnbreaker // Signaling Roar", "Creature — Dragon // Sorcery — Omen",
+        "Flying, vigilance\nAt the beginning of combat on your turn, another target creature you control gets "
+        + "+1/+0 until end of turn.\nCreate a 2/2 white Soldier creature token. (Then shuffle this card into its "
+        + "owner's library.)")]
+    [InlineData("Hildibrand Manderville // Gentleman's Rise", "Legendary Creature — Human Detective // Instant — Adventure",
+        "Creature tokens you control get +1/+1.\nWhen Hildibrand Manderville dies, you may cast it from your "
+        + "graveyard as an Adventure until the end of your next turn.\nCreate a 2/2 black Zombie creature token. "
+        + "(Then exile this card. You may cast the creature later from exile.)")]
+    [InlineData("Imodane's Recruiter // Train Troops", "Creature — Human Knight // Sorcery — Adventure",
+        "When this creature enters, creatures you control get +1/+0 and gain haste until end of turn.\nCreate "
+        + "two 2/2 white Knight creature tokens with vigilance. (Then exile this card. You may cast the "
+        + "creature later from exile.)")]
+    [InlineData("Devouring Sugarmaw // Have for Dinner", "Creature — Horror // Instant — Adventure",
+        "Menace, trample\nAt the beginning of your upkeep, you may sacrifice an artifact, enchantment, or "
+        + "token. If you don't, tap this creature.\nCreate a 1/1 white Human creature token and a Food token. "
+        + "(Then exile this card. You may cast the creature later from exile.)")]
+    public void Classify_TheBodiesOfAnAdventuresSpellFace_AreTokens(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    // Descendants' Fury sacrifices one of the creatures that dealt damage and digs
+    // for a creature sharing its type: Filter and Sacrifice by hand (2026-10-29),
+    // no Cheat, the type being TribalCard's.
+    [InlineData("Descendants' Fury", "Enchantment",
+        "Whenever one or more creatures you control deal combat damage to a player, you may sacrifice one of "
+        + "them. If you do, reveal cards from the top of your library until you reveal a creature card that "
+        + "shares a creature type with the sacrificed creature. Put that card onto the battlefield and the rest "
+        + "on the bottom of your library in a random order.")]
+    public void Classify_ADigForTheSacrificedCreaturesType_IsFilterAndSacrifice(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Filter));
+        Assert.True(result.HasFlag(CardEffect.Sacrifice));
+        Assert.False(result.HasFlag(CardEffect.Cheat));
     }
 
     [Theory]

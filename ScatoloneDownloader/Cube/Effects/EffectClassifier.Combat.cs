@@ -405,10 +405,15 @@ namespace ScatoloneDownloader.Cube
         // ability already named — Giant Oyster's "target tapped creature
         // doesn't untap … and at the beginning of each of your draw steps,
         // put a -1/-1 counter on that creature".
+        // …and the creature CHOSEN first and shrunk by a die roll, read
+        // 2026-10-30: Attempted Murder's "Choose target creature. Roll X
+        // six-sided dice. For each even result, put two -1/-1 counters on that
+        // creature", Removal by hand (1 of 1).
         private static readonly Regex ShrinkCounters = Rx(
             @"put(?:s)? (?:a|an|two|three|four|\d+|x) -[\dX]+/-[1-9X] counters? on "
             + @"(?:[\w ,'\-/]{0,40}(?:target|up to)|enchanted creature)"
             + @"|at the beginning of each of your draw steps, put a -1/-1 counter on that creature"
+            + @"|\bchoose target creature\. [^\n]{0,120}\bput (?:a|an|two|three|four|\d+|x) -[\dX]+/-[1-9X] counters? on that creature"
             + @"|distributes? (?:a|an|two|three|four|\d+|x) -[\dX]+/-[1-9X] counters? among");
 
         // Pacify's own version of the self-versus-other question, and the largest
@@ -617,7 +622,13 @@ namespace ScatoloneDownloader.Cube
             // The keyword counters beside it can be joined by "and" alone (Guide
             // of Souls' "two +1/+1 counters and a flying counter on target",
             // 2026-10-16).
-            @"\+[\dX]+/\+[\dX]+ counters?(?:,? (?:and )?an? [\w ]{0,20}counter,?(?: and an? [\w ]{0,20}counter)?)?"
+            // Not the counters a TRIGGER waits for: Omarthis's "whenever you put
+            // one or more +1/+1 counters on another colorless creature" pays
+            // Omarthis, and the human took Buff off it on 2026-10-29 (read
+            // 10-30; 0 of 4 reviewed with Earth Kingdom General, Stocking the
+            // Pantry and Terrasymbiosis).
+            @"(?<!\bwhenever you put (?:one or more|a|an) )"
+            + @"\+[\dX]+/\+[\dX]+ counters?(?:,? (?:and )?an? [\w ]{0,20}counter,?(?: and an? [\w ]{0,20}counter)?)?"
             + @" ?(?:equal to [\w' ]{0,30} )?on "
             + @"(?:target|another|each|up to|one or more|enchanted)"
             // "That creature" when it is the one just CAST (Communal Brewing,
@@ -680,7 +691,10 @@ namespace ScatoloneDownloader.Cube
             + @"|\bmove (?:a|an|one) (?:\+1/\+1 )?counters? from this (?:artifact|enchantment) onto"
             // REINFORCE, whose counters are only ever written in its reminder
             // like mentor's (Fowl Strike, tagged 2026-09-23).
-            + @"|\breinforce (?:[2-9]|x)\b");
+            + @"|\breinforce (?:[2-9]|x)\b"
+            // Its own counters COPIED onto the creature that enters (Denry Klin,
+            // tagged 2026-10-27, read 10-30; the only card that says it).
+            + @"|\bput the same number of each kind of counter on (?:that creature|it)\b");
 
         // DOUBLE STRIKE handed to another creature in three wordings the
         // subject gate cannot read, all tagged by hand (2026-10-16): the
@@ -743,16 +757,19 @@ namespace ScatoloneDownloader.Cube
             + @"|" + ClauseStart + @"(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + StateBeforeATribe + NotATribe + @"[A-Z][\w']+s? (?:you control )?(?:get|have)\b"
             + @"|[Tt]arget " + NotATribe + @"[A-Z][\w']+ creature gets"
             + @"|" + ClauseStart + @"(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + StateBeforeATribe + NotATribe + @"[A-Z][\w']+s? creatures? get \+"
-            // Four more ways a card names a tribe, found 2026-09-21 when the
-            // human ruled that a lord is never this tag: the type can be CHOSEN
-            // rather than printed (Patchwork Banner), several types can be
-            // listed (The Swarmweaver's "Insects and Spiders", Spider-Ham's
-            // eighteen), or the "tribe" can be one card NAME (Rohgahh's Kobolds
-            // of Kher Keep, Gary Clone's other Gary Clones).
+            // More ways a card names a tribe, found 2026-09-21 when the human
+            // ruled that a lord is never this tag: several types can be listed
+            // (The Swarmweaver's "Insects and Spiders", Spider-Ham's eighteen),
+            // or the "tribe" can be one card NAME (Rohgahh's Kobolds of Kher
+            // Keep, Gary Clone's other Gary Clones). A type CHOSEN as the card
+            // enters (Patchwork Banner) was one of them until 2026-10-30, when
+            // the human ruled a chosen type no tribe in any tag ("Se scegli tu
+            // il tipo quando gioco la carta è diverso da un tribale fisso"): its
+            // anthem is Buff like any other, as Lifecraft Engine and Shared
+            // Triumph already were.
             // NB every letter of these is case-SENSITIVE like the rest of this
             // pattern, so the leading noun needs both spellings: the phrase is
             // capitalised when it opens a line and lower-case mid-sentence.
-            + @"|[Cc]reatures you control of the chosen type (?:get|have)\b"
             + @"|[Cc]reatures? you control named [\w' ,-]{1,40} gets? \+"
             + @"|each creature you control named [\w' ,-]{1,40} gets? \+"
             // …and the tribe as a clause after the noun (Skeleton Crew's "each
@@ -790,8 +807,12 @@ namespace ScatoloneDownloader.Cube
             // 2026-10-27: the tribe as a clause after "each creature you
             // control" (Kibo's "that's an Ape or a Monkey") and the counters
             // distributed among a plural tribe (Numa's "target Elves").
+            // A count may follow the tribe (Go-Shintai of Boundless Vigor's
+            // "target Shrine for each Shrine you control", untagged 2026-10-29,
+            // read 10-30; a counter on "target" and a capitalised type is 0 of
+            // 11 reviewed Buff).
             + @"|\+1/\+1 counters? on (?:each |target |up to one target |another target )(?:other )?" + NotATribe
-            + @"[A-Z][\w'-]+s?(?: or [A-Z][\w'-]+s?)?(?: creatures?)?(?: you control\b|(?=[.,]))"
+            + @"[A-Z][\w'-]+s?(?: or [A-Z][\w'-]+s?)?(?: creatures?)?(?: you control\b|(?=[.,])|(?= for each\b))"
             + @"|\+1/\+1 counters? on each (?:other )?creature you control that's an? " + NotATribe
             + @"[A-Z][\w']+(?:,? or (?:an? )?[A-Z][\w']+)*"
             + @"|\+1/\+1 counters among (?:any number of |up to \w+ )?target " + NotATribe + @"[A-Z][\w']+\b"
@@ -972,8 +993,11 @@ namespace ScatoloneDownloader.Cube
         // reviewed tagged; a granted "when this creature dies, return it" is
         // tagged on 5 of 6 reviewed cards, the sixth Perigee Beckoner's, on an
         // enters trigger that is not held up).
+        // A keyword may be granted beside it (Return to Action's "gains
+        // lifelink and \"When this creature dies, return it …\"", Protection by
+        // hand, read 2026-10-30; 6 of 7 with Perigee Beckoner).
         private static readonly Regex SavesFromDeathOrDamage = Rx(
-            @"gains? ""when this creature dies(?: or is put into exile from the battlefield)?, return it to (?:the battlefield|its owner's hand)"
+            @"gains? (?:[\w ,]{1,40} and )?""when this creature dies(?: or is put into exile from the battlefield)?, return it to (?:the battlefield|its owner's hand)"
             + @"|damage would be dealt to (?:any|target|each) creature[^.\n]{0,40}dealt to you instead"
             + @"|that damage is dealt to (?:that source's|that spell's) controller instead"
             + @"|is dealt to that spell's controller instead"
@@ -1290,7 +1314,10 @@ namespace ScatoloneDownloader.Cube
             // (Awakened Awareness, Buff and Pacify by hand), read 2026-10-27.
             + @"|(?:otherwise|as long as enchanted permanent is a creature), it has base power and toughness [0-2]/"
             + @"|target (?![^.\n]{0,60}\byou control\b)[^.\n]{0,60}loses all abilities until your next turn"
-            + @"|^enchanted (?:creature|permanent) is an? [^\n]{0,60}artifact\b[^\n]{0,200}loses all other card types and abilities"
+            // The abilities may stay: Swift Reconfiguration's Vehicle "loses
+            // all other card types" and is no creature until crewed (Pacify by
+            // hand, read 2026-10-30, 2 of 2 with Sugar Coat).
+            + @"|^enchanted (?:creature|permanent) is an? [^\n]{0,60}artifact\b[^\n]{0,200}loses all other card types"
             + @"|attacking creatures get -"
             + @"|(?<!(?:under your control|you control enchanted creature)[\s\S]*)"
             + @"(?:gets? -[\dX]+/-0 and loses all abilities|^enchanted creature gets -[\dX]+/-0)"
@@ -1306,6 +1333,13 @@ namespace ScatoloneDownloader.Cube
             // Student; Tamiyo Meets the Story Circle, untagged).
             + @"|target creature(?! you control)[^.\n]{0,60}gets? -[\dX]+/-0[^.\n]{0,40}until your next turn"
             + @"|until your next turn, [^.\n]{0,40}target creature(?! you control)[^.\n]{0,40}gets? -[\dX]+/-0"
+            // …and on every creature of theirs: Behold the Unspeakable's
+            // "Creatures you don't control get -2/-0 until your next turn"
+            // (tagged 2026-10-27), which reaches Mouth of the Storm's -3/-0,
+            // reviewed untagged on 2026-09-11 before the ruling and handed back.
+            // Until end of turn the same words are not this (0 of 5 reviewed:
+            // Mindwhisker, Bewildering Blizzard, Sea Hag …).
+            + @"|creatures (?:you don't control|your opponents control) get -[\dX]+/-0[^.\n]{0,40}until your next turn"
             + @"|loses all abilities and (?:doesn'?t untap|can'?t attack)"
             // A CURSED ROLE ("Enchanted creature is 1/1") put on an opponent's
             // creature is the same small body in token form: Diminisher Witch,
@@ -1846,8 +1880,12 @@ namespace ScatoloneDownloader.Cube
         // Nor lands untapped at the END STEP for a price of "you can't cast
         // spells until your next turn" (Innocuous Researcher, untagged; read
         // 2026-10-16): the mana is for instants you may not cast.
+        // Nor a target that may as well be a CREATURE: Civic Gardener's attack
+        // trigger "untap target creature or land" is untagged by hand, and so
+        // is every reviewed "creature or land" (read 2026-10-30, 0 of 8 with
+        // "target permanent"). A bare "untap target land" stays, 6 of 9.
         private static readonly Regex UntapsLands = Rx(
-            @"untap (?:target|all|x target|up to \w+ target)[\w ]{0,20}(?<!non)"
+            @"untap (?:target|all|x target|up to \w+ target)(?! (?:creature or land|land or creature)\b)[\w ]{0,20}(?<!non)"
             + @"(?:lands?|forests?|islands?|swamps?|mountains?|plains)\b(?![\w ]{0,15}\. it becomes)"
             + @"(?![^\n]{0,40}\byou can't cast spells\b)"
             + @"|untaps all basic lands");
@@ -2037,10 +2075,13 @@ namespace ScatoloneDownloader.Cube
         // that only read {2} would have missed the whole point. {X} is mana
         // too, read 2026-10-13: Wizard's Rockets pays X for X in any
         // combination of colours, and is ManaFixing alone by hand.
+        // Two for {2} is not more: Guild Globe's "{2}, {T}, Sacrifice this
+        // artifact: Add two mana of different colors" is ManaFixing alone by
+        // hand (read 2026-10-30, the only reviewed card paying {2} for two).
         private static readonly Regex PaidManaAbility = Rx(
             @"^[^\n:]*\{[\dwubrgx]\}[^\n:]*: add ", RegexOptions.Multiline);
         private static readonly Regex PaidManaGivesBackMore = Rx(
-            @"^[^\n:]*\{[\dwubrg]\}[^\n:]*: add (?:two|three|four|five|x|\d+) "
+            @"^(?![^\n:]*\{2\}[^\n:]*: add two )[^\n:]*\{[\dwubrg]\}[^\n:]*: add (?:two|three|four|five|x|\d+) "
             + @"|^[^\n:]*\{[\dwubrg]\}[^\n:]*: add \{[wubrgc]\}\{", RegexOptions.Multiline);
 
         // Swapping ONE land for ONE land moves no mana: Renewal sacrifices a
@@ -2338,6 +2379,7 @@ namespace ScatoloneDownloader.Cube
             // reads it (Ashnod's Intervention, Protection alone, 2026-10-27).
             @"\bgets? \+[\dx]+/[-+][\dx]+ and gains? (?:indestructible|hexproof|shroud|protection from"
             + @"|""when this creature dies(?: or is put into exile from the battlefield)?, return)");
+        private static readonly Regex PumpWithLifelink = Rx(@"\bgets? \+[\dx]+/[-+][\dx]+ and gains? lifelink\b");
         // The keyword counters may be a list without "and" in front of the
         // first (Scavenged Brawler's four +1/+1, flying, vigilance, trample
         // and lifelink, untagged; 2026-10-27).
@@ -2497,7 +2539,14 @@ namespace ScatoloneDownloader.Cube
             // Filter does not count as "something else": a scry or a surveil is
             // the rider the human called saturating, and Storm Strike is Guided
             // Strike with a scry 1 on it — the pump is still the card.
-            bool pumpIsTheCard = (otherTags & ~CardEffect.Filter) == CardEffect.None;
+            // Nor does the shield a pump grants WITH LIFELINK: Return to Action's
+            // "+1/+0 and gains lifelink and \"When this creature dies, return
+            // it…\"" is Buff and Protection by hand (2026-10-27, read 10-30), as
+            // Scales of Shale's +2/+0, lifelink and indestructible is, while
+            // the same shield beside a bare pump is Protection alone (Presumed
+            // Dead, Ashnod's Intervention; see PumpBesideAShield).
+            CardEffect riders = CardEffect.Filter | (PumpWithLifelink.IsMatch(line) ? CardEffect.Protection : CardEffect.None);
+            bool pumpIsTheCard = (otherTags & ~riders) == CardEffect.None;
             bool spell = timing == PumpTiming.Instant
                 || (card.TypeLine ?? string.Empty).Split("//")[0].Contains("Sorcery", StringComparison.OrdinalIgnoreCase);
 

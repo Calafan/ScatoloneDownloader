@@ -134,3 +134,9 @@ lands each player short of them may search for after a sweep (Natural Balance); 
 '{T}: Add one mana of any color'", the one mana granted to lands, which fixes (Toxicrene); Treasures
 a TARGET OPPONENT creates, theirs (Vazi, Keen Negotiator, neither Ramp nor ManaFixing). Left as a
 known disagreement: The Last Agni Kai.
+
+Read 2026-10-30: two mana for {2} is mana that costs mana and adds none (Guild Globe, ManaFixing
+alone by hand; Terrarion follows), and "untap target creature or land" is not a land untapped for
+mana (Civic Gardener; 0 of 8 reviewed with "target permanent"). Not read: Morophon, the Boundless's
+{W}{U}{B}{R}{G} less for spells of the chosen type, since a reduction of several symbols is 0 of 1
+reviewed (Avatar Aang); Morophon was handed back for its Buff and can take Ramp by hand.

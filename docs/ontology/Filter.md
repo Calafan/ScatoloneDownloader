@@ -193,3 +193,11 @@ Dragonkind). Seven stay against the rules, each known: Hei Bai, Kellan, Rumor Ga
 Once and Future by name, Sidequest: Catch a Fish, and Candy Trail and Invasion of Pyrulea, put back
 by hand after the 10-16 hand-back — a noncreature's one-shot scry on entering is 1 of 6 tagged
 (Lembas, the same Food, is not).
+
+Read 2026-10-30: look at the top cards, EXILE ONE OF THEM and cast it (Discover the Impossible,
+Filter alone by hand; Ashiok, Wicked Manipulator stays out), and a dig until a creature card that
+shares a type with the creature just sacrificed, put onto the battlefield (Descendants' Fury, Filter
+and Sacrifice by hand), which TribalCard keeps from being Cheat. Not widened to a printed type: Hei
+Bai, Forest Guardian's "Shrine card" is Filter by hand and Tom Bombadil's "Saga card" untagged.
+Sparkshaper Visionary's granted repeating scry is Filter as proposed, its missing tag a slip
+("svista", 2026-10-30).

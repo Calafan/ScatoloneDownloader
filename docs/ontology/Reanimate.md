@@ -34,8 +34,7 @@ not yours (Immortal Obligation, Mysterious Limousine).
 
 Ruled 2026-10-15 with Cheat ("Reanimate e Cheat non dovrebbero contare" for the tribal ones): a
 creature only a TYPE can bring back is not this tag — a Pirate card (Admiral Brass, Unsinkable), a
-Bird creature card (Kastral, the Windcrested), a creature card of the chosen type (From the Rubble)
-or of that type (Haunting Voyage), an Assassin whose token copies follow it (Altaïr Ibn-La'Ahad) —
+Bird creature card (Kastral, the Windcrested), an Assassin whose token copies follow it (Altaïr Ibn-La'Ahad) —
 nor is one behind a cost only OTHER members of the type pay (Gravespawn Sovereign's five Zombies,
 Meanders Guide's other Merfolk); a "Saga card" reads the same way, as the hand had it (Rydia,
 Summoner of Mist). Not tribal: an exclusion (Junji's non-Dragon), a card any creature could be in
@@ -50,3 +49,13 @@ returned to the battlefield (Angelic Renewal, moved from Regrowth), and a creatu
 FREE from your graveyard (Counterpoint, and Shiko, Paragon of the Way's copy). Handed back: All
 Hallow's Eve, Cass and False Demise with the tag; Noctis, Prince of Lucis, which casts artifacts
 from your graveyard for their cost, without it.
+
+Overturned 2026-10-30 with Buff and Cheat ("Se scegli tu il tipo quando gioco la carta è diverso da
+un tribale fisso", for every tag): a creature card of the CHOSEN type, or "of that type" after the
+choice, is any creature, and is Reanimate again. From the Rubble, untagged by hand, was realigned
+and handed back; Haunting Voyage and Bloodline Bidding are proposed. A type printed on the card
+stays tribal, and so does one SHARED with another creature.
+
+Ruled 2026-10-30 with Regrowth (Anikthea, Hand of Erebos): a token copy of a CREATURE card exiled
+from your graveyard stays Reanimate (Ardyn, Mordor on the March, Abyssal Harvester); a noncreature
+card's copy is Regrowth.
