@@ -1,12 +1,10 @@
-#nullable enable annotations
-
 namespace ScatoloneDownloader.Mtg
 {
     /// <summary>
     /// Maps a Scryfall <c>color_identity</c> (array of color codes like
     /// ["W","U"]) to a cube-design bucket string. Single colors map to their
     /// letter; 2 colors to the ordered guild code; 3 colors to the canonical WotC
-    /// shard/wedge code used by Plan §3.3; 4-5 colors to "4_5_Colors". Empty/null =
+    /// shard/wedge code; 4-5 colors to "4_5_Colors". Empty/null =
     /// "Colorless".
     ///
     /// For 2- and 3-color identities, WUBRG strict sort does not always match the
@@ -17,9 +15,9 @@ namespace ScatoloneDownloader.Mtg
     {
         private const string WubrgOrder = "WUBRG";
 
-        /// <summary>2-color bucket code (guild) by WUBRG-sorted pair key (Plan §3.3 names).
+        /// <summary>2-color bucket code (guild) by WUBRG-sorted pair key.
         /// Ally pairs that wrap around the WUBRG ring (W&amp;G, U&amp;G) are listed explicitly
-        /// since strict sort disagrees with Plan's canonical guild codes.</summary>
+        /// since strict sort disagrees with the canonical guild codes.</summary>
         private static readonly Dictionary<string, string> GuildCodes = new()
         {
             { "WU", "WU" },  // Azorius
@@ -34,7 +32,7 @@ namespace ScatoloneDownloader.Mtg
             { "UG", "GU" },  // Simic — strict sort "UG", canonical "GU"
         };
 
-        /// <summary>3-color bucket code by WUBRG-sorted triplet (Plan §3.3 names).</summary>
+        /// <summary>3-color bucket code by WUBRG-sorted triplet.</summary>
         private static readonly Dictionary<string, string> TriColorCodes = new()
         {
             // Shards (3 consecutive WUBRG colors, start at ally).
@@ -113,11 +111,10 @@ namespace ScatoloneDownloader.Mtg
             };
         }
 
-        /// <summary>Colour display name (it began as the by-color view folder name, hence the
-        /// method name): a group-index prefix (so a filesystem
-        /// name sort groups by color count) followed by the readable guild/shard name,
+        /// <summary>Colour display name: a group-index prefix (so a name sort groups
+        /// by color count) followed by the readable guild/shard name,
         /// e.g. "1 White", "2 Azorius", "3 Esper", "5 Colorless".</summary>
-        internal static string ViewFolderName(string category)
+        internal static string NumberedName(string category)
         {
             return $"{SortGroup(category)} {Display(category)}";
         }

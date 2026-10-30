@@ -178,7 +178,7 @@ namespace ScatoloneDownloader.Cli.Cube
             return new StatsCategoryRow(
                 key,
                 ColorCategoryClassifier.Display(key),
-                ColorCategoryClassifier.ViewFolderName(key),
+                ColorCategoryClassifier.NumberedName(key),
                 report.ColorCategoryCounts.GetValueOrDefault(key, 0),
                 creatures,
                 byType.GetValueOrDefault(MacroType.OtherPermanent, 0),
@@ -212,13 +212,13 @@ namespace ScatoloneDownloader.Cli.Cube
         {
             StatsMatrix mono = BuildMatrix(
                 report, MonoColumns, order,
-                key => key == "Multi" ? "*multi" : ColorCategoryClassifier.ViewFolderName(key),
+                key => key == "Multi" ? "*multi" : ColorCategoryClassifier.NumberedName(key),
                 report.CardsByColumn, report.ReviewedByColumn, report.UntaggedByColumn,
                 report.EffectCountsByColumn);
 
             StatsMatrix identity = BuildMatrix(
                 report, IdentityColumns, order,
-                key => key == "Colorless" ? ColorCategoryClassifier.ViewFolderName(key) : "*has:" + key,
+                key => key == "Colorless" ? ColorCategoryClassifier.NumberedName(key) : "*has:" + key,
                 report.CardsByIdentity, report.ReviewedByIdentity, report.UntaggedByIdentity,
                 report.EffectCountsByIdentity);
 
@@ -245,8 +245,8 @@ namespace ScatoloneDownloader.Cli.Cube
                     creatureTotal.Evasive,
                     creatureTotal.Haste,
                     creatureTotal.Defender),
-                BuildCurve(report, MonoColumns, key => key == "Multi" ? "*multi" : ColorCategoryClassifier.ViewFolderName(key), report.CreatureCurveByColumn),
-                BuildCurve(report, IdentityColumns, key => key == "Colorless" ? ColorCategoryClassifier.ViewFolderName(key) : "*has:" + key, report.CreatureCurveByIdentity));
+                BuildCurve(report, MonoColumns, key => key == "Multi" ? "*multi" : ColorCategoryClassifier.NumberedName(key), report.CreatureCurveByColumn),
+                BuildCurve(report, IdentityColumns, key => key == "Colorless" ? ColorCategoryClassifier.NumberedName(key) : "*has:" + key, report.CreatureCurveByIdentity));
 
             return new StatsTier(label, ratingParam, report.TotalCards, mono, identity, answers, creatures);
         }
@@ -344,7 +344,9 @@ namespace ScatoloneDownloader.Cli.Cube
     /// colour categories in their groups. Lands carry no mana value, so they appear
     /// only in <paramref name="Lands"/> and in each category's own Lands count.</summary>
     /// <param name="NonLand">Non-land pool cards.</param>
+    /// <param name="Lands">Lands in the pool.</param>
     /// <param name="Permanents">Non-land cards that are not spells.</param>
+    /// <param name="Spells">Non-land cards that are not permanents (instants and sorceries).</param>
     /// <param name="AverageMv">Average mana value, lands excluded.</param>
     /// <param name="PipDensity">Coloured pips per non-land card.</param>
     /// <param name="Types">Creature, OtherPermanent, Spell, in that order.</param>
@@ -374,7 +376,7 @@ namespace ScatoloneDownloader.Cli.Cube
     internal sealed record StatsCategoryGroup(string Label, IReadOnlyList<StatsCategoryRow> Rows);
 
     /// <summary>One exact colour category. <paramref name="ColorParam"/> is the tagger's
-    /// <c>color=</c> value (the view folder name). A row exists when the category has
+    /// <c>color=</c> value (e.g. "2 Azorius"). A row exists when the category has
     /// non-land cards or lands; <paramref name="CreatureAverageMv"/> is null without
     /// creatures. <paramref name="ByCost"/> and <paramref name="CreatureByCost"/> have
     /// every <see cref="CostBucket"/> key and leave lands out.</summary>
@@ -409,6 +411,9 @@ namespace ScatoloneDownloader.Cli.Cube
     /// the cost-by-colour curve in both column views.</summary>
     /// <param name="Rows">One row per cost bucket, 0 to 6_Plus.</param>
     /// <param name="Total">The sum over <paramref name="Rows"/>; its Cost is empty.</param>
+    /// <param name="Summary">The creature counts behind the profile (two-drops, evasive, haste, ...).</param>
+    /// <param name="CurveMono">The cost-by-colour curve, columns by mono colour.</param>
+    /// <param name="CurveIdentity">The cost-by-colour curve, columns by colour identity.</param>
     internal sealed record StatsCreatures(
         IReadOnlyList<StatsCreatureRow> Rows,
         StatsCreatureRow Total,
@@ -463,7 +468,7 @@ namespace ScatoloneDownloader.Cli.Cube
         IReadOnlyList<StatsEffectRow> Rows);
 
     /// <summary>One column of a matrix. <paramref name="ColorParam"/> is the value the
-    /// tagger's colour filter takes for it (a view folder name, or a pseudo-value).</summary>
+    /// tagger's colour filter takes for it (a category name such as "2 Azorius", or a pseudo-value).</summary>
     internal sealed record StatsColumn(string Key, string Name, string ColorParam);
 
     internal sealed record StatsEffectRow(string Effect, IReadOnlyDictionary<string, int> ByColumn, int Total);

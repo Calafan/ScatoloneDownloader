@@ -17,7 +17,7 @@ namespace ScatoloneDownloader
                 config.SetInterceptor(new OutputPathInterceptor());
 
                 config.AddCommand<AllCommand>("all")
-                    .WithDescription("Download all unique-artwork cards, grouped by released year and set.");
+                    .WithDescription("Download one printing per card under the library rules (unique artwork with --no-rules), grouped by released year and set.");
 
                 config.AddCommand<SetCommand>("set")
                     .WithDescription("Download the given set codes.");

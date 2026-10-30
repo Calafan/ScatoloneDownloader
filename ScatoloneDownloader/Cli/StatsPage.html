@@ -84,7 +84,7 @@
 </div>
 <div id="out"></div>
 <script>
-// Frozen copy: the `report` command and the download links put the data in
+// Frozen copy: the `report` and `analyze` commands and the download links put the data in
 // window.STATS_SNAPSHOT before this script. The page then renders from it, fetches
 // nothing and links nowhere (there is no tagger to open); the live page has none.
 const SNAPSHOT = window.STATS_SNAPSHOT || null;
@@ -351,7 +351,7 @@ function typesNote(o) {
 }
 
 // The pool by exact colour category, in the analyzer's groups. A category's colour
-// filter is its view folder name; the Total row has none. Shares: the type and star
+// filter is its category name ("2 Azorius"); the Total row has none. Shares: the type and star
 // cells of the row's own cards, Cards of the tier's non-land, Lands of the tier's lands.
 // The bench is ★2 by definition, so its table drops the ★3/★4/★5 columns.
 function categoriesTable(tier, o, withStars) {

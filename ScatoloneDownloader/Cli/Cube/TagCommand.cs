@@ -43,7 +43,7 @@ namespace ScatoloneDownloader.Cli.Cube
             public string[] ExtraHosts { get; set; } = [];
         }
 
-        // In-memory state shared between request handlers. Guarded by SaveLock.
+        // In-memory state shared between request handlers. Guarded by saveLock.
         private readonly object saveLock = new();
         private List<(Card Card, string Path)> matched = [];
         private CubeMetadata metadata = new();
@@ -83,7 +83,7 @@ namespace ScatoloneDownloader.Cli.Cube
                 AnsiConsole.MarkupLine(
                     $"[red]Error: {effectNames.Length} effects but only {EffectHotkeys.Length} hotkeys in TagCommand.EffectHotkeys.[/]");
                 AnsiConsole.MarkupLine(
-                    "[yellow]Add more keys to EffectHotkeys (6-9 and most punctuation are free; avoid 0-5, n/b/t/j/c/f and . , /).[/]");
+                    "[yellow]Add more keys to EffectHotkeys (avoid the page's own keys: 0-5, n/b/t/j/c, / and the characters already in EffectHotkeys).[/]");
                 return 1;
             }
 
@@ -141,7 +141,7 @@ namespace ScatoloneDownloader.Cli.Cube
                 }
                 else
                 {
-                    AnsiConsole.MarkupLine("[yellow]Try a different port with -p, e.g. `tag <dir> -p 8790`.[/]");
+                    AnsiConsole.MarkupLine("[yellow]Try a different port with -p, e.g. `tag -p 8790`.[/]");
                 }
 
                 return 1;
@@ -245,7 +245,6 @@ namespace ScatoloneDownloader.Cli.Cube
                 var dto = matched.Select((m, i) => new
                 {
                     index = i,
-                    oracleId = m.Card.OracleId ?? string.Empty,
                     name = m.Card.Name,
                     rating = m.Card.Rating,
                     status = m.Card.Status.ToString(),
@@ -257,7 +256,7 @@ namespace ScatoloneDownloader.Cli.Cube
                     macro = m.Card.MacroType.ToString(),
                     // Colour and cost are sent as display names ("2 Azorius",
                     // and the cost bucket), which the page filters on directly.
-                    color = ColorCategoryClassifier.ViewFolderName(m.Card.ColorCategory),
+                    color = ColorCategoryClassifier.NumberedName(m.Card.ColorCategory),
                     // The stats page's two colour views: the one-column split the
                     // analyzer uses ("Multi" for every gold card) and the raw identity
                     // letters ("BG", "" for colourless) for "any card with this colour".
@@ -425,10 +424,10 @@ namespace ScatoloneDownloader.Cli.Cube
 
         /// <summary>
         /// Handles one <c>POST /api/save</c>: applies rating/status/effects to the
-        /// in-memory <see cref="Card"/> and immediately persists the whole
-        /// <see cref="metadata"/> document (every keystroke autosaves — there is no
-        /// separate "commit" action in the UI, so a browser crash never loses more
-        /// than the single field just changed). Returns <c>false</c> without
+        /// in-memory <see cref="Card"/> and immediately persists this card's entry
+        /// through <see cref="CubeMetadataStore.SaveEntry"/> (every keystroke
+        /// autosaves — there is no separate "commit" action in the UI, so a browser
+        /// crash never loses more than the single field just changed). Returns <c>false</c> without
         /// writing when the request is malformed or the card has no
         /// <see cref="Card.OracleId"/> to key the entry by.
         /// </summary>
@@ -566,14 +565,15 @@ namespace ScatoloneDownloader.Cli.Cube
         // Keys are chosen initial-first, most common effect first, measured against
         // the real library: Discard, Filter, ManaFixing, Sacrifice, Ramp, Pacify,
         // Wipe and LandDestruction all get theirs. Eight is the CEILING, not a
-        // compromise — the 24 effects share only 11 distinct initials, and three of
+        // compromise — the 25 effects share only 11 distinct initials, and three of
         // those (b, c, t) are reserved for status and confirm, which is what blocks
-        // Buff, Burn, Bounce, CardAdvantage, Counter, Tokens and Tutor. Freeing b
-        // and t by moving status elsewhere would raise it to ten.
+        // Buff, Burn, Bounce, CardAdvantage, Cheat, Counter, Tokens and Tutor.
+        // Freeing b and t by moving status elsewhere would raise it to ten.
         //
-        // Where the initial is taken, the key is another letter from the name
-        // (bUff, tOkens, cArdAdvantage, remoVal); the three rarest effects take the
-        // leftovers. Filter selection is mouse-only, so no letter is spent on it.
+        // Where the initial is taken, the key is another letter from the name when
+        // one is free (bUff, tOkens, cArdAdvantage, remoVal, protectIon, burn E,
+        // regrowtH); the rest take leftover keys that spell nothing. The page's
+        // filters and shuffle have no keys, so no letter is spent on them.
         // Cheat (added 2026-09-18) gets "7": every letter in its name is gone —
         // h, e and a are spent, and c and t are the reserved ones — so it takes
         // a leftover, which is exactly what the paragraph above predicted would

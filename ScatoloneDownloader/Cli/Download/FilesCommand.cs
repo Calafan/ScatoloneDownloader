@@ -65,7 +65,7 @@ namespace ScatoloneDownloader.Cli.Download
                 }
             }
 
-            await CardService.RunFilesAsync(settings.Files, settings.Reprints, settings.Tokens, settings.Lands, settings.PrintOnly, librarySource);
+            await CardService.RunFilesAsync(settings.Files, settings.Lands, settings.PrintOnly, librarySource);
 
             return 0;
         }

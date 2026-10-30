@@ -1,11 +1,11 @@
 ﻿namespace ScatoloneDownloader.Mtg
 {
     /// <summary>
-    /// One short line per <see cref="CardEffect"/>, shown as the tooltip on the
-    /// tagger's effect buttons.
+    /// One short line per <see cref="CardEffect"/>, shown in the hint box above
+    /// the tagger's effect buttons and as the tooltip on the stats page's effect names.
     /// <para>
-    /// The rulings live in <see cref="CardEffect"/>'s own comments, but those are
-    /// paragraphs and they are in the source tree — which is exactly where they
+    /// The rulings live in docs/ontology/ (one file per <see cref="CardEffect"/>
+    /// member), but those are paragraphs and they are in the source tree — which is exactly where they
     /// are no use, because the moment a ruling is needed is the moment a card is
     /// on screen and a key is about to be pressed. Tagging tens of thousands of
     /// cards is repetitive, and the slips it produces (a self-pump tagged Buff, a

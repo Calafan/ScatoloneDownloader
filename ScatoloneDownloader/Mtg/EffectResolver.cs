@@ -10,8 +10,8 @@ namespace ScatoloneDownloader.Mtg
     internal static class EffectResolver
     {
         /// <summary>All real effect flags in declared (ascending bit) order, cached
-        /// once. <see cref="ToNames"/> runs per-entry on every tagger save and
-        /// per-card during view generation, so it must not re-allocate the values
+        /// once. <see cref="ToNames"/> runs per-entry on every tagger save, per
+        /// card in the tagger's card list and per effect group in the stats payload, so it must not re-allocate the values
         /// array (or box operands via <see cref="Enum.HasFlag"/>) each call.</summary>
         private static readonly CardEffect[] AllFlags =
             Enum.GetValues<CardEffect>().Where(f => f != CardEffect.None).ToArray();

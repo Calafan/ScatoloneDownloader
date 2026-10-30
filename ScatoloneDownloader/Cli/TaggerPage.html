@@ -170,8 +170,8 @@
     #effectList { max-height:50vh; }
     #effects { grid-template-columns:repeat(auto-fill, minmax(148px,1fr)); gap:7px; }
     /* The same text in a third of the width needs about twice the rows. 150px
-       is measured, not guessed: the longest line in the glossary (Tokens, 340
-       characters, the cap the glossary test enforces) wants 139px at 390px of
+       is measured, not guessed: a glossary line at the 340-character cap the
+       glossary test enforces wants 139px at 390px of
        viewport, and everything else wants 130. Still a FIXED height — the whole
        point is that the effect buttons never move while a thumb is over them,
        and anything longer scrolls inside rather than pushing them. */
@@ -268,8 +268,8 @@
   <button type="button" id="mnext" aria-label="Next card">&rsaquo;</button>
 </nav>
 <script>
-// Effect hotkeys deliberately avoid digits (0-5 = rating) and n/b/t/j/c/f
-// (status + confirm + filter), so every action has one dedicated key. The key
+// Effect hotkeys deliberately avoid the digits 0-5 (rating), n/b/t/j (status),
+// c (confirm) and / (list), so every action has one dedicated key. The key
 // string is injected by the server (TagCommand.EffectHotkeys) — the single
 // source of truth, also asserted at startup to be >= the effect count.
 const EFFECT_KEYS = "__EFFECT_KEYS__".split("");
@@ -415,7 +415,7 @@ function typeLabel() { return typeSel === TYPE_NONLAND ? "all but lands" : (MACR
 // exactly the pool the stats page counts, and "exactly ★2 (bench)" with "no
 // status" is its bench.
 function statusMatch(c) { return !statusSel || c.status === statusSel; }
-// Besides the folder names, two pseudo-values the stats page links with:
+// Besides the colour category names ("2 Azorius"), two pseudo-values the stats page links with:
 // "*multi" is the analyzer's Multi column (every gold card), and "*has:X" is
 // "any card with X in its colour identity", gold cards included.
 function colorMatch(c) {
@@ -436,9 +436,9 @@ function colorLabel() {
   return colorName(colorSel);
 }
 
-// The colour is still matched on the folder name, but the picker shows only
-// the readable part: the leading digit ("2 Azorius") exists to sort the view
-// folders by colour count, and here it becomes the option group instead.
+// The colour is matched on the full category name ("2 Azorius"), but the picker
+// shows only the readable part: the leading digit sorts the colours by count,
+// and here it becomes the option group instead.
 // Within a group the order is the one Magic reads in — WUBRG, the guilds,
 // then shards and wedges — as ColorCategoryClassifier lists its names; a name
 // missing from this list still gets an entry, last in its group.
@@ -483,7 +483,7 @@ function costMatch(c) { return !costSel || c.cost === costSel; }
 
 function statusLabel() { return statusSel === "None" ? "no status" : statusSel; }
 
-// Cost buckets are "0".."5" and "6_Plus", as the view folders spell them.
+// Cost buckets are "0".."5" and "6_Plus".
 function costLabel(bucket) { return bucket === "6_Plus" ? "cost 6+" : `cost ${bucket}`; }
 
 function folderMatch(c) {

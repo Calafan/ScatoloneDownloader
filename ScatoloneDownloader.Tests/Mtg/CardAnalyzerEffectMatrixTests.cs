@@ -1,4 +1,3 @@
-using ScatoloneDownloader.Cli.Cube;
 using ScatoloneDownloader.Tests.Cli;
 using ScatoloneDownloader.Cube;
 using ScatoloneDownloader.Json.Cards;

@@ -82,7 +82,7 @@ namespace ScatoloneDownloader.Cube
                 noProposal++;
             }
 
-            return new SyncRegistration(registered.AddedNames, registered.AddedOracleIds, proposed, noProposal);
+            return new SyncRegistration(registered.AddedNames, proposed, noProposal);
         }
 
         /// <summary>
@@ -97,27 +97,18 @@ namespace ScatoloneDownloader.Cube
         {
             List<string> addedNames = [];
             List<string> addedOracleIds = [];
-            HashSet<string> addedIds = new(StringComparer.Ordinal);
-            HashSet<string> alreadyInStore = new(StringComparer.Ordinal);
-            int skippedNoOracleId = 0;
 
             foreach ((Card card, string _) in matched)
             {
                 if (string.IsNullOrEmpty(card.OracleId))
                 {
-                    skippedNoOracleId++; // cannot key an entry without an oracle_id
-                    continue;
+                    continue; // cannot key an entry without an oracle_id
                 }
 
                 if (metadata.Cards.ContainsKey(card.OracleId))
                 {
-                    // A second file of an oracle added a moment ago is not "already
-                    // in the store": the first file wins and this one is ignored.
-                    if (!addedIds.Contains(card.OracleId))
-                    {
-                        alreadyInStore.Add(card.OracleId);
-                    }
-
+                    // Already held, or added a moment ago from another file of the
+                    // same oracle: the first one wins.
                     continue;
                 }
 
@@ -127,12 +118,11 @@ namespace ScatoloneDownloader.Cube
                     Rating = 0,
                     ScryfallId = card.Id,
                 };
-                addedIds.Add(card.OracleId);
                 addedOracleIds.Add(card.OracleId);
                 addedNames.Add(card.Name);
             }
 
-            return new RegisterResult(addedNames, alreadyInStore.Count, skippedNoOracleId, addedOracleIds);
+            return new RegisterResult(addedNames, addedOracleIds);
         }
 
         /// <summary>
@@ -208,24 +198,16 @@ namespace ScatoloneDownloader.Cube
 
     /// <summary>What one <see cref="LibrarySync.RegisterNew"/> call did.</summary>
     /// <param name="AddedNames">Names of the entries added, in match order.</param>
-    /// <param name="AlreadyInStore">Distinct oracle ids that were already in the store
-    /// before the call.</param>
-    /// <param name="SkippedNoOracleId">Matched files whose card has no oracle id.</param>
     /// <param name="AddedOracleIds">Oracle ids of the entries added, in the same order as
     /// <paramref name="AddedNames"/>.</param>
-    internal sealed record RegisterResult(
-        IReadOnlyList<string> AddedNames, int AlreadyInStore, int SkippedNoOracleId, IReadOnlyList<string> AddedOracleIds)
-    {
-        internal int Added => AddedNames.Count;
-    }
+    internal sealed record RegisterResult(IReadOnlyList<string> AddedNames, IReadOnlyList<string> AddedOracleIds);
 
     /// <summary>What <see cref="LibrarySync.RegisterAndPropose"/> did.</summary>
     /// <param name="AddedNames">Names of the entries added, in match order.</param>
-    /// <param name="AddedOracleIds">Their oracle ids, in the same order.</param>
     /// <param name="Proposed">Added entries that received a proposal.</param>
     /// <param name="NoProposal">Added entries the classifier had nothing to propose for.</param>
     internal sealed record SyncRegistration(
-        IReadOnlyList<string> AddedNames, IReadOnlyList<string> AddedOracleIds, int Proposed, int NoProposal);
+        IReadOnlyList<string> AddedNames, int Proposed, int NoProposal);
 
     /// <summary>An entry <see cref="LibrarySync.StaleIds"/> found with another printing's id.</summary>
     /// <param name="OracleId">The entry's key.</param>

@@ -79,9 +79,10 @@ namespace ScatoloneDownloader.Cli.Cube
 
             AnsiConsole.MarkupLine("[yellow]Generating the report...[/]");
 
-            // The active pool only (rating 3-5, no Banned/Token/Jolly) so the unrated
-            // backlog and excluded status cards cannot skew the distributions; the
-            // bench (rating 2) rides along for its availability appendix.
+            // Every matched card goes in: StatsPayload.Build keeps the active pool
+            // (rating 3-5, no Banned/Token/Jolly) for the distributions, so the
+            // unrated backlog and excluded status cards cannot skew them, and the
+            // bench (rating 2) apart.
             List<Card> cards = matchedCards.Select(m => m.Card).ToList();
             DateTime now = DateTime.Now;
             StatsPayload payload = StatsPayload.Build(cards);

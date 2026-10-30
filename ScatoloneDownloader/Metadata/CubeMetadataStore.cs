@@ -1,6 +1,4 @@
-﻿#nullable enable annotations
-
-using System.Text.Encodings.Web;
+﻿using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -128,7 +126,7 @@ namespace ScatoloneDownloader.Metadata
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
         };
 
-        /// <summary>Routes a card to its tier file by its CURRENT rating (B1),
+        /// <summary>Routes a card to its tier file by its CURRENT rating,
         /// using the shared <see cref="RatingTierClassifier"/> so the rating
         /// boundaries live in exactly one place (also read by
         /// <see cref="CardAnalyzer"/>). <see cref="RatingTier.Fringe"/> and
@@ -148,10 +146,10 @@ namespace ScatoloneDownloader.Metadata
         /// <summary>
         /// Reads every tier file present in <paramref name="metadataDirectory"/>
         /// and merges them into one <see cref="CubeMetadata"/> keyed by
-        /// <c>oracle_id</c>. Tolerant end to end: a missing directory, a missing
-        /// individual tier file, or a blank/corrupt tier file all just contribute
-        /// nothing rather than throwing — the tagger/views should never crash on
-        /// load. If the same <c>oracle_id</c> somehow appears in more than one
+        /// <c>oracle_id</c>. A missing directory, a missing individual tier file
+        /// or a blank one contributes nothing; a tier file that is present but
+        /// corrupt THROWS <see cref="InvalidDataException"/> (see
+        /// <see cref="LoadTierFile"/>). If the same <c>oracle_id</c> somehow appears in more than one
         /// tier file, the first one encountered in <see cref="TierFileNames"/>
         /// order (pool -> fringe -> unrated) wins, so the merge is deterministic.
         /// </summary>

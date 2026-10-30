@@ -1,5 +1,3 @@
-#nullable enable annotations
-
 using System.Text.RegularExpressions;
 
 namespace ScatoloneDownloader.Mtg
