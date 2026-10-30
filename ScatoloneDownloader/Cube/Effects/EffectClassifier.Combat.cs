@@ -124,7 +124,9 @@ namespace ScatoloneDownloader.Cube
         // Lands made EVERY basic land type fix every colour: Leyline of the
         // Guildpact, Energybending and Omo, Queen of Vesuva, ManaFixing by
         // hand (3 of 3), read 2026-10-15. "The basic land type of your choice"
-        // is split 1 to 1 (Mystic Compass tagged, Jinx not) and is not read.
+        // was split 1 to 1 (Mystic Compass tagged, Jinx not) and not read until
+        // 2026-10-16 ("MF a entrambe"): the ManaFixing table in the Rules file
+        // reads "target land becomes the basic land type of your choice" now.
         private static readonly Regex LandsOfEveryType = Rx(
             @"\blands? you control (?:are|gain) (?:every|all) basic land types?\b|\bis every land type\b");
 
@@ -839,8 +841,11 @@ namespace ScatoloneDownloader.Cube
         // sull'opponent per prendere tempo che su di te per salvare qualcosa".
         // The permanent has to be a CREATURE — Vision Charm phases an artifact
         // and is Mill and Protection — and an O-RING phase-out that lasts until
-        // the enchantment leaves is the temporary-exile family instead, which
-        // has no ruling yet (Oubliette, hand-tagged Removal).
+        // the enchantment leaves is Removal instead (Oubliette, The Phasing of
+        // Zhalfir): a phasing that lasts as long as the card does, settled in
+        // Removal.md and read in the Removal table; the "until" look-ahead
+        // below keeps it out of this tag. (Until 2026-10-14 this read "no
+        // ruling yet".)
         //
         // DECLARED HERE, above ProtectionPatterns, and that placement is load
         // bearing: field initialisers run in textual order within a file, so a
@@ -1349,7 +1354,7 @@ namespace ScatoloneDownloader.Cube
             // one target creature") and on each of theirs (Asinine Antics,
             // "attached to that creature"): 3 of 3 reviewed.
             + @"|cursed role token attached to (?:that creature|(?:up to one )?target creature(?! you control))"
-            // Three more read the same day, one reviewed card each, tagged and
+            // Four more read the same day, one reviewed card each, tagged and
             // never proposed: a creature that BECOMES a 1/1 and loses all
             // abilities (Hunted by The Family); one exiled until ITS
             // CONTROLLER's next end step, a whole turn of theirs (The Eternal
@@ -2131,10 +2136,12 @@ namespace ScatoloneDownloader.Cube
 
         // A mana ability that costs nothing but the tap is a mana SOURCE: the
         // card is Ramp, and the colour it happens to make is a property of the
-        // source rather than a service it performs for you. Pay something on top
-        // — mana, a life, the tap of another permanent — and it converts colour
-        // instead of making it, which IS the job: Celestial Prism, Mana Prism,
-        // Standing Stones, Gene Pollinator. Measured 2026-09-18 over the 5,035
+        // source rather than a service it performs for you. Pay MANA on top and
+        // it converts colour instead of making it, which IS the job: Celestial
+        // Prism, Mana Prism, Standing Stones. (Until 2026-09-29 any price on
+        // top converted — a life, the tap of another permanent, Gene Pollinator;
+        // ruled that day "solo il mana converte", ManaFixing.md, and
+        // ActivatedAdd below enforces it.) Measured 2026-09-18 over the 5,035
         // reviewed cards: a bare {T} for any colour was tagged 2 of 28 (7.1%),
         // the same line behind a cost 11 of 12 (91.7%); for a choice of two
         // colours, 0 of 3 against 6 of 6. Worth 21 on its own.

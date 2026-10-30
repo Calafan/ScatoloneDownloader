@@ -1226,11 +1226,10 @@ namespace ScatoloneDownloader.Cube
                 //
                 // Worth 15 recovered against 9 wrongly fired on the reviewed set, which
                 // is thin: it is here for the consistency, not for the score. The wider
-                // Burn problem is elsewhere and NOT fixed — "each" in the object list
-                // below tags mass damage as Burn, which accounts for 37 false positives,
-                // but the same wording is hand-tagged Burn on 22 other cards, so the
-                // question of whether a sweeper burns is the user's to settle, not a
-                // rule to quietly change.
+                // Burn problem — "each" in the object list tagging mass damage as
+                // Burn, 37 false positives against 22 hand-tagged cards — was left
+                // to the user then and SETTLED 2026-09-15, see the paragraph below
+                // and Burn.md.
                 // Burn is damage aimed at a FACE. Damage pointed at a creature is how
                 // the game kills creatures and is already Removal; reading it as Burn
                 // as well is what gave the tag 129 false positives, Explosive Shot and
@@ -1474,11 +1473,13 @@ namespace ScatoloneDownloader.Cube
                     Rx(SacrificesYourOwnByAnotherVerb, RegexOptions.Multiline)]),
 
                 // Three patterns of "gain control" saw one third of this tag. The rest
-                // is in StealPatterns above: an EXCHANGE is a theft you paid for
-                // (Juxtapose, Legerdemain, Political Trickery, Trade the Helm,
-                // Gauntlets of Chaos), a card taken out of somebody else's LIBRARY,
-                // HAND or GRAVEYARD and played is a theft of a card rather than of a
-                // permanent (15 of the 28 misses, from Outrageous Robbery to Gonti),
+                // is in StealPatterns (declared in EffectClassifier.Permanents.cs,
+                // not above) and in TakesSomebodyElsesCard, which Classify calls:
+                // an EXCHANGE is a theft you paid for (Juxtapose, Legerdemain,
+                // Political Trickery, Trade the Helm, Gauntlets of Chaos), a card
+                // taken out of somebody else's LIBRARY, HAND or GRAVEYARD and played
+                // is a theft of a card rather than of a permanent (15 of the 28
+                // misses, from Outrageous Robbery to Gonti: TakesSomebodyElsesCard),
                 // and "onto the battlefield UNDER YOUR CONTROL" is how Bone Dancer,
                 // Helm of Obedience and Desertion say it.
                 (CardEffect.Steal, StealPatterns),

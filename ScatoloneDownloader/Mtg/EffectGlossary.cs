@@ -87,10 +87,10 @@
                 + "CardAdvantage only on its own repeating ability, or hideaway.",
 
             [CardEffect.Reanimate] =
-                "A creature back from the dead and straight onto the BATTLEFIELD, cheating its cost. A card this card "
-                + "EXILED counts, and so does a token copy of one in a graveyard. Not a card bringing ITSELF back, "
-                + "one put back for somebody ELSE, or one only a creature TYPE can use. Blinking your OWN creature "
-                + "is protection; a land back is Ramp.",
+                "A creature back from the dead straight onto the BATTLEFIELD, its cost cheated. A card it "
+                + "EXILED counts, as does a token copy of one in a graveyard. Not a card bringing ITSELF back, "
+                + "one put back for somebody ELSE, or one for a creature TYPE only. Blinking your OWN creature: "
+                + "Protection; a land is Ramp only if this card filled the graveyard.",
 
             [CardEffect.Buff] =
                 "Raises POWER/TOUGHNESS for something else, when that is what the card is FOR: permanent, over an "

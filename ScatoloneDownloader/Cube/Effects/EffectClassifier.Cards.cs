@@ -612,10 +612,11 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex BlinksYourOwnCreature = Rx(
             @"exiles? target creature you control|exiles? (?:it|them|that creature)[\w ,']{0,30}return");
 
-        // A land out of the graveyard is Ramp, ruled 2026-09-18 and read here
-        // 2026-09-19: 7 reviewed cards put one back and only 1 is tagged
-        // Reanimate. Summon: Titan and Will of the Sultai rebuild a mana base;
-        // they do not reanimate anything.
+        // A land out of the graveyard was Ramp, ruled 2026-09-18 and read here
+        // 2026-09-19; since 2026-10-13 only if the card filled that graveyard
+        // itself (Ramp.md, LandsBackAfterFillingTheGraveyard). 7 reviewed cards
+        // put one back and only 1 is tagged Reanimate. Summon: Titan and Will of
+        // the Sultai rebuild a mana base; they do not reanimate anything.
         private static readonly Regex LandOutOfTheGraveyard = Rx(
             @"land cards? (?:from|in)[\w ,'\-/]{0,30}graveyard[\w ,'\-/]{0,20}(?:on)?to the battlefield[^\n.]{0,40}");
 

@@ -12,7 +12,8 @@ namespace ScatoloneDownloader.Cube
     /// confirms every suggestion in the tagger (the classifier never stamps
     /// <c>reviewedAt</c>). The rule table is a plain list of
     /// <c>(effect, regex...)</c> so it is easy to extend as gaps surface; each
-    /// pattern is matched case-insensitively against the lower-cased oracle text.
+    /// pattern is matched against the oracle text as printed; most patterns are built
+    /// with <c>Rx</c> (which adds IgnoreCase), a few with <c>new Regex</c> are case-sensitive on purpose.
     /// Not an oracle of truth — a starting point that turns "tag 30k from scratch"
     /// into "review suggestions".
     /// </summary>
@@ -85,7 +86,7 @@ namespace ScatoloneDownloader.Cube
 
         // The subjects that make an effect land on something OTHER than the card
         // writing it. Looked for in the text preceding a Buff/Protection match on
-        // the same line — see GrantedToSomethingElse.
+        // the same line — see Beneficiary and AimsOnlyAtItself.
         //
         // "<noun> you control" has to stay open-ended: the beneficiary is any
         // type line the card cares to name (Wizards, Merfolk, creature tokens,
@@ -837,7 +838,9 @@ namespace ScatoloneDownloader.Cube
             // net gain, so the moment the count is provably positive the card
             // belongs to CardAdvantage alone — Casting of Bones and Emmessi Tome
             // were carrying both.
-            // Nothing withdraws Filter. The two tags are NOT exclusive, ruled
+            // OVERTURNED 2026-09-27: the two tags are EXCLUSIVE once the count is
+            // provably positive, see the withdrawal further down. Until then
+            // nothing withdrew Filter and the tags were NOT exclusive, ruled
             // 2026-09-19: a card that selects AND comes out ahead carries both,
             // because it really did both. Casting of Bones draws three and
             // keeps two, which is a card gained and a choice made. An earlier
@@ -847,7 +850,8 @@ namespace ScatoloneDownloader.Cube
 
             // The top few of your library, one of them into your hand, over and
             // over. See TopFewIntoYourHand for the ruling and the measurement,
-            // and note that nothing withdraws Filter: the card really did select.
+            // and note that this rule does not itself withdraw Filter (the
+            // 2026-09-27 exclusivity further down may, once CardAdvantage is set).
             // Explore's reminder is not asked (see Explores).
             if (Abilities(ExploreReminder.Replace(text, " ")).Any(a =>
                     (TopFewIntoYourHand.IsMatch(a) || SearchesSeveralIntoYourHand.IsMatch(a))
@@ -1229,7 +1233,7 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Filter;
             }
 
-            // LAST of all, because B2 asks whether the card does anything else:
+            // Late, because B2 asks whether the card does anything else:
             // a small pump at instant speed is Buff only when it IS the card.
             // Ruled 2026-09-25; see EveryPumpIsBesideThePoint.
             if (result.HasFlag(CardEffect.Buff) && EveryPumpIsBesideThePoint(card, result & ~CardEffect.Buff))
