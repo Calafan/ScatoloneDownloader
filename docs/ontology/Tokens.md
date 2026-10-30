@@ -57,7 +57,8 @@ shape as earthbend, ruled 2026-09-25 on Case of the Filched Falcon ("put four +1
 target noncreature artifact. It becomes a 0/0 Bird creature"). Two disagreements are left on
 purpose: Graywater's Fixer grants encore to every outlaw in the graveyard, which repeats but reads
 as one copy, and Siege-Gang Lieutenant repeats only while you control a commander, which a cube
-never has, and stays untagged by hand (by the rule too since 2026-10-15, below).
+never has, and stays untagged by hand (by the rule too since 2026-10-15, below). Graywater's Fixer
+was settled 2026-10-27, below.
 
 A COPY of a creature SPELL becomes a token and counts, ruled 2026-09-28 ("copia una magia creature è
 Token"): Case of the Shifting Visage, Double Down, Thurid, Jackal — never saying "create", so read
@@ -93,20 +94,21 @@ Gorgon's Kiss); plain MANIFEST counts like cloak, under the creature rule (Guard
 Forgotten) — but not out of a graveyard (Ghastly Conscription) or when somebody else manifests; a
 LIEUTENANT ability never counts, for ANY tag, being the commander clause again (Ironwill Forger
 loses Tokens, Loyal Drake and Stormsurge Kraken CardAdvantage); a token copy of a NONCREATURE stays
-out (Adagia, Windswept Bastion and Terra, Magical Adept).
+out (Adagia, Windswept Bastion and Terra, Magical Adept), and so does a token copy of what an Aura
+or Equipment is attached to (Arna Kennerüd, Three Dog: untagged).
 
 Read the same day: lands that ARE or become X/X creatures (Jolrael, Voice of Zhalfir, Sage of the
 Maze — 11 of 13 reviewed), "each player creates" a creature token makes one for you too (4 of 4, The
 War Games), "that creature's controller creates" after a destroy or exile is the victim's (0 of 14),
-a token copy of what an Aura or Equipment is attached to (Arna, Three Dog), a storm creature whose
-copies become tokens (Stormscale Scion), a land cast face down by disguise or morph, a named token
-whose type follows a quoted ability (Twisted Sewer-Witch), and "of those tokens" doubling a count
-(Adipose Offspring).
+a storm creature whose copies become tokens (Stormscale Scion), a land cast face down by disguise or
+morph, a named token whose type follows a quoted ability (Twisted Sewer-Witch), and "of those
+tokens" doubling a count (Adipose Offspring).
 
-Left as disagreements on purpose: Graywater's Fixer, Writhing Chrysalis (ruled 2026-09-29), Siege
-Veteran (a tribal trigger, 4 to 2), Chandra, Spark Hunter (a Vehicle token, one card), Niko (Shards
-become copies), Random Encounter, Tribute to Horobi. A Vehicle is not a body it makes: 17 of 108
-reviewed Vehicles are tagged, and the rules read a body on 13 of them.
+Left as disagreements on purpose (all settled since, see 2026-10-27 and the end): Graywater's Fixer,
+Writhing Chrysalis (ruled 2026-09-29), Siege Veteran (a tribal trigger, 4 to 2), Chandra, Spark
+Hunter (a Vehicle token, one card), Niko (Shards become copies), Random Encounter, Tribute to Horobi.
+A Vehicle is not a body it makes: 17 of 108 reviewed Vehicles are tagged, and the rules read a body
+on 13 of them.
 
 Ruled 2026-10-24, four questions. Any NONCREATURE card cast face down by morph or disguise is a 2/2
 body, like the land of 2026-10-15 ("Tokens, come le terre"): Gift of Doom tagged, Concealed Weapon
@@ -155,7 +157,7 @@ Random Encounter is Burn and CardAdvantage instead ("Burn e CA", see Burn.md), u
 No disagreement is left on purpose.
 
 RULED 2026-10-27 ("Tokens, niente Buff", Halsin, Emerald Archdruid): any TOKEN of yours made a
-creature is a body like an animated artifact (T1), since a Treasure or a Clue is an artifact by
+creature is a body like an animated artifact, since a Treasure or a Clue is an artifact by
 another name, and a pump only tokens get is the 09-25 Tokens payoff rather than Buff. Halsin's
 "{1}: target token you control becomes a green Bear creature with base power and toughness 4/4" was
 Buff by hand and is corrected by name; Voldaren Bloodcaster's Bloodbat face follows unreviewed. A

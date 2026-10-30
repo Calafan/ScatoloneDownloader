@@ -512,7 +512,7 @@ namespace ScatoloneDownloader.Cube
             // turn" pattern would see them and vouch for a pump that is not there.
             string rest = TribalPump.Replace(text, " ");
             return !PlainPump.IsMatch(rest)
-                && !Rx(@"creatures you control get \+").IsMatch(rest)
+                && !CreaturesYouControlGet.IsMatch(rest)
                 && !(CounterOnSomebodyElse.IsMatch(rest) && !CounterForAnOpponent.IsMatch(rest));
         }
 

@@ -75,16 +75,16 @@
                 + "discard.",
 
             [CardEffect.CardAdvantage] =
-                "A card the opponent does not get. COUNT IT — the card ITSELF counts: Ponder nets 0. A one-shot "
-                + "must draw two more than it pays; a REPEATABLE ability needs one, even paid with a card or a "
-                + "permanent, even THEIR card. Two off and ONE played is Filter; both only on two abilities. "
-                + "Not THEIR draw, a tribe's graveyard, an unreachable trigger.",
+                "A card the opponent does not get. COUNT the card ITSELF: Ponder nets 0. A one-shot "
+                + "must draw two more than it pays; a REPEATABLE ability needs one, even paid with a card or "
+                + "permanent, even THEIR card. Two off, ONE played: Filter unless it repeats; both only on two "
+                + "abilities. Not THEIR draw, a tribe's graveyard, an unreachable trigger.",
 
             [CardEffect.Filter] =
                 "Cards changing places at NO net gain: keep one of a few seen, milled or revealed, rearrange "
-                + "ANY player's top, a wheel, hideaway, a scry LAND, a loot SPELL, a scry, loot, Blood or Map that "
-                + "comes AGAIN. Not one made ONCE in passing, nor a LAND kept (ManaFixing), nor a CLOAK. With "
-                + "CardAdvantage only on its own repeating ability, or hideaway.",
+                + "ANY player's top, a wheel, a scry LAND, a loot SPELL, a scry, loot, Blood or Map that "
+                + "comes AGAIN. Not one made ONCE, a LAND kept (ManaFixing) or a CLOAK. With "
+                + "CardAdvantage only on its own repeating ability, hideaway or a planeswalker's loot.",
 
             [CardEffect.Reanimate] =
                 "A creature back from the dead straight onto the BATTLEFIELD, its cost cheated. A card it "

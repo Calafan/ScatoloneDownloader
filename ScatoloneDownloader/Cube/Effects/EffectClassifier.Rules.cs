@@ -1045,9 +1045,9 @@ namespace ScatoloneDownloader.Cube
                 // lookahead is what keeps CYCLING reminder text out, because
                 // cycling pays a card to replace itself and attacks nobody.
                 // Added 2026-09-19.
-                // Scry and surveil ARE Filter, unconditionally, ruled 2026-09-19 —
-                // it does not matter what else the card does or how small the
-                // number is. Read across every printed form, which "scry \d" was
+                // Scry and surveil ARE Filter, ruled 2026-09-19 unconditionally —
+                // overturned 2026-09-27 for one made once in passing, see
+                // SelectsOnlyInPassing. Read across every printed form, which "scry \d" was
                 // not: the bulk carries "scry X" on 17 cards and "surveil X" on 6,
                 // and a handful say "scries"/"surveils" because the subject is a
                 // player. The count is required so that "whenever you scry OR

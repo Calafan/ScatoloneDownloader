@@ -236,8 +236,9 @@ namespace ScatoloneDownloader.Cube
             {
                 result &= ~CardEffect.Ramp;
 
-                // …unless it makes more mana than it costs, every turn. See the
-                // pattern above for why the self-sacrificing ones stay out.
+                // …unless it makes more mana than it costs, every turn. See
+                // LandTapsForMoreThanOne (Combat.cs) for why the self-sacrificing
+                // ones stay out.
                 // Entering tapped is deliberately NOT asked here, though it is
                 // asked of the sacrifice-for-mana rule below. Tried on
                 // 2026-09-18 to catch Teferi's Isle and reverted: it took the
@@ -260,7 +261,7 @@ namespace ScatoloneDownloader.Cube
             }
 
             // Added AFTER the land strip, because Crystal Vein is a land and is
-            // exactly the card this rule is for. See the patterns above.
+            // exactly the card this rule is for. See SacrificesForMana (Combat.cs).
             // A spell's mana counts when it is the spell's point, not when it
             // rides on an answer. See SpellAddsMana and AnswersARitualRidesOn.
             // A land sacrificing something else for one mana is not asked. See
@@ -276,7 +277,7 @@ namespace ScatoloneDownloader.Cube
             }
 
             // The eight families ruled 2026-09-18, all after the land strip for
-            // the same reason. Each is documented on its own pattern above.
+            // the same reason. Each is documented on its own pattern in Combat.cs.
             // A trigger or a grant the card cannot fire itself is asked
             // without it (OnSomebodyElsesExplore, GrantedToTokens).
             // The table's tap rule is asked again without the grant, as it is
@@ -426,15 +427,16 @@ namespace ScatoloneDownloader.Cube
             }
 
             // A shrink that takes toughness off one named creature. See the two
-            // patterns above for why the zero and the single target both matter.
+            // patterns in Combat.cs (ShrinksOneCreature, ShrinkCounters) for why the zero
+            // and the single target both matter.
             if (ShrinksOneCreature.IsMatch(text) || ShrinkCounters.IsMatch(text))
             {
                 result |= CardEffect.Removal;
             }
 
             // Late, so it can take the tag back off whatever granted it: a card
-            // that can only answer what is already blocking it. See the pattern
-            // above; nothing else on these cards points outward.
+            // that can only answer what is already blocking it. See
+            // OnlyWhatIsInCombatWithIt in Combat.cs; nothing else on these cards points outward.
             if (result.HasFlag(CardEffect.Removal) && OnlyWhatIsInCombatWithIt.IsMatch(text))
             {
                 result &= ~CardEffect.Removal;
@@ -518,7 +520,7 @@ namespace ScatoloneDownloader.Cube
                 }
             }
 
-            // A Wall is not a Pacify effect. See the patterns above. Unless it
+            // A Wall is not a Pacify effect. See SelfCantAttack (Combat.cs). Unless it
             // hands a lock to what it blocks (Mindbender Spores).
             if (result.HasFlag(CardEffect.Pacify) && SelfCantAttack.IsMatch(text) && !OutwardCantAttack.IsMatch(text)
                 && !GrantsAnUntapLock.IsMatch(text))
@@ -542,7 +544,8 @@ namespace ScatoloneDownloader.Cube
             }
 
             // The same question one more time, for the three shapes that name a
-            // victim and still point the wrong way. See the patterns above.
+            // victim and still point the wrong way. See TapsACreatureYouControl,
+            // YourOwnCreaturesCantAttack and PhasesOutYourOwn (Combat.cs).
             if (result.HasFlag(CardEffect.Pacify) && OnlyRestrainsYourOwn(text))
             {
                 result &= ~CardEffect.Pacify;
@@ -564,7 +567,7 @@ namespace ScatoloneDownloader.Cube
 
             // Prevention aimed at one of your own, asked the same way: blank the
             // prevention out and see whether anything else on the card locks
-            // somebody down. See PreventionAimedAtYourOwn above.
+            // somebody down. See PreventionAimedAtYourOwn (Combat.cs).
             if (result.HasFlag(CardEffect.Pacify)
                 && PreventsWhatACreatureDeals.IsMatch(text)
                 && (PreventionAimedAtYourOwn.IsMatch(text) || TheyCanPayToIgnoreIt.IsMatch(text))
@@ -579,15 +582,16 @@ namespace ScatoloneDownloader.Cube
             // like a sweeper and only ever touches what is already in combat with
             // it — Abu Ja'far, Kjeldoran Frostbeast, the Glyph cycle. It is a
             // combat trick, and it was every false positive the widened Wipe
-            // patterns above introduced.
+            // patterns (Rules.cs) introduced.
             if (result.HasFlag(CardEffect.Wipe) && OnlyWhatIsInCombatWithIt.IsMatch(text))
             {
                 result &= ~CardEffect.Wipe;
             }
 
             // …and the sentences that sweep only what attacked or blocked, or
-            // only one creature type, plus the dexterity cards. See the three
-            // patterns above.
+            // only one creature type, plus the dexterity cards. See
+            // SweepsOnlyWhatIsInCombat, SweepsOneCreatureType and
+            // FlippedOntoTheTable (Combat.cs).
             if (result.HasFlag(CardEffect.Wipe)
                 && (FlippedOntoTheTable.IsMatch(text)
                     || !WipePatterns.Any(p => p.IsMatch(
@@ -815,7 +819,7 @@ namespace ScatoloneDownloader.Cube
             }
 
             // …unless the loot can be counted and comes out ahead. See
-            // DrawsThenDiscards above for why this is added back rather than
+            // DrawsThenDiscards (Cards.cs) for why this is added back rather than
             // written into the guard.
             if (LootDrawsMoreThanItPays(text))
             {
@@ -1015,7 +1019,7 @@ namespace ScatoloneDownloader.Cube
             // Added AFTER that gate, not folded into BuffPatterns: the gate reads
             // the text BEFORE a match for its subject, and a counter names its
             // beneficiary after ("put a +1/+1 counter ON target creature"), so it
-            // would be stripped every time. See the patterns above.
+            // would be stripped every time. See CounterOnSomebodyElse (Combat.cs).
             // A Role and a quoted pump handed to an equipped creature join them
             // for the same reason. See HandsSomebodyElseAPump.
             if (HandsSomebodyElseAPump(text))
@@ -1024,8 +1028,8 @@ namespace ScatoloneDownloader.Cube
             }
 
             // Late, so it can take the tag back off whichever rule granted it:
-            // a card whose ONLY pump is restricted to one creature type. See the
-            // patterns above; the "only" is why the tribal phrases are blanked and
+            // a card whose ONLY pump is restricted to one creature type. See
+            // TribalPump (Combat.cs); the "only" is why the tribal phrases are blanked and
             // the question asked again rather than tested in place.
             if (result.HasFlag(CardEffect.Buff)
                 && (OnlyPumpsATribe(text) || OnlyPumpsInsideQuotes(text) || OnlyPumpsItsOwnCopies(card, text)))

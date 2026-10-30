@@ -491,12 +491,16 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex PumpDoubles = Rx(
             @"double (?:target creature's|that creature's|the) power|double the number of \+1/\+1 counters");
 
+        // Declared before BuffPatterns, which holds it, and also read by
+        // OnlyPumpsATribe.
+        private static readonly Regex CreaturesYouControlGet = Rx(@"creatures you control get \+");
+
         // Hoisted for the same reason as MillPatterns: the beneficiary guard
         // re-walks their matches to see WHO the effect lands on.
         private static readonly Regex[] BuffPatterns =
         [
             Rx(@"gets? \+\d+/\+\d+"),
-            Rx(@"creatures you control get \+"),
+            CreaturesYouControlGet,
             Rx(@"\+\d+/\+\d+ until end of turn"),
             // A pump sized by X or by a count is still a pump; the rules only
             // read digits. Added to THIS array rather than OR'd in later, which

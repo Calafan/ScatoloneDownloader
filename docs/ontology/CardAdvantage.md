@@ -29,8 +29,10 @@ draw with selection, while taking exactly one is Filter; and CASTING OUT OF A GR
 counts only when you can go back to it every turn (Festival of Embers, Edgar), never for one
 flashback card.
 
-Ruled again 2026-09-19 and this time the count is symmetric: ANY net gain is CardAdvantage and stops
-being Filter, a net of zero is Filter and was never advantage. Four more ways a card arrives were
+Ruled again 2026-09-19 and this time the count is symmetric: ANY net gain is CardAdvantage, a net of
+zero is Filter and was never advantage. The first cut also took Filter off every card that gained;
+the same day that was corrected, and a card that selects AND comes out ahead carried both (OVERTURNED
+2026-09-27: the two tags are exclusive, see Filter). Four more ways a card arrives were
 measured and added the same day.
 
 WHOSE DRAW IS IT: a card that only ever draws for somebody else gives nothing away (Sibilant Spirit,
@@ -124,13 +126,13 @@ la difficoltà di trigger"; there is no wording that means "this rarely happens"
 each NAME their own difficulty and none has a counterexample — a coin flip (Goblin Artisans),
 becoming the target of an AURA SPELL or an ACTIVATED ABILITY, which needs a second card before the
 draw happens at all (Fugitive Druid, Professor Hojo), and a draw bought by handing an opponent a
-permanent (Stiltzkin). The line it does NOT cross is Surrak, Elusive Hunter: his trigger is ANY
-spell or ability an opponent aims at your creatures, which happens by itself, and he keeps the tag.
-Recorded as four cards read one at a time rather than a principle. Four wordings were simply
-unreadable and are now read: an ADDITIONAL card (Howling Mine, Sylvan Library), "draws UP TO n
-cards" without the "may" that separates Diminishing Returns from Truce, a trigger with one sentence
-in front of it (Rowen), and "that many cards FROM THE TOP of your library" (Symbiote Spider-Man,
-Choco, Stargaze).
+permanent (Stiltzkin; overturned 2026-10-14, below). The line it does NOT cross is Surrak, Elusive
+Hunter: his trigger is ANY spell or ability an opponent aims at your creatures, which happens by
+itself, and he keeps the tag. Recorded as four cards read one at a time rather than a principle.
+Four wordings were simply unreadable and are now read: an ADDITIONAL card (Howling Mine, Sylvan
+Library), "draws UP TO n cards" without the "may" that separates Diminishing Returns from Truce, a
+trigger with one sentence in front of it (Rowen), and "that many cards FROM THE TOP of your library"
+(Symbiote Spider-Man, Choco, Stargaze).
 
 EXILE AND PLAY IT FROM THERE was confirmed as this tag on 2026-09-21 and was the single biggest hole
 left: twenty reviewed cards, every one tagged by hand, every one missed, because each writes the
@@ -163,8 +165,9 @@ THAN ONE CARD is a trade it wins (Blitzball, Qiqirn Merchant, Reverberating Summ
 the one-shot-sacrifice rule rather than overturning it — that rule was written for the one-card case
 and reads Preferred Selection right. Two exclusions were measured, not assumed: the count has to be
 READABLE (All-Fates Scroll draws "X cards, where X is the number of differently named lands" and is
-Ramp alone, the same answer an unreadable loot gets) and the line must not hand a card back (Conch
-Horn draws two and puts one from your hand on top, which with the artifact is level).
+Ramp alone, the same answer an unreadable loot gets; this tag since 2026-10-23, below) and the line
+must not hand a card back (Conch Horn draws two and puts one from your hand on top, which with the
+artifact is level).
 
 EMPTYING YOUR HAND and drawing a fixed number back is not a loot, because the hand you paid can be
 empty — Case of the Crimson Pulse solves itself on "You have no cards in hand" and then draws two
@@ -210,7 +213,8 @@ life he swapped left him worse off). And the self-cost pattern had never fired a
 been written into the source as a literal BACKSPACE character by an earlier tool, invisible in every
 diff since. Four hypotheses were MEASURED AND REJECTED and are recorded so they are not re-derived.
 "A Saga chapter that draws is advantage" splits 7 to 13. "A modal bullet that draws under a trigger"
-buys Teval's Judgment and costs Monument to Endurance and Zuko, Conflicted — 1 to 2. "A card paid
+buys Teval's Judgment and costs Monument to Endurance and Zuko, Conflicted — 1 to 2 (OVERTURNED
+2026-10-13: a draw mode under a repeating trigger is read, below). "A card paid
 for with ANOTHER permanent is not free" is backwards: 9 of the 10 reviewed cards that sacrifice
 something else to draw ARE tagged, and Susur Secundi is the lone exception, left as a known miss
 rather than written into a rule. And "you may cast it from the top" must say LOOK or REVEAL, never
@@ -277,7 +281,7 @@ TWO CARDS ARE LEFT and both are recorded rather than chased. Lich replaces lifeg
 the human called it "carta particolare, difficile da taggare"; it carries no tag at all and the
 classifier proposes this one. And Teval's Judgment offers a draw as a MODAL BULLET under a trigger,
 which was measured and rejected the day before: the shape buys that one card and costs Monument to
-Endurance and Zuko, Conflicted.
+Endurance and Zuko, Conflicted (the shape was adopted 2026-10-13, below).
 
 Explained on 2026-09-22, and the three do not disagree — each falls to a rule this tag already has.
 Teval's Judgment says "hasn't been chosen THIS TURN", so the choice returns every turn and the
@@ -286,7 +290,7 @@ with a card and is Filter (OVERTURNED 2026-09-27: the human named it advantage, 
 chosen THIS TURN" is now read, which takes Teval's Judgment with it — see Filter). Zuko, Conflicted
 says "hasn't been chosen" with no reset, so the mode runs once in the game. The distinction is
 readable — "this turn" is there in the words — but the family was ruled too card-specific to encode,
-so no rule is written and Teval's Judgment stays a known miss.
+so no rule was written and Teval's Judgment stayed a known miss (OVERTURNED 2026-10-13, below).
 
 An OMEN is not a second cast, corrected 2026-09-29: its "(Then shuffle this card into its owner's
 library.)" sends the card away rather than handing it back, so Flush Out's "discard a card. If you
