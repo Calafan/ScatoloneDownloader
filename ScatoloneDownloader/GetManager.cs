@@ -34,6 +34,9 @@ namespace ScatoloneDownloader
         // for every request (see GetCardsAsync), so this never outlives one file.
         private Dictionary<string, Card>? cardsByName;
 
+        // The Default Cards bulk, fetched on first use and then reused (see GetDefaultCards).
+        private List<Card>? defaultCards;
+
         // Takes a nullable URI because it comes straight off a Scryfall Set,
         // whose search_uri is optional on the wire; a set advertising cards
         // without one is malformed and worth saying so.
@@ -240,7 +243,11 @@ namespace ScatoloneDownloader
         {
             const string AllArtworks = "Default Cards";
 
-            return await FetchBulkList(AllArtworks);
+            // `files` reads this bulk twice in one run: once for the name index of the
+            // list and once to match the library's images. A second download would
+            // fetch the same six-figure card list again for nothing. Callers only read
+            // the list, so handing every one the same instance is safe.
+            return defaultCards ??= await FetchBulkList(AllArtworks);
         }
 
         internal async Task<List<Card>> GetSet(string setCode)

@@ -46,7 +46,7 @@ ScatoloneDownloader <command> [arguments] [options]
 | `all` | Every card, one printing each (library rules), grouped by year and set | — |
 | `set <SETS>` | Every valid printing of the given sets | one or more set codes (e.g. `neo dmu`) |
 | `years <YEARS>` | Cards first released in the given years (1993–2050), library rules | one or more years |
-| `files <FILES>` | Cards from hand-written lists, plus a stats file | one or more files |
+| `files <FILES>` | Cards from hand-written lists, plus a stats file. Copies from the library the images it already holds and downloads only the rest (`--root`) | one or more files |
 | `lands` | **Every** basic land artwork, split by land type | — |
 | `analyze <FILES>` | Analyses the lists **without** downloading images | one or more files |
 
@@ -61,7 +61,6 @@ ScatoloneDownloader <command> [arguments] [options]
 | `-l, --lands` | Include basic lands (left out by default) |
 | `-p, --print-only` | Write the card list only, without downloading images |
 | `--no-rules` | Ignore the library rules (`all` and `years` only) |
-| `--library <DIR>` | Write straight into a `<year>\<set>` library (`all` and `years` only) |
 | `-h, --help` | Help, also per command (e.g. `years --help`) |
 
 Library rules: `all` and `years` reproduce the hand-curated library by default.
@@ -79,13 +78,22 @@ besides dungeons and Role tokens.
 Cards of a set not yet released are left out until it is. The pick
 is global, so a card first printed in 2010 and reprinted in 2024 appears in the
 2010 download only. `--no-rules` restores the previous behaviour (every valid
-printing). `--library <DIR>` writes into `<DIR>\<year>\<set>\` with no mode
-sub-folder and skips images already there. `set` downloads every valid printing
+printing). `all` and `years` always write under the output root; to bring the
+library itself up to the rules use `sync`. `set` downloads every valid printing
 of the set and, for a card with no valid printing there, its variant.
 
 Command-specific options:
 
 - `all` — `-e, --exclude <FILE>` leaves out the cards listed in the file.
+- `files` — `--root <DIR>` names the library root (default: `"root"` in
+  `scatolone.json` beside the executable). A non-basic-land card whose image
+  `<root>\Source` already holds is **copied** to `Output/Lists/<list>/<tag>/`
+  (a re-run overwrites, it never numbers a duplicate); every other card is
+  downloaded as before. The copy carries the library's printing, the image rated
+  in the tagger, not the canonical-artwork printing the name index would pick.
+  Cards that are missing from `Source` but that `sync` would bring are listed at
+  the end. Without a usable root the command says so and downloads every card.
+  `-p/--print-only` copies and downloads nothing.
 - `lands` — takes only `-o/--output`, `-c/--clear` and `-p/--print-only`. The
   reprint, token and land filters do not apply: it downloads every basic land
   artwork.
@@ -95,9 +103,6 @@ Command-specific options:
 ```powershell
 # Cards from 2026
 ScatoloneDownloader years 2026
-
-# Cards from 2026, straight into the curated library
-ScatoloneDownloader years 2026 --library E:\Working\Repos\ScatoloneQuintet\Source
 
 # Several years, onto an external disk
 ScatoloneDownloader years 2024 2025 2026 --output D:\Scryfall
@@ -169,10 +174,9 @@ The technical reference — tier files, save behaviour, recovery, the report
 | Command | What it does | Example |
 |---|---|---|
 | `tag` | Starts the local web tagger (keyboard-driven) to set rating, status and effects; every change is saved to `metadata/` at once. It opens on the review queue (untagged cards plus classifier proposals not yet confirmed), shuffled. Filters, picked in the left rail, combine by review state, rating (pool 3–5 / fringe 1–2 / unrated / exact stars), status, colour, type, effect, cost and folder (year, then set); `/` opens the card list with a name search. The effect filter is multi-select (all of the ticked effects, or any of them) and the scope is kept in the page address. `/stats` shows the cube's effects by colour, answers against targets, the bench and the creature profile (creatures by cost and by colour), computed live from the tagger's memory, and every count there opens the tagger on exactly those cards. Each effect button carries the tag's **definition** as a tooltip (and as a fixed line above the list on a phone). `-p, --port` sets the port (default 8765); `--host` adds a host name to answer to besides localhost, e.g. a Tailscale name | `ScatoloneDownloader tag` |
-| `classify` | Proposes effect tags from each card's Scryfall rules text. Proposals only: it writes `effects` but never `reviewedAt`, and never touches a reviewed card. `--overwrite` re-proposes over unreviewed entries, `--dry-run` reports without writing | `ScatoloneDownloader classify --overwrite` |
+| `classify` | Proposes effect tags from each card's Scryfall rules text. Proposals only: it writes `effects` but never `reviewedAt`, and never touches a reviewed card. `--overwrite` re-proposes over unreviewed entries, `--dry-run` reports without writing. `classify.cmd` builds Release first and passes its arguments through | `ScatoloneDownloader classify --overwrite` |
 | `audit` | Lists **reviewed** cards that say the same thing but were tagged differently — the slips repetitive tagging produces. Read-only. `--since` limits the report to recent sittings, `--limit` the number of groups | `ScatoloneDownloader audit --since 2026-09-12` |
 | `report` | Writes the `Cubo_Analysis.md` report (section 8 is the creature profile of the pool; default `Views\Cubo_Analysis.md` in the library root, or `-o <FILE>`) from `metadata/`. Writes nothing else | `ScatoloneDownloader report` |
-| `register` | Adds the library's new PNGs to `metadata/` as unrated entries. Never touches an existing entry; run `classify` after it to propose the new cards' effects. `--dry-run` reports without writing. Don't run it while `tag` is open | `ScatoloneDownloader register` |
 | `sync` | Brings the library up to the library rules in one go: downloads the cards the rules select and `Source\` lacks (one Scryfall bulk download, reused by every step), registers them in `metadata/` as unrated entries and proposes their effects (never `reviewedAt`), and restamps the `scryfallId` of an existing entry whose card the rules now pick in another printing (nothing else of an existing entry). Files no rule selects and store entries with no image are only **listed** — it never deletes or moves a file or removes an entry. `--dry-run` shows the plan and downloads and writes nothing. Don't run it while `tag` is open | `ScatoloneDownloader sync --dry-run` |
 | `make-list` | Writes, offline, a download list for `files` with the pool only (rating 3–5). Cards with a status go in `-- Banned` / `-- Token` / `-- Jolly` sections, so `files` sorts them into sub-folders | `ScatoloneDownloader make-list -o pool.txt` |
 | `restore --images <DIR>` | Recovery: rebuilds the image folder from every file in `metadata/` plus Scryfall's bulk data | `ScatoloneDownloader restore --images .\Source` |
@@ -181,7 +185,7 @@ All of them work against one **library root** holding `Source\` (the images,
 `<year>\<set>\<Name>.png`), `metadata\` (the store) and `Views\` (the report).
 The root is `"root"` in [`scatolone.json`](ScatoloneDownloader/scatolone.json),
 which is copied next to the executable, or `--root <DIR>` for one run; with
-neither, the command stops and says where to set it. `tag`, `register`, `report`
+neither, the command stops and says where to set it. `tag`, `report`
 and `sync` take no folder argument: their library is `<root>\Source`.
 `-m, --metadata <DIR>` overrides only the metadata folder (default
 `<root>\metadata`), and `classify`, `audit`, `make-list` and `restore` need no
@@ -196,6 +200,15 @@ comes first on purpose: `classify` run from an old build writes that build's
 rules over every unreviewed proposal. The library comes from `scatolone.json`; edit the host names at the top
 of the file if the network changes; the tagger's start-up error
 prints the `netsh http add urlacl` reservations a new host name needs.
+
+### Running the classifier: `classify.cmd`
+
+`classify.cmd` builds the Release executable and then runs `classify` with
+every argument you give it (`classify.cmd --dry-run`, `classify.cmd --overwrite`).
+Unlike `tagger.cmd` it refuses to run from a failed build or without `dotnet`:
+it says so, prints the build log path and exits with an error, because a
+`classify` from a stale build is exactly what rewrote every unreviewed proposal
+on 2026-09-24. It does not pause; it is meant for a terminal.
 
 ### The effect classifier
 

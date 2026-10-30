@@ -5,7 +5,7 @@ using ScatoloneDownloader.Mtg;
 namespace ScatoloneDownloader.Tests.Cli;
 
 /// <summary>
-/// Covers the image-to-card name matcher shared by register/tag/report
+/// Covers the image-to-card name matcher shared by tag/report/sync
 /// (#19): normalized-name matching, DFC underscore handling,
 /// first-wins name dedup, the set-folder preference, and skipping unmatched
 /// files. Files need not exist — the matcher only parses the path.

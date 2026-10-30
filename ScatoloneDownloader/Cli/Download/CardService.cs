@@ -2,6 +2,7 @@ using System.Diagnostics;
 
 using Microsoft.Extensions.Logging;
 
+using ScatoloneDownloader.Cli.Cube;
 using ScatoloneDownloader.Download;
 using ScatoloneDownloader.Enums;
 using ScatoloneDownloader.Filtering;
@@ -54,6 +55,10 @@ namespace ScatoloneDownloader.Cli.Download
 
             /// <summary>Skip the library rules (Mode.All and Mode.Years only).</summary>
             internal bool NoRules { get; init; }
+
+            /// <summary>The library's <c>Source</c> folder to copy the cards it holds from
+            /// (Mode.Files only); null downloads every card.</summary>
+            internal string? LibrarySource { get; init; }
         }
 
         internal static Task RunAllAsync(string? excludeFile, bool reprints, bool tokens, bool lands, bool printOnly, bool noRules)
@@ -116,7 +121,7 @@ namespace ScatoloneDownloader.Cli.Download
             });
         }
 
-        internal static async Task RunFilesAsync(IEnumerable<string> files, bool reprints, bool tokens, bool lands, bool printOnly)
+        internal static async Task RunFilesAsync(IEnumerable<string> files, bool reprints, bool tokens, bool lands, bool printOnly, string? librarySource)
         {
             foreach (string file in files)
             {
@@ -133,6 +138,7 @@ namespace ScatoloneDownloader.Cli.Download
                         Download = true,
                         Analyze = true,
                         PrintOnly = printOnly,
+                        LibrarySource = librarySource,
                     });
                 }
                 else
@@ -214,9 +220,82 @@ namespace ScatoloneDownloader.Cli.Download
                     CardDownloader.WriteToList(card);
                 }
             }
+            else if (req.Download && req.LibrarySource is not null)
+            {
+                await CopyFromLibraryAsync(getManager, downloader, req, cards, specificText);
+            }
             else if (req.Download)
             {
                 await DownloadAllAsync(downloader, cards, req.Mode, req.File, specificText, skipExisting);
+            }
+        }
+
+        /// <summary>
+        /// Exports a list from the library: the cards <c>Source\</c> already holds are
+        /// copied, the rest go through <see cref="DownloadAllAsync"/> unchanged. The
+        /// export therefore carries the LIBRARY's printing, the image the user rated in
+        /// the tagger, not the canonical-artwork printing the name index picks. The
+        /// files are matched exactly as <c>sync</c> matches them, so a card is found
+        /// here whenever the store would find it there.
+        /// </summary>
+        private static async Task CopyFromLibraryAsync(
+            GetManager getManager, CardDownloader downloader, CardRequest req, List<Card> cards, string specificText)
+        {
+            string source = req.LibrarySource!;
+
+            // The same bulk the name index was built from: GetDefaultCards keeps it.
+            List<Card> bulk = await getManager.GetDefaultCards();
+            List<Card> selected = LibrarySelector.Select(bulk, reprints: false, tokens: false, lands: false, releasedBy: DateTime.Today);
+
+            // The rules' picks first, as CardImageMatcher.LibraryPicksFirst orders them.
+            List<(Card Card, string FilePath)> matched = CardImageMatcher.Match(
+                [.. selected, .. bulk], Directory.GetFiles(source, "*.png", SearchOption.AllDirectories), warnUnmatched: false);
+
+            HashSet<string> selectedOracleIds = new(
+                selected.Select(card => card.OracleId).Where(id => !string.IsNullOrEmpty(id)), StringComparer.Ordinal);
+
+            LibraryCopySplit split = LibraryCopy.Split(cards, LibraryCopy.FileByOracleId(matched), selectedOracleIds);
+
+            int copied = 0;
+            List<(string Name, string Message)> failures = [];
+
+            foreach ((Card card, string sourceFile) in split.ToCopy)
+            {
+                try
+                {
+                    string target = Path.Combine(
+                        OutputPaths.BuildCardDirectory(card, req.Mode, req.File), OutputPaths.Sanitize(card.Name) + ".png");
+
+                    LibraryCopy.Copy(sourceFile, target);
+                    copied++;
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    Logger.LogError(ex, "Copying {Name} from the library failed", card.Name);
+                    failures.Add((card.Name, ex.Message));
+                }
+            }
+
+            AnsiConsole.MarkupLineInterpolated($"Copied {copied} cards from the library ({source}).");
+
+            foreach ((string name, string message) in failures)
+            {
+                AnsiConsole.MarkupLineInterpolated($"[red]Failed:[/] {name}: {message}");
+            }
+
+            try
+            {
+                if (split.ToDownload.Count > 0)
+                {
+                    await DownloadAllAsync(downloader, [.. split.ToDownload], req.Mode, req.File, specificText, skipExisting: false);
+                }
+            }
+            finally
+            {
+                // After the download tally, and also when a 429 ends the run: the
+                // list is what the user acts on next.
+                SyncCommand.ListLines(
+                    [.. split.SyncWouldBring.Select(card => card.Name)], "Missing from Source, `sync` would bring them:");
             }
         }
 

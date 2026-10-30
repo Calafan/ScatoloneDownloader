@@ -9,7 +9,7 @@ namespace ScatoloneDownloader.Cli.Cube
 {
     /// <summary>
     /// Base settings for every cube command that reads or writes the library
-    /// (<c>register</c>/<c>tag</c>/<c>classify</c>/<c>report</c>/<c>restore</c>/
+    /// (<c>tag</c>/<c>classify</c>/<c>report</c>/<c>restore</c>/
     /// <c>make-list</c>/<c>audit</c>/<c>sync</c>). Owns the <c>--root</c> and
     /// <c>-m|--metadata</c> options and their resolution, so none of that is
     /// copy-pasted per command. The library root (see <see cref="LibraryRoot"/>)
@@ -36,7 +36,7 @@ namespace ScatoloneDownloader.Cli.Cube
 
         /// <summary>
         /// Whether the command works on the images of <c>Source\</c> (<c>tag</c>,
-        /// <c>register</c>, <c>report</c>, <c>sync</c> override this to
+        /// <c>report</c>, <c>sync</c> override this to
         /// <c>true</c>). Those need a root and its <c>Source</c> folder even when
         /// <c>-m</c> is given; the others need a root only to default the metadata.
         /// </summary>

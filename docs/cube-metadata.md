@@ -36,7 +36,7 @@ lives in exactly one file, chosen by its **current rating**:
 |---|---|---|
 | `metadata/pool.json` | 3-5 | The active cube — small, the main hand-edit target, tiny diffs. |
 | `metadata/fringe.json` | 1-2 | Evaluated but cut. Grows over time as more of the backlog gets rated and rejected. Rating 1 and rating 2 share this file on purpose: they are reported differently (only `2` appears, as the bench appendix of the report, see below) but stored identically, so the split moves nothing on disk. |
-| `metadata/unrated.json` | 0 | The bulk library manifest (tens of thousands of entries). Changes only when `register` adds new cards, not from day-to-day curation. |
+| `metadata/unrated.json` | 0 | The bulk library manifest (tens of thousands of entries). Changes only when `sync` adds new cards, not from day-to-day curation. |
 
 Beside the three tiers sits one file that is **not** a tier and holds no card
 state:
@@ -85,7 +85,7 @@ file and retry. (If the same `oracle_id` somehow appears in more than one file
   *before* the old one is pruned, so a crash between the two writes leaves the
   card momentarily in both tiers (resolved pool-first by `Load`) rather than
   missing from all of them.
-- **`CubeMetadataStore.Save`** — the batch path (e.g. `register`) that rewrites
+- **`CubeMetadataStore.Save`** — the batch path (e.g. `sync`) that rewrites
   all three files from the full in-memory set, routing each entry by
   `TierFileName(rating)`. It stages all three temp files first, then moves them
   into place, so the window in which the tiers are mutually inconsistent is
@@ -107,7 +107,7 @@ Every command below works against one **library root** holding `Source\` (the
 images), `metadata\` (this directory) and `Views\` (the report). The root is
 `"root"` in `scatolone.json`, copied beside the executable, or `--root <DIR>` for
 one run; without either the command stops and says where to set it. `tag`,
-`register`, `report` and `sync` read the images from `<root>\Source`. `-m|--metadata
+`report` and `sync` read the images from `<root>\Source`. `-m|--metadata
 <DIR>` overrides only this directory (default `<root>\metadata`); with it,
 `classify`, `audit`, `make-list` and `restore` need no root at all. Each command
 prints the directory it resolved before touching it, so a mismatch shows up on
@@ -116,10 +116,8 @@ the first line instead of as a mysteriously empty store.
 ## Command lifecycle
 
 ```
-        sync       (download what is missing + register + propose, in one go)
-           |
-        register   (new PNGs -> unrated entries, never touches existing ones)
-           |
+        sync       (download what is missing + register + propose, in one go;
+           |        new PNGs -> unrated entries, never touches existing ones)
            v
    metadata/{pool,fringe,unrated}.json  <-------+
            |                                    |
@@ -135,21 +133,22 @@ the first line instead of as a mysteriously empty store.
    restore  <-- metadata/ (union of all tiers) + Scryfall bulk   (disaster recovery)
 ```
 
-1. **`register [--root dir] [-m metadata] [--dry-run]`** — adds the library's
-   new cards to the metadata directory. It matches every PNG under
+1. **`sync [--root dir] [-m metadata] [--dry-run]`** — brings the library up
+   to the library rules and registers what is new. It downloads the cards the
+   rules select that `<root>\Source` lacks, then matches every PNG under
    `<root>\Source` to a Scryfall card by name — a printing from the set the
    file's folder is named after first, since the bulk lists tokens and front
    cards of the same name earlier — and for each `oracle_id` the store
    does not hold yet it adds an entry with the card's name and printing id,
-   rating `0`, no status, no effects and no `reviewedAt`. It **never modifies an
-   existing entry** (not its name, `scryfallId`, rating or anything else), and
-   several files of one card add one entry. Cards with no `oracle_id` are
-   skipped and counted. It prints how many were registered, how many were
-   already in the store and how many were skipped, lists the new names, and
-   ends with the next step: `classify` to propose their effects. `--dry-run`
-   reports without writing. Don't run it while the tagger is open, since the
-   tagger holds its own snapshot of the store in memory and would write it back
-   on the next keystroke; restart `tag` afterwards.
+   rating `0`, no status and no `reviewedAt`, with the effects `classify` would
+   propose. It **never modifies an existing entry** except to restamp its
+   `scryfallId` when the rules now pick another printing (not its name, rating,
+   effects or anything else), and several files of one card add one entry.
+   Cards with no `oracle_id` are skipped. Extra files and entries with no image
+   are only listed. `--dry-run` reports without downloading or writing. Don't
+   run it while the tagger is open, since the tagger holds its own snapshot of
+   the store in memory and would write it back on the next keystroke; restart
+   `tag` afterwards.
 2. **`tag [--root dir] [-m metadata] [-p port]`** — the authoring tool going
    forward. Launches a local web UI (keyboard-driven, one card at a time) to
    set rating (0-5), status (None/Banned/Token/Jolly), and effect tags. Every
@@ -290,9 +289,9 @@ Each of the three tier files has the same shape:
 
 | Field | Type | Who writes it | Meaning / hand-edit rules |
 |---|---|---|---|
-| `name` | `string` | `register`, `tag` | Card name. **Informational only, not a key** — safe to leave stale after a rename; the app always looks the entry up by `oracle_id`. |
-| `scryfallId` | `string` (nullable, omitted when absent) | `register`, `tag`, `sync` | The Scryfall printing `id` (not `oracle_id`) of the art in the library: the printing the library rules pick, which `sync` restamps when a rule change moves the card to another printing. `restore` prefers this to re-download the *same* printing/art; if it's missing or the printing has vanished from the current bulk data, `restore` falls back to the first printing found for the `oracle_id`. Hand-editing this is fine if you know the correct printing UUID; leaving it blank just means `restore` uses the fallback. |
-| `rating` | `int`, 0-5 | `register` (always `0`), `tag` (authoritative) | Cube rating; `0` = unrated. **This is also the field that decides which tier file (`pool.json`/`fringe.json`/`unrated.json`) the entry lives in** — the next `Save` moves it if you hand-edit this to cross a tier boundary. Rating `1` is deliberately left out of the analysis (see D7 below) — it still round-trips. Rating `2` appears only in the report's bench appendix. |
+| `name` | `string` | `sync`, `tag` | Card name. **Informational only, not a key** — safe to leave stale after a rename; the app always looks the entry up by `oracle_id`. |
+| `scryfallId` | `string` (nullable, omitted when absent) | `tag`, `sync` | The Scryfall printing `id` (not `oracle_id`) of the art in the library: the printing the library rules pick, which `sync` restamps when a rule change moves the card to another printing. `restore` prefers this to re-download the *same* printing/art; if it's missing or the printing has vanished from the current bulk data, `restore` falls back to the first printing found for the `oracle_id`. Hand-editing this is fine if you know the correct printing UUID; leaving it blank just means `restore` uses the fallback. |
+| `rating` | `int`, 0-5 | `sync` (always `0`), `tag` (authoritative) | Cube rating; `0` = unrated. **This is also the field that decides which tier file (`pool.json`/`fringe.json`/`unrated.json`) the entry lives in** — the next `Save` moves it if you hand-edit this to cross a tier boundary. Rating `1` is deliberately left out of the analysis (see D7 below) — it still round-trips. Rating `2` appears only in the report's bench appendix. |
 | `status` | `string`, one of `Banned \| Token \| Jolly`, or omitted/null for a normal card | `tag` | Mutually-exclusive pool status. A tagged card (`Banned`/`Token`/`Jolly`) is excluded from the report's pool at any rating. Hand-editable directly as one of the strings (case-insensitive on read); an unrecognized or blank value is treated as no status. |
 | `effects` | `string[]`, canonical `CardEffect` member names | `tag` only | Functional effect tags (a card can carry several). Stored as an array of names, not a packed bitmask, so git diffs show exactly which tag changed. Unknown/duplicate names are dropped on the next `Save` (round-tripped through the resolver). Hand-editable with any of the canonical names in `Mtg/CardEffect.cs` (aliases like `"board wipe"` are also accepted on read, but always re-written canonically). Empty/absent = untagged. |
 | `reviewedAt` | ISO-8601 UTC timestamp (`DateTimeOffset?`), omitted when null | `tag` only | Stamped automatically the instant a human changes anything for a card in the tagger (rating, status, or an effect toggle) — it is the "someone actually looked at this" marker used by the tagger's progress counter and its default to-review filter. `null`/absent = never manually reviewed. The store preserves this verbatim on every `Save` — nothing else re-stamps or clears it, so do not hand-edit it unless you intend to reset the review flag for that card. |
@@ -308,7 +307,7 @@ the key disappears from a tier the next time that tier is saved.
 - If you hand-edit `rating` to cross a tier boundary (e.g. bump a
   `fringe.json` entry from 2 to 4), it stays in the "wrong" file until a
   command re-saves *that card*: editing it in `tag` moves it (the incremental
-  save prunes the old tier), and `register` (which, when it adds a card, does a
+  save prunes the old tier), and `sync` (which, when it adds a card, does a
   full re-partitioning save) moves every mis-filed entry at once. `report` only
   *reads* the metadata, so it never moves anything. Simplest: just fix the entry in the
   correct tier file directly (add it to `pool.json`, remove it from
@@ -322,7 +321,7 @@ the key disappears from a tier the next time that tier is saved.
   otherwise so the tagger's progress tracking stays accurate.
 - Any save re-writes the tier(s) it touches in canonical, sorted form
   regardless of how they were hand-edited, so formatting drift self-heals;
-  only the *values* need to be correct. `register` re-canonicalizes all three
+  only the *values* need to be correct. `sync` re-canonicalizes all three
   files when it adds a card; the `tag` incremental save re-canonicalizes only the tier(s) of the
   card you edit. An untouched tier's bytes never change, so a stray edit to
   `pool.json` alone won't cause a spurious diff in `unrated.json`.

@@ -21,7 +21,7 @@ namespace ScatoloneDownloader.Cli.Cube
     /// git-tracked metadata directory's rating-tier files, keyed by
     /// <see cref="Card.OracleId"/> (see <see cref="CubeMetadataStore"/>). This
     /// tool is the authoring authority: rating/status/effects are loaded from
-    /// there at startup. New cards reach the store through the <c>register</c>
+    /// there at startup. New cards reach the store through the <c>sync</c>
     /// command, which must not run while this tool is open.
     /// The page opens on the "to review" filter — see <see cref="Card.Reviewed"/>.
     /// </summary>

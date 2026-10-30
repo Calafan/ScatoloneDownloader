@@ -43,9 +43,6 @@ namespace ScatoloneDownloader
                 config.AddCommand<TagCommand>("tag")
                     .WithDescription("Launch the local web tagger to assign card rating/status/effects and autosave to the metadata directory.");
 
-                config.AddCommand<RegisterCommand>("register")
-                    .WithDescription("Add the library's new PNGs to the metadata directory as unrated entries. Never touches existing entries.");
-
                 config.AddCommand<RestoreCommand>("restore")
                     .WithDescription("Rebuild an image folder from the metadata directory + Scryfall bulk data.");
 

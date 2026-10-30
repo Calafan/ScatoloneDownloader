@@ -16,7 +16,8 @@ namespace ScatoloneDownloader.Download
         // working directory) and can be overridden with the --output option.
         internal static string Root { get; private set; } = Path.Combine(".", "Output");
 
-        /// <summary>When set, <c>all</c> and <c>years</c> write straight into this library
+        /// <summary>When set (by <c>sync</c>), the <see cref="Mode.All"/> and <see cref="Mode.Years"/>
+        /// paths are built straight inside this library
         /// (<c>LibraryRoot/year/set</c>, no mode sub-folder). Never part of
         /// <see cref="BasePaths"/>, so <c>--clear</c> cannot touch it.</summary>
         internal static string? LibraryRoot { get; private set; }

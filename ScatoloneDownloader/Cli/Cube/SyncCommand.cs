@@ -55,10 +55,11 @@ namespace ScatoloneDownloader.Cli.Cube
             AnsiConsole.MarkupLine("[yellow]Loading bulk data from Scryfall...[/]");
             List<Card> bulk = await manager.GetDefaultCards();
 
-            // The same selection `all --library` and `years --library` make.
+            // The same selection `all` and `years` make under the library rules.
             List<Card> selected = LibrarySelector.Select(bulk, reprints: false, tokens: false, lands: false, releasedBy: DateTime.Today);
 
-            // The expected file is the path `years --library` would write.
+            // The library layout is <Source>\<year>\<set>\<Name>.png, with no mode
+            // sub-folder, so the expected file is that path.
             OutputPaths.UseLibrary(source);
             List<(Card Card, string ExpectedPath)> expected = [.. selected.Select(card => (
                 card,
@@ -145,7 +146,7 @@ namespace ScatoloneDownloader.Cli.Cube
 
         /// <summary>Prints a titled list, the first <see cref="ListedNames"/> lines and a count of the rest;
         /// prints nothing for an empty list.</summary>
-        private static void ListLines(IReadOnlyList<string> lines, string title)
+        internal static void ListLines(IReadOnlyList<string> lines, string title)
         {
             if (lines.Count == 0)
             {

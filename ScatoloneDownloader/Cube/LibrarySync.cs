@@ -51,7 +51,7 @@ namespace ScatoloneDownloader.Cube
 
         /// <summary>
         /// Registers the matched cards the store does not hold yet (see
-        /// <see cref="RegisterCommand.RegisterNew"/>) and, for each ADDED entry
+        /// <see cref="RegisterNew"/>) and, for each ADDED entry
         /// only, proposes its effects the way <c>classify</c> does. Never stamps
         /// <c>reviewedAt</c> and never touches an entry that existed before.
         /// </summary>
@@ -60,7 +60,7 @@ namespace ScatoloneDownloader.Cube
             IEnumerable<(Card Card, string FilePath)> matched,
             IReadOnlyDictionary<string, Card> cardsByOracleId)
         {
-            RegisterResult registered = RegisterCommand.RegisterNew(metadata, matched);
+            RegisterResult registered = RegisterNew(metadata, matched);
             int proposed = 0;
             int noProposal = 0;
 
@@ -86,8 +86,58 @@ namespace ScatoloneDownloader.Cube
         }
 
         /// <summary>
-        /// The distinct, non-blank oracle ids the store does not hold: what a
-        /// register would add. Does not touch the store.
+        /// Adds an unrated entry (name and printing id only) for every matched
+        /// card whose oracle id the store does not hold yet. An entry already in
+        /// the store is never touched, whatever the matched card says, and several
+        /// files of one oracle add one entry. Pure, so it is testable without
+        /// image files or the Scryfall bulk.
+        /// </summary>
+        internal static RegisterResult RegisterNew(
+            CubeMetadata metadata, IEnumerable<(Card Card, string FilePath)> matched)
+        {
+            List<string> addedNames = [];
+            List<string> addedOracleIds = [];
+            HashSet<string> addedIds = new(StringComparer.Ordinal);
+            HashSet<string> alreadyInStore = new(StringComparer.Ordinal);
+            int skippedNoOracleId = 0;
+
+            foreach ((Card card, string _) in matched)
+            {
+                if (string.IsNullOrEmpty(card.OracleId))
+                {
+                    skippedNoOracleId++; // cannot key an entry without an oracle_id
+                    continue;
+                }
+
+                if (metadata.Cards.ContainsKey(card.OracleId))
+                {
+                    // A second file of an oracle added a moment ago is not "already
+                    // in the store": the first file wins and this one is ignored.
+                    if (!addedIds.Contains(card.OracleId))
+                    {
+                        alreadyInStore.Add(card.OracleId);
+                    }
+
+                    continue;
+                }
+
+                metadata.Cards[card.OracleId] = new CardMetadataEntry
+                {
+                    Name = card.Name,
+                    Rating = 0,
+                    ScryfallId = card.Id,
+                };
+                addedIds.Add(card.OracleId);
+                addedOracleIds.Add(card.OracleId);
+                addedNames.Add(card.Name);
+            }
+
+            return new RegisterResult(addedNames, alreadyInStore.Count, skippedNoOracleId, addedOracleIds);
+        }
+
+        /// <summary>
+        /// The distinct, non-blank oracle ids the store does not hold: what
+        /// <see cref="RegisterNew"/> would add. Does not touch the store.
         /// </summary>
         internal static IReadOnlyList<string> NewOracleIds(CubeMetadata metadata, IEnumerable<string> oracleIds)
         {
@@ -155,6 +205,19 @@ namespace ScatoloneDownloader.Cube
     /// <param name="Extra">Existing files no selected card expects, sorted ordinally.</param>
     internal sealed record SyncPlan(
         IReadOnlyList<(Card Card, string ExpectedPath)> Missing, int PresentCount, IReadOnlyList<string> Extra);
+
+    /// <summary>What one <see cref="LibrarySync.RegisterNew"/> call did.</summary>
+    /// <param name="AddedNames">Names of the entries added, in match order.</param>
+    /// <param name="AlreadyInStore">Distinct oracle ids that were already in the store
+    /// before the call.</param>
+    /// <param name="SkippedNoOracleId">Matched files whose card has no oracle id.</param>
+    /// <param name="AddedOracleIds">Oracle ids of the entries added, in the same order as
+    /// <paramref name="AddedNames"/>.</param>
+    internal sealed record RegisterResult(
+        IReadOnlyList<string> AddedNames, int AlreadyInStore, int SkippedNoOracleId, IReadOnlyList<string> AddedOracleIds)
+    {
+        internal int Added => AddedNames.Count;
+    }
 
     /// <summary>What <see cref="LibrarySync.RegisterAndPropose"/> did.</summary>
     /// <param name="AddedNames">Names of the entries added, in match order.</param>

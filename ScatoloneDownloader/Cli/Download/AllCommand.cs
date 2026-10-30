@@ -1,7 +1,5 @@
 using System.ComponentModel;
 
-using ScatoloneDownloader.Download;
-
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -39,8 +37,6 @@ namespace ScatoloneDownloader.Cli.Download
             {
                 FolderCleaner.Clear();
             }
-
-            OutputPaths.UseLibrary(settings.Library);
 
             await CardService.RunAllAsync(settings.ExcludeFile, settings.Reprints, settings.Tokens, settings.Lands, settings.PrintOnly, settings.NoRules);
 

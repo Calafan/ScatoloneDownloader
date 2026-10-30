@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 using ScatoloneDownloader.Cube;
 using ScatoloneDownloader.Download;
 using ScatoloneDownloader.Json.Cards;
@@ -105,9 +107,111 @@ public sealed class LibrarySyncTests
     [Fact]
     public void ExpectedPath_FollowsTheDownloadNaming_ForSplitCardsAndColons()
     {
-        // The sync expects exactly what `years --library` writes: Sanitize(name) + ".png".
+        // The sync expects exactly what the downloader writes: Sanitize(name) + ".png".
         Assert.Equal("Fire_Ice.png", OutputPaths.Sanitize(MakeCard("Fire // Ice").Name) + ".png");
         Assert.Equal("Summon Choco.png", OutputPaths.Sanitize(MakeCard("Summon: Choco").Name) + ".png");
+    }
+
+    // --- RegisterNew -------------------------------------------------------
+
+    [Fact]
+    public void RegisterNew_NewCard_IsAddedUnratedWithNameAndScryfallId()
+    {
+        CubeMetadata metadata = new();
+        Card bolt = MakeCard("Lightning Bolt", oracleId: "oracle-bolt", id: "print-bolt");
+
+        RegisterResult result = LibrarySync.RegisterNew(metadata, [(bolt, @"C:\lib\Lightning Bolt.png")]);
+
+        CardMetadataEntry entry = Assert.Single(metadata.Cards).Value;
+        Assert.Equal("oracle-bolt", Assert.Single(metadata.Cards).Key);
+        Assert.Equal("Lightning Bolt", entry.Name);
+        Assert.Equal(0, entry.Rating);
+        Assert.Equal("print-bolt", entry.ScryfallId);
+        Assert.Null(entry.Status);
+        Assert.Empty(entry.Effects);
+        Assert.Null(entry.ReviewedAt);
+        Assert.Equal(["Lightning Bolt"], result.AddedNames);
+    }
+
+    [Fact]
+    public void RegisterNew_ExistingEntry_IsLeftUntouched_EvenWhenTheMatchedCardDiffers()
+    {
+        CubeMetadata metadata = new();
+        metadata.Cards["oracle-bolt"] = new CardMetadataEntry
+        {
+            Name = "Lightning Bolt",
+            Rating = 5,
+            ScryfallId = "print-original",
+            Status = "Banned",
+            Effects = ["Burn", "Removal"],
+            ReviewedAt = new DateTimeOffset(2026, 9, 1, 12, 0, 0, TimeSpan.Zero),
+        };
+        string before = JsonSerializer.Serialize(metadata.Cards["oracle-bolt"]);
+
+        // Same oracle, different printing id and a different name on the matched card.
+        Card other = MakeCard("Bolt, Renamed", oracleId: "oracle-bolt", id: "print-other");
+
+        RegisterResult result = LibrarySync.RegisterNew(metadata, [(other, @"C:\lib\Bolt.png")]);
+
+        Assert.Equal(before, JsonSerializer.Serialize(Assert.Single(metadata.Cards).Value));
+        Assert.Equal(0, result.Added);
+        Assert.Equal(1, result.AlreadyInStore);
+    }
+
+    [Fact]
+    public void RegisterNew_TwoFilesOfOneOracle_AddOneEntry()
+    {
+        CubeMetadata metadata = new();
+        Card first = MakeCard("Island", oracleId: "oracle-x", id: "print-1");
+        Card second = MakeCard("Island", oracleId: "oracle-x", id: "print-2");
+
+        RegisterResult result = LibrarySync.RegisterNew(
+            metadata, [(first, @"C:\lib\a\Island.png"), (second, @"C:\lib\b\Island.png")]);
+
+        Assert.Single(metadata.Cards);
+        Assert.Equal("print-1", metadata.Cards["oracle-x"].ScryfallId);
+        Assert.Equal(1, result.Added);
+        // The second file is not "already in the store": the store did not hold it
+        // before this call.
+        Assert.Equal(0, result.AlreadyInStore);
+    }
+
+    [Fact]
+    public void RegisterNew_EmptyOracleId_IsSkippedAndCounted()
+    {
+        CubeMetadata metadata = new();
+        Card token = MakeCard("Some Token", oracleId: string.Empty, id: "print-t");
+
+        RegisterResult result = LibrarySync.RegisterNew(metadata, [(token, @"C:\lib\Some Token.png")]);
+
+        Assert.Empty(metadata.Cards);
+        Assert.Equal(0, result.Added);
+        Assert.Equal(1, result.SkippedNoOracleId);
+    }
+
+    [Fact]
+    public void RegisterNew_Counts_SeparateAddedKnownAndSkipped()
+    {
+        CubeMetadata metadata = new();
+        metadata.Cards["oracle-known"] = new CardMetadataEntry { Name = "Known", Rating = 3 };
+
+        List<(Card Card, string FilePath)> matched =
+        [
+            (MakeCard("Known", "oracle-known", id: "p1"), @"C:\lib\Known.png"),
+            (MakeCard("Known", "oracle-known", id: "p1b"), @"C:\lib\x\Known.png"),
+            (MakeCard("Alpha", "oracle-new-a", id: "p2"), @"C:\lib\Alpha.png"),
+            (MakeCard("Beta", "oracle-new-b", id: "p3"), @"C:\lib\Beta.png"),
+            (MakeCard("Nameless", string.Empty, id: "p4"), @"C:\lib\Nameless.png"),
+        ];
+
+        RegisterResult result = LibrarySync.RegisterNew(metadata, matched);
+
+        Assert.Equal(["Alpha", "Beta"], result.AddedNames);
+        Assert.Equal(2, result.Added);
+        // Two files of the known oracle count as ONE known card.
+        Assert.Equal(1, result.AlreadyInStore);
+        Assert.Equal(1, result.SkippedNoOracleId);
+        Assert.Equal(3, metadata.Cards.Count);
     }
 
     // --- RegisterAndPropose ------------------------------------------------

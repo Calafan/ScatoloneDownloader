@@ -13,7 +13,7 @@ namespace ScatoloneDownloader.Metadata
     /// <c>oracle_id</c> in <see cref="CubeMetadata.Cards"/>. This is the complete,
     /// git-shareable source of truth: rating, status, and effects are authored in
     /// the web tagger and persisted here, so a clone without the image files still
-    /// has every evaluation. New cards enter it through the <c>register</c> command.
+    /// has every evaluation. New cards enter it through the <c>sync</c> command.
     /// Physically split across the rating-tier files in the metadata directory
     /// (<see cref="CubeMetadataStore"/>) — this type is the merged, in-memory view.
     /// </summary>
@@ -24,7 +24,7 @@ namespace ScatoloneDownloader.Metadata
         public string Name { get; set; } = string.Empty;
 
         /// <summary>Cube rating: 0 = unrated, 1-5 stars. Authored in the web
-        /// tagger (<c>register</c> adds new cards at 0); rating 1-2 is
+        /// tagger (<c>sync</c> adds new cards at 0); rating 1-2 is
         /// deliberately kept out of the analysis pool (D7) but still
         /// lives here so it round-trips and can be bumped later. This is also
         /// the field <see cref="CubeMetadataStore.Save"/> reads to route the
@@ -100,7 +100,7 @@ namespace ScatoloneDownloader.Metadata
     /// <item><description><c>unrated.json</c> — rating 0 (the bulk library manifest; changes only when new cards appear).</description></item>
     /// </list>
     /// <see cref="Save"/> rewrites all three files from the full in-memory set
-    /// (used by batch commands like <c>register</c>), while <see cref="SaveEntry"/>
+    /// (used by batch commands like <c>sync</c>), while <see cref="SaveEntry"/>
     /// persists one card incrementally by touching only the tier file(s) it
     /// belongs in (the hot path for the web tagger). Either way a rating change
     /// transparently moves a card from one tier file to another. Every file is
