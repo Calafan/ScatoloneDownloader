@@ -10,7 +10,8 @@ using Spectre.Console.Cli;
 namespace ScatoloneDownloader.Cli.Cube
 {
     /// <summary>
-    /// Closes the disaster-recovery loop: rebuilds an image folder from nothing
+    /// Closes the disaster-recovery loop: rebuilds the library (<c>&lt;dir&gt;\&lt;year&gt;\&lt;set&gt;\&lt;Name&gt;.png</c>,
+    /// the layout <c>sync</c> checks) from nothing
     /// but the git-tracked metadata directory (see <see cref="CubeMetadataStore"/>
     /// — <see cref="CubeMetadataStore.Load"/> merges the UNION of all rating-tier
     /// files, so every card in the library is restored, not just the pool) and
@@ -23,7 +24,7 @@ namespace ScatoloneDownloader.Cli.Cube
         public sealed class Settings : MetadataSettings
         {
             [CommandOption("-i|--images <DIR>")]
-            [Description("Destination folder for the restored .png images (created if missing).")]
+            [Description("Library folder to rebuild, as <DIR>\\<year>\\<set>\\<Name>.png like sync (created if missing).")]
             public string ImagesDirectory { get; set; } = string.Empty;
 
             public override ValidationResult Validate()
@@ -56,9 +57,10 @@ namespace ScatoloneDownloader.Cli.Cube
             }
 
             AnsiConsole.MarkupLine($"[cyan]Metadata  :[/] {metadataDir} ({metadata.Cards.Count} entries)");
-            AnsiConsole.MarkupLine($"[cyan]Images dir:[/] {imagesDir}");
+            AnsiConsole.MarkupLine($"[cyan]Library   :[/] {imagesDir}");
 
             Directory.CreateDirectory(imagesDir);
+            OutputPaths.UseLibrary(imagesDir);
 
             AnsiConsole.MarkupLine("[yellow]Loading bulk data from Scryfall...[/]");
 
@@ -95,7 +97,7 @@ namespace ScatoloneDownloader.Cli.Cube
                         continue;
                     }
 
-                    string destPath = Path.Combine(imagesDir, OutputPaths.Sanitize(card.Name) + ".png");
+                    string destPath = OutputPaths.LibraryImagePath(card);
 
                     if (File.Exists(destPath))
                     {
@@ -110,6 +112,7 @@ namespace ScatoloneDownloader.Cli.Cube
                         // a truncated .png that the skip-existing check above would
                         // then accept as "restored" forever.
                         byte[] png = await downloader.ComposeAsync(card);
+                        Directory.CreateDirectory(Path.GetDirectoryName(destPath)!);
                         string tempPath = destPath + ".tmp";
                         await File.WriteAllBytesAsync(tempPath, png, cancellationToken);
                         File.Move(tempPath, destPath, overwrite: true);

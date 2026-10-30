@@ -139,5 +139,17 @@ namespace ScatoloneDownloader.Download
 
             return path;
         }
+
+        /// <summary>The file a card's image has in the library set by <see cref="UseLibrary"/>:
+        /// <c>LibraryRoot\year\set\Name.png</c>, the path <c>sync</c> expects and <c>restore</c> writes.</summary>
+        internal static string LibraryImagePath(Card card)
+        {
+            if (LibraryRoot == null)
+            {
+                throw new InvalidOperationException("UseLibrary must be called before LibraryImagePath.");
+            }
+
+            return Path.Combine(CardDirectory(card, Mode.All, null), Sanitize(card.Name) + ".png");
+        }
     }
 }
