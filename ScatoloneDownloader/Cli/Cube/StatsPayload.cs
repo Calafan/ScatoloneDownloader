@@ -212,10 +212,10 @@ namespace ScatoloneDownloader.Cli.Cube
             List<StatsTypeRow> types = OverviewTypes
                 .Select(t =>
                 {
-                    Dictionary<int, int> curve = report.CurveByMacroType.GetValueOrDefault(t.Macro) ?? [];
+                    Dictionary<string, int> curve = report.CurveByMacroType.GetValueOrDefault(t.Macro) ?? [];
                     Dictionary<string, int> byCost = CostBucket.All.ToDictionary(
                         b => b,
-                        b => curve.GetValueOrDefault(b == "6_Plus" ? 6 : int.Parse(b, CultureInfo.InvariantCulture), 0));
+                        b => curve.GetValueOrDefault(b, 0));
                     return new StatsTypeRow(
                         t.Macro.ToString(), t.Label, report.MacroTypeCounts.GetValueOrDefault(t.Macro, 0), byCost);
                 })

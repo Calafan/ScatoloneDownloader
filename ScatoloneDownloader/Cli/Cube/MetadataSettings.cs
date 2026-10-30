@@ -55,9 +55,9 @@ namespace ScatoloneDownloader.Cli.Cube
 
                 resolvedRoot = root;
 
-                if (NeedsSource && !Directory.Exists(LibraryRoot.Source(root)))
+                if (NeedsSource && LibraryRoot.ExistingSource(root, out string? sourceError) is null)
                 {
-                    return ValidationResult.Error($"Source folder not found: {LibraryRoot.Source(root)}");
+                    return ValidationResult.Error(sourceError!);
                 }
             }
 

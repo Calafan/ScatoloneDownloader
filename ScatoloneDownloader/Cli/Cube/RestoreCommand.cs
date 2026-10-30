@@ -107,15 +107,13 @@ namespace ScatoloneDownloader.Cli.Cube
 
                     try
                     {
-                        // Write to a temp file then atomically move it into place, so
-                        // an interrupted write (Ctrl-C, crash, disk full) never leaves
+                        // AtomicFile moves the finished write into place, so an
+                        // interrupted one (Ctrl-C, crash, disk full) never leaves
                         // a truncated .png that the skip-existing check above would
                         // then accept as "restored" forever.
                         byte[] png = await downloader.ComposeAsync(card);
                         Directory.CreateDirectory(Path.GetDirectoryName(destPath)!);
-                        string tempPath = destPath + ".tmp";
-                        await File.WriteAllBytesAsync(tempPath, png, cancellationToken);
-                        File.Move(tempPath, destPath, overwrite: true);
+                        await AtomicFile.WriteAllBytesAsync(destPath, png, cancellationToken);
                         downloaded++;
                     }
                     catch (Exception ex)
@@ -123,9 +121,9 @@ namespace ScatoloneDownloader.Cli.Cube
                         // Isolate a single bad card (404/removed image, malformed
                         // face, network failure after retries) so it can't abort the
                         // whole disaster-recovery run and block every card after it.
-                        // The .tmp is cleaned so a later re-run retries this card.
+                        // No file is left under the real name, so a later re-run
+                        // retries this card.
                         failed++;
-                        TryDelete(destPath + ".tmp");
                         AnsiConsole.MarkupLineInterpolated($"[red]Failed:[/] {card.Name} — {ex.Message}");
                     }
                 }
@@ -141,22 +139,6 @@ namespace ScatoloneDownloader.Cli.Cube
             }
 
             return 0;
-        }
-
-        /// <summary>Best-effort delete of a leftover temp file; never throws.</summary>
-        private static void TryDelete(string path)
-        {
-            try
-            {
-                if (File.Exists(path))
-                {
-                    File.Delete(path);
-                }
-            }
-            catch
-            {
-                // Ignore — a stray .tmp is harmless and overwritten on the next try.
-            }
         }
     }
 }

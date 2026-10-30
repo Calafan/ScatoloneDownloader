@@ -122,14 +122,14 @@ public sealed class CardAnalyzerExtendedTests : IDisposable
         AnalysisReport report = analyzer.Analyze();
 
         // Creature curve: 1@1, 1@2, 1@6+, 0@3/4/5
-        Assert.Equal(1, report.CurveByMacroType[MacroType.Creature][1]);
-        Assert.Equal(1, report.CurveByMacroType[MacroType.Creature][2]);
-        Assert.Equal(1, report.CurveByMacroType[MacroType.Creature][6]);
-        Assert.False(report.CurveByMacroType[MacroType.Creature].ContainsKey(3));
+        Assert.Equal(1, report.CurveByMacroType[MacroType.Creature]["1"]);
+        Assert.Equal(1, report.CurveByMacroType[MacroType.Creature]["2"]);
+        Assert.Equal(1, report.CurveByMacroType[MacroType.Creature]["6_Plus"]);
+        Assert.False(report.CurveByMacroType[MacroType.Creature].ContainsKey("3"));
 
         // Spell curve: 1@1, 1@3
-        Assert.Equal(1, report.CurveByMacroType[MacroType.Spell][1]);
-        Assert.Equal(1, report.CurveByMacroType[MacroType.Spell][3]);
+        Assert.Equal(1, report.CurveByMacroType[MacroType.Spell]["1"]);
+        Assert.Equal(1, report.CurveByMacroType[MacroType.Spell]["3"]);
     }
 
     // --- factory -----------------------------------------------------------

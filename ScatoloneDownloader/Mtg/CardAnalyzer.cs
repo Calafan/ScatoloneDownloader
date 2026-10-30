@@ -159,7 +159,7 @@
                 ratingTiers[key] = cur + 1;
             }
 
-            Dictionary<MacroType, Dictionary<int, int>> curveByMacroType = new()
+            Dictionary<MacroType, Dictionary<string, int>> curveByMacroType = new()
             {
                 { MacroType.Creature, [] },
                 { MacroType.Spell, [] },
@@ -168,8 +168,8 @@
             };
             foreach (Card c in nonLands)
             {
-                int bucket = c.Cmc >= 6 ? 6 : (int)c.Cmc;
-                if (!curveByMacroType.TryGetValue(c.MacroType, out Dictionary<int, int>? macro))
+                string bucket = CostBucket.Of(c.Cmc);
+                if (!curveByMacroType.TryGetValue(c.MacroType, out Dictionary<string, int>? macro))
                 {
                     macro = [];
                     curveByMacroType[c.MacroType] = macro;

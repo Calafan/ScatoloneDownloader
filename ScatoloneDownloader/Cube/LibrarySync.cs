@@ -1,4 +1,3 @@
-using ScatoloneDownloader.Cli.Cube;
 using ScatoloneDownloader.Metadata;
 using ScatoloneDownloader.Mtg;
 
@@ -70,7 +69,7 @@ namespace ScatoloneDownloader.Cube
 
                 if (cardsByOracleId.TryGetValue(oracleId, out Card? card))
                 {
-                    (ClassifyOutcome outcome, CardEffect effects) = ClassifyCommand.Decide(entry, card, overwrite: false);
+                    (ClassifyOutcome outcome, CardEffect effects) = ClassifyDecision.Decide(entry, card, overwrite: false);
                     if (outcome == ClassifyOutcome.Classified)
                     {
                         entry.EffectFlags = effects;

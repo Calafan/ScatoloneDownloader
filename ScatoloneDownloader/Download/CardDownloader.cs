@@ -47,23 +47,7 @@ namespace ScatoloneDownloader.Download
 
             // Write beside the target and move into place, so a crash never leaves a
             // truncated PNG that a later skip-existing run would mistake for a finished one.
-            string target = path + ".png";
-            string temp = target + ".tmp";
-
-            try
-            {
-                await File.WriteAllBytesAsync(temp, png);
-                File.Move(temp, target, overwrite: true);
-            }
-            catch
-            {
-                if (File.Exists(temp))
-                {
-                    File.Delete(temp);
-                }
-
-                throw;
-            }
+            await AtomicFile.WriteAllBytesAsync(path + ".png", png);
 
             return DownloadOutcome.Downloaded;
         }

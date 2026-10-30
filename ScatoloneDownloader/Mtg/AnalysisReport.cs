@@ -28,8 +28,8 @@ namespace ScatoloneDownloader.Mtg
         /// <summary>Rating tier count keyed by (ColorCategory, star rating 3-5).</summary>
         internal Dictionary<(string Color, int Stars), int> RatingTiers { get; init; } = [];
 
-        /// <summary>CMC bucket (0-5 = exact, 6 = 6+) count per MacroType.</summary>
-        internal Dictionary<MacroType, Dictionary<int, int>> CurveByMacroType { get; init; } = [];
+        /// <summary>Count per MacroType, keyed by <see cref="CostBucket"/> (0-5 exact, "6_Plus").</summary>
+        internal Dictionary<MacroType, Dictionary<string, int>> CurveByMacroType { get; init; } = [];
 
         /// <summary>Average colored pips per card across the whole cube.</summary>
         internal double GlobalPipDensity { get; init; }

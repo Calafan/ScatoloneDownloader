@@ -113,7 +113,11 @@ namespace ScatoloneDownloader.Metadata
         /// somehow appears in more than one file (shouldn't happen from normal
         /// use — <see cref="Save"/> always partitions a card into exactly one
         /// tier — but a hand-edited directory could produce one).</summary>
-        private static readonly string[] TierFileNames = ["pool.json", "fringe.json", "unrated.json"];
+        private static readonly string[] TierFileNames = [PoolFile, FringeFile, UnratedFile];
+
+        private const string PoolFile = "pool.json";
+        private const string FringeFile = "fringe.json";
+        private const string UnratedFile = "unrated.json";
 
         private static readonly JsonSerializerOptions Options = new()
         {
@@ -137,9 +141,9 @@ namespace ScatoloneDownloader.Metadata
         {
             return RatingTierClassifier.Classify(rating) switch
             {
-                RatingTier.Pool => "pool.json",
-                RatingTier.Fringe or RatingTier.Bench => "fringe.json",
-                _ => "unrated.json",
+                RatingTier.Pool => PoolFile,
+                RatingTier.Fringe or RatingTier.Bench => FringeFile,
+                _ => UnratedFile,
             };
         }
 
@@ -331,9 +335,7 @@ namespace ScatoloneDownloader.Metadata
             };
 
             string tierPath = Path.Combine(fullDirectory, tierFileName);
-            string tempPath = tierPath + ".tmp";
-            File.WriteAllText(tempPath, JsonSerializer.Serialize(ordered, Options));
-            File.Move(tempPath, tierPath, overwrite: true);
+            AtomicFile.WriteAllText(tierPath, JsonSerializer.Serialize(ordered, Options));
         }
 
         /// <summary>Orders entries by <c>(name, oracle_id)</c> ordinal and

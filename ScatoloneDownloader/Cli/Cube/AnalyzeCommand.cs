@@ -90,20 +90,7 @@ namespace ScatoloneDownloader.Cli.Cube
                 (string markdownPath, string htmlPath) = ReportCommand.ResolveOutputs(
                     settings.OutputFile, Directory.GetCurrentDirectory(), stem + "_Analysis");
 
-                foreach (string path in new[] { markdownPath, htmlPath })
-                {
-                    string? dir = Path.GetDirectoryName(path);
-                    if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-                    {
-                        Directory.CreateDirectory(dir);
-                    }
-                }
-
-                File.WriteAllText(markdownPath, StatsMarkdown.Render(payload, document));
-                File.WriteAllText(htmlPath, StatsReport.RenderHtml(payload, document, now));
-
-                AnsiConsole.MarkupLineInterpolated($"[green]Markdown saved to: {markdownPath}[/]");
-                AnsiConsole.MarkupLineInterpolated($"[green]HTML saved to    : {htmlPath}[/]");
+                ReportCommand.WriteStatsFiles(payload, document, now, markdownPath, htmlPath);
             }
 
             return 0;

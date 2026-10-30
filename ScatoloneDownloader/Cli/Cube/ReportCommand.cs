@@ -88,9 +88,15 @@ namespace ScatoloneDownloader.Cli.Cube
             StatsPayload payload = StatsPayload.Build(cards);
             StatsDocument document = StatsDocument.ForCube(now);
 
-            string markdown = StatsMarkdown.Render(payload, document);
-            string html = StatsReport.RenderHtml(payload, document, now);
+            WriteStatsFiles(payload, document, now, markdownPath, htmlPath);
 
+            return 0;
+        }
+
+        /// <summary>Writes the statistics as Markdown and HTML, creating their folders, and says where.</summary>
+        internal static void WriteStatsFiles(
+            StatsPayload payload, StatsDocument document, DateTime generatedAt, string markdownPath, string htmlPath)
+        {
             foreach (string path in new[] { markdownPath, htmlPath })
             {
                 string? dir = Path.GetDirectoryName(path);
@@ -100,13 +106,11 @@ namespace ScatoloneDownloader.Cli.Cube
                 }
             }
 
-            File.WriteAllText(markdownPath, markdown);
-            File.WriteAllText(htmlPath, html);
+            File.WriteAllText(markdownPath, StatsMarkdown.Render(payload, document));
+            File.WriteAllText(htmlPath, StatsReport.RenderHtml(payload, document, generatedAt));
 
             AnsiConsole.MarkupLineInterpolated($"[green]Markdown saved to: {markdownPath}[/]");
             AnsiConsole.MarkupLineInterpolated($"[green]HTML saved to    : {htmlPath}[/]");
-
-            return 0;
         }
     }
 }

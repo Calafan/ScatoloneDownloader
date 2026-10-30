@@ -63,6 +63,24 @@ namespace ScatoloneDownloader.Metadata
         /// <summary>The folder of the master images, <c>&lt;root&gt;\Source</c>.</summary>
         internal static string Source(string root) => Path.Combine(root, "Source");
 
+        /// <summary>
+        /// The <c>Source</c> folder of <paramref name="root"/> when it exists; otherwise
+        /// <c>null</c> with a one-line <paramref name="error"/>.
+        /// </summary>
+        internal static string? ExistingSource(string root, out string? error)
+        {
+            string source = Source(root);
+
+            if (!Directory.Exists(source))
+            {
+                error = $"Source folder not found: {source}";
+                return null;
+            }
+
+            error = null;
+            return source;
+        }
+
         /// <summary>The git-tracked metadata store, <c>&lt;root&gt;\metadata</c>.</summary>
         internal static string Metadata(string root) => Path.Combine(root, "metadata");
 

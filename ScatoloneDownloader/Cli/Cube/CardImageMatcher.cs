@@ -55,7 +55,7 @@ namespace ScatoloneDownloader.Cli.Cube
         /// </summary>
         internal static IEnumerable<Card> LibraryPicksFirst(IReadOnlyCollection<Card> bulk)
         {
-            return LibrarySelector.Select(bulk, reprints: false, tokens: false, lands: false, releasedBy: DateTime.Today)
+            return LibrarySelector.LibraryPicks(bulk)
                 .Concat(bulk);
         }
 

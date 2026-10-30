@@ -195,7 +195,7 @@ namespace ScatoloneDownloader.Cli.Download
 
             // The same bulk the name index was built from: GetDefaultCards keeps it.
             List<Card> bulk = await getManager.GetDefaultCards();
-            List<Card> selected = LibrarySelector.Select(bulk, reprints: false, tokens: false, lands: false, releasedBy: DateTime.Today);
+            List<Card> selected = LibrarySelector.LibraryPicks(bulk);
 
             // The rules' picks first, as CardImageMatcher.LibraryPicksFirst orders them.
             List<(Card Card, string FilePath)> matched = CardImageMatcher.Match(
