@@ -42,7 +42,7 @@ Down on Crime): the pump is how the removal is aimed. Stonewood Invocation, +5/+
 Buff and Protection. 105 reviewed tags came off (64 B3, 27 B1, 8 B2, 5 bites, and one self-pump
 found on the way) and were handed back to the human unreviewed, at their request, because the rule
 had only settled in the last 200–250 cards of the sitting that produced it. Only the pumps the size
-reading recognises are judged; a double strike grant, a base P/T or a doubling is left standing and
+reading recognises are judged; a double strike grant or a base P/T is left standing and
 keeps the tag on its own (Origin of Spider-Man's chapter III). A bullet that carries its own trigger
 is timed by it (Hollowmurk Siege's "Abzan — Whenever you attack"), and a cost that exiles the card
 from its graveyard runs once (Wither and Bloom). B3 was CONFIRMED for noncreatures the same day: the

@@ -33,7 +33,11 @@ namespace ScatoloneDownloader.Cube
 
         private static readonly Regex[] CheatPatterns;
 
-        // A STATIC CONSTRUCTOR rather than three field initialisers, and that is
+        // Sadistic Simulation's chapter III, in both the Filter and the Cheat tables.
+        private static readonly Regex ExileThatManyAndPlayOne = Rx(
+            @"exile that many cards from the top\. you may play one of those cards without paying its mana cost");
+
+        // A STATIC CONSTRUCTOR rather than field initialisers, and that is
         // forced by the split: initialisers run in textual order within a file but
         // in UNSPECIFIED order across the files of a partial class, so this table —
         // which reads two dozen pattern arrays that now live in the other files —
@@ -288,7 +292,7 @@ namespace ScatoloneDownloader.Cube
                 // Boil, Boiling Seas, Acid Rain and Reign of Chaos ever use. The \b
                 // that keeps "islandwalk" out is still doing its job — the letters of
                 // "land" inside "Island" have a word character in front of them.
-                // Four shapes match the words and are not this tag; they are read line
+                // Three shapes match the words and are not this tag; they are read line
                 // by line in AnswersALand below.
                 (CardEffect.LandDestruction, LandDestructionPatterns),
 
@@ -314,7 +318,7 @@ namespace ScatoloneDownloader.Cube
                     // The exile filler may not cross a CARD: "exile target card
                     // from a graveyard and put an oil counter on this creature"
                     // (Armored Scrapgorger) found its creature at the far end.
-                    Rx(@"destroy target[\w ]*(?<!non)creature"), Rx(@"exile target(?:(?! cards?\b)[\w ])*(?<!non)creature"),
+                    Rx(@"exile target(?:(?! cards?\b)[\w ])*(?<!non)creature"),
                     Rx(@"destroy target[\w ]*((?<!non)creature|planeswalker)"),
                     // The AMOUNT is written as freely as the target: "half X damage,
                     // rounded down" (Banshee), "X plus 1 damage" (Meteor Shower). And
@@ -1034,11 +1038,12 @@ namespace ScatoloneDownloader.Cube
                 // Filter is selection at NO net gain: look at some and take one, or
                 // hand back exactly what you drew. The rummage family — "you may
                 // discard a card. If you do, draw a card" — is the plainest shape
-                // there is and had never been read: 14 cards fire on the first
-                // pattern below and 12 of them were already tagged by hand. The
-                // third pattern is the activated version ("Discard a card: Draw a
-                // card"); the lookahead is what keeps CYCLING reminder text out,
-                // because cycling pays a card to replace itself and attacks nobody.
+                // there is and had never been read: 14 cards fired on the "you may
+                // discard a card. If you do, draw" pattern and 12 of them were
+                // already tagged by hand. The activated version ("Discard a card:
+                // Draw a card") is the anchored pattern with the colon; its
+                // lookahead is what keeps CYCLING reminder text out, because
+                // cycling pays a card to replace itself and attacks nobody.
                 // Added 2026-09-19.
                 // Scry and surveil ARE Filter, unconditionally, ruled 2026-09-19 —
                 // it does not matter what else the card does or how small the
@@ -1093,11 +1098,12 @@ namespace ScatoloneDownloader.Cube
                     // Jandor's Ring hands back exactly what it just drew. Each is a
                     // card changing places at no net gain, which is Filter exactly.
                     //
-                    // These are spelled out rather than reusing DrawPaidForWithACard
-                    // and Loot wholesale, which was tried and measured: Loot's middle
-                    // alternative reads CYCLING reminder text as a loot and fires on
-                    // 45 cards of which 4 are tagged, costing 42 false positives on
-                    // its own. The alternatives kept here fire on 3, 1, 1, 5 and 1.
+                    // Loot is not reused wholesale, which was tried and measured:
+                    // Loot's middle alternative reads CYCLING reminder text as a loot
+                    // and fires on 45 cards of which 4 are tagged, costing 42 false
+                    // positives on its own. DrawPaidForWithACard (Cards.cs) is the
+                    // part that was kept: its five alternatives fire on 3, 1, 1, 5
+                    // and 1.
                     Rx(@"(?:you may )?draws? (?:a|one|\w+) cards?\. if you do, discard"),
                     // The card can be a LAND instead, either way round: Highway
                     // Robbery's "discard a card or sacrifice a land. If you do,
@@ -1106,12 +1112,8 @@ namespace ScatoloneDownloader.Cube
                     Rx(@"(?:sacrifice[\w ]{0,25}or )?discard (?:a|one|\w+) cards?(?: or sacrifice (?:a|an) \w+)?\. if you do, draw"),
                     // N for N: Horrid Shadowspinner draws its power and hands the
                     // same number back, which is a rummage however big.
-                    Rx(@"draw cards equal to [^.\n]{1,40}\. if you do, discard that many cards"),
-                    Rx(@"put \w+ cards? from your hand[^\n]{0,30}on top"),
-                    Rx(@"shuffle (?:a|\w+) cards? from your hand into your library\. if you do, draw"),
-                    Rx(@"discard the last card you drew"),
-                    Rx(@"then discard \w+ cards? unless"),
-                    Rx(@"discards? a card\. then draws? a card"),
+                    Rx(DrawThatManyHandedBack),
+                    DrawPaidForWithACard,
                     // A discard charged as an ADDITIONAL COST is still a card
                     // changing places — Grab the Prize pays one to draw two, which
                     // with the spell itself is exactly level, and is functionally
@@ -1197,7 +1199,7 @@ namespace ScatoloneDownloader.Cube
                     // look and one kept, so Filter, and also Cheat (next to
                     // the Cheat patterns). Ruled 2026-10-16; the one card
                     // written this way, 0 of 1 tagged by rule.
-                    Rx(@"exile that many cards from the top\. you may play one of those cards without paying its mana cost")]),
+                    ExileThatManyAndPlayOne]),
 
                 // The [\w ] runs still cannot cross a FULL STOP, which is what keeps
                 // a card that exiles from a graveyard in one sentence and bounces a
@@ -1439,7 +1441,7 @@ namespace ScatoloneDownloader.Cube
                 // Sacrifice is a sacrifice OUTLET: somewhere to put your OWN permanents
                 // on demand, which is what makes a stolen creature (see Steal) worth
                 // taking. Ruled 2026-09-15. Two things fall out of that and are handled
-                // by the guard below: an edict is somebody else sacrificing, and an
+                // by the guard in Classify: an edict is somebody else sacrificing, and an
                 // additional cost to cast is a one-shot price rather than an outlet you
                 // can point at anything. Precision 56.5% -> 88.1%, 84 wrong -> 44.
                 //
@@ -1454,7 +1456,7 @@ namespace ScatoloneDownloader.Cube
                 // never says "permanent", so it simply does not match.
                 //
                 // Only a REPEATABLE outlet counts, ruled 2026-09-25 (see
-                // IsSacrificeOutlet for the shapes). The candidates below read every
+                // SacrificeOutlet for the shapes). The candidates below read every
                 // way a card lets you feed your own creatures and artifacts ("any
                 // number of" needs nothing: the unbounded "a" already takes the "a"
                 // of "any" — measured; "one or more" and "X" do, or Radiant Lotus's
@@ -1499,12 +1501,12 @@ namespace ScatoloneDownloader.Cube
                 // is one card against the family.
                 (CardEffect.Tutor, TutorPatterns),
 
-                (CardEffect.ManaFixing, [Rx(@"add one mana of any color"), Rx(@"mana of any (one )?color"),
-                    // Read 2026-10-13: Great Hall of the Citadel and Wizard's
-                    // Rockets, both ManaFixing by hand; a free source that says
-                    // it is withdrawn by EveryFixerIsASource like any other.
-                    Rx(@"mana in any combination of colou?rs"),
-                    Rx(@"add \{[wubrg]\} or \{[wubrg]\}"), Rx(@"add \{[wubrg]\}, \{[wubrg]\}"),
+                // The one-line fixers are FixesColourOnThisLine (Combat.cs): any
+                // colour, a choice of two, and "mana in any combination of colours",
+                // read 2026-10-13 from Great Hall of the Citadel and Wizard's
+                // Rockets, both ManaFixing by hand; a free source that says it is
+                // withdrawn by EveryFixerIsASource like any other.
+                (CardEffect.ManaFixing, [FixesColourOnThisLine,
                     // Two colours of your choice, read 2026-10-30: Guild Globe and
                     // Interplanar Beacon, both ManaFixing by hand (2 of 2).
                     Rx(@"add two mana of different colou?rs"),
@@ -1554,8 +1556,8 @@ namespace ScatoloneDownloader.Cube
                     // whole modern "{T}: Add {B}. / {T}: Add {W}." cycle.
                     Rx(@"^\{t\}: add \{([wubrg])\}\.?$[\s\S]{0,120}?^\{t\}: add \{(?!\1)([wubrg])\}", RegexOptions.Multiline)]),
 
-                // Mana ability (dork/rock) or a land-fetch to the battlefield. Lands
-                // are stripped below — a land tapping for its own mana is not "ramp".
+                // Mana ability (dork/rock). Lands are stripped in Classify — a land
+                // tapping for its own mana is not "ramp".
                 // The land-search rule that used to sit here moved into the guarded
                 // branch in Classify, where LandOntoTheBattlefield says the same
                 // thing more widely AND asks the two questions this one could not:
@@ -1565,7 +1567,7 @@ namespace ScatoloneDownloader.Cube
                 (CardEffect.Pacify, PacifyPatterns),
 
                 // Cheat: the permanent arrives without being cast. Ruled 2026-09-18;
-                // see CardEffect.Cheat for the three edges and the numbers.
+                // see docs/ontology/Cheat.md for the edges and the numbers.
                 (CardEffect.Cheat, [
                     // Out of hand. The lookahead keeps LANDS out — "put a basic
                     // Forest card from your hand onto the battlefield" is Gaea's
@@ -1758,7 +1760,7 @@ namespace ScatoloneDownloader.Cube
                     // Vault 112: Sadistic Simulation plays one of the cards it
                     // exiled for free: Filter and Cheat, not CardAdvantage.
                     // Ruled 2026-10-16.
-                    Rx(@"exile that many cards from the top\. you may play one of those cards without paying its mana cost")]),
+                    ExileThatManyAndPlayOne]),
             ];
 
             FilterPatterns = Rules.First(rule => rule.Effect == CardEffect.Filter).Patterns;
@@ -1927,9 +1929,10 @@ namespace ScatoloneDownloader.Cube
         private static readonly HashSet<string> HastyAndGoneKeywords =
             new(["Unearth", "Encore", "Blitz", "Dash"], StringComparer.OrdinalIgnoreCase);
 
-        // Three shapes that look like selection and are not, all ruled
+        // Shapes that look like selection and are not. The first three were ruled
         // 2026-09-20 off the nine cards where the classifier said Filter and the
-        // hand did not.
+        // hand did not; the others follow, each dated where it is declared, and
+        // WithoutFalseSelection blanks them all.
         //
         //   CLOAK AND MANIFEST DREAD turn what you picked FACE DOWN into a 2/2.
         //   Nothing is selected as a card — what the ability gave you is a body,

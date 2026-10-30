@@ -68,7 +68,9 @@ from each of your opponents" (Absolute Virtue, whose hand tag was corrected), "y
 permanents you control" still shields the permanents (Veil of Summer), and phasing out every
 permanent you control is an area shield (Teferi's Protection, Perch Protection).
 
-Prevention of damage to the player alone stays Pacify, per the 2026-09-22 ruling.
+Prevention of damage to the player alone stays Pacify, per the 2026-09-22 ruling, when a permanent
+prevents it again and again; one cast once, from a spell, is a Fog and neither tag (Pacify.md,
+ruled 2026-10-13).
 
 A BLINK behind an activation limited to SORCERY SPEED saves nothing, corrected 2026-09-29
 (Lilysplash Mentor): a blink dodges only what is already on the stack. A shield that lasts the turn

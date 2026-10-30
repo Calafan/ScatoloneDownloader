@@ -313,7 +313,7 @@ namespace ScatoloneDownloader.Cube
                 result |= CardEffect.Ramp;
             }
 
-            // …and mana that costs mana adds nothing. Last, so it can withdraw
+            // …and mana that costs mana adds nothing. Late, so it can withdraw
             // the tag whichever rule above granted it, and asked of the whole
             // card so that one free ability elsewhere keeps it.
             if (result.HasFlag(CardEffect.Ramp) && EveryManaAbilityIsPaidAndPoor(text))
@@ -432,7 +432,7 @@ namespace ScatoloneDownloader.Cube
                 result |= CardEffect.Removal;
             }
 
-            // Last, so it can take the tag back off whatever granted it: a card
+            // Late, so it can take the tag back off whatever granted it: a card
             // that can only answer what is already blocking it. See the pattern
             // above; nothing else on these cards points outward.
             if (result.HasFlag(CardEffect.Removal) && OnlyWhatIsInCombatWithIt.IsMatch(text))
@@ -541,14 +541,14 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Pacify;
             }
 
-            // The same question one more time, for the two shapes that name a
+            // The same question one more time, for the three shapes that name a
             // victim and still point the wrong way. See the patterns above.
             if (result.HasFlag(CardEffect.Pacify) && OnlyRestrainsYourOwn(text))
             {
                 result &= ~CardEffect.Pacify;
             }
 
-            // …and the three shapes where the card is paying its own way or
+            // …and the four shapes where the card is paying its own way or
             // swinging for one turn. See OnlyACombatTrickOrItsOwnPrice.
             if (result.HasFlag(CardEffect.Pacify) && OnlyACombatTrickOrItsOwnPrice(card))
             {
@@ -607,7 +607,7 @@ namespace ScatoloneDownloader.Cube
                 }
             }
 
-            // Four shapes that name a player beside "discard" and attack nobody's
+            // Shapes that name a player beside "discard" and attack nobody's
             // hand. See NotAnAttackOnAHand.
             if (result.HasFlag(CardEffect.Discard))
             {
@@ -761,10 +761,10 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Burn;
             }
 
-            // Three shapes that look like selection and are not. Asked by
-            // STRIPPING and re-asking, the same way the draw guard is, so that a
-            // card which cloaks on one line and surveils on another keeps the
-            // tag it earned on the second. See the three patterns for the
+            // Shapes that look like selection and are not. Asked by STRIPPING and
+            // re-asking, the same way the draw guard is, so that a card which
+            // cloaks on one line and surveils on another keeps the tag it earned
+            // on the second. See WithoutFalseSelection for the patterns, the
             // rulings and the cards each was read from.
             if (result.HasFlag(CardEffect.Filter))
             {
@@ -776,7 +776,7 @@ namespace ScatoloneDownloader.Cube
                 }
             }
 
-            // Card parity dressed as card advantage. See the three patterns above
+            // Card parity dressed as card advantage. See the patterns named below
             // for which ruling each one follows from.
             //
             // The LOOT is asked of the card with somebody else's discard blanked
@@ -1023,7 +1023,7 @@ namespace ScatoloneDownloader.Cube
                 result |= CardEffect.Buff;
             }
 
-            // Last, so it can take the tag back off whichever rule granted it:
+            // Late, so it can take the tag back off whichever rule granted it:
             // a card whose ONLY pump is restricted to one creature type. See the
             // patterns above; the "only" is why the tribal phrases are blanked and
             // the question asked again rather than tested in place.
@@ -1081,19 +1081,23 @@ namespace ScatoloneDownloader.Cube
 
             // PHASING OUT earns BOTH tags, ruled 2026-09-22 — "puoi usarlo sia
             // sull'opponent per prendere tempo che su di te per salvare
-            // qualcosa". Added here for the same reason prevention is: the
-            // clause names its victim INSIDE the match ("TARGET creature
-            // phases out"), so there is nothing in front of it for the
-            // self-versus-other gate to inspect and that gate was stripping it.
+            // qualcosa". This block adds Protection (the Pacify half comes from
+            // PhasesSomethingOut in the Pacify table). Added here for the same
+            // reason prevention is: the clause names its victim INSIDE the match
+            // ("TARGET creature phases out"), so there is nothing in front of it
+            // for the self-versus-other gate to inspect and that gate was
+            // stripping it.
             if (PhasesSomethingOut.IsMatch(text) || PhasesAnArtifactOut.IsMatch(text) || PhasesOthersOut.IsMatch(text))
             {
                 result |= CardEffect.Protection;
             }
 
             // The families ruled 2026-09-28 — regeneration, a blink that saves,
-            // a shield counter — and the three shapes read the same day. Each
-            // names its beneficiary inside the match, so, like prevention, they
-            // are added here after the self gate; each must be held up.
+            // a shield counter — and the shapes read the same day or after
+            // (SavesFromDeathOrDamage, UmbraArmor, PhasesYourPermanentsOut,
+            // BackupGrantsAShield, ReturnsWhatDiedThisTurn, ShieldsAnAreaStatically).
+            // Each names its beneficiary inside the match, so, like prevention,
+            // they are added here after the self gate; each must be held up.
             if (HeldUp(card, RegeneratesATribe.Replace(protectable, " "), RegeneratesSomebody)
                 || HeldUp(card, protectable, BlinksToSave, onlyInResponse: true)
                 || HeldUp(card, protectable, ShieldCounterOnSomebody)

@@ -117,11 +117,12 @@ Dregscape Sliver, Sedris, Henzie "Toolbox" Torre) — and for every token or COP
 That overturns the Kiki-Jiki exclusion of 2026-10-14, which was a narrowing made in the code rather
 than a ruling. A creature the card only TAKES — from a graveyard, a hand, a library or an opponent
 (Corpse Dance, Shallow Grave, Through the Breach, Zirilan, Slave of Bolas) — is not burn and keeps
-its Reanimate, Cheat or Steal ("No, solo ciò che la carta crea o è"); nor is unearth on an artifact
-(Mask of the Jadecrafter). Measured: 17 reviewed cards tagged by hand are now read (the thirteen
-encore of 2026-10-20, Hate Mirage, Araumi, Dregscape Sliver, First-Sphere Gargantua), and 59
-untagged ones are reached: Amphin Mutineer, Briarblade Adept, Graywater's Fixer and Mist Dancer,
-named in the question, are corrected, and the other 55 are handed back.
+its Reanimate, Cheat or Steal ("No, solo ciò che la carta crea o è"; the library part overturned
+2026-10-27, below); nor is unearth on an artifact (Mask of the Jadecrafter). Measured: 17 reviewed
+cards tagged by hand are now read (the thirteen encore of 2026-10-20, Hate Mirage, Araumi, Dregscape
+Sliver, First-Sphere Gargantua), and 59 untagged ones are reached: Amphin Mutineer, Briarblade
+Adept, Graywater's Fixer and Mist Dancer, named in the question, are corrected, and the other 55 are
+handed back.
 
 Ruled the same day ("Sì, Burn"): a life loss at the END OF A LIST of what the opponent does —
 "sacrifices a creature of their choice, discards a card, and loses 4 life" — is Burn. Dusk Mangler

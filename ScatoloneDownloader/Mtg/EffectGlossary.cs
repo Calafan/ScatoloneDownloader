@@ -5,8 +5,8 @@
     /// the tagger's effect buttons and as the tooltip on the stats page's effect names.
     /// <para>
     /// The rulings live in docs/ontology/ (one file per <see cref="CardEffect"/>
-    /// member), but those are paragraphs and they are in the source tree — which is exactly where they
-    /// are no use, because the moment a ruling is needed is the moment a card is
+    /// member), but those are paragraphs and they are in the source tree — which
+    /// is exactly where they are no use, because the moment a ruling is needed is the moment a card is
     /// on screen and a key is about to be pressed. Tagging tens of thousands of
     /// cards is repetitive, and the slips it produces (a self-pump tagged Buff, a
     /// self-mill tagged Mill) are all cases where the boundary was known and not
@@ -29,7 +29,7 @@
                 + "once or a repeating effect. A Treasure, Clue or Food is no body.",
 
             [CardEffect.Removal] =
-                "Answers ONE creature: destroy, exile, damage however counted, fight, an edict (one each, a "
+                "Answers ONE creature/planeswalker: destroy, exile, damage however counted, fight, an edict (one each, a "
                 + "punisher), INTO a library, made a Treasure, or ANY toughness malus (\"+2/-1\"). Not YOUR OWN, a "
                 + "creature TYPE, a BLINK, a GRAVEYARD card, \"-2/-0\" (Pacify), \"each creature\" (Wipe), a "
                 + "token's 1-point ping, or what only touches its blocker.",
@@ -102,7 +102,7 @@
                 "Keeps something ELSE alive, held up in response or over an AREA: a keyword shield, prevention, "
                 + "redirection, regeneration, a saving blink or unsummon, a shield counter, phasing. Not one "
                 + "creature's static, conditional or Aura/Equipment shield, a tribe's, a fog, its own, nor "
-                + "damage a creature DEALS or aimed at YOU (Pacify).",
+                + "damage a creature DEALS or REPEATING prevention to YOU (Pacify).",
 
             [CardEffect.Burn] =
                 "Damage or life loss aimed at a FACE, however counted and however slow: \"damage equal to the number "
@@ -130,8 +130,8 @@
             [CardEffect.ManaFixing] =
                 "Fixes colours: a choice paid in MANA, any landcycling, a land with two abilities, a land fetched "
                 + "to HAND or kept from a few milled, a Treasure of YOURS. Free for a tap, a life, a sacrifice or a trigger "
-                + "is just Ramp (Birds), unless it's a land. Not a land put onto the battlefield, not restricted "
-                + "mana unless a land makes it.",
+                + "is just Ramp (Birds), unless it's a land. A land onto the battlefield only if a LAND fetched it, "
+                + "restricted mana only if a land makes it.",
 
             [CardEffect.Pacify] =
                 "Neutralises somebody else's creature without killing it: tapped, stunned, phased out, kept from "

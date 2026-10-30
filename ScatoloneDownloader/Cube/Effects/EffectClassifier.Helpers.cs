@@ -11,13 +11,6 @@ namespace ScatoloneDownloader.Cube
     /// </summary>
     internal static partial class EffectClassifier
     {
-        /// <summary>Whether some ONE line of the card is a real answer to an
-        /// artifact or an enchantment. Read line by line rather than whole, so a
-        /// modal card is judged mode by mode: Pyramids offers "destroy target Aura
-        /// attached to a land" next to a damage-prevention mode, and neither
-        /// should be able to excuse or condemn the other. See
-        /// <see cref="SweepsCreaturesToo"/>, <see cref="ExileThatComesBack"/> and
-        /// <see cref="DisenchantsYourOwn"/> for what each veto costs and buys.</summary>
         /// <summary>Whether every destroy-or-exile clause on the card points at
         /// something that answers nobody. Returns false when the card has no such
         /// clause at all, because then the tag came from damage, a fight, a shrink
@@ -87,6 +80,13 @@ namespace ScatoloneDownloader.Cube
             return false;
         }
 
+        /// <summary>Whether some ONE line of the card is a real answer to an
+        /// artifact or an enchantment. Read line by line rather than whole, so a
+        /// modal card is judged mode by mode: Pyramids offers "destroy target Aura
+        /// attached to a land" next to a damage-prevention mode, and neither
+        /// should be able to excuse or condemn the other. See
+        /// <see cref="SweepsCreaturesToo"/>, <see cref="ExileThatComesBack"/> and
+        /// <see cref="DisenchantsYourOwn"/> for what each veto costs and buys.</summary>
         private static bool AnswersAnArtifactOrEnchantment(string text)
         {
             foreach (string line in text.Split('\n'))
@@ -243,10 +243,11 @@ namespace ScatoloneDownloader.Cube
 
         /// <summary>True when everything that read as Pacify is the card paying
         /// its own way or swinging for one turn: a stun counter it puts on
-        /// itself, a tap on its own attack trigger, or a "can't attack or block
-        /// unless" about itself. Written by blanking those shapes and asking
-        /// the Pacify patterns again, so a card that taps on attack AND locks
-        /// somebody down elsewhere keeps the tag.</summary>
+        /// itself, a stun bought by its own attack, a tap on its own attack
+        /// trigger, or a "can't attack or block unless" about itself. Written by
+        /// blanking those shapes and asking the Pacify patterns again, so a card
+        /// that taps on attack AND locks somebody down elsewhere keeps the
+        /// tag.</summary>
         private static bool OnlyACombatTrickOrItsOwnPrice(Card card)
         {
             string text = card.OracleText ?? string.Empty;
