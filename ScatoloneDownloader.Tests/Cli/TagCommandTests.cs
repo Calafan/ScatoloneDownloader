@@ -5,10 +5,12 @@ using ScatoloneDownloader.Mtg;
 namespace ScatoloneDownloader.Tests.Cli;
 
 /// <summary>
-/// Guards the tagger page moved to an embedded resource (#21): the resource
-/// loads and its <c>__EFFECT_KEYS__</c> placeholder is substituted, and the
-/// hotkey string covers every <see cref="CardEffect"/> so a newly added effect
-/// can never silently lose its keyboard shortcut.
+/// Covers the tagger command's pure helpers: the page moved to an embedded
+/// resource (#21), whose <c>__EFFECT_KEYS__</c> placeholder is substituted, and
+/// the hotkey string, which covers every <see cref="CardEffect"/> so a newly added
+/// effect can never silently lose its keyboard shortcut; plus the folder a card
+/// is tagged under (<c>RelativeFolder</c>), the listener prefixes
+/// (<c>BuildPrefixes</c>) and the reading turns of a double-faced card.
 /// </summary>
 public sealed class TagCommandTests
 {
@@ -184,27 +186,14 @@ public sealed class TagCommandTests
     {
         JsonImageUris png = new() { Png = "https://test/card.png" };
 
-        return new JsonCard
-        {
-            Name = "Test Card",
-            Language = "en",
-            ReleasedAt = "2011-09-30",
-            Layout = faces ? "transform" : layout,
-            TypeLine = typeLine,
-            Games = ["paper"],
-            FrameEffects = [],
-            Set = "TST",
-            SetName = "Test Set",
-            SetType = "expansion",
-            BorderColor = "black",
-            Cmc = 1,
-            Keywords = keywords,
-            // A double carries its art on the faces and none at the top level,
-            // which is what makes CreateCard build a DoubleFaceCard.
-            ImageUris = faces ? null : png,
-            CardFaces = faces
+        // A double carries its art on the faces and none at the top level,
+        // which is what makes CreateCard build a DoubleFaceCard.
+        return TestCards.Json(
+            typeLine: typeLine, keywords: keywords, set: "TST", setName: "Test Set", releasedAt: "2011-09-30",
+            layout: faces ? "transform" : layout,
+            png: faces ? null : "https://test/card.png",
+            faces: faces
                 ? [new JsonCardFace { Name = "Front", ImageUris = png }, new JsonCardFace { Name = "Back", ImageUris = png }]
-                : null,
-        };
+                : null);
     }
 }

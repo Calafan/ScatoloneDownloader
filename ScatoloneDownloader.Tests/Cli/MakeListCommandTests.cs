@@ -1,4 +1,5 @@
 using ScatoloneDownloader.Cli.Cube;
+using ScatoloneDownloader.Download;
 using ScatoloneDownloader.Metadata;
 using ScatoloneDownloader.Mtg;
 
@@ -77,17 +78,26 @@ public sealed class MakeListCommandTests
     }
 
     [Fact]
-    public void GeneratedStatusLine_SplitsBackToNameAndTag_LikeTheDownloadReader()
+    public async Task GeneratedStatusLine_SplitsBackToNameAndTag_LikeTheDownloadReader()
     {
-        // Mirror GetManager.GetCardList's line parsing to prove the generated
-        // format round-trips: name before "--", tag after.
+        // Write the generated list to disk and read it back through CardListFile,
+        // the reader the download commands use: name before "--", tag after.
         string text = MakeListCommand.BuildListText([Entry("Sol Ring", 5, CardStatus.Banned)], "m");
-        string line = Lines(text).First(l => !l.StartsWith("--") && l.Contains("--"));
+        string path = Path.Combine(Path.GetTempPath(), "makelist_" + Guid.NewGuid().ToString("N") + ".txt");
 
-        string[] parts = line.Split("--", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        try
+        {
+            await File.WriteAllTextAsync(path, text);
 
-        Assert.Equal("Sol Ring", parts[0]);
-        Assert.Equal("Banned", parts[1]);
+            CardListEntry entry = Assert.Single(await CardListFile.ReadAsync(path));
+
+            Assert.Equal("Sol Ring", entry.Name);
+            Assert.Equal("Banned", entry.Tag);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
     }
 
     private static CardMetadataEntry Entry(string name, int rating, CardStatus status = CardStatus.None)

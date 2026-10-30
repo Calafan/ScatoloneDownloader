@@ -2,7 +2,6 @@ using System.Net;
 
 using ScatoloneDownloader.Cli.Download;
 using ScatoloneDownloader.Download;
-using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Mtg;
 using ScatoloneDownloader.Scryfall;
 
@@ -91,29 +90,6 @@ public sealed class CardServiceDownloadTests
         CardService.ReportTally(tally, 3, skipExisting: true, TimeSpan.FromSeconds(1));
     }
 
-    private static Card MakeCard(string name)
-    {
-        JsonCard json = new()
-        {
-            Name = name,
-            Id = "id-" + name,
-            OracleId = "oracle-" + name,
-            Language = "en",
-            ReleasedAt = "1997-04-25",
-            Layout = "normal",
-            TypeLine = "Instant",
-            Games = ["paper"],
-            FrameEffects = [],
-            Set = "TMP",
-            SetName = "Tempest",
-            SetType = "expansion",
-            BorderColor = "black",
-            Cmc = 1,
-            ColorIdentity = [],
-            ManaCost = "",
-            ImageUris = new JsonImageUris { Png = "https://test/x.png" },
-        };
-
-        return Card.CreateCard(json);
-    }
+    private static Card MakeCard(string name) =>
+        TestCards.Make(name, id: "id-" + name, oracleId: "oracle-" + name);
 }

@@ -1,6 +1,5 @@
 using ScatoloneDownloader.Cli.Cube;
 using ScatoloneDownloader.Tests.Cli;
-using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Mtg;
 
 namespace ScatoloneDownloader.Tests.Mtg;
@@ -137,29 +136,7 @@ public sealed class CardAnalyzerForPoolTests
         CardEffect effects = CardEffect.None,
         string typeLine = "Creature — Bear")
     {
-        JsonCard json = new()
-        {
-            Name = name,
-            Language = "en",
-            ReleasedAt = "1997-04-25",
-            Layout = "normal",
-            TypeLine = typeLine,
-            Games = ["paper"],
-            FrameEffects = [],
-            Set = "TMP",
-            SetName = "Tempest",
-            SetType = "expansion",
-            BorderColor = "black",
-            Cmc = cmc,
-            ColorIdentity = ["G"],
-            ManaCost = "{1}{G}",
-            ImageUris = new JsonImageUris { Png = "https://test/x.png" },
-        };
-
-        Card card = Card.CreateCard(json);
-        card.Rating = rating;
-        card.Status = status;
-        card.Effects = effects;
-        return card;
+        return TestCards.Make(
+            name, typeLine, colors: ["G"], cmc: cmc, rating: rating, status: status, effects: effects);
     }
 }

@@ -1,6 +1,5 @@
 using ScatoloneDownloader.Tests.Cli;
 using ScatoloneDownloader.Cube;
-using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Metadata;
 using ScatoloneDownloader.Mtg;
 
@@ -148,7 +147,7 @@ public sealed class CardAnalyzerEffectMatrixTests
     public void Render_TargetsPerAnswer_IsTargetsOverAnsweringCards()
     {
         // One removal spell against three creatures: 3 targets per answer, not 0,3.
-        // Integral on purpose, so the assertion holds in any culture.
+        // The ratio is formatted with the invariant culture, so "3.0" holds in any culture.
         List<Card> cards =
         [
             MakeCard("White Removal", ["W"], "Instant", CardEffect.Removal, rating: 4),
@@ -173,31 +172,8 @@ public sealed class CardAnalyzerEffectMatrixTests
         int rating = 4,
         string? oracleId = null)
     {
-        JsonCard json = new()
-        {
-            Name = name,
-            OracleId = oracleId,
-            Language = "en",
-            ReleasedAt = "1997-04-25",
-            Layout = "normal",
-            TypeLine = typeLine,
-            Games = ["paper"],
-            FrameEffects = [],
-            Set = "TMP",
-            SetName = "Tempest",
-            SetType = "expansion",
-            BorderColor = "black",
-            Cmc = 2,
-            ColorIdentity = [.. colors],
-            ManaCost = colors.Length == 0 ? "{2}" : "{1}{" + colors[0] + "}",
-            ImageUris = new JsonImageUris { Png = "https://test/x.png" },
-        };
-
-        Card card = Card.CreateCard(json);
-        card.Rating = rating;
-        card.Status = CardStatus.None;
-        card.Effects = effects;
-        card.Reviewed = reviewed;
-        return card;
+        return TestCards.Make(
+            name, typeLine, colors: colors, cmc: 2, oracleId: oracleId,
+            rating: rating, effects: effects, reviewed: reviewed);
     }
 }

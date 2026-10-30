@@ -14,28 +14,23 @@ namespace ScatoloneDownloader.Tests.Cli;
 /// </summary>
 public sealed class StatsPayloadOverviewTests
 {
-    private static Card Make(string name, string[] colors, string typeLine, double cmc, int rating, string power = "", string toughness = "")
-    {
-        return CardAnalyzerCreatureProfileTests.MakeCard(name, colors, typeLine, cmc, power, toughness, null, rating);
-    }
-
     private static List<Card> Pool()
     {
-        Card banned = Make("Banned", ["W"], "Creature — Human", 2, 5, "2", "2");
+        Card banned = CardAnalyzerCreatureProfileTests.MakeCard("Banned", ["W"], "Creature — Human", 2, "2", "2", rating: 5);
         banned.Status = CardStatus.Banned;
 
         return
         [
-            Make("Half", ["W"], "Creature — Human", 2.5, 3, "2", "2"),
-            Make("Giant", ["W"], "Creature — Giant", 7.5, 5, "7", "7"),
-            Make("Bolt", ["W"], "Instant", 1, 4),
-            Make("Merfolk", ["U"], "Creature — Merfolk", 3, 4, "2", "2"),
-            Make("Charm", ["W", "U"], "Instant", 3, 5),
-            Make("Relic", [], "Artifact", 6, 5),
-            Make("Forest", ["G"], "Land", 0, 4),
-            Make("Badlands", ["B", "R"], "Land", 0, 4),
-            Make("Wastes", [], "Land", 0, 4),
-            Make("Bench", ["W"], "Creature — Human", 2, 2, "2", "2"),
+            CardAnalyzerCreatureProfileTests.MakeCard("Half", ["W"], "Creature — Human", 2.5, "2", "2", rating: 3),
+            CardAnalyzerCreatureProfileTests.MakeCard("Giant", ["W"], "Creature — Giant", 7.5, "7", "7", rating: 5),
+            CardAnalyzerCreatureProfileTests.MakeCard("Bolt", ["W"], "Instant", 1, "", "", rating: 4),
+            CardAnalyzerCreatureProfileTests.MakeCard("Merfolk", ["U"], "Creature — Merfolk", 3, "2", "2", rating: 4),
+            CardAnalyzerCreatureProfileTests.MakeCard("Charm", ["W", "U"], "Instant", 3, "", "", rating: 5),
+            CardAnalyzerCreatureProfileTests.MakeCard("Relic", [], "Artifact", 6, "", "", rating: 5),
+            CardAnalyzerCreatureProfileTests.MakeCard("Forest", ["G"], "Land", 0, "", "", rating: 4),
+            CardAnalyzerCreatureProfileTests.MakeCard("Badlands", ["B", "R"], "Land", 0, "", "", rating: 4),
+            CardAnalyzerCreatureProfileTests.MakeCard("Wastes", [], "Land", 0, "", "", rating: 4),
+            CardAnalyzerCreatureProfileTests.MakeCard("Bench", ["W"], "Creature — Human", 2, "2", "2", rating: 2),
             banned,
         ];
     }

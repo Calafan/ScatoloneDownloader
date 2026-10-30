@@ -1,6 +1,5 @@
 using ScatoloneDownloader.Download;
 using ScatoloneDownloader.Enums;
-using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Mtg;
 
 namespace ScatoloneDownloader.Tests.Download;
@@ -301,26 +300,6 @@ public sealed class OutputPathsTests : IDisposable
         string releasedAt = "1993-08-05",
         string typeLine = "Instant")
     {
-        JsonCard json = new()
-        {
-            Name = name,
-            Language = "en",
-            ReleasedAt = releasedAt,
-            Layout = "normal",
-            TypeLine = typeLine,
-            Games = ["paper"],
-            FrameEffects = [],
-            Reprint = false,
-            Variation = false,
-            Textless = false,
-            Set = set,
-            SetName = setName,
-            SetType = "core",
-            BorderColor = "black",
-            Cmc = 1,
-            ImageUris = new JsonImageUris { Png = "https://test/img.png" },
-        };
-
-        return Card.CreateCard(json);
+        return TestCards.Make(name, typeLine, set: set, setName: setName, setType: "core", releasedAt: releasedAt);
     }
 }

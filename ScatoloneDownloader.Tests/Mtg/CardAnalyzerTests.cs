@@ -1,6 +1,5 @@
 using ScatoloneDownloader.Cli.Cube;
 using ScatoloneDownloader.Tests.Cli;
-using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Mtg;
 
 namespace ScatoloneDownloader.Tests.Mtg;
@@ -183,27 +182,8 @@ public sealed class CardAnalyzerTests
         string typeLine,
         double cmc = 0)
     {
-        JsonCard json = new()
-        {
-            Name = name,
-            Language = "en",
-            ReleasedAt = "1993-08-05",
-            Layout = "normal",
-            TypeLine = typeLine,
-            Games = ["paper"],
-            FrameEffects = [],
-            Reprint = false,
-            Variation = false,
-            Textless = false,
-            Set = "LEA",
-            SetName = "Alpha",
-            SetType = "core",
-            BorderColor = "black",
-            Cmc = cmc,
-            ColorIdentity = colorIdentity ?? [],
-            ImageUris = new JsonImageUris { Png = "https://test/img.png" },
-        };
-
-        return ScatoloneDownloader.Mtg.Card.CreateCard(json);
+        return TestCards.Make(
+            name, typeLine, colors: colorIdentity ?? [], manaCost: "", cmc: cmc,
+            set: "LEA", setName: "Alpha", setType: "core", releasedAt: "1993-08-05");
     }
 }

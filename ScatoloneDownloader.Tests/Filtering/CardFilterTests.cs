@@ -1,5 +1,4 @@
 using ScatoloneDownloader.Filtering;
-using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Mtg;
 
 namespace ScatoloneDownloader.Tests.Filtering;
@@ -299,27 +298,10 @@ public sealed class CardFilterTests
         List<string>? frameEffects = null,
         List<string>? promoTypes = null)
     {
-        JsonCard json = new()
-        {
-            Name = name,
-            Language = language,
-            ReleasedAt = "1993-08-05",
-            Layout = layout,
-            TypeLine = typeLine,
-            Games = games ?? ["paper"],
-            FrameEffects = frameEffects ?? [],
-            Reprint = reprint,
-            Variation = variation,
-            Textless = textless,
-            Set = set,
-            SetName = setName,
-            SetType = setType,
-            BorderColor = borderColor,
-            Cmc = 1,
-            ImageUris = new JsonImageUris { Png = "https://test/img.png" },
-            PromoTypes = promoTypes,
-        };
-
-        return ScatoloneDownloader.Mtg.Card.CreateCard(json);
+        return ScatoloneDownloader.Mtg.Card.CreateCard(TestCards.Json(
+            name, typeLine, set: set, setName: setName, setType: setType, releasedAt: "1993-08-05",
+            layout: layout, language: language, borderColor: borderColor,
+            reprint: reprint, variation: variation, textless: textless,
+            games: games, frameEffects: frameEffects, promoTypes: promoTypes));
     }
 }

@@ -1,5 +1,4 @@
 using ScatoloneDownloader.Cube;
-using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Metadata;
 using ScatoloneDownloader.Mtg;
 
@@ -121,28 +120,6 @@ public sealed class ClassifyDecisionTests
         Assert.Equal(CardEffect.None, proposed);
     }
 
-    private static Card MakeCard(string name, string typeLine, string oracleText)
-    {
-        JsonCard json = new()
-        {
-            Name = name,
-            Language = "en",
-            ReleasedAt = "1997-04-25",
-            Layout = "normal",
-            TypeLine = typeLine,
-            OracleText = oracleText,
-            Games = ["paper"],
-            FrameEffects = [],
-            Set = "TMP",
-            SetName = "Tempest",
-            SetType = "expansion",
-            BorderColor = "black",
-            Cmc = 1,
-            ColorIdentity = [],
-            ManaCost = "",
-            ImageUris = new JsonImageUris { Png = "https://test/x.png" },
-        };
-
-        return Card.CreateCard(json);
-    }
+    private static Card MakeCard(string name, string typeLine, string oracleText) =>
+        TestCards.Make(name, typeLine, oracleText);
 }

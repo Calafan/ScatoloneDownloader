@@ -1,5 +1,4 @@
 using ScatoloneDownloader.Cli.Cube;
-using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Mtg;
 
 namespace ScatoloneDownloader.Tests.Cli;
@@ -333,34 +332,11 @@ public sealed class StatsMarkdownTests
         string? oracleId = null,
         string? oracleText = null)
     {
-        JsonCard json = new()
-        {
-            Name = name,
-            OracleId = oracleId ?? Guid.NewGuid().ToString(),
-            OracleText = oracleText,
-            Language = "en",
-            ReleasedAt = "1997-04-25",
-            Layout = "normal",
-            TypeLine = typeLine,
-            Games = ["paper"],
-            FrameEffects = [],
-            Set = "TMP",
-            SetName = "Tempest",
-            SetType = "expansion",
-            BorderColor = "black",
-            Cmc = cmc,
-            Power = power.Length == 0 ? null : power,
-            Toughness = toughness.Length == 0 ? null : toughness,
-            ColorIdentity = [.. colors],
-            ManaCost = colors.Length == 0 ? "{2}" : "{1}{" + colors[0] + "}",
-            ImageUris = new JsonImageUris { Png = "https://test/x.png" },
-        };
-
-        Card card = Card.CreateCard(json);
-        card.Rating = rating;
-        card.Status = status;
-        card.Effects = effects;
-        card.Reviewed = reviewed;
-        return card;
+        return TestCards.Make(
+            name, typeLine, oracleText, colors, cmc: cmc,
+            power: power.Length == 0 ? null : power,
+            toughness: toughness.Length == 0 ? null : toughness,
+            oracleId: oracleId ?? Guid.NewGuid().ToString(),
+            rating: rating, status: status, effects: effects, reviewed: reviewed);
     }
 }

@@ -2,7 +2,6 @@ using System.Text.Json;
 
 using ScatoloneDownloader.Cli.Download;
 using ScatoloneDownloader.Download;
-using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Mtg;
 
 namespace ScatoloneDownloader.Tests.Download;
@@ -188,23 +187,8 @@ public sealed class LibraryCopyTests : IDisposable
         return path;
     }
 
-    private static Card Make(string name, string typeLine, string oracleId)
-    {
-        return Card.CreateCard(new JsonCard
-        {
-            Id = "id-" + name,
-            OracleId = oracleId,
-            Name = name,
-            Language = "en",
-            ReleasedAt = "2000-01-01",
-            Layout = "normal",
-            TypeLine = typeLine,
-            Games = ["paper"],
-            Set = "set",
-            SetName = "Set",
-            SetType = "core",
-            BorderColor = "black",
-            ImageUris = new JsonImageUris { Png = "https://test/img.png" },
-        });
-    }
+    private static Card Make(string name, string typeLine, string oracleId) =>
+        TestCards.Make(
+            name, typeLine, cmc: 0, id: "id-" + name, oracleId: oracleId,
+            set: "set", setName: "Set", setType: "core", releasedAt: "2000-01-01");
 }

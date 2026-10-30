@@ -125,16 +125,6 @@ public sealed class CreatureStatsTests
         return Card.CreateCard(card);
     }
 
-    private static Card MakeCreature(List<string> keywords, string oracleText)
-    {
-        return Card.CreateCard(new JsonCard
-        {
-            Name = "Test Creature",
-            ReleasedAt = "2020-01-01",
-            TypeLine = "Creature — Bear",
-            Keywords = keywords,
-            OracleText = oracleText,
-            ImageUris = new JsonImageUris { Png = "https://test/x.png" },
-        });
-    }
+    private static Card MakeCreature(List<string> keywords, string oracleText) =>
+        TestCards.Make("Test Creature", "Creature — Bear", oracleText, cmc: 0, keywords: keywords, releasedAt: "2020-01-01");
 }

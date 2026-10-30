@@ -2,7 +2,6 @@ using System.Text.Json;
 
 using ScatoloneDownloader.Cube;
 using ScatoloneDownloader.Download;
-using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Metadata;
 using ScatoloneDownloader.Mtg;
 
@@ -21,33 +20,10 @@ public sealed class LibrarySyncTests
 
     private static string PathFor(string file) => Path.Combine(Lib, "1993", "Alpha", file);
 
-    private static Card MakeCard(string name, string oracleId = "", string oracleText = "", string typeLine = "Instant", string id = "")
-    {
-        JsonCard json = new()
-        {
-            Id = id,
-            Name = name,
-            OracleId = oracleId,
-            OracleText = oracleText,
-            Language = "en",
-            ReleasedAt = "1993-08-05",
-            Layout = "normal",
-            TypeLine = typeLine,
-            Games = ["paper"],
-            FrameEffects = [],
-            Reprint = false,
-            Variation = false,
-            Textless = false,
-            Set = "LEA",
-            SetName = "Alpha",
-            SetType = "core",
-            BorderColor = "black",
-            Cmc = 1,
-            ImageUris = new JsonImageUris { Png = "https://test/img.png" },
-        };
-
-        return Card.CreateCard(json);
-    }
+    private static Card MakeCard(string name, string oracleId = "", string oracleText = "", string typeLine = "Instant", string id = "") =>
+        TestCards.Make(
+            name, typeLine, oracleText, id: id, oracleId: oracleId,
+            set: "LEA", setName: "Alpha", setType: "core", releasedAt: "1993-08-05");
 
     // --- Plan --------------------------------------------------------------
 

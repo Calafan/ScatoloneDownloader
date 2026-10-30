@@ -1,5 +1,4 @@
 using ScatoloneDownloader.Cli.Cube;
-using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Mtg;
 
 namespace ScatoloneDownloader.Tests.Cli;
@@ -45,29 +44,6 @@ public sealed class CardIndexTests
         Assert.Same(first, Assert.Single(index).Value);
     }
 
-    private static Card MakeCard(string name, string? id, string? oracleId)
-    {
-        JsonCard json = new()
-        {
-            Name = name,
-            Id = id,
-            OracleId = oracleId,
-            Language = "en",
-            ReleasedAt = "1997-04-25",
-            Layout = "normal",
-            TypeLine = "Instant",
-            Games = ["paper"],
-            FrameEffects = [],
-            Set = "TMP",
-            SetName = "Tempest",
-            SetType = "expansion",
-            BorderColor = "black",
-            Cmc = 1,
-            ColorIdentity = [],
-            ManaCost = "",
-            ImageUris = new JsonImageUris { Png = "https://test/x.png" },
-        };
-
-        return Card.CreateCard(json);
-    }
+    private static Card MakeCard(string name, string? id, string? oracleId) =>
+        TestCards.Make(name, id: id, oracleId: oracleId);
 }

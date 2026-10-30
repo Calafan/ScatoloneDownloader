@@ -1,5 +1,4 @@
 using ScatoloneDownloader.Download;
-using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Mtg;
 
 namespace ScatoloneDownloader.Tests.Download;
@@ -59,21 +58,8 @@ public sealed class ResolveImagePathTests : IDisposable
 
     private static Card Make(string name, string typeLine, List<string>? promoTypes = null)
     {
-        return Card.CreateCard(new JsonCard
-        {
-            Id = "id",
-            Name = name,
-            Language = "en",
-            ReleasedAt = "2000-01-01",
-            Layout = "normal",
-            TypeLine = typeLine,
-            Games = ["paper"],
-            Set = "set",
-            SetName = "Set",
-            SetType = "core",
-            BorderColor = "black",
-            PromoTypes = promoTypes,
-            ImageUris = new JsonImageUris { Png = "https://test/img.png" },
-        });
+        return Card.CreateCard(TestCards.Json(
+            name, typeLine, cmc: 0, id: "id", promoTypes: promoTypes,
+            set: "set", setName: "Set", setType: "core", releasedAt: "2000-01-01"));
     }
 }

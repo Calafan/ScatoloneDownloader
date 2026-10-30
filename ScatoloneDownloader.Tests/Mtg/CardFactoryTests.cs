@@ -96,25 +96,10 @@ public sealed class CardFactoryTests
     [Fact]
     public void CreateCard_PreservesAllBaseFields_FromJsonCard()
     {
-        JsonCard json = new()
-        {
-            Name = "Wrath of God",
-            Language = "en",
-            ReleasedAt = "1993-08-05",
-            Layout = "normal",
-            TypeLine = "Sorcery",
-            Games = ["paper", "mtgo"],
-            FrameEffects = ["extendedart"],
-            Reprint = true,
-            Variation = true,
-            Textless = true,
-            Set = "2ED",
-            SetName = "Unlimited Edition",
-            SetType = "core",
-            BorderColor = "white",
-            Cmc = 2.5,
-            ImageUris = MakePngUri("https://test/wog.png"),
-        };
+        JsonCard json = TestCards.Json(
+            "Wrath of God", "Sorcery", cmc: 2.5, set: "2ED", setName: "Unlimited Edition", setType: "core",
+            releasedAt: "1993-08-05", borderColor: "white", reprint: true, variation: true, textless: true,
+            games: ["paper", "mtgo"], frameEffects: ["extendedart"], png: "https://test/wog.png");
 
         ScatoloneDownloader.Mtg.Card card = ScatoloneDownloader.Mtg.Card.CreateCard(json);
 
@@ -204,25 +189,10 @@ public sealed class CardFactoryTests
         string typeLine = "Instant",
         JsonImageUris? imageUris = null)
     {
-        return new JsonCard
-        {
-            Name = name,
-            Language = "en",
-            ReleasedAt = releasedAt,
-            Layout = "normal",
-            TypeLine = typeLine,
-            Games = ["paper"],
-            FrameEffects = [],
-            Reprint = false,
-            Variation = false,
-            Textless = false,
-            Set = set,
-            SetName = "Limited Edition Alpha",
-            SetType = "core",
-            BorderColor = "black",
-            Cmc = 1,
-            ImageUris = imageUris,
-        };
+        JsonCard json = TestCards.Json(
+            name, typeLine, set: set, setName: "Limited Edition Alpha", setType: "core", releasedAt: releasedAt, png: null);
+        json.ImageUris = imageUris;
+        return json;
     }
 
     private static JsonImageUris MakePngUri(string png) => new() { Png = png };

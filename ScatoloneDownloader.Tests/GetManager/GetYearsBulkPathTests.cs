@@ -1,4 +1,3 @@
-using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Json.Sets;
 using ScatoloneDownloader.Mtg;
 
@@ -133,28 +132,6 @@ public sealed class GetYearsBulkPathTests
         };
     }
 
-    private static Card MakeCard(string name, string releasedAt)
-    {
-        JsonCard json = new()
-        {
-            Name = name,
-            Language = "en",
-            ReleasedAt = releasedAt,
-            Layout = "normal",
-            TypeLine = "Instant",
-            Games = ["paper"],
-            FrameEffects = [],
-            Reprint = false,
-            Variation = false,
-            Textless = false,
-            Set = "LEA",
-            SetName = "Alpha",
-            SetType = "core",
-            BorderColor = "black",
-            Cmc = 1,
-            ImageUris = new JsonImageUris { Png = "https://test/x.png" },
-        };
-
-        return Card.CreateCard(json);
-    }
+    private static Card MakeCard(string name, string releasedAt) =>
+        TestCards.Make(name, set: "LEA", setName: "Alpha", setType: "core", releasedAt: releasedAt);
 }
