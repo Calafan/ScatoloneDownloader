@@ -5,8 +5,8 @@ namespace ScatoloneDownloader.Mtg
     /// <see cref="CardAnalyzer.Analyze"/>. Each property corresponds to an R2
     /// metric from the cube management plan. Every metric here is derived from the
     /// <see cref="MacroType"/> (from type_line) and <see cref="Card.ColorCategory"/>
-    /// (from color_identity) classifications, so the Markdown report renders from a
-    /// single source of truth.
+    /// (from color_identity) classifications, so the stats payload (the page and its
+    /// Markdown twin) renders from a single source of truth.
     /// </summary>
     public sealed class AnalysisReport
     {
@@ -17,7 +17,7 @@ namespace ScatoloneDownloader.Mtg
         internal Dictionary<string, int> ColorCategoryCounts { get; init; } = [];
 
         /// <summary>MacroType breakdown per ColorCategory: [category][macroType] = count.
-        /// Drives the per-color section of the Markdown report.</summary>
+        /// Drives the by-colour-category tables of the stats files.</summary>
         internal Dictionary<string, Dictionary<MacroType, int>> MacroTypeByCategory { get; init; } = [];
 
         /// <summary>CMC distribution per ColorCategory: [category][cmc] = count.</summary>
@@ -60,7 +60,7 @@ namespace ScatoloneDownloader.Mtg
         /// <summary>Cards whose MacroType is Land, regardless of color_identity.</summary>
         internal int LandCount { get; init; }
 
-        /// <summary>Lands grouped by ColorCategory — for the bottom Lands section.</summary>
+        /// <summary>Lands grouped by ColorCategory — for the Lands column of the category tables.</summary>
         internal Dictionary<string, int> LandsByCategory { get; init; } = [];
 
         /// <summary>Card count per <see cref="CardEffect"/> flag across non-land cards.

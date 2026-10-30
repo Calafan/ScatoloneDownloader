@@ -334,9 +334,9 @@ the key disappears from a tier the next time that tier is saved.
 ## The stats page
 
 The tagger's `/stats` page analyses the **pool**: normal cards (no status)
-rated 3-5. It is built by `CardAnalyzer.ForPool` (the `analyze` download
-command renders the same analysis as Markdown, for a list file). Two rules
-decide who is counted:
+rated 3-5. It is built by `CardAnalyzer.ForPool` into one payload
+(`StatsPayload`), the only source of every stats file. Two rules decide who is
+counted:
 
 - **Any status (Banned/Token/Jolly) → left out of every distribution**, at any
   rating. A tagged card is not part of the pool being measured.
@@ -346,17 +346,31 @@ decide who is counted:
   therefore worth being able to find again — it feeds the page's **bench**
   tables.
 
-The same analysis comes out in three ways, all from the same `CardAnalyzer.ForPool`
-over the same store and cards: the live page, its two downloads and the
-`report` command. Both the downloads (`/api/report.html`, `/api/report.md`, from
-the tagger's memory) and `report` (which scans `Source\` and loads the store
-itself, read-only) produce `Cubo_Analysis*.md`, the Markdown analysis, and the
-HTML, which is the page frozen with the `/api/stats` payload embedded: it opens in
-any browser, shows plain numbers instead of links to the tagger, keeps the
-mono/identity toggle and prints to a readable PDF. `report` writes
-`Cubo_Analysis.md` and `.html` in the current folder (`-o <FILE>` is a base path
-whose extension is replaced); the downloads are named `Cubo_Analysis_yyyy-MM-dd`.
-Both carry a "Generated ..." line (date, pool and bench definitions, no paths).
+One payload, two renderers. `StatsPayload` holds every number of the page; the
+page reads it (live from `/api/stats`, or frozen) and `StatsMarkdown` prints it
+as Markdown, section for section under the page's titles, with the page's cells
+(`n (p%)`, a dash for zero) and both column views (mono + Multi, colour incl.
+multi) one after the other. The files come out three ways, always as that pair:
+the page's two downloads (`/api/report.html`, `/api/report.md`, from the
+tagger's memory), the `report` command (which scans `Source\` and loads the
+store itself, read-only) and the `analyze` command. The HTML is the page frozen
+with the payload embedded: it opens in any browser, shows plain numbers instead
+of links to the tagger, keeps the mono/identity toggle and prints to a readable
+PDF. `report` writes `Cubo_Analysis.md` and `.html` in the current folder (`-o
+<FILE>` is a base path whose extension is replaced); the downloads are named
+`Cubo_Analysis_yyyy-MM-dd`. Each file opens with a title, a "Generated ..." line
+(date and what pool and bench mean, no paths) and a note (`StatsDocument`).
+
+`analyze <FILES>` makes the same pair for a card list instead of the cube
+(`<list>_Analysis.md` and `.html` in the current folder): `StatsPayload.BuildForList`
+counts every card of the list, whatever its rating or status, as the pool under
+the list's name, and has no bench. Each card takes its rating, status, effects
+and Reviewed from the store when it has an entry (as in the tagger); a card
+without one carries the classifier's proposed effects. A `Name -- tag` line is
+not counted (the analysis skips a tagged card, so a `make-list` list leaves its
+Banned/Token/Jolly sections out). The subtitle says how many cards are counted,
+how many of them are in the store and, when there are any, how many tagged lines
+were left out.
 
 The bench tables count the rating-`2` non-land cards by effect and color, and
 their creatures by cost and color, so the page that shows a hole in the

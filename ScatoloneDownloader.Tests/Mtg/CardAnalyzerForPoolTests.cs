@@ -1,3 +1,5 @@
+using ScatoloneDownloader.Cli.Cube;
+using ScatoloneDownloader.Tests.Cli;
 using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Mtg;
 
@@ -8,22 +10,12 @@ namespace ScatoloneDownloader.Tests.Mtg;
 /// the active pool (rating 3-5, no Banned/Token/Jolly), matching the views and
 /// the CardStatus doc — the unrated backlog and excluded status cards must not
 /// skew the distributions. Rating 2 is the one exception: it is carried along as
-/// the bench and rendered as an appendix (section 7), still contributing to no
-/// metric above it. The plain constructor is unaffected (the download
-/// analyze/files path still analyzes whatever it is given).
+/// the bench and rendered as its own sections, still contributing to no
+/// metric of the pool. The plain constructor is unaffected (the analyze command
+/// still analyzes whatever it is given).
 /// </summary>
-public sealed class CardAnalyzerForPoolTests : IDisposable
+public sealed class CardAnalyzerForPoolTests
 {
-    private readonly string tempFile = Path.Combine(Path.GetTempPath(), "ScatoloneBench_" + Guid.NewGuid().ToString("N") + ".md");
-
-    public void Dispose()
-    {
-        if (File.Exists(tempFile))
-        {
-            File.Delete(tempFile);
-        }
-    }
-
     [Fact]
     public void ForPool_ExcludesStatusAndNonPoolCards()
     {
@@ -58,7 +50,7 @@ public sealed class CardAnalyzerForPoolTests : IDisposable
     }
 
     [Fact]
-    public void ForPool_Rating2_RendersBenchAppendix_WithoutEnteringPoolTotals()
+    public void ForPool_Rating2_RendersBenchSections_WithoutEnteringPoolTotals()
     {
         List<Card> cards =
         [
@@ -70,29 +62,28 @@ public sealed class CardAnalyzerForPoolTests : IDisposable
         ];
 
         CardAnalyzer analyzer = CardAnalyzer.ForPool(cards);
-        analyzer.SaveAnalysis(tempFile);
-
-        string text = File.ReadAllText(tempFile);
+        string text = StatsMarkdownTests.Render(cards);
 
         // The pool metrics see the rating-4 card and nothing else.
         Assert.Equal(1, analyzer.Analyze().TotalCards);
-        Assert.Contains("Global Distribution (1 Cards)", text);
+        Assert.Contains("1 cards: 1 non-land + 0 lands", text);
 
-        // The two rating-2 cards land in the appendix. Rating 1 is not a bench
+        // The two rating-2 cards land in the bench sections. Rating 1 is not a bench
         // card, and a Banned 2 is a status card — neither may appear.
-        Assert.Contains("## 7. Bench Availability (2 Cards, Rating 2)", text);
-        Assert.Contains("### Available by Color and Cost", text);
+        StatsPayload payload = StatsPayload.Build(cards);
+        Assert.Equal(2, payload.BenchOverview!.NonLand);
 
         // The cost histogram is the point of the section: one 2-drop, one 6+.
-        Assert.Contains("| **Green** | 2 | 2 | `0: 0` `1: 0` `2: 1` `3: 0` `4: 0` `5: 0` `6+: 1` |", text);
+        string byCost = StatsMarkdownTests.Section(text, "Bench (★2) — mana value by colour category");
+        Assert.Equal("| Green | – | – | 1 (50%) | – | – | – | 1 (50%) | 2 (100%) |", StatsMarkdownTests.Line(byCost, "| Green |"));
 
         // And the effect axis, for "the pool is short on ramp" lookups.
-        Assert.Contains("### Available by Effect", text);
-        Assert.Contains("| Ramp | - | - | - | - | 1 (50%) | - | - | 1 (50%) |", text);
+        string effects = StatsMarkdownTests.Section(text, "Bench (★2) — available by effect and colour");
+        Assert.Equal("| Ramp | – | – | – | – | 1 (50%) | – | – | 1 (50%) |", StatsMarkdownTests.Line(effects, "| Ramp |"));
     }
 
     [Fact]
-    public void ForPool_BenchLands_GetTheirOwnTable_NotTheCostTable()
+    public void ForPool_BenchLands_ShowUnderLands_NotInTheCostTable()
     {
         List<Card> cards =
         [
@@ -100,36 +91,42 @@ public sealed class CardAnalyzerForPoolTests : IDisposable
             MakeCard("Bench Dual", rating: 2, status: CardStatus.None, typeLine: "Land", cmc: 0),
         ];
 
-        CardAnalyzer.ForPool(cards).SaveAnalysis(tempFile);
-
-        string text = File.ReadAllText(tempFile);
+        StatsPayload payload = StatsPayload.Build(cards);
+        string text = StatsMarkdownTests.Render(cards);
 
         // A land's CMC says nothing, so it is kept out of the cost table (as in the
         // pool sections) — but it must still be findable, since a bench dual is
         // exactly what a "short on fixing" hole wants.
-        Assert.Contains("**Non-Land:** 0 | **Lands:** 1", text);
-        Assert.Contains("### Available Lands", text);
-        Assert.Contains("| Green | 1 |", text);
+        Assert.Equal(0, payload.BenchOverview!.NonLand);
+        Assert.Equal(1, payload.BenchOverview.Lands);
+        Assert.EndsWith("| 1 (100%) |", StatsMarkdownTests.Line(
+            StatsMarkdownTests.Section(text, "Bench (★2) — by colour category"), "| Green |"));
+        Assert.DoesNotContain("| Green |", StatsMarkdownTests.Section(text, "Bench (★2) — mana value by colour category"));
     }
 
     [Fact]
-    public void ForPool_NoRating2Cards_OmitsTheBenchSectionEntirely()
+    public void ForPool_NoRating2Cards_StillWritesTheBenchSections_Empty()
     {
+        // The page always shows the bench sections for the cube, empty when no card
+        // is ★2; only a card list has none.
         List<Card> cards = [MakeCard("Pool Bear", rating: 4, status: CardStatus.None)];
 
-        CardAnalyzer.ForPool(cards).SaveAnalysis(tempFile);
+        StatsPayload payload = StatsPayload.Build(cards);
 
-        Assert.DoesNotContain("Bench Availability", File.ReadAllText(tempFile));
+        Assert.Equal(0, payload.BenchOverview!.NonLand);
+        Assert.Contains("## Bench (★2) — by colour category", StatsMarkdownTests.Render(cards));
     }
 
     [Fact]
-    public void PlainConstructor_NeverRendersABenchSection()
+    public void PlainConstructor_AnalyzesWhateverItIsGiven_AndAListHasNoBench()
     {
-        // The download analyze/files path builds the analyzer directly from cards
-        // that carry no rating at all; its report must be unchanged.
-        new CardAnalyzer([MakeCard("Whatever", rating: 0, status: CardStatus.None)]).SaveAnalysis(tempFile);
+        // The analyze command builds the analyzer directly from cards that carry no
+        // rating at all: every one counts, and there is no bench.
+        StatsPayload payload = StatsPayload.BuildForList([MakeCard("Whatever", rating: 0, status: CardStatus.None)], "list");
 
-        Assert.DoesNotContain("Bench Availability", File.ReadAllText(tempFile));
+        Assert.Equal(1, new CardAnalyzer([MakeCard("Whatever", rating: 0, status: CardStatus.None)]).Analyze().TotalCards);
+        Assert.Null(payload.Bench);
+        Assert.DoesNotContain("Bench", StatsMarkdownTests.RenderList([MakeCard("Whatever", rating: 0, status: CardStatus.None)]));
     }
 
     private static Card MakeCard(

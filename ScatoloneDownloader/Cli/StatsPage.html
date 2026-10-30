@@ -352,9 +352,11 @@ function typesNote(o) {
 
 // The pool by exact colour category, in the analyzer's groups. A category's colour
 // filter is its view folder name; the Total row has none. Shares: the type and star
-// cells of the row's own cards, Cards of the pool's non-land, Lands of the pool's lands.
-function categoriesTable(tier, o) {
-  const heads = ["Category", "Cards", "Creatures", "Other perm.", "Spells", "Avg MV", "Creature avg MV", "Pips", "★3", "★4", "★5", "Lands"];
+// cells of the row's own cards, Cards of the tier's non-land, Lands of the tier's lands.
+// The bench is ★2 by definition, so its table drops the ★3/★4/★5 columns.
+function categoriesTable(tier, o, withStars) {
+  const heads = ["Category", "Cards", "Creatures", "Other perm.", "Spells", "Avg MV", "Creature avg MV", "Pips"]
+    .concat(withStars ? ["★3", "★4", "★5"] : [], ["Lands"]);
   const table = el("table");
   table.appendChild(plainHead(heads));
   const body = el("tbody");
@@ -371,9 +373,11 @@ function categoriesTable(tier, o) {
     tr.appendChild(avg(r.averageMv));
     tr.appendChild(avg(r.creatureAverageMv));
     tr.appendChild(avg(r.pipDensity));
-    tr.appendChild(countCell(r.rated3, r.cards, link(tier, c, "", "", null, null, "r3"), null));
-    tr.appendChild(countCell(r.rated4, r.cards, link(tier, c, "", "", null, null, "r4"), null));
-    tr.appendChild(countCell(r.rated5, r.cards, link(tier, c, "", "", null, null, "r5"), null));
+    if (withStars) {
+      tr.appendChild(countCell(r.rated3, r.cards, link(tier, c, "", "", null, null, "r3"), null));
+      tr.appendChild(countCell(r.rated4, r.cards, link(tier, c, "", "", null, null, "r4"), null));
+      tr.appendChild(countCell(r.rated5, r.cards, link(tier, c, "", "", null, null, "r5"), null));
+    }
     tr.appendChild(countCell(r.lands, o.lands, link(tier, c, "", "", "Land"), null));
     body.appendChild(tr);
   };
@@ -432,21 +436,30 @@ function render() {
   const out = document.getElementById("out");
   out.innerHTML = "";
   if (!payload) return;
-  const pm = payload.pool[view], bm = payload.bench[view];
+  const pm = payload.pool[view];
   const o = payload.overview;
-  section("Pool — global distribution", typesTable(payload.pool, o), typesNote(o));
-  section("Pool — by colour category", categoriesTable(payload.pool, o), "Exact colour identity; a land counts only under Lands.");
-  section("Pool — mana value by colour category",
-    costByCategoryTable(payload.pool, o, r => r.byCost, r => r.cards, "*nonland"));
-  section("Pool — creature mana value by colour category",
-    costByCategoryTable(payload.pool, o, r => r.creatureByCost, r => r.creatures, "Creature"));
-  section("Pool — effects by colour", matrixTable(payload.pool, pm));
-  section("Pool — answers vs targets", answersTable(payload.pool, pm));
-  section("Bench (★2) — available by effect and colour", matrixTable(payload.bench, bm));
+  const P = payload.pool.label;
+  const bench = payload.bench;
+  const bm = bench ? bench[view] : null;
+  const bo = payload.benchOverview;
   const key = view === "identity" ? "curveIdentity" : "curveMono";
-  section("Pool — creatures by cost", creaturesTable(payload.pool), creatureSummary(payload.pool.creatures.summary));
-  section("Pool — creature curve by colour", curveTable(payload.pool, payload.pool.creatures[key]));
-  section("Bench (★2) — creature curve by colour", curveTable(payload.bench, payload.bench.creatures[key]));
+  section(P + " — global distribution", typesTable(payload.pool, o), typesNote(o));
+  section(P + " — by colour category", categoriesTable(payload.pool, o, true), "Exact colour identity; a land counts only under Lands.");
+  section(P + " — mana value by colour category",
+    costByCategoryTable(payload.pool, o, r => r.byCost, r => r.cards, "*nonland"));
+  section(P + " — creature mana value by colour category",
+    costByCategoryTable(payload.pool, o, r => r.creatureByCost, r => r.creatures, "Creature"));
+  section(P + " — effects by colour", matrixTable(payload.pool, pm));
+  section(P + " — answers vs targets", answersTable(payload.pool, pm));
+  if (bench) {
+    section("Bench (★2) — by colour category", categoriesTable(bench, bo, false), "Exact colour identity; a land counts only under Lands.");
+    section("Bench (★2) — mana value by colour category",
+      costByCategoryTable(bench, bo, r => r.byCost, r => r.cards, "*nonland"));
+    section("Bench (★2) — available by effect and colour", matrixTable(bench, bm));
+  }
+  section(P + " — creatures by cost", creaturesTable(payload.pool), creatureSummary(payload.pool.creatures.summary));
+  section(P + " — creature curve by colour", curveTable(payload.pool, payload.pool.creatures[key]));
+  if (bench) section("Bench (★2) — creature curve by colour", curveTable(bench, bench.creatures[key]));
 }
 
 async function load() {
@@ -481,9 +494,11 @@ document.getElementById("vIdentity").onclick = () => setView("identity");
 document.getElementById("refresh").onclick = () => load();
 if (SNAPSHOT) {
   ["back", "refresh", "dlHtml", "dlMd"].forEach(id => { document.getElementById(id).hidden = true; });
-  document.getElementById("updated").textContent = window.STATS_SNAPSHOT_INFO || "";
-  document.getElementById("note").textContent =
-    "A snapshot of the cube's statistics. The pool is the cards rated 3–5 with no status; the bench is exactly ★2.";
+  // { title, subtitle, note }, written by the C# side (StatsDocument).
+  const info = window.STATS_SNAPSHOT_INFO || {};
+  if (info.title) document.querySelector("h1").textContent = info.title;
+  document.getElementById("updated").textContent = info.subtitle || "";
+  document.getElementById("note").textContent = info.note || "";
 }
 // No polling: the numbers refresh when you come back to the tab (typically from
 // the tagger, after tagging) or on demand.

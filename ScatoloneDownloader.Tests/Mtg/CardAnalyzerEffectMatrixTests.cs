@@ -1,3 +1,5 @@
+using ScatoloneDownloader.Cli.Cube;
+using ScatoloneDownloader.Tests.Cli;
 using ScatoloneDownloader.Cube;
 using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Metadata;
@@ -7,21 +9,11 @@ namespace ScatoloneDownloader.Tests.Mtg;
 
 /// <summary>
 /// Covers the effect-by-colour matrix, the reviewed share, the answers-vs-targets
-/// groups and their rendering in the cube report, plus the
+/// groups and their rendering in the Markdown report, plus the
 /// <see cref="Card.Reviewed"/> flag the metadata sync feeds them.
 /// </summary>
-public sealed class CardAnalyzerEffectMatrixTests : IDisposable
+public sealed class CardAnalyzerEffectMatrixTests
 {
-    private readonly string tempFile = Path.Combine(Path.GetTempPath(), "ScatoloneMatrix_" + Guid.NewGuid().ToString("N") + ".md");
-
-    public void Dispose()
-    {
-        if (File.Exists(tempFile))
-        {
-            File.Delete(tempFile);
-        }
-    }
-
     [Fact]
     public void ColumnMapping_MonoGuildColorlessAndFiveColor_LandInTheirColumns()
     {
@@ -130,7 +122,7 @@ public sealed class CardAnalyzerEffectMatrixTests : IDisposable
     }
 
     [Fact]
-    public void SaveAnalysis_WithEffects_RendersColorMatrixAndAnswersTable()
+    public void Render_WithEffects_WritesTheColourMatrixAndTheAnswersTable()
     {
         List<Card> cards =
         [
@@ -138,23 +130,23 @@ public sealed class CardAnalyzerEffectMatrixTests : IDisposable
             MakeCard("Bench Ramp", ["G"], "Sorcery", CardEffect.Ramp, rating: 2),
         ];
 
-        CardAnalyzer.ForPool(cards).SaveAnalysis(tempFile);
-        string text = File.ReadAllText(tempFile);
+        string text = StatsMarkdownTests.Render(cards);
 
-        Assert.Contains("## 5. Effects by Color (Excluding Lands)", text);
-        Assert.Contains("| Effect | White | Blue | Black | Red | Green | Multi | Colorless | Total |", text);
-        Assert.Contains("| **Reviewed** | 1 (100%) | - | - | - | - | - | - | 1 (100%) |", text);
-        Assert.Contains("| Removal | 1 (100%) | - | - | - | - | - | - | 1 (100%) |", text);
-        Assert.Contains("## 6. Answers vs Targets", text);
-        Assert.Contains("| Answers | Tags | White | Blue | Black | Red | Green | Multi | Colorless | Total | Targets | Targets per answer |", text);
-        Assert.Contains("| **Counterspells** | Counter | - | - | - | - | - | - | - | - | - | - |", text);
-        Assert.Contains("## 7. Bench Availability", text);
-        Assert.Contains("### Available by Effect and Color", text);
-        Assert.Contains("| Ramp | - | - | - | - | 1 (100%) | - | - | 1 (100%) |", text);
+        string effects = StatsMarkdownTests.Section(text, "Pool — effects by colour");
+        Assert.Contains("| Effect | White | Blue | Black | Red | Green | Multi | Colorless | Total |", effects);
+        Assert.Equal("| Reviewed | 1 (100%) | – | – | – | – | – | – | 1 (100%) |", StatsMarkdownTests.Line(effects, "| Reviewed |"));
+        Assert.Equal("| Removal | 1 (100%) | – | – | – | – | – | – | 1 (100%) |", StatsMarkdownTests.Line(effects, "| Removal |"));
+
+        string answers = StatsMarkdownTests.Section(text, "Pool — answers vs targets");
+        Assert.Contains("| Answer | Tags | White | Blue | Black | Red | Green | Multi | Colorless | Total | Targets | Targets / answer |", answers);
+        Assert.Equal("| Counterspells | Counter | – | – | – | – | – | – | – | – | – | – |", StatsMarkdownTests.Line(answers, "| Counterspells |"));
+
+        string bench = StatsMarkdownTests.Section(text, "Bench (★2) — available by effect and colour");
+        Assert.Equal("| Ramp | – | – | – | – | 1 (100%) | – | – | 1 (100%) |", StatsMarkdownTests.Line(bench, "| Ramp |"));
     }
 
     [Fact]
-    public void SaveAnalysis_TargetsPerAnswer_IsTargetsOverAnsweringCards()
+    public void Render_TargetsPerAnswer_IsTargetsOverAnsweringCards()
     {
         // One removal spell against three creatures: 3 targets per answer, not 0,3.
         // Integral on purpose, so the assertion holds in any culture.
@@ -166,22 +158,11 @@ public sealed class CardAnalyzerEffectMatrixTests : IDisposable
             MakeCard("Bear Three", ["G"], "Creature — Bear", rating: 3),
         ];
 
-        CardAnalyzer.ForPool(cards).SaveAnalysis(tempFile);
-        string text = File.ReadAllText(tempFile);
+        string answers = StatsMarkdownTests.Section(StatsMarkdownTests.Render(cards), "Pool — answers vs targets");
 
-        Assert.Contains("| **Creature removal** | Removal, RemovePermanent, Wipe | 1 | - | - | - | - | - | - | 1 | 3 | 3 |", text);
-    }
-
-    [Fact]
-    public void SaveAnalysis_NoEffectAnywhere_OmitsTheAnswersSectionAndTheColorMatrix()
-    {
-        List<Card> cards = [MakeCard("Plain", ["W"], "Instant", rating: 4)];
-
-        CardAnalyzer.ForPool(cards).SaveAnalysis(tempFile);
-        string text = File.ReadAllText(tempFile);
-
-        Assert.DoesNotContain("## 6. Answers vs Targets", text);
-        Assert.DoesNotContain("Effects by Color", text);
+        Assert.Equal(
+            "| Creature removal | Removal, RemovePermanent, Wipe | 1 (100%) | – | – | – | – | – | – | 1 (25%) | 3 | 3.0 |",
+            StatsMarkdownTests.Line(answers, "| Creature removal |"));
     }
 
     private static Card MakeCard(

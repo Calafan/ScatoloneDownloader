@@ -50,7 +50,6 @@ namespace ScatoloneDownloader.Cli.Download
             internal string? File { get; init; }
 
             internal bool Download { get; init; }
-            internal bool Analyze { get; init; }
             internal bool PrintOnly { get; init; }
 
             /// <summary>Skip the library rules (Mode.All and Mode.Years only).</summary>
@@ -146,30 +145,6 @@ namespace ScatoloneDownloader.Cli.Download
             }
         }
 
-        internal static async Task RunAnalyzeAsync(IEnumerable<string> files, bool reprints, bool tokens, bool lands, bool printOnly)
-        {
-            foreach (string file in files)
-            {
-                if (File.Exists(file))
-                {
-                    await GetCardsAsync(new CardRequest
-                    {
-                        Mode = Mode.Files,
-                        Reprints = reprints,
-                        Tokens = tokens,
-                        Lands = lands,
-                        File = file,
-                        Analyze = true,
-                        PrintOnly = printOnly,
-                    });
-                }
-                else
-                {
-                    AnsiConsole.MarkupLineInterpolated($"[red]File not found:[/] {file}");
-                }
-            }
-        }
-
         private static async Task GetCardsAsync(CardRequest req)
         {
             using GetManager getManager = new();
@@ -196,18 +171,6 @@ namespace ScatoloneDownloader.Cli.Download
 
             // One printing per card: an existing <Name>.png means the card is already downloaded.
             bool skipExisting = libraryRules && !req.Reprints;
-
-            if (req.Analyze)
-            {
-                AnsiConsole.MarkupLine("Analyzing cards.");
-
-                Directory.CreateDirectory(OutputPaths.BasePath(Mode.Files));
-
-                string path = Path.Combine(OutputPaths.BasePath(Mode.Files), Path.GetFileNameWithoutExtension(req.File) + "Stats.md");
-
-                CardAnalyzer cardAnalyzer = new(cards);
-                cardAnalyzer.SaveAnalysis(path);
-            }
 
             if (req.PrintOnly)
             {

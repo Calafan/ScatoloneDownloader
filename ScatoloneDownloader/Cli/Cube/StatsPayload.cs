@@ -8,28 +8,28 @@ namespace ScatoloneDownloader.Cli.Cube
     /// What the tagger's <c>/stats</c> page shows, for the pool and for the bench: the
     /// pool's global distribution, category analysis and mana-value tables
     /// (<see cref="Overview"/>), then the effects by colour, the answers against
-    /// targets, the bench by effect and colour and the creature profile. Built by
-    /// <see cref="CardAnalyzer"/> (<c>ForPool</c>, then <c>Analyze</c> /
-    /// <c>AnalyzeBench</c>) over the tagger's live in-memory cards; the
-    /// <c>analyze</c> download command renders the same analysis as Markdown, but
-    /// for the cards of a list. The Markdown's "cards per colour" section (a gold
-    /// card counted in each of its colours) is not repeated: it is the Non-land row
-    /// of the identity matrix (<c>CardsByIdentity</c>). The same payload is rendered
-    /// frozen into a self-contained HTML file by <see cref="StatsReport"/> (the
-    /// <c>report</c> command and the page's download), whose Markdown twin is the
-    /// same <c>CardAnalyzer.ForPool</c> analysis.
+    /// targets, the bench by effect and colour and the creature profile. It is the
+    /// one source of every stats file: <see cref="Build"/> reads the cube
+    /// (<see cref="CardAnalyzer"/> <c>ForPool</c>, then <c>Analyze</c> /
+    /// <c>AnalyzeBench</c>) and <see cref="BuildForList"/> a card list, which has
+    /// no bench. Two renderers read it with the same sections and numbers: the page
+    /// (live from the tagger, or frozen into a self-contained HTML file by
+    /// <see cref="StatsReport"/>) and <see cref="StatsMarkdown"/>. The <c>report</c>
+    /// command, the page's downloads and the <c>analyze</c> command all write that pair.
     /// </summary>
     /// <param name="Effects">Every single effect flag name, enum order.</param>
     /// <param name="Glossary">Tooltip text, same order as <paramref name="Effects"/>.</param>
     /// <param name="Pool">The active pool: <see cref="RatingTier.Pool"/> cards without a Banned/Token/Jolly status.</param>
-    /// <param name="Bench">The <see cref="RatingTier.Bench"/> cards, shown beside the pool as the availability appendix.</param>
+    /// <param name="Bench">The <see cref="RatingTier.Bench"/> cards, shown beside the pool as the availability appendix; null for a card list, which has no bench.</param>
     /// <param name="Overview">The pool's distribution by type, cost and exact colour category.</param>
+    /// <param name="BenchOverview">The same distribution for the bench; null when <paramref name="Bench"/> is.</param>
     internal sealed record StatsPayload(
         IReadOnlyList<string> Effects,
         IReadOnlyList<string> Glossary,
         StatsTier Pool,
-        StatsTier Bench,
-        StatsOverview Overview)
+        StatsTier? Bench,
+        StatsOverview Overview,
+        StatsOverview? BenchOverview)
     {
         /// <summary>
         /// How the payload is serialized: camelCase (the records are PascalCase), with
@@ -60,9 +60,21 @@ namespace ScatoloneDownloader.Cli.Cube
         internal static StatsPayload Build(IEnumerable<Card> cards)
         {
             CardAnalyzer analyzer = CardAnalyzer.ForPool(cards);
-            AnalysisReport pool = analyzer.Analyze();
-            AnalysisReport bench = analyzer.AnalyzeBench();
+            return BuildFromReports(analyzer.Analyze(), analyzer.AnalyzeBench(), "Pool");
+        }
 
+        /// <summary>
+        /// The payload of a card list (the <c>analyze</c> command): every card counts,
+        /// whatever its rating or status, so the list is the whole "pool" under
+        /// <paramref name="label"/>, and there is no bench.
+        /// </summary>
+        internal static StatsPayload BuildForList(IEnumerable<Card> cards, string label)
+        {
+            return BuildFromReports(new CardAnalyzer((cards ?? []).ToList()).Analyze(), null, label);
+        }
+
+        private static StatsPayload BuildFromReports(AnalysisReport pool, AnalysisReport? bench, string label)
+        {
             List<string> effects = EffectResolver.ToNames((CardEffect)~0);
             string[] glossary = EffectGlossary.DescribeAll(effects);
 
@@ -78,9 +90,10 @@ namespace ScatoloneDownloader.Cli.Cube
             return new StatsPayload(
                 effects,
                 glossary,
-                BuildTier("Pool", "pool", pool, order),
-                BuildTier("Bench", "r2", bench, order),
-                BuildOverview(pool));
+                BuildTier(label, "pool", pool, order),
+                bench is null ? null : BuildTier("Bench", "r2", bench, order),
+                BuildOverview(pool),
+                bench is null ? null : BuildOverview(bench));
         }
 
         private static readonly (MacroType Macro, string Label)[] OverviewTypes =

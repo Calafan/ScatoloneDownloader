@@ -220,18 +220,18 @@ namespace ScatoloneDownloader.Cli.Cube
             }
 
             // The two downloads of the stats page, built from the live cards like
-            // /api/stats: the page frozen with its data, and the Markdown analysis
+            // /api/stats: the page frozen with its data, and the Markdown twin
             // with the same numbers. One clock reading names and dates both.
             if (path == "/api/report.html" || path == "/api/report.md")
             {
                 DateTime now = DateTime.Now;
-                string subtitle = StatsReport.Subtitle(now);
-                IEnumerable<Card> cards = matched.Select(m => m.Card);
+                StatsPayload payload = StatsPayload.Build(matched.Select(m => m.Card));
+                StatsDocument document = StatsDocument.ForCube(now);
                 bool html = path == "/api/report.html";
 
                 string body = html
-                    ? StatsReport.RenderHtml(StatsPayload.Build(cards), subtitle, now)
-                    : CardAnalyzer.ForPool(cards).RenderMarkdown(subtitle);
+                    ? StatsReport.RenderHtml(payload, document, now)
+                    : StatsMarkdown.Render(payload, document);
 
                 ctx.Response.AddHeader("Content-Disposition",
                     $"attachment; filename=\"{StatsReport.FileStem(now)}{(html ? ".html" : ".md")}\"");

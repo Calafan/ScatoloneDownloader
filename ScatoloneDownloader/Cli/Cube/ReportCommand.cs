@@ -10,10 +10,11 @@ using Spectre.Console.Cli;
 namespace ScatoloneDownloader.Cli.Cube
 {
     /// <summary>
-    /// Writes the cube statistics as two files with the same numbers: the Markdown
-    /// analysis (<c>Cubo_Analysis.md</c>, <see cref="CardAnalyzer.RenderMarkdown"/>)
-    /// and a self-contained HTML (<c>Cubo_Analysis.html</c>), the tagger's
-    /// <c>/stats</c> page frozen with its data (<see cref="StatsReport"/>). The
+    /// Writes the cube statistics as two files with the same numbers, both read from
+    /// one <see cref="StatsPayload"/>: the Markdown (<c>Cubo_Analysis.md</c>,
+    /// <see cref="StatsMarkdown"/>) and a self-contained HTML
+    /// (<c>Cubo_Analysis.html</c>), the tagger's <c>/stats</c> page frozen with its
+    /// data (<see cref="StatsReport"/>). The
     /// cards are the ones the tagger shows: the master folder scanned and matched,
     /// then the store's rating/status/effects applied (see
     /// <see cref="Metadata.CubeMetadataStore"/>). Read-only toward the library and
@@ -32,16 +33,22 @@ namespace ScatoloneDownloader.Cli.Cube
 
         /// <summary>
         /// The two paths to write. A blank <paramref name="output"/> is
-        /// <c>Cubo_Analysis</c> in <paramref name="currentDirectory"/>; otherwise it is
+        /// <paramref name="defaultStem"/> (<c>Cubo_Analysis</c> unless the caller, like
+        /// <c>analyze</c>, passes its own) in <paramref name="currentDirectory"/>; otherwise it is
         /// the full path with any extension replaced, so <c>x\stats</c>,
         /// <c>x\stats.md</c> and <c>x\stats.html</c> all give <c>x\stats.md</c> and
         /// <c>x\stats.html</c>.
         /// </summary>
-        internal static (string Markdown, string Html) ResolveOutputs(string? output, string currentDirectory)
+        internal static (string Markdown, string Html) ResolveOutputs(
+            string? output, string currentDirectory, string defaultStem = "Cubo_Analysis")
         {
-            string basePath = string.IsNullOrWhiteSpace(output)
-                ? Path.Combine(currentDirectory, "Cubo_Analysis")
-                : Path.GetFullPath(output, currentDirectory);
+            if (string.IsNullOrWhiteSpace(output))
+            {
+                // Appended, not ChangeExtension: a list called "cube.v2" keeps its dot.
+                return (Path.Combine(currentDirectory, defaultStem + ".md"), Path.Combine(currentDirectory, defaultStem + ".html"));
+            }
+
+            string basePath = Path.GetFullPath(output, currentDirectory);
 
             return (Path.ChangeExtension(basePath, ".md"), Path.ChangeExtension(basePath, ".html"));
         }
@@ -77,10 +84,11 @@ namespace ScatoloneDownloader.Cli.Cube
             // bench (rating 2) rides along for its availability appendix.
             List<Card> cards = matchedCards.Select(m => m.Card).ToList();
             DateTime now = DateTime.Now;
-            string subtitle = StatsReport.Subtitle(now);
+            StatsPayload payload = StatsPayload.Build(cards);
+            StatsDocument document = StatsDocument.ForCube(now);
 
-            string markdown = CardAnalyzer.ForPool(cards).RenderMarkdown(subtitle);
-            string html = StatsReport.RenderHtml(StatsPayload.Build(cards), subtitle, now);
+            string markdown = StatsMarkdown.Render(payload, document);
+            string html = StatsReport.RenderHtml(payload, document, now);
 
             foreach (string path in new[] { markdownPath, htmlPath })
             {

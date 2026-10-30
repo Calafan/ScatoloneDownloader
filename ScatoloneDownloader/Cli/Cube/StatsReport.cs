@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using System.Text.Json;
 
 namespace ScatoloneDownloader.Cli.Cube
@@ -9,8 +10,9 @@ namespace ScatoloneDownloader.Cli.Cube
     /// (<see cref="TagCommand.GetStatsPageHtml"/>) with the payload the page would
     /// fetch from <c>/api/stats</c> embedded before its script; the page sees
     /// <c>window.STATS_SNAPSHOT</c> and renders from it without fetching. Used by
-    /// the <c>report</c> command and by the page's download links, next to the
-    /// Markdown twin (<c>CardAnalyzer.RenderMarkdown</c>) with the same numbers.
+    /// the <c>report</c> and <c>analyze</c> commands and by the page's download
+    /// links, next to the Markdown twin (<see cref="StatsMarkdown"/>) with the same
+    /// numbers.
     /// </summary>
     internal static class StatsReport
     {
@@ -35,11 +37,13 @@ namespace ScatoloneDownloader.Cli.Cube
 
         /// <summary>
         /// The stats page with <paramref name="payload"/> frozen into it, inserted right
-        /// before the page's own script. The JSON is the one <c>/api/stats</c> serves
-        /// (<see cref="StatsPayload.JsonOptions"/>); the default JSON encoder escapes
-        /// <c>&lt;</c>, so a card name cannot close the script tag.
+        /// before the page's own script, and the <paramref name="document"/> words as
+        /// <c>window.STATS_SNAPSHOT_INFO</c> (<c>{ title, subtitle, note }</c>). The JSON
+        /// is the one <c>/api/stats</c> serves (<see cref="StatsPayload.JsonOptions"/>);
+        /// the default JSON encoder escapes <c>&lt;</c>, so neither a card name nor a
+        /// title can close the script tag.
         /// </summary>
-        internal static string RenderHtml(StatsPayload payload, string subtitle, DateTime generatedAt)
+        internal static string RenderHtml(StatsPayload payload, StatsDocument document, DateTime generatedAt)
         {
             string page = TagCommand.GetStatsPageHtml();
 
@@ -50,14 +54,18 @@ namespace ScatoloneDownloader.Cli.Cube
             }
 
             string json = JsonSerializer.Serialize(payload, StatsPayload.JsonOptions);
-            string info = JsonSerializer.Serialize(subtitle);
+            string info = JsonSerializer.Serialize(document, StatsPayload.JsonOptions);
 
             string snapshot = $"<script>window.STATS_SNAPSHOT = {json}; window.STATS_SNAPSHOT_INFO = {info};</script>\n";
 
-            string title = "<title>Scatolone Cube Stats — "
+            string title = "<title>" + WebUtility.HtmlEncode(document.Title) + " — "
                 + generatedAt.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + "</title>";
 
-            return page.Insert(script, snapshot).Replace(TitleTag, title, StringComparison.Ordinal);
+            // The title first: the snapshot (a title or a card name) must not be searched.
+            page = page.Replace(TitleTag, title, StringComparison.Ordinal);
+            script = page.IndexOf(ScriptTag, StringComparison.Ordinal);
+
+            return page.Insert(script, snapshot);
         }
     }
 }

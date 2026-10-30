@@ -1,26 +1,18 @@
+using ScatoloneDownloader.Cli.Cube;
+using ScatoloneDownloader.Tests.Cli;
 using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Mtg;
 
 namespace ScatoloneDownloader.Tests.Mtg;
 
 /// <summary>
-/// The creature profile of <see cref="CardAnalyzer.Analyze"/> and section 8 of the
+/// The creature profile of <see cref="CardAnalyzer.Analyze"/> and its sections of the
 /// Markdown report, over one hand-built pool: a 2-mana 2/2 flyer, a 2-mana 1/1, a
 /// 3-mana 3/3 haste, a 6-mana */* defender, a 7-mana 5/5 (W/U), plus a non-creature
 /// 2-drop and a land, which must stay out.
 /// </summary>
-public sealed class CardAnalyzerCreatureProfileTests : IDisposable
+public sealed class CardAnalyzerCreatureProfileTests
 {
-    private readonly string tempFile = Path.Combine(Path.GetTempPath(), $"creature_{Guid.NewGuid():N}.md");
-
-    public void Dispose()
-    {
-        if (File.Exists(tempFile))
-        {
-            File.Delete(tempFile);
-        }
-    }
-
     [Fact]
     public void Counts_CoverOnlyTheNonLandCreatures()
     {
@@ -125,48 +117,47 @@ public sealed class CardAnalyzerCreatureProfileTests : IDisposable
     }
 
     [Fact]
-    public void SaveAnalysis_RendersSectionEightAfterSectionSeven_WithTheExpectedNumbers()
+    public void Render_WritesTheCreatureSectionsAfterTheBenchOnes_WithTheExpectedNumbers()
     {
         List<Card> cards = Pool();
         cards.Add(MakeCard("Bench Bear", ["G"], "Creature — Bear", 2, "2", "2", rating: 2));
 
-        CardAnalyzer.ForPool(cards).SaveAnalysis(tempFile);
-        string text = File.ReadAllText(tempFile);
+        string text = StatsMarkdownTests.Render(cards);
 
-        int seven = text.IndexOf("## 7. Bench Availability", StringComparison.Ordinal);
-        int eight = text.IndexOf("## 8. Creature Profile (Pool)", StringComparison.Ordinal);
-        Assert.True(seven >= 0);
-        Assert.True(eight > seven);
+        List<string> headings = text.Split(Environment.NewLine)
+            .Where(l => l.StartsWith("## ", StringComparison.Ordinal)).ToList();
+        Assert.True(headings.IndexOf("## Pool — creatures by cost") > headings.IndexOf("## Bench (★2) — available by effect and colour"));
 
-        Assert.Contains("**Creatures:** 5 (83.3% of non-land) | **MV ≤ 2:** 2 (33.3%) | **Aggressive 2-drops (MV ≤ 2, power ≥ 2):** 1 (16.7%) | **MV ≤ 3 with power ≥ 3:** 1 (16.7%) | **Evasive:** 1 (16.7%) | **Haste:** 1 (16.7%) | **Defender:** 1 (16.7%)", text);
+        string creatures = StatsMarkdownTests.Section(text, "Pool — creatures by cost");
+        Assert.Contains("Creatures 5 (83.3%) · MV ≤ 2 2 (33.3%) · aggressive 2-drops (MV ≤ 2, power ≥ 2) 1 (16.7%) · MV ≤ 3 with power ≥ 3 1 (16.7%) · evasive 1 (16.7%) · haste 1 (16.7%) · defender 1 (16.7%) (percent of non-land)", creatures);
 
-        Assert.Contains("| Cost | Creatures | % of creatures | Avg power | Avg toughness | Evasive | Haste | Defender |", text);
-        Assert.Contains("| 0 | 0 | 0.0% | – | – | 0 | 0 | 0 |", text);
-        Assert.Contains("| 2 | 2 | 40.0% | 1.5 | 1.5 | 1 | 0 | 0 |", text);
-        Assert.Contains("| 3 | 1 | 20.0% | 3.0 | 3.0 | 0 | 1 | 0 |", text);
-        Assert.Contains("| 6+ | 2 | 40.0% | 5.0 | 5.0 | 0 | 0 | 1 |", text);
-        Assert.Contains("| **Total** | 5 | 100.0% | 2.8 | 2.8 | 1 | 1 | 1 |", text);
+        Assert.Contains("| Cost | Creatures | Avg power | Avg toughness | Evasive | Haste | Defender |", creatures);
+        Assert.Equal("| 0 | – | – | – | – | – | – |", StatsMarkdownTests.Line(creatures, "| 0 |"));
+        Assert.Equal("| 2 | 2 (40%) | 1.5 | 1.5 | 1 | – | – |", StatsMarkdownTests.Line(creatures, "| 2 |"));
+        Assert.Equal("| 3 | 1 (20%) | 3.0 | 3.0 | – | 1 | – |", StatsMarkdownTests.Line(creatures, "| 3 |"));
+        Assert.Equal("| 6+ | 2 (40%) | 5.0 | 5.0 | – | – | 1 |", StatsMarkdownTests.Line(creatures, "| 6+ |"));
+        Assert.Equal("| Total | 5 (100%) | 2.8 | 2.8 | 1 | 1 | 1 |", StatsMarkdownTests.Line(creatures, "| Total |"));
 
-        Assert.Contains("| Cost | White | Blue | Black | Red | Green | Multi | Colorless | Total |", text);
-        Assert.Contains("| 2 | 1 | - | - | - | 1 | - | - | 2 |", text);
-        Assert.Contains("| 6+ | - | - | - | - | - | 1 | 1 | 2 |", text);
-        Assert.Contains("| **Total** | 1 | - | - | 1 | 1 | 1 | 1 | 5 |", text);
+        string curve = StatsMarkdownTests.Section(text, "Pool — creature curve by colour");
+        string mono = curve[..curve.IndexOf("### colour incl. multi", StringComparison.Ordinal)];
+        Assert.Contains("| Cost | White | Blue | Black | Red | Green | Multi | Colorless | Total |", mono);
+        Assert.Equal("| 2 | 1 (100%) | – | – | – | 1 (100%) | – | – | 2 (40%) |", StatsMarkdownTests.Line(mono, "| 2 |"));
+        Assert.Equal("| 6+ | – | – | – | – | – | 1 (100%) | 1 (100%) | 2 (40%) |", StatsMarkdownTests.Line(mono, "| 6+ |"));
+        Assert.Equal("| Total | 1 (100%) | – | – | 1 (100%) | 1 (100%) | 1 (100%) | 1 (100%) | 5 (100%) |", StatsMarkdownTests.Line(mono, "| Total |"));
 
-        // The bench's own curve, labelled, and the note about variable stats.
-        Assert.Contains("### Creature Curve by Color (Bench, Rating 2)", text);
-        Assert.Contains("| **Total** | - | - | - | - | 1 | - | - | 1 |", text);
-        Assert.Contains("is left out of the averages and counts as 0 in the power thresholds.*", text);
+        // The bench's own curve, one Bench Bear.
+        string bench = StatsMarkdownTests.Section(text, "Bench (★2) — creature curve by colour");
+        Assert.Equal("| Total | – | – | – | – | 1 (100%) | – | – | 1 (100%) |", StatsMarkdownTests.Line(bench, "| Total |"));
     }
 
     [Fact]
-    public void SaveAnalysis_WithoutABench_RendersOnlyThePoolCurve()
+    public void Render_ForAList_WritesOnlyThePoolCurve()
     {
-        new CardAnalyzer(Pool()).SaveAnalysis(tempFile);
-        string text = File.ReadAllText(tempFile);
+        string text = StatsMarkdownTests.RenderList(Pool());
 
-        Assert.Contains("## 8. Creature Profile (Pool)", text);
-        Assert.DoesNotContain("Bench, Rating 2", text);
-        Assert.DoesNotContain("## 7. Bench Availability", text);
+        Assert.Contains("## mylist — creatures by cost", text);
+        Assert.Contains("## mylist — creature curve by colour", text);
+        Assert.DoesNotContain("Bench", text);
     }
 
     internal static List<Card> Pool() =>

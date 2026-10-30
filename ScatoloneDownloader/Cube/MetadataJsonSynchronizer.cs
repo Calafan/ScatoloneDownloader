@@ -48,5 +48,37 @@ namespace ScatoloneDownloader.Cube
                 }
             }
         }
+
+        /// <summary>Like <see cref="SyncFromJson(IEnumerable{Card}, CubeMetadata)"/>
+        /// for a card list that is not the cube (the <c>analyze</c> command): a card
+        /// with a store entry takes the entry's values exactly as there, even when its
+        /// effects are None (a reviewed "nothing"); a card with no entry carries the
+        /// classifier's proposed effects, rating 0, no status, not reviewed. Returns
+        /// how many cards had an entry.</summary>
+        internal static int SyncFromJsonOrClassify(IEnumerable<Card> cards, CubeMetadata data)
+        {
+            int inStore = 0;
+            foreach (Card card in cards)
+            {
+                if (!string.IsNullOrEmpty(card.OracleId)
+                    && data.Cards.TryGetValue(card.OracleId, out CardMetadataEntry? entry))
+                {
+                    card.Rating = entry.Rating;
+                    card.Status = entry.StatusValue;
+                    card.Effects = entry.EffectFlags;
+                    card.Reviewed = entry.ReviewedAt != null;
+                    inStore++;
+                }
+                else
+                {
+                    card.Rating = 0;
+                    card.Status = CardStatus.None;
+                    card.Effects = EffectClassifier.Classify(card);
+                    card.Reviewed = false;
+                }
+            }
+
+            return inStore;
+        }
     }
 }

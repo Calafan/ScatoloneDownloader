@@ -102,7 +102,7 @@ public sealed class StatsPayloadCreatureTests
         StatsPayload payload = StatsPayload.Build(cards);
 
         Assert.Equal(1, payload.Pool.Creatures.Total.Creatures);
-        Assert.Equal(1, payload.Bench.Creatures.Total.Creatures);
-        Assert.Equal(1, payload.Bench.Creatures.CurveMono.Rows.Single(r => r.Cost == "4").ByColumn["G"]);
+        Assert.Equal(1, payload.Bench!.Creatures.Total.Creatures);
+        Assert.Equal(1, payload.Bench!.Creatures.CurveMono.Rows.Single(r => r.Cost == "4").ByColumn["G"]);
     }
 }

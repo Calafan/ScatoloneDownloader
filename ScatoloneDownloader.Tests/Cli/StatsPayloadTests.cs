@@ -37,8 +37,8 @@ public sealed class StatsPayloadTests
 
         Assert.Equal("Pool", payload.Pool.Label);
         Assert.Equal("pool", payload.Pool.RatingParam);
-        Assert.Equal("Bench", payload.Bench.Label);
-        Assert.Equal("r2", payload.Bench.RatingParam);
+        Assert.Equal("Bench", payload.Bench!.Label);
+        Assert.Equal("r2", payload.Bench!.RatingParam);
         Assert.Equal(EffectResolver.ToNames((CardEffect)~0), payload.Effects);
         Assert.Equal(payload.Effects.Count, payload.Glossary.Count);
     }
@@ -59,9 +59,9 @@ public sealed class StatsPayloadTests
 
         Assert.Equal(1, payload.Pool.NonLand);
         Assert.Equal(1, payload.Pool.Mono.TotalCards);
-        Assert.Equal(1, payload.Bench.NonLand);
-        Assert.Equal(1, payload.Bench.Mono.Cards["W"]);
-        Assert.Equal(1, Row(payload.Bench.Mono, "Removal").Total);
+        Assert.Equal(1, payload.Bench!.NonLand);
+        Assert.Equal(1, payload.Bench!.Mono.Cards["W"]);
+        Assert.Equal(1, Row(payload.Bench!.Mono, "Removal").Total);
     }
 
     [Fact]
@@ -81,12 +81,12 @@ public sealed class StatsPayloadTests
         StatsPayload payload = StatsPayload.Build(cards);
 
         List<string> poolOrder = payload.Pool.Mono.Rows.Select(r => r.Effect).ToList();
-        List<string> benchOrder = payload.Bench.Mono.Rows.Select(r => r.Effect).ToList();
+        List<string> benchOrder = payload.Bench!.Mono.Rows.Select(r => r.Effect).ToList();
 
         Assert.Equal(poolOrder, benchOrder);
         Assert.Equal(poolOrder, payload.Pool.Identity.Rows.Select(r => r.Effect).ToList());
         Assert.True(poolOrder.IndexOf("Ramp") < poolOrder.IndexOf("Burn"));
-        Assert.Equal(2, Row(payload.Bench.Mono, "Burn").Total);
+        Assert.Equal(2, Row(payload.Bench!.Mono, "Burn").Total);
     }
 
     [Fact]

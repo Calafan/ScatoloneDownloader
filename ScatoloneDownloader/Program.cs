@@ -35,7 +35,7 @@ namespace ScatoloneDownloader
                     .WithDescription("Bring the library up to the library rules: download the missing cards into Source, register them and propose their effects, restamp the scryfallId of entries whose printing changed; list (never delete) extra files and store entries with no image.");
 
                 config.AddCommand<AnalyzeCommand>("analyze")
-                    .WithDescription("Analyze list file(s) without downloading images.");
+                    .WithDescription("Write the statistics of list file(s) as Markdown and HTML (the /stats page frozen), with the cube's effects; no images downloaded.");
 
                 config.AddCommand<TagCommand>("tag")
                     .WithDescription("Launch the local web tagger to assign card rating/status/effects and autosave to the metadata directory.");
