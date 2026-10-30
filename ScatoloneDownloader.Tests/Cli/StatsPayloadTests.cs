@@ -37,7 +37,7 @@ public sealed class StatsPayloadTests
 
         Assert.Equal("Pool", payload.Pool.Label);
         Assert.Equal("pool", payload.Pool.RatingParam);
-        Assert.Equal("Bench", payload.Bench!.Label);
+        Assert.Equal("Bench (★2)", payload.Bench!.Label);
         Assert.Equal("r2", payload.Bench!.RatingParam);
         Assert.Equal(EffectResolver.ToNames((CardEffect)~0), payload.Effects);
         Assert.Equal(payload.Effects.Count, payload.Glossary.Count);

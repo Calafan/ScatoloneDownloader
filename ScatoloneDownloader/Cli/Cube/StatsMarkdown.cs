@@ -15,8 +15,6 @@ namespace ScatoloneDownloader.Cli.Cube
     /// </summary>
     internal static class StatsMarkdown
     {
-        private const string MonoTitle = "mono + Multi";
-        private const string IdentityTitle = "colour incl. multi";
         private const string Dash = "–";
 
         private static readonly string[] Buckets = [.. CostBucket.All];
@@ -32,51 +30,42 @@ namespace ScatoloneDownloader.Cli.Cube
             sb.AppendLine(document.Note);
             sb.AppendLine();
 
-            string pool = payload.Pool.Label;
-            StatsOverview o = payload.Overview;
-            StatsTier? bench = payload.Bench;
-            StatsOverview? bo = payload.BenchOverview;
-
-            Section(sb, pool + " — global distribution", TypesNote(o));
-            TypesTable(sb, o);
-
-            Section(sb, pool + " — by colour category", "Exact colour identity; a land counts only under Lands.");
-            CategoriesTable(sb, o, withStars: true);
-
-            Section(sb, pool + " — mana value by colour category", null);
-            CostByCategoryTable(sb, o, r => r.ByCost, r => r.Cards);
-
-            Section(sb, pool + " — creature mana value by colour category", null);
-            CostByCategoryTable(sb, o, r => r.CreatureByCost, r => r.Creatures);
-
-            Section(sb, pool + " — effects by colour", null);
-            Views(sb, payload.Pool, MatrixTable);
-
-            Section(sb, pool + " — answers vs targets", null);
-            Views(sb, payload.Pool, AnswersTable);
-
-            if (bench is not null && bo is not null)
+            foreach (StatsSection s in payload.Sections)
             {
-                Section(sb, "Bench (★2) — by colour category", "Exact colour identity; a land counts only under Lands.");
-                CategoriesTable(sb, bo, withStars: false);
+                Section(sb, s.Title, s.Note);
+                bool bench = s.Tier == "bench";
+                StatsTier tier = bench ? payload.Bench! : payload.Pool;
+                StatsOverview o = bench ? payload.BenchOverview! : payload.Overview;
 
-                Section(sb, "Bench (★2) — mana value by colour category", null);
-                CostByCategoryTable(sb, bo, r => r.ByCost, r => r.Cards);
-
-                Section(sb, "Bench (★2) — available by effect and colour", null);
-                Views(sb, bench, MatrixTable);
-            }
-
-            Section(sb, pool + " — creatures by cost", CreatureSummary(payload.Pool.Creatures.Summary));
-            CreaturesTable(sb, payload.Pool.Creatures);
-
-            Section(sb, pool + " — creature curve by colour", null);
-            CurveViews(sb, payload.Pool);
-
-            if (bench is not null)
-            {
-                Section(sb, "Bench (★2) — creature curve by colour", null);
-                CurveViews(sb, bench);
+                switch (s.Kind)
+                {
+                    case "types":
+                        TypesTable(sb, o);
+                        break;
+                    case "categories":
+                        CategoriesTable(sb, o, withStars: !bench);
+                        break;
+                    case "manaValue":
+                        CostByCategoryTable(sb, o, r => r.ByCost, r => r.Cards);
+                        break;
+                    case "creatureManaValue":
+                        CostByCategoryTable(sb, o, r => r.CreatureByCost, r => r.Creatures);
+                        break;
+                    case "effects":
+                        Views(sb, payload.ViewNames, tier, MatrixTable);
+                        break;
+                    case "answers":
+                        Views(sb, payload.ViewNames, tier, AnswersTable);
+                        break;
+                    case "creatures":
+                        CreaturesTable(sb, tier.Creatures);
+                        break;
+                    case "curve":
+                        CurveViews(sb, payload.ViewNames, tier);
+                        break;
+                    default:
+                        throw new InvalidOperationException($"Unknown stats section kind \"{s.Kind}\".");
+                }
             }
 
             return sb.ToString();
@@ -125,43 +114,6 @@ namespace ScatoloneDownloader.Cli.Cube
             return CostBucket.Label(bucket);
         }
 
-        // ------------------------------------------------------------- sentences
-
-        private static string OfNonLand(int n, int nonLand)
-        {
-            string percent = nonLand > 0 ? (n * 100.0 / nonLand).ToString("0.0", CultureInfo.InvariantCulture) : "0.0";
-            return $"{Plain(n)} ({percent}%)";
-        }
-
-        private static string TypesNote(StatsOverview o)
-        {
-            string Pct(int n)
-            {
-                return o.NonLand > 0
-                    ? Plain((int)Math.Round(n * 100.0 / o.NonLand, MidpointRounding.AwayFromZero))
-                    : "0";
-            }
-
-            return $"{Plain(o.NonLand + o.Lands)} cards: {Plain(o.NonLand)} non-land + {Plain(o.Lands)} lands"
-                + $" · permanents {Plain(o.Permanents)} ({Pct(o.Permanents)}%)"
-                + $" · spells {Plain(o.Spells)} ({Pct(o.Spells)}%) of non-land"
-                + $" · average mana value {o.AverageMv.ToString("0.00", CultureInfo.InvariantCulture)} (lands excluded)"
-                + $" · pip density {o.PipDensity.ToString("0.00", CultureInfo.InvariantCulture)} (coloured pips per non-land card)"
-                + " · cards per colour: the Non-land row of “effects by colour”, with “colour incl. multi”";
-        }
-
-        private static string CreatureSummary(StatsCreatureSummary s)
-        {
-            return "Creatures " + OfNonLand(s.Creatures, s.NonLand)
-                + " · MV ≤ 2 " + OfNonLand(s.CreaturesMv2, s.NonLand)
-                + " · aggressive 2-drops (MV ≤ 2, power ≥ 2) " + OfNonLand(s.AggressiveTwoDrops, s.NonLand)
-                + " · MV ≤ 3 with power ≥ 3 " + OfNonLand(s.MvThreePowerThree, s.NonLand)
-                + " · evasive " + OfNonLand(s.Evasive, s.NonLand)
-                + " · haste " + OfNonLand(s.Haste, s.NonLand)
-                + " · defender " + OfNonLand(s.Defender, s.NonLand)
-                + " (percent of non-land)";
-        }
-
         // -------------------------------------------------------------- scaffold
 
         private static void Section(StringBuilder sb, string title, string? note)
@@ -201,13 +153,14 @@ namespace ScatoloneDownloader.Cli.Cube
         /// the flag tells the table which view it is writing.</summary>
         private static void Views(
             StringBuilder sb,
+            StatsViewNames names,
             StatsTier tier,
             Action<StringBuilder, StatsTier, StatsMatrix, bool> table)
         {
-            sb.AppendLine($"### {MonoTitle}");
+            sb.AppendLine($"### {names.Mono}");
             sb.AppendLine();
             table(sb, tier, tier.Mono, false);
-            sb.AppendLine($"### {IdentityTitle}");
+            sb.AppendLine($"### {names.Identity}");
             sb.AppendLine();
             table(sb, tier, tier.Identity, true);
         }
@@ -382,12 +335,12 @@ namespace ScatoloneDownloader.Cli.Cube
             Table(sb, ["Cost", "Creatures", "Avg power", "Avg toughness", "Evasive", "Haste", "Defender"], rows);
         }
 
-        private static void CurveViews(StringBuilder sb, StatsTier tier)
+        private static void CurveViews(StringBuilder sb, StatsViewNames names, StatsTier tier)
         {
-            sb.AppendLine($"### {MonoTitle}");
+            sb.AppendLine($"### {names.Mono}");
             sb.AppendLine();
             CurveTable(sb, tier, tier.Creatures.CurveMono);
-            sb.AppendLine($"### {IdentityTitle}");
+            sb.AppendLine($"### {names.Identity}");
             sb.AppendLine();
             CurveTable(sb, tier, tier.Creatures.CurveIdentity);
         }

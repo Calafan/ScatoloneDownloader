@@ -9,8 +9,8 @@ namespace ScatoloneDownloader.Cli.Cube
     /// of a pair open the same way.
     /// </summary>
     /// <param name="Title">The heading and, with the date, the HTML title.</param>
-    /// <param name="Subtitle">When it was made and what it is about.</param>
-    /// <param name="Note">What the numbers count.</param>
+    /// <param name="Subtitle">When it was made and, for a list, what it is about.</param>
+    /// <param name="Note">What the numbers count (<see cref="StatsPayload.CubeScope"/> or <see cref="StatsPayload.ListScope"/>).</param>
     internal sealed record StatsDocument(string Title, string Subtitle, string Note)
     {
         /// <summary>The cube's report (<c>report</c> command and the page's downloads).</summary>
@@ -18,8 +18,16 @@ namespace ScatoloneDownloader.Cli.Cube
         {
             return new StatsDocument(
                 "Scatolone Cube Stats",
-                StatsReport.Subtitle(generatedAt),
-                "A snapshot of the cube's statistics. The pool is the cards rated 3–5 with no status; the bench is exactly ★2.");
+                Generated(generatedAt),
+                "A snapshot of the cube's statistics. " + StatsPayload.CubeScope);
+        }
+
+        /// <summary>The line under a report's title, alone for the cube's report and the
+        /// start of a list's: <c>Generated yyyy-MM-dd HH:mm</c>. No file paths: the files
+        /// go to other people.</summary>
+        internal static string Generated(DateTime generatedAt)
+        {
+            return "Generated " + generatedAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
         }
 
         /// <summary>A card list's report (<c>analyze</c> command): <paramref name="cards"/>
@@ -28,7 +36,6 @@ namespace ScatoloneDownloader.Cli.Cube
         /// lines, which the analysis does not count (named only when there are some).</summary>
         internal static StatsDocument ForList(string listFileName, DateTime generatedAt, int cards, int inStore, int taggedLeftOut)
         {
-            string when = generatedAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
             string leftOut = taggedLeftOut > 0
                 ? string.Create(CultureInfo.InvariantCulture, $" · tagged lines (Name -- tag) left out: {taggedLeftOut}")
                 : "";
@@ -36,8 +43,8 @@ namespace ScatoloneDownloader.Cli.Cube
             return new StatsDocument(
                 Path.GetFileNameWithoutExtension(listFileName) + " — List Stats",
                 string.Create(CultureInfo.InvariantCulture,
-                    $"Generated {when} · list: {listFileName} · {cards} cards, {inStore} in the cube's store{leftOut}"),
-                "A snapshot of a card list's statistics. Every card of the list counts, whatever its rating or status in the cube. Effects, ★ and Reviewed come from the cube's store; a card not in the store carries the classifier's proposed effects.");
+                    $"{Generated(generatedAt)} · list: {listFileName} · {cards} cards, {inStore} in the cube's store{leftOut}"),
+                "A snapshot of a card list's statistics. " + StatsPayload.ListScope + " Effects, ★ and Reviewed come from the cube's store; a card not in the store carries the classifier's proposed effects.");
         }
     }
 }

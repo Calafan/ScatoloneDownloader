@@ -19,16 +19,6 @@ namespace ScatoloneDownloader.Cli.Cube
         private const string TitleTag = "<title>Scatolone Cube Stats</title>";
         private const string ScriptTag = "<script>";
 
-        /// <summary>
-        /// The line under the report's title: when it was made and what pool and bench
-        /// mean. No file paths: the files go to other people.
-        /// </summary>
-        internal static string Subtitle(DateTime generatedAt)
-        {
-            return $"Generated {generatedAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)}"
-                + " · pool: rating 3-5, no status · bench: exactly ★2";
-        }
-
         /// <summary>The download name without extension, <c>Cubo_Analysis_yyyy-MM-dd</c>.</summary>
         internal static string FileStem(DateTime generatedAt)
         {

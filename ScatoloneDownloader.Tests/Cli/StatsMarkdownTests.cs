@@ -88,6 +88,65 @@ public sealed class StatsMarkdownTests
     }
 
     [Fact]
+    public void Render_WritesOneHeadingPerPayloadSection_InThePayloadsOrder()
+    {
+        StatsPayload payload = StatsPayload.Build(
+        [
+            Make("Bolt", ["R"], "Instant", rating: 4),
+            Make("Bench", ["W"], "Instant", rating: 2),
+        ]);
+
+        string md = StatsMarkdown.Render(payload, StatsDocument.ForCube(Moment));
+
+        Assert.Equal(payload.Sections.Select(s => s.Title).ToList(), Headings(md));
+    }
+
+    [Fact]
+    public void Sections_OfACubeWithABench_FollowThePagesOrder()
+    {
+        StatsPayload payload = StatsPayload.Build(
+        [
+            Make("Bolt", ["R"], "Instant", rating: 4),
+            Make("Bench", ["W"], "Instant", rating: 2),
+        ]);
+
+        Assert.Equal(
+            [
+                "types/pool", "categories/pool", "manaValue/pool", "creatureManaValue/pool", "effects/pool", "answers/pool",
+                "categories/bench", "manaValue/bench", "effects/bench",
+                "creatures/pool", "curve/pool", "curve/bench",
+            ],
+            payload.Sections.Select(s => s.Kind + "/" + s.Tier).ToList());
+        Assert.All(payload.Sections, s => Assert.StartsWith(s.Tier == "pool" ? "Pool — " : "Bench (★2) — ", s.Title));
+        Assert.Equal(CubeTitles, payload.Sections.Select(s => s.Title).ToList());
+        Assert.Equal(StatsPayload.CubeScope, payload.Scope);
+    }
+
+    [Fact]
+    public void Sections_OfAListPayload_HaveNoBench()
+    {
+        StatsPayload payload = StatsPayload.BuildForList([Make("Bolt", ["R"], "Instant", rating: 0)], "mylist");
+
+        Assert.Equal(
+            ["types", "categories", "manaValue", "creatureManaValue", "effects", "answers", "creatures", "curve"],
+            payload.Sections.Select(s => s.Kind).ToList());
+        Assert.All(payload.Sections, s => Assert.Equal("pool", s.Tier));
+        Assert.All(payload.Sections, s => Assert.StartsWith("mylist — ", s.Title));
+        Assert.Equal(StatsPayload.ListScope, payload.Scope);
+    }
+
+    [Fact]
+    public void Payload_CarriesTheViewNamesAndTheBuckets()
+    {
+        StatsPayload payload = StatsPayload.Build([]);
+
+        Assert.Equal("mono + Multi", payload.ViewNames.Mono);
+        Assert.Equal("colour incl. multi", payload.ViewNames.Identity);
+        Assert.Equal(CostBucket.All.ToList(), payload.Buckets.Select(b => b.Key).ToList());
+        Assert.Equal("6+", payload.Buckets[^1].Label);
+    }
+
+    [Fact]
     public void Render_StartsWithTheDocumentTitleSubtitleAndNote()
     {
         StatsDocument document = StatsDocument.ForCube(Moment);
@@ -97,7 +156,7 @@ public sealed class StatsMarkdownTests
         string[] lines = md.Split(Environment.NewLine);
         Assert.Equal("# Scatolone Cube Stats", lines[0]);
         Assert.Equal("", lines[1]);
-        Assert.Equal("*" + StatsReport.Subtitle(Moment) + "*", lines[2]);
+        Assert.Equal("*" + StatsDocument.Generated(Moment) + "*", lines[2]);
         Assert.Equal("", lines[3]);
         Assert.Equal(document.Note, lines[4]);
     }
