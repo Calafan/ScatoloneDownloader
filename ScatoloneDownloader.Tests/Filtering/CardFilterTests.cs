@@ -6,8 +6,7 @@ namespace ScatoloneDownloader.Tests.Filtering;
 /// <summary>
 /// Pure-logic coverage for the named-rule predicates in <see cref="CardFilter"/>.
 /// No I/O, no network. Was the #1 documented testing gap in
-/// <c>docs/follow-ups/2026-06-21-pre-existing-findings.md</c> ("equivalenza del
-/// filtro carte: CardFilter vs il vecchio Card.IsValid").
+/// (the equivalence of <see cref="CardFilter"/> with the old <c>Card.IsValid</c>).
 /// </summary>
 public sealed class CardFilterTests
 {

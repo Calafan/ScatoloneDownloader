@@ -80,7 +80,7 @@ CardAdvantage Filter Reanimate Buff Protection Burn Sacrifice Steal Tutor
 ManaFixing Pacify LandDestruction Mill Regrowth Redirect Cheat
 ```
 
-Both scripts here already do all of this. Hand-editing the JSON does not.
+`scripts/apply_ruling.py` (which `store_pass.py` calls) already does all of this. Hand-editing the JSON does not.
 
 ## The commits of a pass
 

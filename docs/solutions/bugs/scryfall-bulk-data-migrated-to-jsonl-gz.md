@@ -8,7 +8,6 @@ problem_type: bug
 severity: P1
 date: 2026-08-13
 status: fixed
-fu_related: FU-4
 ---
 
 # Scryfall bulk-data files migrated from JSON array to gzipped JSONL
@@ -21,8 +20,8 @@ after Scryfall switched the bulk-export format. The old code tried to
 deserialize the bulk file as a single JSON array.
 
 ## Symptoms
-- Deserialization threw on the bulk fetch (`GetManager.GetCardList`, the
-  `/bulk-data` lookup path), because the downloaded body was no longer a
+- Deserialization threw on the bulk fetch (then `GetManager.GetCardList`, now
+  `GetManager.FetchBulkList`, the `/bulk-data` lookup path), because the downloaded body was no longer a
   JSON array.
 - The bulk-data metadata endpoint (`/bulk-data/:id`, served at
   `bulkData.Uri`) returns a `bulk_data` metadata object, **not** cards — so
@@ -62,16 +61,19 @@ public string Uri { get; set; }
 public string JsonlDownloadUri { get; set; }
 ```
 
-`Uri` is intentionally kept — it is still useful as a metadata endpoint
-and other code paths may want to inspect `updated_at` / `compressed_size`
-later. Removing it would be a wider blast radius than the bug needs.
+`Uri` was kept at the time, as the metadata endpoint. It has since been
+removed: nothing read it, and `BulkData` now maps only `Name` and
+`JsonlDownloadUri`.
 
 ### 2. Stream the JSONL archive — `ScatoloneDownloader/Scryfall/ScryfallClient.cs`
 Add `GetJsonLinesAsync<T>` that streams the bulk file, gunzips it, and
 deserializes one record per line, yielding `IAsyncEnumerable<T>`. It reuses
-the existing rate-limit gate (`SendWithRetryAsync`, 250 ms + 429/5xx retry)
-and the `IdleTimeoutStream` (30 s per-read) guard from FU-4, so the
-hardening landed in `8e043d4` is preserved.
+the existing rate-limit gate (`SendWithRetryAsync`, 250 ms then, 500 ms now,
++ 429/5xx retry) and the `IdleTimeoutStream` guard (30 s per read: a
+connection that goes silent dies quickly), so the hardening landed in `8e043d4`
+is preserved. The guard has since gained a second limit: a 10-minute cap on the
+whole body (`ReadTotalTimeout`), because the bulk file takes seconds on a
+healthy line and a body still arriving after 10 minutes is broken, not slow.
 
 ```csharp
 internal async IAsyncEnumerable<T> GetJsonLinesAsync<T>(
@@ -99,8 +101,8 @@ Notes:
   nothing is buffered into memory. The decompressed archive is often
   >1 GB, so this matters.
 - The 30 s `ReadIdleTimeout` guards every read, not the whole download; a
-  healthy long download is never cut. Same shape as the old
-  `GetFromJsonAsync<List<Card>>` path, so FU-4's reasoning still holds.
+  healthy download is never cut by it (only the 10-minute total cap above can
+  end one). Same shape as the old `GetFromJsonAsync<List<Card>>` path.
 - `JsonSerializer.Deserialize<T>(line)` uses the same `JsonSerializerOptions`
   (which registers `JsonCardConverter` → `Card.CreateCard`), so the per-record
   construction path is byte-identical to the previous whole-array
@@ -109,8 +111,9 @@ Notes:
 
 ### 3. Use the new field + streamer — `ScatoloneDownloader/GetManager.cs`
 Switch the single `GetFromJsonAsync<List<Card>>(bulkData.Uri, ...)` call in
-`GetCardList` to `GetJsonLinesAsync<Card>(bulkData.JsonlDownloadUri, ...)`
-and accumulate the records into a `List<Card>`.
+`GetCardList` (today `FetchBulkList`) to
+`GetJsonLinesAsync<Card>(bulkData.JsonlDownloadUri, ...)` and accumulate the
+records into a `List<Card>`.
 
 ```csharp
 foreach (BulkData bulkData in bulkDataCollection.Data)
@@ -142,12 +145,12 @@ foreach (BulkData bulkData in bulkDataCollection.Data)
 - **Endpoint match.** `bulkData.Uri` returns the *metadata* `bulk_data`
   object; `bulkData.JsonlDownloadUri` is the *cards* file. The new code
   uses each for its purpose and stops conflating them.
-- **Steam preserves prior hardening.** `SendWithRetryAsync` (250 ms
-  throttle, 429/5xx backoff, `Retry-After`-aware) and `IdleTimeoutStream`
-  (30 s per-read) both wrap the gzip stream — so the FU-4 guarantee that
-  a silent connection dies quickly still holds, and rate-limit retry
-  survives the JSONL migration unchanged. The `idleTimeout` timer resets
-  per read, so a long-but-healthy download is never cut.
+- **Stream preserves prior hardening.** `SendWithRetryAsync` (throttle,
+  429/5xx backoff, `Retry-After`-aware) and `IdleTimeoutStream` (30 s per
+  read) both wrap the gzip stream — so the guarantee that a silent connection
+  dies quickly still holds, and rate-limit retry survives the JSONL migration
+  unchanged. The `idleTimeout` timer resets per read, so a slow-but-alive
+  download is not cut by it.
 - **`Card` / `JsonCardConverter` unchanged.** The line-level
   `JsonSerializer.Deserialize<Card>(line, options)` uses the same
   converter (registered via `JsonSerializerOptions.Converters`) that
@@ -160,14 +163,13 @@ foreach (BulkData bulkData in bulkDataCollection.Data)
   sidebar). Pinning assumptions to the wire format (`List<Card>` from a
   single JSON array) without a unit test against even a small recorded
   bulk-data fixture meant the regression surfaced only at run time.
-  Capture a small `.jsonl.gz` fixture (a dozen lines) and cover the
-  ingestion round-trip with one integration-style test. The fix path now
-  lives in `GetJsonLinesAsync`, which is the right shape to exercise in
-  isolation.
-- **Map all fields of an external metadata object.** `BulkData.cs`
-  mapped only `name` and `uri`. The arrival of `jsonl_download_uri` was
-  silent because unmapped JSON properties are ignored by `System.Text.Json`
-  by default. Consider `JsonSerializerOptions.UnmappedMemberHandling = Disallow`
+  Done: `GetJsonLinesAsyncTests` covers the round-trip with a canned
+  `.jsonl.gz` stream. The fix path lives in `GetJsonLinesAsync`, which is the
+  right shape to exercise in isolation.
+- **Map all fields of an external metadata object.** `BulkData.cs` then mapped
+  only `name` and `uri` (now `name` and `jsonl_download_uri`). The arrival of
+  `jsonl_download_uri` was silent because unmapped JSON properties are ignored
+  by `System.Text.Json` by default. Consider `JsonSerializerOptions.UnmappedMemberHandling = Disallow`
   (net9+) on the bulk-data metadata deserialization so additions to the
   contract surface as an error rather than a silently dropped field. That
   validator already exists in `System.Text.Json` 9+ (and is wired in
@@ -178,15 +180,12 @@ foreach (BulkData bulkData in bulkDataCollection.Data)
   pinned note wherever the integration is referenced.
 
 ## Related documents
-- `docs/follow-ups/2026-06-21-pre-existing-findings.md` — **FU-4** introduced
-  the per-read `IdleTimeoutStream` (30 s) that this fix reuses. The
-  streaming JSONL path inherits FU-4's guarantee unchanged.
-- `docs/follow-ups/2026-06-21-dotnet10-opportunities.md` — **section 3**
-  ("JSON source generation") discussed the bulk path as
-  `GetFromJsonAsync<List<Card>>`. That characterization is now stale: the
-  hot path is per-line `JsonSerializer.Deserialize<Card>(line)` on
-  individual records, streamed via `GetJsonLinesAsync<Card>`. Update that
-  follow-up to reflect the new shape.
+- The per-read `IdleTimeoutStream` (30 s) guard, introduced earlier by the
+  follow-up note of 2026-06-21, is reused here; the streaming JSONL path inherits its
+  guarantee unchanged.
+- JSON source generation (section 3 of the "dotnet10 opportunities" note) was
+  weighed for the bulk path and discarded after measurement on 2026-09-04:
+  wall-clock is I/O-bound. Both notes were removed on 2026-10-30 (git history).
 
 ## Caveats / open follow-ups
 - `JsonSerializer.Deserialize<Card>(line)` throws if any single line is
@@ -195,7 +194,5 @@ foreach (BulkData bulkData in bulkDataCollection.Data)
   single-line parse could surface the offending line index and continue —
   useful when Scryfall ships a one-off broken record. Low priority until
   seen.
-- `dotnet10-opportunities.md` section 3's source-generation idea still
-  applies (it would benefit the line-level parser too), but the
-  reflections vs network split argument is unchanged — wall-clock is
-  still I/O-bound.
+- Source generation for the line-level parser was discarded after measurement
+  (2026-09-04): wall-clock is still I/O-bound.

@@ -5,9 +5,14 @@ product_contract_source: interactive-session
 title: "Cube Metadata (Effects + Ban/Token + Rating), Git Recovery & Restructured Views - Plan"
 date: 2026-08-30
 supersedes_decisions:
+  # (the 08-13 plan below was removed 2026-10-30, see git history)
   - "2026-08-13-1045-feat-cube-management-plan.md#3 (XMP hand-rolled / eliminate Magick.NET)"
   - "2026-08-13-1045-feat-cube-management-plan.md#12 (CSV repository as git snapshot)"
 ---
+
+> **HISTORICAL.** This is the design record of 2026-08-30, kept as history. The
+> current state is in `docs/cube-metadata.md` and `docs/ontology/`; where they
+> differ, they win. The XMP bridge this plan describes was removed 2026-10-18.
 
 # Cube Metadata, Git Recovery & Restructured Views - Plan
 

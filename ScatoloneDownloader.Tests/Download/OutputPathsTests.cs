@@ -250,7 +250,7 @@ public sealed class OutputPathsTests : IDisposable
     [Fact]
     public void BuildCardDirectory_ModeFiles_TagWithLeadingDots_IsNeutralized()
     {
-        // FU-1 mitigation: "..." → "" via TrimStart('.'); a tag like ".." cannot
+        // Path-traversal mitigation: "..." → "" via TrimStart('.'); a tag like ".." cannot
         // add an extra path segment, so the returned dir is the file-list base
         // (no tag subdir) — the attack surface is the absence of an extra folder
         // segment, not a literal ".." directory.

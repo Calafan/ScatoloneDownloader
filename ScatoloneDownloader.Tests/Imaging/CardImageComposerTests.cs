@@ -6,8 +6,8 @@ namespace ScatoloneDownloader.Tests.Imaging;
 
 /// <summary>
 /// Geometry checks for the printable-PNG composer. Today this path is verified
-/// only by printing physical cards ("manually in stampa", R6 per
-/// <c>docs/follow-ups/2026-06-21-pre-existing-findings.md</c>) — these tests
+/// only by printing physical cards ("manually in stampa", a known
+/// testing gap) — these tests
 /// at least pin the output dimensions, valid-PNG encoding, and double-face
 /// canvas/rotation shape so refactors regress loudly.
 ///

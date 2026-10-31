@@ -16,8 +16,8 @@ cube. It does two jobs:
 
 - [.NET 10](https://dotnet.microsoft.com/download/dotnet/10.0): the runtime for
   the published executable, or the SDK to build from source.
-- An internet connection. The tool keeps to Scryfall's rate limit (about 10
-  requests a second) and retries on 429 and 5xx responses.
+- An internet connection. The tool keeps to Scryfall's rate limit (calls
+  are spaced 500 ms apart, 2 a second) and retries on 429 and 5xx responses.
 
 ## Building
 
@@ -33,8 +33,9 @@ dotnet publish -c Release -r win-x64
 # -> ScatoloneDownloader/bin/Release/net10.0/win-x64/publish/ScatoloneDownloader.exe
 ```
 
-The publish produces **one** `ScatoloneDownloader.exe`, with SkiaSharp's native
-libraries inside. It needs the .NET 10 runtime installed.
+The publish folder holds `ScatoloneDownloader.exe` (one file, with SkiaSharp's
+native libraries inside) and `scatolone.json` beside it, the settings file with
+the library root. It needs the .NET 10 runtime installed.
 
 ## Downloading images
 
@@ -49,7 +50,7 @@ ScatoloneDownloader <command> [arguments] [options]
 | `years <YEARS>` | Cards first released in the given years (1993–2050), library rules | one or more years |
 | `files <FILES>` | Cards from hand-written lists. Copies from the library the images it already holds and downloads only the rest (`--root`) | one or more files |
 | `lands` | **Every** basic land artwork, split by land type | — |
-| `analyze <FILES>` | Writes the statistics of the lists **without** downloading images: `<list>_Analysis.md` and `<list>_Analysis.html` (the `/stats` page frozen, like `report`) in the current folder; `-o <FILE>` gives the base path of a single list. Every card of the list counts, whatever its rating or status in the cube, except the `Name -- tag` lines. Effects, ★ and Reviewed come from the cube's store (`-m`/`--root` as for `report`); a card the store does not know carries the classifier's proposed effects | one or more files |
+| `analyze <FILES>` | Writes the statistics of the lists **without** downloading images: `<list>_Analysis.md` and `<list>_Analysis.html` (the `/stats` page frozen, like `report`) in the current folder; `-o <FILE>` gives the base path of a single list. Every card of the list counts, whatever its rating or status in the cube, except the `Name -- tag` lines. Effects, ★ and Reviewed come from the cube's store (`-m` needs no library root; without it the metadata is `<root>\metadata`, `--root` as for `report`); a card the store does not know carries the classifier's proposed effects | one or more files |
 
 ### Common options
 
@@ -57,8 +58,8 @@ ScatoloneDownloader <command> [arguments] [options]
 |---|---|
 | `-o, --output <DIR>` | Output root (default `./Output`) |
 | `-c, --clear` | Empty the output folders before starting |
-| `-r, --reprints` | Include reprints (left out by default) |
-| `-t, --tokens` | Include tokens (left out by default) |
+| `-r, --reprints` | Include reprints (left out by default; `all`, `set` and `years` only) |
+| `-t, --tokens` | Include tokens (left out by default; `all`, `set` and `years` only) |
 | `-l, --lands` | Include basic lands (left out by default) |
 | `-p, --print-only` | Write the card list only, without downloading images |
 | `--no-rules` | Ignore the library rules (`all` and `years` only) |

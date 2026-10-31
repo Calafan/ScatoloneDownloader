@@ -116,10 +116,13 @@ matches.
 or `split_unreviewed.py` moves thousands of proposals when the code barely changed.
 
 **Cause:** the proposals in the WORKING TREE are not HEAD's. Only `classify`
-rewrites them wholesale, so something ran `classify` with an OLD BUILD: the tagger
-launcher (`tagger.cmd`) starts `bin\Release`, which is rebuilt only by hand, and a
-`classify` from that build rewrites every unreviewed proposal with the rules of the
-day it was compiled. The reviewed entries survive, so nothing looks wrong. On
+rewrites them wholesale, so something ran `classify` with an OLD BUILD: the
+tagger launcher (`tagger.cmd`) starts `bin\Release`. Both `.cmd` scripts at the
+repo root now build Release before they run (`classify.cmd` refuses to run if
+the build fails; `tagger.cmd` only warns and starts the previous build), but a
+`classify` run straight from `bin\Release`, or from a `tagger.cmd` whose build
+failed, still rewrites every unreviewed proposal with the rules of the day it
+was compiled. The reviewed entries survive, so nothing looks wrong. On
 2026-09-24 the tree held the proposals of 2026-09-19 on 24,091 of 24,092
 unreviewed cards, and all 1,017 first reviews of the three days before had been
 shown them.

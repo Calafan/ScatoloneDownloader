@@ -3,11 +3,11 @@
 This is the reference for the `metadata/` directory — the git-tracked source
 of truth for every card evaluation (rating, ban/token/jolly status, and
 functional effect tags) for the **entire** card library, ~30k+ printings and
-growing — and for the stats page and report files computed from it. It documents
-the final state produced by
-`docs/plans/2026-08-30-001-feat-card-effect-ontology-plan.md` (including the
-"Part B" follow-up); see that plan for the design rationale (decisions
-`D1`-`D8`, `P1`-`P9`, `B1`-`B4`).
+growing — and for the stats page and report files computed from it. This file
+(with `docs/ontology/` for the effect rulings) is the current state. The design
+record it grew from is
+`docs/plans/2026-08-30-001-feat-card-effect-ontology-plan.md`, kept as history
+(decisions `D1`-`D8`, `P1`-`P9`, `B1`-`B4`); where the two differ, this file wins.
 
 ## Guiding principle: recovery from git + Scryfall
 
@@ -36,7 +36,7 @@ lives in exactly one file, chosen by its **current rating**:
 |---|---|---|
 | `metadata/pool.json` | 3-5 | The active cube — small, the main hand-edit target, tiny diffs. |
 | `metadata/fringe.json` | 1-2 | Evaluated but cut. Grows over time as more of the backlog gets rated and rejected. Rating 1 and rating 2 share this file on purpose: they are reported differently (only `2` appears, in the stats page's bench tables, see below) but stored identically, so the split moves nothing on disk. |
-| `metadata/unrated.json` | 0 | The bulk library manifest (tens of thousands of entries). Changes only when `sync` adds new cards, not from day-to-day curation. |
+| `metadata/unrated.json` | 0 | The bulk library manifest (tens of thousands of entries). Written by `sync` (new cards, restamped `scryfallId`), by `classify` (proposals for unrated cards) and by `tag` when an unrated card is edited or rated out of it; day-to-day curation of the pool does not touch it. |
 
 Beside the three tiers sits one file that is **not** a tier and holds no card
 state:
@@ -106,10 +106,11 @@ through the pool no longer pays the backlog's cost on every keystroke.
 Every command below works against one **library root** holding `Source\` (the
 images) and `metadata\` (this directory). The root is
 `"root"` in `scatolone.json`, copied beside the executable, or `--root <DIR>` for
-one run; without either the command stops and says where to set it. `tag`
-and `sync` read the images from `<root>\Source`. `-m|--metadata
+one run; without either the command stops and says where to set it. `tag`,
+`report` and `sync` read the images from `<root>\Source` and always need the
+root, even with `-m`. `-m|--metadata
 <DIR>` overrides only this directory (default `<root>\metadata`); with it,
-`classify`, `audit`, `make-list` and `restore` need no root at all. Each command
+`classify`, `audit`, `make-list`, `restore` and `analyze` need no root at all. Each command
 prints the directory it resolved before touching it, so a mismatch shows up on
 the first line instead of as a mysteriously empty store.
 
@@ -152,7 +153,7 @@ the first line instead of as a mysteriously empty store.
    run it while the tagger is open, since the tagger holds its own snapshot of
    the store in memory and would write it back on the next keystroke; restart
    `tag` afterwards.
-2. **`tag [--root dir] [-m metadata] [-p port]`** — the authoring tool going
+2. **`tag [--root dir] [-m metadata] [-p port] [--host name]`** — the authoring tool going
    forward. Launches a local web UI (keyboard-driven, one card at a time) to
    set rating (0-5), status (None/Banned/Token/Jolly), and effect tags. Every
    change autosaves immediately (incrementally, via `SaveEntry` — only the
@@ -166,15 +167,15 @@ the first line instead of as a mysteriously empty store.
    That union is deliberate: `classify` writes `effects` only when it has
    something to propose, so a card it read and found nothing for stays
    untagged and would never surface in an auto-only view, while an
-   untagged-only view hides every auto suggestion. `f` cycles
-   **to review → all → untagged → auto**; a card leaves the queue only once a
+   untagged-only view hides every auto suggestion. The Review picker offers
+   **to review / all cards / untagged only / auto**; a card leaves the queue only once a
    human confirms it (any edit, or `c` to confirm with no change), which is
-   what makes the backlog finite. The queue is re-cut on `f` and on reload,
+   what makes the backlog finite. The queue is re-cut when a picker changes and on reload,
    not on each save, so cards don't vanish under the cursor mid-pass.
-   The queue is **shuffled by default**; `.` toggles back to library order (a
-   punctuation key because the effect hotkeys plus `n/b/t/j/c/f` use up the
-   whole alphabet — but not the keyboard: `6`-`9` and most punctuation stay
-   free, which is where a 21st effect goes rather than into a merge). Cards arrive in `Directory.GetFiles` order, i.e. year
+   The queue is **shuffled by default**; the "shuffle the queue" checkbox
+   switches to library order. The filters and the shuffle have no keys: every
+   letter is worth more as an effect hotkey (cut around the effects' initials,
+   `n/b/t/j/c` aside), and `0`-`5` set the rating. Cards arrive in `Directory.GetFiles` order, i.e. year
    folders ascending, so working the queue from the top reviews 1993, then
    1994, and so on — which is how the first 65 reviewed cards ended up being
    entirely Alpha and Arabian Nights, a sample far too era-skewed to tune the
@@ -184,12 +185,19 @@ the first line instead of as a mysteriously empty store.
    "which part of the library am I on?" are independent, so collapsing them
    into one list would force choosing between *pool* and *to review* instead
    of asking for both:
-   - **Rating** (`,` cycles, or the picker): any / pool (3-5) / fringe (1-2) /
+   - **Rating** (picker): any / pool (3-5) / fringe (1-2) /
      unrated / each exact star. The first three mirror the store's own tier
      files, so "pool" here means what it means in `pool.json` — the ~2600
      cards that actually make the cube, against 30k in the library.
-   - **Effect** (picker): one effect, or the two questions a name cannot ask
-     - which cards carry nothing at all, and which carry anything at all.
+   - **Status** (picker): any, none, Banned, Token or Jolly.
+   - **Colour** (picker): the colour categories grouped Mono / Guilds /
+     Shards & wedges, plus multicolour and "incl. multi" per colour.
+   - **Type** (picker): Creature, Land, Other permanent, Spell, or all but lands.
+   - **Effect** (multi-select panel): tick any number of effects and choose
+     whether a card must carry all of them or any of them; it also asks the two
+     questions a name cannot ask — which cards carry nothing at all, and which
+     carry anything at all.
+   - **Cost** (picker): a mana-value bucket.
    - **Folder** (two pickers): year, then set. Taken from each file's path
      relative to `<root>\Source` (`TagCommand.RelativeFolder`), not from the
      card, because the folder describes how the library is laid out on disk.
@@ -234,7 +242,7 @@ the first line instead of as a mysteriously empty store.
    only fills entries with no effects yet (`--overwrite` re-proposes over
    still-unreviewed ones; `--dry-run` reports without writing). Every
    suggestion then shows up in the tagger as **AUTO — pending review**, inside
-   the default *to review* queue (press `f` there to narrow to auto-only);
+   the default *to review* queue (pick *auto* in the Review filter to narrow to auto-only);
    note that a card `classify` had nothing to suggest for stays untagged and
    unreviewed, so it is in the same queue rather than lost; confirming it in the tagger
    is what promotes a suggestion to a human-verified tag (`reviewedAt` gets
@@ -296,7 +304,7 @@ Each of the three tier files has the same shape:
 | `scryfallId` | `string` (nullable, omitted when absent) | `tag`, `sync` | The Scryfall printing `id` (not `oracle_id`) of the art in the library: the printing the library rules pick, which `sync` restamps when a rule change moves the card to another printing. `restore` prefers this to re-download the *same* printing/art; if it's missing or the printing has vanished from the current bulk data, `restore` falls back to the first printing found for the `oracle_id`. Hand-editing this is fine if you know the correct printing UUID; leaving it blank just means `restore` uses the fallback. |
 | `rating` | `int`, 0-5 | `sync` (always `0`), `tag` (authoritative) | Cube rating; `0` = unrated. **This is also the field that decides which tier file (`pool.json`/`fringe.json`/`unrated.json`) the entry lives in** — the next `Save` moves it if you hand-edit this to cross a tier boundary. Rating `1` is deliberately left out of the analysis (see D7 below) — it still round-trips. Rating `2` appears only in the stats page's bench tables. |
 | `status` | `string`, one of `Banned \| Token \| Jolly`, or omitted/null for a normal card | `tag` | Mutually-exclusive pool status. A tagged card (`Banned`/`Token`/`Jolly`) is excluded from the stats page's pool at any rating. Hand-editable directly as one of the strings (case-insensitive on read); an unrecognized or blank value is treated as no status. |
-| `effects` | `string[]`, canonical `CardEffect` member names | `tag` only | Functional effect tags (a card can carry several). Stored as an array of names, not a packed bitmask, so git diffs show exactly which tag changed. Unknown/duplicate names are dropped on the next `Save` (round-tripped through the resolver). Hand-editable with any of the canonical names in `Mtg/CardEffect.cs` (aliases like `"board wipe"` are also accepted on read, but always re-written canonically). Empty/absent = untagged. |
+| `effects` | `string[]`, canonical `CardEffect` member names | `tag`; `classify` and `sync` write proposals | Functional effect tags (a card can carry several). Stored as an array of names, not a packed bitmask, so git diffs show exactly which tag changed. Unknown/duplicate names are dropped on the next `Save` (round-tripped through the resolver). Hand-editable with any of the canonical names in `Mtg/CardEffect.cs` (aliases like `"board wipe"` are also accepted on read, but always re-written canonically). Empty/absent = untagged. |
 | `reviewedAt` | ISO-8601 UTC timestamp (`DateTimeOffset?`), omitted when null | `tag` only | Stamped automatically the instant a human changes anything for a card in the tagger (rating, status, or an effect toggle) — it is the "someone actually looked at this" marker used by the tagger's progress counter and its default to-review filter. `null`/absent = never manually reviewed. The store preserves this verbatim on every `Save` — nothing else re-stamps or clears it, so do not hand-edit it unless you intend to reset the review flag for that card. |
 
 A tier file written before the Adobe Bridge workflow was dropped may still carry
@@ -383,6 +391,6 @@ counts it in the pool at once.
 `{Color}` names throughout come from `ColorCategoryClassifier.ViewFolderName`
 (e.g. `1 White`, `2 Azorius`, `3 Esper`, `4 4-5 Colors`, `5 Colorless`) — the
 numeric prefix keeps a plain name-sort grouping mono > guild > shard/wedge >
-4-5 > colorless. The macro type ("Supertipo", `P6`) is `Creature`, `Land`,
+4-5 > colorless. The macro type (`MacroType`) is `Creature`, `Land`,
 `OtherPermanent`, or `Spell` — Scryfall's type line collapsed to the coarse
 bucket the cube cares about (see `Mtg/MacroTypeResolver.cs`).
