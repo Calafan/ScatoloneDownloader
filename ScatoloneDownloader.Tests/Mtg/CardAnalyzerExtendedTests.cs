@@ -1,4 +1,3 @@
-using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Mtg;
 
 namespace ScatoloneDownloader.Tests.Mtg;
@@ -6,28 +5,13 @@ namespace ScatoloneDownloader.Tests.Mtg;
 /// <summary>
 /// Phase 1 TDD: extended CardAnalyzer metrics (R2). Pins the new metric
 /// outputs — MacroType ratios, Guild/Shard density, Rating tier distribution,
-/// pip density, and CSV export — so refactors of the analyzer regress loudly.
-/// The existing .txt output contract is already covered by CardAnalyzerTests.
+/// pip density, and the mana curve by macro type — so refactors of the analyzer
+/// regress loudly. The payload and the Markdown output are pinned by CardAnalyzerTests.
 /// </summary>
-public sealed class CardAnalyzerExtendedTests : IDisposable
+public sealed class CardAnalyzerExtendedTests
 {
-    private readonly string tempFile;
-
-    public CardAnalyzerExtendedTests()
-    {
-        tempFile = Path.Combine(Path.GetTempPath(), "cardanalyzer_ext_" + Guid.NewGuid().ToString("N") + ".txt");
-    }
-
-    public void Dispose()
-    {
-        if (File.Exists(tempFile))
-        {
-            File.Delete(tempFile);
-        }
-    }
-
     [Fact]
-    public void Analyze_MacroTypeRios_ReturnsCreatureSpellPermanentCounts()
+    public void Analyze_MacroTypeRatios_ReturnsCreatureSpellPermanentCounts()
     {
         List<Card> cards =
         [
@@ -122,14 +106,14 @@ public sealed class CardAnalyzerExtendedTests : IDisposable
         AnalysisReport report = analyzer.Analyze();
 
         // Creature curve: 1@1, 1@2, 1@6+, 0@3/4/5
-        Assert.Equal(1, report.CurveByMacroType[MacroType.Creature][1]);
-        Assert.Equal(1, report.CurveByMacroType[MacroType.Creature][2]);
-        Assert.Equal(1, report.CurveByMacroType[MacroType.Creature][6]);
-        Assert.False(report.CurveByMacroType[MacroType.Creature].ContainsKey(3));
+        Assert.Equal(1, report.CurveByMacroType[MacroType.Creature]["1"]);
+        Assert.Equal(1, report.CurveByMacroType[MacroType.Creature]["2"]);
+        Assert.Equal(1, report.CurveByMacroType[MacroType.Creature]["6_Plus"]);
+        Assert.False(report.CurveByMacroType[MacroType.Creature].ContainsKey("3"));
 
         // Spell curve: 1@1, 1@3
-        Assert.Equal(1, report.CurveByMacroType[MacroType.Spell][1]);
-        Assert.Equal(1, report.CurveByMacroType[MacroType.Spell][3]);
+        Assert.Equal(1, report.CurveByMacroType[MacroType.Spell]["1"]);
+        Assert.Equal(1, report.CurveByMacroType[MacroType.Spell]["3"]);
     }
 
     // --- factory -----------------------------------------------------------
@@ -144,31 +128,8 @@ public sealed class CardAnalyzerExtendedTests : IDisposable
         string manaCost = "",
         string scryfallId = "")
     {
-        JsonCard json = new()
-        {
-            Id = scryfallId,
-            Name = name,
-            Language = "en",
-            ReleasedAt = "1993-08-05",
-            Layout = "normal",
-            TypeLine = typeLine,
-            Games = ["paper"],
-            FrameEffects = [],
-            Reprint = false,
-            Variation = false,
-            Textless = false,
-            Set = set,
-            SetName = "Alpha",
-            SetType = "core",
-            BorderColor = "black",
-            Cmc = cmc,
-            ColorIdentity = colorIdentity ?? ["R"],
-            ManaCost = manaCost,
-            ImageUris = new JsonImageUris { Png = "https://test/x.png" },
-        };
-
-        Card card = Card.CreateCard(json);
-        card.Rating = rating;
-        return card;
+        return TestCards.Make(
+            name, typeLine, colors: colorIdentity ?? ["R"], manaCost: manaCost, cmc: cmc, id: scryfallId,
+            set: set, setName: "Alpha", setType: "core", releasedAt: "1993-08-05", rating: rating);
     }
 }

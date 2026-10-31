@@ -12,9 +12,9 @@ namespace ScatoloneDownloader.Cube
     /// </summary>
     internal static partial class EffectClassifier
     {
-        // Three shapes that LOOK like repeatable or multi-card draw and are not.
-        // None of them is a new ruling — each follows from one already made, and
-        // together they took CardAdvantage from 135 wrong out of 355 fired to 39
+        // Shapes that LOOK like repeatable or multi-card draw and are not. The
+        // first three (loot, cycling, replacement) are no new ruling — each
+        // follows from one already made, and together they took CardAdvantage from 135 wrong out of 355 fired to 39
         // out of 263 (precision 62.0% -> 85.2%).
         //
         //   A loot draws and discards in the same breath. "Draw then discard is
@@ -43,7 +43,11 @@ namespace ScatoloneDownloader.Cube
             // in for the card (Highway Robbery), and N for N is still level
             // (Horrid Shadowspinner draws its power and discards as many).
             + @"|discards? a card or sacrifice (?:a|an) \w+\. if you do, draws?"
-            + @"|draw cards equal to [^.\n]{1,40}\. if you do, discard that many cards");
+            + "|" + DrawThatManyHandedBack);
+
+        // N for N, in Loot above and in the Filter table (Rules.cs).
+        private const string DrawThatManyHandedBack =
+            @"draw cards equal to [^.\n]{1,40}\. if you do, discard that many cards";
 
         //   Cycling pays a card to replace itself: exactly parity. It fired only
         //   because its REMINDER text spells out an activated ability that draws.
@@ -265,12 +269,13 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex SacrificeRefundedByACopy = Rx(
             @"whenever you sacrifice this [\w]+[^\n]{0,120}create a token that's a copy of that");
 
-        //   And four more ways the same card is handed back, which the loot
-        //   pattern above does not cover because none of them says "discard":
-        //   putting cards from your hand on top (Dream Cache), shuffling one in
-        //   (Lat-Nam's Legacy), paying back the card you just drew (Jandor's
-        //   Ring), and a discard split across two sentences (Green Goblin,
-        //   Alpharael). Added 2026-09-16.
+        //   And five more ways the same card is handed back, which the loot
+        //   pattern above does not cover because none of them says "discard"
+        //   in the loot's order: putting cards from your hand on top (Dream
+        //   Cache), shuffling one in (Lat-Nam's Legacy), paying back the card
+        //   you just drew (Jandor's Ring), a discard unless something else is
+        //   paid ("then discard N cards unless"), and a discard split across two
+        //   sentences (Green Goblin, Alpharael). Added 2026-09-16.
         private static readonly Regex DrawPaidForWithACard = Rx(
             @"put \w+ cards? from your hand[^\n]{0,30}on top"
             + @"|shuffle (?:a|\w+) cards? from your hand into your library\. if you do, draw"
@@ -575,7 +580,8 @@ namespace ScatoloneDownloader.Cube
             Rx(@"(?:spells?|cards?)[\w ,'\-/]{0,20}(?:can be cast|may be cast) from your graveyard"),
         ];
 
-        // MEASURED AND REJECTED 2026-09-19, recorded so it is not tried again.
+        // MEASURED AND REJECTED 2026-09-19, OVERTURNED 2026-10-13: the veto is
+        // SelfRecursionWording below. Kept for the numbers.
         // A card that claws ITSELF back out of the graveyard — unearth, "{B}:
         // Return this card from your graveyard to the battlefield", the
         // discard-me-and-I-come-back cycle — looks like the self-pump that Buff
@@ -584,8 +590,8 @@ namespace ScatoloneDownloader.Cube
         // anyway makes things WORSE: it buys 9 false positives for 5 true ones
         // but costs 7 points of recall across the two tags, and the exact
         // tag-set match falls. Hammer of Bogardan is tagged Regrowth and the
-        // veto would have taken it. The split is a ruling nobody has made, not
-        // a rule waiting to be written.
+        // veto would have taken it. The split was a ruling nobody had made then;
+        // the human made it on 2026-10-13 (SelfRecursionWording).
 
         // A card THIS CARD exiled, put onto the battlefield under your control.
         // Ruled 2026-09-19: the graveyard is not the only place a creature
@@ -612,10 +618,11 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex BlinksYourOwnCreature = Rx(
             @"exiles? target creature you control|exiles? (?:it|them|that creature)[\w ,']{0,30}return");
 
-        // A land out of the graveyard is Ramp, ruled 2026-09-18 and read here
-        // 2026-09-19: 7 reviewed cards put one back and only 1 is tagged
-        // Reanimate. Summon: Titan and Will of the Sultai rebuild a mana base;
-        // they do not reanimate anything.
+        // A land out of the graveyard was Ramp, ruled 2026-09-18 and read here
+        // 2026-09-19; since 2026-10-13 only if the card filled that graveyard
+        // itself (Ramp.md, LandsBackAfterFillingTheGraveyard). 7 reviewed cards
+        // put one back and only 1 is tagged Reanimate. Summon: Titan and Will of
+        // the Sultai rebuild a mana base; they do not reanimate anything.
         private static readonly Regex LandOutOfTheGraveyard = Rx(
             @"land cards? (?:from|in)[\w ,'\-/]{0,30}graveyard[\w ,'\-/]{0,20}(?:on)?to the battlefield[^\n.]{0,40}");
 
@@ -806,7 +813,7 @@ namespace ScatoloneDownloader.Cube
             @"^[^\n:]{0,50}discard (?!this card|a land card\b)(?:a|one|two|three|\w+) (?:\w+ )?cards?[^\n:]{0,30}:(?=[^\n]{0,100}\bdraw)",
             RegexOptions.Multiline);
 
-        // Four shapes that name a player beside "discard" and attack nobody's
+        // Shapes that name a player beside "discard" and attack nobody's
         // hand, found 2026-09-28, each untagged on every reviewed card:
         //   the MADNESS-style punishment — "when a spell or ability an opponent
         //     controls CAUSES YOU TO DISCARD THIS CARD" (Guerrilla Tactics, Psychic
@@ -1097,8 +1104,10 @@ namespace ScatoloneDownloader.Cube
         // Repeatable, read loosely ON PURPOSE. The anchored version of this test
         // misses "Battalion — Whenever ...", "Start your engines!" and a trigger
         // written inside a modal bullet, which between them are three of the seven
-        // one-card impulses in the reviewed set and all three are tagged. Used only
-        // once an impulse has already matched, so the looseness costs nothing.
+        // one-card impulses in the reviewed set and all three are tagged. Asked of
+        // an impulse that has already matched and of the cast stream
+        // (CastsAStreamFromElsewhere), and, through AbilityRepeats, of the loots,
+        // the top-few, Blood, Map, the Filter dig and BodyAbilityRepeats.
         private static readonly Regex RepeatableWording = Rx(
             @"\bwhenever\b|at the beginning of|^[^\n:]{1,70}:", RegexOptions.Multiline);
 
@@ -1143,16 +1152,18 @@ namespace ScatoloneDownloader.Cube
         private static bool AbilityRepeats(string ability) =>
             RepeatableWording.IsMatch(ability) || ChapterFiresTwice.IsMatch(ability);
 
-        // The same question with the two self-consuming costs subtracted. An
+        // The same question with the exile out of the graveyard subtracted. An
         // ability that spends the card to pay for itself runs once however it
         // is worded — Morbius the Living Vampire exiles itself out of the
-        // graveyard, Lupinflower Village sacrifices itself — and the impulse
-        // family deliberately does NOT ask this, because there the cost is
-        // often paid by something else: Junktown makes three Junk tokens and
-        // each token sacrifices ITSELF for a card, which is three cards.
+        // graveyard.
         private static bool AbilityRepeatsOutsideTheGraveyard(string ability) =>
             AbilityRepeats(ability) && !SpendsItselfOutOfTheGraveyard(ability);
 
+        // …and with the other self-consuming costs subtracted too: Lupinflower
+        // Village sacrifices itself. The impulse family deliberately does NOT
+        // ask this, because there the cost is often paid by something else:
+        // Junktown makes three Junk tokens and each token sacrifices ITSELF for
+        // a card, which is three cards.
         private static bool AbilityRepeatsAtNoCostToItself(string ability) =>
             AbilityRepeats(ability)
             && !DrawBySacrificingItself.IsMatch(ability)
@@ -1160,7 +1171,7 @@ namespace ScatoloneDownloader.Cube
             && !TransformsItselfAway.IsMatch(ability)
             && !SpendsItselfOutOfTheGraveyard(ability);
 
-        // A third way an ability runs exactly once: it TRANSFORMS the permanent
+        // Another way an ability runs exactly once: it TRANSFORMS the permanent
         // the moment it succeeds, and the other face does something else
         // entirely. This is the whole difference between Sidequest: Catch a
         // Fish and Traveling Botanist, which print the same sentence word for
@@ -1702,7 +1713,9 @@ namespace ScatoloneDownloader.Cube
             @"phases (?:out|in), discards? a card[\s\S]{0,120}phases (?:in|out), draws? a card");
 
         // MEASURED AND REJECTED, 2026-09-21, and the human explained the split
-        // on 2026-09-22. A trigger whose draw is printed as a MODAL BULLET
+        // on 2026-09-22; the "too card-specific" verdict below was OVERTURNED on
+        // 2026-09-27 (DrawModeEveryTurn, DrawModeOnARepeatingTrigger).
+        // Recorded as it stood. A trigger whose draw is printed as a MODAL BULLET
         // further down reads as a bare draw to the anchored rules, because the
         // bullet is a line of its own with no trigger word on it — Teval's
         // Judgment says "Whenever one or more cards leave your graveyard,
@@ -1715,7 +1728,7 @@ namespace ScatoloneDownloader.Cube
         //
         //   Teval's Judgment  — "hasn't been chosen THIS TURN", so the choice
         //                       comes back every turn and the second iteration
-        //                       is a card. Tagged, and it stays a known miss.
+        //                       is a card. Tagged; a known miss until 09-27.
         //   Monument to End.  — the trigger IS a discard, so the draw is paid
         //                       for with a card. Parity, and it is Filter.
         //   Zuko, Conflicted  — "hasn't been chosen", full stop: the mode runs

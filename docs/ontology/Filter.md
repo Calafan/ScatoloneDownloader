@@ -10,15 +10,17 @@ one), and HAND BACK WHAT YOU DREW (discard two draw two, and every rummage — "
 card. If you do, draw a card"). The second was the tag's biggest hole: the rummage is the plainest
 Filter shape printed and the classifier had never read a single one of the 14 cards that carry it,
 12 of which were already tagged by hand. The boundary with CardAdvantage is COUNTED, but the two
-tags are NOT EXCLUSIVE (OVERTURNED 2026-09-27 — they are, see the end), ruled 2026-09-19 after a
-first cut of the count got that wrong: a card that selects AND comes out ahead carries both, because
+tags are NOT EXCLUSIVE (OVERTURNED 2026-09-27 — they are, and limited to one ability on 2026-09-29,
+see the end), ruled 2026-09-19 after a first cut of the count, which had stripped Filter from every
+profitable loot, got that wrong: a card that selects AND comes out ahead carries both, because
 it really did both — Casting of Bones draws three and keeps two, which is a card gained and a choice
-made. Nothing ever withdraws this tag. Measured before the count was ruled: of the 41 reviewed cards
-that net zero, 38 were tagged Filter and 3 advantage. Anything whose count cannot be parsed stays
-parity and therefore stays here. Two things that look like this and are NOT: a card that pays a card
-as a COST to do something else (cycling, madness, blitz) — the discard is the price, not the
-selection — and looking at an OPPONENT'S library, which is only 2 of 8 reviewed cards and was
-measured and rejected (OVERTURNED 2026-09-27 for a top that is rearranged or trimmed, see the end).
+made. Nothing withdrew this tag then (it is withdrawn today, see the end). Measured before the count
+was ruled: of the 41 reviewed cards that net zero, 38 were tagged Filter and 3 advantage. Anything
+whose count cannot be parsed stays parity and therefore stays here. Two things that look like this
+and are NOT: a card that pays a card as a COST to do something else (cycling, madness, blitz) — the
+discard is the price, not the selection — and looking at an OPPONENT'S library, which is only 2 of 8
+reviewed cards and was measured and rejected (OVERTURNED 2026-09-27 for a top that is rearranged or
+trimmed, see the end).
 
 SCRY AND SURVEIL ARE THIS TAG UNCONDITIONALLY (OVERTURNED 2026-09-27 for one made once in passing,
 see the end), ruled 2026-09-19: it does not matter how small the number is or what else the card
@@ -38,13 +40,13 @@ reminder text the surveil rule already read; the rule is for the other four. The
 PLANESWALKER, so it earns nothing from Tokens.
 
 Looking at the top few and taking exactly one is still this tag, and from 2026-09-20 it is ALSO
-CardAdvantage when the ability repeats — Browse selects and gains, so it carries both, exactly as a
-profitable loot does. Two shapes were ruled INTO this tag the same day and out of CardAdvantage:
-EXILE SEVERAL AND PLAY ONE OF THEM (Riverwheel Sweep, Heroes' Hangout, Case of the Burning Masks),
-which is the impulse with a Filter's count, and a repeatable loot that lets you SACRIFICE A
-PERMANENT INSTEAD of discarding (Chandra, Spark Hunter, Reckless Detective) — repeatable or not, one
-thing goes for one card. And three were ruled OUT, from the nine cards where the classifier said
-Filter and the hand did not.
+CardAdvantage when the ability repeats — Browse selects and gains, so it carried both, exactly as a
+profitable loot did (OVERTURNED 2026-09-27: Browse is advantage alone, see the end). Two shapes were
+ruled INTO this tag the same day and out of CardAdvantage: EXILE SEVERAL AND PLAY ONE OF THEM
+(Riverwheel Sweep, Heroes' Hangout, Case of the Burning Masks), which is the impulse with a Filter's
+count, and a repeatable loot that lets you SACRIFICE A PERMANENT INSTEAD of discarding (Chandra,
+Spark Hunter, Reckless Detective) — repeatable or not, one thing goes for one card. And three were
+ruled OUT, from the nine cards where the classifier said Filter and the hand did not.
 
 CLOAK AND MANIFEST DREAD turn what you picked FACE DOWN into a 2/2, so what the ability gave you is
 a body and not a choice: Curator Beastie and Hide in Plain Sight are Tokens alone. The keyword is
@@ -115,17 +117,17 @@ thin the library), Scroll Rack and Horrid Shadowspinner are this tag; Pitiless C
 Endurance and Make Your Own Luck are advantage; Caradora is Tutor alone and Hei Bai keeps this tag
 by hand, the classifier reading no rule for it. Perception Bobblehead casts what it looks at for
 free and is Cheat, not a choice ("lo mettiamo Cheat"), and the Cheat rules read it from the same
-day. The last questions were answered that evening. Arcade Gannon, Case File Auditor, Jace
-Reawakened, Squad Rallier, Bucolic Ranch and Resonance Technician, Filter alone by hand, are
-CardAdvantage as the advantage rules read them ("correggi"). Thundertrap Trainer, which had both, is
-CardAdvantage alone ("solo CA"), because offspring fires its enters trigger twice. Shoreline Looter
-and Wonderscape Sage, answered "solo CA" the same way, were put back to Filter an hour later —
-"lasciamoli Filter che è lo stato base" — which is what the rules read in "then discard a card
-unless", the count Chakra Meditation and Katara were ruled on.
+day (OVERTURNED 2026-10-16: it is Filter, see below). The last questions were answered that evening.
+Arcade Gannon, Case File Auditor, Jace Reawakened, Squad Rallier, Bucolic Ranch and Resonance
+Technician, Filter alone by hand, are CardAdvantage as the advantage rules read them ("correggi").
+Thundertrap Trainer, which had both, is CardAdvantage alone ("solo CA"), because offspring fires its
+enters trigger twice. Shoreline Looter and Wonderscape Sage, answered "solo CA" the same way, were
+put back to Filter an hour later — "lasciamoli Filter che è lo stato base" — which is what the rules
+read in "then discard a card unless", the count Chakra Meditation and Katara were ruled on.
 
 A LOOT tacked onto a spell that does something else is the one-shot rider too — "Refute non ha
 Filter, solo counter" — which takes Deny Entry, Broadside Barrage and Transpose with it; a creature
-that loots as it enters was not asked about and keeps the tag.
+that loots as it enters was not asked about and kept the tag (OVERTURNED 2026-10-24, see below).
 
 A SPELL'S MODE is an effect of its own and not a rider, ruled that evening after a first answer the
 other way: "Kozilek's Command: ho sbagliato io. È una spell, quindi conta l'effetto secco (come

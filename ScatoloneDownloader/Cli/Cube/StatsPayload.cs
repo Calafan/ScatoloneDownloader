@@ -23,14 +23,31 @@ namespace ScatoloneDownloader.Cli.Cube
     /// <param name="Bench">The <see cref="RatingTier.Bench"/> cards, shown beside the pool as the availability appendix; null for a card list, which has no bench.</param>
     /// <param name="Overview">The pool's distribution by type, cost and exact colour category.</param>
     /// <param name="BenchOverview">The same distribution for the bench; null when <paramref name="Bench"/> is.</param>
+    /// <param name="Scope">What the tiers count: <see cref="CubeScope"/> or <see cref="ListScope"/>.</param>
+    /// <param name="ViewNames">The names of the two column views, for the page's buttons and the Markdown sub-headings.</param>
+    /// <param name="Buckets">The cost buckets in table order, with their labels.</param>
+    /// <param name="Sections">The sections both renderers print, in order, with their titles and notes.</param>
     internal sealed record StatsPayload(
         IReadOnlyList<string> Effects,
         IReadOnlyList<string> Glossary,
         StatsTier Pool,
         StatsTier? Bench,
         StatsOverview Overview,
-        StatsOverview? BenchOverview)
+        StatsOverview? BenchOverview,
+        string Scope,
+        StatsViewNames ViewNames,
+        IReadOnlyList<StatsBucket> Buckets,
+        IReadOnlyList<StatsSection> Sections)
     {
+        /// <summary>What the cube's tiers count (<see cref="Build"/>).</summary>
+        internal const string CubeScope = "The pool is the cards rated 3–5 with no status; the bench is exactly ★2.";
+
+        /// <summary>What a card list's "pool" counts (<see cref="BuildForList"/>).</summary>
+        internal const string ListScope = "Every card of the list counts, whatever its rating or status in the cube.";
+
+        private const string BenchLabel = "Bench (★2)";
+        private const string CategoriesNote = "Exact colour identity; a land counts only under Lands.";
+
         /// <summary>
         /// How the payload is serialized: camelCase (the records are PascalCase), with
         /// dictionary keys (W, Multi, 1 White) left exactly as they are. Shared by
@@ -57,10 +74,12 @@ namespace ScatoloneDownloader.Cli.Cube
             ("Colorless", "Colorless"),
         ];
 
+        private static readonly StatsViewNames Views = new("mono + Multi", "colour incl. multi");
+
         internal static StatsPayload Build(IEnumerable<Card> cards)
         {
             CardAnalyzer analyzer = CardAnalyzer.ForPool(cards);
-            return BuildFromReports(analyzer.Analyze(), analyzer.AnalyzeBench(), "Pool");
+            return BuildFromReports(analyzer.Analyze(), analyzer.AnalyzeBench(), "Pool", CubeScope);
         }
 
         /// <summary>
@@ -70,10 +89,10 @@ namespace ScatoloneDownloader.Cli.Cube
         /// </summary>
         internal static StatsPayload BuildForList(IEnumerable<Card> cards, string label)
         {
-            return BuildFromReports(new CardAnalyzer((cards ?? []).ToList()).Analyze(), null, label);
+            return BuildFromReports(new CardAnalyzer((cards ?? []).ToList()).Analyze(), null, label, ListScope);
         }
 
-        private static StatsPayload BuildFromReports(AnalysisReport pool, AnalysisReport? bench, string label)
+        private static StatsPayload BuildFromReports(AnalysisReport pool, AnalysisReport? bench, string label, string scope)
         {
             List<string> effects = EffectResolver.ToNames((CardEffect)~0);
             string[] glossary = EffectGlossary.DescribeAll(effects);
@@ -87,13 +106,98 @@ namespace ScatoloneDownloader.Cli.Cube
                 .ThenBy(e => e.Name, StringComparer.Ordinal)
                 .ToList();
 
+            StatsTier poolTier = BuildTier(label, "pool", pool, order);
+            StatsTier? benchTier = bench is null ? null : BuildTier(BenchLabel, "r2", bench, order);
+            StatsOverview overview = BuildOverview(pool);
+
             return new StatsPayload(
                 effects,
                 glossary,
-                BuildTier(label, "pool", pool, order),
-                bench is null ? null : BuildTier("Bench", "r2", bench, order),
-                BuildOverview(pool),
-                bench is null ? null : BuildOverview(bench));
+                poolTier,
+                benchTier,
+                overview,
+                bench is null ? null : BuildOverview(bench),
+                scope,
+                Views,
+                CostBucket.All.Select(b => new StatsBucket(b, CostBucket.Label(b))).ToList(),
+                BuildSections(poolTier, benchTier, overview));
+        }
+
+        /// <summary>The sections in the order both renderers print them: the pool's
+        /// tables, the bench's appendix when there is a bench (it sits between the
+        /// pool's answers and its creature profile), then the creature profile and
+        /// curve of each tier.</summary>
+        private static List<StatsSection> BuildSections(StatsTier pool, StatsTier? bench, StatsOverview overview)
+        {
+            string p = pool.Label;
+            List<StatsSection> sections =
+            [
+                new("types", "pool", p + " — global distribution", TypesNote(overview)),
+                new("categories", "pool", p + " — by colour category", CategoriesNote),
+                new("manaValue", "pool", p + " — mana value by colour category", null),
+                new("creatureManaValue", "pool", p + " — creature mana value by colour category", null),
+                new("effects", "pool", p + " — effects by colour", null),
+                new("answers", "pool", p + " — answers vs targets", null),
+            ];
+
+            if (bench is not null)
+            {
+                sections.Add(new("categories", "bench", bench.Label + " — by colour category", CategoriesNote));
+                sections.Add(new("manaValue", "bench", bench.Label + " — mana value by colour category", null));
+                sections.Add(new("effects", "bench", bench.Label + " — available by effect and colour", null));
+            }
+
+            sections.Add(new("creatures", "pool", p + " — creatures by cost", CreatureSummary(pool.Creatures.Summary)));
+            sections.Add(new("curve", "pool", p + " — creature curve by colour", null));
+
+            if (bench is not null)
+            {
+                sections.Add(new("curve", "bench", bench.Label + " — creature curve by colour", null));
+            }
+
+            return sections;
+        }
+
+        // ------------------------------------------------------------- sentences
+
+        private static string Plain(int n)
+        {
+            return n.ToString(CultureInfo.InvariantCulture);
+        }
+
+        private static string OfNonLand(int n, int nonLand)
+        {
+            string percent = nonLand > 0 ? (n * 100.0 / nonLand).ToString("0.0", CultureInfo.InvariantCulture) : "0.0";
+            return $"{Plain(n)} ({percent}%)";
+        }
+
+        private static string TypesNote(StatsOverview o)
+        {
+            string Pct(int n)
+            {
+                return o.NonLand > 0
+                    ? Plain((int)Math.Round(n * 100.0 / o.NonLand, MidpointRounding.AwayFromZero))
+                    : "0";
+            }
+
+            return $"{Plain(o.NonLand + o.Lands)} cards: {Plain(o.NonLand)} non-land + {Plain(o.Lands)} lands"
+                + $" · permanents {Plain(o.Permanents)} ({Pct(o.Permanents)}%)"
+                + $" · spells {Plain(o.Spells)} ({Pct(o.Spells)}%) of non-land"
+                + $" · average mana value {o.AverageMv.ToString("0.00", CultureInfo.InvariantCulture)} (lands excluded)"
+                + $" · pip density {o.PipDensity.ToString("0.00", CultureInfo.InvariantCulture)} (coloured pips per non-land card)"
+                + $" · cards per colour: the Non-land row of “effects by colour”, with “{Views.Identity}”";
+        }
+
+        private static string CreatureSummary(StatsCreatureSummary s)
+        {
+            return "Creatures " + OfNonLand(s.Creatures, s.NonLand)
+                + " · MV ≤ 2 " + OfNonLand(s.CreaturesMv2, s.NonLand)
+                + " · aggressive 2-drops (MV ≤ 2, power ≥ 2) " + OfNonLand(s.AggressiveTwoDrops, s.NonLand)
+                + " · MV ≤ 3 with power ≥ 3 " + OfNonLand(s.MvThreePowerThree, s.NonLand)
+                + " · evasive " + OfNonLand(s.Evasive, s.NonLand)
+                + " · haste " + OfNonLand(s.Haste, s.NonLand)
+                + " · defender " + OfNonLand(s.Defender, s.NonLand)
+                + " (percent of non-land)";
         }
 
         private static readonly (MacroType Macro, string Label)[] OverviewTypes =
@@ -108,10 +212,10 @@ namespace ScatoloneDownloader.Cli.Cube
             List<StatsTypeRow> types = OverviewTypes
                 .Select(t =>
                 {
-                    Dictionary<int, int> curve = report.CurveByMacroType.GetValueOrDefault(t.Macro) ?? [];
+                    Dictionary<string, int> curve = report.CurveByMacroType.GetValueOrDefault(t.Macro) ?? [];
                     Dictionary<string, int> byCost = CostBucket.All.ToDictionary(
                         b => b,
-                        b => curve.GetValueOrDefault(b == "6_Plus" ? 6 : int.Parse(b, CultureInfo.InvariantCulture), 0));
+                        b => curve.GetValueOrDefault(b, 0));
                     return new StatsTypeRow(
                         t.Macro.ToString(), t.Label, report.MacroTypeCounts.GetValueOrDefault(t.Macro, 0), byCost);
                 })
@@ -178,7 +282,7 @@ namespace ScatoloneDownloader.Cli.Cube
             return new StatsCategoryRow(
                 key,
                 ColorCategoryClassifier.Display(key),
-                ColorCategoryClassifier.ViewFolderName(key),
+                ColorCategoryClassifier.NumberedName(key),
                 report.ColorCategoryCounts.GetValueOrDefault(key, 0),
                 creatures,
                 byType.GetValueOrDefault(MacroType.OtherPermanent, 0),
@@ -212,13 +316,13 @@ namespace ScatoloneDownloader.Cli.Cube
         {
             StatsMatrix mono = BuildMatrix(
                 report, MonoColumns, order,
-                key => key == "Multi" ? "*multi" : ColorCategoryClassifier.ViewFolderName(key),
+                key => key == "Multi" ? "*multi" : ColorCategoryClassifier.NumberedName(key),
                 report.CardsByColumn, report.ReviewedByColumn, report.UntaggedByColumn,
                 report.EffectCountsByColumn);
 
             StatsMatrix identity = BuildMatrix(
                 report, IdentityColumns, order,
-                key => key == "Colorless" ? ColorCategoryClassifier.ViewFolderName(key) : "*has:" + key,
+                key => key == "Colorless" ? ColorCategoryClassifier.NumberedName(key) : "*has:" + key,
                 report.CardsByIdentity, report.ReviewedByIdentity, report.UntaggedByIdentity,
                 report.EffectCountsByIdentity);
 
@@ -245,8 +349,8 @@ namespace ScatoloneDownloader.Cli.Cube
                     creatureTotal.Evasive,
                     creatureTotal.Haste,
                     creatureTotal.Defender),
-                BuildCurve(report, MonoColumns, key => key == "Multi" ? "*multi" : ColorCategoryClassifier.ViewFolderName(key), report.CreatureCurveByColumn),
-                BuildCurve(report, IdentityColumns, key => key == "Colorless" ? ColorCategoryClassifier.ViewFolderName(key) : "*has:" + key, report.CreatureCurveByIdentity));
+                BuildCurve(report, MonoColumns, key => key == "Multi" ? "*multi" : ColorCategoryClassifier.NumberedName(key), report.CreatureCurveByColumn),
+                BuildCurve(report, IdentityColumns, key => key == "Colorless" ? ColorCategoryClassifier.NumberedName(key) : "*has:" + key, report.CreatureCurveByIdentity));
 
             return new StatsTier(label, ratingParam, report.TotalCards, mono, identity, answers, creatures);
         }
@@ -340,11 +444,27 @@ namespace ScatoloneDownloader.Cli.Cube
         }
     }
 
+    /// <summary>The names of the two column views of a matrix: the analyzer's own
+    /// one-column split, and the colour identity.</summary>
+    internal sealed record StatsViewNames(string Mono, string Identity);
+
+    /// <summary>One cost bucket: <paramref name="Key"/> is the tagger's <c>cost=</c>
+    /// value, <paramref name="Label"/> its display form.</summary>
+    internal sealed record StatsBucket(string Key, string Label);
+
+    /// <summary>One section of the stats files. <paramref name="Kind"/> says which table
+    /// it holds (types, categories, manaValue, creatureManaValue, effects, answers,
+    /// creatures, curve), <paramref name="Tier"/> whose numbers (pool or bench),
+    /// <paramref name="Note"/> the line above the table, if any.</summary>
+    internal sealed record StatsSection(string Kind, string Tier, string Title, string? Note);
+
     /// <summary>The pool's overview: counts, the non-land curve by type, and the exact
     /// colour categories in their groups. Lands carry no mana value, so they appear
     /// only in <paramref name="Lands"/> and in each category's own Lands count.</summary>
     /// <param name="NonLand">Non-land pool cards.</param>
+    /// <param name="Lands">Lands in the pool.</param>
     /// <param name="Permanents">Non-land cards that are not spells.</param>
+    /// <param name="Spells">Non-land cards that are not permanents (instants and sorceries).</param>
     /// <param name="AverageMv">Average mana value, lands excluded.</param>
     /// <param name="PipDensity">Coloured pips per non-land card.</param>
     /// <param name="Types">Creature, OtherPermanent, Spell, in that order.</param>
@@ -374,7 +494,7 @@ namespace ScatoloneDownloader.Cli.Cube
     internal sealed record StatsCategoryGroup(string Label, IReadOnlyList<StatsCategoryRow> Rows);
 
     /// <summary>One exact colour category. <paramref name="ColorParam"/> is the tagger's
-    /// <c>color=</c> value (the view folder name). A row exists when the category has
+    /// <c>color=</c> value (e.g. "2 Azorius"). A row exists when the category has
     /// non-land cards or lands; <paramref name="CreatureAverageMv"/> is null without
     /// creatures. <paramref name="ByCost"/> and <paramref name="CreatureByCost"/> have
     /// every <see cref="CostBucket"/> key and leave lands out.</summary>
@@ -409,6 +529,9 @@ namespace ScatoloneDownloader.Cli.Cube
     /// the cost-by-colour curve in both column views.</summary>
     /// <param name="Rows">One row per cost bucket, 0 to 6_Plus.</param>
     /// <param name="Total">The sum over <paramref name="Rows"/>; its Cost is empty.</param>
+    /// <param name="Summary">The creature counts behind the profile (two-drops, evasive, haste, ...).</param>
+    /// <param name="CurveMono">The cost-by-colour curve, columns by mono colour.</param>
+    /// <param name="CurveIdentity">The cost-by-colour curve, columns by colour identity.</param>
     internal sealed record StatsCreatures(
         IReadOnlyList<StatsCreatureRow> Rows,
         StatsCreatureRow Total,
@@ -463,7 +586,7 @@ namespace ScatoloneDownloader.Cli.Cube
         IReadOnlyList<StatsEffectRow> Rows);
 
     /// <summary>One column of a matrix. <paramref name="ColorParam"/> is the value the
-    /// tagger's colour filter takes for it (a view folder name, or a pseudo-value).</summary>
+    /// tagger's colour filter takes for it (a category name such as "2 Azorius", or a pseudo-value).</summary>
     internal sealed record StatsColumn(string Key, string Name, string ColorParam);
 
     internal sealed record StatsEffectRow(string Effect, IReadOnlyDictionary<string, int> ByColumn, int Total);

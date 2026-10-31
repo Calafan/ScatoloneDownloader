@@ -79,17 +79,24 @@ namespace ScatoloneDownloader.Cli.Cube
 
             AnsiConsole.MarkupLine("[yellow]Generating the report...[/]");
 
-            // The active pool only (rating 3-5, no Banned/Token/Jolly) so the unrated
-            // backlog and excluded status cards cannot skew the distributions; the
-            // bench (rating 2) rides along for its availability appendix.
+            // Every matched card goes in: StatsPayload.Build keeps the active pool
+            // (rating 3-5, no Banned/Token/Jolly) for the distributions, so the
+            // unrated backlog and excluded status cards cannot skew them, and the
+            // bench (rating 2) apart.
             List<Card> cards = matchedCards.Select(m => m.Card).ToList();
             DateTime now = DateTime.Now;
             StatsPayload payload = StatsPayload.Build(cards);
             StatsDocument document = StatsDocument.ForCube(now);
 
-            string markdown = StatsMarkdown.Render(payload, document);
-            string html = StatsReport.RenderHtml(payload, document, now);
+            WriteStatsFiles(payload, document, now, markdownPath, htmlPath);
 
+            return 0;
+        }
+
+        /// <summary>Writes the statistics as Markdown and HTML, creating their folders, and says where.</summary>
+        internal static void WriteStatsFiles(
+            StatsPayload payload, StatsDocument document, DateTime generatedAt, string markdownPath, string htmlPath)
+        {
             foreach (string path in new[] { markdownPath, htmlPath })
             {
                 string? dir = Path.GetDirectoryName(path);
@@ -99,13 +106,11 @@ namespace ScatoloneDownloader.Cli.Cube
                 }
             }
 
-            File.WriteAllText(markdownPath, markdown);
-            File.WriteAllText(htmlPath, html);
+            File.WriteAllText(markdownPath, StatsMarkdown.Render(payload, document));
+            File.WriteAllText(htmlPath, StatsReport.RenderHtml(payload, document, generatedAt));
 
             AnsiConsole.MarkupLineInterpolated($"[green]Markdown saved to: {markdownPath}[/]");
             AnsiConsole.MarkupLineInterpolated($"[green]HTML saved to    : {htmlPath}[/]");
-
-            return 0;
         }
     }
 }

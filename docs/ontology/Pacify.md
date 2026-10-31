@@ -91,12 +91,14 @@ Trespassers, Shackle Slinger).
 PHASING OUT is this tag AND Protection, ruled together because the same words do both jobs — "puoi
 usarlo sia sull'opponent per prendere tempo che su di te per salvare qualcosa"; the permanent has to
 be a creature (Vision Charm phases an artifact) and an O-ring phase-out that lasts until the
-enchantment leaves belongs to the temporary-exile family, which still has no ruling (Oubliette,
-Tawnos's Coffin, Summon: Ixion, and Icy Prison, which the human called their own mistake and moved
-to Removal). And PREVENTING DAMAGE TO THE PLAYER ALONE is this tag and NOT Protection — "le
-prevenzioni al solo giocatore mettiamole come solo Pacify": nothing of yours is saved, the attack
-simply stops mattering, which is what a Propaganda does. A prevention that also covers permanents
-keeps both, and so does one that answers a SOURCE (Prismatic Strands).
+enchantment leaves is Removal, not this tag (settled below and in Removal.md, read 2026-10-14: a
+phasing that lasts as long as the card does; an O-ring on a Saga is Pacify alone, 2026-10-16). The
+family was once listed as unruled (Oubliette, Tawnos's Coffin, Summon: Ixion, and Icy Prison, which
+the human called their own mistake and moved to Removal). And PREVENTING DAMAGE TO THE PLAYER ALONE
+is this tag and NOT Protection — "le prevenzioni al solo giocatore mettiamole come solo Pacify":
+nothing of yours is saved, the attack simply stops mattering, which is what a Propaganda does. A
+prevention that also covers permanents keeps both, and so does one that answers a SOURCE (Prismatic
+Strands).
 
 But a prevention to you CAST ONCE, from a spell, is a Fog and not this tag, ruled 2026-10-13
 ("Ultimate Magic: Holy errore" — Holy keeps only the Protection of its indestructible; Eerie

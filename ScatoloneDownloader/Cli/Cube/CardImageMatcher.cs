@@ -7,17 +7,17 @@ using Spectre.Console;
 namespace ScatoloneDownloader.Cli.Cube
 {
     /// <summary>
-    /// Matches physical master image files to Scryfall cards by NAME, shared by
-    /// <c>tag</c> and <c>sync</c> (<c>restore</c> matches in
-    /// reverse — from metadata to bulk by id/oracle_id — and stays separate). The
-    /// forward name match was previously copy-pasted into each of the commands,
-    /// which had already drifted apart; this is the single implementation.
+    /// Matches physical master image files to Scryfall cards by NAME
+    /// (<c>restore</c> matches in reverse — from metadata to bulk by id/oracle_id —
+    /// and stays separate).
     /// <para>
     /// <see cref="ScanAndMatchAsync"/> is the whole scan-then-match sequence
     /// <c>tag</c> and <c>report</c> run: it lists the <c>.png</c> files first and returns
     /// before the expensive Scryfall bulk download when the folder is empty, since
     /// there are then no cards to match. <see cref="Match"/> alone is the pure
-    /// matching step.
+    /// matching step, which <c>sync</c> and the <c>files</c> export call with their own
+    /// ordering; <see cref="LibraryPicksFirst"/> is the ordering
+    /// <see cref="ScanAndMatchAsync"/> gives it.
     /// </para>
     /// </summary>
     internal static class CardImageMatcher
@@ -55,7 +55,7 @@ namespace ScatoloneDownloader.Cli.Cube
         /// </summary>
         internal static IEnumerable<Card> LibraryPicksFirst(IReadOnlyCollection<Card> bulk)
         {
-            return LibrarySelector.Select(bulk, reprints: false, tokens: false, lands: false, releasedBy: DateTime.Today)
+            return LibrarySelector.LibraryPicks(bulk)
                 .Concat(bulk);
         }
 

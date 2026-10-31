@@ -15,10 +15,9 @@ using Spectre.Console;
 namespace ScatoloneDownloader.Cli.Download
 {
     /// <summary>
-    /// Orchestrates a single download/analyze run. Replaces the old 11-parameter
-    /// Program.GetCards dispatch; the subcommands call the mode-specific entry
-    /// points below, each of which builds a <see cref="CardRequest"/> and hands it
-    /// to <see cref="GetCardsAsync"/>.
+    /// Orchestrates a single card-download run: the subcommands call the
+    /// mode-specific entry points below, each of which builds a
+    /// <see cref="CardRequest"/> and hands it to <see cref="GetCardsAsync"/>.
     /// </summary>
     internal static class CardService
     {
@@ -28,10 +27,8 @@ namespace ScatoloneDownloader.Cli.Download
         private static readonly ILogger Logger = AppLogger.CreateLogger(nameof(CardService));
 
         /// <summary>
-        /// One download/analyze request. Bundling the inputs replaces a
-        /// 10-argument positional call where half the slots were <c>null</c>: each
-        /// entry point sets only the fields its mode needs and leaves the rest at
-        /// their defaults.
+        /// One card-download request: each entry point sets only the fields its
+        /// mode needs and leaves the rest at their defaults.
         /// </summary>
         private sealed record CardRequest
         {
@@ -49,7 +46,6 @@ namespace ScatoloneDownloader.Cli.Download
             /// <summary>List file to read (Mode.Files) or exclude file (Mode.All).</summary>
             internal string? File { get; init; }
 
-            internal bool Download { get; init; }
             internal bool PrintOnly { get; init; }
 
             /// <summary>Skip the library rules (Mode.All and Mode.Years only).</summary>
@@ -69,7 +65,6 @@ namespace ScatoloneDownloader.Cli.Download
                 Tokens = tokens,
                 Lands = lands,
                 File = excludeFile,
-                Download = true,
                 PrintOnly = printOnly,
                 NoRules = noRules,
             });
@@ -86,7 +81,6 @@ namespace ScatoloneDownloader.Cli.Download
                     Tokens = tokens,
                     Lands = lands,
                     Set = set,
-                    Download = true,
                     PrintOnly = printOnly,
                 });
             }
@@ -103,7 +97,6 @@ namespace ScatoloneDownloader.Cli.Download
                 Tokens = tokens,
                 Lands = lands,
                 Years = validYears,
-                Download = true,
                 PrintOnly = printOnly,
                 NoRules = noRules,
             });
@@ -115,12 +108,11 @@ namespace ScatoloneDownloader.Cli.Download
             {
                 Mode = Mode.Lands,
                 Lands = true,
-                Download = true,
                 PrintOnly = printOnly,
             });
         }
 
-        internal static async Task RunFilesAsync(IEnumerable<string> files, bool reprints, bool tokens, bool lands, bool printOnly, string? librarySource)
+        internal static async Task RunFilesAsync(IEnumerable<string> files, bool lands, bool printOnly, string? librarySource)
         {
             foreach (string file in files)
             {
@@ -129,11 +121,8 @@ namespace ScatoloneDownloader.Cli.Download
                     await GetCardsAsync(new CardRequest
                     {
                         Mode = Mode.Files,
-                        Reprints = reprints,
-                        Tokens = tokens,
                         Lands = lands,
                         File = file,
-                        Download = true,
                         PrintOnly = printOnly,
                         LibrarySource = librarySource,
                     });
@@ -181,11 +170,11 @@ namespace ScatoloneDownloader.Cli.Download
                     CardDownloader.WriteToList(card);
                 }
             }
-            else if (req.Download && req.LibrarySource is not null)
+            else if (req.LibrarySource is not null)
             {
                 await CopyFromLibraryAsync(getManager, downloader, req, cards, specificText);
             }
-            else if (req.Download)
+            else
             {
                 await DownloadAllAsync(downloader, cards, req.Mode, req.File, specificText, skipExisting);
             }
@@ -206,7 +195,7 @@ namespace ScatoloneDownloader.Cli.Download
 
             // The same bulk the name index was built from: GetDefaultCards keeps it.
             List<Card> bulk = await getManager.GetDefaultCards();
-            List<Card> selected = LibrarySelector.Select(bulk, reprints: false, tokens: false, lands: false, releasedBy: DateTime.Today);
+            List<Card> selected = LibrarySelector.LibraryPicks(bulk);
 
             // The rules' picks first, as CardImageMatcher.LibraryPicksFirst orders them.
             List<(Card Card, string FilePath)> matched = CardImageMatcher.Match(
@@ -436,7 +425,7 @@ namespace ScatoloneDownloader.Cli.Download
             switch (req.Mode)
             {
                 case Mode.All:
-                    return "Unique Artworks";
+                    return req.NoRules ? "Unique Artworks" : "library-rules";
                 case Mode.Set:
                     return req.Set + " set";
                 case Mode.Years:

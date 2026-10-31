@@ -6,7 +6,8 @@ namespace ScatoloneDownloader.Cube
 {
     /// <summary>
     /// Patterns for the tags that act on the BOARD and on mana: Ramp, Removal,
-    /// Buff, Protection, Pacify and ManaFixing. Part of
+    /// Buff, Protection, Pacify and ManaFixing, plus the Wipe and Tokens fields
+    /// that read board text. Part of
     /// <see cref="EffectClassifier"/>.
     /// </summary>
     internal static partial class EffectClassifier
@@ -124,7 +125,9 @@ namespace ScatoloneDownloader.Cube
         // Lands made EVERY basic land type fix every colour: Leyline of the
         // Guildpact, Energybending and Omo, Queen of Vesuva, ManaFixing by
         // hand (3 of 3), read 2026-10-15. "The basic land type of your choice"
-        // is split 1 to 1 (Mystic Compass tagged, Jinx not) and is not read.
+        // was split 1 to 1 (Mystic Compass tagged, Jinx not) and not read until
+        // 2026-10-16 ("MF a entrambe"): the ManaFixing table in the Rules file
+        // reads "target land becomes the basic land type of your choice" now.
         private static readonly Regex LandsOfEveryType = Rx(
             @"\blands? you control (?:are|gain) (?:every|all) basic land types?\b|\bis every land type\b");
 
@@ -483,12 +486,21 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex WhatSomebodyElseCreates = Rx(
             @"[^.\n]*(?:" + SomebodyElseCreatesWording + @")[^.\n]*");
 
+        // Declared before BuffPatterns, which holds it, and also read by
+        // EveryPumpIsBesideThePoint below.
+        private static readonly Regex PumpDoubles = Rx(
+            @"double (?:target creature's|that creature's|the) power|double the number of \+1/\+1 counters");
+
+        // Declared before BuffPatterns, which holds it, and also read by
+        // OnlyPumpsATribe.
+        private static readonly Regex CreaturesYouControlGet = Rx(@"creatures you control get \+");
+
         // Hoisted for the same reason as MillPatterns: the beneficiary guard
         // re-walks their matches to see WHO the effect lands on.
         private static readonly Regex[] BuffPatterns =
         [
             Rx(@"gets? \+\d+/\+\d+"),
-            Rx(@"creatures you control get \+"),
+            CreaturesYouControlGet,
             Rx(@"\+\d+/\+\d+ until end of turn"),
             // A pump sized by X or by a count is still a pump; the rules only
             // read digits. Added to THIS array rather than OR'd in later, which
@@ -530,8 +542,7 @@ namespace ScatoloneDownloader.Cube
             // and it lands in the same place. Ruled 2026-09-21: Bulk Up doubles
             // a creature's power, Double Trouble doubles everyone's, and Seismic
             // Tutelage doubles the counters already on the enchanted creature.
-            Rx(@"double (?:target creature's|that creature's|the) power"
-                + @"|double the number of \+1/\+1 counters"),
+            PumpDoubles,
         ];
 
         // The one base the bare phrase's split leaves readable: a creature YOU
@@ -803,7 +814,7 @@ namespace ScatoloneDownloader.Cube
             // the tribe (Inside Source's "target Detective you control gets",
             // Rockface Village's "target Lizard, Mouse, Otter, or Raccoon").
             // A hyphen may stand in the type (Autonomous Assembler's "target
-            // Assembly-Worker you control"), and three more shapes were read
+            // Assembly-Worker you control"), and two more shapes were read
             // 2026-10-27: the tribe as a clause after "each creature you
             // control" (Kibo's "that's an Ape or a Monkey") and the counters
             // distributed among a plural tribe (Numa's "target Elves").
@@ -839,8 +850,11 @@ namespace ScatoloneDownloader.Cube
         // sull'opponent per prendere tempo che su di te per salvare qualcosa".
         // The permanent has to be a CREATURE — Vision Charm phases an artifact
         // and is Mill and Protection — and an O-RING phase-out that lasts until
-        // the enchantment leaves is the temporary-exile family instead, which
-        // has no ruling yet (Oubliette, hand-tagged Removal).
+        // the enchantment leaves is Removal instead (Oubliette, The Phasing of
+        // Zhalfir): a phasing that lasts as long as the card does, settled in
+        // Removal.md and read in the Removal table; the "until" look-ahead
+        // below keeps it out of this tag. (Until 2026-10-14 this read "no
+        // ruling yet".)
         //
         // DECLARED HERE, above ProtectionPatterns, and that placement is load
         // bearing: field initialisers run in textual order within a file, so a
@@ -1026,7 +1040,7 @@ namespace ScatoloneDownloader.Cube
         // alternative of its own. A permanent that "can't phase
         // in" for as long as something holds it is the O-ring shape the
         // "until" guard keeps out (The Pandorica, The Phasing of Zhalfir — 0
-        // of 2 tagged).
+        // of 2 tagged Protection).
         private static readonly Regex PhasesOthersOut = Rx(
             @"target [\w ,]{0,35}(?:creatures|permanents?)[\w ,]{0,25} phases? out(?![^\n]{0,20}until)(?![^\n]{0,25}\bcan'?t phase in)");
 
@@ -1300,7 +1314,7 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex NeutralisesWithoutKilling = Rx(
             @"(?<!creature you (?:cast|control)[^.\n]{0,60})base power (?:and toughness )?0"
             + @"|is an? [\w ]{0,25}with base power and toughness [0-2]/"
-            // Four more read 2026-10-16, one reviewed card each, tagged and
+            // Three more read 2026-10-16, one reviewed card each, tagged and
             // never proposed: an Aura's "OTHERWISE, it has base power and
             // toughness 1/1" (Burden of Proof, a pump only for your own
             // Detectives); a target of theirs that "loses all abilities UNTIL
@@ -1349,7 +1363,7 @@ namespace ScatoloneDownloader.Cube
             // one target creature") and on each of theirs (Asinine Antics,
             // "attached to that creature"): 3 of 3 reviewed.
             + @"|cursed role token attached to (?:that creature|(?:up to one )?target creature(?! you control))"
-            // Three more read the same day, one reviewed card each, tagged and
+            // Four more read the same day, one reviewed card each, tagged and
             // never proposed: a creature that BECOMES a 1/1 and loses all
             // abilities (Hunted by The Family); one exiled until ITS
             // CONTROLLER's next end step, a whole turn of theirs (The Eternal
@@ -1497,10 +1511,11 @@ namespace ScatoloneDownloader.Cube
             // reviewed cards carry the word and 18 are tagged; of the six that
             // are not, three put the counter on THEMSELVES as a drawback
             // (Tonberry, Baloth Prime, Ambling Stormshell — see
-            // StunsItselfAsADrawback), one is an attack trigger (Vengeful
-            // Villagers, read by TapsOnItsOwnAttack), and two hang it off a
-            // bigger effect as a rider (Kitnap steals the creature it stuns,
-            // Magmatic Hellkite stuns the land it just made an opponent fetch).
+            // StunsItselfAsADrawback), one is a stun bought on its own attack
+            // (Vengeful Villagers, read by StunBoughtOnItsOwnAttack), and two
+            // hang it off a bigger effect as a rider (Kitnap steals the creature
+            // it stuns, Magmatic Hellkite stuns the land it just made an
+            // opponent fetch).
             Rx(@"stun counters? on (?!it\b|this )"),
             // "On it" is the victim too when the card named one first, read
             // 2026-10-13: Trap the Trespassers ("a creature you don't control …
@@ -1559,7 +1574,7 @@ namespace ScatoloneDownloader.Cube
         // …unless the same tap also STUNS, ruled 2026-10-13: Mjölnir taps and
         // puts a stun counter every time it attacks, which outlasts the swing
         // (Pacify); Vengeful Villagers stuns only behind a sacrifice, which is
-        // the price the next pattern blanks (not Pacify) — "Mjölnir lo fa
+        // the price StunBoughtOnItsOwnAttack blanks (not Pacify) — "Mjölnir lo fa
         // sempre, i Villagers solo dietro un costo".
         // "Attacks ALONE" is the same trigger (Imperial Subduer, untagged; read
         // 2026-10-27).
@@ -1639,7 +1654,7 @@ namespace ScatoloneDownloader.Cube
         // too, is left as it is.
         private static readonly Regex PhasesOutYourOwn = Rx(@"target creatures? you control phases? out");
 
-        private static readonly Regex[] PacifyPatterns = [AnyUntapLock, PreventsWhatACreatureDeals, .. PacifyOutward];
+        private static readonly Regex[] PacifyPatterns = [AnyUntapLock, .. PacifyOutward];
 
         // See the two guards these feed, down in Classify.
         // Shared by Wipe and Removal: an answer that can only ever touch what is
@@ -2131,10 +2146,12 @@ namespace ScatoloneDownloader.Cube
 
         // A mana ability that costs nothing but the tap is a mana SOURCE: the
         // card is Ramp, and the colour it happens to make is a property of the
-        // source rather than a service it performs for you. Pay something on top
-        // — mana, a life, the tap of another permanent — and it converts colour
-        // instead of making it, which IS the job: Celestial Prism, Mana Prism,
-        // Standing Stones, Gene Pollinator. Measured 2026-09-18 over the 5,035
+        // source rather than a service it performs for you. Pay MANA on top and
+        // it converts colour instead of making it, which IS the job: Celestial
+        // Prism, Mana Prism, Standing Stones. (Until 2026-09-29 any price on
+        // top converted — a life, the tap of another permanent, Gene Pollinator;
+        // ruled that day "solo il mana converte", ManaFixing.md, and
+        // ActivatedAdd below enforces it.) Measured 2026-09-18 over the 5,035
         // reviewed cards: a bare {T} for any colour was tagged 2 of 28 (7.1%),
         // the same line behind a cost 11 of 12 (91.7%); for a choice of two
         // colours, 0 of 3 against 6 of 6. Worth 21 on its own.
@@ -2250,8 +2267,8 @@ namespace ScatoloneDownloader.Cube
         // Asked per ability, with modal bullets read on their own when they
         // carry their own trigger (Hollowmurk Siege's "Abzan — Whenever you
         // attack"). Only the pumps THIS reading recognises are judged: a double
-        // strike grant, a base P/T or a doubling is left standing, and the
-        // strip-and-re-ask at the end lets it keep the tag.
+        // strike grant or a base P/T is left standing, and the strip-and-re-ask
+        // at the end lets it keep the tag.
         private static readonly Regex PumpNumbers = Rx(
             @"\bgets? \+(?<a>\d+|x)/\+(?<b>\d+|x)|\bgets? \+(?<a>\d+|x)/[-+]0\b|\bgets? [-+]0/\+(?<b>\d+|x)");
 
@@ -2276,9 +2293,6 @@ namespace ScatoloneDownloader.Cube
         // on a creature entering (Charmed Clothier, Redtooth Genealogist) not.
         private static readonly Regex GivesARole = Rx(
             @"create (?:a|an) (?:monster|royal|sorcerer|virtuous|wicked|young hero) role tokens? attached to");
-
-        private static readonly Regex PumpDoubles = Rx(
-            @"double (?:target creature's|that creature's|the) power|double the number of \+1/\+1 counters");
 
         // "Enters with" is bare on purpose: the card's own counters are written
         // "Ghave enters with five +1/+1 counters on it" as often as "this

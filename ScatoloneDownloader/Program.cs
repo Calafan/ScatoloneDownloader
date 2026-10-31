@@ -17,7 +17,7 @@ namespace ScatoloneDownloader
                 config.SetInterceptor(new OutputPathInterceptor());
 
                 config.AddCommand<AllCommand>("all")
-                    .WithDescription("Download all unique-artwork cards, grouped by released year and set.");
+                    .WithDescription("Download one printing per card under the library rules (unique artwork with --no-rules), grouped by released year and set.");
 
                 config.AddCommand<SetCommand>("set")
                     .WithDescription("Download the given set codes.");
@@ -44,7 +44,7 @@ namespace ScatoloneDownloader
                     .WithDescription("Write the cube statistics (Markdown and HTML, the /stats page frozen) from the library root and its metadata.");
 
                 config.AddCommand<RestoreCommand>("restore")
-                    .WithDescription("Rebuild an image folder from the metadata directory + Scryfall bulk data.");
+                    .WithDescription("Rebuild the library (<year>\\<set>\\<Name>.png, as sync lays it out) from the metadata directory + Scryfall bulk data.");
 
                 config.AddCommand<MakeListCommand>("make-list")
                     .WithDescription("Write a download list (for the `files` command) of the pool (rating 3-5) from the metadata directory, with Banned/Token/Jolly in their own sections.");

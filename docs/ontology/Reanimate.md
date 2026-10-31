@@ -15,14 +15,15 @@ and stays untagged.
 A TOKEN COPY of a creature card in a graveyard is not the card itself, but what lands on the table
 is the same thing (Cursecloth Wrappings' embalm, Ardyn, Coiling Rebirth). And a LAND out of the
 graveyard is not this tag (7 reviewed cards put one back and only 1 carried it) — nor Ramp, measured
-2026-09-29 at 1 of 8 (Lumra the one): the human files it under Regrowth (Undergrowth Recon) or
-nothing. Vetoing the card that claws ITSELF out — unearth, escape, sarcophagus, "{B}: Return this
-card from your graveyard to the battlefield", a death trigger that returns it — was measured and
-rejected on 09-19 (16 of 21 untagged, 7 points of recall) and RULED IN on 2026-10-13: "mai
-Reanimate" for a card returning or casting itself (Helbrute, Wave of Rats, Lunar Hatchling named; 22
-more realigned and handed back: Balustrade Wurm, Bloodfeather Phoenix, Necrosavant, Skeleton Crew
-…). Asked of Regrowth too the same day: a card returning itself to HAND is not Regrowth either ("Mai
-Regrowth (come Reanimate)").
+2026-09-29 at 1 of 8 (Lumra the one): the human files it under Regrowth or nothing (Undergrowth
+Recon was handed back without the Regrowth tag on 2026-10-16; Ramp only if the card filled the
+graveyard itself, ruled 2026-10-13, Ramp.md). Vetoing the card that claws ITSELF out — unearth,
+escape, sarcophagus, "{B}: Return this card from your graveyard to the battlefield", a death trigger
+that returns it — was measured and rejected on 09-19 (16 of 21 untagged, 7 points of recall) and
+RULED IN on 2026-10-13: "mai Reanimate" for a card returning or casting itself (Helbrute, Wave of
+Rats, Lunar Hatchling named; 22 more realigned and handed back: Balustrade Wurm, Bloodfeather
+Phoenix, Necrosavant, Skeleton Crew …). Asked of Regrowth too the same day: a card returning itself
+to HAND is not Regrowth either ("Mai Regrowth (come Reanimate)").
 
 Read 2026-10-13, every wording tagged by hand on the reviewed cards that say it: a long list before
 "from", "OF your graveyard" (Shallow Grave), a PUT of a described or PERMANENT card, the Aura that

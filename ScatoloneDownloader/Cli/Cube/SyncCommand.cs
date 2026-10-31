@@ -56,14 +56,12 @@ namespace ScatoloneDownloader.Cli.Cube
             List<Card> bulk = await manager.GetDefaultCards();
 
             // The same selection `all` and `years` make under the library rules.
-            List<Card> selected = LibrarySelector.Select(bulk, reprints: false, tokens: false, lands: false, releasedBy: DateTime.Today);
+            List<Card> selected = LibrarySelector.LibraryPicks(bulk);
 
             // The library layout is <Source>\<year>\<set>\<Name>.png, with no mode
             // sub-folder, so the expected file is that path.
             OutputPaths.UseLibrary(source);
-            List<(Card Card, string ExpectedPath)> expected = [.. selected.Select(card => (
-                card,
-                Path.Combine(OutputPaths.CardDirectory(card, Mode.All, null), OutputPaths.Sanitize(card.Name) + ".png")))];
+            List<(Card Card, string ExpectedPath)> expected = [.. selected.Select(card => (card, OutputPaths.LibraryImagePath(card)))];
 
             SyncPlan plan = LibrarySync.Plan(expected, Directory.GetFiles(source, "*.png", SearchOption.AllDirectories));
 

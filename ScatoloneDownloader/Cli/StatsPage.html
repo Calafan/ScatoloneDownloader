@@ -77,18 +77,20 @@
   <span id="updated"></span>
 </header>
 <noscript><p>This report needs JavaScript: open it in a web browser.</p></noscript>
-<div id="note">Numbers are live from the tagger's memory, so they follow every change at once. The pool is the cards rated 3&ndash;5 with no status; the bench is exactly &#9733;2.</div>
+<div id="note">Numbers are live from the tagger's memory, so they follow every change at once.</div>
 <div id="viewbar">Columns:
   <button type="button" id="vMono" class="on">mono + Multi</button>
   <button type="button" id="vIdentity">colour incl. multi</button>
 </div>
 <div id="out"></div>
 <script>
-// Frozen copy: the `report` command and the download links put the data in
+// Frozen copy: the `report` and `analyze` commands and the download links put the data in
 // window.STATS_SNAPSHOT before this script. The page then renders from it, fetches
 // nothing and links nowhere (there is no tagger to open); the live page has none.
 const SNAPSHOT = window.STATS_SNAPSHOT || null;
 let payload = null;
+// The static note; the live load adds the payload's scope to it (a frozen copy sets its own).
+const LIVE_NOTE = document.getElementById("note").textContent;
 let view = new URLSearchParams(location.search).get("view") === "identity" ? "identity" : "mono";
 
 // Plain links into the tagger, same tab, so the back button returns here with
@@ -208,22 +210,6 @@ function answersTable(tier, m) {
   return table;
 }
 
-// "n (p%)" of the non-land cards, one decimal.
-function ofNonLand(n, nonLand) {
-  return n.toLocaleString() + " (" + (nonLand > 0 ? (n * 100 / nonLand).toFixed(1) : "0.0") + "%)";
-}
-
-function creatureSummary(s) {
-  return "Creatures " + ofNonLand(s.creatures, s.nonLand)
-    + " · MV ≤ 2 " + ofNonLand(s.creaturesMv2, s.nonLand)
-    + " · aggressive 2-drops (MV ≤ 2, power ≥ 2) " + ofNonLand(s.aggressiveTwoDrops, s.nonLand)
-    + " · MV ≤ 3 with power ≥ 3 " + ofNonLand(s.mvThreePowerThree, s.nonLand)
-    + " · evasive " + ofNonLand(s.evasive, s.nonLand)
-    + " · haste " + ofNonLand(s.haste, s.nonLand)
-    + " · defender " + ofNonLand(s.defender, s.nonLand)
-    + " (percent of non-land)";
-}
-
 // The cost table of the creature profile. Only the Creatures cell opens the
 // tagger (type=Creature, one cost bucket); evasive/haste/defender have no
 // tagger filter, so they stay plain numbers.
@@ -285,9 +271,6 @@ function curveTable(tier, curve) {
   return table;
 }
 
-const BUCKETS = ["0", "1", "2", "3", "4", "5", "6_Plus"];
-const bucketLabel = b => b === "6_Plus" ? "6+" : b;
-
 function plainHead(labels) {
   const tr = el("tr");
   labels.forEach(t => tr.appendChild(el("th", null, t)));
@@ -305,53 +288,43 @@ function groupRow(label, span) {
   return tr;
 }
 
-// The pool's global distribution by type and cost. Not part of the mono/identity
+// A tier's global distribution by type and cost. Not part of the mono/identity
 // toggle: the rows are macro types. The shares of the cost cells are of the row.
 function typesTable(tier, o) {
   const all = o.nonLand + o.lands;
   const table = el("table");
-  table.appendChild(plainHead(["Type", "Cards", ...BUCKETS.map(bucketLabel)]));
+  table.appendChild(plainHead(["Type", "Cards", ...payload.buckets.map(b => b.label)]));
   const body = el("tbody");
 
   o.types.forEach(t => {
     const tr = el("tr");
     tr.appendChild(el("td", null, t.label));
     tr.appendChild(countCell(t.cards, all, link(tier, "", "", "", t.macro), null));
-    BUCKETS.forEach(b => tr.appendChild(countCell(
-      t.byCost[b] || 0, t.cards, link(tier, "", "", "", t.macro, b), null)));
+    payload.buckets.forEach(({ key }) => tr.appendChild(countCell(
+      t.byCost[key] || 0, t.cards, link(tier, "", "", "", t.macro, key), null)));
     body.appendChild(tr);
   });
 
   const nl = el("tr", "meta");
   nl.appendChild(el("td", null, "Non-land"));
   nl.appendChild(countCell(o.nonLand, all, link(tier, "", "", "", "*nonland"), null));
-  BUCKETS.forEach(b => nl.appendChild(countCell(
-    o.curveTotal[b] || 0, o.nonLand, link(tier, "", "", "", "*nonland", b), null)));
+  payload.buckets.forEach(({ key }) => nl.appendChild(countCell(
+    o.curveTotal[key] || 0, o.nonLand, link(tier, "", "", "", "*nonland", key), null)));
   body.appendChild(nl);
 
   // Lands carry no mana value in the analysis, so their cost cells stay empty.
   const ln = el("tr", "meta");
   ln.appendChild(el("td", null, "Lands"));
   ln.appendChild(countCell(o.lands, all, link(tier, "", "", "", "Land"), null));
-  BUCKETS.forEach(() => ln.appendChild(el("td", "zero", "–")));
+  payload.buckets.forEach(() => ln.appendChild(el("td", "zero", "–")));
   body.appendChild(ln);
 
   table.appendChild(body);
   return table;
 }
 
-function typesNote(o) {
-  const pct = n => o.nonLand > 0 ? Math.round(n * 100 / o.nonLand) : 0;
-  return (o.nonLand + o.lands).toLocaleString() + " cards: " + o.nonLand.toLocaleString() + " non-land + "
-    + o.lands.toLocaleString() + " lands · permanents " + o.permanents.toLocaleString() + " (" + pct(o.permanents) + "%)"
-    + " · spells " + o.spells.toLocaleString() + " (" + pct(o.spells) + "%) of non-land"
-    + " · average mana value " + o.averageMv.toFixed(2) + " (lands excluded)"
-    + " · pip density " + o.pipDensity.toFixed(2) + " (coloured pips per non-land card)"
-    + " · cards per colour: the Non-land row of “effects by colour”, with “colour incl. multi”";
-}
-
 // The pool by exact colour category, in the analyzer's groups. A category's colour
-// filter is its view folder name; the Total row has none. Shares: the type and star
+// filter is its category name ("2 Azorius"); the Total row has none. Shares: the type and star
 // cells of the row's own cards, Cards of the tier's non-land, Lands of the tier's lands.
 // The bench is ★2 by definition, so its table drops the ★3/★4/★5 columns.
 function categoriesTable(tier, o, withStars) {
@@ -396,7 +369,7 @@ function categoriesTable(tier, o, withStars) {
 // which is the row's cards (or creatures) and links with the colour alone.
 function costByCategoryTable(tier, o, byCost, count, type) {
   const table = el("table");
-  table.appendChild(plainHead(["Category", ...BUCKETS.map(bucketLabel), "Total"]));
+  table.appendChild(plainHead(["Category", ...payload.buckets.map(b => b.label), "Total"]));
   const body = el("tbody");
 
   const addRow = (r, cls) => {
@@ -404,7 +377,7 @@ function costByCategoryTable(tier, o, byCost, count, type) {
     const n = count(r);
     const tr = el("tr", cls);
     tr.appendChild(el("td", null, r.name));
-    BUCKETS.forEach(b => tr.appendChild(countCell(byCost(r)[b] || 0, n, link(tier, c, "", "", type, b), null)));
+    payload.buckets.forEach(({ key }) => tr.appendChild(countCell(byCost(r)[key] || 0, n, link(tier, c, "", "", type, key), null)));
     tr.appendChild(countCell(n, n, link(tier, c, "", "", type), null));
     body.appendChild(tr);
   };
@@ -412,7 +385,7 @@ function costByCategoryTable(tier, o, byCost, count, type) {
   o.groups.forEach(g => {
     const rows = g.rows.filter(r => count(r) > 0);
     if (rows.length === 0) return;
-    body.appendChild(groupRow(g.label, BUCKETS.length + 2));
+    body.appendChild(groupRow(g.label, payload.buckets.length + 2));
     rows.forEach(r => addRow(r, null));
   });
   addRow(o.total, "meta");
@@ -430,36 +403,36 @@ function section(title, table, note) {
   out.appendChild(wrap);
 }
 
+// One section's table, by the payload's kind and tier. An unknown kind has no table.
+function sectionTable(s) {
+  const bench = s.tier === "bench";
+  const tier = bench ? payload.bench : payload.pool;
+  const o = bench ? payload.benchOverview : payload.overview;
+  switch (s.kind) {
+    case "types": return typesTable(tier, o);
+    case "categories": return categoriesTable(tier, o, !bench);
+    case "manaValue": return costByCategoryTable(tier, o, r => r.byCost, r => r.cards, "*nonland");
+    case "creatureManaValue": return costByCategoryTable(tier, o, r => r.creatureByCost, r => r.creatures, "Creature");
+    case "effects": return matrixTable(tier, tier[view]);
+    case "answers": return answersTable(tier, tier[view]);
+    case "creatures": return creaturesTable(tier);
+    case "curve": return curveTable(tier, tier.creatures[view === "identity" ? "curveIdentity" : "curveMono"]);
+    default: return null;
+  }
+}
+
 function render() {
   document.getElementById("vMono").className = view === "mono" ? "on" : "";
   document.getElementById("vIdentity").className = view === "identity" ? "on" : "";
   const out = document.getElementById("out");
   out.innerHTML = "";
   if (!payload) return;
-  const pm = payload.pool[view];
-  const o = payload.overview;
-  const P = payload.pool.label;
-  const bench = payload.bench;
-  const bm = bench ? bench[view] : null;
-  const bo = payload.benchOverview;
-  const key = view === "identity" ? "curveIdentity" : "curveMono";
-  section(P + " — global distribution", typesTable(payload.pool, o), typesNote(o));
-  section(P + " — by colour category", categoriesTable(payload.pool, o, true), "Exact colour identity; a land counts only under Lands.");
-  section(P + " — mana value by colour category",
-    costByCategoryTable(payload.pool, o, r => r.byCost, r => r.cards, "*nonland"));
-  section(P + " — creature mana value by colour category",
-    costByCategoryTable(payload.pool, o, r => r.creatureByCost, r => r.creatures, "Creature"));
-  section(P + " — effects by colour", matrixTable(payload.pool, pm));
-  section(P + " — answers vs targets", answersTable(payload.pool, pm));
-  if (bench) {
-    section("Bench (★2) — by colour category", categoriesTable(bench, bo, false), "Exact colour identity; a land counts only under Lands.");
-    section("Bench (★2) — mana value by colour category",
-      costByCategoryTable(bench, bo, r => r.byCost, r => r.cards, "*nonland"));
-    section("Bench (★2) — available by effect and colour", matrixTable(bench, bm));
-  }
-  section(P + " — creatures by cost", creaturesTable(payload.pool), creatureSummary(payload.pool.creatures.summary));
-  section(P + " — creature curve by colour", curveTable(payload.pool, payload.pool.creatures[key]));
-  if (bench) section("Bench (★2) — creature curve by colour", curveTable(bench, bench.creatures[key]));
+  document.getElementById("vMono").textContent = payload.viewNames.mono;
+  document.getElementById("vIdentity").textContent = payload.viewNames.identity;
+  payload.sections.forEach(s => {
+    const table = sectionTable(s);
+    if (table) section(s.title, table, s.note);
+  });
 }
 
 async function load() {
@@ -473,6 +446,7 @@ async function load() {
     if (!r.ok) throw new Error("HTTP " + r.status);
     payload = await r.json();
     document.getElementById("err").hidden = true;
+    document.getElementById("note").textContent = LIVE_NOTE + " " + payload.scope;
     document.getElementById("updated").textContent = "updated " + new Date().toLocaleTimeString([], { hour12: false });
     render();
   } catch (e) {

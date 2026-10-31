@@ -12,7 +12,8 @@ namespace ScatoloneDownloader.Cube
     /// confirms every suggestion in the tagger (the classifier never stamps
     /// <c>reviewedAt</c>). The rule table is a plain list of
     /// <c>(effect, regex...)</c> so it is easy to extend as gaps surface; each
-    /// pattern is matched case-insensitively against the lower-cased oracle text.
+    /// pattern is matched against the oracle text as printed; most patterns are built
+    /// with <c>Rx</c> (which adds IgnoreCase), a few with <c>new Regex</c> are case-sensitive on purpose.
     /// Not an oracle of truth — a starting point that turns "tag 30k from scratch"
     /// into "review suggestions".
     /// </summary>
@@ -85,7 +86,7 @@ namespace ScatoloneDownloader.Cube
 
         // The subjects that make an effect land on something OTHER than the card
         // writing it. Looked for in the text preceding a Buff/Protection match on
-        // the same line — see GrantedToSomethingElse.
+        // the same line — see Beneficiary and AimsOnlyAtItself.
         //
         // "<noun> you control" has to stay open-ended: the beneficiary is any
         // type line the card cares to name (Wizards, Merfolk, creature tokens,
@@ -235,8 +236,9 @@ namespace ScatoloneDownloader.Cube
             {
                 result &= ~CardEffect.Ramp;
 
-                // …unless it makes more mana than it costs, every turn. See the
-                // pattern above for why the self-sacrificing ones stay out.
+                // …unless it makes more mana than it costs, every turn. See
+                // LandTapsForMoreThanOne (Combat.cs) for why the self-sacrificing
+                // ones stay out.
                 // Entering tapped is deliberately NOT asked here, though it is
                 // asked of the sacrifice-for-mana rule below. Tried on
                 // 2026-09-18 to catch Teferi's Isle and reverted: it took the
@@ -259,7 +261,7 @@ namespace ScatoloneDownloader.Cube
             }
 
             // Added AFTER the land strip, because Crystal Vein is a land and is
-            // exactly the card this rule is for. See the patterns above.
+            // exactly the card this rule is for. See SacrificesForMana (Combat.cs).
             // A spell's mana counts when it is the spell's point, not when it
             // rides on an answer. See SpellAddsMana and AnswersARitualRidesOn.
             // A land sacrificing something else for one mana is not asked. See
@@ -275,7 +277,7 @@ namespace ScatoloneDownloader.Cube
             }
 
             // The eight families ruled 2026-09-18, all after the land strip for
-            // the same reason. Each is documented on its own pattern above.
+            // the same reason. Each is documented on its own pattern in Combat.cs.
             // A trigger or a grant the card cannot fire itself is asked
             // without it (OnSomebodyElsesExplore, GrantedToTokens).
             // The table's tap rule is asked again without the grant, as it is
@@ -312,7 +314,7 @@ namespace ScatoloneDownloader.Cube
                 result |= CardEffect.Ramp;
             }
 
-            // …and mana that costs mana adds nothing. Last, so it can withdraw
+            // …and mana that costs mana adds nothing. Late, so it can withdraw
             // the tag whichever rule above granted it, and asked of the whole
             // card so that one free ability elsewhere keeps it.
             if (result.HasFlag(CardEffect.Ramp) && EveryManaAbilityIsPaidAndPoor(text))
@@ -425,15 +427,16 @@ namespace ScatoloneDownloader.Cube
             }
 
             // A shrink that takes toughness off one named creature. See the two
-            // patterns above for why the zero and the single target both matter.
+            // patterns in Combat.cs (ShrinksOneCreature, ShrinkCounters) for why the zero
+            // and the single target both matter.
             if (ShrinksOneCreature.IsMatch(text) || ShrinkCounters.IsMatch(text))
             {
                 result |= CardEffect.Removal;
             }
 
-            // Last, so it can take the tag back off whatever granted it: a card
-            // that can only answer what is already blocking it. See the pattern
-            // above; nothing else on these cards points outward.
+            // Late, so it can take the tag back off whatever granted it: a card
+            // that can only answer what is already blocking it. See
+            // OnlyWhatIsInCombatWithIt in Combat.cs; nothing else on these cards points outward.
             if (result.HasFlag(CardEffect.Removal) && OnlyWhatIsInCombatWithIt.IsMatch(text))
             {
                 result &= ~CardEffect.Removal;
@@ -517,7 +520,7 @@ namespace ScatoloneDownloader.Cube
                 }
             }
 
-            // A Wall is not a Pacify effect. See the patterns above. Unless it
+            // A Wall is not a Pacify effect. See SelfCantAttack (Combat.cs). Unless it
             // hands a lock to what it blocks (Mindbender Spores).
             if (result.HasFlag(CardEffect.Pacify) && SelfCantAttack.IsMatch(text) && !OutwardCantAttack.IsMatch(text)
                 && !GrantsAnUntapLock.IsMatch(text))
@@ -540,14 +543,15 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Pacify;
             }
 
-            // The same question one more time, for the two shapes that name a
-            // victim and still point the wrong way. See the patterns above.
+            // The same question one more time, for the three shapes that name a
+            // victim and still point the wrong way. See TapsACreatureYouControl,
+            // YourOwnCreaturesCantAttack and PhasesOutYourOwn (Combat.cs).
             if (result.HasFlag(CardEffect.Pacify) && OnlyRestrainsYourOwn(text))
             {
                 result &= ~CardEffect.Pacify;
             }
 
-            // …and the three shapes where the card is paying its own way or
+            // …and the four shapes where the card is paying its own way or
             // swinging for one turn. See OnlyACombatTrickOrItsOwnPrice.
             if (result.HasFlag(CardEffect.Pacify) && OnlyACombatTrickOrItsOwnPrice(card))
             {
@@ -563,7 +567,7 @@ namespace ScatoloneDownloader.Cube
 
             // Prevention aimed at one of your own, asked the same way: blank the
             // prevention out and see whether anything else on the card locks
-            // somebody down. See PreventionAimedAtYourOwn above.
+            // somebody down. See PreventionAimedAtYourOwn (Combat.cs).
             if (result.HasFlag(CardEffect.Pacify)
                 && PreventsWhatACreatureDeals.IsMatch(text)
                 && (PreventionAimedAtYourOwn.IsMatch(text) || TheyCanPayToIgnoreIt.IsMatch(text))
@@ -578,15 +582,16 @@ namespace ScatoloneDownloader.Cube
             // like a sweeper and only ever touches what is already in combat with
             // it — Abu Ja'far, Kjeldoran Frostbeast, the Glyph cycle. It is a
             // combat trick, and it was every false positive the widened Wipe
-            // patterns above introduced.
+            // patterns (Rules.cs) introduced.
             if (result.HasFlag(CardEffect.Wipe) && OnlyWhatIsInCombatWithIt.IsMatch(text))
             {
                 result &= ~CardEffect.Wipe;
             }
 
             // …and the sentences that sweep only what attacked or blocked, or
-            // only one creature type, plus the dexterity cards. See the three
-            // patterns above.
+            // only one creature type, plus the dexterity cards. See
+            // SweepsOnlyWhatIsInCombat, SweepsOneCreatureType and
+            // FlippedOntoTheTable (Combat.cs).
             if (result.HasFlag(CardEffect.Wipe)
                 && (FlippedOntoTheTable.IsMatch(text)
                     || !WipePatterns.Any(p => p.IsMatch(
@@ -606,7 +611,7 @@ namespace ScatoloneDownloader.Cube
                 }
             }
 
-            // Four shapes that name a player beside "discard" and attack nobody's
+            // Shapes that name a player beside "discard" and attack nobody's
             // hand. See NotAnAttackOnAHand.
             if (result.HasFlag(CardEffect.Discard))
             {
@@ -760,10 +765,10 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Burn;
             }
 
-            // Three shapes that look like selection and are not. Asked by
-            // STRIPPING and re-asking, the same way the draw guard is, so that a
-            // card which cloaks on one line and surveils on another keeps the
-            // tag it earned on the second. See the three patterns for the
+            // Shapes that look like selection and are not. Asked by STRIPPING and
+            // re-asking, the same way the draw guard is, so that a card which
+            // cloaks on one line and surveils on another keeps the tag it earned
+            // on the second. See WithoutFalseSelection for the patterns, the
             // rulings and the cards each was read from.
             if (result.HasFlag(CardEffect.Filter))
             {
@@ -775,7 +780,7 @@ namespace ScatoloneDownloader.Cube
                 }
             }
 
-            // Card parity dressed as card advantage. See the three patterns above
+            // Card parity dressed as card advantage. See the patterns named below
             // for which ruling each one follows from.
             //
             // The LOOT is asked of the card with somebody else's discard blanked
@@ -814,7 +819,7 @@ namespace ScatoloneDownloader.Cube
             }
 
             // …unless the loot can be counted and comes out ahead. See
-            // DrawsThenDiscards above for why this is added back rather than
+            // DrawsThenDiscards (Cards.cs) for why this is added back rather than
             // written into the guard.
             if (LootDrawsMoreThanItPays(text))
             {
@@ -837,7 +842,9 @@ namespace ScatoloneDownloader.Cube
             // net gain, so the moment the count is provably positive the card
             // belongs to CardAdvantage alone — Casting of Bones and Emmessi Tome
             // were carrying both.
-            // Nothing withdraws Filter. The two tags are NOT exclusive, ruled
+            // OVERTURNED 2026-09-27: the two tags are EXCLUSIVE once the count is
+            // provably positive, see the withdrawal further down. Until then
+            // nothing withdrew Filter and the tags were NOT exclusive, ruled
             // 2026-09-19: a card that selects AND comes out ahead carries both,
             // because it really did both. Casting of Bones draws three and
             // keeps two, which is a card gained and a choice made. An earlier
@@ -847,7 +854,8 @@ namespace ScatoloneDownloader.Cube
 
             // The top few of your library, one of them into your hand, over and
             // over. See TopFewIntoYourHand for the ruling and the measurement,
-            // and note that nothing withdraws Filter: the card really did select.
+            // and note that this rule does not itself withdraw Filter (the
+            // 2026-09-27 exclusivity further down may, once CardAdvantage is set).
             // Explore's reminder is not asked (see Explores).
             if (Abilities(ExploreReminder.Replace(text, " ")).Any(a =>
                     (TopFewIntoYourHand.IsMatch(a) || SearchesSeveralIntoYourHand.IsMatch(a))
@@ -1011,7 +1019,7 @@ namespace ScatoloneDownloader.Cube
             // Added AFTER that gate, not folded into BuffPatterns: the gate reads
             // the text BEFORE a match for its subject, and a counter names its
             // beneficiary after ("put a +1/+1 counter ON target creature"), so it
-            // would be stripped every time. See the patterns above.
+            // would be stripped every time. See CounterOnSomebodyElse (Combat.cs).
             // A Role and a quoted pump handed to an equipped creature join them
             // for the same reason. See HandsSomebodyElseAPump.
             if (HandsSomebodyElseAPump(text))
@@ -1019,9 +1027,9 @@ namespace ScatoloneDownloader.Cube
                 result |= CardEffect.Buff;
             }
 
-            // Last, so it can take the tag back off whichever rule granted it:
-            // a card whose ONLY pump is restricted to one creature type. See the
-            // patterns above; the "only" is why the tribal phrases are blanked and
+            // Late, so it can take the tag back off whichever rule granted it:
+            // a card whose ONLY pump is restricted to one creature type. See
+            // TribalPump (Combat.cs); the "only" is why the tribal phrases are blanked and
             // the question asked again rather than tested in place.
             if (result.HasFlag(CardEffect.Buff)
                 && (OnlyPumpsATribe(text) || OnlyPumpsInsideQuotes(text) || OnlyPumpsItsOwnCopies(card, text)))
@@ -1077,19 +1085,23 @@ namespace ScatoloneDownloader.Cube
 
             // PHASING OUT earns BOTH tags, ruled 2026-09-22 — "puoi usarlo sia
             // sull'opponent per prendere tempo che su di te per salvare
-            // qualcosa". Added here for the same reason prevention is: the
-            // clause names its victim INSIDE the match ("TARGET creature
-            // phases out"), so there is nothing in front of it for the
-            // self-versus-other gate to inspect and that gate was stripping it.
+            // qualcosa". This block adds Protection (the Pacify half comes from
+            // PhasesSomethingOut in the Pacify table). Added here for the same
+            // reason prevention is: the clause names its victim INSIDE the match
+            // ("TARGET creature phases out"), so there is nothing in front of it
+            // for the self-versus-other gate to inspect and that gate was
+            // stripping it.
             if (PhasesSomethingOut.IsMatch(text) || PhasesAnArtifactOut.IsMatch(text) || PhasesOthersOut.IsMatch(text))
             {
                 result |= CardEffect.Protection;
             }
 
             // The families ruled 2026-09-28 — regeneration, a blink that saves,
-            // a shield counter — and the three shapes read the same day. Each
-            // names its beneficiary inside the match, so, like prevention, they
-            // are added here after the self gate; each must be held up.
+            // a shield counter — and the shapes read the same day or after
+            // (SavesFromDeathOrDamage, UmbraArmor, PhasesYourPermanentsOut,
+            // BackupGrantsAShield, ReturnsWhatDiedThisTurn, ShieldsAnAreaStatically).
+            // Each names its beneficiary inside the match, so, like prevention,
+            // they are added here after the self gate; each must be held up.
             if (HeldUp(card, RegeneratesATribe.Replace(protectable, " "), RegeneratesSomebody)
                 || HeldUp(card, protectable, BlinksToSave, onlyInResponse: true)
                 || HeldUp(card, protectable, ShieldCounterOnSomebody)
@@ -1229,7 +1241,7 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Filter;
             }
 
-            // LAST of all, because B2 asks whether the card does anything else:
+            // Late, because B2 asks whether the card does anything else:
             // a small pump at instant speed is Buff only when it IS the card.
             // Ruled 2026-09-25; see EveryPumpIsBesideThePoint.
             if (result.HasFlag(CardEffect.Buff) && EveryPumpIsBesideThePoint(card, result & ~CardEffect.Buff))

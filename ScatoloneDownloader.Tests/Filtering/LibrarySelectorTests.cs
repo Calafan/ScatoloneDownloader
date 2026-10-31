@@ -625,31 +625,11 @@ public sealed class LibrarySelectorTests
         List<string>? games = null,
         string language = "en")
     {
-        JsonCard json = new()
-        {
-            Id = id,
-            Name = name,
-            OracleId = oracle,
-            Language = language,
-            ReleasedAt = released,
-            Layout = layout,
-            TypeLine = typeLine,
-            Games = games ?? ["paper"],
-            FrameEffects = frameEffects ?? [],
-            Variation = variation,
-            Textless = textless,
-            Reprint = reprint,
-            Set = "set",
-            SetName = setName,
-            SetType = setType,
-            BorderColor = borderColor,
-            CollectorNumber = collector,
-            PromoTypes = promoTypes,
-            Legalities = legalities,
-            ImageUris = new JsonImageUris { Png = "https://test/img.png" },
-            CardFaces = firstFaceOracle.Length > 0 ? [new JsonCardFace { OracleId = firstFaceOracle }] : null,
-        };
-
-        return Card.CreateCard(json);
+        return Card.CreateCard(TestCards.Json(
+            name, typeLine, cmc: 0, id: id, oracleId: oracle, set: "set", setName: setName, setType: setType,
+            releasedAt: released, layout: layout, language: language, borderColor: borderColor,
+            collectorNumber: collector, reprint: reprint, variation: variation, textless: textless,
+            games: games, frameEffects: frameEffects, promoTypes: promoTypes, legalities: legalities,
+            faces: firstFaceOracle.Length > 0 ? [new JsonCardFace { OracleId = firstFaceOracle }] : null));
     }
 }

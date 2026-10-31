@@ -227,6 +227,15 @@ namespace ScatoloneDownloader.Filtering
         }
 
         /// <summary>
+        /// The printings <c>all</c> and <c>years</c> download under the library rules, as of
+        /// today: one per card, no reprints, tokens or basic lands.
+        /// </summary>
+        internal static List<Card> LibraryPicks(IEnumerable<Card> bulk)
+        {
+            return Select(bulk, reprints: false, tokens: false, lands: false, releasedBy: DateTime.Today);
+        }
+
+        /// <summary>
         /// Library rules ON. Drops excluded cards; with <paramref name="reprints"/> returns
         /// every eligible printing; otherwise keeps every eligible basic land plus one
         /// printing per card (the best strict rank among the eligible, else the

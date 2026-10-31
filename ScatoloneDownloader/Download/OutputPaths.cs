@@ -18,9 +18,9 @@ namespace ScatoloneDownloader.Download
 
         /// <summary>When set (by <c>sync</c>), the <see cref="Mode.All"/> and <see cref="Mode.Years"/>
         /// paths are built straight inside this library
-        /// (<c>LibraryRoot/year/set</c>, no mode sub-folder). Never part of
+        /// (<c>LibrarySource/year/set</c>, no mode sub-folder). Never part of
         /// <see cref="BasePaths"/>, so <c>--clear</c> cannot touch it.</summary>
-        internal static string? LibraryRoot { get; private set; }
+        internal static string? LibrarySource { get; private set; }
 
         private static readonly IReadOnlyDictionary<Mode, string> SubFolders = new Dictionary<Mode, string>
         {
@@ -40,19 +40,19 @@ namespace ScatoloneDownloader.Download
             }
         }
 
-        /// <summary>Sets the <see cref="LibraryRoot"/>; ignores null/blank input.</summary>
+        /// <summary>Sets the <see cref="LibrarySource"/>; ignores null/blank input.</summary>
         internal static void UseLibrary(string? dir)
         {
             if (!string.IsNullOrWhiteSpace(dir))
             {
-                LibraryRoot = dir;
+                LibrarySource = dir;
             }
         }
 
-        /// <summary>Clears the <see cref="LibraryRoot"/> (tests restore it with this).</summary>
+        /// <summary>Clears the <see cref="LibrarySource"/> (tests restore it with this).</summary>
         internal static void ResetLibrary()
         {
-            LibraryRoot = null;
+            LibrarySource = null;
         }
 
         /// <summary>The base folder for a mode, under the configured <see cref="Root"/>.</summary>
@@ -96,8 +96,8 @@ namespace ScatoloneDownloader.Download
         /// <see cref="BuildCardDirectory"/> creates and returns.</summary>
         internal static string CardDirectory(Card card, Mode mode, string? fileName)
         {
-            bool inLibrary = LibraryRoot != null && mode is Mode.All or Mode.Years;
-            string path = inLibrary ? LibraryRoot! : BasePath(mode);
+            bool inLibrary = LibrarySource != null && mode is Mode.All or Mode.Years;
+            string path = inLibrary ? LibrarySource! : BasePath(mode);
 
             switch (mode)
             {
@@ -138,6 +138,18 @@ namespace ScatoloneDownloader.Download
             }
 
             return path;
+        }
+
+        /// <summary>The file a card's image has in the library set by <see cref="UseLibrary"/>:
+        /// <c>LibrarySource\year\set\Name.png</c>, the path <c>sync</c> expects and <c>restore</c> writes.</summary>
+        internal static string LibraryImagePath(Card card)
+        {
+            if (LibrarySource == null)
+            {
+                throw new InvalidOperationException("UseLibrary must be called before LibraryImagePath.");
+            }
+
+            return Path.Combine(CardDirectory(card, Mode.All, null), Sanitize(card.Name) + ".png");
         }
     }
 }

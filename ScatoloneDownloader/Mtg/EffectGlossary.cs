@@ -1,12 +1,12 @@
 ﻿namespace ScatoloneDownloader.Mtg
 {
     /// <summary>
-    /// One short line per <see cref="CardEffect"/>, shown as the tooltip on the
-    /// tagger's effect buttons.
+    /// One short line per <see cref="CardEffect"/>, shown in the hint box above
+    /// the tagger's effect buttons and as the tooltip on the stats page's effect names.
     /// <para>
-    /// The rulings live in <see cref="CardEffect"/>'s own comments, but those are
-    /// paragraphs and they are in the source tree — which is exactly where they
-    /// are no use, because the moment a ruling is needed is the moment a card is
+    /// The rulings live in docs/ontology/ (one file per <see cref="CardEffect"/>
+    /// member), but those are paragraphs and they are in the source tree — which
+    /// is exactly where they are no use, because the moment a ruling is needed is the moment a card is
     /// on screen and a key is about to be pressed. Tagging tens of thousands of
     /// cards is repetitive, and the slips it produces (a self-pump tagged Buff, a
     /// self-mill tagged Mill) are all cases where the boundary was known and not
@@ -29,7 +29,7 @@
                 + "once or a repeating effect. A Treasure, Clue or Food is no body.",
 
             [CardEffect.Removal] =
-                "Answers ONE creature: destroy, exile, damage however counted, fight, an edict (one each, a "
+                "Answers ONE creature/planeswalker: destroy, exile, damage however counted, fight, an edict (one each, a "
                 + "punisher), INTO a library, made a Treasure, or ANY toughness malus (\"+2/-1\"). Not YOUR OWN, a "
                 + "creature TYPE, a BLINK, a GRAVEYARD card, \"-2/-0\" (Pacify), \"each creature\" (Wipe), a "
                 + "token's 1-point ping, or what only touches its blocker.",
@@ -75,22 +75,22 @@
                 + "discard.",
 
             [CardEffect.CardAdvantage] =
-                "A card the opponent does not get. COUNT IT — the card ITSELF counts: Ponder nets 0. A one-shot "
-                + "must draw two more than it pays; a REPEATABLE ability needs one, even paid with a card or a "
-                + "permanent, even THEIR card. Two off and ONE played is Filter; both only on two abilities. "
-                + "Not THEIR draw, a tribe's graveyard, an unreachable trigger.",
+                "A card the opponent does not get. COUNT the card ITSELF: Ponder nets 0. A one-shot "
+                + "must draw two more than it pays; a REPEATABLE ability needs one, even paid with a card or "
+                + "permanent, even THEIR card. Two off, ONE played: Filter unless it repeats; both only on two "
+                + "abilities. Not THEIR draw, a tribe's graveyard, an unreachable trigger.",
 
             [CardEffect.Filter] =
                 "Cards changing places at NO net gain: keep one of a few seen, milled or revealed, rearrange "
-                + "ANY player's top, a wheel, hideaway, a scry LAND, a loot SPELL, a scry, loot, Blood or Map that "
-                + "comes AGAIN. Not one made ONCE in passing, nor a LAND kept (ManaFixing), nor a CLOAK. With "
-                + "CardAdvantage only on its own repeating ability, or hideaway.",
+                + "ANY player's top, a wheel, a scry LAND, a loot SPELL, a scry, loot, Blood or Map that "
+                + "comes AGAIN. Not one made ONCE, a LAND kept (ManaFixing) or a CLOAK. With "
+                + "CardAdvantage only on its own repeating ability, hideaway or a planeswalker's loot.",
 
             [CardEffect.Reanimate] =
-                "A creature back from the dead and straight onto the BATTLEFIELD, cheating its cost. A card this card "
-                + "EXILED counts, and so does a token copy of one in a graveyard. Not a card bringing ITSELF back, "
-                + "one put back for somebody ELSE, or one only a creature TYPE can use. Blinking your OWN creature "
-                + "is protection; a land back is Ramp.",
+                "A creature back from the dead straight onto the BATTLEFIELD, its cost cheated. A card it "
+                + "EXILED counts, as does a token copy of one in a graveyard. Not a card bringing ITSELF back, "
+                + "one put back for somebody ELSE, or one for a creature TYPE only. Blinking your OWN creature: "
+                + "Protection; a land is Ramp only if this card filled the graveyard.",
 
             [CardEffect.Buff] =
                 "Raises POWER/TOUGHNESS for something else, when that is what the card is FOR: permanent, over an "
@@ -102,7 +102,7 @@
                 "Keeps something ELSE alive, held up in response or over an AREA: a keyword shield, prevention, "
                 + "redirection, regeneration, a saving blink or unsummon, a shield counter, phasing. Not one "
                 + "creature's static, conditional or Aura/Equipment shield, a tribe's, a fog, its own, nor "
-                + "damage a creature DEALS or aimed at YOU (Pacify).",
+                + "damage a creature DEALS or REPEATING prevention to YOU (Pacify).",
 
             [CardEffect.Burn] =
                 "Damage or life loss aimed at a FACE, however counted and however slow: \"damage equal to the number "
@@ -130,8 +130,8 @@
             [CardEffect.ManaFixing] =
                 "Fixes colours: a choice paid in MANA, any landcycling, a land with two abilities, a land fetched "
                 + "to HAND or kept from a few milled, a Treasure of YOURS. Free for a tap, a life, a sacrifice or a trigger "
-                + "is just Ramp (Birds), unless it's a land. Not a land put onto the battlefield, not restricted "
-                + "mana unless a land makes it.",
+                + "is just Ramp (Birds), unless it's a land. A land onto the battlefield only if a LAND fetched it, "
+                + "restricted mana only if a land makes it.",
 
             [CardEffect.Pacify] =
                 "Neutralises somebody else's creature without killing it: tapped, stunned, phased out, kept from "

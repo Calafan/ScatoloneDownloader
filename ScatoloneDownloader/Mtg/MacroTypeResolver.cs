@@ -34,11 +34,7 @@ namespace ScatoloneDownloader.Mtg
                 return MacroType.OtherPermanent;
             }
 
-            if (typeLine.Contains("Instant", cmp) || typeLine.Contains("Sorcery", cmp))
-            {
-                return MacroType.Spell;
-            }
-
+            // Instant, Sorcery and any other type line.
             return MacroType.Spell;
         }
     }

@@ -29,9 +29,9 @@ public sealed class GetJsonLinesAsyncTests
     [Fact]
     public async Task StreamsCardsFromGzippedJsonl_OnePerLine()
     {
-        JsonCard lightning = SampleCard("Lightning Bolt", "LEA", "instant");
-        JsonCard taiga = SampleCard("Taiga", "2ED", "land", typeLine: "Basic Land — Mountain Forest");
-        JsonCard sea = SampleCard("Island", "LEA", "basic_land", typeLine: "Basic Land — Island");
+        JsonCard lightning = SampleCard("Lightning Bolt", "LEA");
+        JsonCard taiga = SampleCard("Taiga", "2ED", typeLine: "Basic Land — Mountain Forest");
+        JsonCard sea = SampleCard("Island", "LEA", typeLine: "Basic Land — Island");
 
         byte[] gzBody = GzipJsonl([lightning, taiga, sea]);
 
@@ -56,8 +56,8 @@ public sealed class GetJsonLinesAsyncTests
     public async Task ReturnsCorrectCardSubtypeBasedOnImageUrisPresence(byte marker)
     {
         JsonCard target = marker == SingleFace
-            ? SampleCard("Sol Ring", "LEB", "artifact")
-            : SampleDoubleFace("Delver of Secrets", "ISD", "creature");
+            ? SampleCard("Sol Ring", "LEB")
+            : SampleDoubleFace("Delver of Secrets", "ISD");
 
         using ScryfallClient client = new(new StubHandler(GzipJsonl([target]), HttpStatusCode.OK), _ => Task.CompletedTask);
 
@@ -82,9 +82,9 @@ public sealed class GetJsonLinesAsyncTests
     public async Task SkipsBlankLinesBetweenRecords()
     {
         byte[] body = GzipJsonl([
-            SampleCard("Alpha", "LEA", "creature"),
+            SampleCard("Alpha", "LEA"),
             null!, // blank line
-            SampleCard("Beta", "LEA", "creature"),
+            SampleCard("Beta", "LEA"),
         ]);
 
         using ScryfallClient client = new(new StubHandler(body, HttpStatusCode.OK), _ => Task.CompletedTask);
@@ -115,56 +115,22 @@ public sealed class GetJsonLinesAsyncTests
 
     // --- helpers ------------------------------------------------------------
 
-    /// <summary>Carries a type sentinel distinguishing the single-face vs
-    /// double-face factory branch in the theory above.</summary>
-
-    private static JsonCard SampleCard(
-        string name,
-        string set,
-        string layout,
-        string typeLine = "Instant")
+    /// <summary>A single-face card: art at the top level, which is what makes
+    /// the factory build a <see cref="SingleFaceCard"/>.</summary>
+    private static JsonCard SampleCard(string name, string set, string typeLine = "Instant")
     {
-        return new JsonCard
-        {
-            Name = name,
-            Language = "en",
-            ReleasedAt = "1993-08-05",
-            Layout = layout,
-            TypeLine = typeLine,
-            Games = ["paper"],
-            FrameEffects = [],
-            Reprint = false,
-            Variation = false,
-            Textless = false,
-            Set = set,
-            SetName = "Limited Edition Alpha",
-            SetType = "core",
-            BorderColor = "black",
-            Cmc = 1,
-            ImageUris = new JsonImageUris { Png = "https://test/img.png" },
-        };
+        return TestCards.Json(
+            name, typeLine, set: set, setName: "Limited Edition Alpha", setType: "core", releasedAt: "1993-08-05");
     }
 
-    private static JsonCard SampleDoubleFace(string name, string set, string layout)
+    /// <summary>A transform card: art only on the faces, so the factory builds a
+    /// <see cref="DoubleFaceCard"/>.</summary>
+    private static JsonCard SampleDoubleFace(string name, string set)
     {
-        return new JsonCard
-        {
-            Name = name,
-            Language = "en",
-            ReleasedAt = "2011-09-30",
-            Layout = layout == "creature" ? "transform" : layout,
-            TypeLine = "Creature — Insect",
-            Games = ["paper"],
-            FrameEffects = [],
-            Reprint = false,
-            Variation = false,
-            Textless = false,
-            Set = set,
-            SetName = "Innistrad",
-            SetType = "expansion",
-            BorderColor = "black",
-            Cmc = 1,
-            CardFaces = [
+        return TestCards.Json(
+            name, "Creature — Insect", set: set, setName: "Innistrad", releasedAt: "2011-09-30", layout: "transform",
+            png: null,
+            faces: [
                 new JsonCardFace
                 {
                     Name = "Delver of Secrets",
@@ -175,8 +141,7 @@ public sealed class GetJsonLinesAsyncTests
                     Name = "Insectile Aberration",
                     ImageUris = new JsonImageUris { Png = "https://test/rear.png" },
                 },
-            ],
-        };
+            ]);
     }
 
     /// <summary>

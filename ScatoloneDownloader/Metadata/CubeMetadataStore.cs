@@ -1,6 +1,4 @@
-﻿#nullable enable annotations
-
-using System.Text.Encodings.Web;
+﻿using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -115,7 +113,11 @@ namespace ScatoloneDownloader.Metadata
         /// somehow appears in more than one file (shouldn't happen from normal
         /// use — <see cref="Save"/> always partitions a card into exactly one
         /// tier — but a hand-edited directory could produce one).</summary>
-        private static readonly string[] TierFileNames = ["pool.json", "fringe.json", "unrated.json"];
+        private static readonly string[] TierFileNames = [PoolFile, FringeFile, UnratedFile];
+
+        private const string PoolFile = "pool.json";
+        private const string FringeFile = "fringe.json";
+        private const string UnratedFile = "unrated.json";
 
         private static readonly JsonSerializerOptions Options = new()
         {
@@ -128,7 +130,7 @@ namespace ScatoloneDownloader.Metadata
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
         };
 
-        /// <summary>Routes a card to its tier file by its CURRENT rating (B1),
+        /// <summary>Routes a card to its tier file by its CURRENT rating,
         /// using the shared <see cref="RatingTierClassifier"/> so the rating
         /// boundaries live in exactly one place (also read by
         /// <see cref="CardAnalyzer"/>). <see cref="RatingTier.Fringe"/> and
@@ -139,19 +141,19 @@ namespace ScatoloneDownloader.Metadata
         {
             return RatingTierClassifier.Classify(rating) switch
             {
-                RatingTier.Pool => "pool.json",
-                RatingTier.Fringe or RatingTier.Bench => "fringe.json",
-                _ => "unrated.json",
+                RatingTier.Pool => PoolFile,
+                RatingTier.Fringe or RatingTier.Bench => FringeFile,
+                _ => UnratedFile,
             };
         }
 
         /// <summary>
         /// Reads every tier file present in <paramref name="metadataDirectory"/>
         /// and merges them into one <see cref="CubeMetadata"/> keyed by
-        /// <c>oracle_id</c>. Tolerant end to end: a missing directory, a missing
-        /// individual tier file, or a blank/corrupt tier file all just contribute
-        /// nothing rather than throwing — the tagger/views should never crash on
-        /// load. If the same <c>oracle_id</c> somehow appears in more than one
+        /// <c>oracle_id</c>. A missing directory, a missing individual tier file
+        /// or a blank one contributes nothing; a tier file that is present but
+        /// corrupt THROWS <see cref="InvalidDataException"/> (see
+        /// <see cref="LoadTierFile"/>). If the same <c>oracle_id</c> somehow appears in more than one
         /// tier file, the first one encountered in <see cref="TierFileNames"/>
         /// order (pool -> fringe -> unrated) wins, so the merge is deterministic.
         /// </summary>
@@ -333,9 +335,7 @@ namespace ScatoloneDownloader.Metadata
             };
 
             string tierPath = Path.Combine(fullDirectory, tierFileName);
-            string tempPath = tierPath + ".tmp";
-            File.WriteAllText(tempPath, JsonSerializer.Serialize(ordered, Options));
-            File.Move(tempPath, tierPath, overwrite: true);
+            AtomicFile.WriteAllText(tierPath, JsonSerializer.Serialize(ordered, Options));
         }
 
         /// <summary>Orders entries by <c>(name, oracle_id)</c> ordinal and

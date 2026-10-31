@@ -4,7 +4,7 @@ using Spectre.Console.Cli;
 
 namespace ScatoloneDownloader.Cli.Download
 {
-    internal sealed class SetSettings : DownloadSettings
+    internal sealed class SetSettings : PrintingSettings
     {
         [CommandArgument(0, "<SETS>")]
         [Description("One or more set codes to download.")]

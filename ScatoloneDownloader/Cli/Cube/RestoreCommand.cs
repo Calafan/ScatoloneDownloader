@@ -10,7 +10,8 @@ using Spectre.Console.Cli;
 namespace ScatoloneDownloader.Cli.Cube
 {
     /// <summary>
-    /// Closes the disaster-recovery loop: rebuilds an image folder from nothing
+    /// Closes the disaster-recovery loop: rebuilds the library (<c>&lt;dir&gt;\&lt;year&gt;\&lt;set&gt;\&lt;Name&gt;.png</c>,
+    /// the layout <c>sync</c> checks) from nothing
     /// but the git-tracked metadata directory (see <see cref="CubeMetadataStore"/>
     /// — <see cref="CubeMetadataStore.Load"/> merges the UNION of all rating-tier
     /// files, so every card in the library is restored, not just the pool) and
@@ -23,7 +24,7 @@ namespace ScatoloneDownloader.Cli.Cube
         public sealed class Settings : MetadataSettings
         {
             [CommandOption("-i|--images <DIR>")]
-            [Description("Destination folder for the restored .png images (created if missing).")]
+            [Description("Library folder to rebuild, as <DIR>\\<year>\\<set>\\<Name>.png like sync (created if missing).")]
             public string ImagesDirectory { get; set; } = string.Empty;
 
             public override ValidationResult Validate()
@@ -56,9 +57,10 @@ namespace ScatoloneDownloader.Cli.Cube
             }
 
             AnsiConsole.MarkupLine($"[cyan]Metadata  :[/] {metadataDir} ({metadata.Cards.Count} entries)");
-            AnsiConsole.MarkupLine($"[cyan]Images dir:[/] {imagesDir}");
+            AnsiConsole.MarkupLine($"[cyan]Library   :[/] {imagesDir}");
 
             Directory.CreateDirectory(imagesDir);
+            OutputPaths.UseLibrary(imagesDir);
 
             AnsiConsole.MarkupLine("[yellow]Loading bulk data from Scryfall...[/]");
 
@@ -95,7 +97,7 @@ namespace ScatoloneDownloader.Cli.Cube
                         continue;
                     }
 
-                    string destPath = Path.Combine(imagesDir, OutputPaths.Sanitize(card.Name) + ".png");
+                    string destPath = OutputPaths.LibraryImagePath(card);
 
                     if (File.Exists(destPath))
                     {
@@ -105,14 +107,13 @@ namespace ScatoloneDownloader.Cli.Cube
 
                     try
                     {
-                        // Write to a temp file then atomically move it into place, so
-                        // an interrupted write (Ctrl-C, crash, disk full) never leaves
+                        // AtomicFile moves the finished write into place, so an
+                        // interrupted one (Ctrl-C, crash, disk full) never leaves
                         // a truncated .png that the skip-existing check above would
                         // then accept as "restored" forever.
                         byte[] png = await downloader.ComposeAsync(card);
-                        string tempPath = destPath + ".tmp";
-                        await File.WriteAllBytesAsync(tempPath, png, cancellationToken);
-                        File.Move(tempPath, destPath, overwrite: true);
+                        Directory.CreateDirectory(Path.GetDirectoryName(destPath)!);
+                        await AtomicFile.WriteAllBytesAsync(destPath, png, cancellationToken);
                         downloaded++;
                     }
                     catch (Exception ex)
@@ -120,9 +121,9 @@ namespace ScatoloneDownloader.Cli.Cube
                         // Isolate a single bad card (404/removed image, malformed
                         // face, network failure after retries) so it can't abort the
                         // whole disaster-recovery run and block every card after it.
-                        // The .tmp is cleaned so a later re-run retries this card.
+                        // No file is left under the real name, so a later re-run
+                        // retries this card.
                         failed++;
-                        TryDelete(destPath + ".tmp");
                         AnsiConsole.MarkupLineInterpolated($"[red]Failed:[/] {card.Name} — {ex.Message}");
                     }
                 }
@@ -138,22 +139,6 @@ namespace ScatoloneDownloader.Cli.Cube
             }
 
             return 0;
-        }
-
-        /// <summary>Best-effort delete of a leftover temp file; never throws.</summary>
-        private static void TryDelete(string path)
-        {
-            try
-            {
-                if (File.Exists(path))
-                {
-                    File.Delete(path);
-                }
-            }
-            catch
-            {
-                // Ignore — a stray .tmp is harmless and overwritten on the next try.
-            }
         }
     }
 }

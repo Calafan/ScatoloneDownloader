@@ -34,14 +34,7 @@ namespace ScatoloneDownloader.Cli.Download
                 return null;
             }
 
-            string source = LibraryRoot.Source(root);
-            if (!Directory.Exists(source))
-            {
-                error = $"Source folder not found: {source}";
-                return null;
-            }
-
-            return source;
+            return LibraryRoot.ExistingSource(root, out error);
         }
     }
 
@@ -65,7 +58,7 @@ namespace ScatoloneDownloader.Cli.Download
                 }
             }
 
-            await CardService.RunFilesAsync(settings.Files, settings.Reprints, settings.Tokens, settings.Lands, settings.PrintOnly, librarySource);
+            await CardService.RunFilesAsync(settings.Files, settings.Lands, settings.PrintOnly, librarySource);
 
             return 0;
         }

@@ -2,7 +2,6 @@ using System.Text.Json;
 
 using ScatoloneDownloader.Cube;
 using ScatoloneDownloader.Download;
-using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Metadata;
 using ScatoloneDownloader.Mtg;
 
@@ -21,33 +20,10 @@ public sealed class LibrarySyncTests
 
     private static string PathFor(string file) => Path.Combine(Lib, "1993", "Alpha", file);
 
-    private static Card MakeCard(string name, string oracleId = "", string oracleText = "", string typeLine = "Instant", string id = "")
-    {
-        JsonCard json = new()
-        {
-            Id = id,
-            Name = name,
-            OracleId = oracleId,
-            OracleText = oracleText,
-            Language = "en",
-            ReleasedAt = "1993-08-05",
-            Layout = "normal",
-            TypeLine = typeLine,
-            Games = ["paper"],
-            FrameEffects = [],
-            Reprint = false,
-            Variation = false,
-            Textless = false,
-            Set = "LEA",
-            SetName = "Alpha",
-            SetType = "core",
-            BorderColor = "black",
-            Cmc = 1,
-            ImageUris = new JsonImageUris { Png = "https://test/img.png" },
-        };
-
-        return Card.CreateCard(json);
-    }
+    private static Card MakeCard(string name, string oracleId = "", string oracleText = "", string typeLine = "Instant", string id = "") =>
+        TestCards.Make(
+            name, typeLine, oracleText, id: id, oracleId: oracleId,
+            set: "LEA", setName: "Alpha", setType: "core", releasedAt: "1993-08-05");
 
     // --- Plan --------------------------------------------------------------
 
@@ -154,8 +130,7 @@ public sealed class LibrarySyncTests
         RegisterResult result = LibrarySync.RegisterNew(metadata, [(other, @"C:\lib\Bolt.png")]);
 
         Assert.Equal(before, JsonSerializer.Serialize(Assert.Single(metadata.Cards).Value));
-        Assert.Equal(0, result.Added);
-        Assert.Equal(1, result.AlreadyInStore);
+        Assert.Empty(result.AddedNames);
     }
 
     [Fact]
@@ -170,14 +145,11 @@ public sealed class LibrarySyncTests
 
         Assert.Single(metadata.Cards);
         Assert.Equal("print-1", metadata.Cards["oracle-x"].ScryfallId);
-        Assert.Equal(1, result.Added);
-        // The second file is not "already in the store": the store did not hold it
-        // before this call.
-        Assert.Equal(0, result.AlreadyInStore);
+        Assert.Equal(["Island"], result.AddedNames);
     }
 
     [Fact]
-    public void RegisterNew_EmptyOracleId_IsSkippedAndCounted()
+    public void RegisterNew_EmptyOracleId_IsSkipped()
     {
         CubeMetadata metadata = new();
         Card token = MakeCard("Some Token", oracleId: string.Empty, id: "print-t");
@@ -185,12 +157,11 @@ public sealed class LibrarySyncTests
         RegisterResult result = LibrarySync.RegisterNew(metadata, [(token, @"C:\lib\Some Token.png")]);
 
         Assert.Empty(metadata.Cards);
-        Assert.Equal(0, result.Added);
-        Assert.Equal(1, result.SkippedNoOracleId);
+        Assert.Empty(result.AddedNames);
     }
 
     [Fact]
-    public void RegisterNew_Counts_SeparateAddedKnownAndSkipped()
+    public void RegisterNew_AddsOnlyTheNewOracles()
     {
         CubeMetadata metadata = new();
         metadata.Cards["oracle-known"] = new CardMetadataEntry { Name = "Known", Rating = 3 };
@@ -207,11 +178,10 @@ public sealed class LibrarySyncTests
         RegisterResult result = LibrarySync.RegisterNew(metadata, matched);
 
         Assert.Equal(["Alpha", "Beta"], result.AddedNames);
-        Assert.Equal(2, result.Added);
-        // Two files of the known oracle count as ONE known card.
-        Assert.Equal(1, result.AlreadyInStore);
-        Assert.Equal(1, result.SkippedNoOracleId);
+        Assert.Equal(["oracle-new-a", "oracle-new-b"], result.AddedOracleIds);
+        // The known oracle is kept as it was and the oracle-less file adds nothing.
         Assert.Equal(3, metadata.Cards.Count);
+        Assert.Equal(3, metadata.Cards["oracle-known"].Rating);
     }
 
     // --- RegisterAndPropose ------------------------------------------------
@@ -232,7 +202,6 @@ public sealed class LibrarySyncTests
         Assert.Equal(0, entry.Rating);
         Assert.Null(entry.ReviewedAt);
         Assert.Equal(["Doom Blade"], result.AddedNames);
-        Assert.Equal(["oid-kill"], result.AddedOracleIds);
         Assert.Equal((1, 0), (result.Proposed, result.NoProposal));
     }
 
@@ -272,7 +241,7 @@ public sealed class LibrarySyncTests
 
         // An unreviewed entry that EXISTED before is not proposed over either.
         CardMetadataEntry unreviewed = metadata.Cards["oid-u"];
-        Assert.Equal((2, (DateTimeOffset?)null, CardEffect.None), (unreviewed.Rating, unreviewed.ReviewedAt, unreviewed.EffectFlags));
+        Assert.Equal((2, null, CardEffect.None), (unreviewed.Rating, unreviewed.ReviewedAt, unreviewed.EffectFlags));
     }
 
     // --- NewOracleIds ------------------------------------------------------

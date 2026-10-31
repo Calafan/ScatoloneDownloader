@@ -43,7 +43,7 @@ namespace ScatoloneDownloader.Mtg
 
         /// <summary>Rules text. For a double-faced card the per-face texts are
         /// joined (top-level <c>oracle_text</c> is usually empty there). Input for
-        /// the future effect auto-classifier; empty when Scryfall omits it.</summary>
+        /// <see cref="Cube.EffectClassifier"/>; empty when Scryfall omits it.</summary>
         internal string OracleText { get; init; }
 
         /// <summary>Scryfall keyword abilities (e.g. "Flash", "Hexproof",
@@ -139,8 +139,11 @@ namespace ScatoloneDownloader.Mtg
         internal int ManaPips { get; init; }
 
         /// <summary>Download sub-folder assigned by the list file being processed
-        /// (see <see cref="Cli.Cube.MakeListCommand"/>); null for cards that came
-        /// from a plain year/set download.</summary>
+        /// (see <see cref="Cli.Cube.MakeListCommand"/>): the list line's tag, empty
+        /// for an untagged line, "Basic Lands" for the basic lands
+        /// <see cref="GetManager"/> adds to a list; null for cards that came from a
+        /// plain year/set download. <c>analyze</c> leaves out every card whose tag is
+        /// not empty.</summary>
         internal string? Tag { get; set; }
 
         // Scryfall may omit any of these JSON fields, so every one is coalesced:

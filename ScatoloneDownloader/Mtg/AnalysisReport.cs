@@ -2,8 +2,7 @@ namespace ScatoloneDownloader.Mtg
 {
     /// <summary>
     /// Immutable snapshot of all cube metrics computed by
-    /// <see cref="CardAnalyzer.Analyze"/>. Each property corresponds to an R2
-    /// metric from the cube management plan. Every metric here is derived from the
+    /// <see cref="CardAnalyzer.Analyze"/>. Every metric here is derived from the
     /// <see cref="MacroType"/> (from type_line) and <see cref="Card.ColorCategory"/>
     /// (from color_identity) classifications, so the stats payload (the page and its
     /// Markdown twin) renders from a single source of truth.
@@ -29,8 +28,8 @@ namespace ScatoloneDownloader.Mtg
         /// <summary>Rating tier count keyed by (ColorCategory, star rating 3-5).</summary>
         internal Dictionary<(string Color, int Stars), int> RatingTiers { get; init; } = [];
 
-        /// <summary>CMC bucket (1-5 = exact, 6 = 6+) count per MacroType.</summary>
-        internal Dictionary<MacroType, Dictionary<int, int>> CurveByMacroType { get; init; } = [];
+        /// <summary>Count per MacroType, keyed by <see cref="CostBucket"/> (0-5 exact, "6_Plus").</summary>
+        internal Dictionary<MacroType, Dictionary<string, int>> CurveByMacroType { get; init; } = [];
 
         /// <summary>Average colored pips per card across the whole cube.</summary>
         internal double GlobalPipDensity { get; init; }
@@ -46,16 +45,6 @@ namespace ScatoloneDownloader.Mtg
 
         /// <summary>Average creature CMC per ColorCategory.</summary>
         internal Dictionary<string, double> AverageCreatureCmcPerCategory { get; init; } = [];
-
-        /// <summary>
-        /// Per-single-color card count: multicolor cards contribute to EVERY
-        /// color in their color_identity. Lands are excluded from this count and
-        /// tracked separately in <see cref="LandCount"/>.
-        /// </summary>
-        internal Dictionary<string, int> IndividualColorCounts { get; init; } = [];
-
-        /// <summary>Non-land cards with an empty color_identity (artifacts, eldrazi, ...).</summary>
-        internal int ColorlessCount { get; init; }
 
         /// <summary>Cards whose MacroType is Land, regardless of color_identity.</summary>
         internal int LandCount { get; init; }
@@ -135,7 +124,8 @@ namespace ScatoloneDownloader.Mtg
         /// "Colorless"; same rule as <see cref="CardsByIdentity"/>.</summary>
         internal Dictionary<string, Dictionary<string, int>> CreatureCurveByIdentity { get; init; } = [];
 
-        /// <summary>Total card count analyzed (excludes basic lands + tagged cards, per existing rule).</summary>
+        /// <summary>Total non-land cards analyzed: lands (counted in <see cref="LandCount"/>)
+        /// and cards carrying a list tag are left out.</summary>
         internal int TotalCards { get; init; }
     }
 

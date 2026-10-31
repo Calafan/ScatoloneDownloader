@@ -18,38 +18,18 @@ namespace ScatoloneDownloader.Cube
         /// evaluation follows the card across reprints; a card with no
         /// <see cref="Card.OracleId"/> or no matching entry is reset to the
         /// unrated/no-status/no-effects defaults rather than left with stale
-        /// values from a previous sync call.</summary>
-        internal static void SyncFromJson(IEnumerable<Card> cards, string metadataDirectory)
-        {
-            SyncFromJson(cards, CubeMetadataStore.Load(metadataDirectory));
-        }
-
-        /// <summary>Overload for callers that have already loaded the metadata
+        /// values from a previous sync call. Takes the metadata already loaded
         /// (e.g. the tagger, which keeps the merged document in memory for
-        /// autosave) — avoids deserializing every tier file a second time.</summary>
+        /// autosave) so no tier file is deserialized a second time.</summary>
         internal static void SyncFromJson(IEnumerable<Card> cards, CubeMetadata data)
         {
             foreach (Card card in cards)
             {
-                if (!string.IsNullOrEmpty(card.OracleId)
-                    && data.Cards.TryGetValue(card.OracleId, out CardMetadataEntry? entry))
-                {
-                    card.Rating = entry.Rating;
-                    card.Status = entry.StatusValue;
-                    card.Effects = entry.EffectFlags;
-                    card.Reviewed = entry.ReviewedAt != null;
-                }
-                else
-                {
-                    card.Rating = 0;
-                    card.Status = CardStatus.None;
-                    card.Effects = CardEffect.None;
-                    card.Reviewed = false;
-                }
+                Apply(card, data, _ => CardEffect.None);
             }
         }
 
-        /// <summary>Like <see cref="SyncFromJson(IEnumerable{Card}, CubeMetadata)"/>
+        /// <summary>Like <see cref="SyncFromJson"/>
         /// for a card list that is not the cube (the <c>analyze</c> command): a card
         /// with a store entry takes the entry's values exactly as there, even when its
         /// effects are None (a reviewed "nothing"); a card with no entry carries the
@@ -60,25 +40,35 @@ namespace ScatoloneDownloader.Cube
             int inStore = 0;
             foreach (Card card in cards)
             {
-                if (!string.IsNullOrEmpty(card.OracleId)
-                    && data.Cards.TryGetValue(card.OracleId, out CardMetadataEntry? entry))
+                if (Apply(card, data, EffectClassifier.Classify))
                 {
-                    card.Rating = entry.Rating;
-                    card.Status = entry.StatusValue;
-                    card.Effects = entry.EffectFlags;
-                    card.Reviewed = entry.ReviewedAt != null;
                     inStore++;
-                }
-                else
-                {
-                    card.Rating = 0;
-                    card.Status = CardStatus.None;
-                    card.Effects = EffectClassifier.Classify(card);
-                    card.Reviewed = false;
                 }
             }
 
             return inStore;
+        }
+
+        /// <summary>Applies the card's store entry, or the unrated/no-status/not-reviewed
+        /// defaults with <paramref name="fallbackEffects"/> when there is none. Returns
+        /// whether the card had an entry.</summary>
+        private static bool Apply(Card card, CubeMetadata data, Func<Card, CardEffect> fallbackEffects)
+        {
+            if (!string.IsNullOrEmpty(card.OracleId)
+                && data.Cards.TryGetValue(card.OracleId, out CardMetadataEntry? entry))
+            {
+                card.Rating = entry.Rating;
+                card.Status = entry.StatusValue;
+                card.Effects = entry.EffectFlags;
+                card.Reviewed = entry.ReviewedAt != null;
+                return true;
+            }
+
+            card.Rating = 0;
+            card.Status = CardStatus.None;
+            card.Effects = fallbackEffects(card);
+            card.Reviewed = false;
+            return false;
         }
     }
 }

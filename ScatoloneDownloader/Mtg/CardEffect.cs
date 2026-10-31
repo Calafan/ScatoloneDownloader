@@ -6,7 +6,7 @@
     /// this is a <see cref="FlagsAttribute"/> bitset combined with <c>|</c>.
     ///
     /// Structural buckets Creature and Land are intentionally NOT effects — they
-    /// are covered by <see cref="MacroType"/> and the view tree. This enum holds
+    /// are covered by <see cref="MacroType"/>. This enum holds
     /// only functional effects. Members are authored via the tagging tool and
     /// persisted by name (not packed int) for readable git diffs.
     ///

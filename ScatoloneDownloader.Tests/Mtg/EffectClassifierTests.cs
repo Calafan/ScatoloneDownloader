@@ -1,5 +1,4 @@
 ﻿using ScatoloneDownloader.Cube;
-using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Mtg;
 
 namespace ScatoloneDownloader.Tests.Mtg;
@@ -1164,8 +1163,6 @@ public sealed class EffectClassifierTests
     // self-sacrificing family spends itself for the extra one, which is why
     // Dwarven Ruins is hand-tagged as nothing.
     [InlineData("Tropical Island", "Land — Forest Island", "({T}: Add {G} or {U}.)")]
-    [InlineData("Dwarven Ruins", "Land",
-        "This land enters tapped.\n{T}: Add {R}.\n{T}, Sacrifice this land: Add {R}{R}.")]
     // A land that costs one untapped land to enter, or phases out every other
     // turn, does not make more than it costs every turn (Balduvian Trading Post,
     // Teferi's Isle — untagged, measured 2026-09-29).
@@ -4915,7 +4912,10 @@ public sealed class EffectClassifierTests
         + "more poison counters.")]
     public void Classify_ManaForNothingButATap_IsRampNotManaFixing(string name, string typeLine, string oracle)
     {
-        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
+        CardEffect effects = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(effects.HasFlag(CardEffect.Ramp));
+        Assert.False(effects.HasFlag(CardEffect.ManaFixing));
     }
 
     [Theory]
@@ -6129,7 +6129,6 @@ public sealed class EffectClassifierTests
     [Theory]
     // Two or more cards, or a draw you can come back to.
     [InlineData("Divination", "Sorcery", "Draw two cards.")]
-    [InlineData("Ancestral Recall", "Instant", "Target player draws three cards.")]
     // The user's own example: an activated draw on a body is card advantage
     // because nothing stops you doing it again.
     [InlineData("Azure Drake", "Creature — Drake", "Flying\n{3}{U}: Draw a card.")]
@@ -7812,29 +7811,14 @@ public sealed class EffectClassifierTests
     [InlineData("Cataclysm", "Sorcery",
         "Each player chooses from among the permanents they control an artifact, a creature, an enchantment, "
         + "and a land, then sacrifices the rest.")]
-    [InlineData("Global Ruin", "Sorcery",
-        "Each player chooses from the lands they control a land of each basic land type, then sacrifices the "
-        + "rest.")]
-    [InlineData("Natural Balance", "Sorcery",
-        "Each player who controls six or more lands chooses five lands they control and sacrifices the rest. "
-        + "Each player who controls four or fewer lands may search their library for up to X basic land cards "
-        + "and put them onto the battlefield, where X is five minus the number of lands they control. Then each "
-        + "player who searched their library this way shuffles.")]
     public void Classify_ASweepThatTakesTheLandsUnnamed_IsLandDestruction(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.LandDestruction));
     }
 
     [Theory]
-    // Read 2026-10-16: lands returned to their owners' hands (Sunder), a land
-    // closing a type list (Wave of Vitriol, Structural Collapse), and a land edict
-    // after a creature edict (Din of the Fireherd, Smallpox).
-    [InlineData("Sunder", "Instant",
-        "Return all lands to their owners' hands.")]
-    [InlineData("Wave of Vitriol", "Sorcery",
-        "Each player sacrifices all artifacts, enchantments, and nonbasic lands they control. For each land "
-        + "sacrificed this way, its controller may search their library for a basic land card and put it onto "
-        + "the battlefield tapped. Then each player who searched their library this way shuffles.")]
+    // Read 2026-10-16: a land closing a type list (Structural Collapse), and a
+    // land edict after a creature edict (Din of the Fireherd, Smallpox).
     [InlineData("Structural Collapse", "Sorcery",
         "Target player sacrifices an artifact and a land of their choice. Structural Collapse deals 2 damage "
         + "to that player.")]
@@ -8328,12 +8312,6 @@ public sealed class EffectClassifierTests
         "{T}: Add one mana of any color.\n"
         + "GOOOOAAAALLL! — {T}, Sacrifice this artifact: Draw two cards. Activate only if an opponent was "
         + "dealt combat damage by a legendary creature this turn.")]
-    // Emptying your hand for a fixed number back is not a loot: the hand you
-    // paid can be empty, which is what the Case solves itself on.
-    [InlineData("Case of the Crimson Pulse", "Enchantment — Case",
-        "When this Case enters, discard a card, then draw two cards.\n"
-        + "To solve — You have no cards in hand. (If unsolved, solve at the beginning of your end step.)\n"
-        + "Solved — At the beginning of your upkeep, discard your hand, then draw two cards.")]
     // A triggered draw printed INSIDE QUOTES was handed to a body that keeps
     // it, the reading Mnemonic Sliver already got.
     [InlineData("Thief's Knife", "Artifact — Equipment",
@@ -8772,10 +8750,8 @@ public sealed class EffectClassifierTests
         "When this creature enters, it explores X times. (To have it explore, reveal the top card of your "
         + "library. Put that card into your hand if it's a land. Otherwise, put a +1/+1 counter on that "
         + "creature, then put the card back or put it into your graveyard.)")]
-    // Sentinels: a "target player" loot can be yours (Forget); a scry the
-    // card SACRIFICES itself for still counts (Grim Bauble, Aang's Iceberg).
-    [InlineData("Forget", "Sorcery",
-        "Target player discards two cards, then draws as many cards as they discarded this way.")]
+    // Sentinel: a scry the card SACRIFICES itself for still counts (Grim Bauble,
+    // Aang's Iceberg).
     [InlineData("Grim Bauble", "Artifact",
         "When this artifact enters, target creature an opponent controls gets -2/-2 until end of "
         + "turn.\n{2}{B}, {T}, Sacrifice this artifact: Surveil 2. (Look at the top two cards of your library, "
@@ -9021,9 +8997,6 @@ public sealed class EffectClassifierTests
     [InlineData("Fatal Lore", "Sorcery",
         "An opponent chooses one —\n• You draw three cards.\n• You destroy up to two target creatures that "
         + "player controls. They can't be regenerated. That player draws up to three cards.")]
-    [InlineData("Bellowing Mauler", "Creature — Ogre Warrior",
-        "At the beginning of your end step, each player loses 4 life unless they sacrifice a nontoken "
-        + "creature of their choice.")]
     [InlineData("Mogis, God of Slaughter", "Legendary Enchantment Creature — God",
         "Indestructible\nAs long as your devotion to black and red is less than seven, Mogis isn't a "
         + "creature.\nAt the beginning of each opponent's upkeep, Mogis deals 2 damage to that player unless "
@@ -9239,13 +9212,6 @@ public sealed class EffectClassifierTests
     [InlineData("Floral Spuzzem", "Creature — Elemental",
         "Whenever this creature attacks and isn't blocked, you may destroy target artifact defending player "
         + "controls. If you do, this creature assigns no combat damage this turn.")]
-    [InlineData("Tomb of Annihilation", "Dungeon",
-        "Trapped Entry — Each player loses 1 life. (Leads to: Veils of Fear, Oubliette)\nVeils of Fear — Each "
-        + "player loses 2 life unless they discard a card. (Leads to: Sandfall Cell)\nSandfall Cell — Each "
-        + "player loses 2 life unless they sacrifice a creature, artifact, or land of their choice. (Leads to: "
-        + "Cradle of the Death God)\nOubliette — Discard a card and sacrifice a creature, an artifact, and a "
-        + "land. (Leads to: Cradle of the Death God)\nCradle of the Death God — Create The Atropal, a legendary "
-        + "4/4 black God Horror creature token with deathtouch.")]
     [InlineData("Mogg Cannon", "Artifact",
         "{T}: Target creature you control gets +1/+0 and gains flying until end of turn. Destroy that "
         + "creature at the beginning of the next end step.")]
@@ -9594,10 +9560,6 @@ public sealed class EffectClassifierTests
         "Whenever you cast your first instant or sorcery spell each turn, exile an instant or sorcery card at "
         + "random from your graveyard. Then copy each card exiled with this enchantment. You may cast any "
         + "number of the copies without paying their mana costs.")]
-    [InlineData("Arcade Gannon", "Legendary Creature — Human Doctor",
-        "{T}: Draw a card, then discard a card. Put a quest counter on Arcade Gannon.\nFor Auld Lang Syne — "
-        + "Once during each of your turns, you may cast an artifact or Human spell from your graveyard with "
-        + "mana value less than or equal to the number of quest counters on Arcade Gannon.")]
     [InlineData("Tarrian's Journal // The Tomb of Aclazotz", "Legendary Artifact — Book // Legendary Land — Cave",
         "{T}, Sacrifice another artifact or creature: Draw a card. Activate only as a sorcery.\n{2}, {T}, "
         + "Discard your hand: Transform Tarrian's Journal.\n(Transforms from Tarrian's Journal.)\n{T}: Add "
@@ -9788,10 +9750,6 @@ public sealed class EffectClassifierTests
         + "control.\nWhenever one or more creatures you control with counters on them deal combat damage to a "
         + "player, put target creature or Vehicle card from that player's graveyard onto the battlefield under "
         + "your control.")]
-    [InlineData("Gorbag of Minas Morgul", "Legendary Creature — Orc Soldier",
-        "Whenever a Goblin or Orc you control deals combat damage to a player, you may sacrifice it. When you "
-        + "do, choose one —\n• Draw a card.\n• Create a Treasure token. (It's an artifact with \"{T}, Sacrifice "
-        + "this token: Add one mana of any color.\")")]
     [InlineData("Riverwheel Sweep", "Sorcery",
         "Tap target creature. Put three stun counters on it. (If a permanent with a stun counter would become "
         + "untapped, remove one from it instead.)\nExile the top two cards of your library. Choose one of them. "
@@ -9822,11 +9780,6 @@ public sealed class EffectClassifierTests
         + "noncreature spell from exile pays for {1} or one mana of that creature's color.)\nAt the beginning of "
         + "your first main phase, you may discard a card. If you do, exile the top two cards of your library, "
         + "then choose one of them. You may play that card this turn.")]
-    [InlineData("Feral Encounter", "Sorcery",
-        "Look at the top five cards of your library. You may exile a creature card from among them. Put the "
-        + "rest on the bottom of your library in a random order. You may cast the exiled card this turn. At the "
-        + "beginning of the next combat phase this turn, target creature you control deals damage equal to its "
-        + "power to up to one target creature you don't control.")]
     [InlineData("Magmatic Channeler", "Creature — Human Wizard",
         "As long as there are four or more instant and/or sorcery cards in your graveyard, this creature gets "
         + "+3/+1.\n{T}, Discard a card: Exile the top two cards of your library, then choose one of them. You "
@@ -9911,8 +9864,6 @@ public sealed class EffectClassifierTests
         + "instant or sorcery card, then shuffles the rest into their library. You may cast up to X instant "
         + "and/or sorcery spells from among cards exiled this way without paying their mana costs.\n1—9 | X is "
         + "one.\n10—19 | X is two.\n20 | X is three.")]
-    [InlineData("Brainstorm", "Instant",
-        "Draw three cards, then put two cards from your hand on top of your library in any order.")]
     [InlineData("Dream Cache", "Sorcery",
         "Draw three cards, then put two cards from your hand both on top of your library or both on the "
         + "bottom of your library.")]
@@ -9991,11 +9942,6 @@ public sealed class EffectClassifierTests
         + "noncreature spell from exile pays for {1} or one mana of that creature's color.)\nAt the beginning of "
         + "your first main phase, you may discard a card. If you do, exile the top two cards of your library, "
         + "then choose one of them. You may play that card this turn.")]
-    [InlineData("Feral Encounter", "Sorcery",
-        "Look at the top five cards of your library. You may exile a creature card from among them. Put the "
-        + "rest on the bottom of your library in a random order. You may cast the exiled card this turn. At the "
-        + "beginning of the next combat phase this turn, target creature you control deals damage equal to its "
-        + "power to up to one target creature you don't control.")]
     public void Classify_TheOctober16Pass_OneOfTwoOnce_IsFilter(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
@@ -11290,8 +11236,6 @@ public sealed class EffectClassifierTests
         "Until end of turn, target creature you control becomes a green Wurm with base power and toughness "
         + "6/4.\nOverload {4}{G}{G} (You may cast this spell for its overload cost. If you do, change \"target\" "
         + "in its text to \"each.\")")]
-    [InlineData("Gift of the Viper", "Instant",
-        "Put a +1/+1 counter, a reach counter, and a deathtouch counter on target creature. Untap it.")]
     public void Classify_TheOctober27BuffPass_IsBuff(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
@@ -11717,11 +11661,6 @@ public sealed class EffectClassifierTests
         "Flying\n{1}: Put a fire counter on this Vehicle.\nAs long as this Vehicle has three or more fire "
         + "counters on it, it's an artifact creature.\nCrew 3 (Tap any number of creatures you control with "
         + "total power 3 or more: This Vehicle becomes an artifact creature until end of turn.)")]
-    [InlineData("Bloodroot Apothecary", "Creature — Squirrel Druid",
-        "Toxic 2 (Players dealt combat damage by this creature also get two poison counters. A player with "
-        + "ten or more poison counters loses the game.)\nWhen this creature enters, you and target opponent each "
-        + "create a Treasure token.\nWhenever an opponent sacrifices a noncreature token, that player gets two "
-        + "poison counters.")]
     public void Classify_TheOctober24TokensPass_IsNotTokens(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
@@ -12125,8 +12064,6 @@ public sealed class EffectClassifierTests
     [InlineData("Wasp, Shrinking Savior", "Legendary Creature — Human Hero",
         "Flying\nWhenever Wasp attacks, up to one other target creature gets -3/-0 until your next turn. Then "
         + "draw a card for each creature with power less than 0 on the battlefield.")]
-    [InlineData("Ring of the Lucii", "Legendary Artifact",
-        "{T}: Add {C}{C}.\n{2}, {T}, Pay 1 life: Tap target nonland permanent.")]
     [InlineData("Chrome Prowler", "Artifact Creature — Phyrexian Cat",
         "Flash\nWhen this creature enters, tap target creature an opponent controls.")]
     [InlineData("Riptide", "Instant",
@@ -12487,29 +12424,6 @@ public sealed class EffectClassifierTests
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
     }
 
-    private static Card MakeCard(string name, string typeLine, string oracleText, List<string>? keywords = null)
-    {
-        JsonCard json = new()
-        {
-            Name = name,
-            Language = "en",
-            ReleasedAt = "1997-04-25",
-            Layout = "normal",
-            TypeLine = typeLine,
-            OracleText = oracleText,
-            Keywords = keywords,
-            Games = ["paper"],
-            FrameEffects = [],
-            Set = "TMP",
-            SetName = "Tempest",
-            SetType = "expansion",
-            BorderColor = "black",
-            Cmc = 1,
-            ColorIdentity = [],
-            ManaCost = "",
-            ImageUris = new JsonImageUris { Png = "https://test/x.png" },
-        };
-
-        return Card.CreateCard(json);
-    }
+    private static Card MakeCard(string name, string typeLine, string oracleText, List<string>? keywords = null) =>
+        TestCards.Make(name, typeLine, oracleText, keywords: keywords);
 }

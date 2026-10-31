@@ -71,30 +71,14 @@ namespace ScatoloneDownloader.Download
         /// <summary>
         /// Copies a library image to <paramref name="target"/>, creating its folder.
         /// An existing file is replaced, never numbered: running the same list again
-        /// refreshes the export. The copy goes to a <c>.tmp</c> beside the target and is
-        /// moved into place, like <see cref="CardDownloader.DownloadAsync"/> writes,
-        /// so a crash never leaves a truncated PNG under the real name.
+        /// refreshes the export. The copy goes through <see cref="AtomicFile.Copy"/>, so
+        /// a crash never leaves a truncated PNG under the real name.
         /// </summary>
         internal static void Copy(string sourceFile, string target)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(target)!);
 
-            string temp = target + ".tmp";
-
-            try
-            {
-                File.Copy(sourceFile, temp, overwrite: true);
-                File.Move(temp, target, overwrite: true);
-            }
-            catch
-            {
-                if (File.Exists(temp))
-                {
-                    File.Delete(temp);
-                }
-
-                throw;
-            }
+            AtomicFile.Copy(sourceFile, target);
         }
     }
 

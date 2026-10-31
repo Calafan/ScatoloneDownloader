@@ -1,6 +1,5 @@
 using ScatoloneDownloader.Download;
 using ScatoloneDownloader.Enums;
-using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Mtg;
 
 namespace ScatoloneDownloader.Tests.Download;
@@ -149,6 +148,38 @@ public sealed class OutputPathsTests : IDisposable
     }
 
     [Fact]
+    public void LibraryImagePath_IsYearSetNameUnderTheLibrary()
+    {
+        string library = Path.Combine(tempRoot, "Library");
+        OutputPaths.UseLibrary(library);
+        Card delver = MakeCard("Delver of Secrets", set: "ISD", setName: "Innistrad", releasedAt: "2011-09-30");
+
+        string path = OutputPaths.LibraryImagePath(delver);
+
+        Assert.Equal(Path.Combine(library, "2011", "Innistrad", "Delver of Secrets.png"), path);
+        Assert.False(Directory.Exists(library));
+    }
+
+    [Fact]
+    public void LibraryImagePath_SanitizesTheName()
+    {
+        string library = Path.Combine(tempRoot, "Library");
+        OutputPaths.UseLibrary(library);
+        Card fire = MakeCard("Fire // Ice", set: "MH2", setName: "Modern Horizons 2", releasedAt: "2021-06-18");
+
+        Assert.Equal(Path.Combine(library, "2021", "Modern Horizons 2", "Fire_Ice.png"), OutputPaths.LibraryImagePath(fire));
+    }
+
+    [Fact]
+    public void LibraryImagePath_WithoutLibrary_Throws()
+    {
+        OutputPaths.ResetLibrary();
+        Card bolt = MakeCard("Lightning Bolt", set: "LEA");
+
+        Assert.Throws<InvalidOperationException>(() => OutputPaths.LibraryImagePath(bolt));
+    }
+
+    [Fact]
     public void CardDirectory_EqualsBuildCardDirectory_ButCreatesNothing()
     {
         string library = Path.Combine(tempRoot, "Library");
@@ -269,26 +300,6 @@ public sealed class OutputPathsTests : IDisposable
         string releasedAt = "1993-08-05",
         string typeLine = "Instant")
     {
-        JsonCard json = new()
-        {
-            Name = name,
-            Language = "en",
-            ReleasedAt = releasedAt,
-            Layout = "normal",
-            TypeLine = typeLine,
-            Games = ["paper"],
-            FrameEffects = [],
-            Reprint = false,
-            Variation = false,
-            Textless = false,
-            Set = set,
-            SetName = setName,
-            SetType = "core",
-            BorderColor = "black",
-            Cmc = 1,
-            ImageUris = new JsonImageUris { Png = "https://test/img.png" },
-        };
-
-        return Card.CreateCard(json);
+        return TestCards.Make(name, typeLine, set: set, setName: setName, setType: "core", releasedAt: releasedAt);
     }
 }

@@ -1,6 +1,4 @@
-using ScatoloneDownloader.Cli.Cube;
 using ScatoloneDownloader.Tests.Cli;
-using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Mtg;
 
 namespace ScatoloneDownloader.Tests.Mtg;
@@ -181,32 +179,10 @@ public sealed class CardAnalyzerCreatureProfileTests
         List<string>? keywords = null,
         int rating = 4)
     {
-        JsonCard json = new()
-        {
-            Name = name,
-            OracleId = Guid.NewGuid().ToString(),
-            Language = "en",
-            ReleasedAt = "1997-04-25",
-            Layout = "normal",
-            TypeLine = typeLine,
-            Games = ["paper"],
-            FrameEffects = [],
-            Set = "TMP",
-            SetName = "Tempest",
-            SetType = "expansion",
-            BorderColor = "black",
-            Cmc = cmc,
-            Power = power.Length == 0 ? null : power,
-            Toughness = toughness.Length == 0 ? null : toughness,
-            Keywords = keywords ?? [],
-            ColorIdentity = [.. colors],
-            ManaCost = colors.Length == 0 ? "{2}" : "{1}{" + colors[0] + "}",
-            ImageUris = new JsonImageUris { Png = "https://test/x.png" },
-        };
-
-        Card card = Card.CreateCard(json);
-        card.Rating = rating;
-        card.Status = CardStatus.None;
-        return card;
+        return TestCards.Make(
+            name, typeLine, colors: colors, cmc: cmc,
+            power: power.Length == 0 ? null : power,
+            toughness: toughness.Length == 0 ? null : toughness,
+            keywords: keywords ?? [], oracleId: Guid.NewGuid().ToString(), rating: rating);
     }
 }

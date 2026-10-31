@@ -164,8 +164,7 @@ namespace ScatoloneDownloader.Cli.Cube
         private static string Describe(CardEffect effects) =>
             effects == CardEffect.None
                 ? "(nothing)"
-                : string.Join(",", Enum.GetValues<CardEffect>()
-                    .Where(e => e != CardEffect.None && effects.HasFlag(e)));
+                : string.Join(",", EffectResolver.ToNames(effects));
 
         private static string Snip(string text)
         {

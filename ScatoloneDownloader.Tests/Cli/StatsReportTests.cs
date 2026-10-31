@@ -45,7 +45,7 @@ public sealed class StatsReportTests
 
         // Only that line differs: the numbers do not depend on the words around them.
         string nl = Environment.NewLine;
-        Assert.Equal(withSubtitle.Replace("*" + StatsReport.Subtitle(Moment) + "*", "*Generated today*"), withOther);
+        Assert.Equal(withSubtitle.Replace("*" + StatsDocument.Generated(Moment) + "*", "*Generated today*"), withOther);
         Assert.DoesNotContain("Generated today", withSubtitle.Replace(nl, " "));
     }
 
@@ -55,7 +55,8 @@ public sealed class StatsReportTests
         StatsDocument document = StatsDocument.ForCube(Moment);
 
         Assert.Equal("Scatolone Cube Stats", document.Title);
-        Assert.Equal(StatsReport.Subtitle(Moment), document.Subtitle);
+        Assert.Equal(StatsDocument.Generated(Moment), document.Subtitle);
+        Assert.Equal("Generated 2026-10-30 14:05", document.Subtitle);
         Assert.Equal("A snapshot of the cube's statistics. The pool is the cards rated 3–5 with no status; the bench is exactly ★2.", document.Note);
     }
 
@@ -87,9 +88,9 @@ public sealed class StatsReportTests
     }
 
     [Fact]
-    public void Subtitle_AndFileStem_HaveTheirFormats()
+    public void Generated_AndFileStem_HaveTheirFormats()
     {
-        Assert.Equal("Generated 2026-10-30 14:05 · pool: rating 3-5, no status · bench: exactly ★2", StatsReport.Subtitle(Moment));
+        Assert.Equal("Generated 2026-10-30 14:05", StatsDocument.Generated(Moment));
         Assert.Equal("Cubo_Analysis_2026-10-30", StatsReport.FileStem(Moment));
     }
 

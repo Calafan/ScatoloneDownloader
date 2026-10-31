@@ -213,9 +213,10 @@ the first line instead of as a mysteriously empty store.
    **union of all three tier files** (the full library manifest, not just the
    pool), downloads the Scryfall bulk card list, resolves each entry to its
    exact printing (preferring `scryfallId`), and re-downloads + recomposes
-   any `.png` missing from `<dir>`. Idempotent — already-present files are
-   left untouched, so it's also the right command to top up a partial image
-   folder. Rating/status/effects live only in the metadata, never in the images.
+   any `.png` missing from `<dir>\<year>\<set>\<Name>.png` (the library layout
+   `sync` checks). Idempotent — already-present files are left untouched, so
+   it's also the right command to top up a partial library. Rating/status/effects
+   live only in the metadata, never in the images.
 5. **`make-list -m metadata -o <file>`** — writes a download list (the exact
    format the pre-existing `files` command reads) of the **pool (rating 3-5)**
    from the metadata, offline (no Scryfall call). The plain pool is one card

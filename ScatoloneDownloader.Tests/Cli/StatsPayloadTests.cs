@@ -1,5 +1,4 @@
 using ScatoloneDownloader.Cli.Cube;
-using ScatoloneDownloader.Json.Cards;
 using ScatoloneDownloader.Mtg;
 
 namespace ScatoloneDownloader.Tests.Cli;
@@ -37,7 +36,7 @@ public sealed class StatsPayloadTests
 
         Assert.Equal("Pool", payload.Pool.Label);
         Assert.Equal("pool", payload.Pool.RatingParam);
-        Assert.Equal("Bench", payload.Bench!.Label);
+        Assert.Equal("Bench (★2)", payload.Bench!.Label);
         Assert.Equal("r2", payload.Bench!.RatingParam);
         Assert.Equal(EffectResolver.ToNames((CardEffect)~0), payload.Effects);
         Assert.Equal(payload.Effects.Count, payload.Glossary.Count);
@@ -165,31 +164,8 @@ public sealed class StatsPayloadTests
         bool reviewed = false,
         CardStatus status = CardStatus.None)
     {
-        JsonCard json = new()
-        {
-            Name = name,
-            OracleId = Guid.NewGuid().ToString(),
-            Language = "en",
-            ReleasedAt = "1997-04-25",
-            Layout = "normal",
-            TypeLine = "Instant",
-            Games = ["paper"],
-            FrameEffects = [],
-            Set = "TMP",
-            SetName = "Tempest",
-            SetType = "expansion",
-            BorderColor = "black",
-            Cmc = 2,
-            ColorIdentity = [.. colors],
-            ManaCost = colors.Length == 0 ? "{2}" : "{1}{" + colors[0] + "}",
-            ImageUris = new JsonImageUris { Png = "https://test/x.png" },
-        };
-
-        Card card = Card.CreateCard(json);
-        card.Rating = rating;
-        card.Status = status;
-        card.Effects = effects;
-        card.Reviewed = reviewed;
-        return card;
+        return TestCards.Make(
+            name, colors: colors, cmc: 2, oracleId: Guid.NewGuid().ToString(),
+            rating: rating, status: status, effects: effects, reviewed: reviewed);
     }
 }

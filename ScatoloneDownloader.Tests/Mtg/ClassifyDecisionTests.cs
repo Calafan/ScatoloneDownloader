@@ -1,18 +1,17 @@
-using ScatoloneDownloader.Cli.Cube;
-using ScatoloneDownloader.Json.Cards;
+using ScatoloneDownloader.Cube;
 using ScatoloneDownloader.Metadata;
 using ScatoloneDownloader.Mtg;
 
-namespace ScatoloneDownloader.Tests.Cli;
+namespace ScatoloneDownloader.Tests.Mtg;
 
 /// <summary>
 /// Pins the classifier's propose-not-decide contract via the pure
-/// <see cref="ClassifyCommand.Decide"/>: it suggests effects for unreviewed,
+/// <see cref="ClassifyDecision.Decide"/>: it suggests effects for unreviewed,
 /// empty entries, never touches a human-reviewed entry, respects
 /// <c>--overwrite</c> for already-tagged (still-unreviewed) entries, and never
 /// implies a reviewedAt stamp.
 /// </summary>
-public sealed class ClassifyCommandTests
+public sealed class ClassifyDecisionTests
 {
     private static readonly Card Bolt = MakeCard("Lightning Bolt", "Instant", "Lightning Bolt deals 3 damage to any target.");
     private static readonly Card Vanilla = MakeCard("Grizzly Bears", "Creature — Bear", "");
@@ -22,7 +21,7 @@ public sealed class ClassifyCommandTests
     {
         CardMetadataEntry entry = new() { Name = "Lightning Bolt" };
 
-        (ClassifyOutcome outcome, CardEffect proposed) = ClassifyCommand.Decide(entry, Bolt, overwrite: false);
+        (ClassifyOutcome outcome, CardEffect proposed) = ClassifyDecision.Decide(entry, Bolt, overwrite: false);
 
         Assert.Equal(ClassifyOutcome.Classified, outcome);
         Assert.Equal(CardEffect.Removal | CardEffect.Burn, proposed);
@@ -37,7 +36,7 @@ public sealed class ClassifyCommandTests
             ReviewedAt = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
         };
 
-        (ClassifyOutcome outcome, CardEffect proposed) = ClassifyCommand.Decide(entry, Bolt, overwrite: true);
+        (ClassifyOutcome outcome, CardEffect proposed) = ClassifyDecision.Decide(entry, Bolt, overwrite: true);
 
         Assert.Equal(ClassifyOutcome.Reviewed, outcome);
         Assert.Equal(CardEffect.None, proposed);
@@ -48,7 +47,7 @@ public sealed class ClassifyCommandTests
     {
         CardMetadataEntry entry = new() { Name = "Lightning Bolt", EffectFlags = CardEffect.Removal };
 
-        (ClassifyOutcome outcome, _) = ClassifyCommand.Decide(entry, Bolt, overwrite: false);
+        (ClassifyOutcome outcome, _) = ClassifyDecision.Decide(entry, Bolt, overwrite: false);
 
         Assert.Equal(ClassifyOutcome.AlreadyTagged, outcome);
     }
@@ -61,7 +60,7 @@ public sealed class ClassifyCommandTests
         // assertion still proves the proposal was REDERIVED rather than kept.
         CardMetadataEntry entry = new() { Name = "Lightning Bolt", EffectFlags = CardEffect.Tokens };
 
-        (ClassifyOutcome outcome, CardEffect proposed) = ClassifyCommand.Decide(entry, Bolt, overwrite: true);
+        (ClassifyOutcome outcome, CardEffect proposed) = ClassifyDecision.Decide(entry, Bolt, overwrite: true);
 
         Assert.Equal(ClassifyOutcome.Classified, outcome);
         Assert.Equal(CardEffect.Removal | CardEffect.Burn, proposed);
@@ -76,7 +75,7 @@ public sealed class ClassifyCommandTests
         // classify run and no rule in the codebase would stand behind it.
         CardMetadataEntry entry = new() { Name = "Grizzly Bears", EffectFlags = CardEffect.Protection };
 
-        (ClassifyOutcome outcome, CardEffect proposed) = ClassifyCommand.Decide(entry, Vanilla, overwrite: true);
+        (ClassifyOutcome outcome, CardEffect proposed) = ClassifyDecision.Decide(entry, Vanilla, overwrite: true);
 
         Assert.Equal(ClassifyOutcome.Cleared, outcome);
         Assert.Equal(CardEffect.None, proposed);
@@ -89,7 +88,7 @@ public sealed class ClassifyCommandTests
         // conservative "fill the blanks" pass it has always been.
         CardMetadataEntry entry = new() { Name = "Grizzly Bears", EffectFlags = CardEffect.Protection };
 
-        (ClassifyOutcome outcome, _) = ClassifyCommand.Decide(entry, Vanilla, overwrite: false);
+        (ClassifyOutcome outcome, _) = ClassifyDecision.Decide(entry, Vanilla, overwrite: false);
 
         Assert.Equal(ClassifyOutcome.AlreadyTagged, outcome);
     }
@@ -105,7 +104,7 @@ public sealed class ClassifyCommandTests
             ReviewedAt = DateTimeOffset.UtcNow,
         };
 
-        (ClassifyOutcome outcome, _) = ClassifyCommand.Decide(entry, Vanilla, overwrite: true);
+        (ClassifyOutcome outcome, _) = ClassifyDecision.Decide(entry, Vanilla, overwrite: true);
 
         Assert.Equal(ClassifyOutcome.Reviewed, outcome);
     }
@@ -115,34 +114,12 @@ public sealed class ClassifyCommandTests
     {
         CardMetadataEntry entry = new() { Name = "Grizzly Bears" };
 
-        (ClassifyOutcome outcome, CardEffect proposed) = ClassifyCommand.Decide(entry, Vanilla, overwrite: false);
+        (ClassifyOutcome outcome, CardEffect proposed) = ClassifyDecision.Decide(entry, Vanilla, overwrite: false);
 
         Assert.Equal(ClassifyOutcome.NoProposal, outcome);
         Assert.Equal(CardEffect.None, proposed);
     }
 
-    private static Card MakeCard(string name, string typeLine, string oracleText)
-    {
-        JsonCard json = new()
-        {
-            Name = name,
-            Language = "en",
-            ReleasedAt = "1997-04-25",
-            Layout = "normal",
-            TypeLine = typeLine,
-            OracleText = oracleText,
-            Games = ["paper"],
-            FrameEffects = [],
-            Set = "TMP",
-            SetName = "Tempest",
-            SetType = "expansion",
-            BorderColor = "black",
-            Cmc = 1,
-            ColorIdentity = [],
-            ManaCost = "",
-            ImageUris = new JsonImageUris { Png = "https://test/x.png" },
-        };
-
-        return Card.CreateCard(json);
-    }
+    private static Card MakeCard(string name, string typeLine, string oracleText) =>
+        TestCards.Make(name, typeLine, oracleText);
 }

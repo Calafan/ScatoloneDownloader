@@ -69,13 +69,13 @@ Ostrich-Horse, Town Greeter, Satyr Wayfinder).
 Read 2026-10-15: the Capenna lands that sacrifice themselves as they enter and fetch (Brokers
 Hideout); a chosen colour beside a fixed one, and the colours of what a land exiled (Citadel Gate,
 Pit of Offerings); lands made EVERY basic land type (Leyline of the Guildpact, Energybending, Omo —
-"the basic land type of your choice" is split 1 to 1, Mystic Compass against Jinx, and is not read);
-Renewal's one land for one; a card TYPED Treasure (Buried Treasure, Courier's Briefcase); a basic
-land put on top (Silver Deputy); a choice of colours granted to a target land (Spara's
-Adjudicators). Not a Treasure handed to somebody else (An Offer You Can't Refuse, Erestor of the
-Council, Blooming Blast's gift), nor the free extra mana of an enchanted land, a source (Blighted
-Burgeoning, Buried in the Garden), nor free mana handed to "target player" (Bigger on the Inside,
-The Warring Triad).
+"the basic land type of your choice" is split 1 to 1, Mystic Compass against Jinx, and is not read;
+overturned 2026-10-16, below); Renewal's one land for one; a card TYPED Treasure (Buried Treasure,
+Courier's Briefcase); a basic land put on top (Silver Deputy); a choice of colours granted to a
+target land (Spara's Adjudicators). Not a Treasure handed to somebody else (An Offer You Can't
+Refuse, Erestor of the Council, Blooming Blast's gift), nor the free extra mana of an enchanted
+land, a source (Blighted Burgeoning, Buried in the Garden), nor free mana handed to "target player"
+(Bigger on the Inside, The Warring Triad).
 
 Ruled 2026-10-16 (M1, "MF a entrambe"): a target land made the basic land type of your choice is
 this tag, Mystic Compass and Jinx alike; Jinx is handed back with it. Read the same day: lands
