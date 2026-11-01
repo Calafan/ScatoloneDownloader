@@ -36,6 +36,9 @@ namespace ScatoloneDownloader
         // safe because each caller consumes a list fully before reading the next.
         private Dictionary<string, Card>? cardsByName;
 
+        // Built from cardsByName with it, see BuildFullNamesByFront.
+        private Dictionary<string, string>? fullNamesByFront;
+
         // The Default Cards bulk, fetched on first use and then reused (see GetDefaultCards).
         private List<Card>? defaultCards;
 
@@ -336,29 +339,17 @@ namespace ScatoloneDownloader
 
         internal async Task<List<Card>> GetCardList(string fileName, bool downloadLands)
         {
-            HashSet<string> seenNames = [];
-            List<Card> cards = [];
-
             Dictionary<string, Card> index = cardsByName ??= await BuildCardsByName(downloadLands);
+            Dictionary<string, string> fronts = fullNamesByFront ??= BuildFullNamesByFront(index.Values);
 
-            foreach (CardListEntry entry in await CardListFile.ReadAsync(fileName))
+            (List<Card> cards, List<string> missing) = MatchEntries(await CardListFile.ReadAsync(fileName), index, fronts);
+
+            // Every miss is also a warning line of its own, but those scroll by among the
+            // others: the summary tells at a glance whether the list was read whole.
+            if (missing.Count > 0)
             {
-                if (index.TryGetValue(entry.Name, out Card? card))
-                {
-                    if (!seenNames.Add(entry.Name))
-                    {
-                        Logger.LogWarning("Duplicate card: {Name}", entry.Name);
-                    }
-                    else
-                    {
-                        card.Tag = entry.Tag;
-                        cards.Add(card);
-                    }
-                }
-                else
-                {
-                    Logger.LogWarning("Missing card: {Name}", entry.Name);
-                }
+                AnsiConsole.MarkupLineInterpolated(
+                    $"[yellow]{Path.GetFileName(fileName)}: not found ({missing.Count}):[/] {string.Join(", ", missing)}");
             }
 
             if (downloadLands)
@@ -381,6 +372,102 @@ namespace ScatoloneDownloader
             }
 
             return cards;
+        }
+
+        // --- list-name matching (pure logic, tested) ---------------------------
+
+        private const string FaceSeparator = " // ";
+
+        /// <summary>
+        /// Matches the entries of a list against the name index, in list order. A name
+        /// is looked up as written first, then as the front face of a multi-face card
+        /// (<see cref="BuildFullNamesByFront"/>). A card listed twice, under the same
+        /// name or once by its front and once in full, is kept once. Misses and
+        /// duplicates go to the log; the misses are also returned, in list order.
+        /// </summary>
+        internal static (List<Card> Cards, List<string> Missing) MatchEntries(
+            IEnumerable<CardListEntry> entries,
+            IReadOnlyDictionary<string, Card> index,
+            IReadOnlyDictionary<string, string> fullNamesByFront)
+        {
+            HashSet<string> seenNames = [];
+            List<Card> cards = [];
+            List<string> missing = [];
+
+            foreach (CardListEntry entry in entries)
+            {
+                string? name = index.ContainsKey(entry.Name)
+                    ? entry.Name
+                    : fullNamesByFront.GetValueOrDefault(entry.Name);
+
+                if (name == null)
+                {
+                    Logger.LogWarning("Missing card: {Name}", entry.Name);
+                    missing.Add(entry.Name);
+                }
+                else if (!seenNames.Add(name))
+                {
+                    Logger.LogWarning("Duplicate card: {Name}", entry.Name);
+                }
+                else
+                {
+                    Card card = index[name];
+                    card.Tag = entry.Tag;
+                    cards.Add(card);
+                }
+            }
+
+            return (cards, missing);
+        }
+
+        /// <summary>
+        /// Maps the front face of every multi-face card to its full Scryfall name:
+        /// lists exported from CubeCobra, and many written by hand, name a double-faced
+        /// card, an adventure or a flip card by its front alone ("Brazen Borrower"),
+        /// while Scryfall writes every face ("Brazen Borrower // Petty Theft").
+        /// <para>
+        /// Art cards, reversible cards, tokens and emblems are left out: an art card
+        /// and a reversible card repeat a card that already has its own name ("Abrade //
+        /// Abrade", "Scavenger Regent // Exude Toxin // Scavenger Regent"), and a list
+        /// does not mean a token or an emblem. A front shared by two different cards
+        /// ("Start // Finish" and "Start // Fire") is ambiguous and left out too.
+        /// Measured on Default Cards of 2026-11-01: 891 fronts, 3 of them ambiguous.
+        /// </para>
+        /// </summary>
+        internal static Dictionary<string, string> BuildFullNamesByFront(IEnumerable<Card> cards)
+        {
+            Dictionary<string, HashSet<string>> fullNames = [];
+
+            foreach (Card card in cards)
+            {
+                int separator = card.Name.IndexOf(FaceSeparator, StringComparison.Ordinal);
+
+                if (separator <= 0 || IsLeftOutOfFronts(card.Layout))
+                {
+                    continue;
+                }
+
+                string front = card.Name[..separator];
+
+                if (!fullNames.TryGetValue(front, out HashSet<string>? names))
+                {
+                    names = [];
+                    fullNames.Add(front, names);
+                }
+
+                names.Add(card.Name);
+            }
+
+            return fullNames
+                .Where(pair => pair.Value.Count == 1)
+                .ToDictionary(pair => pair.Key, pair => pair.Value.Single());
+        }
+
+        private static bool IsLeftOutOfFronts(string layout)
+        {
+            return layout is "art_series" or "reversible_card"
+                || layout.Contains("token", StringComparison.Ordinal)
+                || layout.Contains("emblem", StringComparison.Ordinal);
         }
 
         internal Task<Stream> GetImageStreamAsync(string url)

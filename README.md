@@ -152,6 +152,12 @@ Counterspell
 
 - `Name -- tag` puts the image in `Lists/<list>/<tag>/`.
 - A bare `Name` puts it straight in `Lists/<list>/`.
+- A double-faced card, an adventure or a flip card can be written by its front
+  alone (`Brazen Borrower`, the way CubeCobra exports it) or by its full Scryfall
+  name (`Brazen Borrower // Petty Theft`).
+- A card listed twice is taken once.
+- The names not found are printed after the list is read
+  (`list.txt: not found (1): Lightning Boltt`).
 - Basic lands are handled apart and included only with `--lands`.
 
 ## Managing the cube
