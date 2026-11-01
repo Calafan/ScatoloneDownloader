@@ -655,10 +655,11 @@ namespace ScatoloneDownloader.Cube
             + @"(?:their|its owner's|the control of)[^.\n]*");
 
         /// <summary>The text without the card's ways of bringing ITSELF back,
-        /// its old wording naming itself. See SelfRecursionWording.</summary>
+        /// its old wording naming itself (ShortName: Akuta, Born of Ash writes
+        /// "return Akuta", read 2026-11-01). See SelfRecursionWording.</summary>
         private static string WithoutSelfRecursion(Card card, string text)
         {
-            string name = Regex.Escape((card.Name ?? string.Empty).Split(" // ")[0]);
+            string name = Regex.Escape(ShortName(card));
             string pattern = SelfRecursionWording.ToString().Replace("SELFNAME", name.Length > 0 ? name : "(?!)");
             return Regex.Replace(text, pattern, " ", SelfRecursionWording.Options);
         }
@@ -788,7 +789,9 @@ namespace ScatoloneDownloader.Cube
 
         private static readonly Regex AnyAbilityWithACost = Rx(@"^[^\n:]{1,70}:", RegexOptions.Multiline);
 
-        private static readonly Regex RecurringTrigger = Rx(@"\bwhenever\b|at the beginning of");
+        // A trigger word that fires again; also the Treasure-for-each guard
+        // of TreasureAlsoRamps.
+        private static readonly Regex RecurringTrigger = Rx(@"\bwhenever\b|\bat the beginning of\b");
 
         // Cards paid that the paired draw/discard patterns cannot see, because
         // they are spent in a different sentence or by a different verb. A
@@ -1167,7 +1170,7 @@ namespace ScatoloneDownloader.Cube
         private static bool AbilityRepeatsAtNoCostToItself(string ability) =>
             AbilityRepeats(ability)
             && !DrawBySacrificingItself.IsMatch(ability)
-            && !SpendsItselfWithoutACostLine.IsMatch(ability)
+            && !SacrificesItself.IsMatch(ability)
             && !TransformsItselfAway.IsMatch(ability)
             && !SpendsItselfOutOfTheGraveyard(ability);
 
@@ -1482,12 +1485,18 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex LooksAndKeepsTheRest = Rx(
             @"look at the top \w+ cards? of your library[^\n]{0,200}put the rest into your hand");
 
-        // The self-sacrifice written as an EFFECT rather than as a cost, so
-        // there is no colon for DrawBySacrificingItself to find: Preferred
-        // Selection looks at two cards every upkeep but only keeps one by
-        // saying "You may sacrifice this enchantment and pay {2}{G}{G}",
-        // which it can do exactly once. Added 2026-09-21.
-        private static readonly Regex SpendsItselfWithoutACostLine = Rx(
+        // The card SACRIFICES ITSELF, so the ability runs once, whatever it
+        // fetches and whether the sacrifice is a cost or an effect. Added
+        // 2026-09-21 for the effect, which has no colon for
+        // DrawBySacrificingItself to find: Preferred Selection looks at two
+        // cards every upkeep but only keeps one by saying "You may sacrifice
+        // this enchantment and pay {2}{G}{G}". Measured 2026-11-01: without it
+        // 16 cards turn CardAdvantage (10 reviewed, none tagged), and 15 of
+        // them sacrifice themselves in a COST line that DrawBySacrificingItself
+        // does not read, with no draw within 90 characters of the colon
+        // ("{1}{W}, {T}, Sacrifice this land: Look at the top six cards",
+        // Lupinflower Village; the Hidden Caves' discover).
+        private static readonly Regex SacrificesItself = Rx(
             @"sacrifice this (?:creature|permanent|artifact|enchantment|land|token|card)\b");
 
         // "Look at the top few cards of your library and put one INTO YOUR
@@ -1818,18 +1827,22 @@ namespace ScatoloneDownloader.Cube
         // bare "Draw a card." closing the line: Hylda's Crown of Winter draws
         // one for each tapped creature and ED-E, Lonesome Eyebot one per
         // counter more, and both are tagged.
-        private static bool DrawsOnceBySacrificingItsName(Card card, string text)
+        private static bool DrawsOnceBySacrificingItsName(Card card, string text) =>
+            CostSacrificingItsName(card) is string cost
+            && Regex.IsMatch(text, cost + @"[^\n:]{0,30}:[^\n]{0,60}\bdraw a card\.?$", ByNameOptions);
+
+        /// <summary>The start of a cost line that sacrifices the card BY ITS
+        /// NAME (ShortName), or null for a card without one. Shared by
+        /// DrawsOnceBySacrificingItsName and WithoutSelfSacrificeByName, each
+        /// adding its own end, with <see cref="ByNameOptions"/>.</summary>
+        private static string? CostSacrificingItsName(Card card)
         {
             string name = ShortName(card);
-            if (name.Length == 0)
-            {
-                return false;
-            }
-
-            return Regex.IsMatch(text,
-                @"^[^\n:]{0,60}sacrifice " + Regex.Escape(name) + @"[^\n:]{0,30}:[^\n]{0,60}\bdraw a card\.?$",
-                RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant);
+            return name.Length == 0 ? null : @"^[^\n:]{0,60}sacrifice " + Regex.Escape(name);
         }
+
+        private const RegexOptions ByNameOptions =
+            RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant;
 
         // "Until end of turn, WHENEVER …" on an instant or a sorcery is a window
         // of one turn, not an ability that comes back: Waltz of Rage exiles a
@@ -1883,18 +1896,10 @@ namespace ScatoloneDownloader.Cube
         // CardAdvantage (read 2026-10-16, 0 of 1 tagged). The line is blanked
         // and the cast stream asked again, so a card that casts on another
         // line keeps the tag.
-        private static string WithoutSelfSacrificeByName(Card card, string text)
-        {
-            string name = ShortName(card);
-            if (name.Length == 0)
-            {
-                return text;
-            }
-
-            return Regex.Replace(text,
-                @"^[^\n:]{0,60}sacrifice " + Regex.Escape(name) + @"\b[^\n:]{0,30}:[^\n]*$", " ",
-                RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant);
-        }
+        private static string WithoutSelfSacrificeByName(Card card, string text) =>
+            CostSacrificingItsName(card) is string cost
+                ? Regex.Replace(text, cost + @"\b[^\n:]{0,30}:[^\n]*$", " ", ByNameOptions)
+                : text;
 
         // A card off the top of an OPPONENT's library that you may play or cast,
         // under an ability that REPEATS, is CardAdvantage next to Steal. Ruled

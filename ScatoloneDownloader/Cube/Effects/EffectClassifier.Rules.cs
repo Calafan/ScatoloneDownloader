@@ -751,8 +751,10 @@ namespace ScatoloneDownloader.Cube
                 // Aura" (Hope Charm) or "destroy all Auras" (Serene Heart) still
                 // counts, which is why the noun tests only for the words that follow.
                 //
-                // Three more shapes match the words and are not this tag; they are
-                // read line by line in AnswersAnArtifactOrEnchantment below.
+                // Three more shapes match the words and are not this tag (a sweep
+                // that takes the creatures too, an exile that comes back, your own
+                // permanent), nor is a CARD in a graveyard (2026-10-16); all four
+                // are read line by line in AnswersAnArtifactOrEnchantment.
                 (CardEffect.Disenchant, DisenchantPatterns),
 
                 // Same reading as Mill, and the same result. A bare "discard a card"

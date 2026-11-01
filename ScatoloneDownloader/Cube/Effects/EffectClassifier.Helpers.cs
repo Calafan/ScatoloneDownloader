@@ -85,8 +85,10 @@ namespace ScatoloneDownloader.Cube
         /// modal card is judged mode by mode: Pyramids offers "destroy target Aura
         /// attached to a land" next to a damage-prevention mode, and neither
         /// should be able to excuse or condemn the other. See
-        /// <see cref="SweepsCreaturesToo"/>, <see cref="ExileThatComesBack"/> and
-        /// <see cref="DisenchantsYourOwn"/> for what each veto costs and buys.</summary>
+        /// <see cref="TargetCardInAGraveyard"/>, blanked before the patterns are
+        /// asked, and <see cref="SweepsCreaturesToo"/>,
+        /// <see cref="ExileThatComesBack"/> and <see cref="DisenchantsYourOwn"/>
+        /// for what each veto costs and buys.</summary>
         private static bool AnswersAnArtifactOrEnchantment(string text)
         {
             foreach (string line in text.Split('\n'))
@@ -308,11 +310,8 @@ namespace ScatoloneDownloader.Cube
 
             // "You may cast this spell as though it had flash if you pay {2}
             // more" is instant speed too (Breaking Wave).
-            string typeLine = card.TypeLine ?? string.Empty;
-            bool flash = card.Keywords?.Contains("Flash") == true || FlashLine.IsMatch(text)
-                || text.Contains("as though it had flash", StringComparison.OrdinalIgnoreCase);
-            bool sorcery = typeLine.Contains("Sorcery", StringComparison.Ordinal)
-                && !typeLine.Contains("Instant", StringComparison.Ordinal) && !flash;
+            bool flash = IsCastInResponse(card);
+            bool sorcery = (card.TypeLine ?? string.Empty).Contains("Sorcery", StringComparison.Ordinal) && !flash;
             string name = ShortName(card);
 
             List<string> kept = [];
@@ -582,7 +581,7 @@ namespace ScatoloneDownloader.Cube
 
             return MakesATreasure.IsMatch(text)
                 && (SeveralTreasures.IsMatch(text) || ActivatedTreasureMaker.IsMatch(text)
-                    || text.Split('\n').Any(line => TreasureForEach.IsMatch(line) && !RecurringTriggerWord.IsMatch(line)));
+                    || text.Split('\n').Any(line => TreasureForEach.IsMatch(line) && !RecurringTrigger.IsMatch(line)));
         }
 
         /// <summary>True when EVERY line that adds mana charges mana for it and

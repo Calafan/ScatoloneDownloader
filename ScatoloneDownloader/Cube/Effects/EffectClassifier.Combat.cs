@@ -15,8 +15,9 @@ namespace ScatoloneDownloader.Cube
         // The one land shape that IS Ramp, ruled 2026-09-15. A land tapping for
         // its own single mana is just a land, but Ancient Tomb and Mishra's
         // Workshop produce more than they cost EVERY turn. (The Karoo lands were
-        // read here until 2026-10-13 — see LandThatDoesNotGainEveryTurn.) The "{T}, Sacrifice this land:
-        // Add {R}{R}" family is deliberately NOT caught — it spends itself for
+        // read here until 2026-10-13, when the 09-30 ruling was coded — see
+        // LandThatDoesNotGainEveryTurn.) The "{T}, Sacrifice this land: Add
+        // {R}{R}" family is deliberately NOT caught — it spends itself for
         // the extra mana once, which is why Dwarven Ruins and Ebon Stronghold
         // are hand-tagged as nothing while Crystal Vein is not.
         //
@@ -56,10 +57,11 @@ namespace ScatoloneDownloader.Cube
         // Scorched Ruins sacrifices two for four and is Ramp), nor one that
         // PHASES out every other turn (Teferi's Isle, untagged): neither makes
         // more than it costs EVERY turn. Measured 2026-09-29. Nor, ruled
-        // 2026-09-30 ("togliamo Ramp ai Karoo"), a KAROO — a land that hands a
-        // land back as it enters: Karoo, Coral Atoll, Dormant Volcano,
-        // Everglades and Jungle Basin, Ramp by hand on 09-08, are no longer,
-        // and Arid Archway, left untagged on 09-23, stops being the exception.
+        // 2026-09-30 ("togliamo Ramp ai Karoo") and coded 2026-10-13, a KAROO —
+        // a land that hands a land back as it enters: Karoo, Coral Atoll,
+        // Dormant Volcano, Everglades and Jungle Basin, Ramp by hand on 09-08,
+        // are no longer, and Arid Archway, left untagged on 09-23, stops being
+        // the exception.
         private static readonly Regex LandThatDoesNotGainEveryTurn = Rx(
             @"sacrifice an untapped [\w ]{1,20} instead|^phasing\b"
             + @"|enters, (?:sacrifice it unless you )?return (?:a land|an untapped \w+) you control to its owner's hand",
@@ -1876,8 +1878,16 @@ namespace ScatoloneDownloader.Cube
         // "ALL lands have" is the same grant (Toxicrene, ManaFixing alone by
         // hand, read 2026-10-24).
         private static readonly Regex OneManaGrantedToLands = Rx(
-            @"(?:\blands? you control have|\ball lands have|\benchanted land has|\btarget land gains) [""']\{t\}: add "
-            + @"(?:one mana of any colou?r|\{[wubrg]\}(?:, \{[wubrg]\})*,? or \{[wubrg]\})\.?[""']");
+            LandsGranted + @" [""']\{t\}: add " + OneManaOfAChoice + @"\.?[""']");
+
+        // The lands a grant is handed to, and the one mana of a choice of
+        // colours, shared by OneManaGrantedToLands (the whole quoted ability)
+        // and ManaGrantedToLands (anywhere on the line).
+        private const string LandsGranted =
+            @"(?:\blands? you control have|\ball lands have|\benchanted land has|\btarget land gains)";
+
+        private const string OneManaOfAChoice =
+            @"(?:one mana of any colou?r|\{[wubrg]\}(?:, \{[wubrg]\})*,? or \{[wubrg]\})";
 
         // Lands out of a GRAVEYARD the card has just FILLED itself are Ramp,
         // ruled 2026-10-13: Blossoming Tortoise and Deeproot Wayfinder mill or
@@ -2053,8 +2063,6 @@ namespace ScatoloneDownloader.Cube
             + @"|^[ivx]+(?:, [ivx]+)* — [^\n]*\bfor each [^.\n]{0,100}, create (?:a|one) (?:tapped )?treasure token",
             RegexOptions.Multiline);
 
-        private static readonly Regex RecurringTriggerWord = Rx(@"\bwhenever\b|\bat the beginning of\b");
-
         // Treasures counted by the EXCESS DAMAGE a removal spell dealt are the
         // spell's rider, however many: Bottle-Cap Blast and Hell to Pay, both
         // left without Ramp by the human on 2026-09-23.
@@ -2207,9 +2215,7 @@ namespace ScatoloneDownloader.Cube
         // A choice of colours granted to "target land" is the same, read
         // 2026-10-15: Spara's Adjudicators' "{T}: Add {G}, {W}, or {U}",
         // ManaFixing by hand.
-        private static readonly Regex ManaGrantedToLands = Rx(
-            @"(?:\blands? you control have\b|\ball lands have\b|\benchanted land has\b|\btarget land gains\b)[^\n]*\badd "
-            + @"(?:one mana of any colou?r|\{[wubrg]\}(?:, \{[wubrg]\})*,? or \{[wubrg]\})");
+        private static readonly Regex ManaGrantedToLands = Rx(LandsGranted + @"\b[^\n]*\badd " + OneManaOfAChoice);
 
         private static readonly Regex SacrificesATokenForMana = Rx(@"sacrifice an? (?<token>[\w-]+) token: add ");
 

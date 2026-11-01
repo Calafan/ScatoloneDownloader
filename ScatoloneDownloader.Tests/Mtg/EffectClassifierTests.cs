@@ -1895,6 +1895,11 @@ public sealed class EffectClassifierTests
     [InlineData("Haunt of the Dead Marshes", "Creature — Nightmare Elf",
         "When this creature enters, scry 1.\n{2}{B}: Return this card from your graveyard to the battlefield "
         + "tapped. Activate only if you control a legendary creature.")]
+    // An old card names itself by the name cut at the comma (ShortName), not
+    // by its full front name: Akuta was Reanimate until 2026-11-01.
+    [InlineData("Akuta, Born of Ash", "Legendary Creature — Spirit",
+        "Haste\nAt the beginning of your upkeep, if you have more cards in hand than each opponent, you may "
+        + "sacrifice a Swamp. If you do, return Akuta from your graveyard to the battlefield.")]
     public void Classify_ACardBringingItselfBack_IsNotReanimate(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
