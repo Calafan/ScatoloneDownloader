@@ -1,7 +1,8 @@
 # Scatolone: confronto con cubi di riferimento
 
-Documento del punto 3 del piano di miglioramento del cubo. Ricerca del 2026-10-31. **Sospeso**:
-manca la scelta dei cubi, e il codice per il confronto non è ancora scritto.
+Documento del punto 3 del piano di miglioramento del cubo. Ricerca del 2026-10-31. Il confronto
+statistico con gli 8 cubi della tabella, insieme al Limited retail nel tempo, è in
+[`limited-history.md`](limited-history.md) (2026-11-02).
 
 Lo scopo è passare liste di cubi noti a `analyze <list>` e mettere i numeri accanto a quelli del
 pool, per capire se la diagnosi dell'utente ("troppo lento e con troppe soluzioni") vale anche
@@ -135,18 +136,17 @@ dell'unione.
 
 ## Cosa serve per il confronto
 
-Sospeso il 2026-11-01 per scelta dell'utente: il confronto coi cubi servirà solo per un'analisi
-statistica, più avanti. Fino ad allora non si fanno la vista di confronto (punti 2–4) né il
-controllo sul download delle liste da CubeCobra.
+Il 2026-11-01 l'utente ha scelto un'analisi statistica al posto di una vista nell'app; il
+2026-11-02 ha scelto gli 8 cubi della tabella.
 
 1. `analyze`: trovare le carte col solo nome del fronte e stampare quelle non trovate. Fatto il
    2026-11-01, vedi sopra.
-2. Una vista di confronto: pool e N cubi affiancati, percentuali sulle non-terra e numero per busta.
-3. Carte in comune tra il pool e ciascun cubo (Jaccard).
-4. Per ogni cubo, quante carte hanno il tag rivisto a mano e quante la proposta del classificatore.
+2. Pool e cubi affiancati, percentuali sulle non-terra e numero per busta: fatto il 2026-11-02 con
+   gli script di `tools/cube-metrics`, in [`limited-history.md`](limited-history.md). Le liste si
+   scaricano con `fetch_cubes.py`, che scarta un file senza `# mainboard` in testa.
+3. Carte in comune tra il pool e ciascun cubo (Jaccard): non fatto.
+4. Per ogni cubo, la quota di carte col tag rivisto a mano: nella tabella di copertura di
+   [`limited-history-tables.md`](limited-history-tables.md).
 
-## Da decidere alla ripresa
-
-- Quali cubi usare: gli 8 della tabella, Battlebond, o una selezione.
-- I numeri del pool sono provvisori finché la revisione delle carte è in corso: il confronto va
-  rifatto alla fine.
+I numeri del pool sono provvisori finché la revisione delle carte è in corso: il confronto va
+rifatto alla fine.

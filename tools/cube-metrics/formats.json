@@ -1,0 +1,915 @@
+[
+ {
+  "id": "MIR-VIS-WTH",
+  "label": "Mirage (MIR-VIS-WTH)",
+  "kind": "3 sets",
+  "packs": [
+   "MIR",
+   "VIS",
+   "WTH"
+  ],
+  "date": "1997-06-09"
+ },
+ {
+  "id": "TMP-STH-EXO",
+  "label": "Tempest (TMP-STH-EXO)",
+  "kind": "3 sets",
+  "packs": [
+   "TMP",
+   "STH",
+   "EXO"
+  ],
+  "date": "1998-06-15"
+ },
+ {
+  "id": "USG-ULG-UDS",
+  "label": "Urza's Saga (USG-ULG-UDS)",
+  "kind": "3 sets",
+  "packs": [
+   "USG",
+   "ULG",
+   "UDS"
+  ],
+  "date": "1999-06-07"
+ },
+ {
+  "id": "MMQ-NEM-PCY",
+  "label": "Mercadian Masques (MMQ-NEM-PCY)",
+  "kind": "3 sets",
+  "packs": [
+   "MMQ",
+   "NEM",
+   "PCY"
+  ],
+  "date": "2000-06-05"
+ },
+ {
+  "id": "INV-PLS-APC",
+  "label": "Invasion (INV-PLS-APC)",
+  "kind": "3 sets",
+  "packs": [
+   "INV",
+   "PLS",
+   "APC"
+  ],
+  "date": "2001-06-04"
+ },
+ {
+  "id": "ODY-TOR-JUD",
+  "label": "Odyssey (ODY-TOR-JUD)",
+  "kind": "3 sets",
+  "packs": [
+   "ODY",
+   "TOR",
+   "JUD"
+  ],
+  "date": "2002-05-27"
+ },
+ {
+  "id": "ONS-LGN-SCG",
+  "label": "Onslaught (ONS-LGN-SCG)",
+  "kind": "3 sets",
+  "packs": [
+   "ONS",
+   "LGN",
+   "SCG"
+  ],
+  "date": "2003-05-26"
+ },
+ {
+  "id": "MRD-DST-5DN",
+  "label": "Mirrodin (MRD-DST-5DN)",
+  "kind": "3 sets",
+  "packs": [
+   "MRD",
+   "DST",
+   "5DN"
+  ],
+  "date": "2004-06-04"
+ },
+ {
+  "id": "CHK-BOK-SOK",
+  "label": "Champions of Kamigawa (CHK-BOK-SOK)",
+  "kind": "3 sets",
+  "packs": [
+   "CHK",
+   "BOK",
+   "SOK"
+  ],
+  "date": "2005-06-03"
+ },
+ {
+  "id": "RAV-GPT-DIS",
+  "label": "Ravnica: City of Guilds (RAV-GPT-DIS)",
+  "kind": "3 sets",
+  "packs": [
+   "RAV",
+   "GPT",
+   "DIS"
+  ],
+  "date": "2006-05-05"
+ },
+ {
+  "id": "TSP-PLC-FUT",
+  "label": "Time Spiral (TSP-PLC-FUT)",
+  "kind": "3 sets",
+  "packs": [
+   "TSP",
+   "PLC",
+   "FUT"
+  ],
+  "date": "2007-05-04"
+ },
+ {
+  "id": "ALA-CON-ARB",
+  "label": "Shards of Alara (ALA-CON-ARB)",
+  "kind": "3 sets",
+  "packs": [
+   "ALA",
+   "CON",
+   "ARB"
+  ],
+  "date": "2009-04-30"
+ },
+ {
+  "id": "SOM-MBS-NPH",
+  "label": "Scars of Mirrodin (SOM-MBS-NPH)",
+  "kind": "3 sets",
+  "packs": [
+   "SOM",
+   "MBS",
+   "NPH"
+  ],
+  "date": "2011-05-13"
+ },
+ {
+  "id": "RTR-GTC-DGM",
+  "label": "Return to Ravnica (RTR-GTC-DGM)",
+  "kind": "3 sets",
+  "packs": [
+   "RTR",
+   "GTC",
+   "DGM"
+  ],
+  "date": "2013-05-03"
+ },
+ {
+  "id": "THS-BNG-JOU",
+  "label": "Theros (THS-BNG-JOU)",
+  "kind": "3 sets",
+  "packs": [
+   "THS",
+   "BNG",
+   "JOU"
+  ],
+  "date": "2014-05-02"
+ },
+ {
+  "id": "LRW-LRW-MOR",
+  "label": "Lorwyn (LRW-LRW-MOR)",
+  "kind": "2 sets",
+  "packs": [
+   "LRW",
+   "LRW",
+   "MOR"
+  ],
+  "date": "2008-02-01"
+ },
+ {
+  "id": "SHM-SHM-EVE",
+  "label": "Shadowmoor (SHM-SHM-EVE)",
+  "kind": "2 sets",
+  "packs": [
+   "SHM",
+   "SHM",
+   "EVE"
+  ],
+  "date": "2008-07-25"
+ },
+ {
+  "id": "ZEN-ZEN-WWK",
+  "label": "Zendikar (ZEN-ZEN-WWK)",
+  "kind": "2 sets",
+  "packs": [
+   "ZEN",
+   "ZEN",
+   "WWK"
+  ],
+  "date": "2010-02-05"
+ },
+ {
+  "id": "ISD-ISD-DKA",
+  "label": "Innistrad (ISD-ISD-DKA)",
+  "kind": "2 sets",
+  "packs": [
+   "ISD",
+   "ISD",
+   "DKA"
+  ],
+  "date": "2012-02-03"
+ },
+ {
+  "id": "DTK-DTK-FRF",
+  "label": "Dragons of Tarkir (DTK-DTK-FRF)",
+  "kind": "2 sets",
+  "packs": [
+   "DTK",
+   "DTK",
+   "FRF"
+  ],
+  "date": "2015-03-27"
+ },
+ {
+  "id": "BFZ-BFZ-OGW",
+  "label": "Battle for Zendikar (BFZ-BFZ-OGW)",
+  "kind": "2 sets",
+  "packs": [
+   "BFZ",
+   "BFZ",
+   "OGW"
+  ],
+  "date": "2016-01-22"
+ },
+ {
+  "id": "SOI-EMN-EMN",
+  "label": "Shadows over Innistrad (SOI-EMN-EMN)",
+  "kind": "2 sets",
+  "packs": [
+   "SOI",
+   "EMN",
+   "EMN"
+  ],
+  "date": "2016-07-22"
+ },
+ {
+  "id": "KLD-KLD-AER",
+  "label": "Kaladesh (KLD-KLD-AER)",
+  "kind": "2 sets",
+  "packs": [
+   "KLD",
+   "KLD",
+   "AER"
+  ],
+  "date": "2017-01-20"
+ },
+ {
+  "id": "AKH-HOU-HOU",
+  "label": "Amonkhet (AKH-HOU-HOU)",
+  "kind": "2 sets",
+  "packs": [
+   "AKH",
+   "HOU",
+   "HOU"
+  ],
+  "date": "2017-07-14"
+ },
+ {
+  "id": "XLN-RIX-RIX",
+  "label": "Ixalan (XLN-RIX-RIX)",
+  "kind": "2 sets",
+  "packs": [
+   "XLN",
+   "RIX",
+   "RIX"
+  ],
+  "date": "2018-01-19"
+ },
+ {
+  "id": "CSP",
+  "label": "Coldsnap (CSP)",
+  "kind": "1 set",
+  "packs": [
+   "CSP",
+   "CSP",
+   "CSP"
+  ],
+  "date": "2006-07-21"
+ },
+ {
+  "id": "ROE",
+  "label": "Rise of the Eldrazi (ROE)",
+  "kind": "1 set",
+  "packs": [
+   "ROE",
+   "ROE",
+   "ROE"
+  ],
+  "date": "2010-04-23"
+ },
+ {
+  "id": "AVR",
+  "label": "Avacyn Restored (AVR)",
+  "kind": "1 set",
+  "packs": [
+   "AVR",
+   "AVR",
+   "AVR"
+  ],
+  "date": "2012-05-04"
+ },
+ {
+  "id": "KTK",
+  "label": "Khans of Tarkir (KTK)",
+  "kind": "1 set",
+  "packs": [
+   "KTK",
+   "KTK",
+   "KTK"
+  ],
+  "date": "2014-09-26"
+ },
+ {
+  "id": "DOM",
+  "label": "Dominaria (DOM)",
+  "kind": "1 set",
+  "packs": [
+   "DOM",
+   "DOM",
+   "DOM"
+  ],
+  "date": "2018-04-27"
+ },
+ {
+  "id": "GRN",
+  "label": "Guilds of Ravnica (GRN)",
+  "kind": "1 set",
+  "packs": [
+   "GRN",
+   "GRN",
+   "GRN"
+  ],
+  "date": "2018-10-05"
+ },
+ {
+  "id": "RNA",
+  "label": "Ravnica Allegiance (RNA)",
+  "kind": "1 set",
+  "packs": [
+   "RNA",
+   "RNA",
+   "RNA"
+  ],
+  "date": "2019-01-25"
+ },
+ {
+  "id": "WAR",
+  "label": "War of the Spark (WAR)",
+  "kind": "1 set",
+  "packs": [
+   "WAR",
+   "WAR",
+   "WAR"
+  ],
+  "date": "2019-05-03"
+ },
+ {
+  "id": "ELD",
+  "label": "Throne of Eldraine (ELD)",
+  "kind": "1 set",
+  "packs": [
+   "ELD",
+   "ELD",
+   "ELD"
+  ],
+  "date": "2019-10-04"
+ },
+ {
+  "id": "THB",
+  "label": "Theros Beyond Death (THB)",
+  "kind": "1 set",
+  "packs": [
+   "THB",
+   "THB",
+   "THB"
+  ],
+  "date": "2020-01-24"
+ },
+ {
+  "id": "IKO",
+  "label": "Ikoria: Lair of Behemoths (IKO)",
+  "kind": "1 set",
+  "packs": [
+   "IKO",
+   "IKO",
+   "IKO"
+  ],
+  "date": "2020-04-24"
+ },
+ {
+  "id": "ZNR",
+  "label": "Zendikar Rising (ZNR)",
+  "kind": "1 set",
+  "packs": [
+   "ZNR",
+   "ZNR",
+   "ZNR"
+  ],
+  "date": "2020-09-25"
+ },
+ {
+  "id": "KHM",
+  "label": "Kaldheim (KHM)",
+  "kind": "1 set",
+  "packs": [
+   "KHM",
+   "KHM",
+   "KHM"
+  ],
+  "date": "2021-02-05"
+ },
+ {
+  "id": "STX",
+  "label": "Strixhaven: School of Mages (STX)",
+  "kind": "1 set",
+  "packs": [
+   "STX",
+   "STX",
+   "STX"
+  ],
+  "date": "2021-04-23"
+ },
+ {
+  "id": "AFR",
+  "label": "Adventures in the Forgotten Realms (AFR)",
+  "kind": "1 set",
+  "packs": [
+   "AFR",
+   "AFR",
+   "AFR"
+  ],
+  "date": "2021-07-23"
+ },
+ {
+  "id": "MID",
+  "label": "Innistrad: Midnight Hunt (MID)",
+  "kind": "1 set",
+  "packs": [
+   "MID",
+   "MID",
+   "MID"
+  ],
+  "date": "2021-09-24"
+ },
+ {
+  "id": "VOW",
+  "label": "Innistrad: Crimson Vow (VOW)",
+  "kind": "1 set",
+  "packs": [
+   "VOW",
+   "VOW",
+   "VOW"
+  ],
+  "date": "2021-11-19"
+ },
+ {
+  "id": "NEO",
+  "label": "Kamigawa: Neon Dynasty (NEO)",
+  "kind": "1 set",
+  "packs": [
+   "NEO",
+   "NEO",
+   "NEO"
+  ],
+  "date": "2022-02-18"
+ },
+ {
+  "id": "SNC",
+  "label": "Streets of New Capenna (SNC)",
+  "kind": "1 set",
+  "packs": [
+   "SNC",
+   "SNC",
+   "SNC"
+  ],
+  "date": "2022-04-29"
+ },
+ {
+  "id": "DMU",
+  "label": "Dominaria United (DMU)",
+  "kind": "1 set",
+  "packs": [
+   "DMU",
+   "DMU",
+   "DMU"
+  ],
+  "date": "2022-09-09"
+ },
+ {
+  "id": "BRO",
+  "label": "The Brothers' War (BRO)",
+  "kind": "1 set",
+  "packs": [
+   "BRO",
+   "BRO",
+   "BRO"
+  ],
+  "date": "2022-11-18"
+ },
+ {
+  "id": "ONE",
+  "label": "Phyrexia: All Will Be One (ONE)",
+  "kind": "1 set",
+  "packs": [
+   "ONE",
+   "ONE",
+   "ONE"
+  ],
+  "date": "2023-02-10"
+ },
+ {
+  "id": "MOM",
+  "label": "March of the Machine (MOM)",
+  "kind": "1 set",
+  "packs": [
+   "MOM",
+   "MOM",
+   "MOM"
+  ],
+  "date": "2023-04-21"
+ },
+ {
+  "id": "WOE",
+  "label": "Wilds of Eldraine (WOE)",
+  "kind": "1 set",
+  "packs": [
+   "WOE",
+   "WOE",
+   "WOE"
+  ],
+  "date": "2023-09-08"
+ },
+ {
+  "id": "LCI",
+  "label": "The Lost Caverns of Ixalan (LCI)",
+  "kind": "1 set",
+  "packs": [
+   "LCI",
+   "LCI",
+   "LCI"
+  ],
+  "date": "2023-11-17"
+ },
+ {
+  "id": "MKM",
+  "label": "Murders at Karlov Manor (MKM)",
+  "kind": "1 set",
+  "packs": [
+   "MKM",
+   "MKM",
+   "MKM"
+  ],
+  "date": "2024-02-09"
+ },
+ {
+  "id": "OTJ",
+  "label": "Outlaws of Thunder Junction (OTJ)",
+  "kind": "1 set",
+  "packs": [
+   "OTJ",
+   "OTJ",
+   "OTJ"
+  ],
+  "date": "2024-04-19"
+ },
+ {
+  "id": "BLB",
+  "label": "Bloomburrow (BLB)",
+  "kind": "1 set",
+  "packs": [
+   "BLB",
+   "BLB",
+   "BLB"
+  ],
+  "date": "2024-08-02"
+ },
+ {
+  "id": "DSK",
+  "label": "Duskmourn: House of Horror (DSK)",
+  "kind": "1 set",
+  "packs": [
+   "DSK",
+   "DSK",
+   "DSK"
+  ],
+  "date": "2024-09-27"
+ },
+ {
+  "id": "DFT",
+  "label": "Aetherdrift (DFT)",
+  "kind": "1 set",
+  "packs": [
+   "DFT",
+   "DFT",
+   "DFT"
+  ],
+  "date": "2025-02-14"
+ },
+ {
+  "id": "TDM",
+  "label": "Tarkir: Dragonstorm (TDM)",
+  "kind": "1 set",
+  "packs": [
+   "TDM",
+   "TDM",
+   "TDM"
+  ],
+  "date": "2025-04-11"
+ },
+ {
+  "id": "FIN",
+  "label": "Final Fantasy (FIN)",
+  "kind": "1 set",
+  "packs": [
+   "FIN",
+   "FIN",
+   "FIN"
+  ],
+  "date": "2025-06-13"
+ },
+ {
+  "id": "EOE",
+  "label": "Edge of Eternities (EOE)",
+  "kind": "1 set",
+  "packs": [
+   "EOE",
+   "EOE",
+   "EOE"
+  ],
+  "date": "2025-08-01"
+ },
+ {
+  "id": "SPM",
+  "label": "Marvel's Spider-Man (SPM)",
+  "kind": "1 set",
+  "packs": [
+   "SPM",
+   "SPM",
+   "SPM"
+  ],
+  "date": "2025-09-26"
+ },
+ {
+  "id": "TLA",
+  "label": "Avatar: The Last Airbender (TLA)",
+  "kind": "1 set",
+  "packs": [
+   "TLA",
+   "TLA",
+   "TLA"
+  ],
+  "date": "2025-11-21"
+ },
+ {
+  "id": "ECL",
+  "label": "Lorwyn Eclipsed (ECL)",
+  "kind": "1 set",
+  "packs": [
+   "ECL",
+   "ECL",
+   "ECL"
+  ],
+  "date": "2026-01-23"
+ },
+ {
+  "id": "TMT",
+  "label": "Teenage Mutant Ninja Turtles (TMT)",
+  "kind": "1 set",
+  "packs": [
+   "TMT",
+   "TMT",
+   "TMT"
+  ],
+  "date": "2026-03-06"
+ },
+ {
+  "id": "SOS",
+  "label": "Secrets of Strixhaven (SOS)",
+  "kind": "1 set",
+  "packs": [
+   "SOS",
+   "SOS",
+   "SOS"
+  ],
+  "date": "2026-04-24"
+ },
+ {
+  "id": "MSH",
+  "label": "Marvel Super Heroes (MSH)",
+  "kind": "1 set",
+  "packs": [
+   "MSH",
+   "MSH",
+   "MSH"
+  ],
+  "date": "2026-06-26"
+ },
+ {
+  "id": "HOB",
+  "label": "The Hobbit (HOB)",
+  "kind": "1 set",
+  "packs": [
+   "HOB",
+   "HOB",
+   "HOB"
+  ],
+  "date": "2026-08-14"
+ },
+ {
+  "id": "FRA",
+  "label": "Reality Fracture (FRA)",
+  "kind": "1 set",
+  "packs": [
+   "FRA",
+   "FRA",
+   "FRA"
+  ],
+  "date": "2026-10-02"
+ },
+ {
+  "id": "5ED",
+  "label": "Fifth Edition (5ED)",
+  "kind": "core",
+  "packs": [
+   "5ED",
+   "5ED",
+   "5ED"
+  ],
+  "date": "1997-03-24"
+ },
+ {
+  "id": "6ED",
+  "label": "Classic Sixth Edition (6ED)",
+  "kind": "core",
+  "packs": [
+   "6ED",
+   "6ED",
+   "6ED"
+  ],
+  "date": "1999-04-21"
+ },
+ {
+  "id": "7ED",
+  "label": "Seventh Edition (7ED)",
+  "kind": "core",
+  "packs": [
+   "7ED",
+   "7ED",
+   "7ED"
+  ],
+  "date": "2001-04-11"
+ },
+ {
+  "id": "8ED",
+  "label": "Eighth Edition (8ED)",
+  "kind": "core",
+  "packs": [
+   "8ED",
+   "8ED",
+   "8ED"
+  ],
+  "date": "2003-07-28"
+ },
+ {
+  "id": "9ED",
+  "label": "Ninth Edition (9ED)",
+  "kind": "core",
+  "packs": [
+   "9ED",
+   "9ED",
+   "9ED"
+  ],
+  "date": "2005-07-29"
+ },
+ {
+  "id": "10E",
+  "label": "Tenth Edition (10E)",
+  "kind": "core",
+  "packs": [
+   "10E",
+   "10E",
+   "10E"
+  ],
+  "date": "2007-07-13"
+ },
+ {
+  "id": "M10",
+  "label": "Magic 2010 (M10)",
+  "kind": "core",
+  "packs": [
+   "M10",
+   "M10",
+   "M10"
+  ],
+  "date": "2009-07-17"
+ },
+ {
+  "id": "M11",
+  "label": "Magic 2011 (M11)",
+  "kind": "core",
+  "packs": [
+   "M11",
+   "M11",
+   "M11"
+  ],
+  "date": "2010-07-16"
+ },
+ {
+  "id": "M12",
+  "label": "Magic 2012 (M12)",
+  "kind": "core",
+  "packs": [
+   "M12",
+   "M12",
+   "M12"
+  ],
+  "date": "2011-07-15"
+ },
+ {
+  "id": "M13",
+  "label": "Magic 2013 (M13)",
+  "kind": "core",
+  "packs": [
+   "M13",
+   "M13",
+   "M13"
+  ],
+  "date": "2012-07-13"
+ },
+ {
+  "id": "M14",
+  "label": "Magic 2014 (M14)",
+  "kind": "core",
+  "packs": [
+   "M14",
+   "M14",
+   "M14"
+  ],
+  "date": "2013-07-19"
+ },
+ {
+  "id": "M15",
+  "label": "Magic 2015 (M15)",
+  "kind": "core",
+  "packs": [
+   "M15",
+   "M15",
+   "M15"
+  ],
+  "date": "2014-07-18"
+ },
+ {
+  "id": "ORI",
+  "label": "Magic Origins (ORI)",
+  "kind": "core",
+  "packs": [
+   "ORI",
+   "ORI",
+   "ORI"
+  ],
+  "date": "2015-07-17"
+ },
+ {
+  "id": "M19",
+  "label": "Core Set 2019 (M19)",
+  "kind": "core",
+  "packs": [
+   "M19",
+   "M19",
+   "M19"
+  ],
+  "date": "2018-07-13"
+ },
+ {
+  "id": "M20",
+  "label": "Core Set 2020 (M20)",
+  "kind": "core",
+  "packs": [
+   "M20",
+   "M20",
+   "M20"
+  ],
+  "date": "2019-07-12"
+ },
+ {
+  "id": "M21",
+  "label": "Core Set 2021 (M21)",
+  "kind": "core",
+  "packs": [
+   "M21",
+   "M21",
+   "M21"
+  ],
+  "date": "2020-07-03"
+ },
+ {
+  "id": "FDN",
+  "label": "Foundations (FDN)",
+  "kind": "core",
+  "packs": [
+   "FDN",
+   "FDN",
+   "FDN"
+  ],
+  "date": "2024-11-15"
+ }
+]
