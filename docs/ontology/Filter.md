@@ -207,3 +207,15 @@ Sparkshaper Visionary's granted repeating scry is Filter as proposed, its missin
 Read 2026-11-03 with CardAdvantage (see there): one card discarded and two drawn by a repeating
 ability is no longer Filter (Niambi, Esteemed Speaker); two paid for two or three, or a draw of two
 with one card put back, stay here (Falkenrath Pit Fighter, Pumpkin Bombs, Krovikan Sorcerer).
+
+Ruled 2026-11-03 with the Cheat redefinition ("3. Filter per le singole, CA per le multiple"; see
+Cheat): ONE card chosen out of the top few and put onto the battlefield is selection, so a look, a
+reveal or a mill that puts one card from among them is this tag and no longer Cheat. A look was this
+tag by the older rules already (Owlbear Cub, Web of Life and Destiny, Armored Skyhunter, Kinnan,
+Aetherworks Marvel); the MILL and an opponent's REVEAL were not, and are read now
+(OneChosenFromAMillOrReveal: Mole Module, Vastlands Scavenger's Bind to Life, Guild Feud, named). A
+RANDOM card is no choice (Getaway Barrel's "a random creature card", untagged). More than one card
+is CardAdvantage (see there), and the exclusivity keeps the card out of this tag (Gilgamesh,
+Master-at-Arms, Doors of Durin, reached and handed back). So is ONE card chosen by an ability that
+REPEATS, ruled later the same day ("Si ripete = CA"): Owlbear Cub, Web of Life and Destiny, Armored
+Skyhunter, Kinnan and Mole Module left this tag; a single look, reveal or mill stays here.

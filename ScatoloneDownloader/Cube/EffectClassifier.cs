@@ -717,21 +717,11 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Cheat;
             }
 
-            // ONE card off the top cast by an ability that runs once is no
-            // Cheat, ruled 2026-11-03 ("Mai Cheat"); a pile stays ("Pile restano
-            // Cheat"). See CastsOneOfThem.
-            if (result.HasFlag(CardEffect.Cheat) && CastsOneCardOffTheTopOnce(text))
-            {
-                result &= ~CardEffect.Cheat;
-            }
-
-            // One free card off the top, again and again. Added after the
-            // vetoes above, and tribal-proof by its own shape. See
-            // FreeCardOffTheTopAgainAndAgain.
-            if (FreeCardOffTheTopAgainAndAgain(text))
-            {
-                result |= CardEffect.Cheat;
-            }
+            // The two Cheat lines on a card off the TOP of a library that stood
+            // here, the 2026-11-03 "Mai Cheat" veto on one cast once and the Caves
+            // and Gríma rule adding one cast again and again, went the same day
+            // with the redefinition ("1. CA"): nothing off the top is Cheat, so
+            // neither question is asked any more.
 
             // Added after that guard, and asked as a pair. See
             // ExiledCardOntoTheBattlefield for why it cannot live in the table.
@@ -1006,6 +996,19 @@ namespace ScatoloneDownloader.Cube
                 || D20DrawOnARepeatingTrigger.IsMatch(text) || EachDrawsHalfThatMany.IsMatch(text))
             {
                 result |= CardEffect.CardAdvantage;
+            }
+
+            // What comes off the top of a library and stopped being Cheat on
+            // 2026-11-03 is a card, or a choice when only one is chosen out of a
+            // mill or a reveal. See OffTheTopIsACard and OneChosenFromAMillOrReveal.
+            if (OffTheTopIsACard(text))
+            {
+                result |= CardEffect.CardAdvantage;
+            }
+
+            if (OneChosenFromAMillOrReveal.IsMatch(text))
+            {
+                result |= CardEffect.Filter;
             }
 
             // A loot the card spreads over TWO TRIGGERS is still one card for

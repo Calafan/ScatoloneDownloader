@@ -3,9 +3,12 @@
 Canonical record of the rulings for `CardEffect.Cheat`. The one-line tooltip shown in the tagger is
 in [`EffectGlossary.cs`](../../ScatoloneDownloader/Mtg/EffectGlossary.cs).
 
-put a NONLAND permanent onto the battlefield without casting it — out of your hand (Sneak Attack,
-Elvish Piper, Quicksilver Amulet, Didgeridoo, Show and Tell) or out of your library (Natural Order)
-— or hold a STANDING permission to cast without paying (Dracogenesis, Aluren, Omniscience).
+the mana cost of a card the player CHOSE is skipped: a NONLAND permanent put onto the battlefield
+out of your hand (Sneak Attack, Elvish Piper, Quicksilver Amulet, Show and Tell) or SEARCHED out of
+your library (Natural Order, Tooth and Nail), or a STANDING permission or a real alternative cost to
+cast without paying (Omniscience, Dream Halls, Leyline of Mutation). Nothing that comes off the TOP
+of a library, and nothing under a mana-value cap of any kind (redefined 2026-11-03, the last two
+rulings below; every earlier paragraph marked "overturned" is history).
 
 Ruled 2026-09-18, and it is the tag those cards had been falling through: of the 13 already reviewed
 that put a card from hand onto the battlefield, 7 carried no tag at all. Three edges.
@@ -16,45 +19,47 @@ zone, but 97 hand-tagged cards and an archetype of its own, and folding them tog
 
 A LAND is not in it — putting a land onto the battlefield is Ramp, ruled the same day, so Skyshroud
 Ranger and PuPu UFO stay there. And "you may cast IT without paying its mana cost" on one exiled
-card is the impulse rider, which is CardAdvantage when it runs once or under a cap (a repeating,
-uncapped one is Cheat since 2026-11-03, below): otherwise only a standing permission counts, the
+card is the impulse rider, which is CardAdvantage (and since 2026-11-03 so is every card off the
+top, below): otherwise only a standing permission counts, the
 same line already drawn for the Clue and the Treasure. Measured before it was added: the
 hand-to-battlefield wording is on 119 cards in the bulk, while the bare phrase "without paying its
 mana cost" is on 624 and is almost all that rider.
 
-LOOKING at the top few and casting one of them free is this tag, ruled 2026-09-27 on Perception
-Bobblehead ("lo mettiamo Cheat"), with Aetherworks Marvel, Svella and Kiora written the same way;
-the EXILE-and-cast rider stays advantage.
+(Overturned 2026-11-03.) LOOKING at the top few and casting one of them free is this tag, ruled
+2026-09-27 on Perception Bobblehead ("lo mettiamo Cheat"), with Aetherworks Marvel, Svella and Kiora
+written the same way; the EXILE-and-cast rider stays advantage.
 
-The 2026-10-13 pass (F1 55.9% -> 84.4%) read and ruled: out of HAND, "any number of" and a cap after
-the noun (Ghalta, Jhoira, Paladin Elizabeth Taggerdy), but not a LESSER cap ("lesser = niente",
-Shadowfax) nor an opponent putting from their own hand (Wumpus Aberration); out of the LIBRARY from
-among cards looked at, revealed or milled, a nonland permanent with NO mana-value cap (Arthur, Ojer
-Kaslem, Majestic Genesis, and Vorinclex and Bramble Familiar out of a mill — Cheat, not Reanimate),
-while one under a cap is Filter alone ("qualunque tetto = Filter": Emergent Woodwurm, Kayla's
-Reconstruction, Wilfred Mott, Knickknack Ouphe); UNCAPPED free casts ("carta grossa"): a pile of
-exiled cards, yours or theirs (Etali, Dance with Calamity, Kylox, Wand of Wonder, Plargg and
-Nassari), a spell from your hand (Great Intelligence's Plan, Marvo), another spell's cost paid
-otherwise (Dream Halls, Cramped Vents), not copies (Arcane Bombardment) and not a pile the card
-filled itself (Forger's Foundry), while cascade under a lesser cap stays CardAdvantage (Jodah,
-Breaching Dragonstorm); and GRANTING SUSPEND to a card from your library or hand (Sibylline
-Soothsayer, The Eleventh Doctor, The Parting of the Ways), not to itself (Rory Williams) or the
-spell you cast (Taigam). Single free casts of one card were left named (Malcolm, The Seventh Doctor,
-Djeru and Hazoret, Sarevok's Tome), the wording being shared with impulse riders and Steal
-(Hidetsugu and Kairi, Gríma), until the 2026-10-16 pass read each one narrowly (below). A creature
-TYPE out of the hand had been Cheat (Goblin Wizard, Willow Priestess, Didgeridoo, Gallifrey Stands —
-4 of 4 reviewed) until the human, having ruled Kastral, the Windcrested's Bird out on 2026-10-15
-("Kastral è tribale, in questo caso non conta"), widened it the same day ("Vorrei una revisione dei
-tribali. Reanimate e Cheat non dovrebbero contare"): a cheat only a creature TYPE can use is not
-this tag — a type card or spell (Goblin Wizard, Dracogenesis, Kaalia of the Vast), a creature card
-sharing a type with the enchanted creature (Call to the Kindred) — nor is one behind a tribal trigger, asked with Kiora, Sovereign of the Deep ("Tribale,
-niente Cheat"), nor one behind a cost only OTHER members of the type pay (Shadow-Rite Priest's
-"sacrifice another Cleric"). An exclusion is no tribe (Kinnan's non-Human), nor is an Aura or
-Equipment card. The 6 reviewed tribal Cheats were handed back. A tribal trigger the card fires
-ITSELF stays Cheat, asked the same day ("Restano"): Broodcaller Scourge and The Ur-Dragon are
-Dragons and need no tribal deck.
+The 2026-10-13 pass (F1 55.9% -> 84.4%; everything in it off the library but the search overturned
+2026-11-03) read and ruled: out of HAND, "any number of" and a cap after the noun (Ghalta, Jhoira,
+Paladin Elizabeth Taggerdy), but not a LESSER cap ("lesser = niente", Shadowfax) nor an opponent
+putting from their own hand (Wumpus Aberration); out of the LIBRARY from among cards looked at,
+revealed or milled, a nonland permanent with NO mana-value cap (Arthur, Ojer Kaslem, Majestic
+Genesis, and Vorinclex and Bramble Familiar out of a mill — Cheat, not Reanimate), while one under a
+cap is Filter alone ("qualunque tetto = Filter": Emergent Woodwurm, Kayla's Reconstruction, Wilfred
+Mott, Knickknack Ouphe); UNCAPPED free casts ("carta grossa"): a pile of exiled cards, yours or
+theirs (Etali, Dance with Calamity, Kylox, Wand of Wonder, Plargg and Nassari), a spell from your
+hand (Great Intelligence's Plan, Marvo), another spell's cost paid otherwise (Dream Halls, Cramped
+Vents), not copies (Arcane Bombardment) and not a pile the card filled itself (Forger's Foundry),
+while cascade under a lesser cap stays CardAdvantage (Jodah, Breaching Dragonstorm); and GRANTING
+SUSPEND to a card from your library or hand (Sibylline Soothsayer, The Eleventh Doctor, The Parting
+of the Ways), not to itself (Rory Williams) or the spell you cast (Taigam). Single free casts of one
+card were left named (Malcolm, The Seventh Doctor, Djeru and Hazoret, Sarevok's Tome), the wording
+being shared with impulse riders and Steal (Hidetsugu and Kairi, Gríma), until the 2026-10-16 pass
+read each one narrowly (below). A creature TYPE out of the hand had been Cheat (Goblin Wizard,
+Willow Priestess, Didgeridoo, Gallifrey Stands — 4 of 4 reviewed) until the human, having ruled
+Kastral, the Windcrested's Bird out on 2026-10-15 ("Kastral è tribale, in questo caso non conta"),
+widened it the same day ("Vorrei una revisione dei tribali. Reanimate e Cheat non dovrebbero
+contare"): a cheat only a creature TYPE can use is not this tag — a type card or spell (Goblin
+Wizard, Dracogenesis, Kaalia of the Vast), a creature card sharing a type with the enchanted
+creature (Call to the Kindred) — nor is one behind a tribal trigger, asked with Kiora, Sovereign of
+the Deep ("Tribale, niente Cheat"), nor one behind a cost only OTHER members of the type pay
+(Shadow-Rite Priest's "sacrifice another Cleric"). An exclusion is no tribe (Kinnan's non-Human),
+nor is an Aura or Equipment card. The 6 reviewed tribal Cheats were handed back. A tribal trigger
+the card fires ITSELF stays Cheat, asked the same day ("Restano"): Broodcaller Scourge and The
+Ur-Dragon are Dragons and need no tribal deck.
 
-The 2026-10-16 pass (66/0/7 -> 72/0/1, F1 95.0% -> 99.3%) asked one question. A LOOK that EXILES the
+The 2026-10-16 pass (66/0/7 -> 72/0/1, F1 95.0% -> 99.3%; its looks, exiles and mill overturned
+2026-11-03) asked one question. A LOOK that EXILES the
 card it keeps and casts it free later, with no mana-value cap, is this tag ("Hideaway no, altri
 sì"): Djeru and Hazoret's legendary creature, The Dragon-Kami Reborn's hatched one. HIDEAWAY is not:
 its play waits on a condition and it stays Filter alone, 4 of 5 by hand (Clive's Hideaway,
@@ -79,7 +84,8 @@ FIXED mana-value cap is not this tag, the free-cast side of the 10-13 "qualunque
 After a look it is Filter alone (Bobblehead, the one reviewed card it reaches, named and corrected);
 out of an exiled pile it stays CardAdvantage (Collected Conjuring's 3, Hazoret's Undying Fury's 5,
 both unreviewed). An X cap stays, as big as the damage dealt or the mana paid: Kotis, the Fangkeeper
-by hand on 10-15, Villainous Wealth and Epic Experiment proposed.
+by hand on 10-15, Villainous Wealth and Epic Experiment proposed (overturned 2026-11-03: all three
+come off the top, and an X the player pays is out).
 
 The 2026-10-25 pass (83/2/8 -> 100/0/0 with its rulings, F1 94.3% -> 100%, four of them then handed
 back) read seven cards by rulings already made, each through the one wording it fell through: a
@@ -89,7 +95,7 @@ permanent cards revealed this way (Over the Top), a noun list ending in a land o
 (Court of Bounty's "a creature or land card", as Bramble Familiar's out of a mill), a typed spell
 out of the hand or graveyard paid with life (Anrakyr the Traveller), suspend spelled out with time
 counters (Alaundo the Seer), and an exiled pile played free once flashed back (Ignite the Future).
-It asked three questions.
+It asked three questions. (The reveals, Over the Top and Ignite the Future overturned 2026-11-03.)
 
 Ruled 2026-10-25 on Covert Technician ("Cheat", against its untagged review and with the same words
 as Broodcaller Scourge): a cap the BOARD sets on a card put from the hand is the X cap — the damage
@@ -98,7 +104,8 @@ handed back), the counters (Aether Vial), a creature's power (Minn, Wily Illusio
 "less than" is the lesser cap and stays out (Arni Metalbrow, as Kodama of the East Tree's "equal or
 lesser").
 
-Ruled 2026-10-25 on Xander's Pact ("Cheat a tutti"): ANOTHER card cast by paying something other
+(Overturned 2026-11-03 off the top of a library and out of the graveyard; the hand stays.) Ruled
+2026-10-25 on Xander's Pact ("Cheat a tutti"): ANOTHER card cast by paying something other
 than its mana cost is this tag wherever it is cast from, Dream Halls' and Cramped Vents' cost paid
 otherwise widened past the hand. Asked with Bismuth Mindrender (the same day as Xander's Pact) and
 Nashi, Moon Sage's Scion against it, then the edge one card at a time: life for cards exiled from an
@@ -129,19 +136,20 @@ wherever it came from. Named: Anzrag's Rampage (reviewed, Cheat by hand 10-27) a
 (never Cheat). Reached: Arthur, Marigold Knight (reviewed 09-25 Filter and Cheat, handed back),
 Nahiri, the Harbinger's −8 and Swift Warkite, which keeps Reanimate through its graveyard half, and
 from the HAND too, asked the same day ("Sì, da qualunque zona"): Ilharg, the Raze-Boar and Surprise
-Deployment (unreviewed proposals), and Aethermage's Touch, whose creature is GRANTED a quoted "At the
-beginning of your end step, return this creature to its owner's hand". The line that returns it is
-blanked and the table asked again, so Cauldron Dance keeps the tag through its OTHER sentence (a
+Deployment (unreviewed proposals), and Aethermage's Touch, whose creature is GRANTED a quoted "At
+the beginning of your end step, return this creature to its owner's hand". The line that returns it
+is blanked and the table asked again, so Cauldron Dance keeps the tag through its OTHER sentence (a
 creature from the hand, SACRIFICED at the end step), and so does every "sacrifice it" or "exile it"
-card. A creature that returns ITSELF (Metathran Aerostat, Dermoplasm) is untouched. Two wordings the human named
-were counted and written as no rule, each a family of one card: Anzrag's Rampage as Filter ("ne
-prende solo una" of the X cards exiled; no other card exiles the top X and puts ONE of them onto the
-battlefield) and Random Encounter as CardAdvantage ("prende tutte le creature" it mills; no other
-card mills and puts EACH creature card milled this way onto the battlefield, the broad "put each …
-this way onto the battlefield" being 1 CardAdvantage of 3 reviewed). Both stay known misses, as
-named.
+card. A creature that returns ITSELF (Metathran Aerostat, Dermoplasm) is untouched. Two wordings the
+human named were counted and written as no rule, each a family of one card: Anzrag's Rampage as
+Filter ("ne prende solo una" of the X cards exiled; no other card exiles the top X and puts ONE of
+them onto the battlefield) and Random Encounter as CardAdvantage ("prende tutte le creature" it
+mills; no other card mills and puts EACH creature card milled this way onto the battlefield, the
+broad "put each … this way onto the battlefield" being 1 CardAdvantage of 3 reviewed). Both stay
+known misses, as named.
 
-Ruled 2026-11-03 on Caves of Chaos Adventurer ("Sì, Cheat come Tome"): ONE card from the top of YOUR
+(Overturned the same day by the redefinition, as are the two paragraphs after it.) Ruled 2026-11-03
+on Caves of Chaos Adventurer ("Sì, Cheat come Tome"): ONE card from the top of YOUR
 library cast or played without paying its mana cost, with no cap, by an ability that REPEATS (a
 recurring trigger or an activated ability) is this tag, like Sarevok's Tome (2026-10-13, "carta
 grossa"). CardAdvantage stays where it was: Caves keeps it, the free card is both. Reached:
@@ -178,3 +186,48 @@ Calamity, Inside Information, Invasion of Alara (one of TWO cards). The other on
 in the store (Stolen Goods, Ensnared by the Mara, Solstice Revelations, Unpredictable Cyclone,
 Treasure Keeper) had no Cheat to lose. Asked of the ability, not the card: blanking it and asking
 the table again, as for the returned creature above, was tried and kept no card.
+
+Redefined 2026-11-03, from scratch ("Ragioniamo insieme su come classificare Cheat. Tooth and Nail è
+il cheat per eccellenza"): this tag is the mana cost SKIPPED on a card the player CHOSE — put out of
+the hand, SEARCHED out of the library, or cast under a standing permission or a real alternative
+cost. Nothing that comes off the TOP of a library is this tag any more ("1. CA", "2. NO"), whatever
+happens to it: cast free once or again and again (Caves of Chaos Adventurer, Gríma, Sarevok's Tome:
+the Caves and Gríma rulings of the same morning overturned), a pile cast free under an X cap or none
+(Kotis, Villainous Wealth, Etali, Dance with Calamity: the 10-13 "carta grossa" overturned), paid
+otherwise (Xander's Pact, Bismuth Mindrender, Gwenom, Bolas's Citadel: the 10-25 "Cheat a tutti"
+overturned off the top, and Eye of Duskmantle's surveilled cards with it), revealed until a type and
+put onto the battlefield (Aspiring Champion, Atla Palani, Polymorph, Oath of Druids), looked at,
+revealed or milled and one chosen ("Fuori": Aetherworks Marvel, Ojer Kaslem, Owlbear Cub, Vorinclex,
+Djeru and Hazoret; Perception Bobblehead's 09-27 "lo mettiamo Cheat" overturned), or suspended
+(Sibylline Soothsayer, The Parting of the Ways). A CAP keeps a card out ("3. Fuori"): a fixed one
+(Aluren's 3, "1. OK"; Marvo's 8 out of the hand, "6. OK") and an X the player pays, so a capped
+tutor is Tutor alone (Green Sun's Zenith, Chord of Calling, Nature's Rhythm, Rocco, Protean Hulk's
+total, Woodland Bellower's 3); the board-set X cap of 10-25 went too (below). Tooth and Nail is
+Tutor and Cheat and not CardAdvantage ("Hai ragione, Tutor": two creatures tutored to the hand are
+Tutor). A real FIXED alternative cost for the spells the player chooses is this tag ("7. OK"):
+Leyline of Mutation's, Fist of Suns' and Jodah's five colours, Nissa, Worldsoul Speaker's eight
+energy, Conspiracy Unraveler's collect evidence 10, all untagged by hand before 10-25; read by it
+and handed back, Darksteel Monolith's colorless spell from the hand and Demon of Fate's Design's
+enchantment spell paid with life. A {0} permission over spells cast from EXILE is not ("8. OK":
+Charred Foyer keeps CardAdvantage; Tlincalli Hunter). Winter, Cynical Opportunist's pile out of the
+graveyard is Reanimate ("5. OK"), by hand: its wording is a family of one and stays a known miss.
+What left the tag is a card or a choice, ruled the same day ("2. CA", "3. Filter per le singole, CA
+per le multiple", "4. CA se si ripetono"): see CardAdvantage and Filter. Asked to be carried to the
+other tags once this one is done ("Questa razionalizzazione ha senso, dopo la applicherei anche agli
+altri tag").
+
+Ruled 2026-11-03 once the redefinition was reported, one question at a time. EVERY cap keeps a card
+out ("Ogni tetto fuori", asked with Anticausal Vestige, untagged by hand on 10-26 against the 10-25
+Covert Technician ruling, which it overturns): the damage dealt (Covert Technician, Broodcaller
+Scourge, named), the lands you control (Anticausal Vestige), a creature's power or the counters in
+an X (Paladin Elizabeth Taggerdy, Jhoira, Ageless Innovator, Eddie Brock's Venom, reached and handed
+back; Minn, Kinscaer Sentry) or an "equal to" (Aether Vial), and a fixed one out of the hand
+(Emergency Powers, Origin of Iron Man, Nick Fury, Spymaster), all three unreviewed groups proposed.
+A creature off the top put for one turn is not this tag either ("Solo Burn", on Killer Instinct,
+suggested as "Burn + Cheat (come Sneak Attack?)": Sneak Attack's creature is chosen from the hand,
+Killer Instinct's is the top card, and the sacrifice leaves no card for CardAdvantage). Read by
+rulings already made, both untagged by hand on 10-26: suspend granted to the spell just cast and
+paid for from the hand is Taigam's (Gandalf of the Secret Fire's "spell from your hand"), and a LIST
+of creature types is a tribe (Dr. Eggman's "a Construct, Robot, or Vehicle card", which the opponent
+may refuse as well; Push the Limit's "Mount and Vehicle cards" lose Reanimate by the same reading,
+reached).

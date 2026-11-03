@@ -709,8 +709,11 @@ namespace ScatoloneDownloader.Cube
         private const string NotOnlyATribesSpells =
             @"(?! (?-i:" + ACreatureType + @") (?:creature )?spells from the top)";
 
+        // A LIST of types is a tribe as well, read 2026-11-03: Dr. Eggman's "a
+        // Construct, Robot, or Vehicle card from your hand", untagged by hand on
+        // 10-26 (the opponent chooses, too).
         private static readonly Regex TribalCard = new(
-            ACreatureType + @" (?:creature |permanent )?(?:cards?|spells?)\b"
+            ACreatureType + @"(?:(?:,(?: or| and)?| or| and) [A-Z][\w'-]+)*" + @" (?:creature |permanent )?(?:cards?|spells?)\b"
             + @"|\bcreature cards? that shares? a creature type\b",
             RegexOptions.CultureInvariant);
 
@@ -1467,92 +1470,137 @@ namespace ScatoloneDownloader.Cube
         private static bool MakesMapsAgainAndAgain(string text) =>
             Abilities(text).Any(a => MakesMap.IsMatch(a) && AbilityRepeats(Parenthetical.Replace(a, " ")));
 
-        // ONE card off the top of YOUR library, cast or played without paying
-        // its mana cost, by an ability that REPEATS, with no cap on its size:
-        // Cheat, ruled 2026-11-03 on Caves of Chaos Adventurer ("Sì, Cheat come
-        // Tome"), the one-card cousin of Sarevok's Tome ("carta grossa",
-        // 2026-10-13). It stays CardAdvantage too, where it already was. Reached,
-        // and left as the ruling words them: Planetarium of Wan Shi Tong (a
-        // scry or surveil trigger, once each turn), Galvanoth ("if it's an
-        // instant or sorcery spell"), Intet, the Dreamer, Oracle's Vault (its
-        // second ability), Yennett ("if its mana value is odd") and Temporal
-        // Aperture. A condition that is not a size cap does not keep it out.
-        // Stays out: a ONE-SHOT (Hidetsugu and Kairi's death trigger, Filter by
-        // hand); a CAP, "lesser mana value" (Rashmi, Eternities Crafter), "the
-        // same mana value" (Powerbalance, reviewed CardAdvantage, 2026-09-23),
-        // "mana value X or less" (Keldon Flamesage); and a TRIBAL one, "shares a
-        // creature type" (Descendants' Path, Leaf-Crowned Elder). Asked of the
-        // ABILITY, like the Blood and Map readings, and added in Classify AFTER
-        // the tribal guard, so that guard cannot take it off for a Goblin
-        // card somewhere else on the card. Measured and dropped, each moving no
-        // card in the store: TribalCard asked of the ability ("if it's a Goblin
-        // card"), and "mana value N or less" as a cap (Keldon Flamesage looks
-        // at the top X cards, so the one-card shape never reads it). The
-        // existing tribal guard alone would not do: TribalCard reads
-        // Descendants' Path's "creature card that shares a creature type" but
-        // not Leaf-Crowned Elder's "if it shares a creature type with this
-        // creature".
+        // Two Cheat questions on ONE card off the top of a library stood here,
+        // both ruled 2026-11-03: FreeCardOffTheTopAgainAndAgain made one cast free
+        // by an ability that repeats Cheat (Caves of Chaos Adventurer, "Sì, Cheat
+        // come Tome"; Gríma off an opponent's library), CastsOneCardOffTheTopOnce
+        // took Cheat from one cast once ("Mai Cheat", Amped Raptor). Both went the
+        // same day with the redefinition ("1. CA"): nothing off the top is Cheat.
+        //
+        // What took their place is the other half of that redefinition, ruled
+        // the same day ("2. CA", "3. Filter per le singole, CA per le multiple",
+        // "4. CA se si ripetono"): a card off the top that is no longer Cheat is
+        // a CARD, and these are the shapes the CardAdvantage table never read
+        // because Cheat had them. Each counted against the reviewed cards first.
+        //
+        // A PILE off the top cast free, 7 of 10 reviewed CardAdvantage; the three
+        // untagged are the ruling's named cards (Dance with Calamity, Plargg and
+        // Nassari, Wand of Wonder, Cheat alone or with Steal). Collected
+        // Conjuring and Forger's Foundry, already CardAdvantage, say it too. Not
+        // cards from OUTSIDE THE GAME, a wish and no top (Spawnsire of Ulamog's
+        // Eldrazi, moved by the first cut).
+        private static readonly Regex FreePileOffTheTop = Rx(
+            @"\bcast (?:any number of |up to \w+ )?(?:[\w/-]+ ){0,4}?spells (?:with mana value [^.\n]{0,20} )?from among "
+            + @"(?![^.\n]{0,60}outside the game)[^.\n]{0,80}without paying their mana costs\b");
+
+        // An exile or a reveal UNTIL a nonland card, cast free: 3 of 4 reviewed
+        // (Breaching Dragonstorm, Sarevok's Tome, Solstice Revelations), the
+        // fourth Neera, Wild Mage, named. Off an opponent's library too (Nicol
+        // Bolas, God-Pharaoh's +2, named).
+        private static readonly Regex FreeCastUntilANonland = Rx(
+            @"\b(?:reveal|exile)s? cards from the top of [^.\n]* until (?:you|they) (?:reveal|exile) a nonland card\. "
+            + @"(?:until end of turn, )?you may cast (?:that card|it) without paying its mana cost\b");
+
+        // A card off the top SUSPENDED for you: The Tenth Doctor by hand, and
+        // the two named, Sibylline Soothsayer and The Parting of the Ways.
+        private static readonly Regex SuspendsACardOffTheTop = Rx(
+            @"\b(?:reveal|exile)[^\n]{0,120}\btop\b[^\n]{0,200}gains suspend\b");
+
+        // ONE card off the top cast or played free, by an ability that REPEATS
+        // (Temporal Aperture, named; Urza, Lord High Artificer), after "shuffle
+        // your library, then reveal / exile the top card", the one wording the
+        // impulse rules do not read. A one-shot is not asked (Unexpected
+        // Results, a sorcery). The plain "look at / reveal / exile the top card
+        // of your library" was read here too, with a guard for a card only a
+        // creature TYPE may cast (Descendants' Path, Leaf-Crowned Elder), and
+        // moved no card: every one it reached (Caves of Chaos Adventurer,
+        // Planetarium of Wan Shi Tong, Galvanoth) is CardAdvantage through the
+        // impulse rules already (checked by Dump, 2026-11-03).
         private static readonly Regex FreeCardOffTheTop = Rx(
-            @"\b(?:look at|reveal|exile)s? the top card of your library\b|\bshuffle your library, then reveal the top card\b");
+            @"\bshuffle your library, then (?:reveal|exile) the top card\b");
 
         private static readonly Regex CastsItFree = Rx(
             @"\b(?:cast|play) (?:it|that card)(?: this turn)? without paying its mana cost\b");
 
-        private static readonly Regex FreeCastIsCapped = Rx(
-            @"\blesser mana value\b|\bthe same mana value\b|\bshares? a creature type\b");
+        // MORE THAN ONE nonland card off the top put onto the battlefield ("CA
+        // per le multiple"): Majestic Genesis, Over the Top, Hew the Entwood,
+        // Vorinclex's milled pair and Tezzeret, Master of the Bridge's −8, named;
+        // Gilgamesh, Master-at-Arms' Equipment reached. Not LANDS, which are Ramp
+        // (Expand the Sphere, Famished Worldsire, Rampant Frogantua, all three Ramp
+        // by hand), nor a CAP, Filter by the 2026-10-13 "qualunque tetto"
+        // (Knickknack Ouphe's "artifact cards with total mana value"): the noun
+        // list has no land and the noun must be followed by "from among", so a
+        // guard for both was written, moved no card and went (2026-11-03). Nor a
+        // MASS SWAP of your own permanents for as many
+        // off the top, a card for a card (Mass Polymorph, Synthetic Destiny,
+        // Glimpse of Tomorrow, moved by the first cut).
+        private static readonly Regex MassSwap = Rx(
+            @"\bexile all creatures you control\b|\bshuffle all permanents you own into your library\b");
 
-        // The same off the top of an OPPONENT's library, ruled 2026-11-03 on
-        // Gríma, Saruman's Footman ("Gríma +Cheat"): a card cast free is worth at
-        // least the one Bismuth Mindrender pays for with life (Cheat since
-        // 2026-10-25). Reached, reviewed without it and handed back: Strago and
-        // Relm, Fallen Shinobi (the top two, "those cards"), Fire Lord Ozai and
-        // Court of Locthwain (its pile, once you are the monarch); proposed:
-        // Chaos Wand, Dazzling Sphinx, Mind's Dilation, Nicol Bolas,
-        // God-Pharaoh's +2. A one-shot stays out here too (Stolen Goods). Only
-        // "you may": where the player who exiled it casts it (Possibility
-        // Storm, Casey & Raph) nothing comes to you.
-        private static readonly Regex FreeCardOffTheirTop = Rx(
-            @"\bexiles? (?:the top (?:card|\w+ cards)|cards from the top) of (?:their|target opponent's|each opponent's) library\b");
+        private static readonly Regex SeveralPutFromAmongThem = Rx(
+            @"\bputs? (?:any number of|up to (?:two|three|four|five|x)|all) "
+            + @"[^.\n]{0,40}\b(?:creature|permanent|artifact|enchantment|nonland|equipment|planeswalker|aura)s? cards? "
+            + @"(?:from among (?:them|those cards|the (?:milled|revealed|exiled) cards)|(?:they |you )?(?:revealed|chosen) this way)"
+            + @"[^.\n]{0,20} onto the battlefield");
 
-        private static readonly Regex YouCastItFree = Rx(
-            @"\byou may (?:cast|play) (?:it|that card|those cards|one of those cards|a spell from among cards exiled with this \w+) without paying (?:its|their) mana costs?\b");
+        // ONE chosen from a MILL or an opponent's REVEAL put onto the battlefield
+        // is selection ("Filter per le singole"): Vastlands Scavenger and Guild
+        // Feud, unreviewed; Mole Module's, on every hit, is CardAdvantage since the
+        // later answer the same day (OneChosenOffTheTop). The look is Filter by the older rules already
+        // (Owlbear Cub, Web of Life and Destiny, Armored Skyhunter); a random
+        // card is no choice (Getaway Barrel's "a random creature card").
+        private static readonly Regex OneChosenFromAMillOrReveal = Rx(
+            @"\b(?:mill|reveals?) (?:the top )?\w+ cards[^.\n]{0,40}[.,] (?:then |you may |may )*put (?:a|an) "
+            + @"(?:creature|permanent|artifact|enchantment|nonland|planeswalker)[\w ]{0,20} card from among (?:them|those cards|the milled cards)"
+            + @"[^.\n]{0,40}onto the battlefield");
 
-        private static bool FreeCardOffTheTopAgainAndAgain(string text) =>
-            Abilities(text).Any(a =>
+        // A creature or another permanent off the top put onto the battlefield
+        // by an ability that REPEATS ("CA se si ripetono"): Call of the Wild and
+        // Atla Palani, Nest Tender named, Hans Eriksson by hand. Not once (Aspiring
+        // Champion's "sacrifice it", Gamekeeper, Madcap Experiment), and not a
+        // SWAP of one of your own for it, which is a card for a card (Identity
+        // Echo, Fireflux Squad, Audacious Reshapers, Dreamshaper Shaman, Jace,
+        // Multiverse Architect's −3; Shifting Shadow's "destroy this creature" is
+        // quoted and not read, and the alternative written for it moved no card).
+        // A land is Ramp (Nadu, Galadriel of Lothlórien). Doors of Durin says
+        // "if a creature card is revealed this way", on every attack (reached,
+        // the only reviewed card with that wording).
+        private static readonly Regex RevealedOntoTheBattlefield = Rx(
+            @"\breveal the top card of your library\. if (?:it's a (?:creature|permanent|artifact) card|(?:a|an) (?:creature|permanent|artifact) card is revealed this way), put it onto the battlefield"
+            + @"|\buntil you reveal an? (?:creature|permanent|nonland|artifact|planeswalker)[^.\n]{0,40}card\. put (?:that card|it) onto the battlefield");
+
+        private static readonly Regex SwapsYourOwn = Rx(
+            @"\bsacrifice (?:a|an|another) |\bexile (?:another )?target [\w ]{0,40}you control\b");
+
+        // ONE card CHOSEN off the top and put onto the battlefield by an ability
+        // that REPEATS is CardAdvantage too, ruled 2026-11-03 ("Si ripete = CA",
+        // asked with Arthur, Marigold Knight, whose creature also comes back to
+        // the hand): Web of Life and Destiny, Owlbear Cub and Armored Skyhunter,
+        // Filter by hand and named; Ureni of the Unwritten reached. Once, it stays
+        // Filter (OneChosenFromAMillOrReveal, the looks). A land is Ramp
+        // (Freestrider Lookout, Shigeki), a swap is a card for a card (Industrial
+        // Advancement sacrifices a creature first), and Guild Feud's "target
+        // opponent reveals", which hands the opponent one as well, is not read.
+        private static readonly Regex OneChosenOffTheTop = Rx(
+            @"\b(?:look at|reveal|mill) (?:the top )?(?:\w+ )?cards?\b[^\n]{0,120}?\bput (?:a|an|one) "
+            + @"(?![\w ]{0,20}\bland cards?\b)[\w ,-]{0,40}?cards? from among (?:them|those cards|the milled cards|the revealed cards)"
+            + @"[^.\n]{0,60}onto the battlefield");
+
+        // A creature put for a turn and SACRIFICED at the end step leaves no card
+        // behind, ruled 2026-11-03 on Killer Instinct ("Solo Burn"; unreviewed).
+        private static readonly Regex SacrificedAtTheEndStep = Rx(
+            @"\bsacrifice (?:it|that creature|them|those creatures) at the beginning of the next end step");
+
+        private static bool OffTheTopIsACard(string text) =>
+            FreePileOffTheTop.IsMatch(text) || FreeCastUntilANonland.IsMatch(text)
+            || SuspendsACardOffTheTop.IsMatch(text) || (SeveralPutFromAmongThem.IsMatch(text) && !MassSwap.IsMatch(text))
+            || Abilities(text).Any(a =>
             {
                 string ability = Parenthetical.Replace(a, " ");
-                return (FreeCardOffTheTop.IsMatch(ability) && CastsItFree.IsMatch(ability)
-                        || FreeCardOffTheirTop.IsMatch(ability) && YouCastItFree.IsMatch(ability))
-                    && !FreeCastIsCapped.IsMatch(ability)
-                    && AbilityRepeats(ability);
-            });
-
-        // ONE card off the top of a library cast by an ability that runs ONCE is
-        // no Cheat, free or paid otherwise, ruled 2026-11-03 ("Mai Cheat"), asked
-        // with Amped Raptor's energy and Xander's Pact's life against the four
-        // reviewed free ones, none of them Cheat (Portent of Calamity, Hidetsugu
-        // and Kairi, Crabomination, Ensnared by the Mara): it is the impulse
-        // rider, CardAdvantage, as the Caves ruling already left a one-shot out.
-        // A PILE stays Cheat, asked the same day ("Pile restano Cheat"): Etali
-        // and Dance with Calamity ("carta grossa", 2026-10-13), and Xander's
-        // Pact, which casts spells from among one card per opponent. Amped
-        // Raptor named; Vault 112: Sadistic Simulation's chapter III reached
-        // (Filter and Cheat by the 2026-10-16 ruling, Filter alone now). Asked
-        // of the ABILITY. Blanking it and re-asking the table, as
-        // PutThenReturnedToHand does, was tried and kept no card: no card in the
-        // store has this shape beside another Cheat line (Invasion of Alara's
-        // "one of those two cards" never matches, and its back face keeps the
-        // tag).
-        private static readonly Regex CardsOffTheTop = Rx(@"\bcards from the top\b");
-
-        private static readonly Regex CastsOneOfThem = Rx(
-            @"\byou may (?:cast|play) (?:that card|one of those cards)\b[^.\n]{0,80}?(?:without paying|rather than paying) its mana cost\b");
-
-        private static bool CastsOneCardOffTheTopOnce(string text) =>
-            Abilities(text).Any(a =>
-            {
-                string ability = Parenthetical.Replace(a, " ");
-                return CardsOffTheTop.IsMatch(ability) && CastsOneOfThem.IsMatch(ability) && !AbilityRepeats(ability);
+                return (FreeCardOffTheTop.IsMatch(ability) && CastsItFree.IsMatch(ability) && AbilityRepeats(ability))
+                    || ((RevealedOntoTheBattlefield.IsMatch(ability) || OneChosenOffTheTop.IsMatch(ability))
+                        && RepeatsWithoutPayingACard(ability)
+                        && !SwapsYourOwn.IsMatch(ability) && !SacrificedAtTheEndStep.IsMatch(ability));
             });
 
         // HIDEAWAY is Filter on every reviewed card that has it, 5 of 5, and

@@ -892,4 +892,25 @@ public sealed partial class EffectClassifierTests
         Assert.False(result.HasFlag(CardEffect.CardAdvantage));
         Assert.True(result.HasFlag(CardEffect.Filter));
     }
+
+    [Theory]
+    // ONE card chosen from a MILL or an opponent's REVEAL put onto the battlefield
+    // is selection, ruled 2026-11-03 ('3. Filter per le singole';
+    // OneChosenFromAMillOrReveal): Vastlands Scavenger's Bind to Life and Guild
+    // Feud, named, each Cheat before. A look was Filter by the older rules
+    // already. Mole Module moved to CardAdvantage the same day, with Kinnan and
+    // Owlbear Cub: one chosen again and again is a card ("Si ripete = CA").
+    [InlineData("Vastlands Scavenger // Bind to Life", "Creature — Bear Druid // Instant",
+        "Deathtouch\nThis creature enters prepared. (While it's prepared, you may cast a copy of its spell. "
+        + "Doing so unprepares it.)\nMill seven cards. Then put a creature card from among them onto the "
+        + "battlefield.")]
+    [InlineData("Guild Feud", "Enchantment",
+        "At the beginning of your upkeep, target opponent reveals the top three cards of their library, may "
+        + "put a creature card from among them onto the battlefield, then puts the rest into their graveyard. "
+        + "You do the same with the top three cards of your library. If two creatures are put onto the "
+        + "battlefield this way, those creatures fight each other.")]
+    public void Classify_TheNovember3Redefinition_OneChosenFromAMillOrAReveal_IsFilter(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
 }

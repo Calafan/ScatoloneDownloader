@@ -33,7 +33,8 @@ namespace ScatoloneDownloader.Cube
 
         private static readonly Regex[] CheatPatterns;
 
-        // Sadistic Simulation's chapter III, in both the Filter and the Cheat tables.
+        // Sadistic Simulation's chapter III, in the Filter table (and in Cheat's
+        // until 2026-11-03).
         private static readonly Regex ExileThatManyAndPlayOne = Rx(
             @"exile that many cards from the top\. you may play one of those cards without paying its mana cost");
 
@@ -1568,8 +1569,15 @@ namespace ScatoloneDownloader.Cube
 
                 (CardEffect.Pacify, PacifyPatterns),
 
-                // Cheat: the permanent arrives without being cast. Ruled 2026-09-18;
-                // see docs/ontology/Cheat.md for the edges and the numbers.
+                // Cheat: the mana cost of a card the player CHOSE is skipped — put
+                // out of the hand or SEARCHED out of the library onto the
+                // battlefield, or cast under a standing permission. Ruled
+                // 2026-09-18 and redefined 2026-11-03 ("1. CA 2. NO 3. Fuori"):
+                // nothing that comes off the TOP of a library is this tag any more,
+                // whether it is cast free, put onto the battlefield, looked at and
+                // chosen, revealed until a type, milled or cascaded into, once or
+                // again and again; and a FIXED cap or an X the player pays keeps a
+                // card out. See docs/ontology/Cheat.md for the edges and the numbers.
                 (CardEffect.Cheat, [
                     // Out of hand. The lookahead keeps LANDS out — "put a basic
                     // Forest card from your hand onto the battlefield" is Gaea's
@@ -1590,59 +1598,47 @@ namespace ScatoloneDownloader.Cube
                     // card either, read 2026-10-25 as Bramble Familiar's out of
                     // the library: Court of Bounty's "a creature or land card",
                     // the one reviewed card it moves.
-                    // A cap the BOARD sets is the X cap, ruled 2026-10-25 on Covert
-                    // Technician ("Cheat", against its untagged review, the same
-                    // words as Broodcaller Scourge's): the damage dealt, the lands
-                    // you control (Anticausal Vestige, handed back), the counters
-                    // (Aether Vial) or a creature's power (Minn), which the window
-                    // of 50 and no apostrophe had cut off. A strict "less than" is
-                    // the lesser cap (Arni Metalbrow, untagged by hand).
-                    Rx(@"(?<!opponent may )put (?:an?|any number of|up to \w+|one or more) (?![^.\n]{0,80}\b(?:lesser\b|less than (?!or equal)))"
+                    // EVERY mana-value cap keeps a card out, ruled 2026-11-03 ("Ogni
+                    // tetto fuori", overturning the 2026-10-25 Covert Technician
+                    // ruling that a cap the BOARD sets was the X cap): the damage
+                    // dealt (Covert Technician, Broodcaller Scourge, named), the
+                    // lands you control (Anticausal Vestige, untagged by hand on
+                    // 10-26), a creature's power (Minn; Paladin Elizabeth Taggerdy's
+                    // "X or less", reached), the counters (Aether Vial's "equal
+                    // to"), as well as the lesser cap (Arni Metalbrow, Kodama of the
+                    // East Tree's "equal or lesser").
+                    Rx(@"(?<!opponent may )put (?:an?|any number of|up to \w+|one or more) "
+                        + @"(?![^.\n]{0,80}\b(?:lesser\b|less than\b|mana value (?:equal to\b|\w+ or less\b)))"
                         + @"(?![\w ]{0,25}(?<!(?:creature|artifact|enchantment|planeswalker|permanent),? or )(?:land|forest|island|swamp|mountain|plains) cards? from)"
                         + @"[\w ,/-]{0,60}cards?[\w ,/'-]{0,80} from (?:your|their) hand(?: or graveyard)? onto the battlefield"),
-                    // Out of the library. Natural Order, Eldritch Evolution's cousins,
-                    // and since 2026-10-13 "any number of" (Bilbo). Not a copy of a
-                    // creature already on the battlefield, ruled 2026-10-25 on March
-                    // of Burgeoning Life ("stesso nome"; Tutor alone by hand).
-                    Rx(@"search your library for (?:an?|any number of|up to \w+) [\w ]{0,30}creature cards?(?! with the same name)"
+                    // Out of the library by a SEARCH, the one way a library card is
+                    // chosen. Natural Order, and since 2026-10-13 "any number of"
+                    // (Bilbo). Not a copy of a creature already on the battlefield,
+                    // ruled 2026-10-25 on March of Burgeoning Life ("stesso nome";
+                    // Tutor alone by hand). Not under a cap, ruled 2026-11-03 ("3.
+                    // Fuori", on Green Sun's Zenith): an X the player PAYS (Green
+                    // Sun's Zenith, Chord of Calling, Nature's Rhythm, Rocco, Fiend
+                    // Artisan), a fixed one (Woodland Bellower's 3, Protean Hulk's
+                    // total 6) or a lesser one (Rushed Rebirth, Vivien, Monsters'
+                    // Advocate) is Tutor alone. An X the BOARD sets ("where X is")
+                    // would stay, but no tutor in the store says it, so the guard
+                    // does not ask (an exemption for it was written and turned
+                    // nothing red, 2026-11-03). Protean Hulk's "total mana value 6
+                    // or less" is the fixed cap's own words; a separate "total"
+                    // alternative moved no card.
+                    Rx(@"search your library for (?:an?|any number of|up to \w+) "
+                        + @"(?![^.\n]{0,60}?\b(?:mana value (?:\d+|x) or less\b|lesser mana value\b))"
+                        + @"[\w ]{0,30}creature cards?(?! with the same name)"
                         + @"[\w ,']{0,40}put (?:it|that card|them|those cards) onto the battlefield"),
-                    // Out of the library from among the cards LOOKED AT, REVEALED
-                    // or MILLED, ruled 2026-10-13: a nonland permanent with NO
-                    // mana-value cap is Cheat (Arthur, Ojer Kaslem, Majestic
-                    // Genesis, Bramble Familiar and Vorinclex out of a mill —
-                    // not Reanimate), and one under a cap is selection, Filter
-                    // alone ("qualunque tetto = Filter": Emergent Woodwurm,
-                    // Kayla's Reconstruction, Wilfred Mott, Knickknack Ouphe).
-                    // The noun may be a LIST that ends in a land, read
-                    // 2026-10-16: Bramble Familiar's "a creature, enchantment,
-                    // or land card" is the ruled card.
-                    Rx(@"put (?:a|an|up to \w+|any number of|all|one|two) (?:(?!mana value|lesser|power)[^.\n]){0,100}?"
-                        + @"\b(?:creature|permanent|artifact|enchantment|nonland|equipment|aura|planeswalker)"
-                        + @"(?:,? (?:or )?(?:creature|artifact|enchantment|land|planeswalker|battle))* cards? "
-                        + @"(?:(?!mana value|lesser|power)[^.\n]){0,60}?from among (?:them|those cards|the (?:milled|revealed|exiled) cards)"
-                        + @"[^.\n]{0,20} onto the battlefield"),
-                    // …and the same out of a reveal or an exile named "this way"
-                    // (Doors of Durin, Eladamri, Anzrag's Rampage, Hew the Entwood,
-                    // Thunderous Debut bargained, The Creation of Avacyn), and
-                    // since 2026-10-25 every player's permanents revealed this way
-                    // (Over the Top, the one card in the store that says it).
-                    Rx(@"library[^\n]{0,80}?if (?:it's a|you reveal a|a) creature card(?: is revealed)?(?: this way)?, put it onto the battlefield"
-                        + @"|put (?:a|all) (?:creature|nonland)[^.\n]{0,30}cards? (?:exiled|chosen) this way onto the battlefield"
-                        + @"|put the revealed cards onto the battlefield"
-                        + @"|put the exiled card onto the battlefield if it's a creature card"
-                        + @"|puts? all permanent cards (?:they |you )?revealed this way onto the battlefield"),
-                    // …and a reveal UNTIL the first nonland permanent of a kind,
-                    // put onto the battlefield, read 2026-10-25 by the same
-                    // ruling (no mana-value cap): Aspiring Champion and Atla
-                    // Palani by hand, 2 of 2 reviewed, and Polymorph's family
-                    // proposed (11 unreviewed). A land is Ramp (Clifftop
-                    // Lookout, The Regalia), a lesser cap nothing (Kethek), and a
-                    // type before the noun is the tribe the tribal guard reads
-                    // (Time Lord Regeneration, Tom Bombadil's Saga, Hei Bai's
-                    // Shrine): none of them starts with the words below. A guard
-                    // against a cap in the noun was tried and matched no card.
-                    Rx(@"until you reveal an? (?:creature|permanent|nonland|artifact|planeswalker)[^.\n]{0,40}card\. "
-                        + @"put (?:that card|it) onto the battlefield"),
+                    // GONE 2026-11-03, with the human's "2. NO" and "Fuori" on a look
+                    // and a choice: every card put onto the battlefield from among
+                    // the cards LOOKED AT, REVEALED or MILLED (the 2026-10-13 ruling:
+                    // Arthur, Ojer Kaslem, Majestic Genesis, Bramble Familiar,
+                    // Vorinclex), or revealed or exiled "this way" (Doors of Durin,
+                    // Eladamri, Hew the Entwood, Over the Top), or revealed UNTIL the
+                    // first creature or permanent (the 2026-10-25 reading: Aspiring
+                    // Champion, Atla Palani, Polymorph's family). They keep what the
+                    // look already earns them, Filter, and nothing else.
                     // A STANDING permission to cast free, and the discriminator is
                     // GRAMMATICAL NUMBER. A standing permission covers a class of
                     // spells, so its wording is plural — "Dragon spells … without
@@ -1658,111 +1654,89 @@ namespace ScatoloneDownloader.Cube
                     // without paying their mana costs" — so the object phrase is
                     // tempered as well: anything pointing back at cards this card
                     // exiled is the rider, not a permission.
+                    // A FIXED cap keeps it out, ruled 2026-11-03 ("3. Fuori", on
+                    // Aluren's "mana value 3 or less", Cheat by hand on 09-08): the
+                    // free-cast side of the 2026-10-16 Bobblehead ruling. And any
+                    // "from among" is a pile, not a class of spells: Fevered
+                    // Suspicion's "among those nonland cards" got past "those
+                    // cards" (unreviewed, found 2026-11-03).
                     Rx(@"(?:you|any player|each player|players) may cast "
                         + @"(?!this card\b|this spell\b)"
-                        + @"(?:(?!among them|those cards|exiled|from exile|\bthem\b|copies)[\w ,'-]){0,60}"
+                        + @"(?![^.\n]{0,60}?\bmana value \d+ or less\b)"
+                        + @"(?:(?!\bamong\b|those cards|exiled|from exile|\bthem\b|copies)[\w ,'-]){0,60}"
                         + @"without paying their mana costs"),
-                    // UNCAPPED free casts are Cheat, ruled 2026-10-13 ("carta
-                    // grossa"): spells from among a pile of exiled cards, mine or
-                    // theirs (Etali, Dance with Calamity, Kylox, Wand of Wonder,
-                    // Plargg and Nassari, Ral's −8), not a pile this card filled
-                    // itself ("exiled with this", Forger's Foundry) and not copies
-                    // (Arcane Bombardment); a spell out of your HAND (Great
-                    // Intelligence's Plan, Marvo, One with the Multiverse); a
-                    // permission for the next spell (Eye of Ojer Taq); and another
-                    // card's SPELL COST paid with something else (Dream Halls,
-                    // Cramped Vents). A LESSER-mana-value cap is cascade and stays
-                    // CardAdvantage (Jodah, Breaching Dragonstorm) — neither shape
-                    // below says it, so a "lesser" guard written for them was
-                    // measured, matched no card, and was dropped.
-                    // A FIXED cap is no "carta grossa" either, ruled 2026-10-16 on
-                    // Perception Bobblehead ("è 3 o meno il costo che ti regala"):
-                    // Collected Conjuring's 3 and Hazoret's Undying Fury's 5. An X
-                    // cap stays, as big as the damage or the mana paid (Kotis,
-                    // Villainous Wealth, Epic Experiment; Kotis Cheat by hand).
-                    Rx(@"you may cast (?:(?:any number of|up to \w+) )?(?:[\w/-]+ ){0,5}?spells "
-                        + @"(?:with mana value (?!\d)[^.\n]{0,20} )?from among (?![^.\n]{0,60}exiled with this)[^.\n]{0,80}"
-                        + @"without paying their mana costs"),
-                    // …and the same pile PLAYED free, read 2026-10-25: Ignite the
-                    // Future's three exiled cards once it is flashed back.
-                    Rx(@"you may play cards this way without paying their mana costs"),
-                    Rx(@"cast (?:a|an|up to \w+|any number of) [^.\n]{0,40}spells? from your hand"
+                    // A spell out of your HAND cast free (Great Intelligence's Plan,
+                    // Marvo, One with the Multiverse), ruled 2026-10-13, under no
+                    // fixed cap (2026-11-03).
+                    // GONE 2026-11-03 ("1. CA"): spells from among a PILE of exiled
+                    // cards, mine or theirs, the 2026-10-13 "carta grossa" (Etali,
+                    // Dance with Calamity, Kylox, Wand of Wonder, Plargg and Nassari,
+                    // Ral's −8, Kotis, Villainous Wealth, Epic Experiment), and
+                    // Ignite the Future's pile played free: what comes off the top is
+                    // CardAdvantage, however big it turns out to be.
+                    Rx(@"cast (?:a|an|up to \w+|any number of) (?![^.\n]{0,60}?\bmana value \d+ or less\b)[^.\n]{0,40}spells? from your hand"
                         + @"[^.\n]{0,40}without paying (?:its|their) mana costs?"),
                     Rx(@"the next spell you cast [^.\n]{0,40}can be cast without paying its mana cost"),
-                    // The hand's spell may be named by a type and come out of the
-                    // graveyard too, read 2026-10-25: Anrakyr the Traveller's
-                    // "an artifact spell from your hand or graveyard", Cheat and
-                    // Reanimate by hand.
-                    Rx(@"rather than pay the mana cost for a spell"
-                        + @"|cast (?:a|an) (?:[\w-]+ )?spell from your hand(?: or graveyard)? by paying [^.\n]{0,40} rather than paying its mana cost"),
-                    // …and ANY other card's cost paid with something else, wherever
-                    // it is cast from, ruled 2026-10-25 on Xander's Pact ("Cheat a
-                    // tutti"): life (Bismuth Mindrender, Nashi and Valgavoth handed
-                    // back; Gwenom, Bolas's Citadel, Inside Information, and Eye of
-                    // Duskmantle out of the graveyard), a discard (The Infamous
-                    // Cruelclaw), energy (Amped Raptor) or {1} (Jadzi). Not Hama's
-                    // waterbending {X}, which pays the whole mana value ("Hama"
-                    // left out of the answer) and is cast "during your turn by",
-                    // so the shape never reaches it; not the card casting ITSELF
-                    // (Squee, Worldheart Phoenix), nor a copy (Blue Mage's Cane),
-                    // nor Primal Prayers' fixed cap of 3, all three untouched.
-                    // "The exiled card by" was tried as a third noun and matched
-                    // no card.
-                    Rx(@"(?:if you cast a spell this way, (?:you )?pay|you may cast (?:that card|it) by)"
-                        + @"[^.\n]{0,60}rather than pay(?:ing)? its mana cost"),
-                    // GRANTING SUSPEND to a card out of your library or hand is a
-                    // free cast on a timer, ruled 2026-10-13 (Sibylline Soothsayer,
-                    // The Eleventh Doctor, The Parting of the Ways; The Tenth
-                    // Doctor realigned). Not the card suspending ITSELF (Rory
-                    // Williams), nor the spell you just cast and paid for (Taigam).
-                    Rx(@"(?:top of your library|from your hand|of your library)[^\n]{0,250}gains suspend"),
+                    // Another spell's cost paid with something else (Dream Halls,
+                    // Cramped Vents, 2026-10-13). The spell may be named by a type
+                    // and come out of the graveyard too, read 2026-10-25: Anrakyr
+                    // the Traveller's "an artifact spell from your hand or
+                    // graveyard", Cheat and Reanimate by hand. Read 2026-11-03 by the
+                    // same rulings, each reviewed without the tag the shape never
+                    // offered and handed back: a TYPED spell from the hand (Darksteel
+                    // Monolith's "a colorless spell you cast from your hand"), one
+                    // with no zone named (Demon of Fate's Design's "an enchantment
+                    // spell by paying life"), and the next spell paid with life
+                    // (Marshland Bloodcaster, unreviewed). A real FIXED price for
+                    // every spell is no cap, ruled 2026-11-03 ("7. OK"): Leyline of
+                    // Mutation's {W}{U}{B}{R}{G}, Nissa, Worldsoul Speaker's eight
+                    // energy, Conspiracy Unraveler's collect evidence 10, each
+                    // untagged by hand before 10-25; a type of two words is a
+                    // tribe and is not read (Rooftop Storm's "Zombie creature
+                    // spells"). Not a spell cast from EXILE, ruled the same day ("8.
+                    // OK"): Charred Foyer's exile is its own impulse, a card off the
+                    // top, and Tlincalli Hunter never said "a spell".
+                    Rx(@"rather than pay the mana cost for a spell(?! you cast from exile)"
+                        + @"|rather than pay the mana cost for (?:[\w-]+ )?spells you cast"
+                        + @"|rather than pay the mana cost for (?:a|an) [\w-]+ spell you cast from your hand"
+                        + @"|rather than pay the mana cost of the next spell you cast"
+                        + @"|cast (?:a|an) (?:[\w-]+ )?spell(?: from your hand(?: or graveyard)?)? by paying [^.\n]{0,40} rather than paying its mana cost"),
+                    // GONE 2026-11-03 ("1. CA"): the cost paid otherwise for a card
+                    // off the TOP of a library, the 2026-10-25 Xander's Pact ruling
+                    // ("Cheat a tutti") — life (Bismuth Mindrender, Nashi, Valgavoth,
+                    // Gwenom, Bolas's Citadel, Inside Information), a discard (The
+                    // Infamous Cruelclaw), {1} (Jadzi) — and Eye of Duskmantle's
+                    // surveilled cards out of the graveyard, which keeps Regrowth.
+                    // GRANTING SUSPEND to a card out of your HAND is a free cast on a
+                    // timer, ruled 2026-10-13 (The Eleventh Doctor; The Tenth Doctor
+                    // realigned). Not the card suspending ITSELF (Rory Williams), nor
+                    // the spell you just cast and paid for (Taigam), and since
+                    // 2026-11-03 not a card off the top of the library (Sibylline
+                    // Soothsayer, The Parting of the Ways). Taigam's spell is a
+                    // "spell from your hand" in Gandalf of the Secret Fire's words,
+                    // untagged by hand on 10-26 (read 2026-11-03).
+                    Rx(@"(?<!\bspells? )from your hand[^\n]{0,250}gains suspend"),
                     // …and the same suspend spelled out without the keyword, read
                     // 2026-10-25: Alaundo the Seer's time counters on a card from
                     // the hand, cast free when the last one is removed.
                     Rx(@"from your hand and put [^.\n]{0,60}time counters? on it[^\n]{0,200}"
                         + @"when the last time counter is removed[^\n]{0,80}you may cast it without paying its mana cost"),
-                    // LOOKING at the top few and casting one of them free puts a
-                    // card into play at no cost, named Cheat by the human on
-                    // 2026-09-27 (Perception Bobblehead) — Aetherworks Marvel is
-                    // the same card. Asked of a LOOK or a REVEAL only: the EXILE
-                    // version is the impulse rider above, which is a card. Under
-                    // a FIXED cap it is Filter alone, ruled 2026-10-16 on the same
-                    // Bobblehead ("è 3 o meno il costo che ti regala"), as the
-                    // 10-13 "qualunque tetto = Filter" ruled a permanent put from
-                    // among them; the one reviewed card it reaches.
-                    Rx(@"(?:look at|reveal) the top [\w ]{1,20} of your library[^\n]{0,200}"
-                        + @"cast (?![^\n]{0,80}?mana value \d+ or less)[^\n]{0,80}from among them without paying"),
-                    // …and a look that EXILES the one it keeps and casts it free
-                    // later, with no mana-value cap, ruled 2026-10-16 ("Hideaway
-                    // no, altri sì"): Djeru and Hazoret's legendary creature, The
-                    // Dragon-Kami Reborn's hatched creature. Not HIDEAWAY, whose
-                    // play waits on a condition and stays Filter alone, 4 of 5 by
-                    // hand (Evercoat Ursine handed back) — its reminder joins the
-                    // look with a comma, not a full stop. Not under a cap either:
-                    // Discover the Impossible's "if it's an instant spell".
-                    // Keldon Flamesage's "mana value X or less" never gets here,
-                    // its look running on into "where X is"; a guard against a
-                    // cap in the exiled noun was tried and matched no card.
-                    Rx(@"look at the top \w+ cards of your library\. (?:you may )?exile (?:a|an|one) [^.\n]{0,120}\."
-                        + @"[\s\S]{0,300}?cast (?:the exiled card|a [\w ]{0,20}spell from among cards [^.\n]{0,20}in exile with [\w-]+ counters on them)"
-                        + @" without paying its mana cost(?! if)"),
-                    // Exiling until a NONLAND card and casting it free with no cap
-                    // is cascade without its ceiling, Cheat by the 2026-10-13
-                    // ruling ("carta grossa": Sarevok's Tome); with a cap after it
-                    // stays CardAdvantage (Breaching Dragonstorm, Solstice
-                    // Revelations, Ryan Sinclair).
-                    Rx(@"until you (?:exile|reveal) a nonland card\. you may cast (?:that card|it|the exiled card) without paying its mana cost(?! if)"),
+                    // GONE 2026-11-03 ("Fuori" on a look and a choice, "1. CA" on the
+                    // rest): a look at the top few and one of them cast free (Perception
+                    // Bobblehead's "lo mettiamo Cheat" of 2026-09-27, Aetherworks Marvel),
+                    // a look that exiles the one it keeps and casts it later (Djeru and
+                    // Hazoret, The Dragon-Kami Reborn, 2026-10-16), and an exile until a
+                    // NONLAND card cast free (Sarevok's Tome, Wanda's Vision). A look stays
+                    // Filter; the exiled card cast free stays CardAdvantage. Vault 112:
+                    // Sadistic Simulation's one card of the many it exiled is Filter
+                    // alone (ExileThatManyAndPlayOne, in the Filter table only).
                     // A card out of your HAND cast free, as Great Intelligence's
                     // Plan, when it is chosen first (The Seventh Doctor), and the
                     // card a loot discarded (Malcolm, named 2026-10-13). One card
                     // each; the impulse rider ("exile the top card … cast it") and
                     // Steal's (Hidetsugu and Kairi) say neither.
                     Rx(@"choose a card in your hand\.[^\n]{0,200}you may cast it without paying its mana cost"),
-                    Rx(@"you may cast the discarded card without paying its mana cost"),
-                    // Vault 112: Sadistic Simulation plays one of the cards it
-                    // exiled for free: Filter and Cheat, not CardAdvantage.
-                    // Ruled 2026-10-16.
-                    ExileThatManyAndPlayOne]),
+                    Rx(@"you may cast the discarded card without paying its mana cost")]),
             ];
 
             FilterPatterns = Rules.First(rule => rule.Effect == CardEffect.Filter).Patterns;

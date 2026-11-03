@@ -1743,11 +1743,6 @@ public sealed partial class EffectClassifierTests
     [InlineData("Oil-Gorger Troll", "Creature — Phyrexian Troll Warrior",
         "When this creature enters, you gain 3 life. Then if you control a permanent with an oil counter on "
         + "it, draw a card.")]
-    [InlineData("Wand of Wonder", "Artifact",
-        "{4}, {T}: Roll a d20. Each opponent exiles cards from the top of their library until they exile an "
-        + "instant or sorcery card, then shuffles the rest into their library. You may cast up to X instant "
-        + "and/or sorcery spells from among cards exiled this way without paying their mana costs.\n1—9 | X is "
-        + "one.\n10—19 | X is two.\n20 | X is three.")]
     [InlineData("Dream Cache", "Sorcery",
         "Draw three cards, then put two cards from your hand both on top of your library or both on the "
         + "bottom of your library.")]
@@ -1765,6 +1760,287 @@ public sealed partial class EffectClassifierTests
         + "graveyard. You may cast it this turn, and mana of any type can be spent to cast that spell. If that "
         + "spell would be put into a graveyard, exile it instead.")]
     public void Classify_TheOctober16CardAdvantagePassRemovals_AreNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // What stopped being Cheat on 2026-11-03 is a CARD ('1. CA', '2. CA', '3. CA
+    // per le multiple', '4. CA se si ripetono'), in the shapes this tag never read
+    // because Cheat had them. A PILE off the top cast free (FreePileOffTheTop):
+    // Dance with Calamity, Plargg and Nassari and Wand of Wonder, named (Wand
+    // pinned the other way from 2026-10-16, moved here), and Fevered Suspicion.
+    [InlineData("Dance with Calamity", "Sorcery",
+        "Shuffle your library. As many times as you choose, you may exile the top card of your library. If "
+        + "the total mana value of the cards exiled this way is 13 or less, you may cast any number of spells "
+        + "from among those cards without paying their mana costs.")]
+    [InlineData("Plargg and Nassari", "Legendary Creature — Orc Efreet",
+        "At the beginning of your upkeep, each player exiles cards from the top of their library until they "
+        + "exile a nonland card. An opponent chooses a nonland card exiled this way. You may cast up to two "
+        + "spells from among the other cards exiled this way without paying their mana costs.")]
+    [InlineData("Wand of Wonder", "Artifact",
+        "{4}, {T}: Roll a d20. Each opponent exiles cards from the top of their library until they exile an "
+        + "instant or sorcery card, then shuffles the rest into their library. You may cast up to X instant "
+        + "and/or sorcery spells from among cards exiled this way without paying their mana costs.\n1—9 | X is "
+        + "one.\n10—19 | X is two.\n20 | X is three.")]
+    [InlineData("Fevered Suspicion", "Sorcery",
+        "Each opponent exiles cards from the top of their library until they exile a nonland card. You may "
+        + "cast any number of spells from among those nonland cards without paying their mana costs.\nRebound "
+        + "(If you cast this spell from your hand, exile it as it resolves. At the beginning of your next "
+        + "upkeep, you may cast this card from exile without paying its mana cost.)")]
+    // An exile or a reveal UNTIL a nonland card cast free (FreeCastUntilANonland),
+    // off an opponent's library too: Neera, Wild Mage, and Nicol Bolas, God-
+    // Pharaoh's +2, named.
+    [InlineData("Neera, Wild Mage", "Legendary Creature — Human Elf Shaman",
+        "Whenever you cast a spell, you may put it on the bottom of its owner's library. If you do, reveal "
+        + "cards from the top of your library until you reveal a nonland card. You may cast that card without "
+        + "paying its mana cost. Then put all revealed cards not cast this way on the bottom of your library in "
+        + "a random order. This ability triggers only once each turn.")]
+    [InlineData("Nicol Bolas, God-Pharaoh", "Legendary Planeswalker — Bolas",
+        "+2: Target opponent exiles cards from the top of their library until they exile a nonland card. "
+        + "Until end of turn, you may cast that card without paying its mana cost.\n+1: Each opponent exiles two "
+        + "cards from their hand.\n−4: Nicol Bolas deals 7 damage to target opponent, creature an opponent "
+        + "controls, or planeswalker an opponent controls.\n−12: Exile each nonland permanent your opponents "
+        + "control.")]
+    // A card off the top SUSPENDED for you (SuspendsACardOffTheTop): Sibylline
+    // Soothsayer and The Parting of the Ways, named.
+    [InlineData("Sibylline Soothsayer", "Creature — Human Warlock",
+        "Temporal Foresight — When this creature enters, reveal cards from the top of your library until you "
+        + "reveal a nonland card with mana value 3 or greater. Exile that card with three time counters on it. "
+        + "If it doesn't have suspend, it gains suspend. Put the rest of the revealed cards on the bottom of "
+        + "your library in a random order.")]
+    [InlineData("The Parting of the Ways", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Exile "
+        + "the top five cards of your library. For each nonland card exiled this way, put a number of time "
+        + "counters on that card equal to its mana value. If it doesn't have suspend, it gains suspend.\nII — "
+        + "Time travel, then time travel.\nIII — For each opponent, destroy up to one target artifact that "
+        + "player controls.")]
+    // ONE card off the top cast or played free by an ability that repeats
+    // (FreeCardOffTheTop, CastsItFree): Temporal Aperture, named; Urza, Lord High
+    // Artificer's shuffle-then-exile.
+    [InlineData("Temporal Aperture", "Artifact",
+        "{5}, {T}: Shuffle your library, then reveal the top card. Until end of turn, for as long as that "
+        + "card remains on top of your library, play with the top card of your library revealed and you may "
+        + "play that card without paying its mana cost. (If it has X in its mana cost, X is 0.)")]
+    [InlineData("Urza, Lord High Artificer", "Legendary Creature — Human Artificer",
+        "When Urza enters, create a 0/0 colorless Construct artifact creature token with \"This token gets "
+        + "+1/+1 for each artifact you control.\"\nTap an untapped artifact you control: Add {U}.\n{5}: Shuffle "
+        + "your library, then exile the top card. Until end of turn, you may play that card without paying its "
+        + "mana cost.")]
+    // MORE THAN ONE card off the top put onto the battlefield
+    // (SeveralPutFromAmongThem): Majestic Genesis, Over the Top, Hew the Entwood,
+    // Vorinclex's milled pair and Tezzeret, Master of the Bridge's -8, named;
+    // Gilgamesh, Master-at-Arms' Equipment, reached.
+    [InlineData("Majestic Genesis", "Sorcery",
+        "Reveal the top X cards of your library, where X is the greatest mana value of a commander you own on "
+        + "the battlefield or in the command zone. You may put any number of permanent cards from among them "
+        + "onto the battlefield. Put the rest on the bottom of your library in a random order.")]
+    [InlineData("Over the Top", "Sorcery",
+        "Each player reveals a number of cards from the top of their library equal to the number of nonland "
+        + "permanents they control, puts all permanent cards they revealed this way onto the battlefield, and "
+        + "puts the rest into their graveyard.")]
+    [InlineData("Hew the Entwood", "Sorcery",
+        "Sacrifice any number of lands. Reveal the top X cards of your library, where X is the number of "
+        + "lands sacrificed this way. Choose any number of artifact and/or land cards revealed this way. Put "
+        + "all nonland cards chosen this way onto the battlefield, then put all land cards chosen this way onto "
+        + "the battlefield tapped, then put the rest on the bottom of your library in a random order.")]
+    [InlineData("Vorinclex // The Grand Evolution", "Legendary Creature — Phyrexian Praetor // Enchantment — Saga",
+        "Reach, trample\nWhen Vorinclex enters, search your library for up to two Forest cards, reveal them, "
+        + "put them into your hand, then shuffle.\n{6}{G}{G}: Exile Vorinclex, then return it to the battlefield "
+        + "transformed under its owner's control. Activate only as a sorcery.\n(As this Saga enters and after "
+        + "your draw step, add a lore counter.)\nI — Mill ten cards. Put up to two creature cards from among the "
+        + "milled cards onto the battlefield.\nII — Distribute seven +1/+1 counters among any number of target "
+        + "creatures you control.\nIII — Until end of turn, creatures you control gain \"{1}: This creature "
+        + "fights target creature you don't control.\" Exile this Saga, then return it to the battlefield (front "
+        + "face up).")]
+    [InlineData("Tezzeret, Master of the Bridge", "Legendary Planeswalker — Tezzeret",
+        "Creature and planeswalker spells you cast have affinity for artifacts. (They cost {1} less to cast "
+        + "for each artifact you control.)\n+2: Tezzeret deals X damage to each opponent, where X is the number "
+        + "of artifacts you control. You gain X life.\n−3: Return target artifact card from your graveyard to "
+        + "your hand.\n−8: Exile the top ten cards of your library. Put all artifact cards from among them onto "
+        + "the battlefield.")]
+    [InlineData("Gilgamesh, Master-at-Arms", "Legendary Creature — Human Samurai",
+        "Whenever Gilgamesh enters or attacks, look at the top six cards of your library. You may put any "
+        + "number of Equipment cards from among them onto the battlefield. Put the rest on the bottom of your "
+        + "library in a random order. When you put one or more Equipment onto the battlefield this way, you may "
+        + "attach one of them to a Samurai you control.")]
+    // A creature or another permanent off the top put onto the battlefield by an
+    // ability that repeats (RevealedOntoTheBattlefield): Call of the Wild and Atla
+    // Palani, named; Doors of Durin's 'revealed this way', reached; Zoologist.
+    [InlineData("Call of the Wild", "Enchantment",
+        "{2}{G}{G}: Reveal the top card of your library. If it's a creature card, put it onto the "
+        + "battlefield. Otherwise, put it into your graveyard.")]
+    [InlineData("Atla Palani, Nest Tender", "Legendary Creature — Human Shaman",
+        "{2}, {T}: Create a 0/1 green Egg creature token with defender.\nWhenever an Egg you control dies, "
+        + "reveal cards from the top of your library until you reveal a creature card. Put that card onto the "
+        + "battlefield and the rest on the bottom of your library in a random order.")]
+    [InlineData("Doors of Durin", "Legendary Artifact",
+        "Whenever you attack, scry 2, then you may reveal the top card of your library. If a creature card is "
+        + "revealed this way, put it onto the battlefield tapped and attacking. Until your next turn, it gains "
+        + "trample if you control a Dwarf and hexproof if you control an Elf.")]
+    [InlineData("Zoologist", "Creature — Human Druid",
+        "{3}{G}, {T}: Reveal the top card of your library. If it's a creature card, put it onto the "
+        + "battlefield. Otherwise, put it into your graveyard.")]
+    public void Classify_TheNovember3Redefinition_ACardOffTheTop_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Ruled 2026-11-03 ('Si ripete = CA', asked with Arthur, whose creature also
+    // comes back to the hand): ONE card chosen off the top and put onto the
+    // battlefield by an ability that repeats is CardAdvantage, chosen as well as
+    // random (OneChosenOffTheTop). Web of Life and Destiny, Owlbear Cub and
+    // Armored Skyhunter named, Filter by hand; Ureni of the Unwritten reached;
+    // Mole Module, Muzzio and Winota unreviewed.
+    [InlineData("Arthur, Marigold Knight", "Legendary Creature — Mouse Knight",
+        "Haste\nWhenever Arthur and at least one other creature attack, look at the top six cards of your "
+        + "library. You may put a creature card from among them onto the battlefield tapped and attacking. Put "
+        + "the rest on the bottom of your library in a random order. Return that creature to its owner's hand "
+        + "at end of combat.")]
+    [InlineData("Web of Life and Destiny", "Enchantment",
+        "Convoke (Your creatures can help cast this spell. Each creature you tap while casting this spell "
+        + "pays for {1} or one mana of that creature's color.)\nAt the beginning of combat on your turn, look at "
+        + "the top five cards of your library. You may put a creature card from among them onto the "
+        + "battlefield. Put the rest on the bottom of your library in a random order.")]
+    [InlineData("Owlbear Cub", "Creature — Bird Bear",
+        "Mama's Coming — Whenever this creature attacks a player who controls eight or more lands, look at "
+        + "the top eight cards of your library. You may put a creature card from among them onto the "
+        + "battlefield tapped and attacking that player. Put the rest on the bottom of your library in a random "
+        + "order.")]
+    [InlineData("Armored Skyhunter", "Creature — Cat Knight",
+        "Flying\nWhenever this creature attacks, look at the top six cards of your library. You may put an "
+        + "Aura or Equipment card from among them onto the battlefield. If an Equipment is put onto the "
+        + "battlefield this way, you may attach it to a creature you control. Put the rest of those cards on "
+        + "the bottom of your library in a random order.")]
+    [InlineData("Ureni of the Unwritten", "Legendary Creature — Spirit Dragon",
+        "Flying, trample\nWhenever Ureni enters or attacks, look at the top eight cards of your library. You "
+        + "may put a Dragon creature card from among them onto the battlefield. Put the rest on the bottom of "
+        + "your library in a random order.")]
+    [InlineData("Mole Module", "Artifact — Vehicle",
+        "Menace\nWhenever this Vehicle deals combat damage to a player, mill four cards. You may put a "
+        + "permanent card from among them onto the battlefield.\nCrew 2")]
+    [InlineData("Muzzio, Visionary Architect", "Legendary Creature — Human Artificer",
+        "{3}{U}, {T}: Look at the top X cards of your library, where X is the greatest mana value among "
+        + "artifacts you control. You may put an artifact card from among them onto the battlefield. Put the "
+        + "rest on the bottom of your library in any order.")]
+    [InlineData("Winota, Joiner of Forces", "Legendary Creature — Human Warrior",
+        "Whenever a non-Human creature you control attacks, look at the top six cards of your library. You "
+        + "may put a Human creature card from among them onto the battlefield tapped and attacking. It gains "
+        + "indestructible until end of turn. Put the rest of the cards on the bottom of your library in a "
+        + "random order.")]
+    public void Classify_TheNovember3Redefinition_OneChosenAgainAndAgain_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.False(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // The edges of the same 2026-11-03 reading. A MASS SWAP of your own permanents
+    // for as many off the top is a card for a card (MassSwap): Mass Polymorph,
+    // Synthetic Destiny, Glimpse of Tomorrow.
+    [InlineData("Mass Polymorph", "Sorcery",
+        "Exile all creatures you control, then reveal cards from the top of your library until you reveal "
+        + "that many creature cards. Put all creature cards revealed this way onto the battlefield, then "
+        + "shuffle the rest of the revealed cards into your library.")]
+    [InlineData("Synthetic Destiny", "Instant",
+        "Exile all creatures you control. At the beginning of the next end step, reveal cards from the top of "
+        + "your library until you reveal that many creature cards, put all creature cards revealed this way "
+        + "onto the battlefield, then shuffle the rest of the revealed cards into your library.")]
+    [InlineData("Glimpse of Tomorrow", "Sorcery",
+        "Suspend 3—{R}{R}\nShuffle all permanents you own into your library, then reveal that many cards from "
+        + "the top of your library. Put all non-Aura permanent cards revealed this way onto the battlefield, "
+        + "then do the same for Aura cards, then put the rest on the bottom of your library in a random order.")]
+    // So is a swap of ONE of your own for the creature revealed, however often
+    // (SwapsYourOwn): Identity Echo, Fireflux Squad, Audacious Reshapers.
+    [InlineData("Identity Echo", "Enchantment",
+        "{3}{R}: Exile target creature or planeswalker you control. Reveal cards from the top of your library "
+        + "until you reveal a creature or planeswalker card. Put that card onto the battlefield and the rest on "
+        + "the bottom of your library in a random order. Activate only as a sorcery.")]
+    [InlineData("Fireflux Squad", "Creature — Human Soldier",
+        "Haste\nWhenever this creature attacks, you may exile another target attacking creature you control. "
+        + "If you do, reveal cards from the top of your library until you reveal a creature card. Put that card "
+        + "onto the battlefield tapped and attacking and the rest on the bottom of your library in a random "
+        + "order.")]
+    [InlineData("Audacious Reshapers", "Creature — Human Artificer",
+        "{T}, Sacrifice an artifact: Reveal cards from the top of your library until you reveal an artifact "
+        + "card. Put that card onto the battlefield and the rest on the bottom of your library in a random "
+        + "order. This creature deals damage to you equal to the number of cards revealed this way.")]
+    // A free card only a creature TYPE may cast is the tribal impulse of
+    // 2026-10-23: Descendants' Path, Leaf-Crowned Elder.
+    // Cards from OUTSIDE THE GAME are a wish, not the top (Spawnsire of Ulamog).
+    [InlineData("Descendants' Path", "Enchantment",
+        "At the beginning of your upkeep, reveal the top card of your library. If it's a creature card that "
+        + "shares a creature type with a creature you control, you may cast it without paying its mana cost. If "
+        + "you don't cast it, put it on the bottom of your library.")]
+    [InlineData("Leaf-Crowned Elder", "Creature — Treefolk Shaman",
+        "Kinship — At the beginning of your upkeep, you may look at the top card of your library. If it "
+        + "shares a creature type with this creature, you may reveal it. If you do, you may play that card "
+        + "without paying its mana cost.")]
+    [InlineData("Spawnsire of Ulamog", "Creature — Eldrazi",
+        "Annihilator 1 (Whenever this creature attacks, defending player sacrifices a permanent of their "
+        + "choice.)\n{4}: Create two 0/1 colorless Eldrazi Spawn creature tokens. They have \"Sacrifice this "
+        + "token: Add {C}.\"\n{20}: Cast any number of Eldrazi spells from among cards you own outside the game "
+        + "without paying their mana costs.")]
+    // A creature revealed ONCE is one card, not a stream: Aspiring Champion
+    // sacrifices itself, Gamekeeper exiles itself, Madcap Experiment is a sorcery.
+    // LANDS are Ramp (Expand the Sphere), and a CAP is Filter (Knickknack Ouphe).
+    [InlineData("Aspiring Champion", "Creature — Astartes Warrior",
+        "Menace\nRuinous Ascension — When this creature deals combat damage to a player, sacrifice it. If you "
+        + "do, reveal cards from the top of your library until you reveal a creature card. Put that card onto "
+        + "the battlefield, then shuffle the rest into your library. If that creature is a Demon, it deals "
+        + "damage equal to its power to each opponent.")]
+    [InlineData("Gamekeeper", "Creature — Elf",
+        "When this creature dies, you may exile it. If you do, reveal cards from the top of your library "
+        + "until you reveal a creature card. Put that card onto the battlefield and put all other cards "
+        + "revealed this way into your graveyard.")]
+    [InlineData("Madcap Experiment", "Sorcery",
+        "Reveal cards from the top of your library until you reveal an artifact card. Put that card onto the "
+        + "battlefield and the rest on the bottom of your library in a random order. Madcap Experiment deals "
+        + "damage to you equal to the number of cards revealed this way.")]
+    [InlineData("Expand the Sphere", "Sorcery",
+        "Look at the top six cards of your library. Put up to two land cards from among them onto the "
+        + "battlefield tapped and the rest on the bottom of your library in a random order. If you put fewer "
+        + "than two lands onto the battlefield this way, proliferate a number of times equal to the difference. "
+        + "(Choose any number of permanents and/or players, then give each another counter of each kind already "
+        + "there.)")]
+    [InlineData("Knickknack Ouphe", "Creature — Ouphe",
+        "This creature enters with X +1/+1 counters on it.\nWhen this creature enters, reveal the top X cards "
+        + "of your library. You may put any number of Aura cards with mana value X or less from among them onto "
+        + "the battlefield. Then put all cards revealed this way that weren't put onto the battlefield on the "
+        + "bottom of your library in a random order.")]
+    // A ONE-SHOT shuffle and free top card is no stream (Unexpected Results, a
+    // sorcery): the repeat gate on FreeCardOffTheTop.
+    [InlineData("Unexpected Results", "Sorcery",
+        "Shuffle your library, then reveal the top card. If it's a nonland card, you may cast it without "
+        + "paying its mana cost. If it's a land card, you may put it onto the battlefield and return Unexpected "
+        + "Results to its owner's hand.")]
+    // Nor, ruled 2026-11-03 on Killer Instinct ('Solo Burn'), a creature off the
+    // top SACRIFICED at the next end step, which leaves no card behind
+    // (SacrificedAtTheEndStep); nor one chosen after a sacrifice (Industrial
+    // Advancement), a land (Freestrider Lookout, Ramp), or Guild Feud's card the
+    // opponent chooses first (not read).
+    [InlineData("Killer Instinct", "Enchantment",
+        "At the beginning of your upkeep, reveal the top card of your library. If it's a creature card, put "
+        + "it onto the battlefield. That creature gains haste until end of turn. Sacrifice it at the beginning "
+        + "of the next end step.")]
+    [InlineData("Industrial Advancement", "Enchantment",
+        "At the beginning of your end step, you may sacrifice a creature. If you do, look at the top X cards "
+        + "of your library, where X is that creature's mana value. You may put a creature card from among them "
+        + "onto the battlefield. Put the rest on the bottom of your library in a random order.")]
+    [InlineData("Freestrider Lookout", "Creature — Human Rogue",
+        "Reach\nWhenever you commit a crime, look at the top five cards of your library. You may put a land "
+        + "card from among them onto the battlefield tapped. Put the rest on the bottom of your library in a "
+        + "random order. This ability triggers only once each turn. (Targeting opponents, anything they "
+        + "control, and/or cards in their graveyards is a crime.)")]
+    [InlineData("Guild Feud", "Enchantment",
+        "At the beginning of your upkeep, target opponent reveals the top three cards of their library, may "
+        + "put a creature card from among them onto the battlefield, then puts the rest into their graveyard. "
+        + "You do the same with the top three cards of your library. If two creatures are put onto the "
+        + "battlefield this way, those creatures fight each other.")]
+    public void Classify_TheNovember3Redefinition_ACardForACardOrOnce_IsNotCardAdvantage(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
     }

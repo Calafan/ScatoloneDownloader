@@ -31,8 +31,8 @@ flashback card.
 
 Ruled again 2026-09-19 and this time the count is symmetric: ANY net gain is CardAdvantage, a net of
 zero is Filter and was never advantage. The first cut also took Filter off every card that gained;
-the same day that was corrected, and a card that selects AND comes out ahead carried both (OVERTURNED
-2026-09-27: the two tags are exclusive, see Filter). Four more ways a card arrives were
+the same day that was corrected, and a card that selects AND comes out ahead carried both
+(OVERTURNED 2026-09-27: the two tags are exclusive, see Filter). Four more ways a card arrives were
 measured and added the same day.
 
 WHOSE DRAW IS IT: a card that only ever draws for somebody else gives nothing away (Sibilant Spirit,
@@ -440,3 +440,34 @@ also sacrifices a Vampire (two paid for two, Filter, unreviewed), Krovikan Sorce
 discards one (2026-09-19, Filter), Pumpkin Bombs discards two for three (Filter by hand 2026-10-26),
 and Reverberating Summons, a one-shot, was this tag already. Niambi is the only card in the store
 with the shape.
+
+Ruled 2026-11-03 with the Cheat redefinition (see Cheat: nothing off the top of a library is Cheat
+any more): what left Cheat is a CARD ("1. CA", "2. CA", "3. CA per le multiple", "4. CA se si
+ripetono"), in shapes this tag never read because Cheat had them. A PILE off the top cast free,
+yours or an opponent's (FreePileOffTheTop, 7 of 10 reviewed CardAdvantage before; Dance with
+Calamity, Plargg and Nassari and Wand of Wonder named, Wand pinned the other way since 2026-10-16),
+not cards from outside the game (Spawnsire of Ulamog's wish). An exile or a reveal UNTIL a nonland
+card cast free (3 of 4; Neera, Wild Mage and Nicol Bolas, God-Pharaoh's +2 named). A card off the
+top SUSPENDED for you (Sibylline Soothsayer and The Parting of the Ways named, The Tenth Doctor by
+hand). ONE card off the top cast or played free by an ability that repeats (Temporal Aperture named;
+Urza, Lord High Artificer), not one only a creature type may cast (Descendants' Path, Leaf-Crowned
+Elder: the tribal impulse of 10-23). MORE THAN ONE nonland card off the top put onto the battlefield
+(Majestic Genesis, Over the Top, Hew the Entwood, Vorinclex, Tezzeret, Master of the Bridge's −8
+named; Gilgamesh, Master-at-Arms reached), not lands, which are Ramp, nor under a cap, Filter, nor a
+MASS SWAP of your own permanents for as many off the top (Mass Polymorph, Synthetic Destiny, Glimpse
+of Tomorrow: a card for a card). A creature or another permanent off the top put onto the
+battlefield by an ability that repeats (Call of the Wild and Atla Palani named, Hans Eriksson by
+hand; Doors of Durin's "revealed this way" reached), not once (Aspiring Champion, Gamekeeper, Madcap
+Experiment) and not in exchange for one of your own (Identity Echo, Fireflux Squad, Audacious
+Reshapers, Jace, Multiverse Architect's −3), nor SACRIFICED at the next end step, which leaves no
+card behind (Killer Instinct, "Solo Burn", unreviewed).
+
+Ruled 2026-11-03 later the same day ("Si ripete = CA", asked with Arthur, Marigold Knight: "il
+potere lo attiva più volte -> Filter diventa CA, no?"): ONE card CHOSEN off the top and put onto the
+battlefield by an ability that repeats is this tag, as the random one above is, and the exclusivity
+takes it out of Filter (OneChosenOffTheTop). Web of Life and Destiny, Owlbear Cub and Armored
+Skyhunter named, Filter by hand; Ureni of the Unwritten reached and handed back; Mole Module,
+Muzzio, Kinnan, Nick Fury, Agent of S.H.I.E.L.D. and Winota unreviewed. Arthur's creature also comes
+back to the hand at end of combat, and Arthur kept its hand tags. Not a land (Freestrider Lookout,
+Ramp), not after a sacrifice (Industrial Advancement), and not Guild Feud's, which the opponent is
+offered first (unreviewed, not read, left Filter).

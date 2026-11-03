@@ -157,10 +157,10 @@
                 + "Straight to the battlefield is Reanimate.",
 
             [CardEffect.Cheat] =
-                "Puts a NONLAND permanent onto the battlefield uncast — from hand (Sneak Attack) or library "
-                + "(Natural Order) — or casts free STANDING (Omniscience), one card off the top AGAIN, or another "
-                + "card paid with life. Not a creature-TYPE trick, nor one sent back to hand. "
-                + "A graveyard is Reanimate, a land Ramp, a one-off free card CardAdvantage.",
+                "Skips the mana cost of a card YOU CHOSE: a NONLAND permanent from hand (Sneak Attack) or SEARCHED "
+                + "from the library (Natural Order), or a standing free cast or fixed alternative cost (Omniscience). "
+                + "Nothing off the TOP of a library, under any mana-value cap, tribal, or sent back to hand. "
+                + "A graveyard is Reanimate, a land Ramp.",
 
             [CardEffect.Redirect] =
                 "Acts on a spell without countering it: changes its targets, takes control of it, or copies it — "

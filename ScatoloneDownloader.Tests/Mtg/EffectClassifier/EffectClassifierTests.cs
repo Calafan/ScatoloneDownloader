@@ -677,6 +677,13 @@ public sealed partial class EffectClassifierTests
         + "card.\nSummon — {X}, {T}: Return target Saga card with mana value X from your graveyard to the "
         + "battlefield with a finality counter on it. It gains haste until end of turn. Activate only as a "
         + "sorcery.")]
+    // A LIST of types is a tribe too, read 2026-11-03 (Dr. Eggman's Cheat): Push
+    // the Limit's Mounts and Vehicles, Reanimate by hand on 09-10 before the
+    // tribal ruling and reached.
+    [InlineData("Push the Limit", "Sorcery", CardEffect.Reanimate,
+        "Return all Mount and Vehicle cards from your graveyard to the battlefield. Sacrifice them at the "
+        + "beginning of the next end step.\nVehicles you control become artifact creatures until end of turn. "
+        + "Creatures you control gain haste until end of turn.")]
     public void Classify_TheTribalReanimateAndCheat_DoNotCarryTheTag(string name, string typeLine, CardEffect effect, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(effect));
@@ -692,11 +699,6 @@ public sealed partial class EffectClassifierTests
         "Deathtouch\nWhenever another nontoken creature you control dies, this creature connives.\nWhen this "
         + "creature dies, return another target non-Rogue creature card with equal or lesser power from your "
         + "graveyard to the battlefield.")]
-    [InlineData("Kinnan, Bonder Prodigy", "Legendary Creature — Human Druid", CardEffect.Cheat,
-        "Whenever you tap a nonland permanent for mana, add one mana of any type that permanent "
-        + "produced.\n{5}{G}{U}: Look at the top five cards of your library. You may put a non-Human creature "
-        + "card from among them onto the battlefield. Put the rest on the bottom of your library in a random "
-        + "order.")]
     // A card any creature could be, beside the tribal one.
     [InlineData("Thwart the Grave", "Sorcery", CardEffect.Reanimate,
         "This spell costs {1} less to cast for each creature in your party. (Your party consists of up to one "
