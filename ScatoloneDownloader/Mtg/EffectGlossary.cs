@@ -158,9 +158,9 @@
 
             [CardEffect.Cheat] =
                 "Puts a NONLAND permanent onto the battlefield uncast — from hand (Sneak Attack) or library "
-                + "(Natural Order) — or casts free STANDING (Omniscience), or casts another card paying life or a "
-                + "discard for its mana (Bolas's Citadel). Not one only a creature TYPE can use. A graveyard is "
-                + "Reanimate, a land Ramp, one free exiled card CardAdvantage.",
+                + "(Natural Order) — or casts free STANDING (Omniscience), one card off the top AGAIN, or another "
+                + "card paid with life. Not a creature-TYPE trick, nor one sent back to hand. "
+                + "A graveyard is Reanimate, a land Ramp, a one-off free card CardAdvantage.",
 
             [CardEffect.Redirect] =
                 "Acts on a spell without countering it: changes its targets, takes control of it, or copies it — "

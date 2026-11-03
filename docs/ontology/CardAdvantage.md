@@ -430,3 +430,13 @@ several on another, by the 2026-09-29 two-abilities ruling (The Royal Scions' +1
 Qiqirn), and a standing permission to play a land or cast from elsewhere (Kagha, Shadow Archdruid; 9
 of 10 reviewed, The Eighth Doctor the exception). Not a cycling reminder's "Discard this card: Draw
 a card", nor a draw that spends the card.
+
+Ruled 2026-11-03 ("CA", on Niambi, Esteemed Speaker): a REPEATABLE activated ability whose cost
+discards ONE card and that draws TWO — "{1}{W}{U}, {T}, Discard a legendary card: Draw two cards" —
+nets a card each activation, "a draw you can go back to", and is this tag, not Filter. Key to the
+Side-Door, the same ability with a longer noun, was CardAdvantage already. The cost is mana, a tap
+and that single discard and nothing else, and the draw is two and no more: Falkenrath Pit Fighter
+also sacrifices a Vampire (two paid for two, Filter, unreviewed), Krovikan Sorcerer draws two and
+discards one (2026-09-19, Filter), Pumpkin Bombs discards two for three (Filter by hand 2026-10-26),
+and Reverberating Summons, a one-shot, was this tag already. Niambi is the only card in the store
+with the shape.

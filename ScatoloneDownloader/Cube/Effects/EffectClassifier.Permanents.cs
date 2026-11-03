@@ -204,7 +204,13 @@ namespace ScatoloneDownloader.Cube
             // (Braids, Cabal Minion), which never has to be a land. And it may
             // follow a creature edict, "…, then sacrifices a land of their
             // choice" (Din of the Fireherd, Smallpox), 2026-10-16.
-            Rx(@"(?:target (?:player|opponent)|each player|that player|each opponent)"
+            // A COMPARISON names nobody as the victim, ruled 2026-11-03 on the
+            // principle of 2026-09-15 (a tag is what the card aims at somebody,
+            // never what it pays): Akuta, Born of Ash's "if you have more cards
+            // in hand THAN each opponent, you may sacrifice a Swamp" pays its own
+            // land. Own-land sacrifice is untagged on 66 of the 69 reviewed
+            // cards that make it; the lookbehind keeps "than" off the subject.
+            Rx(@"(?<!\bthan )(?:target (?:player|opponent)|each player|that player|each opponent)"
                 + @"[\w ,'\-]{0,60}sacrifices? (?:[\w-]+,? ){0,5}(?<!\bor )(?:lands?\b|" + BasicLandType + @")"
                 + @"|, then sacrifices (?:[\w-]+ ){0,3}(?:lands?\b|" + BasicLandType + @")"),
             // Fallow Earth answers a land without destroying it — but the

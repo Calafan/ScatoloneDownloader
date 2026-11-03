@@ -1737,8 +1737,16 @@ namespace ScatoloneDownloader.Cube
         // Golden-Tail Trainer and Commander Liara Portyr were not, and went
         // back for review. Seven "this spell costs {X} less" stay out, and so
         // do the coloured ones on itself (Khalni Hydra, Demilich, Ertai's Scorn).
-        private static readonly Regex CostsLessToCast = Rx(@"costs? \{(?:\d+|x|[wubrg])\}(?: \(or \{\d+\}\))? less to cast");
-        private static readonly Regex CostsLessForItself = Rx(@"this spell costs \{(?:\d+|x|[wubrg])\} less to cast");
+        // A RUN of coloured symbols is the same discount, ruled 2026-11-03
+        // ("Morophon è Ramp"): Morophon, the Boundless's chosen type costs
+        // {W}{U}{B}{R}{G} less (a CHOSEN type is no tribe, 2026-10-30), Bard
+        // Class's legendary spells {R}{G}, Avatar Aang's every spell. The run is
+        // read on the itself pattern too, so a self-discount stays out, and the
+        // tribal blank below reads it so Edgewalker's "{W}{B}" and Ragemonger's
+        // "{B}{R}" stay nothing.
+        private const string CostSymbols = @"(?:\{(?:\d+|x)\}|(?:\{[wubrg]\})+)";
+        private static readonly Regex CostsLessToCast = Rx(@"costs? " + CostSymbols + @"(?: \(or \{\d+\}\))? less to cast");
+        private static readonly Regex CostsLessForItself = Rx(@"this spell costs " + CostSymbols + @" less to cast");
 
         // Any activated ability on a NON-LAND that adds mana, whatever it asks
         // for: a tap (Llanowar Elves), a counter (Wall of Roots), a card out of
@@ -1813,7 +1821,7 @@ namespace ScatoloneDownloader.Cube
         // case-sensitive, like TribalCard.
         private static readonly Regex TribalCostReduction = new(
             @"(?!(?:Instant|Sorcery|Lesson|Arcane|Adventure|Historic|Aura|Equipment|Vehicle|Kicked|Spells|Face-down)\b)"
-            + ACreatureType + @" (?:creature )?spells you cast cost \{(?:\d+|[WUBRG])\} less to cast",
+            + ACreatureType + @" (?:creature )?spells you cast cost (?:\{\d+\}|(?:\{[WUBRG]\})+) less to cast",
             RegexOptions.CultureInvariant);
 
         private static readonly Regex ExtraLandDrop = Rx(

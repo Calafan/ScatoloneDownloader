@@ -747,6 +747,34 @@ namespace ScatoloneDownloader.Cube
                 sentence => TribalCard.IsMatch(sentence.Value)
                     && !UnrestrictedCard.IsMatch(TribalCard.Replace(sentence.Value, " ")) ? " " : sentence.Value);
 
+        // The LINE that puts a creature onto the battlefield and gives it back
+        // to the hand at the next end step or at end of combat, ruled
+        // 2026-11-03 for Cheat ("toglierei Cheat ad entrambe perché la carta
+        // torna in mano", on Anzrag's Rampage and Random Encounter): the card
+        // is borrowed, not cheated in. Reached, and handed back for review:
+        // Arthur, Marigold Knight (a look at the top six, back "at end of
+        // combat"), Nahiri, the Harbinger's −8 and Swift Warkite (which keeps
+        // Reanimate through its graveyard half). Cauldron Dance keeps the tag
+        // through ANOTHER line, a creature from the hand sacrificed at the end
+        // step, and so does any "sacrifice it" / "exile it" card: nothing here
+        // says "to hand". Read on the line and not the sentence because the
+        // return is the sentence after the one that puts. The returned object
+        // is the creature that was put (it, that creature, those creatures),
+        // never the card's own "this creature": Metathran Aerostat and
+        // Dermoplasm bounce themselves and stay Cheat. From the HAND too, asked
+        // the same day ("Sì, da qualunque zona"): Ilharg, the Raze-Boar and
+        // Surprise Deployment. And the return GRANTED to the creature put, a
+        // quoted "At the beginning of your end step, return this creature to
+        // its owner's hand" on the line that puts it (Aethermage's Touch; the
+        // "this creature" inside the quote is the creature put, not the card).
+        private static readonly Regex PutThenReturnedToHand = Rx(
+            @"^(?=[^\n]*\b(?:next end step|end of combat|the end step)\b)[^\n]*"
+            + @"\breturns? (?:it|that creature|those creatures|them|that card|those cards|the creature|each of them) "
+            + @"to (?:your|its owner's|their owner's|their owners'|its owners'|the owner's) hand[^\n]*$"
+            + @"|^[^\n]*\bonto the battlefield\b[^\n]*\bgains? ""at the beginning of (?:your|the next) end step, "
+            + @"return this creature to (?:its owner's|your) hand\.?""[^\n]*$",
+            RegexOptions.Multiline);
+
         // THE CARD ITSELF IS A CARD. Ruled 2026-09-19 and it completes the
         // count: Ponder is -1 for the Ponder and +1 for the draw, which is
         // zero, and Grab the Prize is -1 for the spell, -1 for the discard it
@@ -815,6 +843,24 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex ActivationCostDiscard = Rx(
             @"^[^\n:]{0,50}discard (?!this card|a land card\b)(?:a|one|two|three|\w+) (?:\w+ )?cards?[^\n:]{0,30}:(?=[^\n]{0,100}\bdraw)",
             RegexOptions.Multiline);
+
+        // …but ONE card for TWO, again and again, nets a card each time and is
+        // CardAdvantage, ruled 2026-11-03 on Niambi, Esteemed Speaker ("CA"):
+        // "{1}{W}{U}, {T}, Discard a legendary card: Draw two cards" is "a draw
+        // you can go back to", and Key to the Side-Door, the same ability with a
+        // longer noun, was CardAdvantage already. The cost is mana, a tap and
+        // that one discard and nothing else, and the draw is two and no more:
+        // Falkenrath Pit Fighter sacrifices a Vampire as well (pays two for two,
+        // stays Filter), Krovikan Sorcerer draws two and discards one, Pumpkin
+        // Bombs discards two for three. Counted before it was written: Niambi is
+        // the only card in the store whose line has this shape, so the ruling
+        // fixes the shape and not a family.
+        private static readonly Regex OneCardForTwoEachTime = Rx(
+            @"^(?:\{[^{}]+\},? ?)*discard (?:a|one) (?:\w+ )?cards?(?: ?,? ?\{[^{}]+\})*: draw two cards(?!, then)",
+            RegexOptions.Multiline);
+
+        private static bool PaysACardPerActivation(string text) =>
+            ActivationCostDiscard.IsMatch(OneCardForTwoEachTime.Replace(text, " "));
 
         // Shapes that name a player beside "discard" and attack nobody's
         // hand, found 2026-09-28, each untagged on every reviewed card:
@@ -1420,6 +1466,49 @@ namespace ScatoloneDownloader.Cube
 
         private static bool MakesMapsAgainAndAgain(string text) =>
             Abilities(text).Any(a => MakesMap.IsMatch(a) && AbilityRepeats(Parenthetical.Replace(a, " ")));
+
+        // ONE card off the top of YOUR library, cast or played without paying
+        // its mana cost, by an ability that REPEATS, with no cap on its size:
+        // Cheat, ruled 2026-11-03 on Caves of Chaos Adventurer ("Sì, Cheat come
+        // Tome"), the one-card cousin of Sarevok's Tome ("carta grossa",
+        // 2026-10-13). It stays CardAdvantage too, where it already was. Reached,
+        // and left as the ruling words them: Planetarium of Wan Shi Tong (a
+        // scry or surveil trigger, once each turn), Galvanoth ("if it's an
+        // instant or sorcery spell"), Intet, the Dreamer, Oracle's Vault (its
+        // second ability), Yennett ("if its mana value is odd") and Temporal
+        // Aperture. A condition that is not a size cap does not keep it out.
+        // Stays out: a ONE-SHOT (Hidetsugu and Kairi's death trigger, Filter by
+        // hand); a CAP, "lesser mana value" (Rashmi, Eternities Crafter), "the
+        // same mana value" (Powerbalance, reviewed CardAdvantage, 2026-09-23),
+        // "mana value X or less" (Keldon Flamesage); and a TRIBAL one, "shares a
+        // creature type" (Descendants' Path, Leaf-Crowned Elder). Asked of the
+        // ABILITY, like the Blood and Map readings, and added in Classify AFTER
+        // the tribal guard, so that guard cannot take it off for a Goblin
+        // card somewhere else on the card. Measured and dropped, each moving no
+        // card in the store: TribalCard asked of the ability ("if it's a Goblin
+        // card"), and "mana value N or less" as a cap (Keldon Flamesage looks
+        // at the top X cards, so the one-card shape never reads it). The
+        // existing tribal guard alone would not do: TribalCard reads
+        // Descendants' Path's "creature card that shares a creature type" but
+        // not Leaf-Crowned Elder's "if it shares a creature type with this
+        // creature".
+        private static readonly Regex FreeCardOffTheTop = Rx(
+            @"\b(?:look at|reveal|exile)s? the top card of your library\b|\bshuffle your library, then reveal the top card\b");
+
+        private static readonly Regex CastsItFree = Rx(
+            @"\b(?:cast|play) (?:it|that card)(?: this turn)? without paying its mana cost\b");
+
+        private static readonly Regex FreeCastIsCapped = Rx(
+            @"\blesser mana value\b|\bthe same mana value\b|\bshares? a creature type\b");
+
+        private static bool FreeCardOffTheTopAgainAndAgain(string text) =>
+            Abilities(text).Any(a =>
+            {
+                string ability = Parenthetical.Replace(a, " ");
+                return FreeCardOffTheTop.IsMatch(ability) && CastsItFree.IsMatch(ability)
+                    && !FreeCastIsCapped.IsMatch(ability)
+                    && AbilityRepeats(ability);
+            });
 
         // HIDEAWAY is Filter on every reviewed card that has it, 5 of 5, and
         // that includes Wiretapping, which also draws a card every turn: the

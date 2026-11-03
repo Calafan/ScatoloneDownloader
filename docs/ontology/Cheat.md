@@ -16,10 +16,11 @@ zone, but 97 hand-tagged cards and an archetype of its own, and folding them tog
 
 A LAND is not in it — putting a land onto the battlefield is Ramp, ruled the same day, so Skyshroud
 Ranger and PuPu UFO stay there. And "you may cast IT without paying its mana cost" on one exiled
-card is the impulse rider, which is CardAdvantage: only a standing permission counts, the same line
-already drawn for the Clue and the Treasure. Measured before it was added: the hand-to-battlefield
-wording is on 119 cards in the bulk, while the bare phrase "without paying its mana cost" is on 624
-and is almost all that rider.
+card is the impulse rider, which is CardAdvantage when it runs once or under a cap (a repeating,
+uncapped one is Cheat since 2026-11-03, below): otherwise only a standing permission counts, the
+same line already drawn for the Clue and the Treasure. Measured before it was added: the
+hand-to-battlefield wording is on 119 cards in the bulk, while the bare phrase "without paying its
+mana cost" is on 624 and is almost all that rider.
 
 LOOKING at the top few and casting one of them free is this tag, ruled 2026-09-27 on Perception
 Bobblehead ("lo mettiamo Cheat"), with Aetherworks Marvel, Svella and Kiora written the same way;
@@ -117,3 +118,38 @@ da un tribale fisso", for every tag): a creature card of the CHOSEN type is any 
 Belbe's Portal is Cheat again. A type printed on the card stays tribal, and so does one SHARED with
 another creature: Call to the Kindred stays out, and Descendants' Fury's dig for a card sharing a
 type with the sacrificed creature is Filter and Sacrifice by hand (2026-10-29), not Cheat.
+
+Ruled 2026-11-03 ("toglierei Cheat ad entrambe perché la carta torna in mano", on Anzrag's Rampage
+and Random Encounter): a creature put onto the battlefield that is RETURNED to its owner's or your
+hand at the next end step or at end of combat is borrowed, not cheated in, and is not this tag,
+wherever it came from. Named: Anzrag's Rampage (reviewed, Cheat by hand 10-27) and Random Encounter
+(never Cheat). Reached: Arthur, Marigold Knight (reviewed 09-25 Filter and Cheat, handed back),
+Nahiri, the Harbinger's −8 and Swift Warkite, which keeps Reanimate through its graveyard half, and
+from the HAND too, asked the same day ("Sì, da qualunque zona"): Ilharg, the Raze-Boar and Surprise
+Deployment (unreviewed proposals), and Aethermage's Touch, whose creature is GRANTED a quoted "At the
+beginning of your end step, return this creature to its owner's hand". The line that returns it is
+blanked and the table asked again, so Cauldron Dance keeps the tag through its OTHER sentence (a
+creature from the hand, SACRIFICED at the end step), and so does every "sacrifice it" or "exile it"
+card. A creature that returns ITSELF (Metathran Aerostat, Dermoplasm) is untouched. Two wordings the human named
+were counted and written as no rule, each a family of one card: Anzrag's Rampage as Filter ("ne
+prende solo una" of the X cards exiled; no other card exiles the top X and puts ONE of them onto the
+battlefield) and Random Encounter as CardAdvantage ("prende tutte le creature" it mills; no other
+card mills and puts EACH creature card milled this way onto the battlefield, the broad "put each …
+this way onto the battlefield" being 1 CardAdvantage of 3 reviewed). Both stay known misses, as
+named.
+
+Ruled 2026-11-03 on Caves of Chaos Adventurer ("Sì, Cheat come Tome"): ONE card from the top of YOUR
+library cast or played without paying its mana cost, with no cap, by an ability that REPEATS (a
+recurring trigger or an activated ability) is this tag, like Sarevok's Tome (2026-10-13, "carta
+grossa"). CardAdvantage stays where it was: Caves keeps it, the free card is both. Reached:
+Planetarium of Wan Shi Tong (reviewed 09-29 CardAdvantage and Filter, handed back), Galvanoth,
+Intet, the Dreamer, Oracle's Vault's second ability, Yennett, Cryptic Sovereign and Temporal
+Aperture, and by the same wording Djinn of Wishes, whose wish counters limit the activations. A
+condition that is not a size cap does not keep it out: a dungeon completed (Caves), "if it's an
+instant or sorcery spell" (Galvanoth), "if its mana value is odd" (Yennett). Stays out: a ONE-SHOT
+(Hidetsugu and Kairi's death trigger, Filter by hand); a CAP, "lesser mana value" (Rashmi,
+Eternities Crafter), "the same mana value" (Powerbalance, reviewed CardAdvantage, unmoved), "mana
+value X or less" (Keldon Flamesage, which looks at several); and a TRIBAL one, "shares a creature
+type" (Descendants' Path, Leaf-Crowned Elder), read by the reading itself because the tribal guard's
+TribalCard does not read Leaf-Crowned Elder's wording. The impulse rider that runs once or under a
+cap is unchanged.

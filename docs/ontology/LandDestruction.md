@@ -51,3 +51,9 @@ is not this (Braids, Cabal Minion).
 
 Read 2026-10-30: a land closing a list of "up to one target" too long for the run of 80 (Chaotic
 Transformation's five, after "and/or"; 2 of 2 with Boom Box).
+
+Read 2026-11-03, on the principle of 2026-09-15 (a tag is what the card aims at somebody, never what
+it pays): a COMPARISON names nobody as the victim. Akuta, Born of Ash's "if you have more cards in
+hand than each opponent, you may sacrifice a Swamp" sacrifices its own land, and own-land sacrifice
+is untagged on 66 of the 69 reviewed cards that make it. Akuta, an unreviewed proposal, is the one
+card it moves.

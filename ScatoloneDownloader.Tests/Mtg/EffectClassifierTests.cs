@@ -5457,11 +5457,9 @@ public sealed class EffectClassifierTests
         + "tapped and attacking, where X is Paladin Elizabeth Taggerdy's power.")]
     // Out of the library, uncapped: from among the cards looked at, a reveal,
     // a search for any number.
-    [InlineData("Arthur, Marigold Knight", "Legendary Creature — Mouse Knight",
-        "Haste\nWhenever Arthur and at least one other creature attack, look at the top six cards of your "
-        + "library. You may put a creature card from among them onto the battlefield tapped and attacking. Put "
-        + "the rest on the bottom of your library in a random order. Return that creature to its owner's hand "
-        + "at end of combat.")]
+    // (Arthur, Marigold Knight was pinned here and moved out on 2026-11-03:
+    // its creature goes back to the hand at end of combat, so it is no longer
+    // Cheat. See Classify_TheNovember3CheatPass_ACreatureThatGoesBackToTheHand_IsNotCheat.)
     [InlineData("Doors of Durin", "Legendary Artifact",
         "Whenever you attack, scry 2, then you may reveal the top card of your library. If a creature card is "
         + "revealed this way, put it onto the battlefield tapped and attacking. Until your next turn, it gains "
@@ -12427,6 +12425,295 @@ public sealed class EffectClassifierTests
     public void Classify_TheOctober16ManaFixingPass_IsNotManaFixing(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
+    }
+
+    [Theory]
+    // Ruled 2026-11-03 (Morophon, the Boundless is Ramp): a cost reduction for
+    // OTHER spells written with several coloured symbols is the same discount as
+    // one symbol, and a chosen type is no tribe (2026-10-30). Avatar Aang is a
+    // reviewed card (09-11, no Ramp) the rule reaches; it is handed back.
+    [InlineData("Morophon, the Boundless", "Legendary Creature — Shapeshifter",
+        "Changeling (This card is every creature type.)\nAs Morophon enters, choose a creature type.\nSpells of "
+        + "the chosen type you cast cost {W}{U}{B}{R}{G} less to cast. This effect reduces only the amount of "
+        + "colored mana you pay.\nOther creatures you control of the chosen type get +1/+1.")]
+    [InlineData("Bard Class", "Enchantment — Class",
+        "(Gain the next level as a sorcery to add its ability.)\nLegendary creatures you control enter with an "
+        + "additional +1/+1 counter on them.\n{R}{G}: Level 2\nLegendary spells you cast cost {R}{G} less to "
+        + "cast. This effect reduces only the amount of colored mana you pay.\n{3}{R}{G}: Level 3\nWhenever you "
+        + "cast a legendary spell, exile the top two cards of your library. You may play them this turn.")]
+    [InlineData("Avatar Aang // Aang, Master of Elements", "Legendary Creature — Human Avatar Ally // Legendary Creature — Avatar Ally",
+        "Flying, firebending 2\nWhenever you waterbend, earthbend, firebend, or airbend, draw a card. Then if "
+        + "you've done all four this turn, transform Avatar Aang.\nFlying\nSpells you cast cost {W}{U}{B}{R}{G} "
+        + "less to cast. (This can reduce generic costs.)\nAt the beginning of each upkeep, you may transform "
+        + "Aang, Master of Elements. If you do, you gain 4 life, draw four cards, put four +1/+1 counters on "
+        + "him, and he deals 4 damage to each opponent.")]
+    public void Classify_TheNovember3RampPass_ARunOfColouredSymbolsLess_IsRamp(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // A tribe's coloured discount stays nothing with several symbols (2026-10-24,
+    // tribal): Edgewalker's Clerics and Ragemonger's Minotaurs.
+    [InlineData("Edgewalker", "Creature — Human Cleric",
+        "Cleric spells you cast cost {W}{B} less to cast. This effect reduces only the amount of colored mana "
+        + "you pay. (For example, if you cast a Cleric spell with mana cost {1}{W}, it costs {1} to cast.)")]
+    [InlineData("Ragemonger", "Creature — Minotaur Shaman",
+        "Minotaur spells you cast cost {B}{R} less to cast. This effect reduces only the amount of colored "
+        + "mana you pay. (For example, if you cast a Minotaur spell with mana cost {2}{R}, it costs {2} to "
+        + "cast.)")]
+    // A self-discount in a run of coloured symbols stays out too: Even the Score's
+    // "this spell costs {U}{U}{U} less to cast" is a discount on itself.
+    [InlineData("Even the Score", "Instant",
+        "This spell costs {U}{U}{U} less to cast if an opponent has drawn four or more cards this turn.\nDraw "
+        + "X cards.")]
+    public void Classify_TheNovember3RampPass_ATribesRunOfSymbolsLess_IsNotRamp(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // Ruled 2026-11-03 on the principle of 2026-09-15 (a tag is what the card aims
+    // at somebody, never what it pays): Akuta sacrifices its own Swamp if you have
+    // more cards in hand THAN each opponent; the opponent is a comparison, not the
+    // victim.
+    [InlineData("Akuta, Born of Ash", "Legendary Creature — Spirit",
+        "Haste\nAt the beginning of your upkeep, if you have more cards in hand than each opponent, you may "
+        + "sacrifice a Swamp. If you do, return Akuta from your graveyard to the battlefield.")]
+    public void Classify_TheNovember3LandDestructionPass_AComparisonIsNoVictim_IsNotLandDestruction(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.LandDestruction));
+    }
+
+    [Theory]
+    // Ruled 2026-11-03 (CA): a repeatable ability that discards ONE card and draws
+    // TWO nets a card every time. Niambi, Esteemed Speaker; Key to the Side-Door
+    // is the same ability with a longer noun and was CardAdvantage already.
+    [InlineData("Niambi, Esteemed Speaker", "Legendary Creature — Human Cleric",
+        "Flash\nWhen Niambi enters, you may return another target creature you control to its owner's hand. If "
+        + "you do, you gain life equal to that creature's mana value.\n{1}{W}{U}, {T}, Discard a legendary card: "
+        + "Draw two cards.")]
+    [InlineData("Key to the Side-Door", "Artifact",
+        "{2}, {T}: Target creature can't be blocked this turn.\n{1}, {T}, Discard a legendary card with the "
+        + "same name as a legendary permanent you control: Draw two cards.")]
+    // Control: Reverberating Summons discards its whole hand and sacrifices itself
+    // for two cards, a one-shot that was CardAdvantage already (reviewed
+    // 2026-09-10).
+    [InlineData("Reverberating Summons", "Enchantment",
+        "At the beginning of each combat, if you've cast two or more spells this turn, this enchantment "
+        + "becomes a 3/3 Monk creature with haste in addition to its other types until end of turn.\n{1}{R}, "
+        + "Discard your hand, Sacrifice this enchantment: Draw two cards.")]
+    public void Classify_TheNovember3CardAdvantagePass_DiscardOneDrawTwoEachTime_IsCardAdvantageNotFilter(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.False(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // What the 2026-11-03 ruling does NOT reach: two cards paid for two or three
+    // (Pumpkin Bombs, Falkenrath Pit Fighter, which also sacrifices a Vampire) and
+    // a draw of two with one card back (Krovikan Sorcerer, 2026-09-19).
+    [InlineData("Pumpkin Bombs", "Artifact",
+        "{T}, Discard two cards: Draw three cards, then put a fuse counter on this artifact. It deals damage "
+        + "equal to the number of fuse counters on it to target opponent. They gain control of this artifact.")]
+    [InlineData("Falkenrath Pit Fighter", "Creature — Vampire Warrior",
+        "{1}{R}, Discard a card, Sacrifice a Vampire: Draw two cards. Activate only if an opponent lost life "
+        + "this turn.")]
+    [InlineData("Krovikan Sorcerer", "Creature — Human Wizard Sorcerer",
+        "{T}, Discard a nonblack card: Draw a card.\n{T}, Discard a black card: Draw two cards, then discard "
+        + "one of them.")]
+    public void Classify_TheNovember3CardAdvantagePass_APaidDrawThatNetsNothing_IsFilterNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.False(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.True(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Ruled 2026-11-03 ("toglierei Cheat ad entrambe perché la carta torna in
+    // mano"): a creature put onto the battlefield and returned to the hand at the
+    // next end step or at end of combat is not Cheat, wherever it came from.
+    // Named: Anzrag's Rampage, Random Encounter. Reached: Arthur, Marigold Knight
+    // (handed back), Nahiri, the Harbinger, Swift Warkite. From the HAND too
+    // ("Sì, da qualunque zona"): Ilharg, the Raze-Boar and Surprise Deployment.
+    // And the return granted in a quote to the creature put (Aethermage's Touch).
+    [InlineData("Aethermage's Touch", "Instant",
+        "Reveal the top four cards of your library. You may put a creature card from among them onto the "
+        + "battlefield. It gains \"At the beginning of your end step, return this creature to its owner's hand.\" "
+        + "Then put the rest of the cards revealed this way on the bottom of your library in any order.")]
+    [InlineData("Anzrag's Rampage", "Sorcery",
+        "Destroy all artifacts you don't control, then exile the top X cards of your library, where X is the "
+        + "number of artifacts that were put into graveyards from the battlefield this turn. You may put a "
+        + "creature card exiled this way onto the battlefield. It gains haste. Return it to your hand at the "
+        + "beginning of the next end step.")]
+    [InlineData("Random Encounter", "Sorcery",
+        "Shuffle your library, then mill four cards. Put each creature card milled this way onto the "
+        + "battlefield. They gain haste. At the beginning of the next end step, return those creatures to their "
+        + "owner's hand.\nFlashback {6}{R}{R} (You may cast this card from your graveyard for its flashback "
+        + "cost. Then exile it.)")]
+    [InlineData("Arthur, Marigold Knight", "Legendary Creature — Mouse Knight",
+        "Haste\nWhenever Arthur and at least one other creature attack, look at the top six cards of your "
+        + "library. You may put a creature card from among them onto the battlefield tapped and attacking. Put "
+        + "the rest on the bottom of your library in a random order. Return that creature to its owner's hand "
+        + "at end of combat.")]
+    [InlineData("Nahiri, the Harbinger", "Legendary Planeswalker — Nahiri",
+        "+2: You may discard a card. If you do, draw a card.\n−2: Exile target enchantment, tapped artifact, "
+        + "or tapped creature.\n−8: Search your library for an artifact or creature card, put it onto the "
+        + "battlefield, then shuffle. It gains haste. Return it to your hand at the beginning of the next end "
+        + "step.")]
+    [InlineData("Swift Warkite", "Creature — Dragon",
+        "Flying\nWhen this creature enters, you may put a creature card with mana value 3 or less from your "
+        + "hand or graveyard onto the battlefield. That creature gains haste. Return it to your hand at the "
+        + "beginning of the next end step.")]
+    [InlineData("Ilharg, the Raze-Boar", "Legendary Creature — Boar God",
+        "Trample\nWhenever Ilharg attacks, you may put a creature card from your hand onto the battlefield "
+        + "tapped and attacking. Return that creature to your hand at the beginning of the next end step.\nWhen "
+        + "Ilharg dies or is put into exile from the battlefield, you may put it into its owner's library third "
+        + "from the top.")]
+    [InlineData("Surprise Deployment", "Instant",
+        "Cast this spell only during combat.\nYou may put a nonwhite creature card from your hand onto the "
+        + "battlefield. At the beginning of the next end step, return that creature to your hand. (Return it "
+        + "only if it's on the battlefield.)")]
+    public void Classify_TheNovember3CheatPass_ACreatureThatGoesBackToTheHand_IsNotCheat(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
+    }
+
+    [Theory]
+    // Cauldron Dance keeps Cheat through its OTHER sentence: a creature from the
+    // hand put onto the battlefield and SACRIFICED at the end step, not returned.
+    // Metathran Aerostat and Dermoplasm return themselves, not the creature they
+    // put.
+    [InlineData("Cauldron Dance", "Instant",
+        "Cast this spell only during combat.\nReturn target creature card from your graveyard to the "
+        + "battlefield. That creature gains haste. Return it to your hand at the beginning of the next end "
+        + "step.\nYou may put a creature card from your hand onto the battlefield. That creature gains haste. "
+        + "Its controller sacrifices it at the beginning of the next end step.")]
+    [InlineData("Metathran Aerostat", "Creature — Metathran",
+        "Flying\n{X}{U}: You may put a creature card with mana value X from your hand onto the battlefield. If "
+        + "you do, return this creature to its owner's hand.")]
+    [InlineData("Dermoplasm", "Creature — Shapeshifter",
+        "Flying\nMorph {2}{U}{U} (You may cast this card face down as a 2/2 creature for {3}. Turn it face up "
+        + "any time for its morph cost.)\nWhen this creature is turned face up, you may put a creature card with "
+        + "a morph ability from your hand onto the battlefield face up. If you do, return this creature to its "
+        + "owner's hand.")]
+    public void Classify_TheNovember3CheatPass_ACreatureNotGivenBack_IsStillCheat(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
+    }
+
+    [Theory]
+    // Swift Warkite loses Cheat but keeps Reanimate through its graveyard half.
+    [InlineData("Swift Warkite", "Creature — Dragon",
+        "Flying\nWhen this creature enters, you may put a creature card with mana value 3 or less from your "
+        + "hand or graveyard onto the battlefield. That creature gains haste. Return it to your hand at the "
+        + "beginning of the next end step.")]
+    public void Classify_TheNovember3CheatPass_SwiftWarkite_KeepsReanimate(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
+    }
+
+    [Theory]
+    // Ruled 2026-11-03 on Caves of Chaos Adventurer ("Sì, Cheat come Tome"): ONE
+    // card off the top of your library cast or played without paying its mana
+    // cost, uncapped, by an ability that repeats, like Sarevok's Tome (2026-10-13,
+    // carta grossa). A condition that is not a size cap does not keep it out: a
+    // dungeon completed (Caves), an instant or sorcery (Galvanoth), an odd mana
+    // value (Yennett). Planetarium of Wan Shi Tong is reviewed (09-29, no Cheat)
+    // and handed back. Djinn of Wishes is reached by the wording and not listed in
+    // the ruling: its wish counters bound the uses.
+    [InlineData("Caves of Chaos Adventurer", "Creature — Human Barbarian",
+        "Trample\nWhen this creature enters, you take the initiative.\nWhenever this creature attacks, exile "
+        + "the top card of your library. If you've completed a dungeon, you may play that card this turn "
+        + "without paying its mana cost. Otherwise, you may play that card this turn.")]
+    [InlineData("Planetarium of Wan Shi Tong", "Legendary Artifact",
+        "{1}, {T}: Scry 2.\nWhenever you scry or surveil, look at the top card of your library. You may cast "
+        + "that card without paying its mana cost. Do this only once each turn. (Look at the card after you "
+        + "scry or surveil.)")]
+    [InlineData("Galvanoth", "Creature — Beast",
+        "At the beginning of your upkeep, you may look at the top card of your library. You may cast it "
+        + "without paying its mana cost if it's an instant or sorcery spell.")]
+    [InlineData("Intet, the Dreamer", "Legendary Creature — Dragon",
+        "Flying\nWhenever Intet deals combat damage to a player, you may pay {2}{U}. If you do, exile the top "
+        + "card of your library face down. You may look at that card for as long as it remains exiled. You may "
+        + "play that card without paying its mana cost for as long as Intet remains on the battlefield.")]
+    [InlineData("Oracle's Vault", "Artifact",
+        "{2}, {T}: Exile the top card of your library. Until end of turn, you may play that card. Put a brick "
+        + "counter on this artifact.\n{T}: Exile the top card of your library. Until end of turn, you may play "
+        + "that card without paying its mana cost. Activate only if there are three or more brick counters on "
+        + "this artifact.")]
+    [InlineData("Yennett, Cryptic Sovereign", "Legendary Creature — Sphinx",
+        "Flying, vigilance, menace\nWhenever Yennett attacks, reveal the top card of your library. You may "
+        + "cast it without paying its mana cost if its mana value is odd. If you don't cast it, draw a card.")]
+    [InlineData("Temporal Aperture", "Artifact",
+        "{5}, {T}: Shuffle your library, then reveal the top card. Until end of turn, for as long as that "
+        + "card remains on top of your library, play with the top card of your library revealed and you may "
+        + "play that card without paying its mana cost. (If it has X in its mana cost, X is 0.)")]
+    [InlineData("Djinn of Wishes", "Creature — Djinn",
+        "Flying\nThis creature enters with three wish counters on it.\n{2}{U}{U}, Remove a wish counter from "
+        + "this creature: Reveal the top card of your library. You may play that card without paying its mana "
+        + "cost. If you don't, exile it.")]
+    [InlineData("Sarevok's Tome", "Artifact — Book",
+        "When this artifact enters, you take the initiative.\n{T}: Add {C}. If you have the initiative, add "
+        + "{C}{C} instead.\n{3}, {T}: Exile cards from the top of your library until you exile a nonland card. "
+        + "You may cast that card without paying its mana cost. Activate only if you've completed a dungeon.")]
+    public void Classify_TheNovember3CheatPass_OneFreeCardOffTheTopAgainAndAgain_IsCheat(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
+    }
+
+    [Theory]
+    // What the 2026-11-03 reading leaves out: a ONE-SHOT (Hidetsugu and Kairi's
+    // death trigger), a CAP (Rashmi's lesser mana value, Powerbalance's same mana
+    // value, Keldon Flamesage's mana value X or less) and a TRIBAL one
+    // (Descendants' Path, Leaf-Crowned Elder: shares a creature type).
+    [InlineData("Hidetsugu and Kairi", "Legendary Creature — Ogre Demon Dragon",
+        "Flying\nWhen Hidetsugu and Kairi enters, draw three cards, then put two cards from your hand on top "
+        + "of your library in any order.\nWhen Hidetsugu and Kairi dies, exile the top card of your library. "
+        + "Target opponent loses life equal to its mana value. If it's an instant or sorcery card, you may cast "
+        + "it without paying its mana cost.")]
+    [InlineData("Rashmi, Eternities Crafter", "Legendary Creature — Elf Druid",
+        "Whenever you cast your first spell each turn, reveal the top card of your library. You may cast it "
+        + "without paying its mana cost if it's a spell with lesser mana value. If you don't cast it, put it "
+        + "into your hand.")]
+    [InlineData("Powerbalance", "Enchantment",
+        "Whenever an opponent casts a spell, you may reveal the top card of your library. If you do, you may "
+        + "cast that card without paying its mana cost if the two spells have the same mana value.")]
+    [InlineData("Keldon Flamesage", "Creature — Human Shaman",
+        "Enlist\nWhenever this creature attacks, look at the top X cards of your library, where X is this "
+        + "creature's power. You may exile an instant or sorcery card with mana value X or less from among "
+        + "them. Put the rest on the bottom of your library in a random order. You may cast the exiled card "
+        + "without paying its mana cost.")]
+    [InlineData("Descendants' Path", "Enchantment",
+        "At the beginning of your upkeep, reveal the top card of your library. If it's a creature card that "
+        + "shares a creature type with a creature you control, you may cast it without paying its mana cost. If "
+        + "you don't cast it, put it on the bottom of your library.")]
+    [InlineData("Leaf-Crowned Elder", "Creature — Treefolk Shaman",
+        "Kinship — At the beginning of your upkeep, you may look at the top card of your library. If it "
+        + "shares a creature type with this creature, you may reveal it. If you do, you may play that card "
+        + "without paying its mana cost.")]
+    public void Classify_TheNovember3CheatPass_OneOffOrCappedOrTribalFreeCard_IsNotCheat(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
+    }
+
+    [Theory]
+    // The free card is Cheat AND CardAdvantage: Caves of Chaos Adventurer keeps
+    // the tag it was reviewed with (2026-10-23), and Powerbalance (reviewed
+    // 2026-09-23) did not move.
+    [InlineData("Caves of Chaos Adventurer", "Creature — Human Barbarian",
+        "Trample\nWhen this creature enters, you take the initiative.\nWhenever this creature attacks, exile "
+        + "the top card of your library. If you've completed a dungeon, you may play that card this turn "
+        + "without paying its mana cost. Otherwise, you may play that card this turn.")]
+    [InlineData("Powerbalance", "Enchantment",
+        "Whenever an opponent casts a spell, you may reveal the top card of your library. If you do, you may "
+        + "cast that card without paying its mana cost if the two spells have the same mana value.")]
+    public void Classify_TheNovember3CheatPass_TheImpulseRiderStaysCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
     }
 
     private static Card MakeCard(string name, string typeLine, string oracleText, List<string>? keywords = null) =>

@@ -137,6 +137,16 @@ known disagreement: The Last Agni Kai.
 
 Read 2026-10-30: two mana for {2} is mana that costs mana and adds none (Guild Globe, ManaFixing
 alone by hand; Terrarion follows), and "untap target creature or land" is not a land untapped for
-mana (Civic Gardener; 0 of 8 reviewed with "target permanent"). Not read: Morophon, the Boundless's
-{W}{U}{B}{R}{G} less for spells of the chosen type, since a reduction of several symbols is 0 of 1
-reviewed (Avatar Aang); Morophon was handed back for its Buff and can take Ramp by hand.
+mana (Civic Gardener; 0 of 8 reviewed with "target permanent"). Not read then (OVERTURNED
+2026-11-03, below): Morophon, the Boundless's {W}{U}{B}{R}{G} less for spells of the chosen type,
+since a reduction of several symbols was 0 of 1 reviewed (Avatar Aang).
+
+Ruled 2026-11-03 ("Morophon è Ramp"): a cost reduction for OTHER spells written with a RUN of
+coloured symbols is the same discount as one symbol, applying the 2026-10-15 "Ramp tutte" coloured
+reduction and the 2026-10-30 ruling that a CHOSEN type is no tribe. Morophon, the Boundless's
+{W}{U}{B}{R}{G} less for spells of the chosen type, Bard Class's {R}{G} less for legendary spells,
+and Avatar Aang's {W}{U}{B}{R}{G} less for every spell. Avatar Aang is the one reviewed card it
+reaches (09-11, no Ramp) and goes back for review. A self-discount stays out with several symbols too
+("this spell costs {R}{G} less"), and so does a TRIBE's: Edgewalker's "Cleric spells … {W}{B} less"
+and Ragemonger's "Minotaur spells … {B}{R} less" are still nothing, the tribal blank reading the run
+as well.

@@ -704,6 +704,27 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Cheat;
             }
 
+            // A creature that GOES BACK TO THE HAND is not cheated in, ruled
+            // 2026-11-03 ("toglierei Cheat ad entrambe perché la carta torna in
+            // mano", Anzrag's Rampage and Random Encounter), wherever it came
+            // from. Asked by blanking the line that returns it and re-asking the
+            // table, so Cauldron Dance keeps the tag through its OTHER line (a
+            // creature from the hand, sacrificed at the end step). See
+            // PutThenReturnedToHand for the cards.
+            if (result.HasFlag(CardEffect.Cheat) && PutThenReturnedToHand.IsMatch(text)
+                && !CheatPatterns.Any(p => p.IsMatch(PutThenReturnedToHand.Replace(text, " "))))
+            {
+                result &= ~CardEffect.Cheat;
+            }
+
+            // One free card off the top, again and again. Added after both
+            // vetoes above, and tribal-proof by its own shape. See
+            // FreeCardOffTheTopAgainAndAgain.
+            if (FreeCardOffTheTopAgainAndAgain(text))
+            {
+                result |= CardEffect.Cheat;
+            }
+
             // Added after that guard, and asked as a pair. See
             // ExiledCardOntoTheBattlefield for why it cannot live in the table.
             if (ExiledCardOntoTheBattlefield.IsMatch(text) && !BlinksYourOwnCreature.IsMatch(text))
@@ -798,7 +819,7 @@ namespace ScatoloneDownloader.Cube
                         && !SacrificeRefundedByACopy.IsMatch(text))
                     || SpendsItselfOutOfTheGraveyard(text)
                     || SpendsItselfWithoutAColon.IsMatch(text)
-                    || AdditionalCostDiscard.IsMatch(text) || ActivationCostDiscard.IsMatch(text)
+                    || AdditionalCostDiscard.IsMatch(text) || PaysACardPerActivation(text)
                     || DrawPaidForWithACard.IsMatch(text)
                     || DrawsOnceBySacrificingItsName(card, text)
                     || DrawOnceOnly.IsMatch(text)

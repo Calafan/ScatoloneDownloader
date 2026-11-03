@@ -203,3 +203,7 @@ and Sacrifice by hand), which TribalCard keeps from being Cheat. Not widened to 
 Bai, Forest Guardian's "Shrine card" is Filter by hand and Tom Bombadil's "Saga card" untagged.
 Sparkshaper Visionary's granted repeating scry is Filter as proposed, its missing tag a slip
 ("svista", 2026-10-30).
+
+Read 2026-11-03 with CardAdvantage (see there): one card discarded and two drawn by a repeating
+ability is no longer Filter (Niambi, Esteemed Speaker); two paid for two or three, or a draw of two
+with one card put back, stay here (Falkenrath Pit Fighter, Pumpkin Bombs, Krovikan Sorcerer).
