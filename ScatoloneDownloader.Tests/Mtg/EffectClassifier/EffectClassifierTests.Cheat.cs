@@ -582,4 +582,56 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
     }
+
+    [Theory]
+    // The same off the top of an OPPONENT's library, ruled 2026-11-03 on Gríma,
+    // Saruman's Footman ('Gríma +Cheat'), as Bismuth Mindrender pays for it with
+    // life: cards from the top (Gríma), the top two and 'those cards' (Fallen
+    // Shinobi), each opponent's top card and 'one of those cards' (Fire Lord
+    // Ozai), target opponent's top card and the Court's pile (Court of Locthwain).
+    [InlineData("Gríma, Saruman's Footman", "Legendary Creature — Human Advisor",
+        "Gríma can't be blocked.\nWhenever Gríma deals combat damage to a player, that player exiles cards "
+        + "from the top of their library until they exile an instant or sorcery card. You may cast that card "
+        + "without paying its mana cost. Then that player puts the exiled cards that weren't cast this way on "
+        + "the bottom of their library in a random order.")]
+    [InlineData("Fallen Shinobi", "Creature — Zombie Ninja",
+        "Ninjutsu {2}{U}{B} ({2}{U}{B}, Return an unblocked attacker you control to hand: Put this card onto "
+        + "the battlefield from your hand tapped and attacking.)\nWhenever this creature deals combat damage to "
+        + "a player, that player exiles the top two cards of their library. Until end of turn, you may play "
+        + "those cards without paying their mana costs.")]
+    [InlineData("Fire Lord Ozai", "Legendary Creature — Human Noble",
+        "Whenever Fire Lord Ozai attacks, you may sacrifice another creature. If you do, add an amount of {R} "
+        + "equal to the sacrificed creature's power. Until end of combat, you don't lose this mana as steps "
+        + "end.\n{6}: Exile the top card of each opponent's library. Until end of turn, you may play one of "
+        + "those cards without paying its mana cost.")]
+    [InlineData("Court of Locthwain", "Enchantment",
+        "When this enchantment enters, you become the monarch.\nAt the beginning of your upkeep, exile the top "
+        + "card of target opponent's library. You may play that card for as long as it remains exiled, and mana "
+        + "of any type can be spent to cast it. If you're the monarch, until end of turn, you may cast a spell "
+        + "from among cards exiled with this enchantment without paying its mana cost.")]
+    // Proposed by the same reading: the top card of their library and 'cast it'
+    // (Mind's Dilation).
+    [InlineData("Mind's Dilation", "Enchantment",
+        "Whenever an opponent casts their first spell each turn, that player exiles the top card of their "
+        + "library. If it's a nonland card, you may cast it without paying its mana cost.")]
+    public void Classify_TheNovember3CheatPass_AFreeCardOffAnOpponentsTopAgainAndAgain_IsCheat(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
+    }
+
+    [Theory]
+    // Still out: the player who exiled it casts it (Possibility Storm), and a one-
+    // shot (Stolen Goods).
+    [InlineData("Possibility Storm", "Enchantment",
+        "Whenever a player casts a spell from their hand, that player exiles it, then exiles cards from the "
+        + "top of their library until they exile a card that shares a card type with it. That player may cast "
+        + "that card without paying its mana cost. Then they put all cards exiled with this enchantment on the "
+        + "bottom of their library in a random order.")]
+    [InlineData("Stolen Goods", "Sorcery",
+        "Target opponent exiles cards from the top of their library until they exile a nonland card. Until "
+        + "end of turn, you may cast that card without paying its mana cost.")]
+    public void Classify_TheNovember3CheatPass_AFreeCardTheOpponentCastsOrOneOff_IsNotCheat(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
+    }
 }

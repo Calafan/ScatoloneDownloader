@@ -1501,11 +1501,28 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex FreeCastIsCapped = Rx(
             @"\blesser mana value\b|\bthe same mana value\b|\bshares? a creature type\b");
 
+        // The same off the top of an OPPONENT's library, ruled 2026-11-03 on
+        // Gríma, Saruman's Footman ("Gríma +Cheat"): a card cast free is worth at
+        // least the one Bismuth Mindrender pays for with life (Cheat since
+        // 2026-10-25). Reached, reviewed without it and handed back: Strago and
+        // Relm, Fallen Shinobi (the top two, "those cards"), Fire Lord Ozai and
+        // Court of Locthwain (its pile, once you are the monarch); proposed:
+        // Chaos Wand, Dazzling Sphinx, Mind's Dilation, Nicol Bolas,
+        // God-Pharaoh's +2. A one-shot stays out here too (Stolen Goods). Only
+        // "you may": where the player who exiled it casts it (Possibility
+        // Storm, Casey & Raph) nothing comes to you.
+        private static readonly Regex FreeCardOffTheirTop = Rx(
+            @"\bexiles? (?:the top (?:card|\w+ cards)|cards from the top) of (?:their|target opponent's|each opponent's) library\b");
+
+        private static readonly Regex YouCastItFree = Rx(
+            @"\byou may (?:cast|play) (?:it|that card|those cards|one of those cards|a spell from among cards exiled with this \w+) without paying (?:its|their) mana costs?\b");
+
         private static bool FreeCardOffTheTopAgainAndAgain(string text) =>
             Abilities(text).Any(a =>
             {
                 string ability = Parenthetical.Replace(a, " ");
-                return FreeCardOffTheTop.IsMatch(ability) && CastsItFree.IsMatch(ability)
+                return (FreeCardOffTheTop.IsMatch(ability) && CastsItFree.IsMatch(ability)
+                        || FreeCardOffTheirTop.IsMatch(ability) && YouCastItFree.IsMatch(ability))
                     && !FreeCastIsCapped.IsMatch(ability)
                     && AbilityRepeats(ability);
             });

@@ -107,8 +107,9 @@ opponent (Bismuth, Nashi and Valgavoth handed back; Inside Information), off the
 Regrowth), a discard (The Infamous Cruelclaw), energy (Amped Raptor), {1} (Jadzi). Hama, the
 Bloodbender's waterbending {X}, which pays the whole mana value, was left out of the answer. Still
 out: a card casting ITSELF that way (Squee, Worldheart Phoenix), a copy (Blue Mage's Cane), and a
-fixed cap (Primal Prayers' 3, by the 10-16 Bobblehead ruling). The free one-card impulse rider stays
-CardAdvantage, so the same exiled card is Cheat paid with life and CardAdvantage cast free.
+fixed cap (Primal Prayers' 3, by the 10-16 Bobblehead ruling). The free one-card impulse rider stayed
+CardAdvantage, so the same exiled card was Cheat paid with life and CardAdvantage cast free; since
+2026-11-03 that holds only for a ONE-SHOT (Caves of Chaos Adventurer and Gríma, below).
 
 Ruled 2026-10-25 on March of Burgeoning Life ("stesso nome"): a tutor for a copy of a creature
 already on the battlefield is Tutor alone, as Bifurcate and Mask of the Mimic already were.
@@ -153,3 +154,14 @@ value X or less" (Keldon Flamesage, which looks at several); and a TRIBAL one, "
 type" (Descendants' Path, Leaf-Crowned Elder), read by the reading itself because the tribal guard's
 TribalCard does not read Leaf-Crowned Elder's wording. The impulse rider that runs once or under a
 cap is unchanged.
+
+Ruled 2026-11-03 on Gríma, Saruman's Footman ("Gríma +Cheat", asked against Bismuth Mindrender,
+the same trigger paid with life): the Caves ruling holds off the top of an OPPONENT's library too.
+A card exiled from it and cast or played free by YOU, with no cap, by an ability that repeats, is
+this tag, as the life-paid one has been since 2026-10-25; it keeps CardAdvantage and Steal. Gríma
+named and corrected; reached, reviewed without the tag and handed back: Strago and Relm, Fallen
+Shinobi (the top two cards, "those cards"), Fire Lord Ozai ("one of those cards") and Court of
+Locthwain (a spell from its pile once you are the monarch); proposed: Chaos Wand, Dazzling Sphinx,
+Mind's Dilation and Nicol Bolas, God-Pharaoh's +2. Still out: a one-shot (Stolen Goods, Knowledge
+Exploitation), a cap (Rashmi and Ragavan's "less than", Synthesis Pod's exact mana value), and a
+card the player who exiled it casts (Possibility Storm, Casey & Raph).
