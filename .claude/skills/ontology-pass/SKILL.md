@@ -114,7 +114,7 @@ from a file, never through a heredoc (`references/hazards.md`).
 | `stale_handbacks.py` | handed-back cards confirmed without a tag the classifier now proposes (needs a fresh `Dump`) |
 | `blast_radius.py` | what a code change moved: reviewed cards RIGHT/WRONG, unreviewed proposals |
 | `gen_inline.py` | `[InlineData]` lines with the exact oracle text, from `dump.jsonl` |
-| `splice_tests.py` | a new `[Theory]`, or more cases for an existing one, spliced into the test file |
+| `splice_tests.py` | a new `[Theory]`, or more cases for an existing one, spliced into the file that declares the anchor method |
 | `neutralise.py` | which test goes red when each fix is undone alone |
 | `find_cards.py` | name → oracle id, tier, tags |
 | `make_rulings.py` | the ruling and hand-back files from `{"Card": ["+Bounce", "-Wipe"]}` |
@@ -213,7 +213,10 @@ ontology lying to the next reader:
   `references/store.md`
 - **the code** → `EffectClassifier.*`, with the ruling and its count in the comment
 - **the tests** → one `[InlineData]` per ruling, with real oracle text, through
-  `scripts/splice_tests.py`; never invented or retyped text. A test pinning the
+  `scripts/splice_tests.py`; never invented or retyped text. They go in the tag's
+  file, `ScatoloneDownloader.Tests/Mtg/EffectClassifier/EffectClassifierTests.<Tag>.cs`
+  (a theory whose expected flags span several tags stays in
+  `EffectClassifierTests.cs`, beside `MakeCard`). A test pinning the
   ruling that was just overturned is moved, with a comment saying so and when
 - **the ontology** → `docs/ontology/<Tag>.md`, which is the canonical record (a
   new ruling is its own paragraph, led by its verb and date, wrapped at 100

@@ -1,4 +1,4 @@
-"""Write classifier tests from card names — the exact oracle text, spliced into the test file.
+"""Write classifier tests from card names — the exact oracle text, spliced into the test files.
 
 Every ruling lands as [InlineData] cases (the skill's step 6), and doing that
 by hand meant a throwaway splice script per pass and an indentation fixed by
@@ -12,10 +12,17 @@ Usage:
                                --comment "why these cards pin the ruling" --cards "A" "B" ...
     python splice_tests.py add --into METHOD --comment "…" --cards "A" "B" ...
 
+EffectClassifierTests is a partial class, one file per tag
+(Mtg/EffectClassifier/EffectClassifierTests.<Tag>.cs; theories whose expected
+flags span several tags stay in EffectClassifierTests.cs). The cases go into
+the file that declares --after or --into, so a new theory for a tag is placed
+after a method in that tag's file; --test-file pins one file instead.
+
 --comment is prose; it is wrapped into // lines at 80 columns. The oracle text
 comes from WORK_DIR/dump.jsonl (--dump to override), never retyped. The file
 keeps its BOM and CRLF. Refuses when a card is not in the dump or the new
-method name already exists. Run the suite afterwards, then neutralise.
+method name already exists in any of the files. Run the suite afterwards, then
+neutralise.
 """
 import argparse
 import sys
@@ -25,11 +32,28 @@ from pathlib import Path
 from common import CODE_REPO, load_dump
 from gen_inline import inline_data
 
-TEST_FILE = CODE_REPO / "ScatoloneDownloader.Tests" / "Mtg" / "EffectClassifierTests.cs"
+TEST_DIR = CODE_REPO / "ScatoloneDownloader.Tests" / "Mtg" / "EffectClassifier"
 
 
 def comment_lines(prose):
     return "\n".join("    // " + line for line in textwrap.wrap(prose, 76)) + "\n"
+
+
+def read(path):
+    """The file's text with LF line ends, and the line end to write it back with."""
+    # newline="" keeps the CRLFs: read_text would translate them and the file
+    # would be written back LF (references/hazards.md).
+    with open(path, encoding="utf-8-sig", newline="") as f:
+        raw = f.read()
+    return raw.replace("\r\n", "\n"), ("\r\n" if "\r\n" in raw else "\n")
+
+
+def declaring(method, files):
+    """The one file among FILES that declares METHOD; exits on none or several."""
+    hits = [p for p in files if "    public void %s(" % method in read(p)[0]]
+    if len(hits) != 1:
+        sys.exit("%s is declared in %d files: %s" % (method, len(hits), ", ".join(p.name for p in hits)))
+    return hits[0]
 
 
 def main():
@@ -42,8 +66,13 @@ def main():
     ap.add_argument("--comment", required=True)
     ap.add_argument("--cards", nargs="+", required=True)
     ap.add_argument("--dump")
-    ap.add_argument("--test-file", default=str(TEST_FILE))
+    ap.add_argument("--test-file", help="the file to splice into (default: the one declaring --after/--into)")
     args = ap.parse_args()
+
+    if args.mode == "add" and not args.into:
+        sys.exit("add needs --into")
+    if args.mode == "new" and not (args.after and args.method and args.asserts):
+        sys.exit("new needs --after, --method and at least one --assert")
 
     by_name = {c["name"]: c for c in load_dump(args.dump)}
     missing = [n for n in args.cards if n not in by_name]
@@ -51,23 +80,19 @@ def main():
         sys.exit("not in the dump: " + ", ".join(missing))
     cases = "\n".join(inline_data(by_name[n]) for n in args.cards) + "\n"
 
-    path = Path(args.test_file)
-    # newline="" keeps the CRLFs: read_text would translate them and the file
-    # would be written back LF (references/hazards.md).
-    with open(path, encoding="utf-8-sig", newline="") as f:
-        raw = f.read()
-    nl = "\r\n" if "\r\n" in raw else "\n"
-    text = raw.replace("\r\n", "\n")
+    every = sorted(TEST_DIR.glob("EffectClassifierTests*.cs"))
+    anchor_method = args.into if args.mode == "add" else args.after
+    path = declaring(anchor_method, [Path(args.test_file)] if args.test_file else every)
+    text, nl = read(path)
 
     if args.mode == "add":
         anchor = "    public void %s(" % args.into
         i = text.index(anchor)
         text = text[:i] + comment_lines(args.comment) + cases + text[i:]
     else:
-        if not (args.after and args.method and args.asserts):
-            sys.exit("new needs --after, --method and at least one --assert")
-        if "void %s(" % args.method in text:
-            sys.exit("method already exists: " + args.method)
+        clash = [p.name for p in set(every) | {path} if "void %s(" % args.method in read(p)[0]]
+        if clash:
+            sys.exit("method already exists: %s in %s" % (args.method, ", ".join(clash)))
         checks = []
         for a in args.asserts:
             tag, value = a.split("=")

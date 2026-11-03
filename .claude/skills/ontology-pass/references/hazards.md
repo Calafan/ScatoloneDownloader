@@ -96,7 +96,7 @@ diff <(sed -n '9,40p' acc-BEFORE.txt) <(sed -n '9,40p' acc-summary.txt)
 **Cause:** the tests pin rulings, and a ruling can be overturned. That is normal.
 
 **Fix:** update the test and say in its comment that the ruling was overturned and
-when — the test file is a record of decisions, so a silent edit loses the history.
+when — the test files are a record of decisions, so a silent edit loses the history.
 Never weaken an assertion to make a test pass.
 
 ## Case-sensitive patterns written lower-case
