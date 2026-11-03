@@ -111,7 +111,7 @@ from a file, never through a heredoc (`references/hazards.md`).
 | `show.py` | text, hand tags, proposal and review date of cards by name, from `dump.jsonl` |
 | `moved_lines.py` | which unreviewed (or reviewed) cards moved one tag, and the line that moved them |
 | `review_changes.py` | what the human changed in their last sitting, per tag, from `review-log.jsonl` |
-| `stale_handbacks.py` | handed-back cards confirmed without a tag the classifier now proposes (needs a fresh `Dump`) |
+| `stale_handbacks.py` | handed-back cards confirmed without a tag the classifier now proposes, and those still waiting whose frozen tags a later ruling moved (`--tag` after a redefinition; needs a fresh `Dump`) |
 | `blast_radius.py` | what a code change moved: reviewed cards RIGHT/WRONG, unreviewed proposals |
 | `gen_inline.py` | `[InlineData]` lines with the exact oracle text, from `dump.jsonl` |
 | `splice_tests.py` | a new `[Theory]`, or more cases for an existing one, spliced into the file that declares the anchor method |
@@ -234,6 +234,12 @@ The hand tags move in two different ways, and the difference is the human's:
   other way, is applied and **handed back** (`op: "unreview"`), so they confirm
   it in the tagger. Asked for on 2026-09-25 ("togli anche reviewed così le
   riguardo direttamente io"), and it applies to every realignment since.
+
+A card ALREADY handed back is frozen and no ruling reaches it by itself: after a
+ruling that moves a tag, `probes.py Dump` then `stale_handbacks.py --tag X`, and
+put every waiting card it lists into the same rulings file. On 2026-11-03 the
+Cheat redefinition skipped four cards the Gríma ruling had handed back that
+morning, and the tagger showed them the overturned Cheat (Fire Lord Ozai).
 
 Score the realigned cards BEFORE handing them back: once unreviewed they drop
 out of `Score`, so a tag the ruling put on by hand that the code does not
