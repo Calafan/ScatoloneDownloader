@@ -272,4 +272,16 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Steal));
     }
+
+    [Theory]
+    // 'As long as you control enchanted creature' is a condition on the Aura's own
+    // creature, not a theft, read 2026-11-03 (Mishra's Domination, Buff alone by
+    // hand).
+    [InlineData("Mishra's Domination", "Enchantment — Aura",
+        "Enchant creature\nAs long as you control enchanted creature, it gets +2/+2. Otherwise, it can't "
+        + "block.")]
+    public void Classify_TheNovember3Readings_AsLongAsYouControlEnchantedCreature_IsNotSteal(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Steal));
+    }
 }

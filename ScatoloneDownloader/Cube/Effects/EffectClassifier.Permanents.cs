@@ -254,7 +254,10 @@ namespace ScatoloneDownloader.Cube
         [
             // …but not of a SPELL, which is Redirect's (Invert Polarity).
             Rx(@"gains? control of(?! (?:target|that) spell)"),
-            Rx(@"you control (enchanted|target)"),
+            // "AS LONG AS you control enchanted creature" is a condition on the
+            // Aura's own creature, not a theft (Mishra's Domination, Buff alone
+            // by hand, read 2026-11-03; the one card in the store worded so).
+            Rx(@"(?<!as long as )you control (enchanted|target)"),
             Rx(@"untap target creature[\w ]*gain control"),
             // An exchange is a theft you paid for. Five cards, and the only way
             // any of them was ever going to be found.

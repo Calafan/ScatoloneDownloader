@@ -2376,4 +2376,25 @@ public sealed partial class EffectClassifierTests
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
     }
+
+    [Theory]
+    // A window opened by a one-shot, 'whenever X this turn, draw a card' or 'until
+    // end of turn, whenever X, draw a card', draws on every X, ruled 2026-11-03
+    // ('CA, si ripete'): Warhost's Frenzy named, Captain Howler reached and handed
+    // back, Benefactor's Draught unreviewed.
+    [InlineData("Warhost's Frenzy", "Instant",
+        "Kicker {B} (You may pay an additional {B} as you cast this spell.)\nCreatures you control get +2/+0 "
+        + "until end of turn. If this spell was kicked, whenever a creature you control dies this turn, draw a "
+        + "card.")]
+    [InlineData("Captain Howler, Sea Scourge", "Legendary Creature — Shark Pirate",
+        "Ward—{2}, Pay 2 life.\nWhenever you discard one or more cards, target creature gets +2/+0 until end "
+        + "of turn for each card discarded this way. Whenever that creature deals combat damage to a player "
+        + "this turn, you draw a card.")]
+    [InlineData("Benefactor's Draught", "Instant",
+        "Untap all creatures. Until end of turn, whenever a creature an opponent controls blocks, draw a "
+        + "card.\nDraw a card.")]
+    public void Classify_TheNovember3Window_WheneverThisTurnDraw_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
 }

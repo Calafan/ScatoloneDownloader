@@ -92,3 +92,8 @@ Removal's, not a board (Highcliff Felidar, Removal alone by hand).
 Read 2026-10-30: the card exiled TOGETHER WITH each creature (Fraying Line's "exile this artifact
 and each creature without a rope counter on it", Gideon, the Oathsworn's −9; 2 of 2). Defiant
 Vanguard's "destroy it and all creatures it blocked this turn" is its own block, not a board.
+
+Read 2026-11-03: a SECOND amount, "and n damage to each … creature", whoever controls the creatures
+(Seismic Wave's "1 damage to each nonartifact creature target opponent controls", The Fall of
+Kroog's "1 damage to each creature they control"), and "X PLUS 2 damage to each creature" (Let the
+Galaxy Burn): 6 of 6 reviewed without "deals" in front were Wipe by hand.

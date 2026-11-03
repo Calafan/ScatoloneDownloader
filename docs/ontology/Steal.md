@@ -51,3 +51,6 @@ unreviewed cards lost the Regrowth with it (Diluvian Primordial, Whispersteel Da
 Shaman's Trance). Read the same day: a permanent of theirs exiled and then cast by you (Abstruse
 Appropriation), which a CARD exiled from a graveyard is not (Savvy Trader); and a card cast "from
 among cards IN your graveyard" is yours (Raul, Trouble Shooter).
+
+Read 2026-11-03: "AS LONG AS you control enchanted creature" is a condition on the Aura's own
+creature, not a theft (Mishra's Domination, Buff alone by hand; the one card worded so).

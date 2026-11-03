@@ -439,4 +439,25 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Wipe));
     }
+
+    [Theory]
+    // A second amount 'and n damage to each ... creature', whoever controls the
+    // creatures, and 'X plus 2 damage to each creature' are Wipe, read 2026-11-03:
+    // Seismic Wave, The Fall of Kroog and Let the Galaxy Burn, Wipe by hand, were
+    // missed.
+    [InlineData("Seismic Wave", "Instant",
+        "Seismic Wave deals 2 damage to any target and 1 damage to each nonartifact creature target opponent "
+        + "controls.")]
+    [InlineData("The Fall of Kroog", "Sorcery",
+        "Choose target opponent. Destroy target land that player controls. The Fall of Kroog deals 3 damage "
+        + "to that player and 1 damage to each creature they control.")]
+    [InlineData("Let the Galaxy Burn", "Sorcery",
+        "Cascade (When you cast this spell, exile cards from the top of your library until you exile a "
+        + "nonland card that costs less. You may cast it without paying its mana cost. Put the exiled cards on "
+        + "the bottom in a random order.)\nLet the Galaxy Burn deals X plus 2 damage to each creature that "
+        + "didn't enter this turn.")]
+    public void Classify_TheNovember3Readings_ASecondDamageToEachCreature_IsWipe(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Wipe));
+    }
 }

@@ -124,14 +124,23 @@ namespace ScatoloneDownloader.Cube
                     Rx(@"(?<!target |attacking |blocking )\bcreatures\b(?:(?! you control\b| with the same name\b)[^.\n]){0,60}? get -[\dX]+/-[1-9X]"),
                     Rx(@"\beach(?: [\w-]{1,15}){0,3} creature\b(?:(?! you control\b)[^.\n]){0,60}? gets (?:twice )?-[\dX]+/-[1-9X]"),
                     Rx(@"-1/-1 counters? on each(?: [\w-]{1,15}){0,3} creature\b(?! you control)"),
-                    Rx(@"deals? (?:[\dX]+ |that much )?damage (?:equal to [^.\n]{1,60}? )?to each(?: [\w/-]{1,20}){0,4} creature\b(?!s? you control)"),
+                    // "X PLUS 2 damage" is an amount too (Let the Galaxy Burn, Wipe
+                    // by hand, read 2026-11-03).
+                    Rx(@"deals? (?:[\dX]+(?: plus [\dX]+)? |that much )?damage (?:equal to [^.\n]{1,60}? )?to each(?: [\w/-]{1,20}){0,4} creature\b(?!s? you control)"),
                     Rx(@"damage to [^.\n]{1,60}\band each creature (?:that player|they)\b[^.\n]{0,40}controls?"
                         + @"|damage divided [^.\n]{0,30}among all creatures"
                         // …and the same side swept after a kill with a count of
                         // its own: Fear, Fire, Foes!'s "X damage to target
                         // creature AND 1 DAMAGE TO EACH OTHER CREATURE WITH THE
                         // SAME CONTROLLER", tagged Wipe by the human on 2026-09-29.
-                        + @"|\band [\dX]+ damage to each other creature (?:with the same controller|that player controls)"),
+                        // Widened 2026-11-03 to any second amount "AND n DAMAGE TO
+                        // EACH … creature", whoever controls it: Seismic Wave's
+                        // "2 damage to any target and 1 damage to each nonartifact
+                        // creature target opponent controls", The Fall of Kroog's
+                        // "3 damage to that player and 1 damage to each creature
+                        // they control" (6 of 6 reviewed without "deals" in front
+                        // are Wipe by hand). Creatures you control stay out.
+                        + @"|\band (?:an additional )?[\dX]+ damage to each(?: [\w/-]{1,20}){0,4} creature\b(?!s? you control)"),
                     // "+1/+1" may stand between the creature and the hand (Wave
                     // Goodbye's "each creature without a +1/+1 counter on it",
                     // 2026-10-14).
@@ -848,7 +857,8 @@ namespace ScatoloneDownloader.Cube
                     // Widening the window to 260 instead was measured the same
                     // day: 3 right and 3 wrong (Captain Howler, Charitable Levy,
                     // Finneas), because past 160 the draw is often somebody
-                    // else's.
+                    // else's. (Captain Howler is this tag since 2026-11-03, through
+                    // the window rule below.)
                     Rx(@"^(?:whenever|at the beginning of)[^\n]*(?:\botherwise, you draw a card|villainous choice — you draw a card)",
                         RegexOptions.Multiline),
                     // The same trigger with ONE SENTENCE in front of it. Rowen
@@ -859,6 +869,18 @@ namespace ScatoloneDownloader.Cube
                     // 11, so this allows exactly one short sentence and no more.
                     Rx(@"^[^\n]{0,70}\. (?:whenever|at the beginning of)[^\n]{0,160}draws? (?:a|one) card",
                         RegexOptions.Multiline),
+                    // A WINDOW opened by a one-shot, "whenever X THIS TURN, draw a
+                    // card" or "UNTIL END OF TURN (or your next turn), whenever X,
+                    // draw a card", draws on every X and is this tag, ruled
+                    // 2026-11-03 ("CA, si ripete", the same reading as "Si ripete =
+                    // CA"): Warhost's Frenzy named, Captain Howler reached and
+                    // handed back (3 of 5 reviewed were tagged before, Maeve and
+                    // Summon: Leviathan through other rules). The Clone
+                    // Saga stays out on the chosen card name, the trigger
+                    // difficulty of 2026-09-22 (ADrawYouCannotCount). Read wherever
+                    // it sits on the line, behind a kicker clause or a pump.
+                    Rx(@"[.,] whenever\b[^.\n]{0,120}\bthis turn, (?:you )?draws? (?:a|one) card"
+                        + @"|\buntil (?:end of turn|your next turn), whenever\b[^.\n]{0,120}, (?:you )?draws? (?:a|one) card"),
                     // Three more shapes of the same trigger, each tagged by hand
                     // on the one reviewed card that says it (2026-10-14): an
                     // ENTERS trigger joined to a repeating one, "When this

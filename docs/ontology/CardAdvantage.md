@@ -471,3 +471,11 @@ Muzzio, Kinnan, Nick Fury, Agent of S.H.I.E.L.D. and Winota unreviewed. Arthur's
 back to the hand at end of combat, and Arthur kept its hand tags. Not a land (Freestrider Lookout,
 Ramp), not after a sacrifice (Industrial Advancement), and not Guild Feud's, which the opponent is
 offered first (unreviewed, not read, left Filter).
+
+Ruled 2026-11-03 ("CA, si ripete"): a WINDOW opened by a one-shot draws on every event in it and is
+this tag, as an ability that repeats is: "whenever X THIS TURN, draw a card" and "UNTIL END OF TURN
+(or your next turn), whenever X, draw a card", wherever they sit on the line (behind a kicker
+clause, a pump, a chapter's first sentence). Warhost's Frenzy named, Captain Howler, Sea Scourge
+reached and handed back (Buff alone by hand since 09-10); Benefactor's Draught, Kang Dynasty and
+Subira, Tulzidi Caravanner unreviewed. 3 of 5 reviewed were tagged before. The Clone Saga stays out
+on the chosen card name, the trigger difficulty of 2026-09-22.
