@@ -6,14 +6,17 @@ verify_tree. Messages come with -F (a file); end them with the attribution
 lines the session asks for. Nothing is pushed.
 
     python store_pass.py rulings FILE.json -F MSG   the human's rulings, on HEAD and then on the tree
+    python store_pass.py readme -F MSG              rewrite the README ontology table, commit it if it changed
     python store_pass.py classify                   Release build, protected classify, split — no commit
     python store_pass.py commit -F MSG              commit the split, restore the tree, verify
     python store_pass.py handback FILE.json -F MSG  unreview on HEAD and tree, commit, add to state/handed-back.json
-    python store_pass.py readme -F MSG              rewrite the README ontology table, commit it if it changed
 
-A pass runs them in this order: rulings -> (code commit) -> classify -> commit
--> handback -> readme. Between `classify` and `commit`, read the moves it prints
-(store_moves.py --names for the cards) and write the message from them.
+A pass runs them in this order: rulings -> (code commit) -> readme -> classify
+-> commit -> handback. `classify` refuses while the README table lags the
+tooltips: six rows had fallen behind unnoticed by 2026-11-03, because the
+readme step came last and was skipped. Between `classify` and `commit`, read
+the moves it prints (store_moves.py --names for the cards) and write the
+message from them.
 """
 import argparse
 import shutil
@@ -47,6 +50,12 @@ def copy_store(src, dst):
     Path(dst).mkdir(parents=True, exist_ok=True)
     for name in FILES:
         shutil.copyfile(Path(src) / name, Path(dst) / name)
+
+
+def readme_lags():
+    """True when the README ontology table differs from the tooltips in the code tree."""
+    return subprocess.run([sys.executable, str(HERE / "readme_ontology.py"), "--check"],
+                          capture_output=True).returncode != 0
 
 
 def reviewed_at_in_diff():
@@ -102,6 +111,9 @@ def main():
         py("verify_tree.py")
 
     elif args.step == "classify":
+        if readme_lags():
+            py("readme_ontology.py", "--check", check=False)
+            sys.exit("the README table lags the tooltips: `store_pass.py readme -F MSG` first, then classify")
         # The Release build is what the tagger and this classify run; an old one
         # silently reverts every proposal (the stale-release-build memory).
         run("dotnet", "build", CODE_REPO / "ScatoloneDownloader", "-c", "Release", "--nologo", "-v", "q")
@@ -130,6 +142,9 @@ def main():
         py("verify_tree.py")
 
     elif args.step == "readme":
+        # The commit takes the whole file, so an edit of the human's own would go with it.
+        if run("git", "-C", STORE_REPO, "status", "--short", "README.md").strip():
+            sys.exit("README.md has uncommitted changes that are not this step's — ask the human first")
         py("readme_ontology.py", "--write")
         if run("git", "-C", STORE_REPO, "status", "--short", "README.md").strip():
             run("git", "-C", STORE_REPO, "add", "README.md")

@@ -220,7 +220,8 @@ ontology lying to the next reader:
   columns; the `CardEffect` member keeps only the pointer to the file), and the
   `EffectGlossary` tooltip (40–340 characters, enforced by a test)
 - **the README** of ScatoloneQuintet, whose ontology table copies the tooltips
-  → `scripts/readme_ontology.py --write` whenever a tooltip changed
+  → `scripts/store_pass.py readme` right after the code commit; `classify`
+  refuses while the table lags the tooltips
 
 The hand tags move in two different ways, and the difference is the human's:
 
@@ -274,8 +275,8 @@ failures). Break a regex by prefixing `(?!)`, never by deleting a line. A case
 that turns NOTHING red is either an untested fix (add the test) or dead code —
 remove the dead alternative after checking with `measure.py` that no card moves
 without it, and say in the comment that it was tried; this happened four times
-on 2026-09-27/29. Probes deleted, `readme_ontology.py --check` clean, then the
-commits described in `references/store.md`. Every number and every card named in
+on 2026-09-27/29. Probes deleted, then the commits described in
+`references/store.md`, the README table first. Every number and every card named in
 a commit message is measured: `store_moves.py --commit SHA --names` after the
 commit checks the prose. Report the before/after numbers, what was ruled, and
 what measurement rejected.

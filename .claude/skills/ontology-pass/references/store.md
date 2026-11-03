@@ -85,9 +85,9 @@ ManaFixing Pacify LandDestruction Mill Regrowth Redirect Cheat
 ## The commits of a pass
 
 A pass produces up to four store commits, kept apart because each is a different
-kind of claim — *the human changed their mind*, *the classifier reads more
-wordings now*, *these cards go back for review*, *the README follows the
-tooltips*. Mixing them makes each unreviewable. `scripts/store_pass.py` runs each
+kind of claim — *the human changed their mind*, *the README follows the
+tooltips*, *the classifier reads more wordings now*, *these cards go back for
+review*. Mixing them makes each unreviewable. `scripts/store_pass.py` runs each
 step, backs up and restores the human's tree around it, and verifies:
 
 ```powershell
@@ -99,19 +99,26 @@ python scripts\store_pass.py rulings state\work\rulings-NAME.json -F msg-rulings
 
 # (commit the code in the code repo here: the classify below runs it)
 
-# 2. the classifier's proposals: Release build, protected classify, split — then read the moves
+# 2. the README table, when a tooltip changed (no commit when it did not)
+python scripts\store_pass.py readme -F msg-readme.txt
+
+# 3. the classifier's proposals: Release build, protected classify, split — then read the moves
 python scripts\store_pass.py classify
 python scripts\store_moves.py --names        # write the message from this
 python scripts\store_pass.py commit -F msg-classify.txt
 
-# 3. the reached cards handed back (AFTER the classify, or it overwrites them)
+# 4. the reached cards handed back (AFTER the classify, or it overwrites them)
 python scripts\store_pass.py handback state\work\unreview-NAME.json -F msg-handback.txt
-
-# 4. the README table, when a tooltip changed
-python scripts\store_pass.py readme -F msg-readme.txt
 ```
 
 What each step checks, and refuses on:
+
+- `classify` stops before the build while `readme_ontology.py --check` fails:
+  the README follows the code that classifies, never a pass behind it. The
+  readme step used to come last and be skipped; six rows had fallen behind by
+  2026-11-03.
+- `readme` stops when README.md already has uncommitted changes, which would be
+  the human's and would go into the table commit with it.
 
 - `rulings` and `handback` stop unless `apply_ruling --mode head` reports
   `non-effects fields: 0`; `rulings` also stops if a `reviewedAt` moved. The
