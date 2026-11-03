@@ -139,6 +139,10 @@ entry.
 ## Data-quality note
 
 Five entries were once keyed by NAME rather than oracle id, from an XMP import
-onto textless "(Theme color: {X})" cards. Four were re-keyed; **Spider-Verse** is
-still wrong and was deliberately left for the human. If a card's stored `name` does
-not match what Scryfall returns for its `oracleId`, that is the same bug.
+onto textless "(Theme color: {X})" cards. All five are fixed now. The last two
+went in 094e135 (2026-10-20), with the 26 library files keyed on a token or a front
+card: Spider-Verse was re-keyed, and Inferno lost a duplicate under a wrong key
+(its right entry had been added beside it by 6991da9 on 2026-09-20, so for a month
+the store held both). Both checked against Scryfall on 2026-11-03: oracle_id agrees
+with the store key. If a card's stored `name` does not match what Scryfall returns
+for its `oracleId`, that is the same bug — and so are two entries with one name.
