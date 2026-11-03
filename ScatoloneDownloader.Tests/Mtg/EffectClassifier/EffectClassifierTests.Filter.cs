@@ -645,18 +645,17 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
-    // C5, 2026-10-16: exile that many from the top, play one free.
+    // C5, 2026-10-16: exile that many from the top, play one free. It was Cheat
+    // too until 2026-11-03, when one card off the top cast once left Cheat
+    // ("Mai Cheat"); see Classify_TheNovember3CheatPass_OneCardOffTheTopOnce_IsNotCheat.
     [InlineData("Vault 112: Sadistic Simulation", "Enchantment — Saga",
         "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI, II — Tap "
         + "up to one target creature and put a stun counter on it. You get {E}{E} (two energy counters).\nIII — "
         + "Pay any amount of {E}. If you paid one or more {E} this way, shuffle your library, then exile that "
         + "many cards from the top. You may play one of those cards without paying its mana cost.")]
-    public void Classify_TheOctober16Pass_ExileThatManyAndPlayOne_IsFilterAndCheat(string name, string typeLine, string oracle)
+    public void Classify_TheOctober16Pass_ExileThatManyAndPlayOne_IsFilter(string name, string typeLine, string oracle)
     {
-        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
-
-        Assert.True(result.HasFlag(CardEffect.Filter));
-        Assert.True(result.HasFlag(CardEffect.Cheat));
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
     }
 
     [Theory]

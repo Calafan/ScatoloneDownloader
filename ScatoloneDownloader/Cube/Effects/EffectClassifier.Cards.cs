@@ -1527,6 +1527,34 @@ namespace ScatoloneDownloader.Cube
                     && AbilityRepeats(ability);
             });
 
+        // ONE card off the top of a library cast by an ability that runs ONCE is
+        // no Cheat, free or paid otherwise, ruled 2026-11-03 ("Mai Cheat"), asked
+        // with Amped Raptor's energy and Xander's Pact's life against the four
+        // reviewed free ones, none of them Cheat (Portent of Calamity, Hidetsugu
+        // and Kairi, Crabomination, Ensnared by the Mara): it is the impulse
+        // rider, CardAdvantage, as the Caves ruling already left a one-shot out.
+        // A PILE stays Cheat, asked the same day ("Pile restano Cheat"): Etali
+        // and Dance with Calamity ("carta grossa", 2026-10-13), and Xander's
+        // Pact, which casts spells from among one card per opponent. Amped
+        // Raptor named; Vault 112: Sadistic Simulation's chapter III reached
+        // (Filter and Cheat by the 2026-10-16 ruling, Filter alone now). Asked
+        // of the ABILITY. Blanking it and re-asking the table, as
+        // PutThenReturnedToHand does, was tried and kept no card: no card in the
+        // store has this shape beside another Cheat line (Invasion of Alara's
+        // "one of those two cards" never matches, and its back face keeps the
+        // tag).
+        private static readonly Regex CardsOffTheTop = Rx(@"\bcards from the top\b");
+
+        private static readonly Regex CastsOneOfThem = Rx(
+            @"\byou may (?:cast|play) (?:that card|one of those cards)\b[^.\n]{0,80}?(?:without paying|rather than paying) its mana cost\b");
+
+        private static bool CastsOneCardOffTheTopOnce(string text) =>
+            Abilities(text).Any(a =>
+            {
+                string ability = Parenthetical.Replace(a, " ");
+                return CardsOffTheTop.IsMatch(ability) && CastsOneOfThem.IsMatch(ability) && !AbilityRepeats(ability);
+            });
+
         // HIDEAWAY is Filter on every reviewed card that has it, 5 of 5, and
         // that includes Wiretapping, which also draws a card every turn: the
         // card it hides is the one it means to play, so the look is not a

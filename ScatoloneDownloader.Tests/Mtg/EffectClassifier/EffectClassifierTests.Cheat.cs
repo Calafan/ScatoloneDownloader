@@ -323,8 +323,9 @@ public sealed partial class EffectClassifierTests
     // Ruled 2026-10-25 on Xander's Pact ("Cheat a tutti"): another card cast by
     // paying something other than its mana cost is Cheat, wherever it is cast
     // from. Life (Bismuth Mindrender, Nashi and Valgavoth handed back; Gwenom; Eye
-    // of Duskmantle out of the graveyard), a discard (The Infamous Cruelclaw),
-    // energy (Amped Raptor).
+    // of Duskmantle out of the graveyard), a discard (The Infamous Cruelclaw).
+    // Energy (Amped Raptor) moved out on 2026-11-03: one card off the top cast
+    // once, see Classify_TheNovember3CheatPass_OneCardOffTheTopOnce_IsNotCheat.
     [InlineData("Xander's Pact", "Sorcery",
         "Casualty 2 (As you cast this spell, you may sacrifice a creature with power 2 or greater. When you "
         + "do, copy this spell.)\nEach opponent exiles the top card of their library. You may cast spells from "
@@ -356,10 +357,6 @@ public sealed partial class EffectClassifierTests
         "Menace\nWhenever The Infamous Cruelclaw deals combat damage to a player, exile cards from the top of "
         + "your library until you exile a nonland card. You may cast that card by discarding a card rather than "
         + "paying its mana cost.")]
-    [InlineData("Amped Raptor", "Creature — Dinosaur",
-        "First strike\nWhen this creature enters, you get {E}{E} (two energy counters). Then if you cast it "
-        + "from your hand, exile cards from the top of your library until you exile a nonland card. You may "
-        + "cast that card by paying an amount of {E} equal to its mana value rather than paying its mana cost.")]
     // Unreviewed, and in the same answer: Jadzi's {1}, the one card that says
     // 'cast it by'.
     [InlineData("Jadzi, Oracle of Arcavios // Journey to the Oracle", "Legendary Creature — Human Wizard // Sorcery",
@@ -633,5 +630,46 @@ public sealed partial class EffectClassifierTests
     public void Classify_TheNovember3CheatPass_AFreeCardTheOpponentCastsOrOneOff_IsNotCheat(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
+    }
+
+    [Theory]
+    // ONE card off the top of a library cast by an ability that runs once is no
+    // Cheat, free or paid otherwise, ruled 2026-11-03 ('Mai Cheat'): Amped
+    // Raptor's energy (named), Vault 112's chapter III (reached; Filter stays).
+    [InlineData("Amped Raptor", "Creature — Dinosaur",
+        "First strike\nWhen this creature enters, you get {E}{E} (two energy counters). Then if you cast it "
+        + "from your hand, exile cards from the top of your library until you exile a nonland card. You may "
+        + "cast that card by paying an amount of {E} equal to its mana value rather than paying its mana cost.")]
+    [InlineData("Vault 112: Sadistic Simulation", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI, II — Tap "
+        + "up to one target creature and put a stun counter on it. You get {E}{E} (two energy counters).\nIII — "
+        + "Pay any amount of {E}. If you paid one or more {E} this way, shuffle your library, then exile that "
+        + "many cards from the top. You may play one of those cards without paying its mana cost.")]
+    public void Classify_TheNovember3CheatPass_OneCardOffTheTopOnce_IsNotCheat(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
+    }
+
+    [Theory]
+    // A PILE cast once stays Cheat ('Pile restano Cheat', 2026-11-03): Xander's
+    // Pact, spells from among one card per opponent, as Etali; Invasion of
+    // Alara's front picks one of TWO cards ("one of those two cards" is not the
+    // single-card reading), and its back face puts an artifact from the hand.
+    [InlineData("Xander's Pact", "Sorcery",
+        "Casualty 2 (As you cast this spell, you may sacrifice a creature with power 2 or greater. When you "
+        + "do, copy this spell.)\nEach opponent exiles the top card of their library. You may cast spells from "
+        + "among those cards this turn. If you cast a spell this way, pay life equal to that spell's mana value "
+        + "rather than pay its mana cost.")]
+    [InlineData("Invasion of Alara // Awaken the Maelstrom", "Battle — Siege // Sorcery",
+        "When this Siege enters, exile cards from the top of your library until you exile two nonland cards "
+        + "with mana value 4 or less. You may cast one of those two cards without paying its mana cost. Put one "
+        + "of them into your hand. Then put the other cards exiled this way on the bottom of your library in a "
+        + "random order.\nAwaken the Maelstrom is all colors.\nTarget player draws two cards. You may put an "
+        + "artifact card from your hand onto the battlefield. Create a token that's a copy of a permanent you "
+        + "control. Distribute three +1/+1 counters among one, two, or three creatures you control. Destroy "
+        + "target permanent an opponent controls.")]
+    public void Classify_TheNovember3CheatPass_APileOnceOrAnotherAbility_StaysCheat(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
     }
 }

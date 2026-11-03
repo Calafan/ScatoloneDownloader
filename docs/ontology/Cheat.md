@@ -104,12 +104,14 @@ otherwise widened past the hand. Asked with Bismuth Mindrender (the same day as 
 Nashi, Moon Sage's Scion against it, then the edge one card at a time: life for cards exiled from an
 opponent (Bismuth, Nashi and Valgavoth handed back; Inside Information), off the top of the library
 (Gwenom, Remorseless; Bolas's Citadel) or out of the graveyard (Eye of Duskmantle, which keeps
-Regrowth), a discard (The Infamous Cruelclaw), energy (Amped Raptor), {1} (Jadzi). Hama, the
-Bloodbender's waterbending {X}, which pays the whole mana value, was left out of the answer. Still
-out: a card casting ITSELF that way (Squee, Worldheart Phoenix), a copy (Blue Mage's Cane), and a
-fixed cap (Primal Prayers' 3, by the 10-16 Bobblehead ruling). The free one-card impulse rider stayed
-CardAdvantage, so the same exiled card was Cheat paid with life and CardAdvantage cast free; since
-2026-11-03 that holds only for a ONE-SHOT (Caves of Chaos Adventurer and Gríma, below).
+Regrowth), a discard (The Infamous Cruelclaw), energy (Amped Raptor, out since 2026-11-03), {1}
+(Jadzi). Hama, the Bloodbender's waterbending {X}, which pays the whole mana value, was left out of
+the answer. Still out: a card casting ITSELF that way (Squee, Worldheart Phoenix), a copy (Blue
+Mage's Cane), and a fixed cap (Primal Prayers' 3, by the 10-16 Bobblehead ruling). The free one-card
+impulse rider stayed CardAdvantage, so the same exiled card was Cheat paid with life and
+CardAdvantage cast free; since 2026-11-03 the payment no longer decides: one card cast by an ability
+that repeats is this tag (Caves of Chaos Adventurer and Gríma), one cast once is not (Amped Raptor),
+all three below.
 
 Ruled 2026-10-25 on March of Burgeoning Life ("stesso nome"): a tutor for a copy of a creature
 already on the battlefield is Tutor alone, as Bifurcate and Mask of the Mimic already were.
@@ -165,3 +167,14 @@ Locthwain (a spell from its pile once you are the monarch); proposed: Chaos Wand
 Mind's Dilation and Nicol Bolas, God-Pharaoh's +2. Still out: a one-shot (Stolen Goods, Knowledge
 Exploitation), a cap (Rashmi and Ragavan's "less than", Synthesis Pod's exact mana value), and a
 card the player who exiled it casts (Possibility Storm, Casey & Raph).
+
+Ruled 2026-11-03 on the one-shot side ("Mai Cheat", then "Pile restano Cheat"): ONE card off the
+top of a library cast or played by an ability that runs ONCE is not this tag, cast free or paid
+otherwise; the 10-25 cost paid otherwise no longer reaches it. Named: Amped Raptor (energy, reviewed
+Cheat). Reached: Vault 112: Sadistic Simulation's chapter III (exile that many, play one free;
+Filter and Cheat by the 10-16 pass, Filter alone now, handed back). A PILE cast once stays, the
+10-13 "carta grossa": Etali (one card per player), Xander's Pact (one per opponent), Dance with
+Calamity, Inside Information, Invasion of Alara (one of TWO cards). The other one-shot single casts
+in the store (Stolen Goods, Ensnared by the Mara, Solstice Revelations, Unpredictable Cyclone,
+Treasure Keeper) had no Cheat to lose. Asked of the ability, not the card: blanking it and asking
+the table again, as for the returned creature above, was tried and kept no card.

@@ -329,10 +329,10 @@ is a card out of THEIR graveyard (3 to 3: Saruman of Many Colors), while the one
 stays Steal alone (Azula, Cunning Usurper; Crabomination); a sacrifice that buys TWO modes, one of
 them a draw, is this tag (Caesar, Legion's Emperor) and a choose-one is not (Gorbag); a graveyard
 cast for ONE turn is not this tag but Regrowth ("Una volta = no CA": Urabrask // The Great Work);
-exiling that many and playing one is Filter and Cheat, not this tag (Vault 112: Sadistic
-Simulation); and a graveyard ability granted to, or a cast limited to, a creature TYPE is not this
-tag ("Tribale = niente CA": Solemn Doomguide, Zul Ashur, Deeproot Historian, Rivaz of the Claw),
-unless a card type stands beside the type (Arcade Gannon).
+exiling that many and playing one is Filter, not this tag (Vault 112: Sadistic Simulation; Cheat
+too until 2026-11-03, see Cheat); and a graveyard ability granted to, or a cast limited to, a
+creature TYPE is not this tag ("Tribale = niente CA": Solemn Doomguide, Zul Ashur, Deeproot
+Historian, Rivaz of the Claw), unless a card type stands beside the type (Arcade Gannon).
 
 Read the same day — not this tag: a draw when the card ITSELF becomes the target of an opponent's
 spell (Altanak, Cactarantula: 0 of 2, where "a creature you control" is 2 of 2, Surrak and Elrond)

@@ -717,7 +717,15 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Cheat;
             }
 
-            // One free card off the top, again and again. Added after both
+            // ONE card off the top cast by an ability that runs once is no
+            // Cheat, ruled 2026-11-03 ("Mai Cheat"); a pile stays ("Pile restano
+            // Cheat"). See CastsOneOfThem.
+            if (result.HasFlag(CardEffect.Cheat) && CastsOneCardOffTheTopOnce(text))
+            {
+                result &= ~CardEffect.Cheat;
+            }
+
+            // One free card off the top, again and again. Added after the
             // vetoes above, and tribal-proof by its own shape. See
             // FreeCardOffTheTopAgainAndAgain.
             if (FreeCardOffTheTopAgainAndAgain(text))
