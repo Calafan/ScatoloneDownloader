@@ -238,3 +238,19 @@ that sitting could not be, because nothing else records it.
 copy of the tree, which only `store_pass.py` passes, and `store_pass` restores the
 tree in a `finally`. To preview a ruling, read the ruling file. Take a `Dump`
 right after the human's sitting: it is the only other record of their tags.
+
+## A second commit took the human's tree
+
+**Symptom:** a "classify" commit in the store moves a card that is not one of the
+classifier's proposals — a handed-back card, or one of the human's reviewed entries.
+
+**Cause:** `store_pass.py commit` stages the whole tree. After it commits the split
+it puts the human's tree back, so a SECOND run commits that tree. On 2026-11-03 the
+first run's output was cut short, the command was run again, and it committed
+Morophon's handed-back +Ramp (9bea3e5, undone with a reset on the human's word).
+
+**Fix:** `commit` now refuses unless the tree is a split (`not_a_split`): every entry
+differing from HEAD unreviewed, not handed back, in the same tier file, with only
+`effects` moved, and at least one of them. The tree is left as it is on a refusal,
+because on a second run it is the human's. Send long outputs to a file and read the
+file, rather than re-running a step whose output was cut.

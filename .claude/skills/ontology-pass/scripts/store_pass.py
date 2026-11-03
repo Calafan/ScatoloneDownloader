@@ -8,7 +8,8 @@ lines the session asks for. Nothing is pushed.
     python store_pass.py rulings FILE.json -F MSG   the human's rulings, on HEAD and then on the tree
     python store_pass.py readme -F MSG              rewrite the README ontology table, commit it if it changed
     python store_pass.py classify                   Release build, protected classify, split — no commit
-    python store_pass.py commit -F MSG              commit the split, restore the tree, verify
+    python store_pass.py commit -F MSG              commit the split, restore the tree, verify;
+                                                    refuses unless the tree IS a split (not_a_split)
     python store_pass.py handback FILE.json -F MSG  unreview on HEAD and tree, commit, add to state/handed-back.json
 
 A pass runs them in this order: rulings -> (code commit) -> readme -> classify
@@ -24,7 +25,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from common import CODE_REPO, FILES, HANDED_BACK, STORE, STORE_REPO, WORK_DIR, utf8_stdout
+from common import CODE_REPO, FILES, HANDED_BACK, STORE, STORE_REPO, WORK_DIR, load_store, read_json, utf8_stdout
 
 HERE = Path(__file__).resolve().parent
 PASS_DIR = WORK_DIR / "store-pass"
@@ -61,6 +62,35 @@ def readme_lags():
 def reviewed_at_in_diff():
     diff = run("git", "-C", STORE_REPO, "diff", "-U0", "--", "metadata/", check=False)
     return sum(1 for line in diff.splitlines() if line[:1] in "+-" and '"reviewedAt"' in line)
+
+
+def not_a_split():
+    """Why the tree is not a classify split, one line per entry; empty when it is one.
+
+    `commit` takes the whole tree, so the tree must be HEAD plus the classifier's
+    proposals and nothing else: unreviewed entries, outside the handed-back set,
+    in the same tier file, with only `effects` moved. On 2026-11-03 `commit` ran
+    twice (its output had been cut short): the second run found the human's tree
+    that the first had put back and committed a handed-back card with it
+    (Morophon, 9bea3e5, undone with a reset)."""
+    head, tree = load_store("HEAD"), load_store()
+    handed = {c["oracleId"] for c in read_json(HANDED_BACK, [])}
+    changed = [oid for oid in head.keys() | tree.keys() if head.get(oid) != tree.get(oid)]
+    if not changed:
+        return ["the tree is HEAD: nothing to commit (was `commit` already run?)"]
+    problems = []
+    for oid in sorted(changed):
+        h, t = head.get(oid), tree.get(oid)
+        name = (t or h)[1].get("name", oid)
+        if h is None or t is None or h[0] != t[0]:
+            problems.append("%s: added, removed or moved between tier files" % name)
+        elif oid in handed:
+            problems.append("%s: handed back for review" % name)
+        elif t[1].get("reviewedAt"):
+            problems.append("%s: reviewed" % name)
+        elif {k for k in h[1].keys() | t[1].keys() if h[1].get(k) != t[1].get(k)} - {"effects"}:
+            problems.append("%s: a field other than effects moved" % name)
+    return problems
 
 
 def commit(message_file):
@@ -130,6 +160,17 @@ def main():
         print("\nnext: read the moves (store_moves.py --names), write the message, `store_pass.py commit -F MSG`")
 
     elif args.step == "commit":
+        # Refused BEFORE anything is staged, and the tree is left as it is: if
+        # this is a second run, it is the human's tree, and post-classify may be
+        # older than what they have tagged since.
+        problems = not_a_split()
+        if problems:
+            for line in problems[:20]:
+                print("  " + line)
+            if len(problems) > 20:
+                print("  … and %d more" % (len(problems) - 20))
+            sys.exit("the tree is not a classify split — nothing committed. `classify` first; "
+                     "the human's tree from the last classify is in " + str(PASS_DIR / "post-classify"))
         if reviewed_at_in_diff():
             sys.exit("reviewedAt moved — nothing committed")
         commit(args.message)

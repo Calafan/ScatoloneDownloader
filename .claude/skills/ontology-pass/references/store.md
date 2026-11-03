@@ -130,6 +130,11 @@ What each step checks, and refuses on:
   `store_pass` passes (see hazards.md, 'A "dry run" that rewrote the human's tree').
 - `classify` prints `reviewedAt lines in the staged diff: 0` — it must be 0 —
   and the per-tag moves; `commit` refuses when it is not 0.
+- `commit` refuses, before staging anything, unless the tree IS a split: every
+  entry that differs from HEAD is unreviewed, outside the handed-back set, in
+  the same tier file, with only `effects` moved — and at least one differs. A
+  second `commit` finds the human's tree and stops on it (hazards.md, "A second
+  commit took the human's tree").
 - Every step ends in `verify_tree.py`: `still uncommitted: N reviewed | NOT
   reviewed: 0 (outside the handed-back set: 0)`, and after a classify
   `handed-back entries identical to the backup: all`.
