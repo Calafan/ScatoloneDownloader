@@ -269,4 +269,24 @@ public sealed partial class EffectClassifierTests
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
     }
+
+    [Theory]
+    // Read 2026-11-05: Savior of Ollenbock exiles a creature from the battlefield
+    // or a creature card from a graveyard and puts the exiled cards onto the
+    // battlefield under their owners' control when it leaves (Removal and
+    // Reanimate by hand). The graveyard half is a return from the dead even though
+    // it is handed to the owner (Reanimate.md, 2026-10-13, is about a card taken
+    // off the battlefield).
+    [InlineData("Savior of Ollenbock", "Creature — Human Soldier",
+        "Training (Whenever this creature attacks with another creature with greater power, put a +1/+1 "
+        + "counter on this creature.)\nWhenever this creature trains, exile up to one other target creature from "
+        + "the battlefield or creature card from a graveyard.\nWhen this creature leaves the battlefield, put "
+        + "the exiled cards onto the battlefield under their owners' control.")]
+    public void Classify_TheNovember5Readings_AGraveyardCardExiledThenReturned_IsReanimate(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Reanimate));
+        Assert.True(result.HasFlag(CardEffect.Removal));
+    }
 }

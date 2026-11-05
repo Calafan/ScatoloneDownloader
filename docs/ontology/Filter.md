@@ -219,3 +219,11 @@ is CardAdvantage (see there), and the exclusivity keeps the card out of this tag
 Master-at-Arms, Doors of Durin, reached and handed back). So is ONE card chosen by an ability that
 REPEATS, ruled later the same day ("Si ripete = CA"): Owlbear Cub, Web of Life and Destiny, Armored
 Skyhunter, Kinnan and Mole Module left this tag; a single look, reveal or mill stays here.
+
+Read 2026-11-05: a spell whose own sentence is the connive with X targets, Change of Plans' "Each
+of X target creatures you control connive" (Filter and Protection by hand, 1 of 1), is not the
+rider of 2026-09-27 that Lethal Scheme's "each creature that convoked this spell connives" is
+(Removal alone by hand): X targets each connive is X loots and not a selection made once in
+passing, and once the card earns Protection the rider rule would take Filter off it. Written for
+that form only; Trickster's Stratagem's "up to one target creature you control connives" stays a
+rider.

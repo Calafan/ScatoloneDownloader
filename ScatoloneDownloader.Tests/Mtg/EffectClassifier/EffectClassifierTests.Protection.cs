@@ -768,4 +768,93 @@ public sealed partial class EffectClassifierTests
         Assert.True(result.HasFlag(CardEffect.Protection));
         Assert.False(result.HasFlag(CardEffect.Buff));
     }
+
+    [Theory]
+    // Read 2026-11-05: an instant that exiles a target permanent and brings it
+    // straight back is a save when you can hold it up, whoever's it is (Planar
+    // Incision, Protection by hand, with Twining Twins and Parting Gust already
+    // tagged), the anybody's-blink of Protection.md 2026-09-28 without the wait.
+    // Eldrazi Confluence's blink mode is the reviewed card this reading reaches
+    // against its hand tag.
+    [InlineData("Planar Incision", "Instant",
+        "Exile target artifact or creature, then return it to the battlefield under its owner's control with "
+        + "a +1/+1 counter on it.")]
+    [InlineData("Twining Twins // Swift Spiral", "Creature — Faerie Wizard // Instant — Adventure",
+        "Flying, vigilance, ward {1}\nExile target nontoken creature. Return it to the battlefield under its "
+        + "owner's control at the beginning of the next end step.")]
+    [InlineData("Parting Gust", "Instant",
+        "Gift a tapped Fish (You may promise an opponent a gift as you cast this spell. If you do, they "
+        + "create a tapped 1/1 blue Fish creature token before its other effects.)\nExile target nontoken "
+        + "creature. If the gift wasn't promised, return that card to the battlefield under its owner's control "
+        + "with a +1/+1 counter on it at the beginning of the next end step.")]
+    public void Classify_TheNovember5InstantBlinkOfAnyonesPermanent_IsProtection(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // Read 2026-11-05: target creatures phased out by choice are a save, whether
+    // the targets are listed (Spectral Adversary's artifacts, creatures, and/or
+    // enchantments) or the phasing is an option of the next sentence (Change of
+    // Plans: connive, then you may have any number of them phase out).
+    [InlineData("Spectral Adversary", "Creature — Spirit",
+        "Flash\nFlying\nWhen this creature enters, you may pay {1}{U} any number of times. When you pay this "
+        + "cost one or more times, put that many +1/+1 counters on this creature, then up to that many other "
+        + "target artifacts, creatures, and/or enchantments phase out.")]
+    [InlineData("Change of Plans", "Instant",
+        "Each of X target creatures you control connive. You may have any number of them phase out. (To have "
+        + "a creature connive, draw a card, then discard a card. If you discarded a nonland card, put a +1/+1 "
+        + "counter on that creature. Treat phased-out permanents and anything attached to them as though they "
+        + "don't exist until their controller's next turn.)")]
+    public void Classify_TheNovember5PhasingOutTargetCreatures_IsProtection(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // Read 2026-11-05: Semester's End exiles any number of target creatures and/or
+    // planeswalkers YOU control and returns each at the end step, a blink of your
+    // own and no answer to anything (Protection alone by hand).
+    [InlineData("Semester's End", "Instant",
+        "Exile any number of target creatures and/or planeswalkers you control. At the beginning of the next "
+        + "end step, return each of them to the battlefield under its owner's control. Each of them enters with "
+        + "an additional +1/+1 counter on it if it's a creature and an additional loyalty counter on it if it's "
+        + "a planeswalker.")]
+    public void Classify_TheNovember5ProtectionPass_ExileYoursAndBringThemBack_IsProtectionNotRemoval(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Protection));
+        Assert.False(result.HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
+    // Read 2026-11-05: Guardian Naga's "during your turn, prevent all damage that
+    // would be dealt to this creature" shields the creature itself, not a save
+    // for anyone else, and a target on the Adventure face (Disenchant by hand)
+    // is no reason to read it as one.
+    [InlineData("Guardian Naga // Banishing Coils", "Creature — Snake // Instant — Adventure",
+        "Vigilance\nDuring your turn, prevent all damage that would be dealt to this creature.\nExile target "
+        + "artifact or enchantment. (Then exile this card. You may cast the creature later from exile.)")]
+    public void Classify_TheNovember5ProtectionPass_AnEffectThatSpendsItselfOnTheCreature_IsNotProtection(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // RULED 2026-11-05 (Solo Buff): a toughness-only bonus is Buff and not
+    // Protection, flash or not. Paladin's Shield is named (flash, attaches on
+    // entering, +0/+2); Great Defender's instant +0/+X is beside it.
+    [InlineData("Paladin's Shield", "Artifact — Equipment",
+        "Flash\nWhen this Equipment enters, attach it to target creature you control.\nEquipped creature gets "
+        + "+0/+2.\nEquip {3} ({3}: Attach to target creature you control. Equip only as a sorcery.)")]
+    [InlineData("Great Defender", "Instant",
+        "Target creature gets +0/+X until end of turn, where X is its mana value.")]
+    public void Classify_TheNovember5Ruling_AToughnessOnlyBonus_IsBuffNotProtection(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Buff));
+        Assert.False(result.HasFlag(CardEffect.Protection));
+    }
 }

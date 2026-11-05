@@ -144,3 +144,33 @@ Read for this tag only, as the plural is: nobody puts a counter on a creature to
 game, so it is yours. The "until" and "can't phase in" guards are the same, so The Moment's "It
 phases out until The Moment leaves" and The Pandorica stay out. The counter is the shield's rider
 and not a Buff of its own, because Protection is already on the card.
+
+Read 2026-11-05: target creatures phased out by CHOICE when they are one of several types, Spectral
+Adversary's "up to that many other target artifacts, creatures, and/or enchantments phase out"
+(Pacify and Protection by hand, with March of Swirling Mist), and when the phasing is an option of
+the sentence after the targets, Change of Plans' "Each of X target creatures you control connive.
+You may have any number of them phase out" (Filter and Protection by hand, 1 of 1).
+
+Read 2026-11-05: "exile any number of target creatures AND/OR planeswalkers you control" with a
+return at the end step, Semester's End (Protection alone by hand): your own blink, which the
+"you control" in the type list now shows (no Removal, no answer to anybody).
+
+Read 2026-11-05: a creature or artifact exiled and BROUGHT STRAIGHT BACK, whoever's it is, at
+instant speed ("Exile target artifact or creature, then return it to the battlefield under its
+owner's control with a +1/+1 counter on it", Planar Incision, Protection alone by hand), the save of
+Twining Twins and Parting Gust without the end-step wait: the blink of anybody's of 2026-09-28.
+1 reviewed card of this wording is tagged and 1 is not: Eldrazi Confluence's blink is one mode of
+three on a card tagged Tokens and Removal on 2026-09-12, and is reached by the same reading
+(+Protection, handed back). Proposed with it, unreviewed:
+Eldrazi Displacer, Flicker of Fate (which loses its Removal, 2026-10-14: a blink is no answer) and
+Spaceshift; Flicker, Hallowed Respite and The Mighty Thor, Jane Foster stay out, being sorceries or
+loyalty abilities.
+
+Read 2026-11-05: a self-shield that ENDS its sentence, Guardian Naga's "During your turn, prevent
+all damage that would be dealt to this creature." (Disenchant alone by hand): 0 of 5 reviewed cards
+written so carry the tag. Glittering Lion and Glittering Lynx, unreviewed with Protection in the
+store, lose that old proposal with it.
+
+RULED 2026-11-05 ("Solo Buff"): a toughness-only bonus is Buff and not this tag, flash or not.
+Paladin's Shield (flash, attaches to a creature you control as it enters, +0/+2) is named: its hand
+tags become Buff alone, as Great Defender's instant +0/+X already is.

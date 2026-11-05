@@ -140,3 +140,27 @@ corrected by name), the breadth rule of 2026-09-15; a creature shuffled away sta
 
 Read 2026-10-30: -1/-1 counters put on a creature CHOSEN in the sentence before, here by die roll
 (Attempted Murder, 1 of 1).
+
+RULED 2026-11-05: Minimus Containment is named Removal and RemovePermanent, not Pacify. An Aura for
+any nonland permanent that makes it a Treasure artifact with "{T}, Sacrifice this artifact: Add one
+mana of any color" and loses all its other abilities is the breadth of Vindicate, not a lock on
+one creature. Sugar Coat's Aura for a creature or Food stays Removal and Pacify ("Aura = +Pacify",
+Pacify.md), In Too Deep's for a creature, planeswalker or Clue stays Removal. The colour of the
+Treasure need not be said ("a Treasure artifact", not "a colorless Treasure").
+
+Read 2026-11-05: an edict by PILES, "each opponent separates the creatures they control into two
+piles. … you choose one … sacrifices the creatures in their chosen pile" (Make an Example); the
+STATISTIC edict that exiles "a creature with the greatest power among creatures target opponent
+controls" (Fall of the Impostor); loyalty counters taken off a planeswalker an opponent controls
+("remove twice X loyalty counters", Confront the Past, whose other mode is Reanimate); and a target
+that may be a creature on the battlefield OR a creature card in a graveyard, "exile up to one other
+target creature from the battlefield or creature card from a graveyard" (Savior of Ollenbock): the
+graveyard half answers nobody and is cut off before the veto of 2026-09-28 is asked, so the
+battlefield half still counts.
+
+Read 2026-11-05, the other way: "exile any number of target creatures and/or planeswalkers you
+control" shows its "you control" now that the type list may close with and/or and cross a slash
+(Semester's End, Protection alone by hand), and ", then return it to the battlefield" after a longer
+type list is a blink again (Flicker of Fate, the 2026-10-14 reading, was proposed Removal until
+then; Vizier of Deferment, which exiles a creature that attacked or blocked and returns it at the
+end step, goes the same way). Both are unreviewed.

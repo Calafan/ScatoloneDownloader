@@ -913,4 +913,21 @@ public sealed partial class EffectClassifierTests
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
     }
+
+    [Theory]
+    // Read 2026-11-05: a spell whose own sentence is the connive, with X targets
+    // (Change of Plans, Filter and Protection by hand), is X loots and not the
+    // single selection made in passing of the 2026-09-27 rider ruling.
+    [InlineData("Change of Plans", "Instant",
+        "Each of X target creatures you control connive. You may have any number of them phase out. (To have "
+        + "a creature connive, draw a card, then discard a card. If you discarded a nonland card, put a +1/+1 "
+        + "counter on that creature. Treat phased-out permanents and anything attached to them as though they "
+        + "don't exist until their controller's next turn.)")]
+    public void Classify_TheNovember5Readings_ATargetedConniveOfTheSpell_IsFilter(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Filter));
+        Assert.True(result.HasFlag(CardEffect.Protection));
+    }
 }

@@ -58,4 +58,16 @@ public sealed partial class EffectClassifierTests
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.RemovePermanent));
     }
+
+    [Theory]
+    // Read 2026-11-05: you choose a nonland permanent among each opponent's and a
+    // die picks which one is destroyed (Chaos Defiler, RemovePermanent by hand).
+    // Not the plain edict where they choose.
+    [InlineData("Chaos Defiler", "Artifact Creature — Demon Construct",
+        "Trample\nBattle Cannon — When this creature enters or dies, for each opponent, choose a nonland "
+        + "permanent that player controls. Destroy one of them chosen at random.")]
+    public void Classify_TheNovember5RemovalPass_ARandomOneOfTheirChosen_IsRemovePermanent(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.RemovePermanent));
+    }
 }

@@ -22,7 +22,10 @@ namespace ScatoloneDownloader.Cube
             foreach (Match match in AimedAtACreature.Matches(text))
             {
                 sawOne = true;
-                if (!AnswersNobody.IsMatch(match.Value))
+                // A target that may be a creature on the battlefield OR a card in a
+                // graveyard (Savior of Ollenbock) can still be theirs: only the
+                // graveyard half answers nobody, so it is cut off before asking.
+                if (!AnswersNobody.IsMatch(BattlefieldOrGraveyard.Replace(match.Value, "creature from the battlefield")))
                 {
                     return false;
                 }
@@ -341,12 +344,13 @@ namespace ScatoloneDownloader.Cube
 
         /// <summary>Whether the ability a line opens happens only on your own
         /// turn: the card's own ETB without flash, a land of yours entering, a
-        /// Saga chapter, or any line of a sorcery (Piercing Rays' forecast is
+        /// Saga chapter, an ability limited to the card's own attack (a boast,
+        /// ActivatedOnlyOnItsOwnAttack), or any line of a sorcery (Piercing Rays' forecast is
         /// activated in your upkeep alone, and it is the one sorcery whose tap
         /// is not the spell's own text).</summary>
         private static bool AtSorcerySpeed(string opener, bool sorcery, bool flash, string name)
         {
-            if (sorcery || LandOrChapterTrigger.IsMatch(opener))
+            if (sorcery || LandOrChapterTrigger.IsMatch(opener) || ActivatedOnlyOnItsOwnAttack.IsMatch(opener))
             {
                 return true;
             }

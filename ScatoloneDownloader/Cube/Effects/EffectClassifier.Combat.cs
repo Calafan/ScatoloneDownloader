@@ -252,8 +252,17 @@ namespace ScatoloneDownloader.Cube
         // Read 2026-10-27: the return may follow "If you do," (Astral Drift,
         // Protection alone by hand), and the owner's permission may be "For as
         // long as that card remains exiled" (Prowl, Stoic Strategist, Bounce).
+        // Read 2026-11-05: the tail crosses a "/" and reaches 40 characters, so
+        // "exile any number of target creatures AND/OR planeswalkers YOU
+        // CONTROL" (Semester's End, a blink of your own that saves, Protection
+        // alone by hand) shows its "you control" to AnswersNobody (the clause
+        // was cut at "you co"), under the 2026-09-28 rule that your own
+        // creature is no kill; and ", then return it" after a longer type list
+        // (Flicker of Fate's "creature or enchantment") is no longer cut at
+        // "return i": a blink of any creature is out of this tag, 3 of 3 on
+        // 2026-10-14.
         private static readonly Regex AimedAtACreature = Rx(
-            @"(?:destroy|exile) (?:[\w -]{0,20})?target[\w ,'-]{0,45}(?<!non)creature[\w ,'-]{0,30}"
+            @"(?:destroy|exile) (?:[\w -]{0,20})?target[\w ,'-]{0,45}(?<!non)creature[\w ,'/-]{0,40}"
             + @"(?:\. (?:if you do, )?(?:return (?:it|that card|them|those cards)\b"
             + @"|(?:for each of those cards|for as long as that card remains exiled), its owner may play it\b))?");
 
@@ -326,6 +335,14 @@ namespace ScatoloneDownloader.Cube
         // It comes back: a blink is not an answer.
         private static readonly Regex ReturnsItToPlay = Rx(
             @"return (?:it|them|that card|those cards)[\w ,']{0,40}to the battlefield");
+
+        // "Exile up to one other target creature from the battlefield or creature
+        // card from a graveyard" (Savior of Ollenbock, Removal + Reanimate by hand,
+        // read 2026-11-05): the target is either one, so the creature half can be
+        // an opponent's and the card is Removal. Asked by OnlyAnswersNobody and
+        // by the KillsAcrossCommas guard in Classify.
+        private static readonly Regex BattlefieldOrGraveyard = Rx(
+            @"\bcreature from the battlefield or creature cards? from (?:a|any|target player's|an opponent's) graveyard");
 
         // A creature card in a graveyard is already dead — that is graveyard hate.
         private static readonly Regex TargetsAGraveyard = Rx(
@@ -906,7 +923,16 @@ namespace ScatoloneDownloader.Cube
             // Protection: 1 of 1 reviewed, no unreviewed card. Not the plural
             // YOU CONTROL (Gallifrey Falls // No More, Guardian of Faith), a
             // save of your own that PhasesOthersOut reads for Protection alone.
-            + @"|\btarget creatures phase out(?![^\n]{0,20}until)");
+            // …the same plural when creatures are one of several types, read
+            // 2026-11-05: Spectral Adversary's "up to that many other target
+            // artifacts, creatures, and/or enchantments phase out", Pacify and
+            // Protection by hand (2 of 2 with March of Swirling Mist; the
+            // others written with a plural list — Clever Concealment, Gallifrey
+            // Falls, Vronos — name "you control" and are the save of your own).
+            // It replaces the bare "target creatures phase out" alternative that
+            // stood here, which it reads whole (a pattern that matches the old
+            // one's every wording would only contradict it if kept beside it).
+            + @"|\btarget (?:\w+s, )*creatures(?:,? (?:and/or|or|and) \w+)? phase out(?![^\n]{0,20}until)");
 
         // NB: no bare "regenerate" — "can't be regenerated" (Wrath) would false-positive.
         private static readonly Regex[] ProtectionPatterns =
@@ -953,8 +979,14 @@ namespace ScatoloneDownloader.Cube
         // the line: Fleeting Flight's "put a +1/+1 counter on target creature …
         // prevent all combat damage that would be dealt to it" shields the
         // target, and is tagged. Found 2026-09-28.
+        // The self-shield may END the sentence, read 2026-11-05: Guardian Naga's
+        // "During your turn, prevent all damage that would be dealt to this
+        // creature." (the trailing space of the old pattern never met a full
+        // stop; Disenchant alone by hand — 0 of 5 reviewed cards written so
+        // carry Protection). Glittering Lion and Glittering Lynx, unreviewed
+        // with Protection in the store, lose the old proposal with it.
         private static readonly Regex PreventForItself = Rx(
-            @"dealt to (?:this creature|this permanent|enchanted creature) |(?<!\btarget\b[^\n]{0,160})dealt to it ");
+            @"dealt to (?:this creature|this permanent|enchanted creature)\b|(?<!\btarget\b[^\n]{0,160})dealt to it ");
 
         // ---- Protection, the families ruled 2026-09-28 --------------------
         // Asked of the card the way prevention is — added after the self gate,
@@ -1000,8 +1032,21 @@ namespace ScatoloneDownloader.Cube
         // Bounce, since it answers nobody (see NotAnAnswerToHand).
         // The comma before "you control" joined 2026-10-14 for a list of types
         // (Scrollshift's "artifact, creature, or enchantment you control").
+        // The type list may close with "and/or" (Semester's End's "any number
+        // of target creatures and/or planeswalkers you control", Protection
+        // alone by hand, read 2026-11-05).
         private static readonly Regex BlinksToSave = Rx(
-            @"exile (?:up to \w+ |x |any number of |another )?(?:other )?target [\w ,]{0,30}?(?:creatures?|permanents?)(?:,? [\w ]{0,20})? you (?:control|own)\b[\s\S]{0,120}?\breturn"
+            @"exile (?:up to \w+ |x |any number of |another )?(?:other )?target [\w ,]{0,30}?(?:creatures?|permanents?)(?:,? [\w /]{0,20})? you (?:control|own)\b[\s\S]{0,120}?\breturn"
+            // …and ANYBODY'S, returned on the spot (Planar Incision's "Exile
+            // target artifact or creature, then return it to the battlefield
+            // under its owner's control", read 2026-11-05): the same save as
+            // the until-the-next-end-step blink of anybody's creature above
+            // (Twining Twins, Parting Gust), at the same instant speed that
+            // HeldUp asks of it. 1 of 1 reviewed tagged; Eldrazi Confluence's
+            // mode (an instant tagged Tokens and Removal on 2026-09-12, before
+            // the blink ruling of 09-28) is the one reviewed card it moves
+            // against its hand tag.
+            + @"|exile (?:up to \w+ |another )?(?:other )?target [\w ]{0,40}?(?:creature|artifact|enchantment|permanent), then return (?:it|that card) to the battlefield"
             // The return may open the first row of a d20 TABLE on the next line
             // (Lae'zel's Acrobatics' "Exile all nontoken creatures you control,
             // then roll a d20. / 1—9 | Return those cards", 2026-10-24, 1 of 1
@@ -1224,9 +1269,15 @@ namespace ScatoloneDownloader.Cube
         // The "any number of (other) target" form was taken out again on
         // 2026-10-24: PhasesOthersOut reads every plural target phased out
         // since, and dumping the store with and without it moved no card.
+        // …and the phasing may be an option of the sentence after the targets,
+        // read 2026-11-05: Change of Plans' "Each of X target creatures you
+        // control connive. You may have any number of THEM phase out" (Filter
+        // and Protection by hand, 1 of 1 in the store), a phase-out by choice
+        // of your own like Clever Concealment's.
         private static readonly Regex PhasesYourPermanentsOut = Rx(
             @"\ball (?:nonland )?(?:permanents|creatures) you control phase out"
-            + @"|\bpermanents you control\b[^.\n]{0,80}\. those permanents phase out");
+            + @"|\bpermanents you control\b[^.\n]{0,80}\. those permanents phase out"
+            + @"|\btarget creatures you control\b[^.\n]{0,40}\. you may have (?:any number of |up to \w+ of )?them phase out");
 
         // BACKUP hands the abilities printed below it to the creature it lands
         // on, so a backup creature with flash and hexproof shields somebody else
@@ -1359,7 +1410,12 @@ namespace ScatoloneDownloader.Cube
         // a trick of yours (Cycle of Life, untagged; 0 of 8 reviewed say it).
         private static readonly Regex NeutralisesWithoutKilling = Rx(
             @"(?<!creature you (?:cast|control)[^.\n]{0,60})base power (?:and toughness )?0"
-            + @"|is an? [\w ]{0,25}with base power and toughness [0-2]/"
+            // The name may be long: Witness Protection's "is a green and white
+            // Citizen creature with base power and toughness 1/1" runs 33
+            // characters before "with" (read 2026-11-05 under the 2026-09-22
+            // small NAMED body: 8 of 8 reviewed cards written so are tagged,
+            // the seven that fitted 25 characters and Witness Protection).
+            + @"|is an? [\w ]{0,45}with base power and toughness [0-2]/"
             // Three more read 2026-10-16, one reviewed card each, tagged and
             // never proposed: an Aura's "OTHERWISE, it has base power and
             // toughness 1/1" (Burden of Proof, a pump only for your own
@@ -1663,6 +1719,17 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex LandOrChapterTrigger = Rx(
             @"^(?:[\w' ]+ — )?whenever (?:a|another|one or more) (?:[\w ]{1,20} )?lands? (?:you control )?enters?"
             + @"|^[ivx]+(?:, [ivx]+)* —");
+
+        // An ability that can be activated only while the card is ATTACKING is
+        // the attack trigger's sibling, read 2026-11-05 under Pacify.md's ruling
+        // that tapping on your own attack trigger is a combat trick and not a
+        // lock: a BOAST ("activate only if this creature attacked this turn",
+        // Goldmaw Champion's "Tap target creature", untagged by hand, the one
+        // boast tap in the store) and "Activate only if <this creature / its
+        // name> is attacking" (Gerrard Capashen's "{3}{W}: Tap target creature",
+        // unreviewed, so its stored Pacify is an old proposal and not a hand tag).
+        private static readonly Regex ActivatedOnlyOnItsOwnAttack = Rx(
+            @"^boast — |\bactivate (?:this ability )?only if [^.\n]{0,40}\bis attacking\b");
 
         private static readonly Regex OwnEntering = Rx(@"^(?:[\w' ]+ — )?when(?:ever)? (?<subject>[^,\n]{1,40}?) enters\b");
 
@@ -2289,9 +2356,19 @@ namespace ScatoloneDownloader.Cube
         // enchanted creature isn't legendary, it doesn't untap", Wall of Stolen
         // Identity's "tap the copied creature and it doesn't untap"), both
         // tagged; read 2026-10-27.
+        // Nor is the pronoun the sentence after "Tap THAT CREATURE.", read
+        // 2026-11-05 on Scion of Stygia's d20 table row ("10—20 | Tap that
+        // creature. It doesn't untap during its controller's next untap
+        // step", Pacify by hand): the victim was named by the card's own
+        // earlier choice, as "Tap target creature. It doesn't untap" names it
+        // (Chill of the Grave, whose bare tap in front of the pronoun already
+        // kept the tag). The one reviewed card written so. The combat-damage
+        // trigger "tap that creature AND it doesn't untap" (Kashi-Tribe
+        // Warriors, unreviewed; Frostwalk Bastion, Tokens alone by hand) is
+        // NOT read here.
         private static readonly Regex SelfUntapClause = Rx(
             @"th(?:is|e) (?:artifact|creature|permanent|enchantment|land|vehicle)[\w ]{0,25}does(?:n'?t| not) untap"
-            + @"|(?<!(?:enchanted|copied) creature[^.\n]{0,40})\bit does(?:n'?t| not) untap"
+            + @"|(?<!(?:enchanted|copied) creature[^.\n]{0,40})(?<!\btap that creature\. )\bit does(?:n'?t| not) untap"
             + @"|does(?:n'?t| not) untap during your (?:next )?untap step"
             + @"|(?m:^)equipped creature (?:gets [+-][\dX]+/[+-][\dX]+ and )?does(?:n'?t| not) untap"
             + @"|under your control[\s\S]*\nenchanted creature (?:gets [+-][\dX]+/[+-][\dX]+ and )?does(?:n'?t| not) untap");

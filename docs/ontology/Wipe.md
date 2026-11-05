@@ -97,3 +97,8 @@ Read 2026-11-03: a SECOND amount, "and n damage to each … creature", whoever c
 (Seismic Wave's "1 damage to each nonartifact creature target opponent controls", The Fall of
 Kroog's "1 damage to each creature they control"), and "X PLUS 2 damage to each creature" (Let the
 Galaxy Burn): 6 of 6 reviewed without "deals" in front were Wipe by hand.
+
+Read 2026-11-05: a shrink of every creature TOKEN, "creature tokens get -2/-2 until end of turn"
+(a mode of Bloodline Culling, Removal and Wipe by hand, 1 of 1 reviewed): the tokens are all the
+creatures it reaches and all of them die. Tokens are not a creature TYPE for the tribal veto above.
+Proposed with it, unreviewed: Illness in the Ranks and Virulent Plague.

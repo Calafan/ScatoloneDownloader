@@ -209,3 +209,22 @@ rule over an area (Behold the Unspeakable; Mouth of the Storm, untagged on 2026-
 ruling, handed back); the until-end-of-turn wording stays out (0 of 5: Mindwhisker, Bewildering
 Blizzard, Sea Hag). An Aura that makes its creature a noncreature artifact that loses its other card
 types is Sugar Coat's lock (Swift Reconfiguration, 2 of 2).
+
+RULED 2026-11-05: Minimus Containment is named. "Enchanted permanent is a Treasure artifact with
+'{T}, Sacrifice this artifact: Add one mana of any color,' and it loses all other abilities" on an
+Aura for ANY nonland permanent is Removal and RemovePermanent and NOT this tag, which the hand tag
+had until then. Its Treasure is the one Vraska, Betrayal's Sting's −2 makes (Removal alone), on an
+Aura for any permanent; Sugar Coat's "Aura = +Pacify" above is the one for a creature or Food (see
+Removal.md and RemovePermanent.md).
+
+Read 2026-11-05: a creature turned into a vanilla body with a small base power and toughness and a
+NAME, Witness Protection's "loses all abilities and is a green and white Citizen creature with base
+power and toughness 1/1 named Legitimate Businessperson" (8 of 8 reviewed cards written so are
+tagged); the pronoun after a bare tap in a table row, Scion of Stygia's "Tap that creature. It
+doesn't untap during its controller's next untap step" (the victim is the one the card chose); and
+a plural list of types phased out by choice, Spectral Adversary's artifacts, creatures, and/or
+enchantments (also Protection). A tap that can only be activated while the creature is ATTACKING is
+the tap on your own attack trigger above, a combat trick: a BOAST (Goldmaw Champion's "Boast —
+{1}{W}: Tap target creature", untagged by hand) and "Activate only if <name> is attacking" (Gerrard
+Capashen's "{3}{W}: Tap target creature", unreviewed: its stored Pacify is an old proposal and not a
+hand tag, and it goes).

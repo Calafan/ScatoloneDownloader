@@ -460,4 +460,16 @@ public sealed partial class EffectClassifierTests
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Wipe));
     }
+
+    [Theory]
+    // Read 2026-11-05: a mode that shrinks every creature TOKEN kills them all
+    // (Bloodline Culling, Removal and Wipe by hand), the same reach as a sweep for
+    // the tokens' own side.
+    [InlineData("Bloodline Culling", "Instant",
+        "Choose one —\n• Target creature gets -5/-5 until end of turn.\n• Creature tokens get -2/-2 until end "
+        + "of turn.")]
+    public void Classify_TheNovember5Readings_CreatureTokensGetMinus_IsWipe(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Wipe));
+    }
 }

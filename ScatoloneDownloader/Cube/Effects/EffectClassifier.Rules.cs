@@ -114,6 +114,15 @@ namespace ScatoloneDownloader.Cube
                     // (2026-10-20), read 2026-10-27.
                     Rx(@"(?<!don't )(?<!for each opponent, choose a creature [^.\n]{0,80}\. )destroy those creatures"
                         + @"|airbend all(?: [\w-]{1,15}){0,3} creatures"),
+                    // The shrink on a group named by what it IS, not by a colour
+                    // or a controller: Bloodline Culling's "Creature TOKENS get
+                    // -2/-2 until end of turn" (Removal and Wipe by hand,
+                    // 2026-11-05, 1 of 1 reviewed), the sibling of "white
+                    // creatures get -1/-1" above. The tokens of both sides are
+                    // swept, so "you control" keeps it out like the plural
+                    // shrink. It reaches two unreviewed statics (Illness in the
+                    // Ranks, Virulent Plague); a -1/-0 stays Pacify's.
+                    Rx(@"\bcreature tokens(?! you control\b)(?: you don't control)? get -[\dX]+/-[1-9X]"),
                     // The card swept away WITH the board, read 2026-10-30: Fraying
                     // Line's "exile this artifact and each creature without a rope
                     // counter on it" and Gideon, the Oathsworn's −9 "exile Gideon
@@ -257,6 +266,20 @@ namespace ScatoloneDownloader.Cube
                     // by hand, read 2026-10-30).
                     Rx(@"target (?:(?:non[\w-]+|legendary),? )*permanent[\w ]{0,30}\. those permanents' owners shuffle them into"),
                     Rx(@"\bchooses an? permanent they control that shares a card type\b[^.\n]{0,60}\bsacrifices it\b"),
+                    // YOU choose it among theirs, and a die picks (read 2026-11-05):
+                    // Chaos Defiler's "for each opponent, choose a nonland
+                    // permanent that player controls. Destroy one of them chosen at
+                    // random" (RemovePermanent by hand, 1 of 1 reviewed). Not the
+                    // plain edict of 2026-10-15, where THEY choose.
+                    Rx(@"for each opponent, choose an? nonland permanent that player controls\. destroy one of them chosen at random"),
+                    // An Aura that turns ANY nonland permanent into a Treasure is
+                    // the breadth of Vindicate: Minimus Containment ("Enchant
+                    // nonland permanent … Enchanted permanent is a Treasure
+                    // artifact", RULED 2026-11-05, Removal and RemovePermanent).
+                    // The Auras that enchant a creature, a planeswalker or a Clue
+                    // (In Too Deep, Removal) or a creature or Food (Sugar Coat,
+                    // Removal and Pacify) stay without this tag.
+                    Rx(@"^enchant nonland permanent\n[^\n]*\benchanted permanent is an? (?:colorless )?(?:Treasure|Clue|Food)\b", RegexOptions.Multiline),
                     // The victim named by its mana value, then destroyed on the
                     // reflexive trigger (Behemoth of Vault 0), and the permanents
                     // each player chooses among yours (The Legend of Yangchen).
@@ -416,7 +439,19 @@ namespace ScatoloneDownloader.Cube
                     // An edict by STATISTIC, read 2026-10-16: Drop of Honey's "At
                     // the beginning of your upkeep, destroy the creature with the
                     // least power" kills whoever is smallest, every turn.
-                    Rx(@"destroy the creature with the (?:least|lowest|greatest|highest|most) (?:power|toughness)"),
+                    // Exile is the same edict, and one of THEIR creatures picked
+                    // from "among creatures target opponent controls" (Fall of the
+                    // Impostor's chapter III, "Exile a creature with the greatest
+                    // power among creatures target opponent controls", Removal
+                    // and Buff by hand, read 2026-11-05, 1 of 1 reviewed).
+                    Rx(@"(?:destroy|exile) (?:the|a) creature with the (?:least|lowest|greatest|highest|most) (?:power|toughness)"),
+                    // Loyalty taken off a planeswalker of theirs is the same
+                    // answer to a planeswalker as damage is (the tag's own line,
+                    // "one creature OR PLANESWALKER"): Confront the Past's "Remove
+                    // twice X loyalty counters from target planeswalker an
+                    // opponent controls" (Removal and Reanimate by hand,
+                    // 2026-11-05; 1 of 1 reviewed, no other card is written so).
+                    Rx(@"remove (?:all|twice [\dX]|[\dX]) loyalty counters? from target planeswalker(?![^.\n]{0,20}\byou control)"),
                     // The creature the table VOTES out, read 2026-10-16: Vault 11:
                     // Voter's Dilemma's "destroy each creature with the most votes
                     // or tied for most votes". Sail into the West's votes pick a
@@ -492,6 +527,15 @@ namespace ScatoloneDownloader.Cube
                         // …and HALF of them, read 2026-10-16: Rush of Dread's "Target
                         // opponent sacrifices half the creatures they control".
                         + @"|target opponent sacrifices half the creatures they control"
+                        // …and the half you pick from two piles, read 2026-11-05:
+                        // Make an Example's "Each opponent separates the creatures
+                        // they control into two piles. … you choose one of their
+                        // piles. Each opponent sacrifices the creatures in their
+                        // chosen pile" (Removal by hand, 1 of 1 reviewed; no other
+                        // creature card is written so, Bend or Break and Whims of
+                        // the Fates pile lands and permanents), Rush of Dread's
+                        // half by another route.
+                        + @"|each opponent sacrifices the creatures in their chosen pile"
                         // …and the edict that takes a permanent FIRST, read 2026-10-16:
                         // Vile Mutilator's "each opponent sacrifices a nontoken
                         // enchantment of their choice, then sacrifices a nontoken
@@ -535,7 +579,15 @@ namespace ScatoloneDownloader.Cube
                     // nothing printed on it (Cyber Conversion). Read 2026-10-14.
                     Rx(@"target [\w ,-]{0,40}creature becomes a (?:Treasure|Clue|Food)\b"
                         + @"|chosen permanents become (?:Treasure|Clue|Food)\b"
-                        + @"|enchanted (?:permanent|creature) is a colorless (?:Treasure|Clue|Food)\b"
+                        // The colour need not be said: Minimus Containment's
+                        // "Enchanted permanent is a Treasure artifact with …
+                        // and it loses all other abilities" (RULED 2026-11-05,
+                        // Removal and RemovePermanent, not Pacify). Without the
+                        // colour the family is 3 reviewed Auras: In Too Deep and
+                        // Sugar Coat already said "colorless" and are Removal by
+                        // hand (Sugar Coat also Pacify), Minimus Containment was
+                        // the only one that did not.
+                        + @"|enchanted (?:permanent|creature) is an? (?:colorless )?(?:Treasure|Clue|Food)\b"
                         + @"|turn target [\w ,-]{0,30}(?<!non)creature face down"),
                     // Phased out for as long as the card that did it stays, the
                     // way an O-ring exiles (Oubliette, The Phasing of Zhalfir).

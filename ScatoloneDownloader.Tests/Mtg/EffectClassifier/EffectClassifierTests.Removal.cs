@@ -825,4 +825,48 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
     }
+
+    [Theory]
+    // Read 2026-11-05: an edict by piles (Make an Example), the statistic edict
+    // (Fall of the Impostor: the creature with the greatest power among those a
+    // target opponent controls), loyalty counters taken off a planeswalker an
+    // opponent controls (Confront the Past), and a target that may be a creature
+    // on the battlefield OR a card in a graveyard (Savior of Ollenbock, so the
+    // graveyard half does not make the whole an answer to nobody).
+    [InlineData("Make an Example", "Sorcery",
+        "Each opponent separates the creatures they control into two piles. For each opponent, you choose one "
+        + "of their piles. Each opponent sacrifices the creatures in their chosen pile. (Piles can be empty.)")]
+    [InlineData("Fall of the Impostor", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI, II — Put "
+        + "a +1/+1 counter on up to one target creature.\nIII — Exile a creature with the greatest power among "
+        + "creatures target opponent controls.")]
+    [InlineData("Confront the Past", "Sorcery — Lesson",
+        "Choose one —\n• Return target planeswalker card with mana value X or less from your graveyard to the "
+        + "battlefield.\n• Remove twice X loyalty counters from target planeswalker an opponent controls.")]
+    [InlineData("Savior of Ollenbock", "Creature — Human Soldier",
+        "Training (Whenever this creature attacks with another creature with greater power, put a +1/+1 "
+        + "counter on this creature.)\nWhenever this creature trains, exile up to one other target creature from "
+        + "the battlefield or creature card from a graveyard.\nWhen this creature leaves the battlefield, put "
+        + "the exiled cards onto the battlefield under their owners' control.")]
+    public void Classify_TheNovember5RemovalPass_IsRemoval(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
+    // RULED 2026-11-05: an Aura that makes any nonland permanent a Treasure that
+    // loses all other abilities is named Removal and RemovePermanent, and not
+    // Pacify (Minimus Containment).
+    [InlineData("Minimus Containment", "Enchantment — Aura",
+        "Enchant nonland permanent\nEnchanted permanent is a Treasure artifact with \"{T}, Sacrifice this "
+        + "artifact: Add one mana of any color,\" and it loses all other abilities. (If it was a creature, it's "
+        + "no longer a creature.)")]
+    public void Classify_TheNovember5Ruling_MinimusContainment_IsRemovalAndRemovePermanentNotPacify(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Removal));
+        Assert.True(result.HasFlag(CardEffect.RemovePermanent));
+        Assert.False(result.HasFlag(CardEffect.Pacify));
+    }
 }

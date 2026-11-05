@@ -708,4 +708,45 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
     }
+
+    [Theory]
+    // Read 2026-11-05: a creature turned into a vanilla 0-2/1-1 body keeps nothing
+    // worth blocking or attacking with (Witness Protection, the same family as the
+    // base 0/1 and 1/1 auras), a tap that also keeps it tapped through the next
+    // untap (Scion of Stygia, whose pronoun is the creature chosen, not an
+    // enchanted one), and a phase-out of other creatures (Spectral Adversary, also
+    // Protection).
+    [InlineData("Witness Protection", "Enchantment — Aura",
+        "Enchant creature\nEnchanted creature loses all abilities and is a green and white Citizen creature "
+        + "with base power and toughness 1/1 named Legitimate Businessperson. (It loses all other colors, card "
+        + "types, creature types, and names.)")]
+    [InlineData("Scion of Stygia", "Creature — Tiefling Shaman",
+        "Flash\nCone of Cold — When this creature enters, choose target creature an opponent controls, then "
+        + "roll a d20.\n1—9 | Tap that creature.\n10—20 | Tap that creature. It doesn't untap during its "
+        + "controller's next untap step.")]
+    [InlineData("Spectral Adversary", "Creature — Spirit",
+        "Flash\nFlying\nWhen this creature enters, you may pay {1}{U} any number of times. When you pay this "
+        + "cost one or more times, put that many +1/+1 counters on this creature, then up to that many other "
+        + "target artifacts, creatures, and/or enchantments phase out.")]
+    public void Classify_TheNovember5PacifyPass_IsPacify(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
+    }
+
+    [Theory]
+    // Read 2026-11-05 under Pacify.md's ruling that tapping on your own attack
+    // trigger is a combat trick and not a lock: a boast (Goldmaw Champion, untagged
+    // by hand) and "activate only if <name> is attacking" (Gerrard Capashen,
+    // unreviewed; its stored Pacify is an old proposal) are the same window.
+    [InlineData("Goldmaw Champion", "Creature — Dwarf Warrior",
+        "Boast — {1}{W}: Tap target creature. (Activate only if this creature attacked this turn and only "
+        + "once each turn.)")]
+    // Gerrard Capashen's activation window, unreviewed: the same reading.
+    [InlineData("Gerrard Capashen", "Legendary Creature — Human Soldier",
+        "At the beginning of your upkeep, you gain 1 life for each card in target opponent's hand.\n{3}{W}: "
+        + "Tap target creature. Activate only if Gerrard Capashen is attacking.")]
+    public void Classify_TheNovember5BoastTap_IsNotPacify(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
+    }
 }

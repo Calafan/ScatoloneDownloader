@@ -615,6 +615,19 @@ namespace ScatoloneDownloader.Cube
             @"(?:put|return)[\w ,'\-/]{0,50}exiled with[\w ,'\-/]{0,40}(?:on)?to the battlefield"
             + @"(?! under (?:its owner's|their owners'?) control)");
 
+        // …unless the card exiled was in a GRAVEYARD: Savior of Ollenbock's "exile
+        // up to one other target creature from the battlefield or creature card
+        // from a graveyard … when this creature leaves the battlefield, put the
+        // exiled cards onto the battlefield under their owners' control" brings a
+        // dead creature back, so it is Reanimate by hand (read 2026-11-05). The
+        // owner's-control veto above is about a card taken off the battlefield and
+        // handed back, which this one can also do, but the graveyard half is a
+        // return from the dead. Broad (any exiled cards put onto the battlefield
+        // under their owners' control): 1 card, this one, so broad and narrow
+        // agree. Asked in the same place as ExiledCardOntoTheBattlefield.
+        private static readonly Regex GraveyardCardExiledThenReturned = Rx(
+            @"creature cards? from (?:a|any|target player's|an opponent's) graveyard[^\n]*\n[^\n]*put the exiled cards onto the battlefield under their owners' control");
+
         private static readonly Regex BlinksYourOwnCreature = Rx(
             @"exiles? target creature you control|exiles? (?:it|them|that creature)[\w ,']{0,30}return");
 
@@ -1313,11 +1326,25 @@ namespace ScatoloneDownloader.Cube
         private static string BlankOutsideQuotes(Regex quotedOrPhrase, string text) =>
             quotedOrPhrase.Replace(text, m => m.Value.StartsWith('"') ? m.Value : " ");
 
+        // A SPELL whose own sentence is the connive: "Each of X target creatures you
+        // control connive" (Change of Plans, Filter and Protection by hand, read
+        // 2026-11-05). The connive is what the spell does, not a rider tacked on
+        // like Lethal Scheme's "each creature that convoked this spell connives"
+        // (Removal alone by hand). Written for the X-target form only: "up to one
+        // target creature you control connives" is a rider again (Trickster's
+        // Stratagem, a Bounce sorcery, whose second sentence it is; the broader
+        // "target creatures? you control connives?" gave it Filter, unreviewed).
+        // 1 card. Read under the 09-27 rider ruling, not against it: X targets
+        // each connive is X loots, not a selection made once in passing.
+        private static readonly Regex ConniveAimedAtTargets = Rx(
+            @"\beach of x target creatures you control connive\b");
+
         private static bool SelectsOnlyInPassing(Card card, string text, CardEffect others)
         {
             bool spell = card.MacroType == MacroType.Spell;
 
-            if (card.MacroType == MacroType.Land || (spell && others == CardEffect.None))
+            if (card.MacroType == MacroType.Land || (spell && others == CardEffect.None)
+                || (spell && ConniveAimedAtTargets.IsMatch(text)))
             {
                 return false;
             }

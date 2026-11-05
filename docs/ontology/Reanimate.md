@@ -60,3 +60,11 @@ stays tribal, and so does one SHARED with another creature.
 Ruled 2026-10-30 with Regrowth (Anikthea, Hand of Erebos): a token copy of a CREATURE card exiled
 from your graveyard stays Reanimate (Ardyn, Mordor on the March, Abyssal Harvester); a noncreature
 card's copy is Regrowth.
+
+Read 2026-11-05: a creature CARD exiled from a graveyard and put onto the battlefield when the
+exiler leaves, "exile up to one other target creature from the battlefield or creature card from a
+graveyard … put the exiled cards onto the battlefield under their owners' control" (Savior of
+Ollenbock, Removal and Reanimate by hand, 1 of 1). It reads the graveyard half: the rule of
+2026-10-13 that a card handed back to its OWNER is no reanimation (Mysterious Limousine, Vault 13)
+is about a creature taken off the battlefield, while this card is named from a graveyard and comes
+back from the dead.

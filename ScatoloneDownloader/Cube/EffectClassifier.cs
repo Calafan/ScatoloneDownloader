@@ -425,7 +425,11 @@ namespace ScatoloneDownloader.Cube
 
             // Removal's two blind spots, added after the table because both need
             // to look at the whole card rather than one sentence.
-            if (KillsAcrossCommas.IsMatch(text) && !ReturnsItToPlay.IsMatch(text) && !TargetsAGraveyard.IsMatch(text))
+            // A target that is a creature on the battlefield OR a card in a
+            // graveyard (Savior of Ollenbock) is only half a graveyard target:
+            // see BattlefieldOrGraveyard.
+            if (KillsAcrossCommas.IsMatch(text) && !ReturnsItToPlay.IsMatch(text)
+                && !TargetsAGraveyard.IsMatch(BattlefieldOrGraveyard.Replace(text, "creature from the battlefield")))
             {
                 result |= CardEffect.Removal;
             }
@@ -734,7 +738,8 @@ namespace ScatoloneDownloader.Cube
 
             // Added after that guard, and asked as a pair. See
             // ExiledCardOntoTheBattlefield for why it cannot live in the table.
-            if (ExiledCardOntoTheBattlefield.IsMatch(text) && !BlinksYourOwnCreature.IsMatch(text))
+            if ((ExiledCardOntoTheBattlefield.IsMatch(text) && !BlinksYourOwnCreature.IsMatch(text))
+                || GraveyardCardExiledThenReturned.IsMatch(text))
             {
                 result |= CardEffect.Reanimate;
             }
