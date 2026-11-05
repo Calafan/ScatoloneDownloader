@@ -989,6 +989,20 @@ namespace ScatoloneDownloader.Cube
 
         private static readonly Regex UnearthKeyword = Rx(@"^unearth\b", RegexOptions.Multiline);
 
+        // The same ruling for the other two tags, 2026-11-05 (Scrapwork Rager
+        // against First-Sphere Gargantua, identical text and one tagged;
+        // Simian Simulacrum, Kinsbaile Courier): UNEARTH and ENCORE SUM the
+        // entries of the card for CardAdvantage and Buff as they do for
+        // Tokens. The card enters once, +1 for unearth, +2 for encore (a copy
+        // for each of two opponents, "encore vale doppio"); the copies are no
+        // bodies of their own. Asked of the text WITHOUT its reminder, which
+        // names both keywords again.
+        private static int EntriesOf(string text)
+        {
+            string own = Parenthetical.Replace(text, " ");
+            return 1 + (UnearthKeyword.IsMatch(own) ? 1 : 0) + (EncoreKeyword.IsMatch(own) ? 2 : 0);
+        }
+
         // An ability word may come first: "Phalanx Commander — When this
         // creature enters" (Royal Warden).
         private static readonly Regex EntersOrDies = Rx(@"^(?:[^—\n]{1,40}— )?when [^,\n]{1,60}\b(?<event>enters|dies)\b");

@@ -479,3 +479,30 @@ clause, a pump, a chapter's first sentence). Warhost's Frenzy named, Captain How
 reached and handed back (Buff alone by hand since 09-10); Benefactor's Draught, Kang Dynasty and
 Subira, Tulzidi Caravanner unreviewed. 3 of 5 reviewed were tagged before. The Clone Saga stays out
 on the chosen card name, the trigger difficulty of 2026-09-22.
+
+RULED 2026-11-05 (asked on Scrapwork Rager against First-Sphere Gargantua, the same text with one
+tagged): UNEARTH and ENCORE SUM the entries of a card for this
+tag, as for Tokens (2026-10-27) and Buff. ONE card drawn when the card enters, or when it
+sacrifices itself, is a cantrip alone and two cards with an unearth, three with an encore (the cube
+is played 2vs2, "encore vale doppio"). Scrapwork Rager and Combat Courier ("{2}, Sacrifice this
+creature: Draw a card", with unearth) are tagged by hand beside Burn; First-Sphere Gargantua is
+reached, and its Burn alone (10-20) is to be handed back CardAdvantage. Eumidian Wastewaker and
+Trove Tracker (encore, tagged) were read through other paths and stay. Not a loot: Scrapwork Mutt
+discards for the card it draws, parity however many times it enters; and not a draw FOR EACH. The
+unearth family has no other card in the store: 4 tagged to 2 untagged before, the 2 being the
+Gargantua and the Mutt.
+
+Read 2026-11-05 under the one-shot rules above. A draw bought by EXILING THE PERMANENT ITSELF is the
+sibling of the self-sacrifice: Lantern of the Lost ("{1}, {T}, Exile this artifact: Exile all cards
+from all graveyards, then draw a card") is untagged by hand, and Relic of Progenitus and Cranial
+Archive (unreviewed) lose the proposal, 3 of 3. Lost Isle Calling's "draw a card for each verse
+counter" exiles itself too and stays tagged. The OPTIONAL self-sacrifice with no colon ("sacrifice
+this Aura. If you do, draw a card", Curse of Silence untagged, Dreamcatcher unreviewed) is the same
+parity, 2 of 2. The broader "sacrifice X. If you do, draw" splits 6 tagged to 6 untagged, the tagged
+ones sacrificing OTHER permanents (Benthic Criminologists, Vampire Gourmand, Sephiroth), so only
+"this <permanent>" is read.
+
+Ruled 2026-11-05 ("Svista, è CardAdvantage"): Vivien's Stampede's "draw a card for each player who
+was dealt combat damage this turn" is this tag like its family, 7 tagged to 1 (Kaito, Season of
+Loss, Body Count, Cut a Deal, Deadly Embrace, Smuggler's Share, Voice of Many). No code change: the
+card is named, and its hand tags are to become CardAdvantage alone (its Buff is melee, see Buff.md).

@@ -137,3 +137,10 @@ Read 2026-10-30: a keyword granted beside the return from death ("gains lifelink
 creature dies, return it to the battlefield…"", Return to Action; 6 of 7, the seventh Perigee
 Beckoner's on an enters trigger). Its +1/+0 stays Buff, the lifelink being more than the shield's
 rider (Buff.md).
+
+Read 2026-11-05: "IT phases out" in the sentence AFTER a target creature, Slip Out the Back's "Put a
++1/+1 counter on target creature. It phases out." (Protection alone by hand, 1 of 1 in the store).
+Read for this tag only, as the plural is: nobody puts a counter on a creature to take it out of the
+game, so it is yours. The "until" and "can't phase in" guards are the same, so The Moment's "It
+phases out until The Moment leaves" and The Pandorica stay out. The counter is the shield's rider
+and not a Buff of its own, because Protection is already on the card.

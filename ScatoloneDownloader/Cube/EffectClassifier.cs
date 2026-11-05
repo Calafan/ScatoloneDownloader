@@ -108,8 +108,17 @@ namespace ScatoloneDownloader.Cube
         // the trigger WATCHES is never what the effect lands on, however much
         // it reads like a beneficiary. See AimsOnlyAtItself for why this is
         // stripped for one of that method's two questions and not the other.
+        //
+        // "AS LONG AS" is such a condition too (read 2026-11-05, Hungry
+        // Ridgewolf: "As long as you control ANOTHER Wolf or Werewolf, this
+        // creature gets +1/+0" was read as a pump for somebody else, and the
+        // reviewed card is untagged by the self-pump ruling of 2026-09-18, "a
+        // creature that pumps only itself has a stat line, not an effect").
+        // The condition is stripped for the BENEFICIARY question only, so
+        // "as long as enchanted creature is red, it gets" has no self-reference
+        // in front of it and keeps its tag.
         private static readonly Regex TriggerClause = Rx(
-            @"(?:whenever|when|at the beginning of)\b[^,\n]{0,160},");
+            @"(?:whenever|when|at the beginning of|as long as)\b[^,\n]{0,160},");
 
         // "Loses ALL ABILITIES" names nobody: Monument to Perfection "becomes a
         // 9/9 … loses all abilities, and gains indestructible" shields itself
@@ -816,7 +825,7 @@ namespace ScatoloneDownloader.Cube
                         && !DrawGrantedToOtherPermanents.IsMatch(text)
                         && !SacrificeRefundedByACopy.IsMatch(text))
                     || SpendsItselfOutOfTheGraveyard(text)
-                    || SpendsItselfWithoutAColon.IsMatch(text)
+                    || SpendsItselfWithoutAColon.IsMatch(text) || DrawByExilingItself.IsMatch(text)
                     || AdditionalCostDiscard.IsMatch(text) || PaysACardPerActivation(text)
                     || DrawPaidForWithACard.IsMatch(text)
                     || DrawsOnceBySacrificingItsName(card, text)
@@ -990,6 +999,8 @@ namespace ScatoloneDownloader.Cube
                 || SquadCopiesDraw.IsMatch(text) || MillHandedBack.IsMatch(text)
                 || ExilesOnePerTargetAndPlays.IsMatch(text) || TokenThatTapsToDraw.IsMatch(text)
                 || DeathDrawRepeatedByEncore.IsMatch(text) || LoyaltyRevealsUntilIntoHand.IsMatch(text)
+                // Unearth and encore sum the entries (ruled 2026-11-05) — see EntriesOf.
+                || OneDrawOnceIsSeveral(text)
                 || LifePaidForADraw.IsMatch(text) || SplicedCantrip.IsMatch(text)
                 // The readings of 2026-10-27 — see DrawClosingAMoveThisWay.
                 || DrawClosingAMoveThisWay.IsMatch(text) || SpellExiledToCastAgain.IsMatch(text)
@@ -1086,7 +1097,7 @@ namespace ScatoloneDownloader.Cube
                 // the equipped creature comes with a damage shield, and the
                 // pump is the card (2026-10-16).
                 realPump = string.Join('\n', realPump.Split('\n')
-                    .Select(line => AnswerOrShieldOnTheSameLine.IsMatch(line) && !PumpIsPermanent.IsMatch(line) ? " " : line));
+                    .Select(line => AnswerOrShieldOnTheSameLine.IsMatch(ModeLabel.Replace(line, " ")) && !PumpIsPermanent.IsMatch(line) ? " " : line));
 
                 if (realPump != text && !BuffPatterns.Any(p => p.IsMatch(realPump))
                     && !HandsSomebodyElseAPump(realPump))
@@ -1284,8 +1295,10 @@ namespace ScatoloneDownloader.Cube
             // A new BASE for one creature of yours is a pump when it is the whole
             // card, the same B2 asked the other way round: Scale Up's 6/4 Wurm
             // (tagged 2026-10-20) is the card, Secret Identity's 3/4 Hero is one
-            // mode of a Protection spell (untagged). Read 2026-10-27.
-            if (!result.HasFlag(CardEffect.Buff) && BaseForOneOfYours.IsMatch(text)
+            // mode of a Protection spell (untagged). Read 2026-10-27, and for ANY
+            // target creature when the base power is three or more, 2026-11-05.
+            if (!result.HasFlag(CardEffect.Buff)
+                && (BaseForOneOfYours.IsMatch(text) || BigBaseForAnyCreature.IsMatch(text))
                 && (result & ~CardEffect.Filter) == CardEffect.None)
             {
                 result |= CardEffect.Buff;

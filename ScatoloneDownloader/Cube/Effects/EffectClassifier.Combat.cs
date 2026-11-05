@@ -553,6 +553,15 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex BaseForOneOfYours = Rx(
             @"target creature you control becomes [^.\n]{0,60}with base power and toughness \d+/\d+");
 
+        // …and the same for ANY target creature when the new base is BIG: a base
+        // POWER of three or more is a pump for whoever it lands on, ruled
+        // 2026-11-05 ("Buff se forza >= 3") on Serpentine Ambush (tagged), with
+        // Suit Up (untagged 2026-10-23, its cantrip no other effect) reached.
+        // A shrink stays out (Metamorphic Blast's 0/1, Eccentric Apprentice's
+        // 1/1): a power under three is the creature taken down, not raised.
+        private static readonly Regex BigBaseForAnyCreature = Rx(
+            @"target creature(?: or vehicle)? becomes [^.\n]{0,60}with base power and toughness (?:[3-9]|\d{2,})/\d+");
+
         // A +1/+1 COUNTER is Buff, ruled 2026-09-15. It is the second vocabulary
         // for raising power and toughness, and the tag asks only where the stats
         // land, not how long they last: one counter on one creature counts, the
@@ -581,10 +590,27 @@ namespace ScatoloneDownloader.Cube
         // Might and Forbidden Lore. That OVERTURNS the 2026-09-21 reading, which
         // took Forbidden Lore as the quoted-target case and kept it untagged:
         // the land is yours and pumps every turn, like the Aura's own pump.
+        // Read 2026-11-05, the same ruling for two more hands the team's pump
+        // comes through: a BACKGROUND's "Commander creatures you own have
+        // \"This creature gets +X/+0…\"" (Criminal Past, tagged by hand
+        // 2026-11-03 beside Hardy Outlander and Master Chef, which were
+        // already read through their own pumps) and an EMBLEM that pumps the
+        // team (Ellywick Tumblestrum's −7, tagged 2026-11-05): the emblem is
+        // the permanent anthem, the player carrying it what the equipped
+        // creature is above. A tribe's emblem is no part of it (Kaito's
+        // Ninjas, Invasion of New Phyrexia's Knights): "creatures you
+        // control" is what the emblem has to say.
         private static readonly Regex GrantsAQuotedPump = Rx(
             @"(?:(?:enchanted|equipped) creature|creatures you control) (?:[^.""\n]{0,60}\band )?(?:has|have|gains?) "
             + @"""[^""\n]*(?:gets? \+[\dXx]|\+1/\+1 counters? on (?:this creature|it)\b)"
-            + @"|enchanted land (?:has|gains?) ""[^""\n]*\btarget creature gets? \+[\dXx]");
+            + @"|enchanted land (?:has|gains?) ""[^""\n]*\btarget creature gets? \+[\dXx]"
+            // A Background hands the commander ONE pump that counts: the static
+            // "This creature gets +X/+0" (Criminal Past). Its other quoted hands
+            // stay the commander's own business: a counter on itself (Agent of
+            // the Shadow Thieves, Clan Crafter) and a pump that begins with a
+            // trigger (Tavern Brawler's upkeep, Haunted One's tap) are no anthem.
+            + @"|commander creatures you own (?:has|have|gains?) (?:[^.""\n]{0,60}\band )?""this creature gets? \+[\dXx]"
+            + @"|emblem with ""creatures you control [^.""\n]{0,80}?\bgets? \+[\dXx]");
 
         // Reminder text, and the three rulings of 2026-09-21 that read it. A
         // pump printed inside PARENTHESES is explaining a keyword, not doing
@@ -838,6 +864,14 @@ namespace ScatoloneDownloader.Cube
             // control").
             + @"|[Cc]reature tokens you control (?:get|have)\b"
             + @"|\+1/\+1 counters? on each (?:creature )?token you control\b"
+            // DOUBLING a tribe's power is a pump restricted to one creature
+            // type like any other (2026-09-15, Buff.md): Thrakkus the
+            // Butcher's "double the power of each Dragon you control" is
+            // untagged by hand (2026-11-03), where Double Trouble's "each
+            // creature you control" stays Buff. Read 2026-11-05; the type is
+            // printed on Thrakkus, so the 2026-10-30 chosen-type exception
+            // does not apply.
+            + @"|\bdouble the power of each " + NotATribe + @"[A-Z][\w']+(?: or [A-Z][\w']+)? you control\b"
             // COLORLESS is the one colour that IS a tribe — the Eldrazi deck's
             // word for itself. Ruled 2026-09-25 on Kozilek, the Broken Reality
             // ("other colorless creatures you control get +3/+2"), which took
@@ -1043,8 +1077,18 @@ namespace ScatoloneDownloader.Cube
         // in" for as long as something holds it is the O-ring shape the
         // "until" guard keeps out (The Pandorica, The Phasing of Zhalfir — 0
         // of 2 tagged Protection).
+        //
+        // …and the creature named in the sentence before, called "it": Slip Out
+        // the Back's "Put a +1/+1 counter on target creature. It phases out."
+        // (Protection alone by hand, 2026-11-03; the one card in the store
+        // written this way, 1 of 1). Read for Protection only, as the plural
+        // is: nobody puts a counter on a creature to take it out of the game,
+        // so it is yours (a Pacify would need a use on theirs). The "until" and
+        // "can't phase in" guards are the same, so The Moment's "It phases out
+        // until The Moment leaves" (Wipe) and The Pandorica stay out.
         private static readonly Regex PhasesOthersOut = Rx(
-            @"target [\w ,]{0,35}(?:creatures|permanents?)[\w ,]{0,25} phases? out(?![^\n]{0,20}until)(?![^\n]{0,25}\bcan'?t phase in)");
+            @"target [\w ,]{0,35}(?:creatures|permanents?)[\w ,]{0,25} phases? out(?![^\n]{0,20}until)(?![^\n]{0,25}\bcan'?t phase in)"
+            + @"|target [\w ,]{0,35}creature[^.\n]{0,60}\. it phases out(?![^\n]{0,20}until)(?![^\n]{0,25}\bcan'?t phase in)");
 
         // A shield handed to ONE TRIBE — or to TOKENS, which the Buff ruling of
         // 2026-09-21 calls a tribe by another name — belongs to that deck's
@@ -2363,6 +2407,16 @@ namespace ScatoloneDownloader.Cube
         // to target creature", "then it fights".
         private static readonly Regex Bite = Rx(@"deals? damage equal to (?:its|their|that creature's) power|\bfights?\b");
 
+        // The NAME of a mode is no fight: You're Ambushed on the Road's
+        // "• Stand and Fight — Target creature gets +1/+3 until end of turn"
+        // read as a bite and lost its pump (Buff and Protection by hand,
+        // 2026-11-05; the two other cards with the word in a mode label are
+        // unmoved: Summon: Magus Sisters, whose "Fight!" bullet IS a fight and
+        // whose Buff comes from another, and School Daze, which has no pump).
+        // Blanked for Bite and for AnswerOrShieldOnTheSameLine, which share
+        // the word.
+        private static readonly Regex ModeLabel = Rx(@"^\s*•[^—\n]{1,40} — ");
+
         // Counters that ARE a body rather than a pump on one, ruled Tokens and
         // not Buff on 2026-09-25: Case of the Filched Falcon puts four on a
         // noncreature artifact that "becomes a 0/0 Bird creature", and
@@ -2523,7 +2577,7 @@ namespace ScatoloneDownloader.Cube
             bool entersOnce = creature && timing == PumpTiming.Once && EntersTrigger.IsMatch(head.Trim());
             int size = SizeOfPump(piece, countsEach: !entersOnce);
 
-            if (Bite.IsMatch(piece) && timing is PumpTiming.Once or PumpTiming.Instant)
+            if (Bite.IsMatch(ModeLabel.Replace(piece, " ")) && timing is PumpTiming.Once or PumpTiming.Instant)
             {
                 return false;
             }
@@ -2627,6 +2681,20 @@ namespace ScatoloneDownloader.Cube
             // stats parked on another creature (2026-09-25).
             bool countersOnEntry = creature && PutsCounters.IsMatch(piece)
                 && EntersTrigger.IsMatch(head.Trim());
+
+            // …and unearth and encore SUM the entries, ruled 2026-11-05 (see
+            // EntriesOf): Simian Simulacrum's two counters are four with its
+            // unearth, Kinsbaile Courier's one is three with its encore
+            // ("x 3 entrate in 2vs2"). Counters only. Hypothesis measured and
+            // not shipped: the entries multiplied for EVERY pump an enters
+            // trigger makes, the temporary ones too, moved no card at all
+            // (11356 exact either way, the same moves line for line), so it is
+            // a rule with nothing to read and is left out.
+            if (countersOnEntry)
+            {
+                size *= EntriesOf(card.OracleText ?? string.Empty);
+            }
+
             if (size >= (countersOnEntry ? CreatureOneShotEnough : 2))
             {
                 return true;

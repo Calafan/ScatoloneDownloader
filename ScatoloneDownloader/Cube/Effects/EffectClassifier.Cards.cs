@@ -1941,8 +1941,50 @@ namespace ScatoloneDownloader.Cube
         // sacrifices itself to draw one on an upkeep it will only reach once,
         // and Preferred Selection sacrifices itself to move one card into your
         // hand. Two reviewed cards say it; neither is tagged.
+        //
+        // …and "sacrifice this Aura. If you do, draw a card": the optional
+        // sacrifice of Curse of Silence (untagged by hand, 2026-11-05) and
+        // Dreamcatcher (unreviewed), 2 of 2 in the store, the same one-shot
+        // as "Sacrifice this artifact: Draw a card" ("an ability that
+        // sacrifices its own permanent runs once", ruling of 2026-09-11). The
+        // broader "sacrifice X. If you do, draw" splits 6 tagged to 6 untagged
+        // (the tagged ones sacrifice OTHER permanents: Benthic Criminologists,
+        // Vampire Gourmand, Sephiroth), so it is "this <permanent>" only.
         private static readonly Regex SpendsItselfWithoutAColon = Rx(
-            @"sacrifice this \w+ and (?:pay|draw)");
+            @"sacrifice this \w+ and (?:pay|draw)|sacrifice this \w+\. if you do, (?:you )?draws? (?:a|one) card\b");
+
+        // A draw bought by EXILING THE PERMANENT ITSELF is the same one-shot,
+        // read 2026-11-05 on Lantern of the Lost ("{1}, {T}, Exile this
+        // artifact: Exile all cards from all graveyards, then draw a card",
+        // untagged by hand): the graveyard-hate cantrips Relic of Progenitus
+        // and Cranial Archive (unreviewed) say it in the same words, 3 of 3
+        // in the store. One card only: Lost Isle Calling's "Draw a card FOR
+        // EACH verse counter" is tagged by hand and stays.
+        private static readonly Regex DrawByExilingItself = Rx(
+            @"^[^\n:]{0,60}exile this (?:artifact|creature|permanent|enchantment|land|vehicle|equipment)\b[^\n:]{0,30}:"
+            + @"[^\n]{0,120}\bdraws? (?:a|one) card\b(?! for each)",
+            RegexOptions.Multiline);
+
+        // One card drawn ONCE: when the card enters, or when it sacrifices
+        // itself. Never alone a card ("An ETB fires once and is a cantrip",
+        // "an ability that sacrifices its own permanent runs once"), but
+        // UNEARTH and ENCORE SUM the entries, ruled 2026-11-05 as for Tokens
+        // (EntriesOf): Scrapwork Rager (CardAdvantage by hand) against
+        // First-Sphere Gargantua, the same text, and Combat Courier's
+        // "{2}, Sacrifice this creature: Draw a card" twice. A loot is not
+        // here, a discard on the ability keeps it parity (Scrapwork Mutt).
+        private static readonly Regex OneDrawOnce = Rx(
+            @"^(?:[^—\n]{1,40}— )?(?:when [^,\n]{1,60}\benters, (?:you )?draw (?:a|one) card\b"
+            + @"|[^\n:]{0,60}sacrifice this \w+[^\n:]{0,30}: ?(?:you )?draw (?:a|one) card\b)(?! for each)(?!, then)",
+            RegexOptions.Multiline);
+
+        private static bool OneDrawOnceIsSeveral(string text)
+        {
+            string own = Parenthetical.Replace(text, " ");
+            return EntriesOf(text) >= 2
+                && Abilities(own).Any(a => OneDrawOnce.IsMatch(a)
+                    && !a.Contains("discard", StringComparison.OrdinalIgnoreCase));
+        }
 
         // The CardAdvantage readings of the 10-06..10-11 sitting, each tagged by
         // hand on every reviewed card that says it (2026-10-14):

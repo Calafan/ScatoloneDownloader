@@ -124,6 +124,13 @@ Spiketail, Perigee Beckoner), and so does a pump alone on its line beside a shie
 RULED 2026-10-16 ("Keyword, mai Buff"): exalted and rampage are keywords, never Buff, like prowess
 (Emissary of Soulfire, Merchant of Truth and Rapid Fire handed back without it).
 
+RULED 2026-11-05 ("Keyword, mai Buff"): MELEE is a keyword like exalted, rampage and prowess,
+never Buff, whatever its reminder says it does. Vivien's Stampede ("Each creature you control
+gains vigilance, trample, and melee until end of turn", tagged Buff on 11-03) is against Skyhunter
+Strike Force (the Lieutenant hands other creatures melee), Drogskol Reinforcements (Spirits) and
+Depthshaker Titan (artifact creatures; Tokens alone), all untagged. Vivien's Stampede is named and
+its Buff is to be taken off by hand; the draw it carries is CardAdvantage (see that file).
+
 RULED 2026-10-16 ("Solo sulle tue creature"): a +N/-M is Buff only on creatures you control —
 Ashnod's Battle Gear's "target creature you control gets +2/-2", Tourach's Gate's attackers. An
 Aura's or an Equipment's +N/-M is not (Grave Servitude handed back).
@@ -197,3 +204,51 @@ Protection alone). Not this: the counters a TRIGGER waits for ("whenever you put
 counters on another colorless creature", Omarthis, Ghostfire Initiate; 0 of 4 reviewed), and a
 counter on "target Shrine for each Shrine you control" (Go-Shintai of Boundless Vigor), a tribe like
 Treebeard's (0 of 11).
+
+RULED 2026-11-05 (asked on Simian Simulacrum and Kinsbaile Courier; the same ruling as Tokens of
+2026-10-27 and CardAdvantage): UNEARTH and ENCORE SUM the entries of a card for Buff. The card
+enters once, once more with an unearth and twice more with an encore (the cube is played 2vs2, so
+encore makes a copy for each of two opponents, "encore vale doppio"), and the counters its enters
+trigger puts on a creature are summed over those entries before they meet the bar of three that
+counters on entry have to reach. Simian Simulacrum's two counters are four with its unearth: Buff
+beside Burn by hand. Kinsbaile Courier's one counter is three with its encore: reached, and its
+hand tag (Burn alone, 10-20) is to be handed back Buff. COUNTERS only. The hypothesis that the
+entries multiply EVERY pump an enters trigger makes, the temporary ones too, was measured and
+moved no card (11356 exact either way), so it is not written. The keywords are asked of the text
+without its reminder, which names both again.
+
+RULED 2026-11-05 ("Buff se forza >= 3"): a new BASE power and toughness for ANY target creature,
+not only one you control, is Buff when it is the whole card (a cantrip "Draw a card" is no other
+effect) and the base POWER is three or more. It extends the Scale Up reading of 2026-10-27 (one
+creature of yours, 6/4), which still stands. Serpentine Ambush (5/5, tagged by hand) is named; Suit
+Up (4/5 and a card, untagged 2026-10-23) is reached and its hand tag is to be handed back Buff;
+Startling Development (4/4 and cycling), Mordenkainen's Polymorph (4/4 and flying) and Omnibian
+({T}: 3/3, repeated) are unreviewed and follow. A SHRINK stays out, a base power under three being
+the creature taken down: Metamorphic Blast's 0/1 mode (CardAdvantage and Pacify) and Eccentric
+Apprentice's 1/1 Bird. Omnibian is a repeated one-turn effect on a creature, which B3 would keep out
+for a pump; it follows the ruling as written and is flagged to the human.
+
+Read 2026-11-05, on the sitting of 11-03..05, each under a ruling above. DOUBLING the power of a
+tribe ("double the power of each Dragon you control", Thrakkus the Butcher) is a pump restricted to
+a type, untagged by hand, where Double Trouble's "each creature you control" stays tagged. A
+self-pump whose AS LONG AS condition says "another" is still the card's own (Hungry Ridgewolf,
+untagged: "As long as you control another Wolf or Werewolf, this creature gets +1/+0" had "another"
+read as the creature pumped); seven unreviewed cards (Bant Sureblade, Bristlebane Outrider, Esper
+Stormblade, Grixis Grimblade, Jund Hackblade, Naya Hushblade, Thrash of Raptors) lose the proposal,
+and no reviewed card of that shape is tagged.
+
+The quoted pump handed through one step (2026-10-14) reaches a BACKGROUND's static "Commander
+creatures you own have ... \"This creature gets +X/+0\"" (Criminal Past, tagged beside Hardy
+Outlander and Master Chef) and an EMBLEM that pumps "creatures you control" (Ellywick
+Tumblestrum's -7; Ajani Resolute, Elspeth, Sun's Champion, Garruk, Cursed Huntsman, Gideon, Ally
+of Zendikar, Oko, Lorwyn Liege, Sorin, Lord of Innistrad and Vivien Reid unreviewed follow).
+Measured and narrowed: the Background wording widened to ANY quoted counter or pump made four
+reviewed cards Buff against the hand (Agent of the Shadow Thieves and Clan Crafter put a counter
+on themselves, Haunted One and Tavern Brawler pump for a turn behind a trigger), so only the
+static pump is read. A TRIBE's emblem is the tribe's pump (Kaito, Saheeli), and Baldur's Gate
+Wilderness's is a Dungeon's.
+
+The NAME of a mode is no fight: You're Ambushed on the Road's "Stand and Fight" bullet is a +1/+3
+pump (Buff and Protection by hand) that "fights" had read as a bite and as an answer on its line;
+Summon: Magus Sisters keeps its Buff and School Daze has no pump. Slip Out the Back's counter is the
+shield's rider (Protection alone, see Protection.md).

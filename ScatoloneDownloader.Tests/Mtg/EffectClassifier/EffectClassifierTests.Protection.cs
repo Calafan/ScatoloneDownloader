@@ -751,4 +751,21 @@ public sealed partial class EffectClassifierTests
         Assert.False(result.HasFlag(CardEffect.Pacify));
         Assert.True(result.HasFlag(CardEffect.Protection));
     }
+
+    [Theory]
+    // Read 2026-11-05 under the phasing ruling: Slip Out the Back's Put a +1/+1
+    // counter on target creature. It phases out. is a shield with the counter as
+    // its rider (Protection alone by hand, 2026-11-03). The it phases out of the
+    // sentence before is read for Protection only, and the until and can't phase
+    // in guards stay.
+    [InlineData("Slip Out the Back", "Instant",
+        "Put a +1/+1 counter on target creature. It phases out. (Treat it and anything attached to it as "
+        + "though they don't exist until its controller's next turn.)")]
+    public void Classify_TheNovember5ItPhasesOutAfterACounter_IsProtectionNotBuff(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Protection));
+        Assert.False(result.HasFlag(CardEffect.Buff));
+    }
 }

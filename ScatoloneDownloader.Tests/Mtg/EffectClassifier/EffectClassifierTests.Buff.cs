@@ -863,6 +863,22 @@ public sealed partial class EffectClassifierTests
         + "turn. If it doesn't have rampage, that creature gains rampage 2 until end of turn. (Whenever the "
         + "creature becomes blocked, it gets +2/+2 until end of turn for each creature blocking it beyond the "
         + "first.)")]
+    // Melee is a keyword, never Buff, ruled 2026-11-05 like exalted and rampage:
+    // the team that is handed it (Skyhunter Strike Force, Drogskol Reinforcements
+    // for Spirits, Depthshaker Titan beside its Tokens) is untagged.
+    [InlineData("Skyhunter Strike Force", "Creature — Cat Knight",
+        "Flying\nMelee (Whenever this creature attacks, it gets +1/+1 until end of turn for each opponent you "
+        + "attacked this combat.)\nLieutenant — As long as you control your commander, other creatures you "
+        + "control have melee.")]
+    [InlineData("Drogskol Reinforcements", "Creature — Spirit Soldier",
+        "Melee (Whenever this creature attacks, it gets +1/+1 until end of turn for each opponent you "
+        + "attacked this combat.)\nOther Spirits you control have melee.\nPrevent all noncombat damage that would "
+        + "be dealt to Spirits you control.")]
+    [InlineData("Depthshaker Titan", "Artifact Creature — Robot",
+        "When this creature enters, any number of target noncreature artifacts you control become 3/3 "
+        + "artifact creatures. Sacrifice them at the beginning of the next end step.\nEach artifact creature you "
+        + "control has melee, trample, and haste. (Whenever a creature with melee attacks, it gets +1/+1 until "
+        + "end of turn for each opponent you attacked this combat.)")]
     public void Classify_TheMidOctoberBuffMisreadings_AreNotBuff(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
@@ -1002,6 +1018,189 @@ public sealed partial class EffectClassifierTests
         + "power and toughness 1/1 and gains hexproof.\n• Reveal — Until end of turn, target creature you "
         + "control becomes a Hero with base power and toughness 3/4 and gains flying and vigilance.")]
     public void Classify_TheOctober27BuffPass_IsNotBuff(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // Ruled 2026-11-05: unearth and encore SUM the card's entries for Buff as they
+    // do for Tokens (2026-10-27). Simian Simulacrum puts two counters on entry,
+    // four with its unearth; Kinsbaile Courier puts one, three with its encore
+    // (the cube is played 2vs2, so encore makes two copies). One entry alone stays
+    // below the creature threshold.
+    [InlineData("Simian Simulacrum", "Artifact Creature — Ape",
+        "When this creature enters, put two +1/+1 counters on target creature you control.\nUnearth {2}{G}{G} "
+        + "({2}{G}{G}: Return this card from your graveyard to the battlefield. It gains haste. Exile it at the "
+        + "beginning of the next end step or if it would leave the battlefield. Unearth only as a sorcery.)")]
+    [InlineData("Kinsbaile Courier", "Creature — Kithkin Soldier",
+        "When this creature enters, put a +1/+1 counter on target creature.\nEncore {2}{W} ({2}{W}, Exile this "
+        + "card from your graveyard: For each opponent, create a token copy that attacks that opponent this "
+        + "turn if able. They gain haste. Sacrifice them at the beginning of the next end step. Activate only "
+        + "as a sorcery.)")]
+    public void Classify_TheNovember5UnearthAndEncoreSumTheEntries_IsBuff(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // Read 2026-11-05 under the quoted-pump ruling of 2026-10-14: a Background's
+    // static quoted pump for the commander (Criminal Past) and an emblem that
+    // pumps every creature you control (Ellywick Tumblestrum's minus seven) are
+    // the team's pump handed through one step.
+    [InlineData("Criminal Past", "Legendary Enchantment — Background",
+        "Commander creatures you own have menace and \"This creature gets +X/+0, where X is the number of "
+        + "creature cards in your graveyard.\" (A creature with menace can't be blocked except by two or more "
+        + "creatures.)")]
+    [InlineData("Ellywick Tumblestrum", "Legendary Planeswalker — Ellywick",
+        "+1: Venture into the dungeon. (Enter the first room or advance to the next room.)\n−2: Look at the "
+        + "top six cards of your library. You may reveal a creature card from among them and put it into your "
+        + "hand. If it's legendary, you gain 3 life. Put the rest on the bottom of your library in a random "
+        + "order.\n−7: You get an emblem with \"Creatures you control have trample and haste and get +2/+2 for "
+        + "each differently named dungeon you've completed.\"")]
+    public void Classify_TheNovember5ABackgroundOrAnEmblemHandingTheTeamAPump_IsBuff(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // The Background reading stops at the static pump: a counter the commander
+    // puts on itself (Agent of the Shadow Thieves, Clan Crafter) and a pump behind
+    // a trigger (Tavern Brawler's upkeep, Haunted One's tap) are the commander's
+    // own business, untagged by hand.
+    [InlineData("Agent of the Shadow Thieves", "Legendary Enchantment — Background",
+        "Commander creatures you own have \"Whenever this creature attacks a player, if no opponent has more "
+        + "life than that player, put a +1/+1 counter on this creature. It gains deathtouch and indestructible "
+        + "until end of turn.\"")]
+    [InlineData("Clan Crafter", "Legendary Enchantment — Background",
+        "Commander creatures you own have \"{2}, Sacrifice an artifact: Put a +1/+1 counter on this creature "
+        + "and draw a card.\"")]
+    [InlineData("Tavern Brawler", "Legendary Enchantment — Background",
+        "Commander creatures you own have \"At the beginning of your upkeep, exile the top card of your "
+        + "library. This creature gets +X/+0 until end of turn, where X is that card's mana value. You may play "
+        + "that card this turn.\"")]
+    [InlineData("Haunted One", "Legendary Enchantment — Background",
+        "Commander creatures you own have \"Whenever this creature becomes tapped, it and other creatures you "
+        + "control that share a creature type with it each get +2/+0 and gain undying until end of turn.\" (When "
+        + "a creature with undying dies, if it had no +1/+1 counters on it, return it to the battlefield under "
+        + "its owner's control with a +1/+1 counter on it.)")]
+    public void Classify_TheNovember5ABackgroundHandingTheCommanderItsOwnBusiness_IsNotBuff(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // Read 2026-11-05: doubling the power of one creature type is a pump
+    // restricted to that type (Buff.md, 2026-09-15). Thrakkus the Butcher is
+    // untagged by hand; Double Trouble's each creature you control stays Buff (see
+    // the base-or-doubling theory).
+    [InlineData("Thrakkus the Butcher", "Legendary Creature — Dragon Peasant",
+        "Trample\nWhenever Thrakkus attacks, double the power of each Dragon you control until end of turn.")]
+    public void Classify_TheNovember5DoublingATribe_IsNotBuff(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // Read 2026-11-05: Hungry Ridgewolf's as-long-as another condition names the
+    // creature that must be there, not the one pumped; the pump is this creature's
+    // own and the card is untagged by hand.
+    [InlineData("Hungry Ridgewolf", "Creature — Wolf",
+        "As long as you control another Wolf or Werewolf, this creature gets +1/+0 and has trample.")]
+    public void Classify_TheNovember5ASelfPumpNamingAnotherInItsCondition_IsNotBuff(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // Read 2026-11-05: the NAME of a mode is no fight. You're Ambushed on the
+    // Road's Stand and Fight bullet is a +1/+3 pump (Buff and Protection by hand).
+    [InlineData("You're Ambushed on the Road", "Instant",
+        "Choose one —\n• Make a Retreat — Return target creature you control to its owner's hand.\n• Stand and "
+        + "Fight — Target creature gets +1/+3 until end of turn.")]
+    // Summon: Magus Sisters keeps its Buff: its Fight! bullet is a real fight, the
+    // pump comes from the Combine Powers bullet.
+    [InlineData("Summon: Magus Sisters", "Enchantment Creature — Saga Faerie",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI, II, III "
+        + "— Choose one at random —\n• Combine Powers! — Put three +1/+1 counters on target creature.\n• Defense! "
+        + "— Put a shield counter on target creature. You gain 3 life.\n• Fight! — This creature fights up to "
+        + "one target creature an opponent controls.\nHaste")]
+    public void Classify_TheNovember5AModeNamedFight_IsNotABite_IsBuff(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // The emblem reading is for creatures you control; an emblem that pumps one
+    // tribe is a tribe's pump (Kaito, Saheeli) and stays untagged.
+    [InlineData("Kaito, Bane of Nightmares", "Legendary Planeswalker — Kaito",
+        "Ninjutsu {1}{U}{B} ({1}{U}{B}, Return an unblocked attacker you control to hand: Put this card onto "
+        + "the battlefield from your hand tapped and attacking.)\nDuring your turn, as long as Kaito has one or "
+        + "more loyalty counters on him, he's a 3/4 Ninja creature and has hexproof.\n+1: You get an emblem with "
+        + "\"Ninjas you control get +1/+1.\"\n0: Surveil 2. Then draw a card for each opponent who lost life this "
+        + "turn.\n−2: Tap target creature. Put two stun counters on it.")]
+    [InlineData("Saheeli, Sublime Artificer", "Legendary Planeswalker — Saheeli",
+        "Whenever you cast a noncreature spell, create a 1/1 colorless Servo artifact creature token.\n−2: "
+        + "Target artifact you control becomes a copy of another target artifact or creature you control until "
+        + "end of turn, except it's an artifact in addition to its other types.")]
+    public void Classify_TheNovember5AnEmblemForOneTribe_IsNotBuff(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // Ruled 2026-11-05 twice: the melee Vivien's Stampede hands the team is a
+    // keyword, never Buff (Skyhunter Strike Force, Drogskol Reinforcements and
+    // Depthshaker Titan are untagged), and its draw a card for each player who was
+    // dealt combat damage is CardAdvantage like the family (7 tagged to 1).
+    [InlineData("Vivien's Stampede", "Sorcery",
+        "Each creature you control gains vigilance, trample, and melee until end of turn. (Whenever a "
+        + "creature with melee attacks, it gets +1/+1 until end of turn for each opponent you attacked this "
+        + "combat.)\nAt the beginning of the next main phase this turn, draw a card for each player who was "
+        + "dealt combat damage this turn.")]
+    public void Classify_TheNovember5VivienStampede_IsCardAdvantageNotBuff(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.False(result.HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // Ruled 2026-11-05 (Buff se forza >= 3): a new BASE power and toughness for
+    // ANY target creature is Buff when it is the whole card, a cantrip no other
+    // effect, and the base power is three or more. Serpentine Ambush is tagged by
+    // hand; Suit Up is reached and handed back; Startling Development,
+    // Mordenkainen's Polymorph and Omnibian are unreviewed.
+    [InlineData("Serpentine Ambush", "Instant",
+        "Until end of turn, target creature becomes a blue Serpent with base power and toughness 5/5.")]
+    [InlineData("Suit Up", "Instant",
+        "Until end of turn, target creature or Vehicle becomes an artifact creature with base power and "
+        + "toughness 4/5.\nDraw a card.")]
+    [InlineData("Startling Development", "Instant",
+        "Until end of turn, target creature becomes a blue Serpent with base power and toughness 4/4.\nCycling "
+        + "{1} ({1}, Discard this card: Draw a card.)")]
+    [InlineData("Mordenkainen's Polymorph", "Instant",
+        "Until end of turn, target creature becomes a Dragon with base power and toughness 4/4 and gains "
+        + "flying. (It loses all other creature types.)")]
+    [InlineData("Omnibian", "Creature — Frog",
+        "{T}: Target creature becomes a Frog with base power and toughness 3/3 until end of turn.")]
+    public void Classify_TheNovember5ABigBaseForAnyCreature_IsBuff(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // A base under three power is the creature taken down: Metamorphic Blast's 0/1
+    // mode (CardAdvantage and Pacify by hand) and Eccentric Apprentice's 1/1 Bird
+    // (unreviewed) stay out of the big-base reading.
+    [InlineData("Metamorphic Blast", "Instant",
+        "Spree (Choose one or more additional costs.)\n+ {1} — Until end of turn, target creature becomes a "
+        + "white Rabbit with base power and toughness 0/1.\n+ {3} — Target player draws two cards.")]
+    [InlineData("Eccentric Apprentice", "Creature — Tiefling Wizard",
+        "Flying\nWhen this creature enters, venture into the dungeon. (Enter the first room or advance to the "
+        + "next room.)\nAt the beginning of combat on your turn, if you've completed a dungeon, up to one target "
+        + "creature becomes a Bird with base power and toughness 1/1 and flying until end of turn.")]
+    public void Classify_TheNovember5AShrinkingBase_IsNotBuff(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
     }

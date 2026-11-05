@@ -2397,4 +2397,80 @@ public sealed partial class EffectClassifierTests
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
     }
+
+    [Theory]
+    // Ruled 2026-11-05: unearth and encore SUM the card's entries for
+    // CardAdvantage, as for Tokens (2026-10-27) and Buff. One draw on entry or on
+    // a sacrifice is two or three draws with the keyword: Scrapwork Rager and
+    // Combat Courier are CardAdvantage and Burn by hand; First-Sphere Gargantua is
+    // reached and handed back.
+    [InlineData("Scrapwork Rager", "Artifact Creature — Phyrexian Horror",
+        "When this creature enters, you draw a card and you lose 1 life.\nUnearth {3}{B} ({3}{B}: Return this "
+        + "card from your graveyard to the battlefield. It gains haste. Exile it at the beginning of the next "
+        + "end step or if it would leave the battlefield. Unearth only as a sorcery.)")]
+    [InlineData("Combat Courier", "Artifact Creature — Construct",
+        "{2}, Sacrifice this creature: Draw a card.\nUnearth {U} ({U}: Return this card from your graveyard to "
+        + "the battlefield. It gains haste. Exile it at the beginning of the next end step or if it would leave "
+        + "the battlefield. Unearth only as a sorcery.)")]
+    [InlineData("First-Sphere Gargantua", "Creature — Phyrexian Horror",
+        "When this creature enters, you draw a card and you lose 1 life.\nUnearth {2}{B} ({2}{B}: Return this "
+        + "card from your graveyard to the battlefield. It gains haste. Exile it at the beginning of the next "
+        + "end step or if it would leave the battlefield. Unearth only as a sorcery.)")]
+    [InlineData("Eumidian Wastewaker", "Creature — Insect Cleric",
+        "Whenever this creature attacks, you and defending player each discard a card or sacrifice a "
+        + "permanent. You draw a card for each land card put into a graveyard this way.\nEncore {6}{B}{B} "
+        + "({6}{B}{B}, Exile this card from your graveyard: For each opponent, create a token copy that attacks "
+        + "that opponent this turn if able. They gain haste. Sacrifice them at the beginning of the next end "
+        + "step. Activate only as a sorcery.)")]
+    [InlineData("Trove Tracker", "Creature — Human Pirate",
+        "When this creature dies, draw a card.\nEncore {5}{U}{U} ({5}{U}{U}, Exile this card from your "
+        + "graveyard: For each opponent, create a token copy that attacks that opponent this turn if able. They "
+        + "gain haste. Sacrifice them at the beginning of the next end step. Activate only as a sorcery.)")]
+    public void Classify_TheNovember5UnearthAndEncoreSumTheDraw_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // A loot stays card parity however many times it enters: Scrapwork Mutt
+    // discards a card for the one it draws, so the summed entries have no surplus.
+    [InlineData("Scrapwork Mutt", "Artifact Creature — Dog",
+        "When this creature enters, you may discard a card. If you do, draw a card.\nUnearth {1}{R} ({1}{R}: "
+        + "Return this card from your graveyard to the battlefield. It gains haste. Exile it at the beginning "
+        + "of the next end step or if it would leave the battlefield. Unearth only as a sorcery.)")]
+    public void Classify_TheNovember5ALootWithUnearth_IsNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Read 2026-11-05: the card that exiles itself (Lantern of the Lost) or
+    // sacrifices itself, even as an optional second sentence with no colon (Curse
+    // of Silence, Dreamcatcher), pays for the card it draws: parity. Lost Isle
+    // Calling's draw is for each, so it is not caught.
+    [InlineData("Lantern of the Lost", "Artifact",
+        "When this artifact enters, exile target card from a graveyard.\n{1}, {T}, Exile this artifact: Exile "
+        + "all cards from all graveyards, then draw a card.")]
+    [InlineData("Curse of Silence", "Enchantment — Aura Curse",
+        "Enchant player\nAs this Aura enters, choose a card name.\nSpells with the chosen name enchanted player "
+        + "casts cost {2} more to cast.\nWhenever enchanted player casts a spell with the chosen name, you may "
+        + "sacrifice this Aura. If you do, draw a card.")]
+    [InlineData("Dreamcatcher", "Creature — Spirit",
+        "Whenever you cast a Spirit or Arcane spell, you may sacrifice this creature. If you do, draw a card.")]
+    public void Classify_TheNovember5ADrawPaidByTheCardItself_IsNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // The self-exile guard leaves a draw for each alone: Lost Isle Calling exiles
+    // itself but draws for each permanent it has, tagged by hand.
+    [InlineData("Lost Isle Calling", "Enchantment",
+        "Whenever you scry, put a verse counter on this enchantment.\n{4}{U}{U}, Exile this enchantment: Draw "
+        + "a card for each verse counter on this enchantment. If it had seven or more verse counters on it, "
+        + "take an extra turn after this one. Activate only as a sorcery.")]
+    public void Classify_TheNovember5ADrawForEachBesideExilingItself_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
 }
