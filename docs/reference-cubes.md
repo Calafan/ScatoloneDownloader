@@ -6,7 +6,7 @@ statistico con gli 8 cubi della tabella, insieme al Limited retail nel tempo, è
 
 Lo scopo è passare liste di cubi noti a `analyze <list>` e mettere i numeri accanto a quelli del
 pool, per capire se la diagnosi dell'utente ("troppo lento e con troppe soluzioni") vale anche
-rispetto ad altri cubi e non solo rispetto ai set retail di `docs/cube-targets.md`.
+rispetto ad altri cubi e non solo rispetto al Limited retail.
 
 Legenda delle fonti: **verificato** = ricontrollato a mano sulla fonte; **riportato** = raccolto
 dalla ricerca ma non ricontrollato.
@@ -97,10 +97,10 @@ https://www.coolstuffinc.com/a/alexullman-030414-removing-removal-in-cube). Bust
 La percentuale è nostra: removal per busta diviso 15. La sua proposta era tagliare removal e
 aggiungere creature economiche ed evasive per l'aggro.
 
-Per confronto, la misura provvisoria del 2026-10-18 (`docs/cube-targets.md`, sulla lista txt e
-non sul pool): hard creature removal 24,7% delle non-terra nel box, 14,8% nel retail. Le
-definizioni non coincidono: Ullman conta tutta la removal sulle carte della busta, noi la hard
-creature removal sulle non-terra.
+Per confronto, in [`limited-history.md`](limited-history.md) (pool del 2026-11-02): rimozione
+dura 22,2% delle non-terra nel pool, 3,11 per busta da 15; nei play booster 2024–2026 15,8% e
+2,01 per busta. Le definizioni non coincidono: Ullman conta tutta la removal sulle carte della
+busta, noi la rimozione dura (tag Removal, RemovePermanent o Wipe) sulle non-terra.
 
 **Forum Riptide Lab** (riportato, https://riptidelab.com/forum/goto/post?id=114760): removal tra il
 13% e il 25% delle carte nei cubi da 384, "24–25%" detto in linea con la media del forum; rapporto

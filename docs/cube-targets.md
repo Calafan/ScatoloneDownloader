@@ -1,39 +1,54 @@
-# Scatolone: percentuali obiettivo
+# Scatolone: obiettivo e misure
 
-Documento del punto 2 del piano di miglioramento del cubo. Misurato il 2026-10-18. Le percentuali
-qui sotto sono l'obiettivo scelto; i tagli e le aggiunte si applicano dopo che le carte saranno
-taggate e selezionate, rimisurando prima.
+Documento del punto 2 del piano di miglioramento del cubo. Riscritto il 2026-11-05: l'obiettivo è
+una direzione, non un elenco di percentuali da raggiungere. I numeri si fissano a revisione finita.
 
-## Il problema
+## Lo scatolone
+
+Lo scatolone è il pool dello store di ScatoloneQuintet: le carte con rating 3-5 e senza status
+(`metadata/pool.json`). È lo stesso pool che misurano la pagina /stats, i file di `report` e
+[`limited-history.md`](limited-history.md). La lista `E:\Working\_ToBe_Scatolone.txt` non è lo
+scatolone: è servita solo per la prima misura, quella del 2026-10-18 (vedi in fondo).
 
 Formato: 2 contro 2, ogni giocatore gioca il proprio turno in senso orario. Draft da 4 buste di 10
 carte a testa, quindi 160 carte per draft e 40 scelte per giocatore. I due compagni possono
 scambiarsi 3 carte a testa.
 
-La diagnosi di partenza è dell'utente: lo scatolone "sembra essere troppo lento e con troppe
-soluzioni". I numeri la confermano: rispetto a un set da draft retail il box ha due terzi di
-rimozione in più, più di cinque volte i Wipe, metà delle creature economiche e una curva più alta.
+## La direzione
 
-## Da dove vengono i numeri
+La diagnosi è dell'utente: lo scatolone "sembra essere troppo lento e con troppe soluzioni". La
+direzione che ne viene:
 
-1. **Il box.** La sezione `-- Scatolone` di `E:\Working\_ToBe_Scatolone.txt`: 4164 carte, tutte
-   trovate su Scryfall. Le sezioni Jolly, Bannate, Dungeon, Melds, Tokens ed Extra sono escluse.
-   Ogni carta pesa 1, perché una busta è un'estrazione a caso dal box.
-2. **I dati delle carte.** Il bulk "Oracle Cards" di Scryfall
-   (`oracle-cards-20261018090155.jsonl.gz`, 38.861 oggetti): costo di mana, riga del tipo,
-   forza e costituzione, parole chiave, testo. Per le carte a due facce vale la faccia frontale.
-3. **Gli effetti.** I tag del metadata store di ScatoloneQuintet (commit `483357a` più il working
-   tree del 2026-10-18): il tag rivisto a mano quando c'è, altrimenti la proposta del
-   classificatore. Delle 4164 carte del box, 1258 sono rivedute e 46 non sono nello store (contano
-   come senza tag).
-4. **Il riferimento retail.** Nove set da draft recenti: Foundations (FDN), Duskmourn (DSK),
-   Bloomburrow (BLB), Outlaws of Thunder Junction (OTJ), Murders at Karlov Manor (MKM), The Lost
-   Caverns of Ixalan (LCI), Wilds of Eldraine (WOE), Aetherdrift (DFT), Tarkir: Dragonstorm (TDM).
-   Le carte vengono dalla ricerca Scryfall `set:X is:booster -type:basic`, 2434 in tutto, di cui
-   2399 nello store. Sono pesate come escono dalle buste: per ogni busta 7 comuni, 3 non comuni,
-   7/8 di rara e 1/8 di mitica, diviso per il numero di carte di quella rarità nel set.
-5. **L'obiettivo.** Per ogni metrica, la media fra il box di oggi e il retail. L'utente l'ha
-   scelto il 2026-10-18 fra tre livelli: a metà strada, livello retail, oppure solo i Wipe.
+- meno rimozione dura, e soprattutto meno Wipe;
+- più creature economiche (costo 2 o meno);
+- una curva più bassa.
+
+Nessuna percentuale è fissata. Il 2026-10-20 l'utente ha detto che dell'obiettivo c'è "solo una
+vaga idea", e il 2026-11-05 ha scelto di tenere la sola direzione. I numeri si decidono a revisione
+finita, sul pool rimisurato.
+
+## Dove siamo
+
+Il pool del 2026-11-02 (2864 carte, store `bc7fd72`) accanto al Limited retail di oggi e ai due cubi
+pensati per il 2 contro 2, dalla tabella di [`limited-history.md`](limited-history.md#i-numeri),
+dove ci sono anche gli altri sei cubi e le ere precedenti. Percentuali sulle carte non-terra.
+
+| metrica | pool | play booster 2024–2026 | 2HG Cube | 42a6g |
+|---|---:|---:|---:|---:|
+| rimozione dura | 22.2 | 15.8 | 19.1 | 16.8 |
+| Wipe | 4.5 | 0.9 | 1.9 | 1.3 |
+| interazione | 40.6 | 25.5 | 33.8 | 27.1 |
+| vantaggio carte | 14.3 | 8.3 | 11.3 | 11.8 |
+| creature | 51.9 | 59.2 | 64.1 | 62.2 |
+| creature costo ≤2 | 15.8 | 20.7 | 18.7 | 21.9 |
+| costo medio | 3.23 | 3.04 | 3.24 | 3.28 |
+| costo 6+ | 8.9 | 6.2 | 11.1 | 9.5 |
+
+- Le risposte sono lontane da ogni riferimento: rimozione dura, Wipe, interazione e vantaggio carte
+  sono sopra ogni formato retail e sopra entrambi i cubi 2 contro 2.
+- La curva è quella dei cubi 2 contro 2 (costo medio 3.23 contro 3.24 e 3.28), sopra il retail.
+- Mancano creature: 51.9% contro il 62-64% dei cubi 2 contro 2, e quelle di costo ≤2 sono sotto
+  sia il retail sia i due cubi.
 
 ## Definizioni
 
@@ -54,108 +69,50 @@ frontale contiene "Land" e non "Creature".
 | fog | "prevent all combat damage" nel testo |
 | per draft | 160 × quota di non-terre × percentuale |
 
-## Le percentuali obiettivo
+Il tag è quello rivisto a mano quando c'è, altrimenti la proposta del classificatore. Guadagno vita
+e fog si leggono dal testo con una regex, non dai tag.
 
-Le quattro che definiscono "lento e con troppe soluzioni":
-
-| metrica | box oggi | retail | obiettivo |
-|---|---:|---:|---:|
-| rimozione dura | 24.7% | 14.8% | **19.8%** |
-| di cui Wipe | 5.1% | 0.9% | **3.0%** |
-| creature costo ≤2 | 9.9% | 21.6% | **15.7%** |
-| costo medio non-terre | 3.7 | 3.0 | **3.3** |
-
-Tutte le metriche, con il box dopo lo scambio proposto (vedi sotto):
-
-| metrica | box oggi | retail | obiettivo | dopo lo scambio |
-|---|---:|---:|---:|---:|
-| creature | 51.4% | 59.6% | 55.5% | 54.9% |
-| planeswalker | 3.8% | 0.1% | 1.9% | 3.4% |
-| istantanei e stregonerie | 33.7% | 28.8% | 31.3% | 31.2% |
-| costo medio non-terre | 3.7 | 3.0 | 3.3 | 3.5 |
-| costo medio creature | 4.0 | 3.2 | 3.6 | 3.7 |
-| costo 0-1 | 6.7% | 13.3% | 10.0% | 8.2% |
-| costo 2 | 19.5% | 30.3% | 24.9% | 22.4% |
-| costo 3 | 25.4% | 24.3% | 24.9% | 24.6% |
-| costo 4 | 20.0% | 15.6% | 17.8% | 19.2% |
-| costo 5 | 14.9% | 9.8% | 12.3% | 13.7% |
-| costo 6+ | 13.5% | 6.6% | 10.0% | 11.9% |
-| creature costo ≤2 | 9.9% | 21.6% | 15.7% | 14.8% |
-| 2-drop aggressivi | 6.0% | 11.9% | 9.0% | 8.8% |
-| costo ≤3 con forza ≥3 | 7.8% | 9.3% | 8.5% | 8.3% |
-| creature con haste | 4.3% | 2.0% | 3.2% | 4.5% |
-| creature evasive | 19.5% | 16.2% | 17.9% | 20.2% |
-| defender | 0.5% | 1.0% | 0.7% | 0.5% |
-| rimozione dura | 24.7% | 14.8% | 19.8% | 20.1% |
-| di cui Wipe | 5.1% | 0.9% | 3.0% | 3.1% |
-| risposte morbide | 10.8% | 5.9% | 8.4% | 10.7% |
-| counterspell | 3.2% | 1.6% | 2.4% | 3.3% |
-| disenchant | 5.2% | 3.3% | 4.2% | 4.8% |
-| scarto | 3.4% | 2.1% | 2.7% | 3.4% |
-| interazione totale | 43.7% | 25.5% | 34.6% | 39.4% |
-| vantaggio carte | 12.5% | 7.6% | 10.0% | 12.5% |
-| guadagno vita | 9.5% | 8.9% | 9.2% | 9.6% |
-| fog | 0.3% | 0.1% | 0.2% | 0.3% |
-| senza tag | 18.4% | 30.3% | 24.4% | 20.0% |
-| creature per rimozione dura | 2.1 | 4.0 | 3.0 | 2.7 |
-| creature per interazione | 1.2 | 2.3 | 1.8 | 1.4 |
-
-Le stesse cose contate in un draft da 160 carte:
-
-| per draft | box oggi | retail | obiettivo |
-|---|---:|---:|---:|
-| rimozione dura | 36.8 | 22.0 | 29.4 |
-| di cui Wipe | 7.6 | 1.3 | 4.5 |
-| interazione totale | 65.1 | 37.8 | 51.5 |
-| creature | 76.6 | 88.5 | 82.5 |
-| creature costo ≤2 | 14.7 | 32.1 | 23.4 |
-| 2-drop aggressivi | 9.0 | 17.7 | 13.3 |
-| costo 6+ | 20.1 | 9.8 | 14.9 |
-| vantaggio carte | 18.6 | 11.4 | 15.0 |
-| planeswalker | 5.6 | 0.2 | 2.9 |
-
-A box di dimensione costante (3878 carte non-terra), l'obiettivo vale circa: Wipe da 198 a 116
-(−82), rimozione dura da 958 a 766 (−192), creature di costo ≤2 da 383 a 611 (+228).
-
-## Quanto fidarsi di questi numeri
+## Quanto fidarsi
 
 - **Il retail è un riferimento, non un modello.** È pensato per l'1 contro 1 e ha meno potenza di
-  un cubo, che di solito vuole più rimozione. Per questo l'obiettivo è a metà strada e non al
-  livello retail.
+  un cubo, che di solito vuole più rimozione.
 - **In 2 contro 2 un Wipe colpisce due avversari**, quindi pesa più che in un 1 contro 1. È una
   ragione in più per tagliarli, e non è misurata nei numeri.
-- **Molti tag sono proposte del classificatore.** Nel box le carte senza rating danno gli stessi
-  rapporti di quelle valutate (interazione 45.2% contro 43.7% sul rating 3-5), quindi il quadro
-  regge. Nel retail le carte senza tag sono il 30%: i commons "vanilla" sono tanti, ma qualche
-  risposta può sfuggire al classificatore.
-- **Guadagno vita e fog** sono letti dal testo con una regex, non dai tag.
-- **Il box non è il pool dello store.** Delle 4164 carte, 1689 hanno rating 3-5, 583 rating 1-2
-  e 1892 nessun rating; 945 carte che lo store valuta 3-5 non sono nella lista. La pagina
-  /stats e i file di `report` misurano il pool, non lo scatolone vero.
-- **I numeri cambiano con il tagging.** Ogni carta rivista o valutata sposta le percentuali:
-  vanno rimisurate prima di applicare i tagli.
-
-## La proposta già pronta
-
-`E:\Working\_ToBe_Scatolone_proposta.md`, con una casella per carta:
-
-- **A, da tagliare (133):** carte del box con rating 1-2 che hanno rimozione dura o Wipe. Il
-  rating dell'utente le mette già in panchina.
-- **B, da valutare (91):** Wipe senza rating. Per l'obiettivo ne vanno via circa 57; i primi
-  candidati sono i 52 di costo 5 o più.
-- **C, da aggiungere (195):** creature di costo ≤2 valutate 3-5 nello store ma assenti dal box,
-  112 con forza 2 o più.
-
-Con A tagliato, i 52 Wipe di B da costo 5+ tagliati e C aggiunto, il box passa da 4164 a 4174
-carte e arriva alla colonna "dopo lo scambio": rimozione e Wipe all'obiettivo, creature economiche
-quasi. Restano sopra l'obiettivo la parte alta della curva (costo 6+ al 11.9%), il vantaggio carte
-(12.5%) e i planeswalker (3.4%): sono la leva successiva.
+- **Molti tag sono proposte del classificatore.** Nel pool del 2026-11-02 il 66.2% del peso è
+  rivisto a mano; nei formati retail la mediana è il 2.8%.
+- **I numeri cambiano con la revisione.** Ogni carta rivista o valutata sposta le percentuali.
 
 ## Per riprendere
 
-1. Finire di taggare e valutare le carte del box, soprattutto le 1892 senza rating.
-2. Rimisurare con gli script di [`tools/cube-metrics`](../tools/cube-metrics/README.md) e
-   rigenerare la proposta.
-3. Rivedere A, B e C. Un filtro "nel box" nel tagger, che legga la lista, permetterebbe di farlo
-   con le immagini e di avere /stats sullo scatolone vero.
-4. Poi la stessa analisi sulla parte alta della curva, sul vantaggio carte e sui planeswalker.
+1. Finire la revisione delle carte: rating e tag.
+2. Rimisurare pool, retail e cubi con gli script di
+   [`tools/cube-metrics`](../tools/cube-metrics/README.md) (sezione "Limited over time").
+3. Fissare con l'utente i numeri, metrica per metrica, partendo dalla direzione qui sopra.
+4. Poi i tagli e le aggiunte: nel pool sono cambi di rating o di status.
+
+## Storico: la misura del 2026-10-18 sulla lista txt
+
+La prima misura prese come scatolone la sezione `-- Scatolone` di `E:\Working\_ToBe_Scatolone.txt`
+(4164 carte, 1258 rivedute) e come retail nove set recenti (FDN, DSK, BLB, OTJ, MKM, LCI, WOE, DFT,
+TDM) dalla ricerca Scryfall `set:X is:booster -type:basic`, pesati per rarità: 7 comuni, 3 non
+comuni, 7/8 di rara e 1/8 di mitica per busta. L'obiettivo era la media fra le due, scelta
+dall'utente fra tre livelli (a metà strada, livello retail, solo i Wipe):
+
+| metrica | lista txt | retail | metà strada |
+|---|---:|---:|---:|
+| rimozione dura | 24.7% | 14.8% | 19.8% |
+| di cui Wipe | 5.1% | 0.9% | 3.0% |
+| creature costo ≤2 | 9.9% | 21.6% | 15.7% |
+| costo medio non-terre | 3.7 | 3.0 | 3.3 |
+
+Lo stesso giorno l'utente ha chiarito che lo scatolone finale è il pool, e che ogni carta viene
+rivista da capo. Quei numeri non si confrontano con il pool: la base è un'altra lista, e il retail
+è pesato con un modello per rarità su nove set invece che con i fogli di stampa di MTGJSON.
+
+Di quella misura restano:
+
+- la proposta di scambio `E:\Working\_ToBe_Scatolone_proposta.md` (A: 133 carte da tagliare, B: 91
+  Wipe da valutare, C: 195 creature da aggiungere), costruita sulla lista txt: non è un passo da
+  fare. Nemmeno un filtro "nel box" nel tagger serve, perché lo scatolone è il pool;
+- gli script della sezione storica di [`tools/cube-metrics`](../tools/cube-metrics/README.md);
+- la tabella completa, 30 metriche per carta e per draft, in questo file al commit `e6f5f38`.

@@ -6,7 +6,7 @@ namespace ScatoloneDownloader.Mtg
     /// The creature facts the creature profile reads from a <see cref="Card"/>:
     /// numeric power/toughness and the evasion/haste/defender definitions of
     /// <c>docs/cube-targets.md</c> ("Definizioni"), so the profile's numbers stay
-    /// comparable with the targets.
+    /// comparable with the cube measurements in <c>docs/</c>.
     /// </summary>
     internal static class CreatureStats
     {

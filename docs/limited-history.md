@@ -128,19 +128,15 @@ Il pool ha cinque volte i Wipe di un play booster di oggi.
   - meno Wipe: 1.9% e 1.3%, contro 4.5%;
   - meno interazione: 33.8% e 27.1%, contro 40.6%.
 
-**Rispetto alla diagnosi "troppo lento e con troppe soluzioni".** Il pool di oggi raggiunge già
-due delle quattro percentuali obiettivo di [`cube-targets.md`](cube-targets.md), misurate sulla
-lista txt:
+**Rispetto alla diagnosi "troppo lento e con troppe soluzioni".** La direzione di
+[`cube-targets.md`](cube-targets.md#la-direzione) è meno rimozione dura e Wipe, più creature
+economiche e una curva più bassa, senza percentuali fissate. Il pool di oggi:
 
-| metrica | pool | obiettivo |
-|---|---:|---:|
-| creature di costo ≤2 | 15.8% | 15.7% |
-| costo medio | 3.23 | 3.3 |
-| rimozione dura | 22.2% | 19.8% |
-| Wipe | 4.5% | 3.0% |
-
-La curva non è più alta di quella dei cubi 2v2. Restano lontane le risposte: rimozione dura,
-Wipe, interazione e vantaggio carte sono sopra ogni formato retail, e sopra quasi tutti i cubi.
+- è lontano nelle risposte: rimozione dura, Wipe, interazione e vantaggio carte sono sopra ogni
+  formato retail, e sopra quasi tutti i cubi;
+- ha la curva dei cubi 2v2 (costo medio 3.23 contro 3.24 e 3.28), sopra il retail (3.04 nei play
+  booster);
+- ha meno creature di costo ≤2 del retail e dei cubi 2v2: 15.8% contro 20.7%, 18.7% e 21.9%.
 
 ## Quanto fidarsi
 
