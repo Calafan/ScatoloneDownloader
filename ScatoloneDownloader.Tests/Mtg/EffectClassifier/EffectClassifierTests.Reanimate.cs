@@ -289,4 +289,82 @@ public sealed partial class EffectClassifierTests
         Assert.True(result.HasFlag(CardEffect.Reanimate));
         Assert.True(result.HasFlag(CardEffect.Removal));
     }
+
+    [Theory]
+    // Read 2026-11-06, each Reanimate by hand: several creature cards chosen in a
+    // graveyard and returned 'each of them' or 'two of them at random' on the next
+    // sentence (Sinister Waltz, The War in Heaven), ALL the cards of a kind
+    // returned with the verb first (Gerrard, Weatherlight Hero), and a permanent
+    // card put from among the cards exiled from the graveyard (Winter, Cynical
+    // Opportunist).
+    [InlineData("Sinister Waltz", "Sorcery",
+        "Choose three target creature cards in your graveyard. Return two of them at random to the "
+        + "battlefield and put the other on the bottom of your library.")]
+    [InlineData("The War in Heaven", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — You "
+        + "draw three cards and you lose 3 life.\nII — Mill three cards.\nIII — Choose up to three target "
+        + "creature cards with total mana value 8 or less in your graveyard. Return each of them to the "
+        + "battlefield with a necrodermis counter on it. They're artifacts in addition to their other types.")]
+    [InlineData("Gerrard, Weatherlight Hero", "Legendary Creature — Human Soldier",
+        "First strike\nWhen Gerrard dies, exile it and return to the battlefield all artifact and creature "
+        + "cards in your graveyard that were put there from the battlefield this turn.")]
+    [InlineData("Winter, Cynical Opportunist", "Legendary Creature — Human Warlock",
+        "Deathtouch\nWhenever Winter attacks, mill three cards.\nDelirium — At the beginning of your end step, "
+        + "you may exile any number of cards from your graveyard with four or more card types among them. If "
+        + "you do, put a permanent card from among them onto the battlefield with a finality counter on it.")]
+    public void Classify_TheNovember6Readings_IsReanimate(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
+    }
+
+    [Theory]
+    // Read 2026-11-06, each untagged for Reanimate by hand: a token that is a copy
+    // of THIS creature (Uchuulon) or of a creature token you control (Selesnya
+    // Eulogist's populate reminder) brings nobody back, and cards exiled with a
+    // Vehicle returned 'tapped under their owners' control' are handed back to
+    // their owners (Mechtitan Core, as Mysterious Limousine).
+    [InlineData("Uchuulon", "Creature — Crab Ooze Horror",
+        "Uchuulon's power is equal to the number of Crabs, Oozes, and/or Horrors you control.\nHorrific "
+        + "Symbiosis — At the beginning of your end step, exile up to one target creature card from an "
+        + "opponent's graveyard. If you do, create a token that's a copy of this creature.")]
+    [InlineData("Selesnya Eulogist", "Creature — Centaur Druid",
+        "{2}{G}: Exile target creature card from a graveyard, then populate. (Create a token that's a copy of "
+        + "a creature token you control.)")]
+    [InlineData("Mechtitan Core", "Artifact — Vehicle",
+        "{5}, Exile this Vehicle and four other artifact creatures and/or Vehicles you control: Create "
+        + "Mechtitan, a legendary 10/10 Construct artifact creature token with flying, vigilance, trample, "
+        + "lifelink, and haste that's all colors. When that token leaves the battlefield, return all cards "
+        + "exiled with this Vehicle except this card to the battlefield tapped under their owners' "
+        + "control.\nCrew 2")]
+    public void Classify_TheNovember6Readings_IsNotReanimate(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
+    }
+
+    [Theory]
+    // RULED 2026-11-06 (No: dal grimorio non è Reanimate), refining 09-19: the
+    // permanent cards exiled with the card are put onto the battlefield, but the
+    // card only exiled from the top of a library, so nothing came back from the
+    // dead (Journey to the Lost City).
+    [InlineData("Journey to the Lost City", "Enchantment",
+        "At the beginning of your upkeep, exile the top four cards of your library, then roll a d20.\n1—9 | "
+        + "You may put a land card from among those cards onto the battlefield.\n10—19 | Create a 2/2 green Wolf "
+        + "creature token, then put a +1/+1 counter on it for each creature card among those cards.\n20 | Put "
+        + "all permanent cards exiled with this enchantment onto the battlefield, then sacrifice it.")]
+    public void Classify_TheNovember6Ruling_ExilingOnlyFromTheTopOfALibrary_IsNotReanimate(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
+    }
+
+    [Theory]
+    // A card that exiles from a graveyard as well as from the top of a library
+    // keeps the 09-19 route (Yggdrasil, Rebirth Engine).
+    [InlineData("Yggdrasil, Rebirth Engine", "Legendary Artifact",
+        "When Yggdrasil enters, exile all creature cards from your graveyard.\n{T}: Exile the top three cards "
+        + "of your library.\n{4}, {T}: Put a creature card exiled with Yggdrasil onto the battlefield under your "
+        + "control. It gains haste until end of turn. Activate only as a sorcery.")]
+    public void Classify_TheNovember6Ruling_ExilingFromAGraveyardAsWell_IsReanimate(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
+    }
 }

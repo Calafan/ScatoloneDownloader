@@ -81,6 +81,23 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
+    // Read 2026-11-06, both Sacrifice by hand: 'Sacrifice UP TO THREE permanents:'
+    // is a cost in front of a colon whatever the number (Baba Lysaga, Night
+    // Witch), and an opponent's optional reply to YOUR sacrifice, 'if you do, each
+    // opponent may sacrifice a permanent', is no edict (Braids, Arisen Nightmare).
+    [InlineData("Baba Lysaga, Night Witch", "Legendary Creature — Human Warlock",
+        "{T}, Sacrifice up to three permanents: If there were three or more card types among the sacrificed "
+        + "permanents, each opponent loses 3 life, you gain 3 life, and you draw three cards.")]
+    [InlineData("Braids, Arisen Nightmare", "Legendary Creature — Nightmare",
+        "At the beginning of your end step, you may sacrifice an artifact, creature, enchantment, land, or "
+        + "planeswalker. If you do, each opponent may sacrifice a permanent of their choice that shares a card "
+        + "type with it. For each opponent who doesn't, that player loses 2 life and you draw a card.")]
+    public void Classify_TheNovember6Readings_IsSacrifice(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Sacrifice));
+    }
+
+    [Theory]
     // Three things that are not an outlet: an edict empties somebody ELSE's
     // board, an additional cost to cast is paid once on the way to a different
     // effect, and a land is not a creature.

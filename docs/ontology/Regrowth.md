@@ -49,3 +49,27 @@ card exiled from your graveyard is Regrowth. A creature card's copy stays Reanim
 on the March, Abyssal Harvester), and so does an "artifact or creature" copy (Tawnos, Lorehold
 Archivist). Read the same day: a card of yours put into the graveyard from the battlefield, exiled
 and then cast (Mazzy, Truesword Paladin's Auras, 1 of 1).
+
+Read 2026-11-06, the sitting of 11-03..05, each tagged by hand and read under the rulings above: a
+card CHOSEN in your graveyard and returned by a d20 table row, "then roll a d20 … 10—20 | Return
+that card to your hand" (Aberrant Mind Sorcerer, 1 of 1); an any-graveyard exile whose copy is cast
+in a sentence of its own, "Exile target instant or sorcery card from a graveyard. Copy that card …
+You may cast the copy" (Mnemonic Deluge, Wizard's Spellbook, 2 of 2; Reenact the Crime says "in a
+graveyard" and stays untagged); and the permission to play granted in quotes to the cards in your
+graveyard, as Otaria grants flashback (Kethis, the Hidden Hand, 1 of 1). Not this: an exile paid as
+a COST in front of a colon, whose Adventure reminder "You may cast the artifact later from exile"
+stood for a cast (Altar of Bhaal // Bone Offering returns a creature to the battlefield, so it is
+Reanimate), and a draw that only WATCHES a cast, "if you've cast a spell from a graveyard"
+(Laboratory Drudge), the shape of Neerdiv.
+
+RULED 2026-11-06, "Tribale non è Regrowth" (asked on Ashcoat of the Shadow Swarm against the 8
+returns the hand had tagged): a return to HAND limited to a creature TYPE is NOT this tag, whether
+it names one tribe (Elderfang Ritualist, Mirkwood Elk: Elf; Tombstone: Villain; Spawnbed Protector:
+Eldrazi; Mtenda Griffin; Gallifrey Stands: Doctor), a list of them (Mudflat Village's "Bat, Lizard,
+Rat, or Squirrel") or Soulshift's reminder (Spirit). It is the same TribalCard that keeps a tribal
+return to the BATTLEFIELD out of Reanimate, applied to the sentences that put a card into the hand;
+the tribal return to the battlefield stays Reanimate, untouched. A card type, a supertype and the
+like is no tribe (Aura, Equipment, Vehicle, Saga: Satsuki, Dogmeat, Imperial Recovery Unit stay),
+and the tag stays when another Regrowth stands on the card (Kami of Restless Shadows puts a creature
+card on top of its library in its other mode). Cast from a graveyard is not touched (Zul Ashur,
+Jacob Frye: asked as a question). 7 reviewed cards lose the tag and are handed back.

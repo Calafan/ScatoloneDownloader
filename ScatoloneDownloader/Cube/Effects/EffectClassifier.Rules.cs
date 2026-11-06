@@ -275,8 +275,10 @@ namespace ScatoloneDownloader.Cube
                     // An Aura that turns ANY nonland permanent into a Treasure is
                     // the breadth of Vindicate: Minimus Containment ("Enchant
                     // nonland permanent … Enchanted permanent is a Treasure
-                    // artifact", RULED 2026-11-05, Removal and RemovePermanent).
-                    // The Auras that enchant a creature, a planeswalker or a Clue
+                    // artifact", RULED 2026-11-05, corrected 2026-11-06: this tag
+                    // ALONE, no Removal; see the Removal pattern for the Auras that
+                    // turn a permanent into a Treasure, a Clue or a Food). The
+                    // Auras that enchant a creature, a planeswalker or a Clue
                     // (In Too Deep, Removal) or a creature or Food (Sugar Coat,
                     // Removal and Pacify) stay without this tag.
                     Rx(@"^enchant nonland permanent\n[^\n]*\benchanted permanent is an? (?:colorless )?(?:Treasure|Clue|Food)\b", RegexOptions.Multiline),
@@ -582,12 +584,26 @@ namespace ScatoloneDownloader.Cube
                         // The colour need not be said: Minimus Containment's
                         // "Enchanted permanent is a Treasure artifact with …
                         // and it loses all other abilities" (RULED 2026-11-05,
-                        // Removal and RemovePermanent, not Pacify). Without the
-                        // colour the family is 3 reviewed Auras: In Too Deep and
-                        // Sugar Coat already said "colorless" and are Removal by
-                        // hand (Sugar Coat also Pacify), Minimus Containment was
-                        // the only one that did not.
-                        + @"|enchanted (?:permanent|creature) is an? (?:colorless )?(?:Treasure|Clue|Food)\b"
+                        // Removal and RemovePermanent, not Pacify; CORRECTED
+                        // 2026-11-06 to RemovePermanent alone, see below). Without
+                        // the colour the family is 3 reviewed Auras: In Too Deep
+                        // and Sugar Coat already said "colorless" and are Removal
+                        // by hand (Sugar Coat also Pacify), Minimus Containment
+                        // was the only one that did not.
+                        //
+                        // The Aura that enchants ANY nonland permanent is left out
+                        // of this one by the lookbehind (it opens the card): "è sia
+                        // removal che remove permanent ma basta solo questo
+                        // [RemovePermanent] secondo me per l'ontologia attuale",
+                        // 2026-11-06. Of 101 reviewed cards tagged RemovePermanent
+                        // by hand, 99 carry no Removal; the 2 that do (Molten
+                        // Collapse, Witherbloom Command) have a SEPARATE creature
+                        // mode. One effect on any nonland permanent is the breadth
+                        // of Vindicate, so RemovePermanent alone (Audacious Swap,
+                        // "Solo RemovePermanent", 2026-10-27). Sugar Coat and In
+                        // Too Deep, which enchant a creature (or Food, or Clue),
+                        // do not move.
+                        + @"|(?<!\Aenchant nonland permanent\n)enchanted (?:permanent|creature) is an? (?:colorless )?(?:Treasure|Clue|Food)\b"
                         + @"|turn target [\w ,-]{0,30}(?<!non)creature face down"),
                     // Phased out for as long as the card that did it stays, the
                     // way an O-ring exiles (Oubliette, The Phasing of Zhalfir).
@@ -1568,7 +1584,13 @@ namespace ScatoloneDownloader.Cube
                 (CardEffect.Sacrifice, [
                     // An Aura "ATTACHED TO this creature" is not a creature
                     // sacrificed (Faunsbane Troll, 2026-10-15).
-                    Rx(@"sacrifices? (?:a|an|another|two|three|\d+|x\b|one or more\b)(?:(?!\battached to\b)[\w ])*(?:creature|artifact|permanent)"),
+                    // "UP TO three permanents" is a count like the others, read
+                    // 2026-11-06 from Baba Lysaga, Night Witch ("{T}, Sacrifice up
+                    // to three permanents:", Sacrifice by hand): the cost in front
+                    // of a colon is the repeatable outlet of 2026-09-25, whatever
+                    // the number. Counted broad ("sacrifices? up to"): 1 reviewed
+                    // card, tagged, and 1 unreviewed.
+                    Rx(@"sacrifices? (?:a|an|another|two|three|\d+|x\b|one or more\b|up to \w+\b)(?:(?!\battached to\b)[\w ])*(?:creature|artifact|permanent)"),
                     Rx(SacrificeKeywordGranted + @"|\bsacrificing (?:a|an|another)[\w ]*(?:creature|artifact|permanent)"
                         + @"|" + SacrificesOneOfThem),
                     Rx(SacrificesYourOwnByAnotherVerb, RegexOptions.Multiline)]),

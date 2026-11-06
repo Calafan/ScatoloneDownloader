@@ -33,3 +33,10 @@ lets you choose, and an artifact or enchantment shuffled into its owner's librar
 Parting). Not this: a sacrifice watched by "whenever an opponent sacrifices", a trigger and no edict
 (Vengeful Tracker), and a target artifact or enchantment CARD in a graveyard (Grave Robbers, Saruman
 of Many Colors; 0 of 31 reviewed). Wrath of the Skies is handed back without the tag.
+
+Read 2026-11-06, each tagged by hand: the permanent every player may CHOOSE, "starting with you,
+each player may choose an artifact or enchantment you don't control. Destroy each permanent chosen
+this way" (Druid of Purification, as Ultimate Magic: Meteor, 2 of 2); a second target after "and",
+"destroy up to one target planeswalker and up to one target artifact" (Sword of Sinew and Steel; 2
+of 2 with Convert to Slime); and the edict repeated for another noun, "then repeat this process for
+an enchantment and a planeswalker" (Invoke Despair, as Pick Your Poison; 1 of 1).

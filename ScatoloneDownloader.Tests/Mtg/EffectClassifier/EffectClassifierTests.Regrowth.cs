@@ -294,4 +294,114 @@ public sealed partial class EffectClassifierTests
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Regrowth));
     }
+
+    [Theory]
+    // Read 2026-11-06, each Regrowth by hand: a card chosen in the graveyard and
+    // returned by a d20 table row (Aberrant Mind Sorcerer), an any-graveyard exile
+    // whose copy comes in a sentence of its own, outside the line that exiles it
+    // (Mnemonic Deluge, Wizard's Spellbook), and a graveyard card granted the
+    // permission to be played in quotes (Kethis, the Hidden Hand; the flashback
+    // Otaria grants).
+    [InlineData("Aberrant Mind Sorcerer", "Creature — Human Elf Shaman Sorcerer",
+        "Psionic Spells — When this creature enters, choose target instant or sorcery card in your graveyard, "
+        + "then roll a d20.\n1—9 | You may put that card on top of your library.\n10—20 | Return that card to "
+        + "your hand.")]
+    [InlineData("Wizard's Spellbook", "Artifact — Book",
+        "{T}: Exile target instant or sorcery card from a graveyard. Roll a d20. Activate only as a "
+        + "sorcery.\n1—9 | Copy that card. You may cast the copy.\n10—19 | Copy that card. You may cast the copy "
+        + "by paying {1} rather than paying its mana cost.\n20 | Copy each card exiled with this artifact. You "
+        + "may cast any number of the copies without paying their mana costs.")]
+    [InlineData("Mnemonic Deluge", "Sorcery",
+        "Exile target instant or sorcery card from a graveyard. Copy that card three times. You may cast the "
+        + "copies without paying their mana costs. Exile Mnemonic Deluge.")]
+    [InlineData("Kethis, the Hidden Hand", "Legendary Creature — Elf Advisor",
+        "Legendary spells you cast cost {1} less to cast.\nExile two legendary cards from your graveyard: "
+        + "Until end of turn, each legendary card in your graveyard gains \"You may play this card from your "
+        + "graveyard.\"")]
+    public void Classify_TheNovember6Readings_IsRegrowth(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Regrowth));
+    }
+
+    [Theory]
+    // Read 2026-11-06, both untagged for Regrowth by hand: an exile paid as a COST
+    // in front of a colon, with the Adventure's reminder 'You may cast the
+    // artifact later from exile' standing for the cast (Altar of Bhaal // Bone
+    // Offering returns a creature to the battlefield, which is Reanimate), and a
+    // draw that only WATCHES a cast from a graveyard happen with 'if you have
+    // cast' (Laboratory Drudge, the shape that keeps 'whenever you cast' out).
+    [InlineData("Altar of Bhaal // Bone Offering", "Artifact // Sorcery — Adventure",
+        "{2}{B}, {T}, Exile a creature you control: Return target creature card from your graveyard to the "
+        + "battlefield. Activate only as a sorcery.\nCreate a tapped 4/1 black Skeleton creature token with "
+        + "menace. (Then exile this card. You may cast the artifact later from exile.)")]
+    [InlineData("Laboratory Drudge", "Creature — Zombie Horror",
+        "At the beginning of each end step, draw a card if you've cast a spell from a graveyard or activated "
+        + "an ability of a card in a graveyard this turn.")]
+    public void Classify_TheNovember6Readings_IsNotRegrowth(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Regrowth));
+    }
+
+    [Theory]
+    // RULED 2026-11-06 (Tribale non è Regrowth): a return to HAND limited to a
+    // creature type is not Regrowth; a tribe, a list of tribes, and Soulshift's
+    // reminder all read the same. A tribal return to the battlefield stays
+    // Reanimate.
+    [InlineData("Ashcoat of the Shadow Swarm", "Legendary Creature — Rat Warlock",
+        "Whenever Ashcoat attacks or blocks, other Rats you control get +X/+X until end of turn, where X is "
+        + "the number of Rats you control.\nAt the beginning of your end step, you may mill four cards. If you "
+        + "do, return up to two Rat creature cards from your graveyard to your hand. (To mill a card, put the "
+        + "top card of your library into your graveyard.)")]
+    [InlineData("Elderfang Ritualist", "Creature — Elf Cleric",
+        "When this creature dies, return another target Elf card from your graveyard to your hand.")]
+    [InlineData("Gallifrey Stands", "Legendary Enchantment",
+        "When Gallifrey Stands enters, return all Doctor cards from your graveyard to your hand.\nAt the "
+        + "beginning of your upkeep, you may put a Doctor creature card from your hand onto the battlefield. "
+        + "Then if you control thirteen or more Doctors, you win the game.")]
+    [InlineData("Mudflat Village", "Land",
+        "{T}: Add {C}.\n{T}: Add {B}. Spend this mana only to cast a creature spell.\n{1}{B}, {T}, Sacrifice "
+        + "this land: Return target Bat, Lizard, Rat, or Squirrel card from your graveyard to your hand.")]
+    [InlineData("Deathknell Kami", "Creature — Spirit",
+        "Flying\n{2}: This creature gets +1/+1 until end of turn. Sacrifice it at the beginning of the next "
+        + "end step.\nSoulshift 1 (When this creature dies, you may return target Spirit card with mana value 1 "
+        + "or less from your graveyard to your hand.)")]
+    public void Classify_TheNovember6Ruling_ATribalReturnToHand_IsNotRegrowth(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Regrowth));
+    }
+
+    [Theory]
+    // A card type, a supertype or the like is no tribe (Aura, Equipment, Vehicle,
+    // Saga), and a card with another Regrowth on it keeps the tag when its tribal
+    // return is blanked (Kami of Restless Shadows puts a creature card on top of
+    // the library in its other mode).
+    [InlineData("Satsuki, the Living Lore", "Legendary Creature — Human Druid",
+        "{T}: Put a lore counter on each Saga you control. Activate only as a sorcery.\nWhen Satsuki dies, "
+        + "choose up to one —\n• Return target Saga or enchantment creature you control to its owner's hand.\n• "
+        + "Return target Saga card from your graveyard to your hand.")]
+    [InlineData("Dogmeat, Ever Loyal", "Legendary Creature — Dog",
+        "When Dogmeat enters, mill five cards, then return an Aura or Equipment card from your graveyard to "
+        + "your hand.\nWhenever a creature you control that's enchanted or equipped attacks, create a Junk "
+        + "token. (It's an artifact with \"{T}, Sacrifice this token: Exile the top card of your library. You "
+        + "may play that card this turn. Activate only as a sorcery.\")")]
+    [InlineData("Imperial Recovery Unit", "Artifact — Vehicle",
+        "Whenever this Vehicle attacks, return target creature or Vehicle card with mana value 2 or less from "
+        + "your graveyard to your hand.\nCrew 2 (Tap any number of creatures you control with total power 2 or "
+        + "more: This Vehicle becomes an artifact creature until end of turn.)")]
+    [InlineData("Kami of Restless Shadows", "Creature — Spirit",
+        "When this creature enters, choose one —\n• Return up to one target Ninja or Rogue creature card from "
+        + "your graveyard to your hand.\n• Put target creature card from your graveyard on top of your library.")]
+    // An Arcane card is a spell type, no tribe (The Unspeakable, unreviewed);
+    // 'creature card' beside a tribe is a plain type (Rise from the Wreck,
+    // Regrowth by hand).
+    [InlineData("The Unspeakable", "Legendary Creature — Spirit",
+        "Flying, trample\nWhenever The Unspeakable deals combat damage to a player, you may return target "
+        + "Arcane card from your graveyard to your hand.")]
+    [InlineData("Rise from the Wreck", "Sorcery",
+        "Return up to one target creature card, up to one target Mount card, up to one target Vehicle card, "
+        + "and up to one target creature card with no abilities from your graveyard to your hand.")]
+    public void Classify_TheNovember6Ruling_ANonTribalReturnToHand_IsStillRegrowth(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Regrowth));
+    }
 }

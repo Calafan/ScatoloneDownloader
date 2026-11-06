@@ -27,10 +27,13 @@ Read 2026-10-30: one target per player, the owners named after the targets ("Tho
 owners shuffle them into their libraries", Guff Rewrites History), under the 2026-10-27 shuffle
 rule.
 
-RULED 2026-11-05: Minimus Containment is named Removal and RemovePermanent, not Pacify. An Aura with
-"Enchant nonland permanent" whose permanent becomes a Treasure artifact that loses all other
-abilities is the breadth of Vindicate; the Auras that enchant a creature, planeswalker or Clue (In
-Too Deep, Removal) or a creature or Food (Sugar Coat, Removal and Pacify) stay without this tag.
+RULED 2026-11-05, corrected 2026-11-06: Minimus Containment is named RemovePermanent ALONE, not
+Removal and not Pacify (11-05 had Removal too; the human on 11-06: "è sia removal che remove
+permanent ma basta solo questo secondo me per l'ontologia attuale"; 99 of the 101 reviewed cards
+tagged RemovePermanent by hand carry no Removal). An Aura with "Enchant nonland permanent" whose
+permanent becomes a Treasure artifact that loses all other abilities is the breadth of Vindicate;
+the Auras that enchant a creature, planeswalker or Clue (In Too Deep, Removal) or a creature or Food
+(Sugar Coat, Removal and Pacify) stay without this tag.
 
 Read 2026-11-05: YOU choose a nonland permanent among each opponent's and a die picks which one is
 destroyed, "for each opponent, choose a nonland permanent that player controls. Destroy one of them

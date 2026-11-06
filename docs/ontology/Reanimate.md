@@ -68,3 +68,20 @@ Ollenbock, Removal and Reanimate by hand, 1 of 1). It reads the graveyard half: 
 2026-10-13 that a card handed back to its OWNER is no reanimation (Mysterious Limousine, Vault 13)
 is about a creature taken off the battlefield, while this card is named from a graveyard and comes
 back from the dead.
+
+Read 2026-11-06, the sitting of 11-03..05 and the older misses of the same wordings, each tagged by
+hand: several creature cards chosen in a graveyard and returned "each of them" or "two of them at
+random" in the next sentence (Sinister Waltz, The War in Heaven, 2 of 2); ALL the cards of a kind
+returned, the verb first (Gerrard, Weatherlight Hero, 1 of 1; Faith's Reward is proposed the same);
+and a permanent card put from among the cards the card exiled from your graveyard (Winter, Cynical
+Opportunist, 1 of 1). Not this: a token copy of THIS creature, "exile up to one target creature card
+from an opponent's graveyard. If you do, create a token that's a copy of this creature" (Uchuulon),
+or of a creature token you control, populate's reminder (Selesnya Eulogist): the token copies
+nothing that was in the graveyard, so nobody comes back (both Tokens alone by hand, 0 of 2); and
+cards exiled with a Vehicle returned "tapped under their owners' control" (Mechtitan Core), handed
+back to their owners as Mysterious Limousine is.
+
+RULED 2026-11-06, "No: dal grimorio non è Reanimate" (Journey to the Lost City), as a refinement of
+the 09-19 route "a card THIS CARD exiled, put onto the battlefield": it does not hold when the card
+exiled cards only from the top of a LIBRARY, since nothing came back from the dead. A card that
+exiles from a graveyard as well keeps the tag (Yggdrasil, Rebirth Engine).

@@ -141,12 +141,17 @@ corrected by name), the breadth rule of 2026-09-15; a creature shuffled away sta
 Read 2026-10-30: -1/-1 counters put on a creature CHOSEN in the sentence before, here by die roll
 (Attempted Murder, 1 of 1).
 
-RULED 2026-11-05: Minimus Containment is named Removal and RemovePermanent, not Pacify. An Aura for
-any nonland permanent that makes it a Treasure artifact with "{T}, Sacrifice this artifact: Add one
-mana of any color" and loses all its other abilities is the breadth of Vindicate, not a lock on
-one creature. Sugar Coat's Aura for a creature or Food stays Removal and Pacify ("Aura = +Pacify",
-Pacify.md), In Too Deep's for a creature, planeswalker or Clue stays Removal. The colour of the
-Treasure need not be said ("a Treasure artifact", not "a colorless Treasure").
+RULED 2026-11-05, corrected 2026-11-06: Minimus Containment is named RemovePermanent ALONE, not
+Removal and not Pacify. An Aura for any nonland permanent that makes it a Treasure artifact with
+"{T}, Sacrifice this artifact: Add one mana of any color" and loses all its other abilities is the
+breadth of Vindicate, not a lock on one creature. It was named "Removal and RemovePermanent" on
+11-05; the human on 11-06: "è sia removal che remove permanent ma basta solo questo
+[RemovePermanent] secondo me per l'ontologia attuale", and of the 101 reviewed cards tagged
+RemovePermanent by hand 99 carry no Removal (the 2 that do, Molten Collapse and Witherbloom Command,
+have a SEPARATE creature mode), as Audacious Swap is "Solo RemovePermanent". Sugar Coat's Aura for a
+creature or Food stays Removal and Pacify ("Aura = +Pacify", Pacify.md), In Too Deep's for a
+creature, planeswalker or Clue stays Removal. The colour of the Treasure need not be said ("a
+Treasure artifact", not "a colorless Treasure").
 
 Read 2026-11-05: an edict by PILES, "each opponent separates the creatures they control into two
 piles. … you choose one … sacrifices the creatures in their chosen pile" (Make an Example); the

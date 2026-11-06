@@ -854,18 +854,20 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
-    // RULED 2026-11-05: an Aura that makes any nonland permanent a Treasure that
-    // loses all other abilities is named Removal and RemovePermanent, and not
-    // Pacify (Minimus Containment).
+    // RULED 2026-11-05, corrected 2026-11-06: an Aura that makes any nonland
+    // permanent a Treasure that loses all other abilities is RemovePermanent
+    // alone, and neither Removal nor Pacify (Minimus Containment): "è sia
+    // removal che remove permanent ma basta solo questo secondo me per
+    // l'ontologia attuale".
     [InlineData("Minimus Containment", "Enchantment — Aura",
         "Enchant nonland permanent\nEnchanted permanent is a Treasure artifact with \"{T}, Sacrifice this "
         + "artifact: Add one mana of any color,\" and it loses all other abilities. (If it was a creature, it's "
         + "no longer a creature.)")]
-    public void Classify_TheNovember5Ruling_MinimusContainment_IsRemovalAndRemovePermanentNotPacify(string name, string typeLine, string oracle)
+    public void Classify_TheNovember5Ruling_MinimusContainment_IsRemovePermanentAloneNotRemovalNorPacify(string name, string typeLine, string oracle)
     {
         CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
 
-        Assert.True(result.HasFlag(CardEffect.Removal));
+        Assert.False(result.HasFlag(CardEffect.Removal));
         Assert.True(result.HasFlag(CardEffect.RemovePermanent));
         Assert.False(result.HasFlag(CardEffect.Pacify));
     }

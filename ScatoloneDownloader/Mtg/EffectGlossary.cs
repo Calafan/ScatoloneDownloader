@@ -152,8 +152,8 @@
 
             [CardEffect.Regrowth] =
                 "Buys a card back out of a graveyard: to HAND, to the TOP of a library, or by CASTING it there or "
-                + "out of the exile it was moved to — reanimation for spells. A card coming back ITSELF (to hand, "
-                + "flashback, escape, unearth) is not. Nor is the BOTTOM of a library, or an opponent's graveyard. "
+                + "out of the exile it was moved to — reanimation for spells. Not a card coming back ITSELF (flashback, unearth), "
+                + "one for a creature TYPE only, the BOTTOM of a library or an opponent's graveyard. "
                 + "Straight to the battlefield is Reanimate.",
 
             [CardEffect.Cheat] =

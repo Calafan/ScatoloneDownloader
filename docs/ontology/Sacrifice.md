@@ -37,3 +37,11 @@ opponent does.
 
 Read 2026-10-30: one of your creatures that has just dealt combat damage, every time it happens
 ("you may sacrifice one of them", Descendants' Fury, 1 of 1).
+
+Read 2026-11-06: a cost that sacrifices "UP TO three permanents" is the outlet of 2026-09-25
+whatever the number (Baba Lysaga, Night Witch, 1 of 1), and so is an end-step sacrifice of yours
+whose "if you do" lets each opponent sacrifice too, "each opponent may sacrifice a permanent of
+their choice that shares a card type" (Braids, Arisen Nightmare, 1 of 1): the opponent's reply
+empties nobody's board, so it is no edict. An opponent's "may sacrifice" without your own sacrifice
+before it stays an edict (Fandaniel, Osseous Sticktwister, Rakdos, Braids's Frightful Return, 0 of
+4).

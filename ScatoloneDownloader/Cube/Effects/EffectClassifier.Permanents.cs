@@ -49,7 +49,32 @@ namespace ScatoloneDownloader.Cube
             // Ultimate Magic: Meteor names no target at all — "for each opponent,
             // choose an artifact or land that player controls. Destroy the chosen
             // permanents." The same clause is LandDestruction's last miss.
-            Rx(@"choose an? [\w ,'\-]{0,30}\bartifacts?\b[^\n]{0,40}destroy the chosen"),
+            //
+            // "Each permanent chosen this way" is the same clause, and the choosing
+            // may be EVERY player's: Druid of Purification's "starting with you,
+            // each player may choose an artifact or enchantment you don't control.
+            // Destroy each permanent chosen this way" (Disenchant by hand, read
+            // 2026-11-06). Counted broad, "choose an artifact/enchantment ...
+            // destroy the chosen / each permanent chosen": 2 reviewed cards, both
+            // tagged (Ultimate Magic: Meteor, Druid), no untagged, no unreviewed.
+            // "Choose an ENCHANTMENT" first was in the count and moves no card
+            // (no card says it), so it is not written.
+            Rx(@"choose an? [\w ,'\-]{0,30}\bartifacts?\b[^\n]{0,40}destroy (?:the chosen|each permanent chosen)"),
+            // A SECOND target after "and": "destroy up to one target planeswalker
+            // and up to one target artifact" (Sword of Sinew and Steel, tagged
+            // by hand, 2026-10-20). Counted broad, "destroy/exile ... and
+            // (up to N) target <artifact/enchantment>": 2 reviewed cards, both
+            // tagged (Convert to Slime reads it already), no untagged, 3
+            // unreviewed all proposed.
+            Rx(@"(?:destroy|exile) [^.\n]{0,60}? and up to \w+ (?:other )?target (?:[\w '\-]{1,14}, )?" + DisenchantNoun),
+            // The edict repeated for another noun: Invoke Despair's "target
+            // opponent sacrifices a creature of their choice. If they can't, they
+            // lose 2 life and you draw a card. Then repeat this process for an
+            // enchantment and a planeswalker" (Removal and Disenchant by hand,
+            // 2026-10-22), the edict of Pick Your Poison and Gaius van Baelsar
+            // read for the second noun. The only card that says it (1 of 1
+            // tagged), so the wording is unique.
+            Rx(@"\brepeat this process for an? (?:artifact|enchantment)\b"),
             // …and the TYPE chosen rather than the permanent: "Choose artifact or
             // enchantment. Destroy all permanents of the chosen type" (Season of
             // Gathering, 2026-10-16).
@@ -451,7 +476,15 @@ namespace ScatoloneDownloader.Cube
 
         private static readonly Regex[] MillPatterns =
         [
-            Rx(OtherPlayer + @"[\w ,]{0,40}mills?\b"),
+            // The run in between may not say "YOU": Sivriss, Nightmare Speaker's
+            // "for each opponent, you mill a card, then return that card from your
+            // graveyard" fills your own graveyard, which is not this tag
+            // (Mill.md: "a bare 'mill three cards' fills your own graveyard"; hand
+            // CardAdvantage, Burn, Sacrifice and Regrowth, no Mill). Counted broad,
+            // "<a player>, ... you mill": 1 reviewed card, untagged, and no
+            // unreviewed one; the 25 reviewed cards that say "you mill" at all carry
+            // no Mill.
+            Rx(OtherPlayer + @"(?:(?!\byou\b)[\w ,]){0,40}mills?\b"),
             Rx(@"put(?:s)? the top [\w ]{0,25}" + OtherPlayer + @"[\w' ]{0,20}library into"),
             // Same sentence with the victim in front of the verb, which is how
             // Millstone and most pre-2021 mill is actually written.
@@ -470,8 +503,37 @@ namespace ScatoloneDownloader.Cube
             // TOKEN's quoted ability (Ashiok, Nightmare Muse).
             Rx(@"^(?![^\n]*(?:\n[^\n]*)?\b(?:(?:may|can) (?:cast|play)(?! this card\b)|(?:cast|play)s? (?:it|them|that card|those cards)|under your control)\b)"
                 + @"(?:[^""\n]|""[^""\n]*"")*?\b(?:target (?:player|opponent)|each opponent|an opponent|that player|defending player|its controller)"
-                + @"[\w ,]{0,40}exiles? the top [\w ]{0,30}of their library",
+                // "Exiles CARDS FROM the top of their library until they exile a
+                // land card" is the same attack in the other order (Umbris, Fear
+                // Manifest, Mill by hand, read 2026-11-06). Counted broad,
+                // "<a player> ... exiles cards from the top of their library": 1
+                // reviewed card tagged and 5 untagged, and all 5 carry the cast
+                // above (Bismuth Mindrender, Gríma, Wand of Wonder, Strago and
+                // Relm: Steal; Transforming Flourish: "they may cast"), so the
+                // veto already keeps them out; 11 unreviewed, 1 of them proposed.
+                + @"[\w ,]{0,40}exiles? (?:the top [\w ]{0,30}|cards from the top )of their library",
                 RegexOptions.Multiline),
+            // An OPPONENT who reveals cards from the top of THEIR library until a
+            // card of some kind, that card taken (to your battlefield, your hand,
+            // wherever) and the REST of the revealed cards put into THEIR
+            // graveyard, is Mill. Ruled 2026-11-06, "Sì, entrambe Mill" (Curse of
+            // Unbinding, Mill by hand, against Sméagol, Helpful Guide, Steal
+            // alone): "That player puts the rest of the revealed cards into their
+            // graveyard" and "and the rest into their graveyard" are one wording.
+            // Counted broad, "<another player> reveals cards from the top of their
+            // library until ... the rest / all other cards ... into their
+            // graveyard": 2 reviewed cards (Curse, tagged; Sméagol, not), 2
+            // unreviewed (Thought Dissector, Steal; Tunnel Vision, whose card
+            // taken goes back on top of the library). Another player's library
+            // ONLY, not "each player" (it includes you) and not the first player
+            // of Oath of Druids: your own library revealed into your own
+            // graveyard is a different question (0 reviewed cards say it; Avenging
+            // Druid, Foster, Gamekeeper, Hermit Druid are unreviewed and untagged)
+            // and "puts all cards revealed this way into their graveyard" with no
+            // card taken (Mind Funeral and 8 more, all unreviewed) another.
+            Rx(@"\b(?:target player|target opponent|each opponent|an opponent|that player|defending player)"
+                + @"[^.\n]{0,20}\breveals? cards from the top of their library until"
+                + @"[^\n]*?\b(?:the rest|all other cards)\b[^.\n]*?\binto (?:their|that player's) graveyard"),
             // RAD COUNTERS mill whoever gets them, one card each at the start of
             // their main phase — 13 of 13 reviewed cards that hand them to a
             // player carry this tag, "each player" included (Nuclear Fallout,
@@ -1056,6 +1118,23 @@ namespace ScatoloneDownloader.Cube
         // which empties their board rather than giving you a place to put yours.
         private static readonly Regex SomebodyElseSacrifices = Rx(OtherPlayer + @"[\w ,]{0,40}sacrifices?\b");
 
+        // …but not the opponent's reply to YOUR sacrifice: Braids, Arisen
+        // Nightmare's "at the beginning of your end step, you may sacrifice an
+        // artifact, creature, enchantment, land, or planeswalker. If you do, each
+        // opponent may sacrifice a permanent of their choice that shares a card
+        // type with it" is an outlet for your own permanents with a punisher
+        // riding on it, and empties nobody's board (Sacrifice by hand, 2026-10-23;
+        // read 2026-11-06 under "NOT an edict, which empties somebody else's
+        // board"). Blanked before SomebodyElseSacrifices is asked, so a card that
+        // also makes an opponent sacrifice outright still is an edict. Counted
+        // broad, "if you do, <an opponent> may sacrifice": 1 reviewed card,
+        // tagged, none unreviewed; the 4 other reviewed cards where "each
+        // opponent / target player may sacrifice" appears (Fandaniel, Osseous
+        // Sticktwister, Rakdos, Braids's Frightful Return) do not say "if you do"
+        // and are untagged, so they stay vetoed.
+        private static readonly Regex OpponentSacrificesInReturn = Rx(
+            @"\bif you do, " + OtherPlayer + @"[\w ,]{0,40}sacrifices?\b[^.\n]*");
+
         // Destroying or exiling your OWN permanent at will is an outlet by
         // another verb, ruled 2026-09-25: Despotic Scepter's "{T}: Destroy target
         // permanent you own", Rats of Rath's "… you control", City of Shadows'
@@ -1080,7 +1159,7 @@ namespace ScatoloneDownloader.Cube
         private const string SacrificeKeywordGranted = @"\b(?:have|has|gains?|with) (?:exploit|casualty|devour|bargain)\b";
 
         private const string WhatAnOutletEats =
-            @"sacrifices? (?:a|an|another|two|three|\d+|x|any number of|one or more) [\w ]*(?:creature|artifact|permanent)";
+            @"sacrifices? (?:a|an|another|two|three|\d+|x|any number of|one or more|up to \w+) [\w ]*(?:creature|artifact|permanent)";
 
         // Only a REPEATABLE outlet is this tag, ruled 2026-09-25: "sì, togliamo
         // Sacrifice alle carte una tantum". The human had tagged one-shots 36

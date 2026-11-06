@@ -710,7 +710,8 @@ namespace ScatoloneDownloader.Cube
             // ITSELF back are blanked for both tags (SelfRecursionWording,
             // ruled 2026-10-13), and a creature put back for somebody else for
             // Reanimate (ReanimatedForSomebodyElse), and one only a creature TYPE
-            // can use (WithoutTribalRecursion).
+            // can use (WithoutTribalRecursion), and for Regrowth a card of a
+            // creature type returned TO HAND (WithoutTribalReturnToHand, 2026-11-06).
             if (result.HasFlag(CardEffect.Reanimate) || result.HasFlag(CardEffect.Regrowth))
             {
                 string aimed = LandOutOfTheGraveyard.Replace(text, " ");
@@ -719,7 +720,7 @@ namespace ScatoloneDownloader.Cube
 
                 if (!ReanimatePatterns.Any(p => p.IsMatch(WithoutTribalRecursion(ReanimatedForSomebodyElse.Replace(ownRecursion, " "))))) { result &= ~CardEffect.Reanimate; }
 
-                if (!RegrowthPatterns.Any(p => p.IsMatch(ownRecursion))) { result &= ~CardEffect.Regrowth; }
+                if (!RegrowthPatterns.Any(p => p.IsMatch(WithoutTribalReturnToHand(ownRecursion)))) { result &= ~CardEffect.Regrowth; }
             }
 
             // The same tribal guard for Cheat, ruled the same day: a type card
@@ -751,8 +752,9 @@ namespace ScatoloneDownloader.Cube
 
             // Added after that guard, and asked as a pair. See
             // ExiledCardOntoTheBattlefield for why it cannot live in the table.
-            if ((ExiledCardOntoTheBattlefield.IsMatch(text) && !BlinksYourOwnCreature.IsMatch(text))
-                || GraveyardCardExiledThenReturned.IsMatch(text))
+            if ((ExiledCardOntoTheBattlefield.IsMatch(text) && !BlinksYourOwnCreature.IsMatch(text)
+                    && !ExilesOnlyFromTheTopOfALibrary(text))
+                ||GraveyardCardExiledThenReturned.IsMatch(text))
             {
                 result |= CardEffect.Reanimate;
             }
@@ -1054,7 +1056,7 @@ namespace ScatoloneDownloader.Cube
             // one that sacrifices once — to cast, as it enters, as a spell —
             // pays and is gone. Neither is an outlet.
             if (result.HasFlag(CardEffect.Sacrifice)
-                && (SomebodyElseSacrifices.IsMatch(text) || !IsSacrificeOutlet(text)))
+                && (SomebodyElseSacrifices.IsMatch(OpponentSacrificesInReturn.Replace(text, " ")) || !IsSacrificeOutlet(text)))
             {
                 result &= ~CardEffect.Sacrifice;
             }

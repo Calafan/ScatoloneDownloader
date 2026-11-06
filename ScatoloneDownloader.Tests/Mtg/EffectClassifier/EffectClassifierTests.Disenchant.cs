@@ -100,6 +100,27 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
+    // Read 2026-11-06, each Disenchant by hand: a permanent every player may
+    // choose, an artifact or an enchantment, then destroyed (Druid of
+    // Purification, as Ultimate Magic: Meteor), a second 'up to one target
+    // artifact' after the first target (Sword of Sinew and Steel), and the edict
+    // repeated for an enchantment (Invoke Despair, as Pick Your Poison).
+    [InlineData("Druid of Purification", "Creature — Human Druid",
+        "When this creature enters, starting with you, each player may choose an artifact or enchantment you "
+        + "don't control. Destroy each permanent chosen this way.")]
+    [InlineData("Sword of Sinew and Steel", "Artifact — Equipment",
+        "Equipped creature gets +2/+2 and has protection from black and from red.\nWhenever equipped creature "
+        + "deals combat damage to a player, destroy up to one target planeswalker and up to one target "
+        + "artifact.\nEquip {2}")]
+    [InlineData("Invoke Despair", "Sorcery",
+        "Target opponent sacrifices a creature of their choice. If they can't, they lose 2 life and you draw "
+        + "a card. Then repeat this process for an enchantment and a planeswalker.")]
+    public void Classify_TheNovember6Readings_IsDisenchant(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Disenchant));
+    }
+
+    [Theory]
     // A sacrifice an opponent makes on their own is a trigger's condition, not an
     // edict, and a card in a graveyard is no permanent to answer (0 of 31
     // reviewed).
