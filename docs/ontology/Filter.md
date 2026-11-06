@@ -3,7 +3,13 @@
 Canonical record of the rulings for `CardEffect.Filter`. The one-line tooltip shown in the tagger is
 in [`EffectGlossary.cs`](../../ScatoloneDownloader/Mtg/EffectGlossary.cs).
 
-selection at NO net gain: you see more than you had to and the card count comes out level.
+YOU choose which cards you will have without having more of them: you see more cards than you keep
+(one at most), or you hand back as many as you take. Brainstorm is the card. It counts when the
+selection is what the card is FOR — a spell or a spell's mode, an ability that comes again, a land,
+an ability paid with the card itself — and not when it is made once beside something else. An
+ability that leaves you with more cards than it took is CardAdvantage instead, unless the gain comes
+only sometimes, which is both (redefined 2026-11-06, the last rulings below; every earlier paragraph
+marked "overturned" is history, and no card is kept in or out of this tag by name).
 
 Two shapes, ruled 2026-09-19: LOOK AT N AND TAKE ONE (scry, surveil, look at the top three and keep
 one), and HAND BACK WHAT YOU DREW (discard two draw two, and every rummage — "you may discard a
@@ -20,7 +26,7 @@ whose count cannot be parsed stays parity and therefore stays here. Two things t
 and are NOT: a card that pays a card as a COST to do something else (cycling, madness, blitz) — the
 discard is the price, not the selection — and looking at an OPPONENT'S library, which is only 2 of 8
 reviewed cards and was measured and rejected (OVERTURNED 2026-09-27 for a top that is rearranged or
-trimmed, see the end).
+trimmed, and back on 2026-11-06: only a top you could own, see the end).
 
 SCRY AND SURVEIL ARE THIS TAG UNCONDITIONALLY (OVERTURNED 2026-09-27 for one made once in passing,
 see the end), ruled 2026-09-19: it does not matter how small the number is or what else the card
@@ -105,8 +111,9 @@ lands the first cut had taken it from were restored as reviewed.
 BLOOD follows the same line — "se ripetuti sì se singoli no" — and, being a rummage, is never
 advantage: Moonstone Eulogist had been read as a repeatable draw off its reminder.
 
-SOMEBODY ELSE'S TOP, REARRANGED OR TRIMMED, IS THIS — "sì, guardare e basta no": Natural Selection
-and Elemental Augury print the same words and were tagged both ways, while Orcish Spy only looks.
+(Overturned 2026-11-06 for a top that can only be an opponent's.) SOMEBODY ELSE'S TOP, REARRANGED OR
+TRIMMED, IS THIS — "sì, guardare e basta no": Natural Selection and Elemental Augury print the same
+words and were tagged both ways, while Orcish Spy only looks.
 
 MILLING OR REVEALING A FEW AND KEEPING ONE is the look-at-N shape — "sì, ma in caso di terre è
 ManaFix": a LAND kept that way is ManaFixing instead (Ainok Wayfarer, Ostrich-Horse, Town Greeter),
@@ -115,7 +122,8 @@ Vendrell, Sludge Titan). Named one card at a time the same day: Highway Robbery 
 for the discard), Winds of Change (a wheel), Foresight and Mana Severance (a search that exiles to
 thin the library), Scroll Rack and Horrid Shadowspinner are this tag; Pitiless Carnage, Monument to
 Endurance and Make Your Own Luck are advantage; Caradora is Tutor alone and Hei Bai keeps this tag
-by hand, the classifier reading no rule for it. Perception Bobblehead casts what it looks at for
+by hand, the classifier reading no rule for it (read from 2026-11-06, one card taken out of several
+even once). Perception Bobblehead casts what it looks at for
 free and is Cheat, not a choice ("lo mettiamo Cheat"), and the Cheat rules read it from the same
 day (OVERTURNED 2026-10-16: it is Filter, see below). The last questions were answered that evening.
 Arcade Gannon, Case File Auditor, Jace Reawakened, Squad Rallier, Bucolic Ranch and Resonance
@@ -123,7 +131,8 @@ Technician, Filter alone by hand, are CardAdvantage as the advantage rules read 
 Thundertrap Trainer, which had both, is CardAdvantage alone ("solo CA"), because offspring fires its
 enters trigger twice. Shoreline Looter and Wonderscape Sage, answered "solo CA" the same way, were
 put back to Filter an hour later — "lasciamoli Filter che è lo stato base" — which is what the rules
-read in "then discard a card unless", the count Chakra Meditation and Katara were ruled on.
+read in "then discard a card unless", the count Chakra Meditation and Katara were ruled on
+(OVERTURNED 2026-11-06: a conditional gain is both tags, see the end).
 
 A LOOT tacked onto a spell that does something else is the one-shot rider too — "Refute non ha
 Filter, solo counter" — which takes Deny Entry, Broadside Barrage and Transpose with it; a creature
@@ -134,13 +143,14 @@ other way: "Kozilek's Command: ho sbagliato io. È una spell, quindi conta l'eff
 Ponder)" — its "scries X, then draws a card" is a Ponder you can choose, and a Charm's loot mode is
 the same (Treva's Charm), so the bullet lines of a spell are never taken for riders.
 
-A scry HANDED to something that repeats it stayed (Unassuming Sage's Sorcerer Role) until
-2026-10-13, ruled the other way: a Sorcerer Role's scry is the Role's (Unassuming Sage, Spellbook
-Vendor, Living Lectern untagged; Splashy Spellcaster handed back). A planeswalker's "draw, then
-discard unless" is this tag AND CardAdvantage (Kaito Shizuki, Teferi Akosa, Tezzeret, Betrayer of
-Flesh, 2026-10-13). A scry or surveil inside the ability that draws stays CardAdvantage alone
-(Mirror of Galadriel, Serum Sovereign, Saheeli — measured 2 of 18 the other way and ruled "solo
-CA"); Rumor Gatherer, Sword of Once and Future and Kellan, Daring Traveler keep both as named cards.
+(All three overturned or widened 2026-11-06, see the end.) A scry HANDED to something that repeats
+it stayed (Unassuming Sage's Sorcerer Role) until 2026-10-13, ruled the other way: a Sorcerer Role's
+scry is the Role's (Unassuming Sage, Spellbook Vendor, Living Lectern untagged; Splashy Spellcaster
+handed back). A planeswalker's "draw, then discard unless" is this tag AND CardAdvantage (Kaito
+Shizuki, Teferi Akosa, Tezzeret, Betrayer of Flesh, 2026-10-13). A scry or surveil inside the
+ability that draws stays CardAdvantage alone (Mirror of Galadriel, Serum Sovereign, Saheeli —
+measured 2 of 18 the other way and ruled "solo CA"); Rumor Gatherer, Sword of Once and Future and
+Kellan, Daring Traveler keep both as named cards.
 
 EXPLORE is this tag and not CardAdvantage, ruled 2026-09-29 ("explore = Filter") on Subterranean
 Schooner, which the human moved from CardAdvantage: a land into your hand or a counter and the
@@ -157,7 +167,8 @@ opponent's), a MAP token made on every attack like Blood (Sentinel of the Namele
 once is a rider), an explore made X TIMES (Jadelight Spelunker), and HIDEAWAY kept beside a card, 5
 of 5 by hand (Wiretapping). Not this tag: THAT player's loot (Memory Worm — "target player" can be
 you, Forget), and a scry the card exiles itself out of the graveyard for, which runs once (Survivor
-of Korlis; one it SACRIFICES itself for still counts, Grim Bauble).
+of Korlis; one it SACRIFICES itself for still counts, Grim Bauble; OVERTURNED 2026-11-06, paid with
+the card is what the card is for).
 
 Withdrawn 2026-10-16: the veto that kept a LOOK AND A FREE CAST out of this tag, written from
 Perception Bobblehead in September. The 2026-10-13 answer made Kiora Cheat AND Filter, and the
@@ -194,13 +205,14 @@ Worm reading with the victim named) and a scry only a TRIBE's spell pays out (La
 Dragonkind). Seven stay against the rules, each known: Hei Bai, Kellan, Rumor Gatherer and Sword of
 Once and Future by name, Sidequest: Catch a Fish, and Candy Trail and Invasion of Pyrulea, put back
 by hand after the 10-16 hand-back — a noncreature's one-shot scry on entering is 1 of 6 tagged
-(Lembas, the same Food, is not).
+(Lembas, the same Food, is not). All seven settled 2026-11-06, see the end.
 
 Read 2026-10-30: look at the top cards, EXILE ONE OF THEM and cast it (Discover the Impossible,
 Filter alone by hand; Ashiok, Wicked Manipulator stays out), and a dig until a creature card that
 shares a type with the creature just sacrificed, put onto the battlefield (Descendants' Fury, Filter
 and Sacrifice by hand), which TribalCard keeps from being Cheat. Not widened to a printed type: Hei
-Bai, Forest Guardian's "Shrine card" is Filter by hand and Tom Bombadil's "Saga card" untagged.
+Bai, Forest Guardian's "Shrine card" is Filter by hand and Tom Bombadil's "Saga card" untagged (both
+read 2026-11-06, see the end).
 Sparkshaper Visionary's granted repeating scry is Filter as proposed, its missing tag a slip
 ("svista", 2026-10-30).
 
@@ -213,7 +225,8 @@ Cheat): ONE card chosen out of the top few and put onto the battlefield is selec
 reveal or a mill that puts one card from among them is this tag and no longer Cheat. A look was this
 tag by the older rules already (Owlbear Cub, Web of Life and Destiny, Armored Skyhunter, Kinnan,
 Aetherworks Marvel); the MILL and an opponent's REVEAL were not, and are read now
-(OneChosenFromAMillOrReveal: Mole Module, Vastlands Scavenger's Bind to Life, Guild Feud, named). A
+(OneChosenFromAMillOrReveal: Mole Module, Vastlands Scavenger's Bind to Life, Guild Feud, named;
+the opponent's reveal OVERTURNED 2026-11-06, only your own cards). A
 RANDOM card is no choice (Getaway Barrel's "a random creature card", untagged). More than one card
 is CardAdvantage (see there), and the exclusivity keeps the card out of this tag (Gilgamesh,
 Master-at-Arms, Doors of Durin, reached and handed back). So is ONE card chosen by an ability that
@@ -227,3 +240,92 @@ rider of 2026-09-27 that Lethal Scheme's "each creature that convoked this spell
 passing, and once the card earns Protection the rider rule would take Filter off it. Written for
 that form only; Trickster's Stratagem's "up to one target creature you control connives" stays a
 rider.
+
+REDEFINED 2026-11-06 from Brainstorm, the Filter card: "TU scegli quali carte avrai senza averne
+di più: vedi più carte di quante ne tieni (al più una) o ne restituisci quante ne prendi; conta
+quando è il mestiere della carta (spell o modo, abilità che torna, terra); se l'abilità lascia più
+carte = CA". Before it, 535 reviewed cards carried the tag, 2 proposed wrongly and 16 missed. Every ruling
+above was put against it: most are the principle read on one wording, and the ones that contradicted
+it were asked one at a time, the answers below. Every card kept against the rules BY NAME (Kellan,
+Daring Traveler, Rumor Gatherer, Sword of Once and Future, Hei Bai, Forest Guardian, Sidequest:
+Catch a Fish, Candy Trail, Invasion of Pyrulea) is now read by a rule or untagged by one.
+
+Coherent with it and not asked, each with its reason: CLOAK and MANIFEST DREAD give a body, not the
+card picked; a LAND taken is the land rail's (Ramp, ManaFixing), not a choice of the cards you will
+have; a WHEEL of your own hand hands back as many as it takes; a search that exiles to THIN the
+library (Foresight) chooses what you draw; HIDEAWAY keeps one of four; EXPLORE is a land or the
+choice to bin the top; BLOOD and MAP made again and again are a rummage and a look, once a rider; an
+OPPONENT's loot is their selection, not yours; and Descendants' Fury's creature dug for the one just
+sacrificed is one for one.
+
+Ruled 2026-11-06 (Q1): THE RIDER is a selection with NO card in it — scry, surveil, loot, rummage,
+connive, explore — made once beside what the card is for. ONE card TAKEN out of several, a look at N
+that keeps one or a dig until a type, is what the card does, so it is this tag even once: 11 of 11
+reviewed creatures with such an enters trigger carried it. It reads Hei Bai, Forest Guardian's dig
+that MAY put its Shrine onto the battlefield and Anzrag's Rampage's "you may put a creature card
+exiled this way onto the battlefield" (both Filter by hand with no rule reading them); without the
+"may" the card is no choice (Aspiring Champion). Sidequest: Catch a Fish's upkeep look that keeps an
+artifact or creature card and then transforms is the same one card taken, read the same day.
+
+Corrected the same day as slips ("svista", Q2): Merfolk Traders and Owl Familiar, an enters loot
+made once. And Candy Trail and Invasion of Pyrulea, put back by hand after the 10-16 hand-back, are
+a noncreature's one-shot scry on entering and lose the tag (Q3).
+
+Ruled 2026-11-06 (Q4): a SAGA's single chapter that selects is the rider ("rumore"), so Battle of
+Frost and Fire and Urza Assembles the Titans lose the tag; a selection on more than one chapter
+comes again and keeps it (The Modern Age, G.F. Ifrit, Vault 21).
+
+Ruled 2026-11-06 (Q5): A CONDITIONAL GAIN is both tags — "Guadagno condizionato = CA+Filter",
+"Filter c'è sempre, ogni tanto c'è CA" — because the selection happens every time and the card only
+sometimes, so the 09-27 exclusivity does not take this tag away. Two shapes: the top card into your
+hand only if it is a kind, and MAY be binned or bottomed if not (Kellan, Territory Culler, Traveling
+Botanist, Cabaretti Ascendancy, Sarinth Steelseeker, Ajani, Sleeper Agent, Bison Whistle, Bucolic
+Ranch); and a scry or surveil every time with the card on a condition (Rumor Gatherer, Weatherlight
+Compleated, Saheeli, Filigree Master, Sword of Once and Future, Palantír of Orthanc). Measured
+before it was ruled: 12 reviewed cards, 3 with both tags (the named ones) and 9 CardAdvantage alone, the 9
+handed back. A CERTAIN gain stays CardAdvantage alone (Mirror of Galadriel's and Serum Sovereign's
+"Scry 1, then draw a card", 33 of 33 reviewed), and a top card that MUST go where it goes chooses
+nothing (Bloodline Shaman, Garruk, Savage Herald). Overturns the 10-13 "solo CA" for Saheeli.
+
+Ruled 2026-11-06 (Q6): ONLY YOUR OWN CARDS — "Fuori: solo le tue carte". A look at TARGET
+OPPONENT'S or EACH OPPONENT'S top chooses their cards, so Cruel Fate, Sealed Fate and Precognition
+lose the tag; TARGET PLAYER'S top stays, because you can point it at yourself as Forget does (Ashnod's Cylix,
+Natural Selection, Portent, Elemental Augury). Overturns 09-27's "somebody else's top" and the 11-03
+reading of an opponent's reveal.
+
+Ruled 2026-11-06 (Q7): A SORCERER ROLE's scry is the card's — "Role = Filter come Equipment": the
+Role's "whenever this creature attacks, scry 1" comes again on every attack, like Candlestick's
+surveil (10 of 11 such Equipment tagged). Overturns 10-13: Unassuming Sage, Spellbook Vendor, Living
+Lectern and Splashy Spellcaster carry the tag. Gylwain's Role, one chosen out of three, stays out.
+
+Ruled 2026-11-06 (Q8): AN ABILITY PAID WITH THE CARD ITSELF is what the card is for — "Pagata con la
+carta = Filter": a scry it sacrifices itself for (Grim Bauble, Found Footage, Cryptex, Surtland
+Frostpyre, 4 of 4 by hand) and one it exiles itself out of the graveyard for (Survivor of Korlis).
+Overturns 10-14.
+
+Ruled 2026-11-06 (Q9): "DRAW, THEN DISCARD UNLESS" anywhere — "Ovunque, come la Q5": a loot when
+the condition fails and a card when it holds, so both tags on any card whose ability gains when the
+condition is met, read by rewriting the ability met and failed. The planeswalker exception of 10-13
+is gone into it. Shoreline Looter, Wonderscape Sage, Chakra Meditation, Arm-Mounted Anchor and
+Tainted Indulgence gain CardAdvantage, Winternight Stories and Rush of Inspiration this tag.
+Waterbending Lesson's draw three, discard one is a card either way: CardAdvantage alone.
+
+Ruled 2026-11-06 (Q9 bis, "Conta + rumore"): an ENTERS loot met at parity — Steamcore Scholar's and
+Alpharael, Dreaming Acolyte's draw two, discard one, parity on a creature like Racers' Scoreboard
+(10-26) — is no card, and is the loot made once: neither tag. Splitskin Doll's draw one, discard
+one is the same and loses the tag too.
+
+Ruled 2026-11-06 (Q12, "Niente: condizione esterna"): Tom Bombadil's dig for a Saga card stays
+untagged. It comes again, but only when another card's last chapter resolves, and its Saga goes in
+without a choice.
+
+Read 2026-11-06, no question asked: a DISCARD THEN A DRAW FOR EACH CARD DISCARDED is a wheel and not
+a card (Change of Fortune, Mishra's Command's mode), while a draw for each card ANOTHER player
+discarded is (Syphon Mind). "Create THAT MANY Blood tokens" on every hit is Blood again and again
+(Jaws, Relentless Predator, Olivia's Attendants). SEVERAL under a cap, off the top onto the
+battlefield, on an ability that REPEATS keeps more than one and is CardAdvantage (Ayesha Tanaka,
+Armorer); once, a cap is still this tag (United Battlefront, and a loyalty ultimate is once:
+Ajani, Outland Chaperone). "Put UP TO TWO of them into your hand" keeps more than one (Shadow
+Prophecy, CardAdvantage). Guild Feud's own half, "you do the same with the top three cards of your
+library" every upkeep, is one chosen again, CardAdvantage by "Si ripete = CA" (11-03); its
+opponent's half is theirs.

@@ -1004,7 +1004,16 @@ namespace ScatoloneDownloader.Cube
                     // written the other way round, and the count-first wording was
                     // missed entirely: Balance of Power, Baleful Stare, Become the
                     // Avalanche. Worth 24 recovered for 2 wrongly fired.
-                    Rx(@"draws? a card for each|draws? cards equal to"),
+                    // Not a card for each card the DRAWER discarded, read
+                    // 2026-11-06: as many back as were given is a wheel or a
+                    // rummage, Filter (Change of Fortune's "you've discarded",
+                    // Mishra's Command's "they may discard … then they draw a card
+                    // for each card discarded this way"; see the Filter pattern
+                    // beside DrawThatManyHandedBack). Syphon Mind's "you draw a
+                    // card for each card discarded this way" by the others stays.
+                    // A "they draw a card for each" of anything else was tried
+                    // and moved no card: none is printed.
+                    Rx(@"(?<!\bthey )draws? a card for each(?! card you've discarded)|draws? cards equal to"),
                     // Mill a few and put ALL of a kind from among them into your
                     // hand: more than one card kept, a card even once (the
                     // "take more than one" reading). Tazri and Beluna Grandsquall,
@@ -1206,6 +1215,13 @@ namespace ScatoloneDownloader.Cube
                     // N for N: Horrid Shadowspinner draws its power and hands the
                     // same number back, which is a rummage however big.
                     Rx(DrawThatManyHandedBack),
+                    // …and the other way round, a card back FOR EACH card
+                    // discarded, read 2026-11-06: Change of
+                    // Fortune's wheel of your hand and Mishra's Command's "they
+                    // may discard up to X cards. Then they draw a card for each
+                    // card discarded this way" (Filter by hand, 11-05 and 11-03).
+                    Rx(@"\bdiscard (?:your hand|up to \w+ cards)[.,] then (?:they |you )?draws? a card for each card "
+                        + @"(?:you've |they've )?discarded"),
                     DrawPaidForWithACard,
                     // A discard charged as an ADDITIONAL COST is still a card
                     // changing places — Grab the Prize pays one to draw two, which
@@ -1224,11 +1240,22 @@ namespace ScatoloneDownloader.Cube
                     // A card that then lets you CAST from that pile is Steal (Black
                     // Cat, Laughing Jasper Flint). Not inside brackets: manifest
                     // dread's reminder has the victim look at their own library.
+                    // Only a top YOU could be the owner of, ruled 2026-11-06 ("Fuori:
+                    // solo le tue carte"): Filter is choosing the cards you will have,
+                    // so "TARGET OPPONENT's" and "EACH OPPONENT's" left (Cruel Fate,
+                    // Sealed Fate, Precognition, 3 of 3 by hand, named), and "target
+                    // player" stays because you can point it at yourself, like Forget.
                     Rx(@"(?<!\([^()\n]*)looks? at the top (?:\w+ )?cards? of "
-                        + @"(?:target (?:player|opponent)'s|their|that player's|each opponent's) library"
+                        + @"(?:target player's|their|that player's) library"
                         + @"(?![^\n]{0,300}\byou may (?:play|cast))[^\n]{0,200}"
                         + @"(?:in any order|into (?:their|that player's) graveyard|on the bottom of (?:their|that player's) library"
                         + @"|exile (?:one|any number) of (?:them|those cards)|puts? one of them back)"),
+                    // The top card looked at every upkeep until ONE of a kind is
+                    // taken, and then the card transforms: one card chosen, even
+                    // once (Filter Q1, 2026-11-06). Sidequest: Catch a Fish,
+                    // Filter by hand since 2026-09-25 with no rule reading it.
+                    Rx(@"look at the top card of your library\. if it's an? [\w ]{0,30}card, you may reveal it and put it "
+                        + @"into your hand\. if you put a card into your hand this way, [^.\n]{0,60}\btransform"),
                     // MILL OR REVEAL N AND KEEP ONE is the look-at-N shape, ruled
                     // 2026-09-27: "sì, ma in caso di terre è ManaFix". Cache Grab,
                     // Malevolent Rumble, Rosheen and Wood Sage were tagged, Eerie
@@ -2094,12 +2121,13 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex ConniveBesideACounter = Rx(
             @"^[^\n]*\bconnives\b[^\n]*\breturn up to one target spell\b[^\n]*", RegexOptions.Multiline);
 
-        // A SORCERER ROLE's scry is the Role's, not the card's, ruled
-        // 2026-10-13: Unassuming Sage, Spellbook Vendor and Living Lectern
-        // untagged (overturning the 09-29 reading that a scry handed to
-        // something that repeats it keeps the tag, which named Unassuming Sage).
-        private static readonly Regex SorcererRoleScry = Rx(
-            @"sorcerer role token[^\n]*?""whenever this creature attacks, scry 1\.""");
+        // A SORCERER ROLE's scry was the Role's, not the card's, from 2026-10-13
+        // (Unassuming Sage, Spellbook Vendor and Living Lectern untagged) until
+        // 2026-11-06, ruled the other way: "Role = Filter come Equipment". The
+        // Role's "whenever this creature attacks, scry 1" comes again on every
+        // attack like Candlestick's surveil (10 of 11 such Equipment tagged), and
+        // Buff already reads the Role's +1/+1 (10-14). The veto that blanked it
+        // (SorcererRoleScry) is gone; the four are named +Filter.
 
         // An OPPONENT's loot, read 2026-10-24: Balor makes "target opponent
         // draw three cards, then discard three cards at random" (untagged by
@@ -2120,8 +2148,8 @@ namespace ScatoloneDownloader.Cube
         // Every shape above blanked, for the tag to be asked again.
         private static string WithoutFalseSelection(string text) =>
             ScryForATribe.Replace(TheirLoot.Replace(
-            SorcererRoleScry.Replace(ConniveBesideACounter.Replace(LandFromAmongThemToHand.Replace(TheirDiscardYourDraw.Replace(
-                LooksAtTopForALand.Replace(LooksAtTopAndMakesBodies.Replace(text, " "), " "), " "), " "), " "), " "), " "), " ");
+            ConniveBesideACounter.Replace(LandFromAmongThemToHand.Replace(TheirDiscardYourDraw.Replace(
+                LooksAtTopForALand.Replace(LooksAtTopAndMakesBodies.Replace(text, " "), " "), " "), " "), " "), " "), " ");
 
         //   AND A LOOT THAT IS NOT YOURS. "Each opponent discards a card AND YOU
         //   DRAW a card" is two different players doing two different things,

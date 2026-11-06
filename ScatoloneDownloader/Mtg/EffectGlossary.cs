@@ -75,16 +75,16 @@
                 + "discard.",
 
             [CardEffect.CardAdvantage] =
-                "A card the opponent does not get. COUNT the card ITSELF: Ponder nets 0. A one-shot "
-                + "must draw two more than it pays; a REPEATABLE ability needs one, even paid with a card or "
-                + "permanent, even THEIR card. Two off, ONE played: Filter unless it repeats; both only on two "
-                + "abilities. Not THEIR draw, a tribe's graveyard, an unreachable trigger.",
+                "A card no opponent gets. COUNT the card ITSELF: Ponder nets 0. A one-shot draws two more "
+                + "than it pays; a REPEATABLE ability one more, even paid with a card, permanent or THEIR card. "
+                + "Two off, ONE played: Filter unless it repeats; both on two abilities or a SOMETIMES gain. "
+                + "Not THEIR draw, a tribe's graveyard, an unreachable trigger.",
 
             [CardEffect.Filter] =
-                "Cards changing places at NO net gain: keep one of a few seen, milled or revealed, rearrange "
-                + "ANY player's top, a wheel, a scry LAND, a loot SPELL, a scry, loot, Blood or Map that "
-                + "comes AGAIN. Not one made ONCE, a LAND kept (ManaFixing) or a CLOAK. With "
-                + "CardAdvantage only on its own repeating ability, hideaway or a planeswalker's loot.",
+                "YOU choose which cards you will have, not more: see more than you keep (one at most) or hand "
+                + "back as many as you take (Brainstorm). Only as the card's JOB: a spell or mode, an ability "
+                + "that comes AGAIN or costs the card, a land. Not a scry or loot made ONCE, a LAND kept, an "
+                + "OPPONENT's top. A gain only SOMETIMES is CardAdvantage too.",
 
             [CardEffect.Reanimate] =
                 "A creature back from the dead straight onto the BATTLEFIELD, its cost cheated. A card it "

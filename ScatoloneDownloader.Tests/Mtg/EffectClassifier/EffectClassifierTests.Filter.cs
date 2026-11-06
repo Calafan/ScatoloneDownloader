@@ -176,9 +176,8 @@ public sealed partial class EffectClassifierTests
     // Spy tagged, on the same act.
     [InlineData("Elemental Augury", "Enchantment",
         "{3}: Look at the top three cards of target player's library, then put them back in any order.")]
-    [InlineData("Cruel Fate", "Sorcery",
-        "Look at the top five cards of target opponent's library. Put one of those cards into that player's "
-        + "graveyard and the rest on top of their library in any order.")]
+    // Cruel Fate stood here until 2026-11-06: only a top you could own is this
+    // tag now ("solo le tue carte"), see Classify_TheNovember6Filter_OnlyAnOpponentsTop_IsNotFilter.
     [InlineData("Eye Spy", "Sorcery",
         "Look at the top card of target player's library. You may put that card into their graveyard.")]
     // MILL OR REVEAL A FEW AND KEEP ONE, the same day; Eerie Gravestone was the
@@ -231,14 +230,9 @@ public sealed partial class EffectClassifierTests
     // Perception Bobblehead stood here from 2026-09-23 ("cheated in, not chosen
     // between") until 2026-10-16: the 10-13 ruling made Kiora Cheat AND Filter,
     // so a look-and-cast-free is both, and the veto was withdrawn.
-    // A SORCERER ROLE's scry is the Role's, ruled 2026-10-13.
-    [InlineData("Unassuming Sage", "Creature — Human Peasant Wizard",
-        "When this creature enters, you may pay {2}. If you do, create a Sorcerer Role token attached to it. "
-        + "(Enchanted creature gets +1/+1 and has \"Whenever this creature attacks, scry 1.\")")]
-    [InlineData("Spellbook Vendor", "Creature — Human Peasant",
-        "Vigilance\nAt the beginning of combat on your turn, you may pay {1}. When you do, create a Sorcerer "
-        + "Role token attached to target creature you control. (If you control another Role on it, put that one "
-        + "into the graveyard. Enchanted creature gets +1/+1 and has \"Whenever this creature attacks, scry 1.\")")]
+    // A SORCERER ROLE's scry was the Role's from 2026-10-13 (Unassuming Sage,
+    // Spellbook Vendor here) until 2026-11-06, ruled the other way: see
+    // Classify_TheNovember6Filter_ASorcererRolesScry_IsFilter.
     public void Classify_SelectionRuledOut_IsNotFilter(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
@@ -555,9 +549,9 @@ public sealed partial class EffectClassifierTests
     [InlineData("Cartographer's Companion", "Artifact Creature — Gnome",
         "When this creature enters, create a Map token. (It's an artifact with \"{1}, {T}, Sacrifice this "
         + "token: Target creature you control explores. Activate only as a sorcery.\")")]
-    // A scry the card exiles itself out of the graveyard for runs once.
-    [InlineData("Survivor of Korlis", "Creature — Human Soldier",
-        "First strike\n{1}{W}, Exile this card from your graveyard: Scry 2.")]
+    // Survivor of Korlis's scry, paid by exiling itself out of the graveyard,
+    // stood here until 2026-11-06: paid with the card is what the card is for,
+    // see Classify_TheNovember6Filter_ASelectionPaidWithTheCard_IsFilter.
     public void Classify_TheOctoberFilterGaps_AreNotFilter(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
@@ -904,11 +898,9 @@ public sealed partial class EffectClassifierTests
         "Deathtouch\nThis creature enters prepared. (While it's prepared, you may cast a copy of its spell. "
         + "Doing so unprepares it.)\nMill seven cards. Then put a creature card from among them onto the "
         + "battlefield.")]
-    [InlineData("Guild Feud", "Enchantment",
-        "At the beginning of your upkeep, target opponent reveals the top three cards of their library, may "
-        + "put a creature card from among them onto the battlefield, then puts the rest into their graveyard. "
-        + "You do the same with the top three cards of your library. If two creatures are put onto the "
-        + "battlefield this way, those creatures fight each other.")]
+    // Guild Feud stood here until 2026-11-06: the opponent's reveal is their
+    // choice, and "you do the same" every upkeep is a card — see
+    // Classify_TheNovember6Filter_YouDoTheSameEveryUpkeep_IsCardAdvantage.
     public void Classify_TheNovember3Redefinition_OneChosenFromAMillOrAReveal_IsFilter(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
@@ -929,5 +921,359 @@ public sealed partial class EffectClassifierTests
 
         Assert.True(result.HasFlag(CardEffect.Filter));
         Assert.True(result.HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // Ruled 2026-11-06 (Q6, "solo le tue carte"): a look at target opponent's or
+    // each opponent's top chooses THEIR cards, not yours, so it is not this tag.
+    // Overturns the 2026-09-27 reading that took an opponent's top in.
+    [InlineData("Cruel Fate", "Sorcery",
+        "Look at the top five cards of target opponent's library. Put one of those cards into that player's "
+        + "graveyard and the rest on top of their library in any order.")]
+    [InlineData("Sealed Fate", "Sorcery",
+        "Look at the top X cards of target opponent's library. Exile one of those cards and put the rest back "
+        + "on top of that player's library in any order.")]
+    [InlineData("Precognition", "Enchantment",
+        "At the beginning of your upkeep, you may look at the top card of target opponent's library. If you "
+        + "do, you may put that card on the bottom of that player's library.")]
+    public void Classify_TheNovember6Filter_OnlyAnOpponentsTop_IsNotFilter(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Q6, 2026-11-06: target player's top can be your own, so it stays this tag.
+    [InlineData("Ashnod's Cylix", "Artifact",
+        "{3}, {T}: Target player looks at the top three cards of their library, puts one of them back on top "
+        + "of their library, then exiles the rest.")]
+    public void Classify_TheNovember6Filter_ATopThatCanBeYours_IsFilter(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Ruled 2026-11-06 (Q7, "Role = Filter come Equipment"): a Sorcerer Role
+    // grants a scry on every attack, the way an Equipment does, and the card that
+    // makes the Role is the one that selects. Overturns the 2026-10-13 ruling that
+    // the scry was the Role's.
+    [InlineData("Unassuming Sage", "Creature — Human Peasant Wizard",
+        "When this creature enters, you may pay {2}. If you do, create a Sorcerer Role token attached to it. "
+        + "(Enchanted creature gets +1/+1 and has \"Whenever this creature attacks, scry 1.\")")]
+    [InlineData("Spellbook Vendor", "Creature — Human Peasant",
+        "Vigilance\nAt the beginning of combat on your turn, you may pay {1}. When you do, create a Sorcerer "
+        + "Role token attached to target creature you control. (If you control another Role on it, put that one "
+        + "into the graveyard. Enchanted creature gets +1/+1 and has \"Whenever this creature attacks, scry 1.\")")]
+    [InlineData("Living Lectern", "Artifact Creature — Construct",
+        "{1}, Sacrifice this creature: Draw a card. Create a Sorcerer Role token attached to up to one other "
+        + "target creature you control. Activate only as a sorcery. (If you control another Role on it, put "
+        + "that one into the graveyard. Enchanted creature gets +1/+1 and has \"Whenever this creature attacks, "
+        + "scry 1.\")")]
+    [InlineData("Splashy Spellcaster", "Creature — Elemental Wizard",
+        "Whenever you cast an instant or sorcery spell, create a Sorcerer Role token attached to up to one "
+        + "other target creature you control. (If you control another Role on it, put that one into the "
+        + "graveyard. Enchanted creature gets +1/+1 and has \"Whenever this creature attacks, scry 1.\")")]
+    public void Classify_TheNovember6Filter_ASorcererRolesScry_IsFilter(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Ruled 2026-11-06 (Q8, "Pagata con la carta = Filter"): a scry the card pays
+    // for by exiling itself out of the graveyard is what the card is for, not a
+    // rider. Overturns the 2026-10-14 reading of a graveyard exile as once.
+    [InlineData("Survivor of Korlis", "Creature — Human Soldier",
+        "First strike\n{1}{W}, Exile this card from your graveyard: Scry 2.")]
+    public void Classify_TheNovember6Filter_ASelectionPaidWithTheCard_IsFilter(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Ruled 2026-11-06 (Q9, "Ovunque, come la Q5"): a draw and a discard unless a
+    // condition is met gains a card when it is met and selects when it is not, so
+    // it is both tags on any card, not only on a planeswalker (2026-10-13). The
+    // planeswalkers keep both.
+    [InlineData("Chakra Meditation", "Enchantment",
+        "When this enchantment enters, return up to one target instant or sorcery card from your graveyard to "
+        + "your hand.\nWhenever you cast an instant or sorcery spell, draw a card. Then discard a card unless "
+        + "there are three or more Lesson cards in your graveyard.")]
+    [InlineData("Shoreline Looter", "Creature — Rat Rogue",
+        "This creature can't be blocked.\nThreshold — Whenever this creature deals combat damage to a player, "
+        + "draw a card. Then discard a card unless there are seven or more cards in your graveyard.")]
+    [InlineData("Wonderscape Sage", "Creature — Moonfolk Wizard",
+        "Flying\n{T}, Return a land you control to its owner's hand: Draw a card. Then discard a card unless "
+        + "that land had a nonbasic land type.")]
+    [InlineData("Tainted Indulgence", "Instant",
+        "Draw two cards. Then discard a card unless there are five or more mana values among cards in your "
+        + "graveyard.")]
+    [InlineData("Arm-Mounted Anchor", "Artifact — Equipment",
+        "Equipped creature gets +2/+2 and has menace.\nWhenever equipped creature deals combat damage to a "
+        + "player, draw two cards. Then discard two cards unless you discard a Pirate card.\nEquip {2}. This "
+        + "ability costs {2} less to activate if you have one or fewer cards in hand.")]
+    [InlineData("Winternight Stories", "Sorcery",
+        "Draw three cards. Then discard two cards unless you discard a creature card.\nHarmonize {4}{U} (You "
+        + "may cast this card from your graveyard for its harmonize cost. You may tap a creature you control to "
+        + "reduce that cost by {X}, where X is its power. Then exile this spell.)")]
+    [InlineData("Rush of Inspiration // Crackling Falls", "Instant // Land",
+        "Draw two cards. Then discard a card at random unless you pay {E}{E} (two energy counters).\nThis land "
+        + "enters tapped.\n{T}: Add {U} or {R}.")]
+    [InlineData("Kaito Shizuki", "Legendary Planeswalker — Kaito",
+        "At the beginning of your end step, if Kaito entered this turn, he phases out.\n+1: Draw a card. Then "
+        + "discard a card unless you attacked this turn.\n−2: Create a 1/1 blue Ninja creature token with \"This "
+        + "token can't be blocked.\"\n−7: You get an emblem with \"Whenever a creature you control deals combat "
+        + "damage to a player, search your library for a blue or black creature card, put it onto the "
+        + "battlefield, then shuffle.\"")]
+    [InlineData("Tezzeret, Betrayer of Flesh", "Legendary Planeswalker — Tezzeret",
+        "The first activated ability of an artifact you activate each turn costs {2} less to activate.\n+1: "
+        + "Draw two cards. Then discard two cards unless you discard an artifact card.\n−2: Target artifact "
+        + "becomes an artifact creature. If it isn't a Vehicle, it has base power and toughness 4/4.\n−6: You "
+        + "get an emblem with \"Whenever an artifact you control becomes tapped, draw a card.\"")]
+    public void Classify_TheNovember6Filter_DrawThenDiscardUnless_IsCardAdvantageAndFilter(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.True(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Q9, 2026-11-06: when the failed condition still leaves more cards than it
+    // took (draw three, discard one), the discard is a cost on a gain, not a
+    // selection.
+    [InlineData("Waterbending Lesson", "Sorcery — Lesson",
+        "Draw three cards. Then discard a card unless you waterbend {2}. (While paying a waterbend cost, you "
+        + "can tap your artifacts and creatures to help. Each one pays for {1}.)")]
+    public void Classify_TheNovember6Filter_AnUnlessThatGainsEitherWay_IsCardAdvantageNotFilter(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.False(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Ruled 2026-11-06 (Q9 bis, "Conta + rumore"): an enters loot whose met
+    // condition is draw two and discard one is parity on a creature (Racers'
+    // Scoreboard, 2026-10-26), and the loot is a rider once, so neither tag.
+    [InlineData("Steamcore Scholar", "Creature — Weird Detective",
+        "Flying, vigilance\nWhen this creature enters, draw two cards. Then discard two cards unless you "
+        + "discard an instant or sorcery card or a creature card with flying.")]
+    [InlineData("Alpharael, Dreaming Acolyte", "Legendary Creature — Human Cleric",
+        "When Alpharael enters, draw two cards. Then discard two cards unless you discard an artifact "
+        + "card.\nDuring your turn, Alpharael has deathtouch.")]
+    [InlineData("Splitskin Doll", "Artifact Creature — Toy",
+        "When this creature enters, draw a card. Then discard a card unless you control another creature with "
+        + "power 2 or less.")]
+    public void Classify_TheNovember6Filter_AnUnlessMetAtParity_IsNotFilter(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.False(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.False(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Ruled 2026-11-06 (Q5, "Guadagno condizionato = CA+Filter"): a selection made
+    // every time and a card only sometimes is both tags, without naming the cards
+    // (2026-10-13 named Kellan, Rumor Gatherer and the Sword).
+    [InlineData("Kellan, Daring Traveler // Journey On", "Legendary Creature — Human Faerie Scout // Sorcery — Adventure",
+        "Whenever Kellan attacks, reveal the top card of your library. If it's a creature card with mana "
+        + "value 3 or less, put it into your hand. Otherwise, you may put it into your graveyard.\nCreate X Map "
+        + "tokens, where X is one plus the number of opponents who control an artifact. (Then exile this card. "
+        + "You may cast the creature later from exile.)")]
+    [InlineData("Territory Culler", "Creature — Eldrazi",
+        "Devoid (This card has no color.)\nReach\nLandfall — Whenever a land you control enters, look at the "
+        + "top card of your library. If it's a creature card, you may reveal it and put it into your hand. If "
+        + "you don't put the card into your hand, you may put it into your graveyard.")]
+    [InlineData("Rumor Gatherer", "Creature — Elf Wizard",
+        "Alliance — Whenever another creature you control enters, scry 1. If this is the second time this "
+        + "ability has resolved this turn, draw a card instead.")]
+    [InlineData("Weatherlight Compleated", "Legendary Artifact — Vehicle",
+        "Flying\nAs long as Weatherlight Compleated has four or more phyresis counters on it, it's a Phyrexian "
+        + "creature in addition to its other types.\nWhenever a creature you control dies, put a phyresis "
+        + "counter on Weatherlight Compleated. Then draw a card if it has seven or more phyresis counters on "
+        + "it. If it doesn't, scry 1.")]
+    [InlineData("Saheeli, Filigree Master", "Legendary Planeswalker — Saheeli",
+        "+1: Scry 1. You may tap an untapped artifact you control. If you do, draw a card.\n−2: Create two 1/1 "
+        + "colorless Thopter artifact creature tokens with flying. They gain haste until end of turn.\n−4: You "
+        + "get an emblem with \"Artifact creatures you control get +1/+1\" and \"Artifact spells you cast cost {1} "
+        + "less to cast.\"")]
+    [InlineData("Sword of Once and Future", "Artifact — Equipment",
+        "Equipped creature gets +2/+2 and has protection from blue and from black.\nWhenever equipped creature "
+        + "deals combat damage to a player, surveil 2. Then you may cast an instant or sorcery spell with mana "
+        + "value 2 or less from your graveyard without paying its mana cost. If that spell would be put into "
+        + "your graveyard, exile it instead.\nEquip {2}")]
+    [InlineData("Palantír of Orthanc", "Legendary Artifact",
+        "At the beginning of your end step, put an influence counter on Palantír of Orthanc and scry 2. Then "
+        + "target opponent may have you draw a card. If that player doesn't, you mill X cards, where X is the "
+        + "number of influence counters on Palantír of Orthanc, and that player loses life equal to the total "
+        + "mana value of those cards.")]
+    public void Classify_TheNovember6Filter_AConditionalGain_IsCardAdvantageAndFilter(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.True(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Q5, 2026-11-06: a top card that goes to the graveyard without a may chooses
+    // nothing, and a scry then a draw on one activation is the draw's.
+    [InlineData("Mirror of Galadriel", "Legendary Artifact",
+        "{5}, {T}: Scry 1, then draw a card. This ability costs {1} less to activate for each legendary "
+        + "creature you control.")]
+    [InlineData("Bloodline Shaman", "Creature — Elf Wizard Shaman",
+        "{T}: Choose a creature type. Reveal the top card of your library. If that card is a creature card of "
+        + "the chosen type, put it into your hand. Otherwise, put it into your graveyard.")]
+    public void Classify_TheNovember6Filter_AGainWithNoChoice_IsCardAdvantageNotFilter(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.False(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Read 2026-11-06: discard your hand (or up to X) then draw a card for each
+    // card discarded hands back as many as it takes, the wheel the definition
+    // names, so it is this tag and no card.
+    [InlineData("Change of Fortune", "Sorcery",
+        "Discard your hand, then draw a card for each card you've discarded this turn.")]
+    [InlineData("Mishra's Command", "Sorcery",
+        "Choose two —\n• Choose target player. They may discard up to X cards. Then they draw a card for each "
+        + "card discarded this way.\n• This spell deals X damage to target creature.\n• This spell deals X damage "
+        + "to target planeswalker.\n• Target creature gets +X/+0 and gains haste until end of turn.")]
+    public void Classify_TheNovember6Filter_ADiscardThenADrawForEach_IsFilterNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.False(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.True(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // 2026-11-06: a draw for each card ANOTHER player discarded is still a card,
+    // which the wheel reading above must not reach.
+    [InlineData("Syphon Mind", "Sorcery",
+        "Each other player discards a card. You draw a card for each card discarded this way.")]
+    public void Classify_TheNovember6Filter_TheirDiscardsYourDraws_IsStillCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Read 2026-11-06: Blood made again and again is a rummage (2026-10-24), and
+    // "that many" Blood tokens is the same Blood.
+    [InlineData("Jaws, Relentless Predator", "Legendary Creature — Shark",
+        "Trample, haste\nWhenever Jaws deals combat damage to a player, create that many Blood tokens. "
+        + "(They're artifacts with \"{1}, {T}, Discard a card, Sacrifice this token: Draw a card.\")\nWhenever a "
+        + "noncreature artifact is sacrificed or destroyed, Jaws deals 1 damage to each opponent.")]
+    [InlineData("Olivia's Attendants", "Creature — Vampire",
+        "Menace\nWhenever this creature deals damage, create that many Blood tokens. (They're artifacts with "
+        + "\"{1}, {T}, Discard a card, Sacrifice this token: Draw a card.\")\n{2}{R}: This creature deals 1 damage "
+        + "to any target.")]
+    public void Classify_TheNovember6Filter_ThatManyBloodAgainAndAgain_IsFilter(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Read 2026-11-06: any number of a kind off the top onto the battlefield on
+    // every attack keeps more than one, so it is a card and not a selection.
+    [InlineData("Ayesha Tanaka, Armorer", "Legendary Creature — Human Artificer",
+        "Whenever Ayesha Tanaka attacks, look at the top four cards of your library. You may put any number "
+        + "of artifact cards with mana value less than or equal to Ayesha Tanaka's power from among them onto "
+        + "the battlefield tapped. Put the rest on the bottom of your library in a random order.\nAyesha Tanaka "
+        + "can't be blocked as long as defending player controls three or more artifacts.")]
+    public void Classify_TheNovember6Filter_SeveralCappedOnEveryAttack_IsCardAdvantageNotFilter(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.False(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // 2026-11-06: the same cap made once is still this tag; only the repeating
+    // form left it.
+    [InlineData("United Battlefront", "Sorcery",
+        "Look at the top seven cards of your library. Put up to two noncreature, nonland permanent cards with "
+        + "mana value 3 or less from among them onto the battlefield. Put the rest on the bottom of your "
+        + "library in a random order.")]
+    // A loyalty ultimate is once, so Ajani, Outland Chaperone's capped -8 is this
+    // tag (unreviewed, read 2026-11-06).
+    [InlineData("Ajani, Outland Chaperone", "Legendary Planeswalker — Ajani",
+        "+1: Create a 1/1 green and white Kithkin creature token.\n−2: Ajani deals 4 damage to target tapped "
+        + "creature.\n−8: Look at the top X cards of your library, where X is your life total. You may put any "
+        + "number of nonland permanent cards with mana value 3 or less from among them onto the battlefield. "
+        + "Then shuffle.")]
+    public void Classify_TheNovember6Filter_SeveralCappedOnce_IsStillFilter(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Read 2026-11-06: up to two of the top X into your hand keeps more than one,
+    // so it is a card.
+    [InlineData("Shadow Prophecy", "Instant",
+        "Domain — Look at the top X cards of your library, where X is the number of basic land types among "
+        + "lands you control. Put up to two of them into your hand and the rest into your graveyard. You lose 2 "
+        + "life.")]
+    public void Classify_TheNovember6Filter_UpToTwoIntoYourHand_IsCardAdvantageNotFilter(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.False(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Read 2026-11-06: the opponent's reveal is their choice (Q6), and "you do the
+    // same" with your own top every upkeep puts a creature onto the battlefield
+    // again and again, a card.
+    [InlineData("Guild Feud", "Enchantment",
+        "At the beginning of your upkeep, target opponent reveals the top three cards of their library, may "
+        + "put a creature card from among them onto the battlefield, then puts the rest into their graveyard. "
+        + "You do the same with the top three cards of your library. If two creatures are put onto the "
+        + "battlefield this way, those creatures fight each other.")]
+    public void Classify_TheNovember6Filter_YouDoTheSameEveryUpkeep_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.False(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Read 2026-11-06: an upkeep look that keeps the card only if it is a kind,
+    // and transforms once it does, selects every upkeep until it gains once: the
+    // selection is the card's job.
+    [InlineData("Sidequest: Catch a Fish // Cooking Campsite", "Enchantment // Land",
+        "At the beginning of your upkeep, look at the top card of your library. If it's an artifact or "
+        + "creature card, you may reveal it and put it into your hand. If you put a card into your hand this "
+        + "way, create a Food token and transform this enchantment.\n{T}: Add {W}.\n{3}, {T}, Sacrifice an "
+        + "artifact: Put a +1/+1 counter on each creature you control. Activate only as a sorcery.")]
+    public void Classify_TheNovember6Filter_AKindIntoYourHandThenTransform_IsFilter(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Read 2026-11-06: reveal until a kind or exile the top X, and you MAY put
+    // that card onto the battlefield, is one chosen off the top (2026-11-03); the
+    // must form (Aspiring Champion) is not.
+    [InlineData("Hei Bai, Forest Guardian", "Legendary Creature — Bear Spirit",
+        "When Hei Bai enters, reveal cards from the top of your library until you reveal a Shrine card. You "
+        + "may put that card onto the battlefield. Then shuffle.\n{W}{U}{B}{R}{G}, {T}: For each legendary "
+        + "enchantment you control, create a 1/1 colorless Spirit creature token with \"This token can't block "
+        + "or be blocked by non-Spirit creatures.\"")]
+    [InlineData("Anzrag's Rampage", "Sorcery",
+        "Destroy all artifacts you don't control, then exile the top X cards of your library, where X is the "
+        + "number of artifacts that were put into graveyards from the battlefield this turn. You may put a "
+        + "creature card exiled this way onto the battlefield. It gains haste. Return it to your hand at the "
+        + "beginning of the next end step.")]
+    public void Classify_TheNovember6Filter_AMayOntoTheBattlefieldFromAReveal_IsFilter(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
     }
 }

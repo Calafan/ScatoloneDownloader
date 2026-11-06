@@ -506,3 +506,14 @@ Ruled 2026-11-05 ("Svista, è CardAdvantage"): Vivien's Stampede's "draw a card 
 was dealt combat damage this turn" is this tag like its family, 7 tagged to 1 (Kaito, Season of
 Loss, Body Count, Cut a Deal, Deadly Embrace, Smuggler's Share, Voice of Many). No code change: the
 card is named, and its hand tags are to become CardAdvantage alone (its Buff is melee, see Buff.md).
+
+Ruled 2026-11-06 with the Filter redefinition (see Filter.md): a CONDITIONAL GAIN is both tags. A
+"draw, then discard unless" on any card whose ability gains when the condition holds (Shoreline
+Looter, Wonderscape Sage, Chakra Meditation, Arm-Mounted Anchor and Tainted Indulgence gain this
+tag; the planeswalker exception of 10-13 is gone into it), and a selection made every time with the
+card only sometimes (Territory Culler, Weatherlight Compleated, Saheeli, Filigree Master and
+Palantír of Orthanc gain Filter). Read the same day: a discard then a draw FOR EACH CARD DISCARDED
+by the same player is a wheel and not this tag (Change of Fortune, Mishra's Command), while Syphon
+Mind's draw for the other players' discards stays; several under a cap on an ability that repeats
+(Ayesha Tanaka, Armorer), "put up to two of them into your hand" (Shadow Prophecy) and Guild Feud's
+"you do the same" every upkeep are this tag and not Filter.

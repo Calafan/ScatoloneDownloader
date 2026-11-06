@@ -998,7 +998,6 @@ namespace ScatoloneDownloader.Cube
                 || LooksAndKeepsTheRest.IsMatch(text)
                 || WarpPaysOnTheWayOutTwice.IsMatch(text)
                 || CopiesYourOwnSpell.IsMatch(text)
-                || PlaneswalkerDrawThenDiscardUnless.IsMatch(text)
                 || (ClueWording.IsMatch(text) && (RepeatableClue.IsMatch(text) || SeveralClues.IsMatch(text)))
                 // The readings of 2026-10-14 — see PileFromTheTopIntoYourHand.
                 || PileFromTheTopIntoYourHand.IsMatch(text) || SeveralKeptFromALook.IsMatch(text)
@@ -1298,10 +1297,21 @@ namespace ScatoloneDownloader.Cube
             // 2026-09-29, see SelectsAndGainsOnDifferentAbilities.
             if (result.HasFlag(CardEffect.CardAdvantage) && result.HasFlag(CardEffect.Filter)
                 && !SelectsAndGainsOnDifferentAbilities(card, text)
-                && !PlaneswalkerDrawThenDiscardUnless.IsMatch(text)
                 && !Hideaway.IsMatch(text))
             {
                 result &= ~CardEffect.Filter;
+            }
+
+            // A CONDITIONAL GAIN is both tags, ruled 2026-11-06: the selection
+            // every time, the card only sometimes. See DrawThenDiscardUnless.
+            // The second shape is asked only of a card the count rules already
+            // call CardAdvantage, so it adds Filter and never decides the card:
+            // without that guard no card moved on 2026-11-06, and it stays to keep
+            // a one-shot enters look (Wall of Omens' count) out of CardAdvantage.
+            if (DrawThenDiscardUnlessGainsWhenMet(card, text)
+                || (result.HasFlag(CardEffect.CardAdvantage) && SelectsEveryTimeGainsSometimes(text)))
+            {
+                result |= CardEffect.CardAdvantage | CardEffect.Filter;
             }
 
             // Late, because B2 asks whether the card does anything else:

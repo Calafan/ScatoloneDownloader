@@ -1265,13 +1265,10 @@ public sealed partial class EffectClassifierTests
         "Gift a tapped Fish\nAs an additional cost to cast this spell, discard a card.\n"
         + "Target player draws two cards. If the gift was promised, target creature you control gets "
         + "+2/+0 until end of turn.")]
-    // A draw for one card handed straight back is parity even when the discard
-    // is conditional: the COUNT is the answer, not the condition.
-    [InlineData("Chakra Meditation", "Enchantment",
-        "When this enchantment enters, return up to one target instant or sorcery card from your "
-        + "graveyard to your hand.\n"
-        + "Whenever you cast an instant or sorcery spell, draw a card. Then discard a card unless there "
-        + "are three or more Lesson cards in your graveyard.")]
+    // Chakra Meditation stood here until 2026-11-06 ("a draw for one card handed
+    // straight back is parity even when the discard is conditional"): a
+    // conditional gain is both tags now, see
+    // Classify_TheNovember6Filter_DrawThenDiscardUnless_IsCardAdvantageAndFilter.
     public void Classify_TheThirdPassNonWordings_AreNotCardAdvantage(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
@@ -2035,11 +2032,8 @@ public sealed partial class EffectClassifierTests
         + "card from among them onto the battlefield tapped. Put the rest on the bottom of your library in a "
         + "random order. This ability triggers only once each turn. (Targeting opponents, anything they "
         + "control, and/or cards in their graveyards is a crime.)")]
-    [InlineData("Guild Feud", "Enchantment",
-        "At the beginning of your upkeep, target opponent reveals the top three cards of their library, may "
-        + "put a creature card from among them onto the battlefield, then puts the rest into their graveyard. "
-        + "You do the same with the top three cards of your library. If two creatures are put onto the "
-        + "battlefield this way, those creatures fight each other.")]
+    // Guild Feud stood here until 2026-11-06, see
+    // Classify_TheNovember6Filter_YouDoTheSameEveryUpkeep_IsCardAdvantage.
     public void Classify_TheNovember3Redefinition_ACardForACardOrOnce_IsNotCardAdvantage(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));

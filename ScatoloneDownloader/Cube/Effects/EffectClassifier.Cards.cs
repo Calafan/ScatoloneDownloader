@@ -1372,14 +1372,7 @@ namespace ScatoloneDownloader.Cube
         private static bool AbilityRepeats(string ability) =>
             RepeatableWording.IsMatch(ability) || ChapterFiresTwice.IsMatch(ability);
 
-        // The same question with the exile out of the graveyard subtracted. An
-        // ability that spends the card to pay for itself runs once however it
-        // is worded — Morbius the Living Vampire exiles itself out of the
-        // graveyard.
-        private static bool AbilityRepeatsOutsideTheGraveyard(string ability) =>
-            AbilityRepeats(ability) && !SpendsItselfOutOfTheGraveyard(ability);
-
-        // …and with the other self-consuming costs subtracted too: Lupinflower
+        // The same question with the self-consuming costs subtracted: Lupinflower
         // Village sacrifices itself. The impulse family deliberately does NOT
         // ask this, because there the cost is often paid by something else:
         // Junktown makes three Junk tokens and each token sacrifices ITSELF for
@@ -1462,8 +1455,16 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex OnceTrigger = Rx(
             @"^\s*(?:when\b(?![^,\n]* or (?:dies|leaves|attacks|is put into)\b)|[ivx]+ —)");
 
+        // Also printed with a full stop, read 2026-11-06 (Q9 bis, "Conta +
+        // rumore"): Steamcore Scholar's and Alpharael's "draw two cards. Then
+        // discard two cards unless you discard an artifact card" on entering
+        // is no card met or not — "draw two, then discard a card" once is
+        // untagged on Racers' Scoreboard, Roiling Dragonstorm and Uthros
+        // Scanship (10-26) — so it is the loot made once, and both are named
+        // -Filter. The condition after it need not be matched: an optional
+        // "( at random)?( unless …)?" was tried and moved no card.
         private const string OneLootOnAPermanent =
-            @"\bdraws? (?:a|one|two|three|x|\d+) cards?,? then discards? (?:a|one|two|three|x|\d+) cards?\.?"
+            @"\bdraws? (?:a|one|two|three|x|\d+) cards?[.,]? then discards? (?:a|one|two|three|x|\d+) cards?\.?"
             + @"|\bdiscards? (?:a|one|two|x|\d+) cards?, then draws? (?:a|one|two|three|x|\d+) cards?\.?"
             + @"|\byou may discard a card\. if you do, draw a card\.?";
 
@@ -1509,14 +1510,15 @@ namespace ScatoloneDownloader.Cube
             // quindi conta l'effetto secco (come Ponder)": its "scries X, then
             // draws a card" is a Ponder you can choose, so a bullet line of a
             // spell is left alone.
-            // An ability that exiles the card out of the GRAVEYARD to pay for
-            // itself runs once (Survivor of Korlis scries 2 that way, untagged
-            // by hand, 2026-10-14). Not every self-spending cost: a scry the
-            // card SACRIFICES itself for is Filter by hand (Grim Bauble, Aang's
-            // Iceberg, the Omen cycle) — measured with AbilityRepeatsAtNoCost-
-            // ToItself and dropped.
+            // An ability PAID WITH THE CARD ITSELF is what the card is for, ruled
+            // 2026-11-06 ("Pagata con la carta = Filter"): a scry it sacrifices
+            // itself for (Grim Bauble, Found Footage, Cryptex, Surtland
+            // Frostpyre, 4 of 4 by hand) and one it exiles itself out of the
+            // GRAVEYARD for (Survivor of Korlis, named), which from 2026-10-14
+            // had run once and been noise (the exile out of the graveyard was
+            // subtracted from AbilityRepeats here; that helper is gone).
             string repeating = string.Join('\n', Abilities(text).Select(a =>
-                AbilityRepeatsOutsideTheGraveyard(Quoted.Replace(Parenthetical.Replace(a, " "), " ")) ? a
+                AbilityRepeats(Quoted.Replace(Parenthetical.Replace(a, " "), " ")) ? a
                 : spell ? string.Join('\n', a.Split('\n').Select(line =>
                     line.TrimStart().StartsWith('•') ? line : BlankOutsideQuotes(QuotedOrOneScryOrLoot, line)))
                 : BlankOutsideQuotes(OnceTrigger.IsMatch(a) ? QuotedOrOneScryOrPermanentLoot : QuotedOrOneScry, a)));
@@ -1550,14 +1552,87 @@ namespace ScatoloneDownloader.Cube
         // also what keeps a SPELL whole, since its lines neither trigger nor
         // cost: a separate "never split a spell" was measured and moved only
         // Quicksilver Sea, a Plane whose two abilities are really two.
-        // An exception to that exclusivity, ruled 2026-10-13: a PLANESWALKER's
-        // "draw, then discard unless" is a card when the
-        // condition is met and a loot when it is not: Kaito Shizuki, Teferi
-        // Akosa of Zhalfir, Tezzeret, Betrayer of Flesh (3 of 3 both tags).
-        // A creature's or an enchantment's is still a loot (Katara, Seeking
-        // Revenge, Chakra Meditation).
-        private static readonly Regex PlaneswalkerDrawThenDiscardUnless = Rx(
-            @"^[+−-]?\d+: draw [^.\n]*\. then discard [^.\n]* unless", RegexOptions.Multiline);
+        // A CONDITIONAL GAIN is both tags, ruled 2026-11-06 — "Guadagno
+        // condizionato = CA+Filter" ("Filter c'è sempre, ogni tanto c'è CA"):
+        // the selection happens every time and the extra card only when the
+        // condition holds, so the exclusivity above does not take Filter away.
+        // A gain that is CERTAIN stays CardAdvantage alone (Mirror of
+        // Galadriel's "Scry 1, then draw a card", Serum Sovereign: 33 of 33
+        // reviewed). Two shapes.
+        //
+        // "DRAW, THEN DISCARD UNLESS" ("Ovunque, come la Q5"): a loot when the
+        // condition fails, and a card when it holds. Asked of the ability with
+        // the condition MET and with it FAILED, through every rule of both
+        // tags: a card only when met is the conditional gain. It was a
+        // PLANESWALKER's exception from 2026-10-13 (Kaito Shizuki, Teferi Akosa
+        // of Zhalfir, Tezzeret, Betrayer of Flesh), and it now holds for any
+        // card: Shoreline Looter, Wonderscape Sage, Chakra Meditation and
+        // Arm-Mounted Anchor's loots that come again and Tainted Indulgence's
+        // spell (named +CardAdvantage), Winternight Stories and Rush of
+        // Inspiration (named +Filter). An enters loot is no card met or not —
+        // Steamcore Scholar's and Alpharael's draw two, discard one is parity
+        // on a creature, Splitskin Doll's draw one is Wall of Omens — and is
+        // the loot made once (Q9 bis, see OneLootOnAPermanent). Waterbending
+        // Lesson's draw three, discard one is a card either way: CardAdvantage
+        // alone.
+        private static readonly Regex DrawThenDiscardUnless = Rx(
+            @"\b(draws? (?:a|one|two|three|four|x) cards?)[.,] then (discards? (?:a|one|two|three|x) cards?)"
+            + @"(?: at random)? unless ([^.\n]*)\.?");
+
+        private static bool DrawThenDiscardUnlessGainsWhenMet(Card card, string text) =>
+            Abilities(text).Any(a =>
+            {
+                Match m = DrawThenDiscardUnless.Match(a);
+                if (!m.Success)
+                {
+                    return false;
+                }
+
+                // "Unless you discard an artifact card" discards that one card
+                // instead of the two; any other condition discards nothing.
+                // Rewritten as the loot is printed, with a comma: "draw a card.
+                // Then discard a card." reads as a draw to the loot rules.
+                string met = m.Groups[3].Value.StartsWith("you discard ", StringComparison.OrdinalIgnoreCase)
+                    ? m.Groups[1].Value + ", then discard a card."
+                    : m.Groups[1].Value + ".";
+                string failed = m.Groups[1].Value + ", then " + m.Groups[2].Value + ".";
+
+                return Classify(new OneAbility(card, a.Remove(m.Index, m.Length).Insert(m.Index, met)))
+                           .HasFlag(CardEffect.CardAdvantage)
+                    && !Classify(new OneAbility(card, a.Remove(m.Index, m.Length).Insert(m.Index, failed)))
+                           .HasFlag(CardEffect.CardAdvantage);
+            });
+
+        // A SELECTION EVERY TIME AND A CARD SOMETIMES, the other shape, asked
+        // only of a card already CardAdvantage. Measured before it was ruled:
+        // 12 reviewed cards, 3 with both tags (Kellan, Daring Traveler, Rumor
+        // Gatherer, Sword of Once and Future, kept by NAME since 2026-10-13)
+        // and 9 CardAdvantage alone; the ruling put Filter on all twelve. The
+        // top card into your hand only if it is a kind, and binned or bottomed
+        // if not: Kellan, Territory Culler, Traveling Botanist, Cabaretti
+        // Ascendancy, Sarinth Steelseeker, Ajani, Sleeper Agent, Bison Whistle,
+        // Bucolic Ranch. A "may" is the choice — Bloodline Shaman's and Garruk,
+        // Savage Herald's top card goes where it must.
+        private static readonly Regex TopCardKeptOnlyIfAKind = Rx(
+            @"\b(?:look at|reveal) the top card of your library\.[^\n]*?\binto your hand\. "
+            + @"(?:otherwise|if you don't put [^.\n,]{0,20} into your hand), (?:you may )?put "
+            + @"(?:it|that card|the card) (?:into your graveyard|on the bottom of your library)");
+
+        // And a scry or surveil every time with the card on a condition: Rumor
+        // Gatherer's "draw a card instead" the second time, Weatherlight
+        // Compleated's draw at seven counters or its scry, Saheeli, Filigree
+        // Master's draw if you tap an artifact, Sword of Once and Future's
+        // "then you may cast" from the graveyard, and Palantír of Orthanc's
+        // draw the opponent may grant.
+        private static readonly Regex SelectionWithACardOnACondition = Rx(
+            @"\b(?:scry|surveil) (?:\d+|x)\.[^\n]*?\b(?:draw a card instead|if you do, draw|may have you draw"
+            + @"|then you may cast [^.\n]* from your graveyard)"
+            + @"|\bdraw a card if [^.\n]*\. if (?:it|you) (?:doesn't|don't), (?:scry|surveil) (?:\d+|x)\b");
+
+        private static bool SelectsEveryTimeGainsSometimes(string text) =>
+            Abilities(Parenthetical.Replace(text, " ")).Any(a =>
+                TopCardKeptOnlyIfAKind.Match(a) is { Success: true } m && m.Value.Contains(" may ", StringComparison.OrdinalIgnoreCase)
+                || SelectionWithACardOnACondition.IsMatch(a));
 
         // The same two abilities when the parity guard has already taken the
         // draw away: a loot on one ability and a draw of two or more of yours,
@@ -1612,7 +1687,10 @@ namespace ScatoloneDownloader.Cube
         // the tag (Ivora, Moonstone Eulogist). And being a rummage it is never a
         // CARD: the reminder's "Draw a card" had been read as a repeatable draw,
         // which is what handed Moonstone Eulogist CardAdvantage.
-        private static readonly Regex MakesBlood = Rx(@"\bcreate (?:a|one|two|three|x|\d+) blood tokens?");
+        // "Create THAT MANY Blood tokens" too, read 2026-11-06: Jaws, Relentless
+        // Predator and Olivia's Attendants make them on every hit (both Filter
+        // by hand, 10-26 and 11-05).
+        private static readonly Regex MakesBlood = Rx(@"\bcreate (?:a|one|two|three|x|that many|\d+) blood tokens?");
 
         // Singular or plural: two made at once say "They're artifacts with",
         // and Falkenrath Celebrants was still reading as two cards.
@@ -1731,10 +1809,20 @@ namespace ScatoloneDownloader.Cube
         // later answer the same day (OneChosenOffTheTop). The look is Filter by the older rules already
         // (Owlbear Cub, Web of Life and Destiny, Armored Skyhunter); a random
         // card is no choice (Getaway Barrel's "a random creature card").
+        // The top X EXILED and one of them put in, read 2026-11-06 under Filter
+        // Q1 (one card taken out of several, even once): Anzrag's Rampage's "you
+        // may put a creature card exiled this way onto the battlefield" (Filter
+        // by hand, 2026-10-27).
+        // An OPPONENT's reveal is theirs to choose (Q6, 2026-11-06), but a
+        // "(?<!opponent )" here was tried and moved no card: Guild Feud, the
+        // only one printed, is CardAdvantage on its own half ("you do the
+        // same", OneChosenOffTheTop), which keeps Filter off it anyway.
         private static readonly Regex OneChosenFromAMillOrReveal = Rx(
             @"\b(?:mill|reveals?) (?:the top )?\w+ cards[^.\n]{0,40}[.,] (?:then |you may |may )*put (?:a|an) "
             + @"(?:creature|permanent|artifact|enchantment|nonland|planeswalker)[\w ]{0,20} card from among (?:them|those cards|the milled cards)"
-            + @"[^.\n]{0,40}onto the battlefield");
+            + @"[^.\n]{0,40}onto the battlefield"
+            + @"|\bexile the top (?:x|\w+) cards of your library[^.\n]{0,120}\. you may put (?:a|an) "
+            + @"(?:creature|permanent|artifact|enchantment|nonland|planeswalker) card exiled this way onto the battlefield");
 
         // A creature or another permanent off the top put onto the battlefield
         // by an ability that REPEATS ("CA se si ripetono"): Call of the Wild and
@@ -1761,12 +1849,27 @@ namespace ScatoloneDownloader.Cube
         // Filter by hand and named; Ureni of the Unwritten reached. Once, it stays
         // Filter (OneChosenFromAMillOrReveal, the looks). A land is Ramp
         // (Freestrider Lookout, Shigeki), a swap is a card for a card (Industrial
-        // Advancement sacrifices a creature first), and Guild Feud's "target
-        // opponent reveals", which hands the opponent one as well, is not read.
+        // Advancement sacrifices a creature first). Guild Feud's "target
+        // opponent reveals" is the opponent's choice (Filter Q6, 2026-11-06:
+        // only your own cards), and its "You do the same with the top three
+        // cards of your library" every upkeep is the one chosen again, read the
+        // same day (unreviewed; it had been Filter off the opponent's half).
         private static readonly Regex OneChosenOffTheTop = Rx(
             @"\b(?:look at|reveal|mill) (?:the top )?(?:\w+ )?cards?\b[^\n]{0,120}?\bput (?:a|an|one) "
             + @"(?![\w ]{0,20}\bland cards?\b)[\w ,-]{0,40}?cards? from among (?:them|those cards|the milled cards|the revealed cards)"
-            + @"[^.\n]{0,60}onto the battlefield");
+            + @"[^.\n]{0,60}onto the battlefield"
+            + @"|\bput (?:a|an) [\w ]{0,20}card from among them onto the battlefield[^\n]*\byou do the same with the top \w+ cards of your library");
+
+        // SEVERAL under a CAP, on an ability that REPEATS, read 2026-11-06: Ayesha
+        // Tanaka, Armorer's "any number of artifact cards with mana value less
+        // than or equal to Ayesha Tanaka's power from among them" on every
+        // attack (CardAdvantage alone by hand, 11-03). Only repeating: once,
+        // a cap is Filter by the 2026-10-13 "qualunque tetto" (Ao, the Dawn Sky,
+        // Kayla's Reconstruction, Knickknack Ouphe, Storm the Festival, United
+        // Battlefront, all reached by the first cut, which read it everywhere).
+        private static readonly Regex SeveralCappedFromAmongThem = Rx(
+            @"\bputs? (?:any number of|up to (?:two|three|four|five|x)) [^.\n]{0,40}\bcards? with [^.\n]{0,60}?"
+            + @"from among (?:them|those cards)[^.\n]{0,20} onto the battlefield");
 
         // A creature put for a turn and SACRIFICED at the end step leaves no card
         // behind, ruled 2026-11-03 on Killer Instinct ("Solo Burn"; unreviewed).
@@ -1780,7 +1883,10 @@ namespace ScatoloneDownloader.Cube
             {
                 string ability = Parenthetical.Replace(a, " ");
                 return (FreeCardOffTheTop.IsMatch(ability) && CastsItFree.IsMatch(ability) && AbilityRepeats(ability))
-                    || ((RevealedOntoTheBattlefield.IsMatch(ability) || OneChosenOffTheTop.IsMatch(ability))
+                    || ((RevealedOntoTheBattlefield.IsMatch(ability) || OneChosenOffTheTop.IsMatch(ability)
+                            // Not an ultimate, which is once: Ajani, Outland
+                            // Chaperone's −8 (unreviewed) stays a capped Filter.
+                            || (SeveralCappedFromAmongThem.IsMatch(ability) && !ability.TrimStart().StartsWith('−')))
                         && RepeatsWithoutPayingACard(ability)
                         && !SwapsYourOwn.IsMatch(ability) && !SacrificedAtTheEndStep.IsMatch(ability));
             });
@@ -2185,8 +2291,11 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex PileFromTheTopIntoYourHand = Rx(
             @"(?:top|library)[^\n]{0,200}put (?:that|one) pile into your hand");
 
+        // "Put UP TO TWO of them into your hand" too, read 2026-11-06: Shadow
+        // Prophecy's look at the top X (CardAdvantage alone by hand, 11-03).
         private static readonly Regex SeveralKeptFromALook = Rx(
             @"put (?:two|three) of those cards into your hand(?![^.\n]{0,20}instead)"
+            + @"|put up to (?:two|three) of them into your hand"
             + @"|reveal up to two [\w ]{0,30}cards from among them and put them into your hand"
             + @"|for each card type[^,\n]{0,60}, (?:you may )?put a card of that type from among [^.\n]{0,40}into your hand");
 
@@ -2481,9 +2590,16 @@ namespace ScatoloneDownloader.Cube
         // Cartographer, ManaFixing) and the TRIBE's (Nissa, Resurgent Animist):
         // both repeat, and vetoes for a land and a chosen type were tried and
         // moved no card.
+        // Ruled 2026-11-06 (Filter Q1): ONE card taken out of several, a look at
+        // N or a dig until a type, is this tag even once, and the dig that MAY
+        // put its card onto the battlefield is the same choice (Hei Bai, Forest
+        // Guardian's Shrine, Filter by hand and kept by name until then). Only
+        // with the "may": Aspiring Champion's creature that must go in is a
+        // card for the card it sacrificed (Burn alone by hand).
         private static readonly Regex RevealsUntilATypeIntoHand = Rx(
             @"reveal cards from the top of your library until you reveal an? "
-            + @"[\w ]{0,30}card\. put (?:that|the revealed) card into your hand and the rest on the bottom of your library");
+            + @"[\w ]{0,30}card\. (?:put (?:that|the revealed) card into your hand and the rest on the bottom of your library"
+            + @"|you may put that card onto the battlefield)");
 
         private static readonly Regex LoyaltyRevealsUntilIntoHand = Rx(
             @"^[+−-]?\d+: reveal cards from the top of your library until you reveal [^.\n]{0,80}\.[^\n]{0,80}\bput (?:that card|it) into your hand",
