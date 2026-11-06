@@ -774,6 +774,13 @@ public sealed partial class EffectClassifierTests
     [InlineData("Slave of Bolas", "Sorcery",
         "Gain control of target creature. Untap that creature. It gains haste until end of turn. Sacrifice it "
         + "at the beginning of the next end step.")]
+    // Ruled the same day ('regola tribale anche qui'): a hasty creature card of
+    // one TYPE put from the hand and gone is fed only by a tribal deck, the
+    // exception the drain on a tribe keeps.
+    [InlineData("Incandescent Soulstoke", "Creature — Elemental Shaman",
+        "Other Elemental creatures you control get +1/+1.\n{1}{R}, {T}: You may put an Elemental creature card "
+        + "from your hand onto the battlefield. That creature gains haste until end of turn. Sacrifice it at "
+        + "the beginning of the next end step.")]
     public void Classify_TheNovember6Definition_IsNotBurn(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));

@@ -1574,7 +1574,15 @@ namespace ScatoloneDownloader.Cube
                     // OPPONENT, whose attack is Act of Treason's — the sacrifice that
                     // follows is Removal (the stolen creature sacrificed, in the Removal
                     // table).
-                    Rx(@"\b(?:return|put) [^.\n]{0,60}\b(?:creature cards?|commanders?)\b[^.\n]{0,80}\b(?:graveyards?|hand|command zone)\b"
+                    // Nor a creature card of one TYPE, ruled 2026-11-06 ("regola
+                    // tribale anche qui", Incandescent Soulstoke's Elemental card
+                    // from the hand): only a tribal deck feeds it, the exception the
+                    // drain on a tribe keeps (DrainOnATribe). The type is the
+                    // capitalised word in front of "creature card"; Soulstoke is the
+                    // one card of 32053 it reaches, and no library rule names a type.
+                    // The keyword handed to a tribe stays (Dregscape Sliver, Sliver
+                    // Gravemother: of the tribe, so on themselves, Burn by hand).
+                    Rx(@"\b(?:return|put) [^.\n]{0,60}\b(?<!(?-i:\b[A-Z][a-z]+) )(?:creature cards?|commanders?)\b[^.\n]{0,80}\b(?:graveyards?|hand|command zone)\b"
                         + @"[^.\n]{0,40}\b(?:onto|to) the battlefield\b"
                         + @"[^.\n]{0,60}\.[^\n]{0,200}?\bhaste\b[^\n]{0,200}?"
                         // Each alternative is one a card needs, neutralised 2026-11-06;

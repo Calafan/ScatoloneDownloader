@@ -14,8 +14,9 @@ exceptions are kept, each with its why. Life that BUYS something for whoever pay
 fixed "target player draws N cards and loses N life" (Blood Pact) and a ward paid in life, the toll
 on their own spell (Zul Ashur, Parnesse), though a variable X pointed at a player is a kill
 (Eldritch Pact). What a TOKEN the card makes then does is the token's (the 0/1 Wizard), unless the
-token is itself the hasty shot (Urabrask's Forge). A drain only ANOTHER MEMBER OF A TRIBE turns on
-needs a tribal deck (Obyra), the one exception Reanimate keeps too. And a card that hands back the
+token is itself the hasty shot (Urabrask's Forge). A drain only ANOTHER MEMBER OF A TRIBE turns on,
+or a hasty creature card of one TYPE put in and gone, needs a tribal deck (Obyra, Incandescent
+Soulstoke), the one exception Reanimate keeps too. And a card that hands back the
 life it deals is worth nothing (Fiery Justice, read by its shape). Redefined 2026-11-06, the
 answers at the end; every earlier paragraph marked "overturned" is history, and no card is kept in
 or out of this tag by name.
@@ -256,8 +257,12 @@ they can avoid it by not targeting (ward, 10 of 10 untagged for that line; Parne
 Q6 ("Del token: fuori"): what a token the card makes does afterwards is the token's (21 of 21
 reviewed untagged for that line); the hasty token gone at the end step stays Burn because there the
 body is the one shot. Q7 ("Tribale fuori, come Reanimate"): the drain on another member of a tribe
-stays out with its why. Q8 ("Fuori: il saldo è zero"): Fiery Justice's damage handed back as life
-is read by its shape, damage then "target opponent gains N life".
+stays out with its why, and so does the hasty creature card of one type, ruled after the pass
+("Incandescent Soulstoke niente Burn, regola tribale anche qui"): its Elemental card from the hand
+is fed only by a tribal deck. It was the one card of the store the Q2 rule reached that way; the
+keyword a Sliver hands its own tribe stays Burn (Dregscape Sliver, Sliver Gravemother), because
+the card is of the tribe and has it too. Q8 ("Fuori: il saldo è zero"): Fiery Justice's damage
+handed back as life is read by its shape, damage then "target opponent gains N life".
 
 Left as known disagreements, each the only card with its wording: Blim, Comedic Genius, Yurlok of
 Scorch Thrash, and Deadpool, Trading Card, whose "you lose 3 life" reaches an opponent only through
