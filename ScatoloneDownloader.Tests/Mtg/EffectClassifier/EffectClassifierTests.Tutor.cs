@@ -89,4 +89,53 @@ public sealed partial class EffectClassifierTests
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tutor));
     }
+
+    [Theory]
+    // Ruled 2026-11-05 (learn is not Tutor): the Lesson card of learn's reminder
+    // text is revealed from outside the game, or a card is rummaged; it searches
+    // no library. Gnarled Professor was untagged by hand, Igneous Inspiration is
+    // handed back without the tag.
+    [InlineData("Gnarled Professor", "Creature — Treefolk Druid",
+        "Trample\nWhen this creature enters, learn. (You may reveal a Lesson card you own from outside the "
+        + "game and put it into your hand, or discard a card to draw a card.)")]
+    [InlineData("Igneous Inspiration", "Sorcery",
+        "Igneous Inspiration deals 3 damage to any target.\nLearn. (You may reveal a Lesson card you own from "
+        + "outside the game and put it into your hand, or discard a card to draw a card.)")]
+    [InlineData("Academic Dispute", "Instant",
+        "Target creature blocks this turn if able. You may have it gain reach until end of turn.\nLearn. (You "
+        + "may reveal a Lesson card you own from outside the game and put it into your hand, or discard a card "
+        + "to draw a card.)")]
+    [InlineData("Cram Session", "Sorcery",
+        "You gain 4 life.\nLearn. (You may reveal a Lesson card you own from outside the game and put it into "
+        + "your hand, or discard a card to draw a card.)")]
+    [InlineData("Field Trip", "Sorcery",
+        "Search your library for a basic Forest card, put that card onto the battlefield tapped, then "
+        + "shuffle.\nLearn. (You may reveal a Lesson card you own from outside the game and put it into your "
+        + "hand, or discard a card to draw a card.)")]
+    public void Classify_TheNovember5Ruling_LearnIsNotTutor(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tutor));
+    }
+
+    [Theory]
+    // The veto is the word Lesson: the other cards that fetch from outside the
+    // game never name one and stay Tutor (Tutor.md, the sideboard is a tutor).
+    [InlineData("Ring of Ma'rûf", "Artifact",
+        "{5}, {T}, Exile this artifact: The next time you would draw a card this turn, instead put a card you "
+        + "own from outside the game into your hand.")]
+    [InlineData("Burning Wish", "Sorcery",
+        "You may reveal a sorcery card you own from outside the game and put it into your hand. Exile Burning "
+        + "Wish.")]
+    [InlineData("Living Wish", "Sorcery",
+        "You may reveal a creature or land card you own from outside the game and put it into your hand. "
+        + "Exile Living Wish.")]
+    [InlineData("Vivien, Arkbow Ranger", "Legendary Planeswalker — Vivien",
+        "+1: Distribute two +1/+1 counters among up to two target creatures. They gain trample until end of "
+        + "turn.\n−3: Target creature you control deals damage equal to its power to target creature or "
+        + "planeswalker.\n−5: You may reveal a creature card you own from outside the game and put it into your "
+        + "hand.")]
+    public void Classify_TheNovember5Ruling_TheSideboardWishesStayTutor(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tutor));
+    }
 }

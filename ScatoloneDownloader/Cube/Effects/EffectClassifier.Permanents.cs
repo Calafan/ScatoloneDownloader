@@ -119,8 +119,20 @@ namespace ScatoloneDownloader.Cube
             // human tags none of those five.
             Rx(@"reveal cards? from the top of your library until you reveal[^\n]{0,30}chosen name"),
             // Ring of Ma'ruf fetches from the sideboard, which is a library the
-            // rules text has no other word for.
-            Rx(@"card you own from outside the game"),
+            // rules text has no other word for. NOT the LESSON card of LEARN's
+            // reminder text ("You may reveal a Lesson card you own from outside
+            // the game and put it into your hand, or discard a card to draw a
+            // card"): ruled 2026-11-05 ("learn is not Tutor": Tutor searches a
+            // LIBRARY, and learn reveals a Lesson from outside the game or
+            // rummages). Gnarled Professor was untagged by hand (reviewed 11-05),
+            // Igneous Inspiration is reached and handed back without the tag; the
+            // classifier proposed Tutor on 19 of the 20 unreviewed learn cards. The
+            // veto is the one word "Lesson": the other outside-the-game cards (the
+            // wishes, Vivien, Arkbow Ranger, The Raven's Warning) never name a
+            // Lesson and stay, as Tutor.md records the sideboard. Measured as a
+            // family on 2026-11-05: learn 1 tagged of 2 reviewed, and the Lesson
+            // reminder is on exactly the cards that say learn.
+            Rx(@"(?<!\blesson )card you own from outside the game"),
         ];
 
         /// <summary>A land search is Ramp or ManaFixing — the ruling this tag was
@@ -557,7 +569,17 @@ namespace ScatoloneDownloader.Cube
         // both tagged, read 2026-10-15.
         private static readonly Regex AnimatesANoncreature = Rx(
             @"counters? on (?:target noncreature [\w ]{0,20}|this (?:artifact|enchantment|land)|an? [\w ]{1,15} you control)"
-            + @"\. it becomes an? 0/0\b[\w ,]{0,40}creature");
+            + @"\. it becomes an? 0/0\b[\w ,]{0,40}creature"
+            // …and the counters put on a target permanent that may not be a creature
+            // yet: "Put two +1/+1 counters on target artifact, creature, or land you
+            // control. Untap that permanent. If it isn't a creature, it becomes a 0/0
+            // creature in addition to its other types" (Tawnos's Tinkering, Tokens +
+            // Buff by hand, reviewed 11-03; ruled 2026-09-25 above). Reached with it:
+            // Donatello, Mutant Mechanic, Pizza Face, Gastromancer and Does Machines,
+            // unreviewed, which keep Buff and gain the body. Buff stays
+            // (CountersMakeTheBody is not touched).
+            + @"|\bcounters? on (?:up to one )?(?:other )?target [^.\n]{0,60}\.(?: untap [^.\n]{0,30}\.)? "
+            + @"if it isn't a creature, it becomes an? 0/0\b[\w ,]{0,40}creature");
 
         // A LAND or an ARTIFACT that animates ITSELF is a body made too,
         // ruled 2026-10-13: the Restless lands, Cavernous Maw, Stalking Stones
@@ -570,9 +592,21 @@ namespace ScatoloneDownloader.Cube
         // and the 13 reviewed ones that animate themselves other than by crew
         // are untagged, against 3 (Kylox's Voltstrider, War Balloon, Phoenix
         // Fleet Airship, handed back).
+        // Read 2026-11-05 under the same ruling, three wordings the rule did not
+        // read, each an artifact that animates ITSELF: "you may have this artifact
+        // BECOME an X/X Insect artifact creature" (Ebony Fly, Tokens by hand); an X/X
+        // body whose size is the X (Chimeric Staff, unreviewed); and the base
+        // power and toughness AFTER the word creature, "becomes a Shapeshifter
+        // artifact creature with base power and toughness 3/3" (Mimic, Tokens by
+        // hand; Dire Mimic, reviewed 11-03 without the tag, has the identical
+        // wording at 5/5 and is handed back with it). NOT an X that is the number of
+        // your COMMANDERS, which a cube never has (Cactus Preserve, reviewed
+        // untagged, as LandsBecomeCreatures reads it).
         private static readonly Regex SelfAnimates = Rx(
-            @"\bthis (?:land|artifact|enchantment|case) (?:becomes|is) an? [^.\n]{0,40}\d+/\d+[^.\n]{0,60}creature"
-            + @"|\bthis (?:land|artifact|enchantment) isn't a creature, it becomes an? \d+/\d+");
+            @"\bthis (?:land|artifact|enchantment|case) (?:becomes?|is) (?![^.\n]*\bcommanders?\b)an? [^.\n]{0,40}"
+            + @"(?:\d+|x)/(?:\d+|x)[^.\n]{0,60}creature"
+            + @"|\bthis (?:land|artifact|enchantment) isn't a creature, it becomes an? \d+/\d+"
+            + @"|\bthis (?:land|artifact|enchantment|case) becomes an? [^.\n]{0,60}creature with base power and toughness \d+/\d+");
 
         // An ARTIFACT animated by the card is a body like the land, ruled
         // 2026-10-15 ("Tokens, come le terre"): the hand tags were split 6 to
@@ -839,9 +873,20 @@ namespace ScatoloneDownloader.Cube
         // an upkeep engine.
         private static readonly Regex DelayedOnce = Rx(@"at the beginning of (?:the|your) next [\w ]{0,20}");
 
+        // The reminder of DECAYED, "(It can't block. When it attacks, sacrifice it at
+        // end of combat.)", is the token's own life and no repeat of the card's
+        // ability: left in, its "at end of combat" read a creature making ONE decayed
+        // Zombie as an engine. Read 2026-11-05 under the 2026-09-24 rule (a creature
+        // card is Tokens for three or more bodies or an effect that repeats): Falcon
+        // Abomination, reviewed untagged. Family: 2 cards make one decayed token once,
+        // Falcon Abomination and Hobbling Zombie (unreviewed, loses the tag); the
+        // decayed makers on a repeating trigger (Poppet Stitcher, Jadar) keep it.
+        private static readonly Regex DecayedReminder = Rx(
+            @"\(it can't block\. when it attacks, sacrifice it at end of combat\.\)");
+
         private static bool BodyAbilityRepeats(string ability)
         {
-            string asked = DelayedOnce.Replace(ability, " ");
+            string asked = DecayedReminder.Replace(DelayedOnce.Replace(ability, " "), " ");
 
             return (AbilityRepeats(asked) || BodyEveryCombat.IsMatch(asked))
                 && !BodyCostSpendsItself.IsMatch(asked);

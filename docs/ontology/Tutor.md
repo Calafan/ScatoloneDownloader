@@ -33,3 +33,11 @@ out by the land ruling on purpose.
 Read 2026-10-16: a search for "a creature or land card" (Analyze the Pollen; Traverse the Ulvenwald,
 unreviewed). Handed back: Central Elevator, Thornvault Forager and The Hunger Tide Rises with the
 tag; Urza's Cave without it.
+
+RULED 2026-11-05 ("learn is not Tutor"): the Lesson card of LEARN's reminder text ("You may reveal a
+Lesson card you own from outside the game and put it into your hand, or discard a card to draw a
+card") searches no library, so the sideboard reading above does not take it. Gnarled Professor is
+the human's own case (the tag taken off by hand); Igneous Inspiration is reached and handed back
+without it; 19 unreviewed learn cards lose the proposal (Academic Dispute, Cram Session, Field Trip,
+Guiding Voice and the like). The veto is the one word "Lesson": the other cards that fetch from
+outside the game never name one and stay Tutor (the Wishes, Ring of Ma'ruf, Vivien, Arkbow Ranger).

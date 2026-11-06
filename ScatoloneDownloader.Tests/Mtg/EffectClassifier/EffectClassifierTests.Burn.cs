@@ -326,12 +326,14 @@ public sealed partial class EffectClassifierTests
 
     [Theory]
     // Ruled 2026-10-16: a player who draws N and loses N life is never burnt (B1,
-    // "Mai Burn", Monumental Corruption), and Blooming Blast's gift is no Burn
-    // (B3). Half the life of its owner or of each player stays out of B2. A ward
-    // paid in life taxes their spell (0 of the 6 reviewed), and a drain that
-    // punishes an opponent's sacrifice is untagged on Vengeful Tracker.
-    [InlineData("Monumental Corruption", "Sorcery",
-        "Target player draws X cards and loses X life, where X is the number of artifacts you control.")]
+    // "Mai Burn"), and Blooming Blast's gift is no Burn (B3). Monumental
+    // Corruption was pinned here until 2026-11-05, when "target player draws X
+    // cards and loses X life" with a VARIABLE X was ruled Burn ("Sì: target
+    // player + X = Burn"); it moved to
+    // Classify_TheNovember5Ruling_TargetPlayerDrawsXAndLosesX_IsBurn. Half the
+    // life of its owner or of each player stays out of B2. A ward paid in life
+    // taxes their spell (0 of the 6 reviewed), and a drain that punishes an
+    // opponent's sacrifice is untagged on Vengeful Tracker.
     [InlineData("Blooming Blast", "Instant",
         "Gift a Treasure (You may promise an opponent a gift as you cast this spell. If you do, they create a "
         + "Treasure token before its other effects. It's an artifact with \"{T}, Sacrifice this token: Add one "
@@ -452,16 +454,15 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
-    // Ruled 2026-10-23 with it: a creature the card only TAKES, from a graveyard
-    // or a hand, keeps its Reanimate or Cheat and is not burn ("solo ciò che la
-    // carta crea o è"). The shield that counters a spell unless its player pays
+    // Ruled 2026-10-23 with it: a creature the card only TAKES, from a hand,
+    // keeps its Cheat and is not burn ("solo ciò che la carta crea o è"). Corpse
+    // Dance, the graveyard case, was pinned here until 2026-11-05, when "Anche
+    // preso è Burn" overturned the graveyard part; it moved to
+    // Classify_TheNovember5Ruling_ACreatureFromAGraveyardWithHasteAndGone_IsBurn.
+    // The shield that counters a spell unless its player pays
     // life is Parnesse's Protection, as ward is. "If it has unearth" grants
     // nothing, an emblem you get is yours, and one point at the end of a list
     // stays under the threshold.
-    [InlineData("Corpse Dance", "Instant",
-        "Buyback {2} (You may pay an additional {2} as you cast this spell. If you do, put this card into "
-        + "your hand as it resolves.)\nReturn the top creature card of your graveyard to the battlefield. That "
-        + "creature gains haste until end of turn. Exile it at the beginning of the next end step.")]
     [InlineData("Through the Breach", "Instant — Arcane",
         "You may put a creature card from your hand onto the battlefield. That creature gains haste. "
         + "Sacrifice that creature at the beginning of the next end step.\nSplice onto Arcane {2}{R}{R} (As you "
@@ -524,5 +525,199 @@ public sealed partial class EffectClassifierTests
         bool creature = typeLine.Contains("Creature", StringComparison.Ordinal);
 
         Assert.Equal(creature, EffectClassifier.Classify(MakeCard(name, typeLine, oracle, [keyword])).HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
+    // Read 2026-11-05 under the 2026-09-20 ruling (damage divided among bare
+    // targets is Burn): one or two targets (Ral, Monsoon Mage, tagged by hand),
+    // and a player in an each-of-up-to list of separate targets (Volatile
+    // Arsonist).
+    [InlineData("Ral, Monsoon Mage // Ral, Leyline Prodigy", "Legendary Creature — Human Wizard // Legendary Planeswalker — Ral",
+        "Instant and sorcery spells you cast cost {1} less to cast.\nWhenever you cast an instant or sorcery "
+        + "spell during your turn, flip a coin. If you lose the flip, Ral deals 1 damage to you. If you win the "
+        + "flip, you may exile Ral. If you do, return him to the battlefield transformed under his owner's "
+        + "control.\nRal enters with an additional loyalty counter on him for each instant and sorcery spell "
+        + "you've cast this turn.\n+1: Until your next turn, instant and sorcery spells you cast cost {1} less "
+        + "to cast.\n−2: Ral deals 2 damage divided as you choose among one or two targets. Draw a card if you "
+        + "control a blue permanent other than Ral.\n−8: Exile the top eight cards of your library. You may cast "
+        + "instant and sorcery spells from among them this turn without paying their mana costs.")]
+    [InlineData("Forked Bolt", "Sorcery",
+        "Forked Bolt deals 2 damage divided as you choose among one or two targets.")]
+    [InlineData("Electrolyze", "Instant",
+        "Electrolyze deals 2 damage divided as you choose among one or two targets.\nDraw a card.")]
+    [InlineData("Fire // Ice", "Instant // Instant",
+        "Fire deals 2 damage divided as you choose among one or two targets.\nTap target permanent.\nDraw a "
+        + "card.")]
+    [InlineData("Volatile Arsonist // Dire-Strain Anarchist", "Creature — Human Werewolf // Creature — Werewolf",
+        "Menace, haste\nWhenever this creature attacks, it deals 1 damage to each of up to one target "
+        + "creature, up to one target player, and/or up to one target planeswalker.\nDaybound (If a player casts "
+        + "no spells during their own turn, it becomes night next turn.)\nMenace, haste\nWhenever this creature "
+        + "attacks, it deals 2 damage to each of up to one target creature, up to one target player, and/or up "
+        + "to one target planeswalker.\nNightbound (If a player casts at least two spells during their own turn, "
+        + "it becomes day next turn.)")]
+    public void Classify_TheNovember5Readings_DamageDividedAmongOneOrTwoTargets_IsBurn(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
+    // Read 2026-11-05: the player a card chose earlier is a player the damage
+    // lands on (The Lord of Pain, tagged by hand).
+    [InlineData("The Lord of Pain", "Legendary Creature — Human Assassin",
+        "Menace\nYour opponents can't gain life.\nWhenever a player casts their first spell each turn, choose "
+        + "another target player. The Lord of Pain deals damage equal to that spell's mana value to the chosen "
+        + "player.")]
+    [InlineData("Saskia the Unyielding", "Legendary Creature — Human Soldier",
+        "Vigilance, haste\nAs Saskia enters, choose a player.\nWhenever a creature you control deals combat "
+        + "damage to a player, it deals that much damage to the chosen player.")]
+    [InlineData("Stuffy Doll", "Artifact Creature — Construct",
+        "Indestructible\nAs this creature enters, choose a player.\nWhenever this creature is dealt damage, it "
+        + "deals that much damage to the chosen player.\n{T}: This creature deals 1 damage to itself.")]
+    public void Classify_TheNovember5Readings_DamageToTheChosenPlayer_IsBurn(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
+    // Sawhorn Nemesis only doubles damage dealt to the chosen player. Dorothea,
+    // Vengeful Victim: named 2026-11-05, a slip: the attacking token sacrificed at
+    // end of combat is not Burn (1 tagged of 13 reviewed cards of that wording).
+    [InlineData("Sawhorn Nemesis", "Creature — Dinosaur",
+        "As this creature enters, choose a player.\nIf a source would deal damage to the chosen player or a "
+        + "permanent they control, it deals double that damage instead.")]
+    [InlineData("Dorothea, Vengeful Victim // Dorothea's Retribution", "Legendary Creature — Spirit // Enchantment — Aura",
+        "Flying\nWhen Dorothea attacks or blocks, sacrifice it at end of combat.\nDisturb {1}{W}{U} (You may "
+        + "cast this card from your graveyard transformed for its disturb cost.)\nEnchant creature\nEnchanted "
+        + "creature has \"Whenever this creature attacks, create a 4/4 white Spirit creature token with flying "
+        + "that's tapped and attacking. Sacrifice that token at end of combat.\"\nIf Dorothea's Retribution would "
+        + "be put into a graveyard from anywhere, exile it instead.")]
+    [InlineData("Kavaron Harrier", "Artifact Creature — Robot Soldier",
+        "Whenever this creature attacks, you may pay {2}. If you do, create a 2/2 colorless Robot artifact "
+        + "creature token that's tapped and attacking. Sacrifice that token at end of combat.")]
+    [InlineData("Mordor Trebuchet", "Artifact Creature — Wall",
+        "Defender\nWhenever you attack with one or more Goblins and/or Orcs, create a 2/1 colorless Construct "
+        + "artifact creature token with flying named Ballistic Boulder that's tapped and attacking. Sacrifice "
+        + "that token at end of combat.")]
+    public void Classify_TheNovember5Readings_DoublingDamageOrTokensSacrificedAtEndOfCombat_AreNotBurn(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
+    // Ruled 2026-11-05 ("Sì: target player + X = Burn", asked on Eldritch Pact
+    // against Pact of the Serpent and Monumental Corruption): a VARIABLE X pointed
+    // at a player can be large and can be an opponent. Eldritch Pact is named;
+    // Pact of the Serpent and Monumental Corruption are reached and handed back
+    // with the tag.
+    [InlineData("Eldritch Pact", "Sorcery",
+        "Target player draws X cards and loses X life, where X is the number of cards in their graveyard.")]
+    [InlineData("Pact of the Serpent", "Sorcery",
+        "Choose a creature type. Target player draws X cards and loses X life, where X is the number of "
+        + "creatures they control of the chosen type.")]
+    [InlineData("Monumental Corruption", "Sorcery",
+        "Target player draws X cards and loses X life, where X is the number of artifacts you control.")]
+    [InlineData("Damnable Pact", "Sorcery",
+        "Target player draws X cards and loses X life.")]
+    public void Classify_TheNovember5Ruling_TargetPlayerDrawsXAndLosesX_IsBurn(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
+    // B1 (2026-10-16, "Mai Burn") still holds for a fixed N pointed at a player
+    // (Sign in Blood, Blood Pact, Insatiable Avarice, Vault Plunderer) and for YOU
+    // drawing X and losing X (Estinien Varlineau, The Speed Demon, Painful
+    // Truths).
+    [InlineData("Sign in Blood", "Sorcery",
+        "Target player draws two cards and loses 2 life.")]
+    [InlineData("Blood Pact", "Instant",
+        "Target player draws two cards and loses 2 life.")]
+    [InlineData("Insatiable Avarice", "Sorcery",
+        "Spree (Choose one or more additional costs.)\n+ {2} — Search your library for a card, then shuffle "
+        + "and put that card on top.\n+ {B}{B} — Target player draws three cards and loses 3 life.")]
+    [InlineData("Vault Plunderer", "Creature — Human Rogue",
+        "When this creature enters, target player draws a card and loses 1 life.")]
+    [InlineData("Estinien Varlineau", "Legendary Creature — Elf Warrior",
+        "Whenever you cast a noncreature spell, put a +1/+1 counter on Estinien Varlineau. It gains flying "
+        + "until end of turn.\nAt the beginning of your second main phase, you draw X cards and lose X life, "
+        + "where X is the number of your opponents who were dealt combat damage by Estinien Varlineau or a "
+        + "Dragon this turn.")]
+    [InlineData("The Speed Demon", "Legendary Creature — Demon",
+        "Flying, trample\nStart your engines! (If you have no speed, it starts at 1. It increases once on each "
+        + "of your turns when an opponent loses life. Max speed is 4.)\nAt the beginning of your end step, you "
+        + "draw X cards and lose X life, where X is your speed.")]
+    [InlineData("Painful Truths", "Sorcery",
+        "Converge — You draw X cards and lose X life, where X is the number of colors of mana spent to cast "
+        + "this spell.")]
+    public void Classify_TheNovember5Ruling_AFixedNOrYouDrawingX_StaysNotBurn(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
+    // Ruled 2026-11-05 ("Anche preso è Burn", asked on Balduvian Atrocity against
+    // Shallow Grave and Corpse Dance): a creature card returned FROM A GRAVEYARD
+    // with haste and sacrificed or exiled at the next end step is Burn beside its
+    // Reanimate. This overturns the graveyard part of the 2026-10-23 rule (Corpse
+    // Dance was pinned as not Burn until now); Balduvian Atrocity is named, Corpse
+    // Dance, Shallow Grave, Push // Pull and Coalstoke Gearhulk are reached and
+    // handed back with the tag.
+    [InlineData("Balduvian Atrocity", "Creature — Phyrexian Berserker",
+        "Kicker {R} (You may pay an additional {R} as you cast this spell.)\nMenace\nWhen this creature enters, "
+        + "if it was kicked, return target creature card with mana value 3 or less from your graveyard to the "
+        + "battlefield. It gains haste. Sacrifice it at the beginning of the next end step.")]
+    [InlineData("Corpse Dance", "Instant",
+        "Buyback {2} (You may pay an additional {2} as you cast this spell. If you do, put this card into "
+        + "your hand as it resolves.)\nReturn the top creature card of your graveyard to the battlefield. That "
+        + "creature gains haste until end of turn. Exile it at the beginning of the next end step.")]
+    [InlineData("Shallow Grave", "Instant",
+        "Return the top creature card of your graveyard to the battlefield. That creature gains haste until "
+        + "end of turn. Exile it at the beginning of the next end step.")]
+    [InlineData("Push // Pull", "Sorcery // Sorcery",
+        "Destroy target tapped creature.\nPut up to two target creature cards from a single graveyard onto the "
+        + "battlefield under your control. They gain haste until end of turn. Sacrifice them at the beginning "
+        + "of the next end step.")]
+    [InlineData("Coalstoke Gearhulk", "Artifact Creature — Construct",
+        "Menace, deathtouch\nWhen this creature enters, put target creature card with mana value 4 or less "
+        + "from a graveyard onto the battlefield under your control with a finality counter on it. That "
+        + "creature gains menace, deathtouch, and haste. At the beginning of your next end step, exile that "
+        + "creature.")]
+    [InlineData("Macabre Mockery", "Instant",
+        "Put target creature card from an opponent's graveyard onto the battlefield under your control. It "
+        + "gets +2/+0 and gains haste until end of turn. Sacrifice it at the beginning of the next end step.")]
+    [InlineData("Whip of Erebos", "Legendary Enchantment Artifact",
+        "Creatures you control have lifelink.\n{2}{B}{B}, {T}: Return target creature card from your graveyard "
+        + "to the battlefield. It gains haste. Exile it at the beginning of the next end step. If it would "
+        + "leave the battlefield, exile it instead of putting it anywhere else. Activate only as a sorcery.")]
+    public void Classify_TheNovember5Ruling_ACreatureFromAGraveyardWithHasteAndGone_IsBurn(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
+    // What stands of 2026-10-23: a creature taken from a HAND (Through the Breach)
+    // is not burn, and neither is a card that is no creature card (Kami of
+    // Industry's artifact, Moira and Teshar's nonland permanent) nor a return to
+    // HAND at the end step (Swift Warkite, from hand or graveyard).
+    [InlineData("Through the Breach", "Instant — Arcane",
+        "You may put a creature card from your hand onto the battlefield. That creature gains haste. "
+        + "Sacrifice that creature at the beginning of the next end step.\nSplice onto Arcane {2}{R}{R} (As you "
+        + "cast an Arcane spell, you may reveal this card from your hand and pay its splice cost. If you do, "
+        + "add this card's effects to that spell.)")]
+    [InlineData("Kami of Industry", "Creature — Spirit",
+        "When this creature enters, return target artifact card with mana value 3 or less from your graveyard "
+        + "to the battlefield. It gains haste. Sacrifice it at the beginning of the next end step.")]
+    [InlineData("Moira and Teshar", "Legendary Creature — Phyrexian Spirit Bird",
+        "Flying\nWhenever you cast a historic spell, return target nonland permanent card from your graveyard "
+        + "to the battlefield. It gains haste. Exile it at the beginning of the next end step. If it would "
+        + "leave the battlefield, exile it instead of putting it anywhere else. (Artifacts, legendaries, and "
+        + "Sagas are historic.)")]
+    [InlineData("Swift Warkite", "Creature — Dragon",
+        "Flying\nWhen this creature enters, you may put a creature card with mana value 3 or less from your "
+        + "hand or graveyard onto the battlefield. That creature gains haste. Return it to your hand at the "
+        + "beginning of the next end step.")]
+    public void Classify_TheNovember5Ruling_FromAHandOrNotACreatureOrBackToHand_StaysNotBurn(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
     }
 }

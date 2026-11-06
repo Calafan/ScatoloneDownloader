@@ -231,3 +231,10 @@ paid for from the hand is Taigam's (Gandalf of the Secret Fire's "spell from you
 of creature types is a tribe (Dr. Eggman's "a Construct, Robot, or Vehicle card", which the opponent
 may refuse as well; Push the Limit's "Mount and Vehicle cards" lose Reanimate by the same reading,
 reached).
+
+Read 2026-11-05 under the 2026-11-03 Wumpus Aberration ruling (an opponent putting a card from their
+own hand is not Cheat): the same in a sentence of its own after an exile, "Exile target artifact,
+creature, or enchantment an opponent controls. That player may put a permanent card from their hand
+onto the battlefield" (Divine Gambit, Removal and Disenchant by hand). A clause that carries you as
+well stays: Braids, Conjurer Adept's "at the beginning of each player's upkeep, that player may
+put".

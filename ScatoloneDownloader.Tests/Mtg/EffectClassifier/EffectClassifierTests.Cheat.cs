@@ -811,4 +811,33 @@ public sealed partial class EffectClassifierTests
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
     }
+
+    [Theory]
+    // Ruled 2026-11-05 under the 2026-11-03 Wumpus Aberration ruling: an opponent
+    // putting a card from their own hand is not Cheat, also when the card says
+    // that player after an exile (Divine Gambit).
+    [InlineData("Divine Gambit", "Sorcery",
+        "Exile target artifact, creature, or enchantment an opponent controls. That player may put a "
+        + "permanent card from their hand onto the battlefield.")]
+    [InlineData("Wumpus Aberration", "Creature — Eldrazi Beast",
+        "Devoid (This card has no color.)\nWhen you cast this spell, if {C} wasn't spent to cast it, target "
+        + "opponent may put a creature card from their hand onto the battlefield.\nTrample")]
+    public void Classify_TheNovember5Ruling_ThatPlayerPutsFromTheirHandAfterAnExile_IsNotCheat(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
+    }
+
+    [Theory]
+    // ...but a clause that carries you too stays Cheat: Braids, Conjurer Adept at
+    // each player's upkeep, Hunted Wumpus.
+    [InlineData("Braids, Conjurer Adept", "Legendary Creature — Human Wizard",
+        "At the beginning of each player's upkeep, that player may put an artifact, creature, or land card "
+        + "from their hand onto the battlefield.")]
+    [InlineData("Hunted Wumpus", "Creature — Beast",
+        "When this creature enters, each other player may put a creature card from their hand onto the "
+        + "battlefield.")]
+    public void Classify_TheNovember5Ruling_EachPlayersUpkeepStaysCheat(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
+    }
 }

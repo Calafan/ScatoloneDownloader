@@ -881,4 +881,107 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
     }
+
+    [Theory]
+    // Read 2026-11-05 under the 2026-10-13 ruling (a land or artifact that
+    // animates itself is a body): an artifact that BECOMES an X/X (Ebony Fly,
+    // Chimeric Staff, Angel's Tomb, Riddleform), and the base power and toughness
+    // after the word creature (Mimic; Dire Mimic, reviewed 11-03 without the tag,
+    // is handed back with it).
+    [InlineData("Ebony Fly", "Artifact",
+        "This artifact enters tapped.\n{T}: Add {C}.\n{4}: Roll a d6. Until end of turn, you may have this "
+        + "artifact become an X/X Insect artifact creature with flying, where X is the result.\nWhenever this "
+        + "artifact attacks, another target attacking creature gains flying until end of turn.")]
+    [InlineData("Mimic", "Artifact — Treasure",
+        "{T}, Sacrifice this artifact: Add one mana of any color.\n{2}: This artifact becomes a Shapeshifter "
+        + "artifact creature with base power and toughness 3/3 until end of turn.")]
+    [InlineData("Dire Mimic", "Artifact — Treasure",
+        "Flash\n{T}, Sacrifice this artifact: Add one mana of any color.\n{3}: This artifact becomes a "
+        + "Shapeshifter artifact creature with base power and toughness 5/5 until end of turn.")]
+    [InlineData("Chimeric Staff", "Artifact",
+        "{X}: This artifact becomes an X/X Construct artifact creature until end of turn.")]
+    [InlineData("Riddleform", "Enchantment",
+        "Whenever you cast a noncreature spell, you may have this enchantment become a 3/3 Sphinx creature "
+        + "with flying in addition to its other types until end of turn.\n{2}{U}: Scry 1. (Look at the top card "
+        + "of your library. You may put that card on the bottom.)")]
+    [InlineData("Angel's Tomb", "Artifact",
+        "Whenever a creature you control enters, you may have this artifact become a 3/3 white Angel artifact "
+        + "creature with flying until end of turn.")]
+    public void Classify_TheNovember5Readings_AnArtifactThatAnimatesItself_IsTokens(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    // An X that counts your commanders is a cube that never has one (Cactus
+    // Preserve, reviewed untagged).
+    [InlineData("Cactus Preserve", "Land — Desert",
+        "This land enters tapped.\n{T}: Add one mana of any type that a land you control could produce.\n{3}: "
+        + "Until end of turn, this land becomes an X/X green Plant creature with reach, where X is the greatest "
+        + "mana value among your commanders. It's still a land.")]
+    public void Classify_TheNovember5Readings_ACommandersXAnimation_IsNotTokens(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    // Read 2026-11-05 under the 2026-09-25 ruling (a noncreature turned into a 0/0
+    // creature with counters is a body): Tawnos's Tinkering, Tokens + Buff by
+    // hand, and the cards that word it the same way.
+    [InlineData("Tawnos's Tinkering", "Instant",
+        "Put two +1/+1 counters on target artifact, creature, or land you control. Untap that permanent. If "
+        + "it isn't a creature, it becomes a 0/0 creature in addition to its other types.")]
+    [InlineData("Donatello, Mutant Mechanic", "Legendary Creature — Mutant Ninja Turtle",
+        "{T}: Put three +1/+1 counters on target artifact you control. If it isn't a creature, it becomes a "
+        + "0/0 Robot creature in addition to its other types. Activate only as a sorcery.\nWhenever an artifact "
+        + "you control is put into a graveyard from the battlefield, if it had counters on it, put those "
+        + "counters on up to one target artifact or creature you control.")]
+    [InlineData("Pizza Face, Gastromancer", "Legendary Artifact Creature — Food Mutant",
+        "When Pizza Face enters, create a Food token.\nDisappear — At the beginning of your end step, if a "
+        + "permanent left the battlefield under your control this turn, put three +1/+1 counters on up to one "
+        + "other target artifact or creature. If it isn't a creature, it becomes a 0/0 Mutant creature in "
+        + "addition to its other types.\n{10}, {T}, Sacrifice Pizza Face: You gain 15 life.")]
+    [InlineData("Does Machines", "Enchantment — Class",
+        "(Gain the next level as a sorcery to add its ability.)\nWhen this Class enters, mill two cards, draw "
+        + "two cards, then discard two cards.\n{1}{U}: Level 2\nWhen this Class becomes level 2, return up to two "
+        + "target artifact cards from your graveyard to your hand.\n{4}{U}: Level 3\nAt the beginning of combat "
+        + "on your turn, put three +1/+1 counters on target artifact you control. If it isn't a creature, it "
+        + "becomes a 0/0 Robot creature in addition to its other types.")]
+    public void Classify_TheNovember5Readings_CountersOnAPermanentThatMayNotBeACreature_IsTokens(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    // Read 2026-11-05 under the 2026-09-24 rule: the decayed reminder, sacrifice
+    // it at end of combat, is the token's own life and no repeat of the ability. A
+    // creature making one decayed Zombie once is not Tokens (Falcon Abomination,
+    // reviewed untagged).
+    [InlineData("Falcon Abomination", "Creature — Zombie Bird",
+        "Flying\nWhen this creature enters, create a 2/2 black Zombie creature token with decayed. (It can't "
+        + "block. When it attacks, sacrifice it at end of combat.)")]
+    [InlineData("Hobbling Zombie", "Creature — Zombie",
+        "Deathtouch\nWhen this creature dies, create a 2/2 black Zombie creature token with decayed. (It can't "
+        + "block. When it attacks, sacrifice it at end of combat.)")]
+    public void Classify_TheNovember5Readings_OneDecayedZombieOnce_IsNotTokens(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    // ...while a decayed maker on a repeating trigger keeps the tag.
+    [InlineData("Poppet Stitcher // Poppet Factory", "Creature — Human Wizard // Artifact",
+        "Whenever you cast an instant or sorcery spell, create a 2/2 black Zombie creature token with "
+        + "decayed. (It can't block. When it attacks, sacrifice it at end of combat.)\nAt the beginning of your "
+        + "upkeep, if you control three or more creature tokens, you may transform this creature.\nCreature "
+        + "tokens you control lose all abilities and have base power and toughness 3/3.\nAt the beginning of "
+        + "your upkeep, you may transform this artifact.")]
+    [InlineData("Jadar, Ghoulcaller of Nephalia", "Legendary Creature — Human Wizard",
+        "At the beginning of your end step, if you control no creatures with decayed, create a 2/2 black "
+        + "Zombie creature token with decayed. (It can't block. When it attacks, sacrifice it at end of "
+        + "combat.)")]
+    public void Classify_TheNovember5Readings_ADecayedMakerThatRepeats_IsTokens(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
 }

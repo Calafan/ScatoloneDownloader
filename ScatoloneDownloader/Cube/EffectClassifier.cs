@@ -62,7 +62,20 @@ namespace ScatoloneDownloader.Cube
             + @"|each of your opponents"
             // 2026-10-23: Coalborn Entity's "target creature token, player, or
             // planeswalker".
-            + @"|target creature token, player)";
+            + @"|target creature token, player"
+            // 2026-11-05: a player in an "EACH OF UP TO" list of separate targets,
+            // "it deals 1 damage to each of up to one target creature, up to one
+            // target player, and/or up to one target planeswalker" (Volatile
+            // Arsonist, Burn by hand, reviewed 11-05), read under the Coalborn
+            // Entity / Soulfire Eruption rulings above. Family of one by wording.
+            + @"|each of up to \w+ target [\w ]{1,20}, up to \w+ target player"
+            // 2026-11-05: the player a card CHOSE earlier, "choose another target
+            // player. The Lord of Pain deals damage equal to that spell's mana value
+            // to the chosen player" (Burn by hand, reviewed 10-26). Family: 3 cards
+            // deal damage to "the chosen player" (Saskia the Unyielding and Stuffy
+            // Doll, unreviewed, gain Burn); Sawhorn Nemesis (reviewed, untagged)
+            // only DOUBLES damage dealt to the chosen player and never matches.
+            + @"|the chosen player)";
 
         /// <summary>The players a life-loss clause can name, with room for the
         /// relative clause the modern templating puts between the subject and

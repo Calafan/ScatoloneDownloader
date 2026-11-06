@@ -89,11 +89,12 @@ damage handed on to the controller, which is not a charge for the kill (Gandalf'
 Aura handing its creature "unless you pay 2 life" every upkeep (Morgul-Knife Wound); Kaito, Dancing
 Shadow's Drone keeps its drain to itself. Measured: Burn F1 98.1 to 98.6 before the store pass.
 
-Ruled 2026-10-16 (B1, "Mai Burn"): a player who DRAWS N CARDS AND LOSES N LIFE is never burnt; the
-life is what the cards cost, whoever pays it. Monumental Corruption was tagged and is corrected by
-name; Ob Nixilis, the Adversary keeps the tag through its +1 drain, another sentence. A drain that
-answers an OPPONENT'S SACRIFICE falls the same way, as the hand already had it (Vengeful Tracker
-untagged). Both are dropped only when nothing else on the card reads as Burn once they are blanked.
+Ruled 2026-10-16 (B1, "Mai Burn"): a player who DRAWS N CARDS AND LOSES N LIFE is never burnt
+(except a VARIABLE X pointed at a player, RULED 2026-11-05 below); the life is what the cards cost,
+whoever pays it. Monumental Corruption was tagged and is corrected by name; Ob Nixilis, the
+Adversary keeps the tag through its +1 drain, another sentence. A drain that answers an OPPONENT'S
+SACRIFICE falls the same way, as the hand already had it (Vengeful Tracker untagged). Both are
+dropped only when nothing else on the card reads as Burn once they are blanked.
 
 Ruled 2026-10-16 (B2, "Sempre Burn"): an opponent, a target player or a defending player losing HALF
 THEIR LIFE is always Burn. Alpharael, Stonechosen and Betor, Kin to All were untagged and are handed
@@ -118,11 +119,11 @@ That overturns the Kiki-Jiki exclusion of 2026-10-14, which was a narrowing made
 than a ruling. A creature the card only TAKES — from a graveyard, a hand, a library or an opponent
 (Corpse Dance, Shallow Grave, Through the Breach, Zirilan, Slave of Bolas) — is not burn and keeps
 its Reanimate, Cheat or Steal ("No, solo ciò che la carta crea o è"; the library part overturned
-2026-10-27, below); nor is unearth on an artifact (Mask of the Jadecrafter). Measured: 17 reviewed
-cards tagged by hand are now read (the thirteen encore of 2026-10-20, Hate Mirage, Araumi, Dregscape
-Sliver, First-Sphere Gargantua), and 59 untagged ones are reached: Amphin Mutineer, Briarblade
-Adept, Graywater's Fixer and Mist Dancer, named in the question, are corrected, and the other 55 are
-handed back.
+2026-10-27 and the graveyard part 2026-11-05, below); nor is unearth on an artifact (Mask of the
+Jadecrafter). Measured: 17 reviewed cards tagged by hand are now read (the thirteen encore of
+2026-10-20, Hate Mirage, Araumi, Dregscape Sliver, First-Sphere Gargantua), and 59 untagged ones are
+reached: Amphin Mutineer, Briarblade Adept, Graywater's Fixer and Mist Dancer, named in the
+question, are corrected, and the other 55 are handed back.
 
 Ruled the same day ("Sì, Burn"): a life loss at the END OF A LIST of what the opponent does —
 "sacrifices a creature of their choice, discards a card, and loses 4 life" — is Burn. Dusk Mangler
@@ -145,7 +146,44 @@ Ruled 2026-10-27 ("Allarga la regola alla libreria", then "Sì, tutte"): a creat
 battlefield FROM THE LIBRARY with haste and gone at the next end step is Burn, whether it was milled
 (Random Encounter, tagged by name with CardAdvantage), exiled from the top (Anzrag's Rampage) or
 searched for (Zirilan of the Claw). That overturns the library part of the 2026-10-23 exclusion; a
-creature taken from a graveyard, a hand or an opponent still is not burn. Anzrag's Rampage and
-Zirilan were untagged and are handed back with the tag. Random Encounter's CardAdvantage is not read
-by the rules, which read no card advantage in a creature returned to hand at the end step (Anzrag's
-Rampage, same wording, is untagged): a known disagreement.
+creature taken from a graveyard (overturned 2026-11-05, below), a hand or an opponent still is not
+burn. Anzrag's Rampage and Zirilan were untagged and are handed back with the tag. Random
+Encounter's CardAdvantage is not read by the rules, which read no card advantage in a creature
+returned to hand at the end step (Anzrag's Rampage, same wording, is untagged): a known
+disagreement.
+
+Read 2026-11-05 under the 2026-09-20 ruling (damage divided among bare targets): "divided as you
+choose among ONE OR TWO targets" (Ral, Monsoon Mage, Burn by hand; Forked Bolt, Electrolyze, Arc
+Mage, Chandra's Pyrohelix, Twin Bolt, Skarrgan Hellkite, Fire // Ice, Samut, the Tested and Death to
+Our Enemies, unreviewed, gain the tag). A player in an "each of up to" list of separate targets is
+the same reading as Coalborn Entity and Soulfire Eruption (Volatile Arsonist, Burn by hand). The
+player a card CHOSE earlier is a player the damage lands on (The Lord of Pain, Burn by hand; Saskia
+the Unyielding and Stuffy Doll, unreviewed, gain the tag); Sawhorn Nemesis only doubles damage dealt
+to the chosen player and stays out.
+
+Named 2026-11-05, a slip: Dorothea, Vengeful Victim, whose Aura makes a 4/4 Spirit "tapped and
+attacking" and sacrifices it at end of combat, is not Burn (1 tagged of 13 reviewed cards with that
+wording; the rules already read Tokens alone).
+
+RULED 2026-11-05 ("Sì: target player + X = Burn", asked on Eldritch Pact against Pact of the Serpent
+and Monumental Corruption): "TARGET PLAYER draws X cards and loses X life" with a VARIABLE X is
+Burn, because X can be large and the player can be an opponent. B1 (2026-10-16) still holds for a
+fixed N pointed at a player (Sign in Blood, Blood Pact, Insatiable Avarice, Vault Plunderer) and for
+YOU drawing X and losing X (Estinien Varlineau, The Speed Demon, Painful Truths). Eldritch Pact is
+named and stays Burn. Pact of the Serpent (11-05) and Monumental Corruption (10-09, tagged without
+Burn under B1) are reached and handed back with the tag; Damnable Pact is the unreviewed one that
+follows. Family measured: 4 cards say it, against 5 that say "you draw X cards and lose X life".
+
+RULED 2026-11-05 ("Anche preso è Burn", asked on Balduvian Atrocity against Shallow Grave and Corpse
+Dance): a creature card returned FROM A GRAVEYARD to the battlefield with haste and sacrificed or
+exiled at the next end step is Burn, beside its Reanimate. That OVERTURNS the graveyard part of the
+2026-10-23 exclusion ("solo ciò che la carta crea o è"), as the library part was overturned on
+2026-10-27. What stands of 2026-10-23: a creature taken from a HAND (Through the Breach) or from an
+opponent's battlefield (Slave of Bolas) is not burn; unearth on an artifact is not (Mask of the
+Jadecrafter); and neither is a card that is no CREATURE card (Kami of Industry's artifact, Moira and
+Teshar's nonland permanent: read by the wording, a type-blind rule would reach exactly those two)
+nor a return to HAND at the end step (Swift Warkite, from hand or graveyard). Balduvian Atrocity is
+named and stays Burn. Reached and handed back with the tag: Corpse Dance, Shallow Grave, Push //
+Pull and Coalstoke Gearhulk (all Reanimate by hand). Unreviewed, gaining the tag: Apprentice
+Necromancer, Dawn of the Dead, Goryo's Vengeance, Gruesome Encore, Macabre Mockery, Postmortem
+Lunge, Puppeteer Clique, Whip of Erebos.

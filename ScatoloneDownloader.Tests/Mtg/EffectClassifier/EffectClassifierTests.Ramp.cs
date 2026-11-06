@@ -779,4 +779,114 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
     }
+
+    [Theory]
+    // Read 2026-11-05: a land onto the battlefield by any wording is Ramp
+    // (Ramp.md). The gap before onto the battlefield runs past 60 characters
+    // (Jaheira's Respite, Harvest Season, Sylvan Primordial), and the put sits
+    // behind a condition (Scholar of New Horizons, Stoic Farmer, Ruin in Their
+    // Wake, Boreas Charger).
+    [InlineData("Jaheira's Respite", "Instant",
+        "Search your library for up to X basic land cards, where X is the number of creatures attacking you, "
+        + "put those cards onto the battlefield tapped, then shuffle.\nPrevent all combat damage that would be "
+        + "dealt this turn.")]
+    [InlineData("Harvest Season", "Sorcery",
+        "Search your library for up to X basic land cards, where X is the number of tapped creatures you "
+        + "control, put those cards onto the battlefield tapped, then shuffle.")]
+    [InlineData("Sylvan Primordial", "Creature — Avatar",
+        "Reach\nWhen this creature enters, for each opponent, destroy target noncreature permanent that player "
+        + "controls. Search your library for up to X Forest cards, where X is the number of permanents "
+        + "destroyed this way, put those cards onto the battlefield tapped, then shuffle.")]
+    [InlineData("Scholar of New Horizons", "Creature — Human Scout",
+        "This creature enters with a +1/+1 counter on it.\n{T}, Remove a counter from a permanent you control: "
+        + "Search your library for a Plains card and reveal it. If an opponent controls more lands than you, "
+        + "you may put that card onto the battlefield tapped. If you don't put the card onto the battlefield, "
+        + "put it into your hand. Then shuffle.")]
+    [InlineData("Stoic Farmer", "Creature — Dwarf Peasant",
+        "When this creature enters, search your library for a basic Plains card and reveal it. If an opponent "
+        + "controls more lands than you, put it onto the battlefield tapped. Otherwise, put it into your hand. "
+        + "Then shuffle.\nForetell {1}{W} (During your turn, you may pay {2} and exile this card from your hand "
+        + "face down. Cast it on a later turn for its foretell cost.)")]
+    [InlineData("Ruin in Their Wake", "Sorcery",
+        "Devoid (This card has no color.)\nSearch your library for a basic land card and reveal it. You may "
+        + "put that card onto the battlefield tapped if you control a land named Wastes. Otherwise, put that "
+        + "card into your hand. Then shuffle.")]
+    [InlineData("Boreas Charger", "Creature — Pegasus",
+        "Flying\nWhen this creature leaves the battlefield, choose an opponent who controls more lands than "
+        + "you. Search your library for a number of Plains cards equal to the difference, reveal those cards, "
+        + "put one of them onto the battlefield tapped and the rest into your hand, then shuffle.")]
+    public void Classify_TheNovember5Readings_ALandOntoTheBattlefield_IsRamp(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // Embermouth Sentinel puts the land on top and the battlefield is only its
+    // fallback with a Dragon: ManaFixing alone by hand, so the put that says
+    // instead stays out.
+    [InlineData("Embermouth Sentinel", "Artifact Creature — Chimera",
+        "When this creature enters, you may search your library for a basic land card, reveal it, then "
+        + "shuffle and put that card on top. If you control a Dragon, put that card onto the battlefield tapped "
+        + "instead.")]
+    public void Classify_TheNovember5Readings_AFallbackPutInsteadOfOnTop_IsNotRamp(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // Read 2026-11-05 under the 2026-10-30 Guild Globe ruling: mana that costs
+    // mana and adds the same amount adds none. Jenson Carthalion pays {5} for
+    // WUBRG (reviewed 11-03, no Ramp); the Eggs and Kaleidostone pay as much as
+    // they add.
+    [InlineData("Jenson Carthalion, Druid Exile", "Legendary Creature — Human Druid",
+        "Whenever you cast a multicolored spell, scry 1. If that spell was all colors, create a 4/4 white "
+        + "Angel creature token with flying and vigilance.\n{5}, {T}: Add {W}{U}{B}{R}{G}.")]
+    [InlineData("Darkwater Egg", "Artifact",
+        "{2}, {T}, Sacrifice this artifact: Add {U}{B}. Draw a card. (Activate only as an instant.)")]
+    [InlineData("Kaleidostone", "Artifact",
+        "When this artifact enters, draw a card.\n{5}, {T}, Sacrifice this artifact: Add {W}{U}{B}{R}{G}.")]
+    [InlineData("Coal Golem", "Artifact Creature — Golem",
+        "{3}, Sacrifice this creature: Add {R}{R}{R}.")]
+    public void Classify_TheNovember5Readings_APaidAbilityThatAddsAsMuchAsItCosts_IsNotRamp(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // ...while the ones that give back more than they took stay Ramp: the Signets
+    // pay {1} for two, Codie and Cormela add more than the mana they cost.
+    [InlineData("Azorius Signet", "Artifact",
+        "{1}, {T}: Add {W}{U}.")]
+    [InlineData("Codie, Vociferous Codex", "Legendary Artifact Creature — Book Construct",
+        "You can't cast permanent spells.\n{4}, {T}: Add {W}{U}{B}{R}{G}. When you next cast a spell this "
+        + "turn, exile cards from the top of your library until you exile an instant or sorcery card with "
+        + "lesser mana value. Until end of turn, you may cast that card without paying its mana cost. Put each "
+        + "other card exiled this way on the bottom of your library in a random order.")]
+    [InlineData("Cormela, Glamour Thief", "Legendary Creature — Vampire Rogue",
+        "Haste\n{1}, {T}: Add {U}{B}{R}. Spend this mana only to cast instant and/or sorcery spells.\nWhen "
+        + "Cormela dies, return up to one target instant or sorcery card from your graveyard to your hand.")]
+    public void Classify_TheNovember5Readings_APaidAbilityThatAddsMoreThanItCosts_IsRamp(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // Read 2026-11-05 under the 2026-10-15 No Ramp ruling: one Treasure from an
+    // ability that discards the card itself is a rider, like the sacrifice (Magma
+    // Opus, untagged by hand).
+    [InlineData("Magma Opus", "Instant",
+        "Magma Opus deals 4 damage divided as you choose among any number of targets. Tap two target "
+        + "permanents. Create a 4/4 blue and red Elemental creature token. Draw two cards.\n{U/R}{U/R}, Discard "
+        + "this card: Create a Treasure token.")]
+    [InlineData("Creative Outburst", "Instant",
+        "Creative Outburst deals 5 damage to any target. Look at the top five cards of your library. Put one "
+        + "of them into your hand and the rest on the bottom of your library in a random order.\n{U/R}{U/R}, "
+        + "Discard this card: Create a Treasure token.")]
+    [InlineData("Elemental Masterpiece", "Sorcery",
+        "Create two 4/4 blue and red Elemental creature tokens.\n{U/R}{U/R}, Discard this card: Create a "
+        + "Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")")]
+    public void Classify_TheNovember5Readings_ADiscardedCardsTreasure_IsNotRamp(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
 }

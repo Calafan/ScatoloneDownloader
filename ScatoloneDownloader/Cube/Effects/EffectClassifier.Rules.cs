@@ -1399,7 +1399,13 @@ namespace ScatoloneDownloader.Cube
                     // (2026-10-23, tagged by hand).
                     Rx(@"damage (?:equal to [\w' ,+/]{0,70}? )?divided (?:evenly,? )?(?:rounded down,? )?(?:as you choose )?"
                         // "among UP TO EIGHT targets" (Blaster Hulk, 2026-10-16).
-                        + @"among (?:any number of|one, two, or three|up to \w+|\w+) targets\b"
+                        // "among ONE OR TWO targets" (Ral, Monsoon Mage, Burn by hand,
+                        // reviewed 11-03; read 2026-11-05 under this same ruling).
+                        // Family: 10 cards, 1 reviewed (Ral, tagged). The nine
+                        // unreviewed ones gain Burn: Forked Bolt, Electrolyze, Arc
+                        // Mage, Chandra's Pyrohelix, Twin Bolt, Skarrgan Hellkite,
+                        // Fire // Ice, Samut the Tested, Death to Our Enemies.
+                        + @"among (?:any number of|one, two, or three|one or two|up to \w+|\w+) targets\b"
                         + @"(?![^\n]{0,40}gains? [\dX]+ life)"),
                     // The same damage with the word order the other way round —
                     // "deals damage TO that player EQUAL TO the number of artifacts
@@ -1488,7 +1494,9 @@ namespace ScatoloneDownloader.Cube
                     // TAKES — from a graveyard, a hand or an opponent (Corpse
                     // Dance, Through the Breach, Slave of Bolas) — keeps its
                     // Reanimate, Cheat or Steal and is not burn ("solo ciò che la
-                    // carta crea o è", same day).
+                    // carta crea o è", same day). The library part was overturned
+                    // 2026-10-27 and the GRAVEYARD part 2026-11-05, both below;
+                    // a hand or an opponent still stands.
                     Rx(@"\b(?:create\b[^\n]{0,200}?\btokens?|populate)\b[^\n]{0,200}?\bhaste\b[^\n]{0,160}?"
                         + @"\b(?:(?:sacrifice|exile) (?:it|them|that token|those tokens|the token|the tokens)"
                         + @"|return (?:it|them|that token|those tokens) to (?:its|their) owner'?s hand)"
@@ -1501,6 +1509,20 @@ namespace ScatoloneDownloader.Cube
                     // zone stays out (Hellkite Courser).
                     Rx(@"(?:\blibrar(?:y|ies)\b|\bmilled\b)[^\n]{0,250}?\bonto the battlefield\b[^\n]{0,250}?\bhaste\b"
                         + @"[^\n]{0,250}?\bnext end step\b"),
+                    // …and one out of a GRAVEYARD, ruled 2026-11-05 ("Anche preso è
+                    // Burn", asked on Balduvian Atrocity against Shallow Grave and
+                    // Corpse Dance): a creature card returned from a graveyard with
+                    // haste and sacrificed or exiled at the next end step is Burn
+                    // beside its Reanimate. This OVERTURNS the graveyard part of the
+                    // 2026-10-23 "solo ciò che la carta crea o è"; what a HAND or an
+                    // OPPONENT gives still is not burn, and neither is a return to
+                    // HAND at the end step (Swift Warkite, "hand or graveyard") nor a
+                    // card that is no creature card (Kami of Industry's artifact,
+                    // Moira and Teshar's "nonland permanent": measured, not moved).
+                    Rx(@"\b(?:return|put) [^.\n]{0,60}\bcreature cards?\b[^.\n]{0,80}\bgraveyards?\b[^.\n]{0,40}\b(?:onto|to) the battlefield\b"
+                        + @"[^.\n]{0,60}\.[^\n]{0,200}?\bhaste\b[^\n]{0,200}?"
+                        + @"(?:\b(?:sacrifice|exile) (?:it|them|that creature)\b[^\n]{0,60}\bnext end step\b"
+                        + @"|\bnext end step, (?:sacrifice|exile) (?:it|them|that creature)\b)"),
                     // …and the keyword that does it, handed to OTHER cards: unearth
                     // in the graveyard (Dregscape Sliver, Sedris, Ghost Ark), blitz
                     // on the creature spells you cast (Henzie). The cards that have
@@ -1668,7 +1690,12 @@ namespace ScatoloneDownloader.Cube
                     // graveyard", Yuna's Decision) — but not a LESSER cap, ruled
                     // the same day (Shadowfax, untagged: "lesser = niente"), and
                     // not an OPPONENT putting from their own hand (Wumpus
-                    // Aberration). A noun LIST that ends in a land is no land
+                    // Aberration), widened 2026-11-05 to a sentence of its own, ". That player
+                    // may put", after an exile (Divine Gambit: the opponent's free permanent is no
+                    // Cheat of yours; the Cheat.md 2026-11-03 ruling. Measured as a family: "that
+                    // player may put ... from their hand" 3 reviewed, 0 tagged). NOT "each player's
+                    // upkeep, that player may put" (Braids, Conjurer Adept: it carries you too).
+                    // A noun LIST that ends in a land is no land
                     // card either, read 2026-10-25 as Bramble Familiar's out of
                     // the library: Court of Bounty's "a creature or land card",
                     // the one reviewed card it moves.
@@ -1681,7 +1708,7 @@ namespace ScatoloneDownloader.Cube
                     // "X or less", reached), the counters (Aether Vial's "equal
                     // to"), as well as the lesser cap (Arni Metalbrow, Kodama of the
                     // East Tree's "equal or lesser").
-                    Rx(@"(?<!opponent may )put (?:an?|any number of|up to \w+|one or more) "
+                    Rx(@"(?<!opponent may |\. that player may )put (?:an?|any number of|up to \w+|one or more) "
                         + @"(?![^.\n]{0,80}\b(?:lesser\b|less than\b|mana value (?:equal to\b|\w+ or less\b)))"
                         + @"(?![\w ]{0,25}(?<!(?:creature|artifact|enchantment|planeswalker|permanent),? or )(?:land|forest|island|swamp|mountain|plains) cards? from)"
                         + @"[\w ,/-]{0,60}cards?[\w ,/'-]{0,80} from (?:your|their) hand(?: or graveyard)? onto the battlefield"),
@@ -1919,9 +1946,23 @@ namespace ScatoloneDownloader.Cube
         /// whoever is pointed at. Monumental Corruption was changed by name;
         /// Insatiable Avarice, Unscrupulous Contractor and Vault Plunderer were
         /// already untagged. Blanked and asked again, so Ob Nixilis, the
-        /// Adversary keeps Burn through its +1.</summary>
+        /// Adversary keeps Burn through its +1.
+        /// <para>EXCEPT a VARIABLE X pointed at a player, ruled 2026-11-05 ("Sì:
+        /// target player + X = Burn", asked on Eldritch Pact against Pact of the
+        /// Serpent and Monumental Corruption): "TARGET PLAYER draws X cards and
+        /// loses X life" can be large and can be an opponent, so it is Burn.
+        /// B1 still holds for a fixed N (Sign in Blood, Blood Pact, Insatiable
+        /// Avarice, Vault Plunderer) and for YOU drawing X and losing X (Cut of
+        /// the Profits, Estinien Varlineau, The Speed Demon, Painful Truths).
+        /// Family measured: 4 cards say "target player draws X cards and loses X
+        /// life" (Eldritch Pact, Pact of the Serpent, Monumental Corruption,
+        /// Damnable Pact); the 5 "you draw X cards and lose X life" ones are not
+        /// Burn either way (Estinien, Graveborn Muse, The Speed Demon, Painful
+        /// Truths, Savanti Romero): no Burn rule reads them, so the veto does not
+        /// name them. A "you draw X" alternative was tried and neutralised: nothing
+        /// went red, a dead alternative.</para></summary>
         private static readonly Regex DrawsForTheLife = Rx(
-            @"draws? (?:a|an|one|two|three|four|five|six|seven|x|\d+) cards? and loses? [\dX]+ life");
+            @"draws? (?:a|an|one|two|three|four|five|six|seven|\d+) cards? and loses? [\dX]+ life");
 
         /// <summary>A punisher on an opponent's OWN sacrifice — "whenever an
         /// opponent sacrifices an artifact, this creature deals 2 damage to

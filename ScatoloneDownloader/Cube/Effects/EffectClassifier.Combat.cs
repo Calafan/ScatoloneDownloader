@@ -2040,7 +2040,12 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex LandOntoTheBattlefield = Rx(
             @"(?<!non)lands? cards?[\w ,'\/]{0,60}onto the battlefield"
             + @"|search your library for[\w ,'\/]{0,80}(?<!non)(?:land|forest|plains|island|swamp|mountain)"
-            + @"[\w ,'\/]{0,60}onto the battlefield"
+            // Gap 60 -> 110 on 2026-11-05: "up to X basic land cards, where X is the
+            // number of creatures attacking you, put those cards onto the battlefield
+            // tapped" (Jaheira's Respite, Ramp by hand; Ramp.md: a land onto the
+            // battlefield by any wording is Ramp). Measured as a family: 7 cards have
+            // a gap of 61-110 characters, all the land put onto the battlefield.
+            + @"[\w ,'\/]{0,110}onto the battlefield"
             // Three more wordings of the same land, read 2026-09-29, each a
             // reviewed card tagged Ramp and never proposed: the land DUG UP and
             // put onto the battlefield in a second sentence (Clifftop Lookout,
@@ -2064,6 +2069,16 @@ namespace ScatoloneDownloader.Cube
             + @"|until you (?:reveal|exile) a land card\. put that card onto the battlefield"
             + @"|search your library for [^.\n]{0,80}(?<!non)(?:land|forest|plains|island|swamp|mountain) cards?[^.\n]{0,60}\. "
             + @"put (?:those cards|them|one of them|two of them|that card|it) onto the battlefield"
+            // …and the same put behind a CONDITION, "If an opponent controls more lands
+            // than you, you may put that card onto the battlefield tapped" (Scholar of
+            // New Horizons, Stoic Farmer: Ramp by hand, ruled 2026-11-05). Embermouth
+            // Sentinel's "put that card onto the battlefield tapped INSTEAD" is the
+            // fallback of a put on top and stays ManaFixing alone, so the "instead"
+            // lookahead is needed here (the plain rule above has no condition to
+            // lean on). Family: 2 tagged Ramp, 1 untagged (Embermouth, excluded).
+            + @"|search your library for [^.\n]{0,80}(?<!non)(?:land|forest|plains|island|swamp|mountain) cards?[^.\n]{0,60}\. "
+            + @"(?:if [^.\n]{0,80}, )?(?:you may )?put (?:those cards|them|one of them|two of them|that card|it) "
+            + @"onto the battlefield(?![^.\n]*\binstead\b)"
             // Read 2026-10-24, one reviewed card each, Ramp by hand: the lands
             // searched and then a d20 rolled, two of whose results put them onto
             // the battlefield (Druid of the Emerald Grove), and the lands each
@@ -2199,8 +2214,13 @@ namespace ScatoloneDownloader.Cube
         // Read 2026-10-24 by the same ruling, ManaFixing alone by hand: one that
         // EXILES the card from the graveyard (Halo Scarab), and the one Treasure
         // made when the last counter is gone (Reckoner Bankbuster).
+        // Read 2026-11-05 by the same ruling: one that DISCARDS the card itself,
+        // "{U/R}{U/R}, Discard this card: Create a Treasure token" (Magma Opus,
+        // untagged for Ramp by hand: the Treasure is the rider of a card cast for
+        // its other halves). Family: Magma Opus reviewed untagged; Creative
+        // Outburst and Elemental Masterpiece, unreviewed, lose the proposal.
         private static readonly Regex ActivatedTreasureMaker = Rx(
-            @"^(?![^\n]*\b(?:sacrifice (?:this (?:land|artifact|creature|enchantment)|it)|exile this card from your graveyard"
+            @"^(?![^\n]*\b(?:sacrifice (?:this (?:land|artifact|creature|enchantment)|it)|exile this card from your graveyard|discard this card"
             + @"|if there are no \w+ counters on this \w+, create a treasure)\b)[^\n:""]{1,70}:[^\n]*\btreasure tokens?\b"
             + @"|""[^""\n:]{1,60}:[^""\n]*\btreasure tokens?\b",
             RegexOptions.Multiline);
@@ -2223,8 +2243,21 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex PaidManaAbility = Rx(
             @"^[^\n:]*\{[\dwubrgx]\}[^\n:]*: add ", RegexOptions.Multiline);
         private static readonly Regex PaidManaGivesBackMore = Rx(
-            @"^(?![^\n:]*\{2\}[^\n:]*: add two )[^\n:]*\{[\dwubrg]\}[^\n:]*: add (?:two|three|four|five|x|\d+) "
-            + @"|^[^\n:]*\{[\dwubrg]\}[^\n:]*: add \{[wubrgc]\}\{", RegexOptions.Multiline);
+            @"^(?![^\n:]*\{2\}[^\n:]*: add two )[^\n:]*\{[\dwubrg]\}[^\n:]*: add (?:two|three|four|five|x|\d+) ",
+            RegexOptions.Multiline);
+
+        // The symbols a paid ability adds, set against what it costs: more symbols
+        // than mana paid is more mana (Signets, Eggs that pay {1} for two); the SAME
+        // number is a trade and adds none, read 2026-11-05 under the 2026-10-30
+        // ruling (Guild Globe) for Jenson Carthalion, Druid Exile's "{5}, {T}: Add
+        // {W}{U}{B}{R}{G}" (reviewed 11-03 without Ramp). Until then any run of two
+        // symbols counted as more. Family measured: the equal-cost lines are Jenson,
+        // Coal Golem (reviewed 09-04 Ramp + ManaFixing, handed back), five Eggs
+        // (Darkwater, Mossfire, Shadowblood, Skycloud, Sungrass), Kaleidostone and
+        // Crystal Quarry (a land, ManaFixing alone); the lines that cost LESS than
+        // they add stay Ramp (Signets, Codie, Cormela).
+        private static readonly Regex PaidManaSymbolRun = Rx(
+            @"^([^\n:]*\{[\dwubrg]\}[^\n:]*): add ((?:\{[wubrgc]\}){2,})", RegexOptions.Multiline);
 
         // Swapping ONE land for ONE land moves no mana: Renewal sacrifices a
         // land to fetch a land and was hand-tagged ManaFixing alone. The count
@@ -2266,7 +2299,19 @@ namespace ScatoloneDownloader.Cube
             @"search your library for[\w ,'-]{0,60}(?:land|plains|island|swamp|mountain|forest)"
             + @"[\w ,'-]{0,40}card[\w ,'-]{0,40}put (?:it|that card|those cards|them) into your hand"
             + @"|search your library for[\w ,'-]{0,60}(?:land|plains|island|swamp|mountain|forest)"
-            + @"[\w ,'-]{0,40}cards?\. reveal those cards, put them into your hand");
+            + @"[\w ,'-]{0,40}cards?\. reveal those cards, put them into your hand"
+            // The land that goes to HAND on the other branch of a condition: "Search
+            // your library for a Plains card and reveal it. If an opponent controls
+            // more lands than you, put it onto the battlefield tapped. Otherwise,
+            // put it into your hand" (Stoic Farmer, named 2026-11-05: ManaFixing
+            // as well, a basic or a "Plains card" alike; ManaFixing.md, a land
+            // searched to hand). Only a land, never "creature or land card"
+            // (Archdruid's Charm is Ramp and Tutor). Family: 2 cards, both tagged
+            // (Scholar of New Horizons the other); Boreas Charger, which splits
+            // "one onto the battlefield, the rest into your hand", is unreviewed
+            // and left out, a family of one.
+            + @"|search your library for an? (?:basic )?(?:land|plains|island|swamp|mountain|forest) card(?: and reveal it)?\."
+            + @"(?: [^.\n]{0,100}\.)? (?:otherwise|if you don't put[^.\n]{0,60}),? put (?:it|that card) into your hand");
         private static readonly Regex LandSearchToTop = Rx(
             @"search your library for[\w ,'-]{0,60}(?:land|plains|island|swamp|mountain|forest)"
             + @"[\w ,'-]{0,60}put (?:that card|it) on top");

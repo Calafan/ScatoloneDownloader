@@ -88,3 +88,11 @@ Inquisitive Student). Handed back: Land Tax with the tag; Crystal Vein, Metamorp
 Scroll, Fellwar Stone, Candelabra of Tawnos and Hall of Gemstone without it.
 
 Read 2026-10-30: "add two mana of different colors" (Interplanar Beacon, Guild Globe; 2 of 2).
+
+Ruled 2026-11-05 (Stoic Farmer, named, +ManaFixing): a land searched to HAND is this tag on the
+other branch of a condition too, "search your library for a Plains card and reveal it. If an
+opponent controls more lands than you, put it onto the battlefield tapped. Otherwise, put it into
+your hand", a basic land or a "Plains card" alike. Scholar of New Horizons says the same, Ruin in
+Their Wake is unreviewed; all three are Ramp as well. "A creature or land card" stays out
+(Archdruid's Charm), and so does Boreas Charger's split, one onto the battlefield and the rest into
+the hand, unreviewed and a family of one.

@@ -403,4 +403,42 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
     }
+
+    [Theory]
+    // Ruled 2026-11-05 (Stoic Farmer, named): a land searched to hand is
+    // ManaFixing, a basic or a Plains card alike, and the same card puts it onto
+    // the battlefield on the other branch of the condition, which is Ramp.
+    [InlineData("Stoic Farmer", "Creature — Dwarf Peasant",
+        "When this creature enters, search your library for a basic Plains card and reveal it. If an opponent "
+        + "controls more lands than you, put it onto the battlefield tapped. Otherwise, put it into your hand. "
+        + "Then shuffle.\nForetell {1}{W} (During your turn, you may pay {2} and exile this card from your hand "
+        + "face down. Cast it on a later turn for its foretell cost.)")]
+    [InlineData("Scholar of New Horizons", "Creature — Human Scout",
+        "This creature enters with a +1/+1 counter on it.\n{T}, Remove a counter from a permanent you control: "
+        + "Search your library for a Plains card and reveal it. If an opponent controls more lands than you, "
+        + "you may put that card onto the battlefield tapped. If you don't put the card onto the battlefield, "
+        + "put it into your hand. Then shuffle.")]
+    [InlineData("Ruin in Their Wake", "Sorcery",
+        "Devoid (This card has no color.)\nSearch your library for a basic land card and reveal it. You may "
+        + "put that card onto the battlefield tapped if you control a land named Wastes. Otherwise, put that "
+        + "card into your hand. Then shuffle.")]
+    public void Classify_TheNovember5Ruling_ALandToHandOnTheOtherBranch_IsManaFixing(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.ManaFixing));
+        Assert.True(result.HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // A creature or land card is a tutor, not a fix (Archdruid's Charm).
+    [InlineData("Archdruid's Charm", "Instant",
+        "Choose one —\n• Search your library for a creature or land card and reveal it. Put it onto the "
+        + "battlefield tapped if it's a land card. Otherwise, put it into your hand. Then shuffle.\n• Put a "
+        + "+1/+1 counter on target creature you control. It deals damage equal to its power to target creature "
+        + "you don't control.\n• Exile target artifact or enchantment.")]
+    public void Classify_TheNovember5Ruling_ACreatureOrLandSearch_IsNotManaFixing(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
+    }
 }

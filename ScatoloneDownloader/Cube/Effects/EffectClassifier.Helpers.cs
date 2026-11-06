@@ -604,13 +604,45 @@ namespace ScatoloneDownloader.Cube
                 }
 
                 addsAny = true;
-                if (!PaidManaAbility.IsMatch(line) || PaidManaGivesBackMore.IsMatch(line))
+                if (!PaidManaAbility.IsMatch(line) || PaidManaGivesBackMore.IsMatch(line) || SymbolRunBeatsTheCost(line))
                 {
                     return false;
                 }
             }
 
             return addsAny;
+        }
+
+        /// <summary>True when the line adds a run of mana symbols and the mana it
+        /// costs is not at least as large. A cost symbol that is not a number or a
+        /// plain colour ({X}, a hybrid) counts as "more", as the run did before.</summary>
+        private static bool SymbolRunBeatsTheCost(string line)
+        {
+            Match m = PaidManaSymbolRun.Match(line);
+            if (!m.Success)
+            {
+                return false;
+            }
+
+            int paid = 0;
+            foreach (Match s in Regex.Matches(m.Groups[1].Value, @"\{([^}]+)\}"))
+            {
+                string symbol = s.Groups[1].Value;
+                if (int.TryParse(symbol, out int generic))
+                {
+                    paid += generic;
+                }
+                else if (symbol.Length == 1 && "wubrgWUBRG".Contains(symbol[0]))
+                {
+                    paid++;
+                }
+                else if (!symbol.Equals("T", StringComparison.OrdinalIgnoreCase) && !symbol.Equals("Q", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return Regex.Matches(m.Groups[2].Value, @"\{").Count > paid;
         }
 
         /// <summary>True when EVERY line that fixes colour is a mana SOURCE — a

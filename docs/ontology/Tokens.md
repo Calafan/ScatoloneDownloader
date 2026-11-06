@@ -170,3 +170,23 @@ two bodies once does not reach them. Animating Faerie's Bring to Life (a noncrea
 0/0 with four +1/+1 counters) is Tokens by hand; Ratcatcher Trainee, Riling Dawnbreaker, Hildibrand
 Manderville, Imodane's Recruiter and Devouring Sugarmaw, untagged before the ruling, were realigned
 and handed back.
+
+Read 2026-11-05 under the 2026-10-13 ruling (a land or artifact that animates itself is a body): an
+artifact that BECOMES an X/X (Ebony Fly's "you may have this artifact become an X/X Insect artifact
+creature", Tokens by hand; Chimeric Staff, Chimeric Coils, Angel's Tomb, Riddleform, Sanguine
+Statuette, Slumbering Tora, Reptilian Reflection and Testament of Faith, unreviewed), and the base
+power and toughness written after the word creature (Mimic, Tokens by hand). Dire Mimic, reviewed
+11-03 as ManaFixing alone, has the wording of Mimic at 5/5 and is handed back with the tag. An X
+that counts your commanders stays out, a cube having none (Cactus Preserve, reviewed untagged).
+
+Read 2026-11-05 under the 2026-09-25 ruling (a noncreature turned into a 0/0 creature with
+counters): "put two +1/+1 counters on target artifact, creature, or land you control. Untap that
+permanent. If it isn't a creature, it becomes a 0/0 creature" (Tawnos's Tinkering, Tokens and Buff
+by hand). The cards that word it the same way, Donatello, Mutant Mechanic, Pizza Face, Gastromancer
+and Does Machines, keep Buff and gain Tokens, unreviewed.
+
+Read 2026-11-05 under the 2026-09-24 rule: the reminder of DECAYED, "it can't block. When it
+attacks, sacrifice it at end of combat", is the token's own life and no repeat of the ability. A
+creature that makes ONE decayed Zombie once is not Tokens (Falcon Abomination, reviewed untagged;
+Hobbling Zombie, unreviewed, loses the tag). A decayed maker on a repeating trigger keeps it (Poppet
+Stitcher, Jadar).

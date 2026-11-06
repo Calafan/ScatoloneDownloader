@@ -150,3 +150,22 @@ reaches (09-11, no Ramp) and goes back for review. A self-discount stays out wit
 ("this spell costs {R}{G} less"), and so does a TRIBE's: Edgewalker's "Cleric spells … {W}{B} less"
 and Ragemonger's "Minotaur spells … {B}{R} less" are still nothing, the tribal blank reading the run
 as well.
+
+Read 2026-11-05: a land put onto the battlefield by any wording is Ramp, now also when the put is
+far from the search (Jaheira's Respite, "up to X basic land cards, where X is the number of
+creatures attacking you, put those cards onto the battlefield tapped"; Harvest Season and Sylvan
+Primordial, unreviewed, the same) and when it sits behind a condition with the hand as the other
+branch (Scholar of New Horizons and Stoic Farmer, tagged by hand; Ruin in Their Wake and Boreas
+Charger, unreviewed). Embermouth Sentinel's "put that card onto the battlefield tapped instead" is
+the fallback of a put on top and stays ManaFixing alone.
+
+Read 2026-11-05 under the 2026-10-30 ruling (Guild Globe): a paid ability that adds as many symbols
+as it costs adds none. Jenson Carthalion, Druid Exile's "{5}, {T}: Add {W}{U}{B}{R}{G}" is not Ramp
+(reviewed 11-03). Reached by the same wording: Coal Golem (reviewed 09-04, Ramp and ManaFixing by
+hand, handed back without Ramp), the five Eggs (Darkwater, Mossfire, Shadowblood, Skycloud,
+Sungrass) and Kaleidostone, unreviewed. The abilities that cost less than they add are untouched
+(the Signets, Codie, Cormela).
+
+Read 2026-11-05 under the 2026-10-15 "No Ramp" ruling: one Treasure from an ability that DISCARDS
+the card itself is a rider, like the sacrifice (Magma Opus, untagged by hand; Creative Outburst and
+Elemental Masterpiece, unreviewed, lose the proposal).
