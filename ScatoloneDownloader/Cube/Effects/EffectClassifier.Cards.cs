@@ -365,6 +365,15 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex DiscardsThenDraws = Rx(
             @"discards? (\w+) cards?[.,]?(?: if you do,)?[^\n.]{0,30}draws? (\w+) cards?");
 
+        // The NONLAND PERMANENT card of the definition of 2026-11-06 (Reanimate.md,
+        // "un ALTRO permanente non-terra"), by any of the type names a card writes
+        // it with: the hand had 30 of 35 artifact, enchantment and Vehicle
+        // returns tagged, and the 5 left were rulings or readings that day
+        // (Danitha's "Aura or Equipment card", Grasping Tentacles' "artifact
+        // card", Push the Limit's Mounts). A land is LandOutOfTheGraveyard's.
+        private const string APermanentCardType =
+            @"(?:creature|permanent|artifact|enchantment|planeswalker|battle|aura|equipment|vehicle|saga)";
+
         // Hoisted for the same reason as MillPatterns: the guard below re-runs
         // them against the card with the un-aimable recursion blanked out.
         private static readonly Regex[] ReanimatePatterns =
@@ -391,7 +400,12 @@ namespace ScatoloneDownloader.Cube
             // creature card OF defending player's graveyard" (Bone Dancer) —
             // 6 of 6 reviewed, all tagged. Whole words, or the IN of
             // "defending" would stand in for the OF.
-            Rx(@"put[\w ,'\-/]{0,60}\b(?:creature|permanent)\b[\w ,'\-/]{0,40}?\bcards?\b[\w ,'\-/]{0,50}?\b(?:from|in|of)\b"
+            // Every nonland permanent card since 2026-11-06 (APermanentCardType):
+            // Danitha, Benalia's Hope's "Aura or Equipment card from your hand or
+            // graveyard", Vault 101: Birthday Party and Liberated Livestock the
+            // same, RULED that day ("+Reanimate a tutte e 3"); Grasping Tentacles'
+            // "artifact card from that player's graveyard" read under it.
+            Rx(@"put[\w ,'\-/]{0,60}\b" + APermanentCardType + @"\b[\w ,'\-/]{0,40}?\bcards?\b[\w ,'\-/]{0,50}?\b(?:from|in|of)\b"
                 + @"[\w ,'\-/]{0,40}graveyards?[\w ,'\-/]{0,40}onto the battlefield"),
             // A token COPY of a creature card in a graveyard. Not the card
             // itself, but what lands on the table is the same. Ruled
@@ -409,7 +423,15 @@ namespace ScatoloneDownloader.Cube
             // table is the same thing). Counted broad, a creature card in a
             // graveyard and a token that is a copy of "this ..." or of a token
             // you control: 2 reviewed cards, both untagged, no unreviewed.
-            Rx(@"(?:creature|permanent) cards?\b[\w ,'\-/]{0,40}?(?:from|in)[\w ,'\-/]{0,40}graveyard"
+            //
+            // A copy of ANY nonland permanent card since 2026-11-06: Anikthea,
+            // Hand of Erebos's "non-Aura enchantment card", RULED that day
+            // ("Reanimate al posto di Regrowth", against Tamiyo, Compleated Sage's
+            // "nonland permanent card", tagged), and read under it Nahiri, the
+            // Unforgiving's "creature or Equipment card with mana value less than
+            // Nahiri's loyalty" (60, not 40, for that) and Leonardo da Vinci's
+            // discarded "artifact card, exile it from your graveyard".
+            Rx(@"\b" + APermanentCardType + @" cards?\b[\w ,'\-/]{0,60}?(?:from|in)[\w ,'\-/]{0,40}graveyard"
                 + @"[\s\S]{0,140}(?:token that's a copy(?! of (?:this \w+|a creature token you control))|token cop|tokens that are copies)"
                 + @"|graveyards?\b[\s\S]{0,80}creature cards? exiled this way[\s\S]{0,60}token that's a copy"),
             // The other wordings of the sitting of 10-06..10-11 and the older
@@ -465,9 +487,28 @@ namespace ScatoloneDownloader.Cube
             // a permanent on the battlefield for nothing, read 2026-10-16. The
             // instant-and-sorcery casts stay Regrowth alone (Daring Waverider,
             // Wishing Well, Seifer Almasy, Sword of Once and Future: 0 of 6).
-            Rx(@"cast (?:a |an |target )?[\w ,'\-/]{0,40}\b(?:creature|permanent|nonland)\b[\w ,'\-/]{0,60}"
-                + @"from your graveyard[^.\n]{0,80}without paying"
-                + @"|\b(?:creature|permanent|nonland) card[\w ,'\-/]{0,40}from your graveyard\. copy it, then you may cast the copy without paying"),
+            //
+            // The definition of 2026-11-06 counts a real ALTERNATIVE cost as a
+            // cost skipped, as Cheat does (Leyline of Mutation): Anrakyr the
+            // Traveller's "cast an artifact spell from your hand or graveyard by
+            // paying life equal to its mana value rather than paying its mana
+            // cost", Reanimate and Cheat by hand. Counted narrow, a graveyard cast
+            // "rather than paying" its mana cost: 3 reviewed, Anrakyr tagged, and
+            // Squee, Dubious Monarch and Raffine's Guidance cast THEMSELVES
+            // (SelfRecursionWording). Noctis pays "in addition to" and stays
+            // Regrowth. And a spell cast free from among the cards an opponent
+            // exiled from a graveyard, Crabomination's "a card at random from
+            // their graveyard … You may cast a spell from among cards exiled this
+            // way without paying its mana cost" (Reanimate by hand, 1 of 1: Kefka
+            // and Portent of Calamity cast from among cards off a library). Never
+            // "cast THIS creature": Scourge of Nel Toth's "by paying {B}{B} and
+            // sacrificing two creatures rather than paying its mana cost" is the
+            // card casting itself (unreviewed, moved by the alternative cost).
+            Rx(@"cast (?!this\b)(?:a |an |target )?[\w ,'\-/]{0,40}\b(?:creature|permanent|nonland|artifact|enchantment|planeswalker)\b[\w ,'\-/]{0,60}"
+                + @"from your (?:hand or )?graveyard[^.\n]{0,80}(?:without paying|rather than paying (?:its|their) mana costs?)"
+                + @"|\b(?:creature|permanent|nonland) card[\w ,'\-/]{0,40}from your graveyard\. copy it, then you may cast the copy without paying"
+                + @"|\bexiles?\b[^.\n]{0,100}\bfrom (?:their|your|a|an opponent's|target player's|that player's) graveyards?\b[^\n]{0,100}"
+                + @"you may cast a spell from among cards exiled this way without paying"),
         ];
 
         private static readonly Regex[] RegrowthPatterns =
@@ -561,12 +602,12 @@ namespace ScatoloneDownloader.Cube
                 + @"|is put into your graveyard from the battlefield, exile it\.[^\n]{0,60}you may cast that card"),
             // A token COPY of a NONCREATURE card exiled out of your graveyard,
             // ruled 2026-10-30 on Anikthea, Hand of Erebos's "non-Aura
-            // enchantment card" (Regrowth kept by name). A creature card's copy
-            // stays Reanimate (Ardyn, Mordor on the March, Abyssal Harvester),
-            // and so does "an artifact or creature card" (Tawnos, Lorehold
-            // Archivist).
-            Rx(@"exile (?:up to one )?(?:target )?(?:non-aura )?(?:enchantment|artifact|noncreature|instant|sorcery) card from your graveyard\. "
-                + @"create a token that's a copy of (?:that card|it)\b"),
+            // enchantment card" (Regrowth kept by name), OVERTURNED for every
+            // permanent card on 2026-11-06 ("Reanimate al posto di Regrowth"):
+            // what enters is a nonland permanent back from the graveyard, which
+            // is Reanimate's definition (APermanentCardType). The regex went with
+            // it: narrowed to "noncreature|instant|sorcery card", it matched none
+            // of the 32053 cards of the store.
             // …and cast from among the cards a collect-evidence or escape cost
             // exiled from it (Kylox's Voltstrider, Skyway Robber).
             Rx(@"(?:collect evidence|escape)[\s\S]{0,300}cast [^.\n]{0,60}from among cards exiled with (?:it|this)"),
@@ -678,70 +719,52 @@ namespace ScatoloneDownloader.Cube
 
         // A card THIS CARD exiled, put onto the battlefield under your control.
         // Ruled 2026-09-19: the graveyard is not the only place a creature
-        // comes back from, and Purgatory, Sothera, The Darkness Crystal and
-        // Ghost Vacuum all take one that died or was already dead.
+        // comes back from, and Purgatory, The Darkness Crystal and Ghost Vacuum
+        // all take one that died or was already dead.
         //
         // Kept OUT of ReanimatePatterns and asked separately, because the two
         // halves live on different lines and the strip-and-re-ask guard blanks
-        // the wrong one: what matches is the RETURN, and what disqualifies it is
-        // the EXILE a line earlier. Blinking your OWN creature is not a
-        // reanimation — Cold Storage and Safe Haven exile a creature you control
-        // and hand it back, which is a strange kind of protection and is
-        // deliberately left untagged. Without the guard the rule fires on 6
-        // cards and is right about 4.
-        //
-        // Nor is a card handed back to its OWNER: Mysterious Limousine returns
-        // the others "under its owner's control", Vault 13 "under their
-        // owners' control" — a temporary removal undone, untagged by hand
-        // (2026-10-13).
+        // the wrong one: what matches is the RETURN, and what qualifies it is
+        // the EXILE a line earlier (ExiledFromTheDead).
         private static readonly Regex ExiledCardOntoTheBattlefield = Rx(
             @"(?:put|return)[\w ,'\-/]{0,50}exiled with[\w ,'\-/]{0,40}(?:on)?to the battlefield"
-            // "TAPPED under their owners' control" is the same handing back
-            // (Mechtitan Core's "return all cards exiled with this Vehicle except
-            // this card to the battlefield tapped under their owners' control",
-            // Tokens alone by hand, read 2026-11-06 under the Mysterious
-            // Limousine ruling above). Counted broad, "tapped under their/its
-            // owner's control": 1 reviewed card, untagged, and 5 unreviewed that
-            // the exiled-with window does not reach.
-            + @"(?! (?:tapped )?under (?:its owner's|their owners'?) control)");
+            + @"|put the exiled cards onto the battlefield");
 
-        // …unless the card exiled was in a GRAVEYARD: Savior of Ollenbock's "exile
-        // up to one other target creature from the battlefield or creature card
-        // from a graveyard … when this creature leaves the battlefield, put the
-        // exiled cards onto the battlefield under their owners' control" brings a
-        // dead creature back, so it is Reanimate by hand (read 2026-11-05). The
-        // owner's-control veto above is about a card taken off the battlefield and
-        // handed back, which this one can also do, but the graveyard half is a
-        // return from the dead. Broad (any exiled cards put onto the battlefield
-        // under their owners' control): 1 card, this one, so broad and narrow
-        // agree. Asked in the same place as ExiledCardOntoTheBattlefield.
-        private static readonly Regex GraveyardCardExiledThenReturned = Rx(
-            @"creature cards? from (?:a|any|target player's|an opponent's) graveyard[^\n]*\n[^\n]*put the exiled cards onto the battlefield under their owners' control");
+        // …and the exile has to be OF THE DEAD, which is the definition of
+        // 2026-11-06 ("dal cimitero, o dall'esilio in cui la carta l'ha messo
+        // uscendo da lì"): a card exiled from a graveyard, or a creature exiled
+        // as it dies or instead of dying (The Darkness Crystal, Gisa). That one
+        // test takes the place of four guards, each a card that exiled nothing
+        // dead: blinking your own creature (Cold Storage, Safe Haven, ruled
+        // 09-19), a permanent handed back to its owner (Mysterious Limousine,
+        // Vault 13, Mechtitan Core, 10-13 and 11-06), the top of a library
+        // (Journey to the Lost City, ruled 11-06), and the graveyard half that
+        // kept Savior of Ollenbock (read 11-05) — which now simply passes.
+        // Counted on every card the route reaches: 19 reviewed, the 12 tagged
+        // all pass but Sothera (ruled below) and the 7 untagged all fail; of the
+        // 14 unreviewed, Synod Sanctum and Northampton Farm (your own permanent)
+        // and Profane Procession and Sisters of Stone Death (a creature off the
+        // battlefield) lose the proposal, as the definition says.
+        private static readonly Regex ExiledFromTheDead = Rx(
+            @"\bexiles? [^.\n]{0,100}\bfrom\b[^.\n]{0,40}\bgraveyards?\b"
+            + @"|\bexiles? (?:target player's|their|your|each opponent's|each player's|its controller's|that player's|all) graveyards?"
+            // (A third graveyard form, "exile … cards IN a graveyard", was tried
+            // and matched none of the 31 cards the route reaches: removed.)
+            + @"|(?:\bdies|is put into (?:a|your|an opponent's|its owner's) graveyard(?: from the battlefield)?"
+            + @"|you sacrifice (?:another|a) (?:nontoken )?creature)[^.\n]{0,40}\bexile (?:it|that card|that creature|them)\b"
+            + @"|\bwould die, (?:instead )?exile it");
 
-        // …nor when the only card the exile took is off the TOP OF A LIBRARY,
-        // ruled 2026-11-06 as a refinement of 09-19 ("No: dal grimorio non è
-        // Reanimate", asked on Journey to the Lost City: it exiles the top four
-        // cards of your library and, on a 20, puts the permanent cards exiled
-        // with it onto the battlefield; Tokens, Ramp and CardAdvantage by
-        // hand): nothing came back from the dead. Yggdrasil, Rebirth Engine
-        // exiles from a graveyard as well, so it keeps the tag. "Only" is read
-        // as no other exile verb on the card once the top-of-library sentences
-        // are blanked. Counted broad, every card whose exile is put back onto
-        // the battlefield (ExiledCardOntoTheBattlefield): 19 reviewed and 12
-        // unreviewed, and Journey is the only one that moves (Yggdrasil exiles
-        // from a graveyard too, and Ashiok, Nightmare Weaver, unreviewed, has
-        // other exiles on the card).
-        private static readonly Regex ExilesFromTheTopOfALibrary = Rx(
-            @"\bexiles? (?:the top [\w ]{0,30}|cards from the top )of [\w' ]{0,25}library\b");
+        // A creature exiled off an opponent's BATTLEFIELD and then put onto the
+        // battlefield under your control is a theft, RULED 2026-11-06 on Sothera,
+        // the Supervoid ("-Reanimate, +Steal": "each opponent chooses a creature
+        // they control and exiles it … put a creature card exiled with it onto
+        // the battlefield under your control"), as Steal.md has Abstruse
+        // Appropriation's permanent of theirs exiled and then cast. Not your own
+        // permanent exiled (Cold Storage, Synod Sanctum, Northampton Farm).
+        private static readonly Regex ExiledThenPutUnderYourControl = Rx(
+            @"(?:put|return)[\w ,'\-/]{0,50}exiled with[\w ,'\-/]{0,40}(?:on)?to the battlefield[^.\n]{0,40}\bunder your control");
 
-        private static readonly Regex ExilesAtAll = Rx(@"\bexiles?\b");
-
-        private static bool ExilesOnlyFromTheTopOfALibrary(string text) =>
-            ExilesFromTheTopOfALibrary.IsMatch(text)
-            && !ExilesAtAll.IsMatch(ExilesFromTheTopOfALibrary.Replace(text, " "));
-
-        private static readonly Regex BlinksYourOwnCreature = Rx(
-            @"exiles? target creature you control|exiles? (?:it|them|that creature)[\w ,']{0,30}return");
+        private static readonly Regex ExilesYourOwn = Rx(@"\bexiles? target (?:creature|permanent) you (?:control|own)\b");
 
         // A land out of the graveyard was Ramp, ruled 2026-09-18 and read here
         // 2026-09-19; since 2026-10-13 only if the card filled that graveyard
@@ -808,10 +831,14 @@ namespace ScatoloneDownloader.Cube
         // (Academy Researchers), an Equipment (Stoneforge Mystic), a Vehicle
         // (Fire Nation Salvagers), a Spacecraft — "creature or Spacecraft card"
         // is any creature (Scrounge for Eternity) — and a Cave (Glimpse the
-        // Core). A "Saga card" is read as a type like a tribe, which is what the
-        // hand had on Rydia, Summoner of Mist: no Reanimate.
+        // Core). A "Saga card" was read as a type like a tribe, which is what the
+        // hand had on Rydia, Summoner of Mist, until it was RULED 2026-11-06
+        // ("Saga non è tribale"): the tribe is a creature type, the one a tribal
+        // deck is built around, and a Saga is an enchantment as a Vehicle is an
+        // artifact. Rydia's "return target Saga card … from your graveyard to the
+        // battlefield" is Reanimate.
         private const string NotAnotherKindOfSubtype =
-            @"(?!(?:Aura|Equipment|Vehicle|Spacecraft|Cave)s?\b)";
+            @"(?!(?:Aura|Equipment|Vehicle|Spacecraft|Cave|Saga)s?\b)";
 
         // Nor the VERB that opens a sentence: Sarevok's Tome's "{3}, {T}: Exile
         // cards from the top of your library until you exile a nonland card"
@@ -886,9 +913,9 @@ namespace ScatoloneDownloader.Cube
         // sentence so a card with another Regrowth on it keeps the tag. A
         // CAST of a tribal card out of the graveyard is not touched (Zul Ashur,
         // asked as a question). Not a tribe, besides what TribalCard refuses
-        // (Aura, Equipment, Vehicle, Spacecraft, Cave, the card types): a Saga
-        // (Satsuki, hand Regrowth) and an Arcane card (Hana Kami, The
-        // Unspeakable, unreviewed) — the ruling's "card types and supertypes
+        // (Aura, Equipment, Vehicle, Spacecraft, Cave, Saga since 2026-11-06, the
+        // card types; the Saga was here first: Satsuki, hand Regrowth) and an
+        // Arcane card (Hana Kami, The Unspeakable, unreviewed) — the ruling's "card types and supertypes
         // and the like". "Lesson" was in the count and moves no card (none
         // returns one from a graveyard), so it is not written. A sentence that
         // names a plain type besides the tribe keeps the tag, as UnrestrictedCard
@@ -901,7 +928,7 @@ namespace ScatoloneDownloader.Cube
         // reached (7 lose the tag, Kami of Restless Shadows keeps it on its
         // other mode), 1 untagged (Ashcoat), plus 44 unreviewed.
         private static readonly Regex TribalCardForRegrowth = new(
-            @"(?!(?:Saga|Arcane)s?\b)" + TribalCard.ToString(), RegexOptions.CultureInvariant);
+            @"(?!Arcanes?\b)" + TribalCard.ToString(), RegexOptions.CultureInvariant);
 
         // creature, land and planeswalker are the plain types that stand beside
         // a tribe on a card; no card writes the others there.

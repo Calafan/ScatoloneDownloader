@@ -751,12 +751,13 @@ namespace ScatoloneDownloader.Cube
             // neither question is asked any more.
 
             // Added after that guard, and asked as a pair. See
-            // ExiledCardOntoTheBattlefield for why it cannot live in the table.
-            if ((ExiledCardOntoTheBattlefield.IsMatch(text) && !BlinksYourOwnCreature.IsMatch(text)
-                    && !ExilesOnlyFromTheTopOfALibrary(text))
-                ||GraveyardCardExiledThenReturned.IsMatch(text))
+            // ExiledCardOntoTheBattlefield for why it cannot live in the table:
+            // Reanimate when the card exiled the dead, Steal when it exiled a
+            // permanent somebody else controlled and puts it under yours.
+            if (ExiledCardOntoTheBattlefield.IsMatch(text))
             {
-                result |= CardEffect.Reanimate;
+                if (ExiledFromTheDead.IsMatch(text)) { result |= CardEffect.Reanimate; }
+                else if (ExiledThenPutUnderYourControl.IsMatch(text) && !ExilesYourOwn.IsMatch(text)) { result |= CardEffect.Steal; }
             }
 
             // Burn, both ways round. The old punishers name a face as "that

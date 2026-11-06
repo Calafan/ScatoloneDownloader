@@ -87,10 +87,10 @@
                 + "OPPONENT's top. A gain only SOMETIMES is CardAdvantage too.",
 
             [CardEffect.Reanimate] =
-                "A creature back from the dead straight onto the BATTLEFIELD, its cost cheated. A card it "
-                + "EXILED counts, as does a token copy of one in a graveyard. Not a card bringing ITSELF back, "
-                + "one put back for somebody ELSE, or one for a creature TYPE only. Blinking your OWN creature: "
-                + "Protection; a land is Ramp only if this card filled the graveyard.",
+                "A nonland PERMANENT back from the dead onto the battlefield under YOUR control, its "
+                + "cost skipped (Reanimate): out of a graveyard, out of the exile this card put it in from "
+                + "there, or as a token copy; any mana value. Not a card bringing ITSELF back, nor one for a "
+                + "creature TYPE only. A land: Ramp only if this card filled the graveyard.",
 
             [CardEffect.Buff] =
                 "Raises POWER/TOUGHNESS for something else, when that is what the card is FOR: permanent, over an "

@@ -3,12 +3,22 @@
 Canonical record of the rulings for `CardEffect.Reanimate`. The one-line tooltip shown in the tagger
 is in [`EffectGlossary.cs`](../../ScatoloneDownloader/Mtg/EffectGlossary.cs).
 
-a creature back from the dead and straight onto the BATTLEFIELD, cheating its cost.
+ANOTHER nonland PERMANENT comes back FROM THE DEAD onto the battlefield under YOUR control without
+its mana cost paid: out of a graveyard, or out of the exile this card put it in from a graveyard or
+as it died. Reanimate is the card. It counts with a real alternative cost, for one turn only, and as
+a token copy, and under any mana-value cap — Cheat refuses a cap, this tag does not (62 of 62 capped
+returns tagged by hand). The rest follows from the sentence: a land is not this tag (nonland), nor a
+card bringing itself back (another), nor one handed to its owner or an opponent (your control), nor
+a blink or a card off a library (from the dead), nor a cast that pays the cost (Noctis). The one
+exception kept, with its why, is the creature TYPE (ruled 2026-10-15): a return only a tribe can use
+needs a tribal deck. Redefined 2026-11-06, the last rulings below; every earlier paragraph marked
+"overturned" is history, and no card is kept in or out of this tag by name.
 
 Three more routes ruled 2026-09-19, because the graveyard is not the only place one comes back from
 and the tag was missing a third of what it should hold. A card THIS CARD EXILED, put onto the
 battlefield under your control, is the same trick with a waiting room in the middle (Purgatory,
-Sothera, The Darkness Crystal, Ghost Vacuum) — but blinking a creature YOU CONTROL is not, because
+Sothera — OVERTURNED 2026-11-06, exiled off the battlefield, Steal —, The Darkness Crystal, Ghost
+Vacuum) — but blinking a creature YOU CONTROL is not, because
 Cold Storage and Safe Haven exile your own and hand it back, which is a strange kind of protection
 and stays untagged.
 
@@ -35,11 +45,12 @@ not yours (Immortal Obligation, Mysterious Limousine).
 
 Ruled 2026-10-15 with Cheat ("Reanimate e Cheat non dovrebbero contare" for the tribal ones): a
 creature only a TYPE can bring back is not this tag — a Pirate card (Admiral Brass, Unsinkable), a
-Bird creature card (Kastral, the Windcrested), an Assassin whose token copies follow it (Altaïr Ibn-La'Ahad) —
-nor is one behind a cost only OTHER members of the type pay (Gravespawn Sovereign's five Zombies,
-Meanders Guide's other Merfolk); a "Saga card" reads the same way, as the hand had it (Rydia,
-Summoner of Mist). Not tribal: an exclusion (Junji's non-Dragon), a card any creature could be in
-the same sentence (Thwart the Grave), a Vehicle, Spacecraft or Cave card, one creature of the type
+Bird creature card (Kastral, the Windcrested), an Assassin whose token copies follow it (Altaïr
+Ibn-La'Ahad) — nor is one behind a cost only OTHER members of the type pay (Gravespawn Sovereign's
+five Zombies, Meanders Guide's other Merfolk); a "Saga card" reads the same way, as the hand had it
+(Rydia, Summoner of Mist; OVERTURNED 2026-11-06, a Saga is no tribe). Not tribal: an exclusion
+(Junji's non-Dragon), a card any creature could be in the same sentence (Thwart the Grave), a
+Vehicle, Spacecraft or Cave card, one creature of the type
 (Slimefoot and Squee's Saproling), a type the card makes tokens of (Rat King, Verminister). The 7
 reviewed tribal Reanimates were handed back. A tribal trigger the card fires ITSELF stays Reanimate,
 asked the same day ("Restano"): Vulpine Harvester is a Phyrexian and needs no tribal deck.
@@ -59,7 +70,7 @@ stays tribal, and so does one SHARED with another creature.
 
 Ruled 2026-10-30 with Regrowth (Anikthea, Hand of Erebos): a token copy of a CREATURE card exiled
 from your graveyard stays Reanimate (Ardyn, Mordor on the March, Abyssal Harvester); a noncreature
-card's copy is Regrowth.
+card's copy is Regrowth (OVERTURNED 2026-11-06 for every permanent card: Anikthea is Reanimate).
 
 Read 2026-11-05: a creature CARD exiled from a graveyard and put onto the battlefield when the
 exiler leaves, "exile up to one other target creature from the battlefield or creature card from a
@@ -85,3 +96,45 @@ RULED 2026-11-06, "No: dal grimorio non è Reanimate" (Journey to the Lost City)
 the 09-19 route "a card THIS CARD exiled, put onto the battlefield": it does not hold when the card
 exiled cards only from the top of a LIBRARY, since nothing came back from the dead. A card that
 exiles from a graveyard as well keeps the tag (Yggdrasil, Rebirth Engine).
+
+REDEFINED 2026-11-06 ("Sì, confermo"), from Reanimate the card: the paragraph at the top. Measured
+on the reviewed cards before any code: an artifact, enchantment or Vehicle card back from the
+graveyard was tagged on 30 of 35 (Brilliant Restoration, Greasefang, Argivian Restoration), a return
+under a mana-value or power cap on 62 of 62, a return given back to the hand at the end step on 2 of
+2 (Greasefang, Swift Warkite), while a cast from the graveyard that pays the cost was untagged on 15
+of 21 (Regrowth, as Noctis; the 6 tagged also return a creature to the battlefield). Asked the same
+day, one at a time, each answer below.
+
+RULED 2026-11-06, "-Reanimate, +Steal": Sothera, the Supervoid's creature is exiled off an
+opponent's battlefield, so nothing came back from the dead, and taking it is a theft (Steal.md,
+Abstruse Appropriation). Profane Procession and Sisters of Stone Death read the same. With it the
+09-19 route reads only an exile OF THE DEAD — a card exiled from a graveyard, or a creature exiled
+as it dies or instead of dying (The Darkness Crystal, Gisa) — and that one test replaces the four
+guards of 09-19, 10-13, 11-05 and 11-06: your own creature blinked (Cold Storage, Safe Haven; Synod
+Sanctum and Northampton Farm lose the proposal), a permanent handed back to its owner (Mysterious
+Limousine, Vault 13, Mechtitan Core), a library (Journey to the Lost City), and the graveyard half
+of Savior of Ollenbock, which now simply passes.
+
+RULED 2026-11-06, "+Reanimate a tutte e 3": an Aura or Equipment card put from your hand or
+graveyard onto the battlefield, attached (Danitha, Benalia's Hope; Vault 101: Birthday Party;
+Liberated Livestock), as Swift Warkite's creature card from hand or graveyard.
+
+RULED 2026-11-06, "Saga non è tribale": the tribe is a creature type, the one a tribal deck is built
+around, and a Saga is an enchantment as a Vehicle is an artifact. Rydia, Summoner of Mist is
+Reanimate.
+
+RULED 2026-11-06: a creature that BECOMES a copy of a card exiled from a graveyard is not this tag,
+because nothing enters the battlefield (Mimeoplasm, Revered One, against Lazav, Wearer of Faces,
+untagged). A token copy is, because a permanent enters.
+
+RULED 2026-11-06, "Reanimate al posto di Regrowth": a token copy of a noncreature PERMANENT card
+exiled from your graveyard (Anikthea, Hand of Erebos's enchantment, as Tamiyo, Compleated Sage's
+nonland permanent card), overturning 10-30 for every permanent card.
+
+Read 2026-11-06 under the definition, and handed back: Grasping Tentacles (an artifact card from an
+opponent's graveyard), Nahiri, the Unforgiving (a token copy of a creature or Equipment card, exiled
+at the end step), Leonardo da Vinci and Osgir, the Reconstructor (a token copy of an artifact card
+from your graveyard). Read on the two misses, each Reanimate by hand: a real alternative cost,
+Anrakyr the Traveller's life "rather than paying its mana cost" (as Cheat counts Leyline of
+Mutation), and Crabomination's spell cast free from among the cards an opponent exiled, one of them
+from their graveyard. Not a card casting itself for an alternative cost (Scourge of Nel Toth).

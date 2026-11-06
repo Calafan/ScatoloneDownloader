@@ -671,12 +671,8 @@ public sealed partial class EffectClassifierTests
         + "graveyard with a memory counter on it. Then for each creature card you own in exile with a memory "
         + "counter on it, create a tapped and attacking token that's a copy of it. Exile those tokens at end of "
         + "combat.")]
-    // A Saga card is a type too (Rydia's Summon).
-    [InlineData("Rydia, Summoner of Mist", "Legendary Creature — Human Shaman", CardEffect.Reanimate,
-        "Landfall — Whenever a land you control enters, you may discard a card. If you do, draw a "
-        + "card.\nSummon — {X}, {T}: Return target Saga card with mana value X from your graveyard to the "
-        + "battlefield with a finality counter on it. It gains haste until end of turn. Activate only as a "
-        + "sorcery.")]
+    // (Rydia's Saga card stood here as a type until 2026-11-06, "Saga non è
+    // tribale": moved to EffectClassifierTests.Reanimate.cs.)
     // A LIST of types is a tribe too, read 2026-11-03 (Dr. Eggman's Cheat): Push
     // the Limit's Mounts and Vehicles, Reanimate by hand on 09-10 before the
     // tribal ruling and reached.

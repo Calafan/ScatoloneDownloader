@@ -220,17 +220,14 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
-    // Two ways a noncreature card comes back from the graveyard, read 2026-10-30:
-    // Mazzy's Aura exiled from the graveyard and then cast, and Anikthea's token
-    // copy of a noncreature card (ruled 10-30; creature copies stay Reanimate).
+    // A noncreature card comes back from the graveyard, read 2026-10-30:
+    // Mazzy's Aura exiled from the graveyard and then cast. (Anikthea's token
+    // copy of an enchantment card stood here until 2026-11-06, "Reanimate al
+    // posto di Regrowth": moved to EffectClassifierTests.Reanimate.cs.)
     [InlineData("Mazzy, Truesword Paladin", "Legendary Creature — Halfling Knight",
         "Whenever an enchanted creature attacks one of your opponents, it gets +2/+0 and gains trample until "
         + "end of turn.\nWhenever an Aura you control is put into your graveyard from the battlefield, exile it. "
         + "Until the end of your next turn, you may cast that card.")]
-    [InlineData("Anikthea, Hand of Erebos", "Legendary Enchantment Creature — Demigod",
-        "Menace\nOther enchantment creatures you control have menace.\nWhenever Anikthea enters or attacks, "
-        + "exile up to one target non-Aura enchantment card from your graveyard. Create a token that's a copy "
-        + "of that card, except it's a 3/3 black Zombie creature in addition to its other types.")]
     public void Classify_ACardExiledFromTheGraveyardAndCast_IsRegrowth(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Regrowth));

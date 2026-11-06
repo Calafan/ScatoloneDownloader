@@ -367,4 +367,185 @@ public sealed partial class EffectClassifierTests
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
     }
+
+    [Theory]
+    // The definition of 2026-11-06: another NONLAND PERMANENT card back from the
+    // graveyard onto the battlefield under your control. RULED that day: an Aura
+    // or Equipment card from your hand or graveyard (Danitha, Vault 101: Birthday
+    // Party, Liberated Livestock) and a Saga card, no tribe (Rydia). Read under
+    // it: an artifact card from an opponent's graveyard (Grasping Tentacles), and
+    // a token copy of a creature-or-Equipment card (Nahiri, the Unforgiving) or of
+    // an artifact card (Leonardo da Vinci, Osgir, the Reconstructor).
+    [InlineData("Danitha, Benalia's Hope", "Legendary Creature — Human Knight",
+        "First strike, vigilance, lifelink\nWhen Danitha enters, you may put an Aura or Equipment card from "
+        + "your hand or graveyard onto the battlefield attached to Danitha.")]
+    [InlineData("Vault 101: Birthday Party", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Create "
+        + "a 1/1 white Human Soldier creature token and a Food token. (A Food token is an artifact with \"{2}, "
+        + "{T}, Sacrifice this token: You gain 3 life.\")\nII, III — You may put an Aura or Equipment card from "
+        + "your hand or graveyard onto the battlefield. If an Equipment is put onto the battlefield this way, "
+        + "you may attach it to a creature you control.")]
+    [InlineData("Liberated Livestock", "Creature — Cat Bird Ox",
+        "When this creature dies, create a 1/1 white Cat creature token with lifelink, a 1/1 white Bird "
+        + "creature token with flying, and a 2/4 white Ox creature token. For each of those tokens, you may put "
+        + "an Aura card from your hand and/or graveyard onto the battlefield attached to it.")]
+    [InlineData("Rydia, Summoner of Mist", "Legendary Creature — Human Shaman",
+        "Landfall — Whenever a land you control enters, you may discard a card. If you do, draw a "
+        + "card.\nSummon — {X}, {T}: Return target Saga card with mana value X from your graveyard to the "
+        + "battlefield with a finality counter on it. It gains haste until end of turn. Activate only as a "
+        + "sorcery.")]
+    [InlineData("Grasping Tentacles", "Sorcery",
+        "Target opponent mills eight cards. You may put an artifact card from that player's graveyard onto "
+        + "the battlefield under your control.")]
+    [InlineData("Nahiri, the Unforgiving", "Legendary Planeswalker — Nahiri",
+        "Compleated ({R/W/P} can be paid with {R}, {W}, or 2 life. If life was paid, this planeswalker enters "
+        + "with two fewer loyalty counters.)\n+1: Until your next turn, up to one target creature attacks a "
+        + "player each combat if able.\n+1: Discard a card, then draw a card.\n0: Exile target creature or "
+        + "Equipment card with mana value less than Nahiri's loyalty from your graveyard. Create a token that's "
+        + "a copy of it. That token gains haste. Exile it at the beginning of the next end step.")]
+    [InlineData("Leonardo da Vinci", "Legendary Creature — Human Artificer",
+        "{3}{U}{U}: Until end of turn, Thopters you control have base power and toughness X/X, where X is the "
+        + "number of cards in your hand.\n{2}{U}, {T}: Draw a card, then discard a card. If the discarded card "
+        + "was an artifact card, exile it from your graveyard. If you do, create a token that's a copy of it, "
+        + "except it's a 0/2 Thopter artifact creature with flying in addition to its other types.")]
+    [InlineData("Osgir, the Reconstructor", "Legendary Creature — Giant Artificer",
+        "Vigilance\n{1}, Sacrifice an artifact: Target creature you control gets +2/+0 until end of turn.\n{X}, "
+        + "{T}, Exile an artifact card with mana value X from your graveyard: Create two tokens that are copies "
+        + "of the exiled card. Activate only as a sorcery.")]
+    public void Classify_TheNovember6Definition_ANonlandPermanentCard_IsReanimate(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
+    }
+
+    [Theory]
+    // RULED 2026-11-06 (Reanimate al posto di Regrowth), overturning 10-30 for
+    // every permanent card: a token copy of an enchantment card exiled from your
+    // graveyard is a nonland permanent back from the dead, as Tamiyo, Compleated
+    // Sage's nonland permanent card copy is.
+    [InlineData("Anikthea, Hand of Erebos", "Legendary Enchantment Creature — Demigod",
+        "Menace\nOther enchantment creatures you control have menace.\nWhenever Anikthea enters or attacks, "
+        + "exile up to one target non-Aura enchantment card from your graveyard. Create a token that's a copy "
+        + "of that card, except it's a 3/3 black Zombie creature in addition to its other types.")]
+    public void Classify_TheNovember6Ruling_AnEnchantmentCardCopied_IsReanimateNotRegrowth(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Reanimate));
+        Assert.False(result.HasFlag(CardEffect.Regrowth));
+    }
+
+    [Theory]
+    // Read 2026-11-06 under the definition, each Reanimate by hand: a real
+    // alternative cost is a cost skipped (Anrakyr the Traveller pays life rather
+    // than its mana cost), and a spell cast free from among the cards exiled from
+    // an opponent's graveyard (Crabomination).
+    [InlineData("Anrakyr the Traveller", "Legendary Artifact Creature — Necron",
+        "Lord of the Pyrrhian Legions — Whenever Anrakyr the Traveller attacks, you may cast an artifact "
+        + "spell from your hand or graveyard by paying life equal to its mana value rather than paying its mana "
+        + "cost.")]
+    [InlineData("Crabomination", "Creature — Crab Demon",
+        "Emerge from artifact {5}{B}{B} (You may cast this spell by sacrificing an artifact and paying the "
+        + "emerge cost reduced by that artifact's mana value.)\nWhen this creature enters, target opponent "
+        + "exiles the top card of their library, a card at random from their graveyard, and a card at random "
+        + "from their hand. You may cast a spell from among cards exiled this way without paying its mana cost.")]
+    public void Classify_TheNovember6Definition_ACostSkipped_IsReanimate(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
+    }
+
+    [Theory]
+    // The 09-19 route under the definition of 2026-11-06: the card exiled the
+    // dead, a creature exiled instead of dying (The Darkness Crystal) or as it is
+    // sacrificed (Prowling Geistcatcher).
+    [InlineData("The Darkness Crystal", "Legendary Artifact",
+        "Black spells you cast cost {1} less to cast.\nIf a nontoken creature an opponent controls would die, "
+        + "instead exile it and you gain 2 life.\n{4}{B}{B}, {T}: Put target creature card exiled with The "
+        + "Darkness Crystal onto the battlefield tapped under your control with two additional +1/+1 counters "
+        + "on it.")]
+    [InlineData("Prowling Geistcatcher", "Creature — Human Rogue",
+        "Whenever you sacrifice another creature, exile it. If that creature was a token, put a +1/+1 counter "
+        + "on this creature.\nWhen this creature leaves the battlefield, return each card exiled with it to the "
+        + "battlefield under your control.")]
+    // …and a whole graveyard exiled, then a creature card exiled with the card put
+    // onto the battlefield (Death in Heaven, Nautiloid Ship).
+    [InlineData("Death in Heaven", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI, II — "
+        + "Target player mills two cards, then exiles their graveyard.\nIII — Put all creature cards exiled with "
+        + "this enchantment onto the battlefield face down under your control. They're 2/2 Cyberman artifact "
+        + "creatures.")]
+    [InlineData("Nautiloid Ship", "Artifact — Vehicle",
+        "Flying\nWhen this Vehicle enters, exile target player's graveyard.\nWhenever this Vehicle deals combat "
+        + "damage to a player, you may put a creature card exiled with this Vehicle onto the battlefield under "
+        + "your control.\nCrew 3")]
+    public void Classify_TheNovember6Definition_AnExileOfTheDead_IsReanimate(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
+    }
+
+    [Theory]
+    // RULED 2026-11-06 on Sothera, the Supervoid (-Reanimate, +Steal): a creature
+    // exiled off an opponent's battlefield and put onto the battlefield under your
+    // control came back from nowhere dead, and it is a theft. Profane Procession
+    // and Sisters of Stone Death read the same.
+    [InlineData("Sothera, the Supervoid", "Legendary Enchantment",
+        "Whenever a creature you control dies, each opponent chooses a creature they control and exiles "
+        + "it.\nAt the beginning of your end step, if a player controls no creatures, sacrifice Sothera, then "
+        + "put a creature card exiled with it onto the battlefield under your control with two additional +1/+1 "
+        + "counters on it.")]
+    [InlineData("Profane Procession // Tomb of the Dusk Rose", "Legendary Enchantment // Legendary Land",
+        "{3}{W}{B}: Exile target creature. Then if there are three or more cards exiled with Profane "
+        + "Procession, transform it.\n(Transforms from Profane Procession.)\n{T}: Add one mana of any "
+        + "color.\n{2}{W}{B}, {T}: Put a creature card exiled with this permanent onto the battlefield under "
+        + "your control.")]
+    [InlineData("Sisters of Stone Death", "Legendary Creature — Gorgon",
+        "{G}: Target creature blocks Sisters of Stone Death this turn if able.\n{B}{G}: Exile target creature "
+        + "blocking or blocked by Sisters of Stone Death.\n{2}{B}: Put a creature card exiled with Sisters of "
+        + "Stone Death onto the battlefield under your control.")]
+    public void Classify_TheNovember6Ruling_ACreatureExiledOffTheirBattlefield_IsStealNotReanimate(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Steal));
+        Assert.False(result.HasFlag(CardEffect.Reanimate));
+    }
+
+    [Theory]
+    // Not the definition of 2026-11-06: your own permanent exiled and returned
+    // (Synod Sanctum, Northampton Farm), a card casting ITSELF for an alternative
+    // cost (Scourge of Nel Toth), and a creature that BECOMES a copy of a card
+    // exiled from a graveyard, since nothing enters (Mimeoplasm, Revered One,
+    // RULED that day, as Lazav, Wearer of Faces was untagged).
+    [InlineData("Synod Sanctum", "Artifact",
+        "{2}, {T}: Exile target permanent you control.\n{2}, Sacrifice this artifact: Return all cards exiled "
+        + "with this artifact to the battlefield under your control.")]
+    [InlineData("Northampton Farm", "Land",
+        "{T}: Add {C}.\n{1}, {T}: Exile target creature you own.\n{2}, {T}, Sacrifice this land: Return a "
+        + "creature card exiled with this land to the battlefield under your control. Return each other card "
+        + "exiled with this land to its owner's hand.")]
+    [InlineData("Scourge of Nel Toth", "Creature — Zombie Dragon",
+        "Flying\nYou may cast this creature from your graveyard by paying {B}{B} and sacrificing two creatures "
+        + "rather than paying its mana cost.")]
+    [InlineData("Mimeoplasm, Revered One", "Legendary Creature — Ooze",
+        "As Mimeoplasm enters, exile up to X creature cards from your graveyard. It enters with three +1/+1 "
+        + "counters on it for each creature card exiled this way.\n{2}: Mimeoplasm becomes a copy of target "
+        + "creature card exiled with it, except it's 0/0 and has this ability.")]
+    public void Classify_TheNovember6Definition_NothingDeadComesBack_IsNotReanimate(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
+    }
+
+    [Theory]
+    // The Sothera ruling of 2026-11-06 takes a creature off somebody else's
+    // battlefield; exiling your own permanent and putting it back under your
+    // control steals nothing (Cold Storage, Synod Sanctum).
+    [InlineData("Cold Storage", "Artifact",
+        "{3}: Exile target creature you control.\nSacrifice this artifact: Return each creature card exiled "
+        + "with this artifact to the battlefield under your control.")]
+    [InlineData("Synod Sanctum", "Artifact",
+        "{2}, {T}: Exile target permanent you control.\n{2}, Sacrifice this artifact: Return all cards exiled "
+        + "with this artifact to the battlefield under your control.")]
+    public void Classify_TheNovember6Ruling_YourOwnPermanentExiledAndReturned_IsNotSteal(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Steal));
+    }
 }
