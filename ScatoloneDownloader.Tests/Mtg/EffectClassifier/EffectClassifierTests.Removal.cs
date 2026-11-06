@@ -871,4 +871,25 @@ public sealed partial class EffectClassifierTests
         Assert.True(result.HasFlag(CardEffect.RemovePermanent));
         Assert.False(result.HasFlag(CardEffect.Pacify));
     }
+
+    [Theory]
+    // Ruled 2026-11-06 with the Burn definition (Steal + Removal): a creature
+    // stolen and sacrificed at the next end step is gone from its owner for good,
+    // a kill beside the theft; the attack itself is Act of Treason's and no Burn.
+    // In Thrall to the Pit sacrifices only when kicked and was handed back with
+    // the tag.
+    [InlineData("Slave of Bolas", "Sorcery",
+        "Gain control of target creature. Untap that creature. It gains haste until end of turn. Sacrifice it "
+        + "at the beginning of the next end step.")]
+    [InlineData("In Thrall to the Pit", "Sorcery",
+        "Kicker {2}{B} (You may pay an additional {2}{B} as you cast this spell.)\nGain control of target "
+        + "creature until end of turn. Untap that creature. It gains haste until end of turn. If this spell was "
+        + "kicked, sacrifice that creature at the beginning of the next end step.")]
+    public void Classify_TheNovember6Ruling_AStolenCreatureSacrificed_IsRemoval(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Removal));
+        Assert.True(result.HasFlag(CardEffect.Steal));
+    }
 }

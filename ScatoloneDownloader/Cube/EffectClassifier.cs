@@ -804,12 +804,13 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Burn;
             }
 
-            // …nor a player paid in cards for the life, nor a punisher on an
-            // opponent's own sacrifice. See DrawsForTheLife and
-            // PunishesTheirSacrifice.
-            if (result.HasFlag(CardEffect.Burn)
-                && (DrawsForTheLife.IsMatch(text) || PunishesTheirSacrifice.IsMatch(text))
-                && !BurnPatterns.Any(p => p.IsMatch(PunishesTheirSacrifice.Replace(DrawsForTheLife.Replace(text, " "), " "))))
+            // …nor a player paid in cards for the life. See DrawsForTheLife.
+            // A punisher on an opponent's own SACRIFICE was vetoed here from
+            // 2026-10-16 ("0 of 3", but two of the three drained nobody) until
+            // 2026-11-06, when it was ruled Burn like every other punisher
+            // ("Burn, veto tolto": Vengeful Tracker against Nazgûl Battle-Mace).
+            if (result.HasFlag(CardEffect.Burn) && DrawsForTheLife.IsMatch(text)
+                && !BurnPatterns.Any(p => p.IsMatch(DrawsForTheLife.Replace(text, " "))))
             {
                 result &= ~CardEffect.Burn;
             }

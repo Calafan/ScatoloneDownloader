@@ -3,7 +3,24 @@
 Canonical record of the rulings for `CardEffect.Burn`. The one-line tooltip shown in the tagger is
 in [`EffectGlossary.cs`](../../ScatoloneDownloader/Mtg/EffectGlossary.cs).
 
-direct damage at a FACE (Lightning Bolt, Fireblast, Price of Progress). Damage pointed at a creature
+An OPPONENT loses life to what the card does: damage that can land on their face, life they lose,
+or life they pay to stop the card; two or more, or one point that comes again and again. Lightning
+Bolt is the card. The rest follows from the sentence: damage only a creature can take is Removal,
+and "any target" is both; the life YOU lose or pay is a price (Ancient Tomb, Reanimate); one point
+once is a rider (Mind Drain); a creature with haste gone at the end of the turn is the damage
+itself, wherever it came from (Ball Lightning, Through the Breach, Shallow Grave); the charge on the
+controller of what the card just destroyed is a rider on the kill (Detonate, Choking Sands). Four
+exceptions are kept, each with its why. Life that BUYS something for whoever pays it is a price: a
+fixed "target player draws N cards and loses N life" (Blood Pact) and a ward paid in life, the toll
+on their own spell (Zul Ashur, Parnesse), though a variable X pointed at a player is a kill
+(Eldritch Pact). What a TOKEN the card makes then does is the token's (the 0/1 Wizard), unless the
+token is itself the hasty shot (Urabrask's Forge). A drain only ANOTHER MEMBER OF A TRIBE turns on
+needs a tribal deck (Obyra), the one exception Reanimate keeps too. And a card that hands back the
+life it deals is worth nothing (Fiery Justice, read by its shape). Redefined 2026-11-06, the
+answers at the end; every earlier paragraph marked "overturned" is history, and no card is kept in
+or out of this tag by name.
+
+Direct damage at a FACE (Lightning Bolt, Fireblast, Price of Progress). Damage pointed at a creature
 is how the game kills creatures and is already Removal, so Explosive Shot is Removal alone; "any
 target" is both, because it can go either way. A sweeper is Burn only when it catches the players
 too — Inferno's "each creature and each player" is Wipe AND Burn, Pyroclasm is Wipe alone. Damage to
@@ -18,7 +35,7 @@ DAMAGE DIVIDED among bare "TARGETS" is Burn because a face can be one of them (F
 Thunder, Pyrotechnics, Meteor Shower, Mogg Mob), while "divided among target CREATURES" never
 reaches a player and is not (Pyrokinesis, Fire Covenant, Forked Lightning and four more). Fiery
 Justice is the exception the human ruled ON PURPOSE: it deals five and hands the same opponent five
-life back, so the count is nothing.
+life back, so the count is nothing (a shape since 2026-11-06, Q8 below, not a name).
 
 THE WORD ORDER RUNS BOTH WAYS — "deals damage TO that player EQUAL TO the number of artifacts they
 control" as readily as "deals damage equal to … to that player" — and only one of the two was being
@@ -65,7 +82,8 @@ Skirk Alarmist and Apprentice Necromancer hand that drawback to somebody else's 
 NB this is the one rule in the file the reviewed set cannot really test: Ball Lightning is tagged,
 Viashino Sandstalker was not and is realigned by the ruling, and the other thirteen cards written
 that way are unreviewed. And on a LAND-DESTROYER the damage is a second effect the human reads as
-worth counting, which settles the split this family had — Orcish Mine charges the controller two for
+worth counting (OVERTURNED 2026-11-06, Q1 below: a rider for a land too), which settles the split
+this family had — Orcish Mine charges the controller two for
 the land it just destroyed and is tagged, Icequake and Stench of Evil do the same and were not. A
 land is therefore not among the permanents whose death excuses the charge; a creature, an artifact,
 a permanent and a spell still are. Inferno is not a classifier problem at all: the store entry is
@@ -93,7 +111,8 @@ Ruled 2026-10-16 (B1, "Mai Burn"): a player who DRAWS N CARDS AND LOSES N LIFE i
 (except a VARIABLE X pointed at a player, RULED 2026-11-05 below); the life is what the cards cost,
 whoever pays it. Monumental Corruption was tagged and is corrected by name; Ob Nixilis, the
 Adversary keeps the tag through its +1 drain, another sentence. A drain that answers an OPPONENT'S
-SACRIFICE falls the same way, as the hand already had it (Vengeful Tracker untagged). Both are
+SACRIFICE falls the same way, as the hand already had it (Vengeful Tracker untagged; OVERTURNED
+2026-11-06, Q4 below: Burn like every punisher). Both are
 dropped only when nothing else on the card reads as Burn once they are blanked.
 
 Ruled 2026-10-16 (B2, "Sempre Burn"): an opponent, a target player or a defending player losing HALF
@@ -119,7 +138,8 @@ That overturns the Kiki-Jiki exclusion of 2026-10-14, which was a narrowing made
 than a ruling. A creature the card only TAKES — from a graveyard, a hand, a library or an opponent
 (Corpse Dance, Shallow Grave, Through the Breach, Zirilan, Slave of Bolas) — is not burn and keeps
 its Reanimate, Cheat or Steal ("No, solo ciò che la carta crea o è"; the library part overturned
-2026-10-27 and the graveyard part 2026-11-05, below); nor is unearth on an artifact (Mask of the
+2026-10-27, the graveyard part 2026-11-05 and the hand 2026-11-06, below; the opponent's creature
+is Removal since 2026-11-06); nor is unearth on an artifact (Mask of the
 Jadecrafter). Measured: 17 reviewed cards tagged by hand are now read (the thirteen encore of
 2026-10-20, Hate Mirage, Araumi, Dregscape Sliver, First-Sphere Gargantua), and 59 untagged ones are
 reached: Amphin Mutineer, Briarblade Adept, Graywater's Fixer and Mist Dancer, named in the
@@ -163,7 +183,7 @@ to the chosen player and stays out.
 
 Named 2026-11-05, a slip: Dorothea, Vengeful Victim, whose Aura makes a 4/4 Spirit "tapped and
 attacking" and sacrifices it at end of combat, is not Burn (1 tagged of 13 reviewed cards with that
-wording; the rules already read Tokens alone).
+wording; the rules already read Tokens alone). Read by its shape since 2026-11-06, Q3 below.
 
 RULED 2026-11-05 ("Sì: target player + X = Burn", asked on Eldritch Pact against Pact of the Serpent
 and Monumental Corruption): "TARGET PLAYER draws X cards and loses X life" with a VARIABLE X is
@@ -178,7 +198,8 @@ RULED 2026-11-05 ("Anche preso è Burn", asked on Balduvian Atrocity against Sha
 Dance): a creature card returned FROM A GRAVEYARD to the battlefield with haste and sacrificed or
 exiled at the next end step is Burn, beside its Reanimate. That OVERTURNS the graveyard part of the
 2026-10-23 exclusion ("solo ciò che la carta crea o è"), as the library part was overturned on
-2026-10-27. What stands of 2026-10-23: a creature taken from a HAND (Through the Breach) or from an
+2026-10-27. What stands of 2026-10-23 (the HAND and the return to HAND OVERTURNED 2026-11-06, Q2
+below): a creature taken from a HAND (Through the Breach) or from an
 opponent's battlefield (Slave of Bolas) is not burn; unearth on an artifact is not (Mask of the
 Jadecrafter); and neither is a card that is no CREATURE card (Kami of Industry's artifact, Moira and
 Teshar's nonland permanent: read by the wording, a type-blind rule would reach exactly those two)
@@ -187,3 +208,57 @@ named and stays Burn. Reached and handed back with the tag: Corpse Dance, Shallo
 Pull and Coalstoke Gearhulk (all Reanimate by hand). Unreviewed, gaining the tag: Apprentice
 Necromancer, Dawn of the Dead, Goryo's Vengeance, Gruesome Encore, Macabre Mockery, Postmortem
 Lunge, Puppeteer Clique, Whip of Erebos.
+
+REDEFINED 2026-11-06 from Lightning Bolt ("Sì, questa"), the sentence at the top of this file, then
+eight answers taken one at a time against it.
+
+Q1 ("Mai Burn, terre comprese", asked on Detonate against Choking Sands): the charge on the
+controller of what the card just destroyed is a rider on the kill whatever was destroyed. 12 of 12
+reviewed removal riders were untagged (Detonate, Judgment Bolt, Rending Flame, Burn the Accursed),
+4 of 4 land-destroyer riders tagged. That OVERTURNS the land part of 2026-09-20: Choking Sands,
+Icequake (one point once, under the threshold anyway), Stench of Evil and Orcish Mine are handed
+back without the tag, and seven unreviewed land destroyers lose the proposal (Cryoclasm, Melt
+Terrain, Molten Rain, Peak Eruption, Poison the Well, Roiling Terrain, Steam Vines).
+
+Q2 (the second option, then "Steal + Removal"): a creature with haste gone at the end step is Burn
+WHEREVER IT CAME FROM — a hand (Through the Breach, Sneak Attack, Terminal Velocity, whose
+sacrifice is in the quotes it grants), the command zone (Hellkite Courser) — and whether it dies,
+is exiled or goes back to a hand or the command zone (Swift Warkite, as Anzrag's Rampage already
+was). That OVERTURNS what stood of 2026-10-23. A creature STOLEN and sacrificed at the next end
+step (Slave of Bolas, In Thrall to the Pit kicked) is no Burn: its attack is Act of Treason's,
+which nobody calls burn; what the sacrifice adds is the creature gone from its owner for good,
+which is Removal beside the Steal. A card that is no creature card stays out by the words (Arms
+Race, Kami of Industry, Moira and Teshar). Handed back: Terminal Velocity and Hellkite Courser with
+Burn, In Thrall to the Pit with Removal. Unreviewed, gaining Burn: Through the Breach, Sneak
+Attack, Swift Warkite, Cauldron Dance, Incandescent Soulstoke, Meek Attack, Shifty Doppelganger;
+gaining Removal: Slave of Bolas, Angrath, the Flame-Chained.
+
+Q3 ("Non Burn, Arthur -Burn"): a body an attack trigger puts onto the battlefield TAPPED AND
+ATTACKING and takes away at end of combat joins an attack already declared. It is an extra
+attacker (Tokens), not the shot with legs, which has haste and attacks on its own. 1 of the 6
+reviewed cards was tagged: Arthur, Marigold Knight, named, loses Burn; Kavaron Harrier, Altaïr,
+Mirror-Style Master, Mordor Trebuchet and Dorothea's Retribution were already untagged.
+
+Q4 ("Burn, veto tolto"): a punisher on an opponent's own SACRIFICE is Burn, as every punisher is
+(Ankh of Mishra, Psychic Venom). The veto of 2026-10-16 said 0 of 3, but two of the three drained
+nobody (Legate Lanius, Malik). Vengeful Tracker, named, gains Burn, and Nazgûl Battle-Mace's
+"unless that player pays 3 life", tagged by hand, is read again.
+
+Q5a ("Prezzo delle carte: fuori"): B1 stands for a fixed N, because whoever pays the life gets the
+cards; four reviewed cards say it at two or more and none is tagged (Blood Pact, Fell Stinger,
+Unscrupulous Contractor, Insatiable Avarice; Vault Plunderer and Silverquill Command drain one and
+fall to the threshold). The variable X of 2026-11-05 stays Burn: Eldritch Pact on a full graveyard
+is a kill, not a trade. Q5b ("Ward fuori, col perché"): life paid to STOP THE CARD is Burn, because
+the card acts on them (Sirocco, Breathstealer's Crypt, Giant Albatross, Nazgûl Battle-Mace, Sivriss:
+5 of 5 tagged); life paid for their OWN action against your permanents is its toll, Protection, and
+they can avoid it by not targeting (ward, 10 of 10 untagged for that line; Parnesse).
+
+Q6 ("Del token: fuori"): what a token the card makes does afterwards is the token's (21 of 21
+reviewed untagged for that line); the hasty token gone at the end step stays Burn because there the
+body is the one shot. Q7 ("Tribale fuori, come Reanimate"): the drain on another member of a tribe
+stays out with its why. Q8 ("Fuori: il saldo è zero"): Fiery Justice's damage handed back as life
+is read by its shape, damage then "target opponent gains N life".
+
+Left as known disagreements, each the only card with its wording: Blim, Comedic Genius, Yurlok of
+Scorch Thrash, and Deadpool, Trading Card, whose "you lose 3 life" reaches an opponent only through
+the exchange of text boxes.

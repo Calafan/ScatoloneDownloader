@@ -105,10 +105,10 @@
                 + "damage a creature DEALS or REPEATING prevention to YOU (Pacify).",
 
             [CardEffect.Burn] =
-                "Damage or life loss aimed at a FACE, however counted and however slow: \"damage equal to the number "
-                + "of Swamps\", an upkeep tax, life PAID to stop the card, two or more life, one point AGAIN and "
-                + "again, a hasty attacker gone at end step. Damage at a creature is Removal; \"any target\" is both. "
-                + "Not damage to YOURSELF, nor a TOKEN's own ability.",
+                "An OPPONENT loses life to what the card does (Lightning Bolt): damage reaching a face, life lost or "
+                + "paid to stop the card, from two or one again and again; a hasty body gone at end step. Damage at "
+                + "a creature is Removal, \"any target\" both. Not your own life, a charge on a kill, a token's "
+                + "ability, nor life that buys cards or a target.",
 
             [CardEffect.Sacrifice] =
                 "An outlet you can feed your OWN creatures or artifacts AGAIN AND AGAIN — a cost, a repeating trigger, "

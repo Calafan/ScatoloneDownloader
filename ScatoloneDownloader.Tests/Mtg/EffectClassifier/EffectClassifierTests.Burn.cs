@@ -94,17 +94,16 @@ public sealed partial class EffectClassifierTests
     // Two more the same day. A creature with HASTE that is gone at the end of
     // the turn it arrived attacks once and then is not there any more, so what
     // it really did was put its power on a face — whether it dies (Ball
-    // Lightning) or bounces (Viashino Sandstalker). And on a LAND-DESTROYER the
-    // damage is a second effect worth counting, which settles the split this
-    // family had: Orcish Mine was tagged and Icequake, printing the same
-    // sentence, was not.
+    // Lightning) or bounces (Viashino Sandstalker). Icequake, the LAND-DESTROYER
+    // whose charge on the controller was ruled Burn the same day, was pinned
+    // here until 2026-11-06, when the charge on a kill was ruled a rider for
+    // lands too ("Mai Burn, terre comprese"); it moved to
+    // Classify_TheNovember6Definition_IsNotBurn.
     [InlineData("Ball Lightning", "Creature — Elemental",
         "Trample\nHaste\nAt the beginning of the end step, sacrifice this creature.")]
     [InlineData("Viashino Sandstalker", "Creature — Viashino Warrior",
         "Haste\nAt the beginning of the end step, return this creature to its owner's hand.")]
-    [InlineData("Icequake", "Sorcery",
-        "Destroy target land. If that land was a snow land, Icequake deals 1 damage to that land's controller.")]
-    public void Classify_AShotWearingLegsOrALand_IsBurn(string name, string typeLine, string oracle)
+    public void Classify_AShotWearingLegs_IsBurn(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
     }
@@ -332,8 +331,10 @@ public sealed partial class EffectClassifierTests
     // player + X = Burn"); it moved to
     // Classify_TheNovember5Ruling_TargetPlayerDrawsXAndLosesX_IsBurn. Half the
     // life of its owner or of each player stays out of B2. A ward paid in life
-    // taxes their spell (0 of the 6 reviewed), and a drain that punishes an
-    // opponent's sacrifice is untagged on Vengeful Tracker.
+    // taxes their spell (0 of the 6 reviewed). Vengeful Tracker, a drain that
+    // punishes an opponent's sacrifice, was pinned here until 2026-11-06, when it
+    // was ruled Burn like every punisher; it moved to
+    // Classify_TheNovember6Definition_IsBurn.
     [InlineData("Blooming Blast", "Instant",
         "Gift a Treasure (You may promise an opponent a gift as you cast this spell. If you do, they create a "
         + "Treasure token before its other effects. It's an artifact with \"{T}, Sacrifice this token: Add one "
@@ -350,8 +351,6 @@ public sealed partial class EffectClassifierTests
         "Ward—Pay 2 life. (Whenever this creature becomes the target of a spell or ability an opponent "
         + "controls, counter it unless that player pays 2 life.)\n{T}: You may cast target Zombie creature card "
         + "from your graveyard this turn.")]
-    [InlineData("Vengeful Tracker", "Creature — Human Detective",
-        "Whenever an opponent sacrifices an artifact, this creature deals 2 damage to them.")]
     public void Classify_TheOctober16BurnPass_IsNotBurn(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
@@ -454,20 +453,14 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
-    // Ruled 2026-10-23 with it: a creature the card only TAKES, from a hand,
-    // keeps its Cheat and is not burn ("solo ciò che la carta crea o è"). Corpse
-    // Dance, the graveyard case, was pinned here until 2026-11-05, when "Anche
-    // preso è Burn" overturned the graveyard part; it moved to
-    // Classify_TheNovember5Ruling_ACreatureFromAGraveyardWithHasteAndGone_IsBurn.
+    // Ruled 2026-10-23. Corpse Dance (a graveyard) and Through the Breach (a
+    // hand), the creatures the card only TAKES, were pinned here as not burn
+    // until the graveyard part was overturned on 2026-11-05 and the hand on
+    // 2026-11-06; they moved to the two IsBurn theories of those days.
     // The shield that counters a spell unless its player pays
     // life is Parnesse's Protection, as ward is. "If it has unearth" grants
     // nothing, an emblem you get is yours, and one point at the end of a list
     // stays under the threshold.
-    [InlineData("Through the Breach", "Instant — Arcane",
-        "You may put a creature card from your hand onto the battlefield. That creature gains haste. "
-        + "Sacrifice that creature at the beginning of the next end step.\nSplice onto Arcane {2}{R}{R} (As you "
-        + "cast an Arcane spell, you may reveal this card from your hand and pay its splice cost. If you do, "
-        + "add this card's effects to that spell.)")]
     [InlineData("Parnesse, the Subtle Brush", "Legendary Creature — Vampire Wizard",
         "Whenever you or a permanent you control becomes the target of a spell or ability an opponent "
         + "controls, counter that spell or ability unless that player pays 4 life.\nWhenever you copy a spell, "
@@ -695,15 +688,12 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
-    // What stands of 2026-10-23: a creature taken from a HAND (Through the Breach)
-    // is not burn, and neither is a card that is no creature card (Kami of
-    // Industry's artifact, Moira and Teshar's nonland permanent) nor a return to
-    // HAND at the end step (Swift Warkite, from hand or graveyard).
-    [InlineData("Through the Breach", "Instant — Arcane",
-        "You may put a creature card from your hand onto the battlefield. That creature gains haste. "
-        + "Sacrifice that creature at the beginning of the next end step.\nSplice onto Arcane {2}{R}{R} (As you "
-        + "cast an Arcane spell, you may reveal this card from your hand and pay its splice cost. If you do, "
-        + "add this card's effects to that spell.)")]
+    // What stands of 2026-10-23: a card that is no creature card is not burn
+    // (Kami of Industry's artifact, Moira and Teshar's nonland permanent).
+    // Through the Breach (a hand) and Swift Warkite (a return to hand) were
+    // pinned here until 2026-11-06, when the hasty body gone at the end step was
+    // ruled Burn wherever it came from; they moved to
+    // Classify_TheNovember6Definition_IsBurn.
     [InlineData("Kami of Industry", "Creature — Spirit",
         "When this creature enters, return target artifact card with mana value 3 or less from your graveyard "
         + "to the battlefield. It gains haste. Sacrifice it at the beginning of the next end step.")]
@@ -712,11 +702,79 @@ public sealed partial class EffectClassifierTests
         + "to the battlefield. It gains haste. Exile it at the beginning of the next end step. If it would "
         + "leave the battlefield, exile it instead of putting it anywhere else. (Artifacts, legendaries, and "
         + "Sagas are historic.)")]
+    public void Classify_TheNovember5Ruling_NotACreatureCard_StaysNotBurn(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
+    // Burn redefined 2026-11-06 from Lightning Bolt: an OPPONENT loses life to
+    // what the card does. A hasty body gone at the end step is the damage wherever
+    // it came from, a hand (Through the Breach, Sneak Attack, Terminal Velocity's
+    // quoted sacrifice), the command zone (Hellkite Courser) or a return to hand
+    // (Swift Warkite). A punisher on an opponent's own sacrifice is Burn like
+    // every punisher, the veto of 2026-10-16 removed (Vengeful Tracker, named;
+    // Nazgul Battle-Mace's life paid to stop the card, tagged by hand and read
+    // again).
+    [InlineData("Through the Breach", "Instant — Arcane",
+        "You may put a creature card from your hand onto the battlefield. That creature gains haste. "
+        + "Sacrifice that creature at the beginning of the next end step.\nSplice onto Arcane {2}{R}{R} (As you "
+        + "cast an Arcane spell, you may reveal this card from your hand and pay its splice cost. If you do, "
+        + "add this card's effects to that spell.)")]
+    [InlineData("Sneak Attack", "Enchantment",
+        "{R}: You may put a creature card from your hand onto the battlefield. That creature gains haste. "
+        + "Sacrifice the creature at the beginning of the next end step.")]
+    [InlineData("Terminal Velocity", "Sorcery",
+        "You may put an artifact or creature card from your hand onto the battlefield. That permanent gains "
+        + "haste, \"When this permanent leaves the battlefield, it deals damage equal to its mana value to each "
+        + "creature,\" and \"At the beginning of your end step, sacrifice this permanent.\"")]
+    [InlineData("Hellkite Courser", "Creature — Dragon",
+        "Flying\nWhen this creature enters, you may put a commander you own from the command zone onto the "
+        + "battlefield. It gains haste. Return it to the command zone at the beginning of the next end step.")]
     [InlineData("Swift Warkite", "Creature — Dragon",
         "Flying\nWhen this creature enters, you may put a creature card with mana value 3 or less from your "
         + "hand or graveyard onto the battlefield. That creature gains haste. Return it to your hand at the "
         + "beginning of the next end step.")]
-    public void Classify_TheNovember5Ruling_FromAHandOrNotACreatureOrBackToHand_StaysNotBurn(string name, string typeLine, string oracle)
+    [InlineData("Vengeful Tracker", "Creature — Human Detective",
+        "Whenever an opponent sacrifices an artifact, this creature deals 2 damage to them.")]
+    [InlineData("Nazgûl Battle-Mace", "Artifact — Equipment",
+        "Equipped creature has menace, deathtouch, annihilator 1, and \"Whenever an opponent sacrifices a "
+        + "nontoken permanent, put that card onto the battlefield under your control unless that player pays 3 "
+        + "life.\" (Whenever a creature with annihilator 1 attacks, defending player sacrifices a permanent of "
+        + "their choice.)\nEquip {3}")]
+    public void Classify_TheNovember6Definition_IsBurn(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
+    // The rest of 2026-11-06. The charge on the controller of what the card just
+    // destroyed is a rider for a LAND too (Choking Sands, Icequake, Orcish Mine,
+    // handed back), as it was for every other permanent. A body that joins an
+    // attack already declared, tapped and attacking and gone at end of combat, is
+    // an extra attacker and no burn (Arthur, Marigold Knight, named). A creature
+    // STOLEN and sacrificed attacks the way Act of Treason does: Steal and
+    // Removal, no Burn (Slave of Bolas).
+    [InlineData("Choking Sands", "Sorcery",
+        "Destroy target non-Swamp land. If that land was nonbasic, Choking Sands deals 2 damage to the land's "
+        + "controller.")]
+    [InlineData("Icequake", "Sorcery",
+        "Destroy target land. If that land was a snow land, Icequake deals 1 damage to that land's "
+        + "controller.")]
+    [InlineData("Orcish Mine", "Enchantment — Aura",
+        "Enchant land\nThis Aura enters with three ore counters on it.\nAt the beginning of your upkeep and "
+        + "whenever enchanted land becomes tapped, remove an ore counter from this Aura.\nWhen the last ore "
+        + "counter is removed from this Aura, destroy enchanted land and this Aura deals 2 damage to that "
+        + "land's controller.")]
+    [InlineData("Arthur, Marigold Knight", "Legendary Creature — Mouse Knight",
+        "Haste\nWhenever Arthur and at least one other creature attack, look at the top six cards of your "
+        + "library. You may put a creature card from among them onto the battlefield tapped and attacking. Put "
+        + "the rest on the bottom of your library in a random order. Return that creature to its owner's hand "
+        + "at end of combat.")]
+    [InlineData("Slave of Bolas", "Sorcery",
+        "Gain control of target creature. Untap that creature. It gains haste until end of turn. Sacrifice it "
+        + "at the beginning of the next end step.")]
+    public void Classify_TheNovember6Definition_IsNotBurn(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
     }

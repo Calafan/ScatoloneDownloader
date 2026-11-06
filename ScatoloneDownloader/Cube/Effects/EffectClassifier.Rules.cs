@@ -355,6 +355,12 @@ namespace ScatoloneDownloader.Cube
                     // (Armored Scrapgorger) found its creature at the far end.
                     Rx(@"exile target(?:(?! cards?\b)[\w ])*(?<!non)creature"),
                     Rx(@"destroy target[\w ]*((?<!non)creature|planeswalker)"),
+                    // A creature STOLEN and sacrificed at the next end step is gone
+                    // from its owner for good, which is a kill, beside the Steal.
+                    // Ruled 2026-11-06 with the Burn definition ("Steal + Removal",
+                    // asked on Slave of Bolas and In Thrall to the Pit's kicker): the
+                    // attack is Act of Treason's and no Burn, the sacrifice is this.
+                    Rx(@"\bgain control of target creature\b[^\n]{0,200}?\bsacrifice (?:it|that creature|the creature) at the beginning of the next end step"),
                     // The AMOUNT is written as freely as the target: "half X damage,
                     // rounded down" (Banshee), "X plus 1 damage" (Meteor Shower). And
                     // "any target" has two more spellings — "any OTHER target"
@@ -1552,20 +1558,31 @@ namespace ScatoloneDownloader.Cube
                     // zone stays out (Hellkite Courser).
                     Rx(@"(?:\blibrar(?:y|ies)\b|\bmilled\b)[^\n]{0,250}?\bonto the battlefield\b[^\n]{0,250}?\bhaste\b"
                         + @"[^\n]{0,250}?\bnext end step\b"),
-                    // …and one out of a GRAVEYARD, ruled 2026-11-05 ("Anche preso è
-                    // Burn", asked on Balduvian Atrocity against Shallow Grave and
-                    // Corpse Dance): a creature card returned from a graveyard with
-                    // haste and sacrificed or exiled at the next end step is Burn
-                    // beside its Reanimate. This OVERTURNS the graveyard part of the
-                    // 2026-10-23 "solo ciò che la carta crea o è"; what a HAND or an
-                    // OPPONENT gives still is not burn, and neither is a return to
-                    // HAND at the end step (Swift Warkite, "hand or graveyard") nor a
-                    // card that is no creature card (Kami of Industry's artifact,
-                    // Moira and Teshar's "nonland permanent": measured, not moved).
-                    Rx(@"\b(?:return|put) [^.\n]{0,60}\bcreature cards?\b[^.\n]{0,80}\bgraveyards?\b[^.\n]{0,40}\b(?:onto|to) the battlefield\b"
+                    // …and one out of a GRAVEYARD, a HAND or the COMMAND ZONE. The
+                    // graveyard was ruled 2026-11-05 ("Anche preso è Burn", Balduvian
+                    // Atrocity against Shallow Grave and Corpse Dance), the rest
+                    // 2026-11-06 with the Burn definition: the body that attacks once
+                    // and is gone is the damage, wherever it came from — Through the
+                    // Breach and Sneak Attack from the hand, Hellkite Courser's
+                    // commander, and the return to hand or to the command zone at the
+                    // end step (Swift Warkite, as Anzrag's Rampage already was). Gone
+                    // may be in the quotes the creature is given (Terminal Velocity's
+                    // "At the beginning of your end step, sacrifice this permanent").
+                    // Out by the words, as the definition has it: a card that is no
+                    // CREATURE card (Arms Race's and Kami of Industry's artifact, Moira
+                    // and Teshar's nonland permanent), and a creature taken from an
+                    // OPPONENT, whose attack is Act of Treason's — the sacrifice that
+                    // follows is Removal (the stolen creature sacrificed, in the Removal
+                    // table).
+                    Rx(@"\b(?:return|put) [^.\n]{0,60}\b(?:creature cards?|commanders?)\b[^.\n]{0,80}\b(?:graveyards?|hand|command zone)\b"
+                        + @"[^.\n]{0,40}\b(?:onto|to) the battlefield\b"
                         + @"[^.\n]{0,60}\.[^\n]{0,200}?\bhaste\b[^\n]{0,200}?"
-                        + @"(?:\b(?:sacrifice|exile) (?:it|them|that creature)\b[^\n]{0,60}\bnext end step\b"
-                        + @"|\bnext end step, (?:sacrifice|exile) (?:it|them|that creature)\b)"),
+                        // Each alternative is one a card needs, neutralised 2026-11-06;
+                        // "this permanent", "your end step" before, and "return" or
+                        // "the creature" after the step went red on nothing and were
+                        // taken out (no card moved).
+                        + @"(?:\b(?:sacrifice|exile|return) (?:it|them|that creature|the creature)\b[^\n]{0,60}\bnext end step\b"
+                        + @"|\b(?:next|your) end step, (?:sacrifice|exile) (?:it|them|that creature|this permanent)\b)"),
                     // …and the keyword that does it, handed to OTHER cards: unearth
                     // in the graveyard (Dregscape Sliver, Sedris, Ghost Ark), blitz
                     // on the creature spells you cast (Henzie). The cards that have
@@ -1923,18 +1940,19 @@ namespace ScatoloneDownloader.Cube
         // controller" with no second "deals" — so it is optional here. The
         // opening alternative has already established that a kill came first.
         //
-        // A LAND is not in the list, ruled 2026-09-20: on the land-destroyers
-        // the human reads the damage as a second effect worth counting, which
-        // also settles the one split this family had — Orcish Mine charges the
-        // controller two for the land it just destroyed and is tagged, Icequake
-        // and Stench of Evil do the same and were not.
+        // A LAND is in the list since 2026-11-06 ("Mai Burn, terre comprese",
+        // asked on Detonate against Choking Sands): the charge on a kill is a
+        // rider whatever was killed, and 12 of 12 reviewed removal riders were
+        // untagged. That OVERTURNS the 2026-09-20 land exception, which had
+        // tagged Choking Sands, Icequake (one point, once: under the threshold
+        // anyway), Stench of Evil and Orcish Mine; the four were handed back.
         // EXCESS damage handed on to the controller is not a charge for the
         // kill but the burn that goes past it (Gandalf's Sanction, 2026-10-14).
         private static readonly Regex ChargesForAKillItJustMade = Rx(
             @"(?:destroy|exile|deals? [\dX]+ damage to target creature"
             + @"|damage equal to [\w' ]{0,25}to itself)"
             + @"[\s\S]{0,160}(?:deals? )?(?:[\dX]+|that much|half [\dX]+)? ?(?<!\bexcess )damage"
-            + @"[\w ,'-]{0,40}to (?:that|the) (?:creature|artifact|permanent|spell)'s controller");
+            + @"[\w ,'-]{0,40}to (?:that|the) (?:creature|land|artifact|permanent|spell)'s controller");
 
         // Damage a TOKEN does, printed inside the quotes the token is created
         // with. Ruled 2026-09-20 with the opposite answer to the one Tokens
@@ -2012,14 +2030,6 @@ namespace ScatoloneDownloader.Cube
         /// went red, a dead alternative.</para></summary>
         private static readonly Regex DrawsForTheLife = Rx(
             @"draws? (?:a|an|one|two|three|four|five|six|seven|\d+) cards? and loses? [\dX]+ life");
-
-        /// <summary>A punisher on an opponent's OWN sacrifice — "whenever an
-        /// opponent sacrifices an artifact, this creature deals 2 damage to
-        /// them" (Vengeful Tracker, untagged) — waits on a choice the opponent
-        /// makes; 0 of the 3 reviewed cards with the trigger carry Burn
-        /// (2026-10-16). The whole line is blanked.</summary>
-        private static readonly Regex PunishesTheirSacrifice = Rx(
-            @"^[^\n]*\bwhenever an opponent sacrifices\b[^\n]*", RegexOptions.Multiline);
 
         /// <summary>True when the card has a drain on another member of a
         /// tribe it neither makes nor is. See DrainOnATribe.</summary>
