@@ -562,3 +562,11 @@ not. Rejected by measurement: recounting the card with the opponent's draw blank
 from The Council of Four and Wiretapping, both reviewed CardAdvantage, so the guard blanks a
 one-shot draw of yours instead (Tataru Taru); the manifest itself is a body, not a card (Tokens, 1
 of 11 tagged), and only the cast that follows counts. Innocent Bystander stays a known disagreement.
+
+Ruled 2026-11-07 later the same day ("Non è CA perché poi lo passi ad un avversario e ne perdi il
+controllo"): an ability that HANDS ITS PERMANENT to an opponent runs once for you, whatever it
+costs. Pumpkin Bombs discards two for three and then gives itself away, minus one, minus two, plus
+three: parity, Filter as tagged on 2026-10-26. The count holds on both sides of it: Humble Defector
+gives itself away too but draws two for the card alone and nets one, while Ormos, Archive Keeper
+keeps its three-for-five and nets two on every activation; both stay this tag. No code: Pumpkin
+Bombs is the only card of its shape in the store, and the shape already keeps it out.

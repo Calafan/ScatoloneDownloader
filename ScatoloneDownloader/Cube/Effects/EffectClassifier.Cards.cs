@@ -1108,7 +1108,12 @@ namespace ScatoloneDownloader.Cube
         // longer noun, was CardAdvantage already. The cost is mana, a tap and
         // that one discard and nothing else, and the draw is two and no more:
         // Krovikan Sorcerer draws two and discards one, Pumpkin Bombs discards
-        // two for three. Counted before it was written: Niambi is the only card
+        // two for three and then hands itself to an opponent, so it runs once
+        // for you and nets zero ("Non è CA perché poi lo passi ad un avversario
+        // e ne perdi il controllo", 2026-11-07; a 2-for-3 that stays yours would
+        // net one each time, like Ormos's 3-for-5, proposed CardAdvantage; the
+        // family is Pumpkin Bombs alone, so no rule reads the handover). Counted
+        // before it was written: Niambi is the only card
         // in the store whose line has this shape, so the ruling fixes the shape
         // and not a family.
         // A PERMANENT sacrificed beside the discard costs nothing, ruled

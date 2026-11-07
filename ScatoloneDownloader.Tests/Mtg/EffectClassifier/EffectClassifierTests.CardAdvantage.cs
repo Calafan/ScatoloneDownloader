@@ -2680,4 +2680,21 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
     }
+
+    [Theory]
+    // Pumpkin Bombs is Filter and not this tag because it hands itself to an
+    // opponent and runs once for you (2026-11-07, see Classify_TheNovember3CardAdv
+    // antagePass_APaidDrawThatNetsNothing_IsFilterNotCardAdvantage). The count
+    // still holds on either side of it: Humble Defector hands itself over too, but
+    // draws two for the card itself and nets one the first time; Ormos stays yours
+    // and pays three for five on every activation.
+    [InlineData("Humble Defector", "Creature — Human Rogue",
+        "{T}: Draw two cards. Target opponent gains control of this creature. Activate only during your turn.")]
+    [InlineData("Ormos, Archive Keeper", "Legendary Creature — Sphinx",
+        "Flying\nIf you would draw a card while your library has no cards in it, instead put five +1/+1 "
+        + "counters on Ormos.\n{1}{U}{U}, Discard three cards with different names: Draw five cards.")]
+    public void Classify_TheNovember7CardAdvantage_TheOtherSideOfPumpkinBombs_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
 }

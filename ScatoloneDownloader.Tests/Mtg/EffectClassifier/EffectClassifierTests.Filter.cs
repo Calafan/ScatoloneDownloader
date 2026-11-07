@@ -867,8 +867,10 @@ public sealed partial class EffectClassifierTests
 
     [Theory]
     // What the 2026-11-03 ruling does NOT reach: two cards paid for three
-    // (Pumpkin Bombs) and a draw of two with one card back (Krovikan Sorcerer,
-    // 2026-09-19). Falkenrath Pit Fighter stood here too, its sacrificed Vampire
+    // (Pumpkin Bombs, which then hands itself to an opponent and so runs once
+    // for you: minus one, minus two, plus three, ruled 2026-11-07 "Non è CA
+    // perché poi lo passi ad un avversario e ne perdi il controllo") and a
+    // draw of two with one card back (Krovikan Sorcerer, 2026-09-19). Falkenrath Pit Fighter stood here too, its sacrificed Vampire
     // counted as a card, until 2026-11-07: a permanent paid is no card ("No,
     // conta la mano"), see
     // Classify_TheNovember7CardAdvantage_APermanentPaidIsNoCard_IsCardAdvantage.
