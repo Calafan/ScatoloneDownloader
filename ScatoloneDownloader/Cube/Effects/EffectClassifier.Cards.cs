@@ -61,26 +61,28 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex ReplacesTheDraw = Rx(
             @"the next time you would draw a card");
 
-        //   A REPEATABLE draw whose trigger you cannot actually repeat. The
-        //   human put it as "il punto è proprio la difficoltà di trigger", and
-        //   asked how hard that is to make readable: in general it is not —
-        //   there is no wording that means "this rarely happens". But the four
-        //   cards it was asked about each NAME their own difficulty, and each
-        //   naming has no counterexample in the reviewed set.
-        //
-        //   A COIN FLIP is chance said outright (Goblin Artisans). Becoming the
-        //   target of an AURA SPELL or of an ACTIVATED ABILITY means you must
-        //   supply a second card before the draw happens at all (Fugitive Druid,
-        //   Professor Hojo). A draw bought by handing an opponent one of your
-        //   permanents was read the same way (Stiltzkin) until 2026-10-14,
-        //   when the human ruled it a card after all — see below.
+        //   A DRAW THE CARD CANNOT MAKE HAPPEN BY ITSELF is not in the count,
+        //   ruled 2026-11-07 as part of the definition ("Dentro il conto"): a
+        //   card that never arrives is not a card. It was "la difficoltà di
+        //   trigger" from 2026-09-21, read one card at a time; the shapes below
+        //   are now the principle's three ways and not exceptions. CHANCE —
+        //   a coin flip (Goblin Artisans), a card name to guess (The Clone
+        //   Saga, Diviner's Lockbox), a life swap that has to leave you worse
+        //   off (Mister Negative). A SECOND CARD OF YOURS aimed at it — an
+        //   Aura spell or an activated ability targeting it (Fugitive Druid,
+        //   Professor Hojo). THE OPPONENT'S CHOICE — aiming at the card itself
+        //   (Altanak), paying to free their creature (Hold for Ransom),
+        //   handing your creature back, or attacking their own teammate, which
+        //   in the cube's 2vs2 never happens (Karazikar, the Eye Tyrant).
         //
         //   The line this does NOT cross is Surrak, Elusive Hunter, which is
         //   tagged: it triggers on ANY spell or ability an opponent controls
-        //   touching your creatures, which happens by itself. So the test is
-        //   whether the trigger names something narrow, not whether it is a
-        //   trigger. Ruled 2026-09-21, and it is four cards read one at a time
-        //   rather than a principle — recorded as such.
+        //   touching your creatures, which happens by itself. Nor a draw the
+        //   card feeds itself: Avatar Aang's "whenever you ... firebend, draw a
+        //   card" was a difficulty from 2026-09-22 and is CardAdvantage since
+        //   2026-11-07, because its own firebending 2 fires on every attack.
+        //   Nor a common event that other cards bring about (Lich and Marina
+        //   Vendrell's Grimoire draw on any life gained, both CardAdvantage).
         private static readonly Regex ADrawYouCannotCount = Rx(
             @"flip a coin[^\n]{0,80}draws? (?:a|one) card"
             // Mister Negative draws only when the life he swapped left him
@@ -109,43 +111,37 @@ namespace ScatoloneDownloader.Cube
             // this list on 2026-10-14 ("Tutti e due CA"): Discerning Financier
             // gives away a Treasure and Stiltzkin, Moogle Merchant any permanent,
             // and both draw. Yes Man, Personal Securitron, tagged, gives ITSELF.
-            // Two more named difficulties, confirmed by the human on
-            // 2026-09-22 ("Confermo la difficoltà di trigger"). BENDING is a
-            // keyword action only a handful of cards in one set can perform, so
-            // "whenever you waterbend, earthbend, firebend, or airbend, draw a
-            // card" is a draw your deck has to be built to reach (Avatar Aang,
-            // the only reviewed card that says it, untagged). And a CHOSEN CARD
-            // NAME asks you to name a card and then meet it: The Clone Saga
-            // draws only if a creature with the name you picked connects, and
-            // that same turn. Two reviewed cards name a card this way and
-            // neither is tagged. Still four-plus-two cards read one at a time
-            // rather than a principle. Diviner's Lockbox guesses the top card
-            // by name for three, and is the same difficulty ("No CA, è
-            // difficoltà", 2026-10-23); its self-sacrifice already keeps it out.
-            + @"|whenever you waterbend, earthbend, firebend, or airbend"
+            // A CHOSEN CARD NAME asks you to name a card and then meet it
+            // (2026-09-22): The Clone Saga draws only if a creature with the
+            // name you picked connects, that same turn. Diviner's Lockbox
+            // guesses the top card by name for three ("No CA, è difficoltà",
+            // 2026-10-23); its self-sacrifice already keeps it out. BENDING
+            // left this list on 2026-11-07, see above.
             + @"|choose a card name\.[^\n]{0,120}with the chosen name"
+            // An opponent attacking ANOTHER opponent, which the cube's 2vs2
+            // never produces: the two are a team (Karazikar, the Eye Tyrant,
+            // untagged by hand 2026-11-06, read 2026-11-07, "In 2vs2 non scatta").
+            + @"|whenever an opponent attacks another one of your opponents"
             // A draw an OPPONENT buys for you: Hold for Ransom hands the
             // creature it holds "{7}: Hold for Ransom's controller sacrifices
             // it and draws a card", the price of letting it go (Pacify alone
             // by hand, read 2026-10-23).
             + @"|'s controller sacrifices it and draws (?:a|one) card");
 
-        //   And a draw the OTHER SIDE gets in the same breath and the same
-        //   number. The parity ruling of 2026-09-20 was written for one player
-        //   trading a card for a card; this is the two-player version, where
-        //   the count is level across the table and neither side has gained on
-        //   the other. Three reviewed cards say it and none is tagged: Tataru
-        //   Taru draws one each, The Legend of Yangchen offers three for three,
-        //   and Mog, Moogle Warrior runs a loot that every player may take.
+        //   A LOOT EVERY PLAYER MAY TAKE is parity for each of them, yours
+        //   included: Mog, Moogle Warrior's "each player may discard a card.
+        //   Each player who discarded a card this way draws a card".
         //
-        //   This does NOT reach "TARGET player draws two cards" or "each player
-        //   draws a card", for the same reason TheirDiscardYourDraw does not:
-        //   you point Ancestral Recall at yourself, and a wheel that pays
-        //   everybody is read by TheirDraw instead.
-        private static readonly Regex EverybodyDrawsTheSame = Rx(
-            @"you draws? (?:a|one|\w+) cards? and (?:target |an )?opponent may draw"
-            + @"|you may have target opponent draw \w+ cards?\. if you do, draws?"
-            + @"|each player[\w ,'-]{0,30}discards?[^\n]{0,60}"
+        //   This was EverybodyDrawsTheSame until 2026-11-07, which also read a
+        //   draw the OTHER SIDE gets in the same breath as parity across the
+        //   table (Tataru Taru, The Legend of Yangchen). OVERTURNED by the
+        //   definition of 2026-11-07, which counts YOUR cards only ("Conto
+        //   netto", against "Carta che l'avversario non ha"): Yangchen's "You
+        //   may have target opponent draw three cards. If you do, draw three
+        //   cards" is +2 for you whatever they draw, like Howling Mine, and
+        //   Tataru Taru's enters draw is a cantrip either way.
+        private static readonly Regex EachPlayerMayLoot = Rx(
+            @"each player[\w ,'-]{0,30}discards?[^\n]{0,60}"
             + @"each player who discarded[^\n]{0,40}draws?");
 
         // EXILE AND PLAY IT FROM THERE, in the five wordings the tag could not
@@ -299,10 +295,12 @@ namespace ScatoloneDownloader.Cube
             // the noun.
             // A land may come first: Kagha, Shadow Archdruid's "Once during
             // each of your turns, you may play a land or cast a permanent
-            // spell from among cards in your graveyard …" (read 2026-10-30;
-            // 9 of 10 reviewed standing permissions to cast from the graveyard
-            // are tagged, The Eighth Doctor the one that is not).
-            @"you may (?:play a land or )?cast (?!this card|it\b)[\w ,'-]{0,40}(?:spells?|cards?)[\w ,'-]{0,40} "
+            // spell from among cards in your graveyard …" (read 2026-10-30).
+            // The land may be described and given its own zone: Serra
+            // Paragon's "play a land from your graveyard or cast", The Eighth
+            // Doctor's "play a historic land or cast", both CardAdvantage since
+            // 2026-11-07 ("Tutti CA": a card every turn).
+            @"you may (?:play a (?:\w+ )?land(?: from your graveyard)? or )?cast (?!this card|it\b)[\w ,'-]{0,40}(?:spells?|cards?)[\w ,'-]{0,40} "
             + @"from (?:among )?(?:cards in )?your graveyard"
             // Granting FLASHBACK to a graveyard wholesale is the same standing
             // permission written as a keyword — Iroh, Grand Lotus gives it to
@@ -333,6 +331,67 @@ namespace ScatoloneDownloader.Cube
         // word for RepeatableWording to find.
         private static readonly Regex StandingPermission = Rx(
             @"once during each of your turns|during your turn,|each of your turns");
+
+        // A WINDOW OF ONE TURN on the graveyard, opened once, plays as many cards
+        // as the turn allows and is CardAdvantage beside Regrowth, ruled
+        // 2026-11-07 ("CA come la finestra", the draw window of 2026-11-03):
+        // Gaea's Will and Yawgmoth's Will, The Great Work's chapter III, Past in
+        // Flames' flashback for a turn, Mizzix's Mastery overloaded. It
+        // overturns "Una volta = no CA" of 2026-10-16 for the window only; ONE
+        // card cast from the graveyard this turn stays Regrowth alone, which is
+        // why "spells" is plural and "target card" is not read.
+        private static readonly Regex GraveyardWindowForOneTurn = Rx(
+            @"until end of turn, you may (?:play lands and )?cast (?:[\w ]{0,40} )?spells from (?:your|any) graveyards?"
+            + @"|\beach [\w ]{0,40}cards? in your graveyard gains? flashback until end of turn"
+            + @"|exile target card [^\n]{0,40}from your graveyard\. for each card exiled this way, copy it, "
+            + @"and you may cast the copy[^\n]*\noverload\b");
+
+        // The readings of 2026-11-07, each a card of the 2026-11-06 sitting or a
+        // known disagreement that the net count reads, no ruling asked:
+        //   STORM COPIES AN IMPULSE, one card off the top per copy (Galvanic
+        //   Relay, +CardAdvantage by hand) — StormKeyword beside ImpulseDraw in
+        //   Classify. Read from the text, not card.Keywords: the keyword line is
+        //   printed, and a card built without its keyword list stays readable.
+        //   A PILE EXILED BY THE CARD comes into the hand on a repeating
+        //   trigger (Wall of Mourning's coven end step, two cards in 2vs2).
+        //   THE TOP OF THEIR LIBRARY playable on every upkeep (Xanathar, Guild
+        //   Kingpin) — see TheirTopForYou.
+        //   SEVERAL CREATURE CARDS milled onto the battlefield and RETURNED to
+        //   the hand at the end step, not sacrificed (Random Encounter).
+        //   ONE CARD, THEN TRANSFORM THIS: the ability runs once (Ecstatic
+        //   Awakener, untagged by hand on 2026-11-06), the TransformsItselfAway
+        //   reading of 2026-09-22 asked of the draw.
+        //   A FACE-DOWN CARD THAT DIES and is cast as itself, every time (Cryptic
+        //   Pursuit): the manifest is a body (Tokens, 1 of 11 tagged), the cast
+        //   that follows is the card.
+        private static readonly Regex StormKeyword = Rx(@"^storm(?: \(|$)", RegexOptions.Multiline);
+
+        private static readonly Regex ExiledPileIntoTheHandEachTurn = Rx(
+            @"^(?:[\w ]+ — )?at the beginning of [^\n]{0,120}\bput a card exiled with this \w+ into (?:your|its owner's) hand",
+            RegexOptions.Multiline);
+
+        private static readonly Regex MilledCreaturesBackToHand = Rx(
+            @"\bput each (?:creature|nonland|permanent) card milled this way onto the battlefield\b"
+            + @"[^\n]{0,120}\breturn (?:those|the) creatures to their owner's hand");
+
+        private static readonly Regex DrawsOnceThenTransforms = Rx(
+            @"^[^\n:]{0,80}:[^\n]{0,20}\bdraws? (?:a|one) card, then transforms? this ", RegexOptions.Multiline);
+
+        //   A SELF-SACRIFICE withdraws only the card it pays for: Investigator's
+        //   Journal's "{2}, Sacrifice this artifact: Draw a card" sits under
+        //   "{2}, {T}, Remove a suspect counter from this artifact: Draw a card",
+        //   which comes round once per counter (+CardAdvantage by hand
+        //   2026-11-06). Reminder and quoted text are not the card's own.
+        private static bool AnotherAbilityDrawsAgain(string text) =>
+            Abilities(text).Any(a =>
+            {
+                string own = Quoted.Replace(Parenthetical.Replace(a, " "), " ");
+                return !DrawBySacrificingItself.IsMatch(own) && YouDraw.IsMatch(own)
+                    && AbilityRepeatsAtNoCostToItself(own);
+            });
+
+        private static readonly Regex FaceDownCardDiesAndIsCast = Rx(
+            @"\bwhenever a face-down creature you control dies, [^.\n]{0,60}\. you may cast that card");
 
         //   The counting exception. A loot that draws THREE and discards one is
         //   not parity, it is a Careful Study with a bonus — the guard was written
@@ -1048,13 +1107,17 @@ namespace ScatoloneDownloader.Cube
         // you can go back to", and Key to the Side-Door, the same ability with a
         // longer noun, was CardAdvantage already. The cost is mana, a tap and
         // that one discard and nothing else, and the draw is two and no more:
-        // Falkenrath Pit Fighter sacrifices a Vampire as well (pays two for two,
-        // stays Filter), Krovikan Sorcerer draws two and discards one, Pumpkin
-        // Bombs discards two for three. Counted before it was written: Niambi is
-        // the only card in the store whose line has this shape, so the ruling
-        // fixes the shape and not a family.
+        // Krovikan Sorcerer draws two and discards one, Pumpkin Bombs discards
+        // two for three. Counted before it was written: Niambi is the only card
+        // in the store whose line has this shape, so the ruling fixes the shape
+        // and not a family.
+        // A PERMANENT sacrificed beside the discard costs nothing, ruled
+        // 2026-11-07 ("No, conta la mano"): Falkenrath Pit Fighter's "Discard a
+        // card, Sacrifice a Vampire: Draw two cards" nets a card each time, and
+        // is no longer the two-for-two it was read as on 2026-11-03 (Filter).
         private static readonly Regex OneCardForTwoEachTime = Rx(
-            @"^(?:\{[^{}]+\},? ?)*discard (?:a|one) (?:\w+ )?cards?(?: ?,? ?\{[^{}]+\})*: draw two cards(?!, then)",
+            @"^(?:\{[^{}]+\},? ?)*discard (?:a|one) (?:\w+ )?cards?"
+            + @"(?:, sacrifice (?:a|an|another) (?!this\b)[\w ]{1,30}?)?(?: ?,? ?\{[^{}]+\})*: draw two cards(?!, then)",
             RegexOptions.Multiline);
 
         private static bool PaysACardPerActivation(string text) =>
@@ -1092,9 +1155,6 @@ namespace ScatoloneDownloader.Cube
             + @"|each player may discard[^.\n]*"
             + @"|each player [^.\n]{0,60}\bunless they discard (?:a|two) cards?"
             + @"|at the beginning of each player's upkeep, that player [^\n]{0,200}?\bthey discard (?:a|two) cards?");
-
-        private static readonly Regex SacrificedLands = Rx(
-            @"sacrifices? (a|one|two|three|four|five|\d+) lands?\b");
 
         // Whose draw is it? A card that only ever draws for somebody ELSE gives
         // nothing away for free — Sibilant Spirit and Harbor Guardian pay the
@@ -1630,6 +1690,33 @@ namespace ScatoloneDownloader.Cube
                            .HasFlag(CardEffect.CardAdvantage);
             });
 
+        // A PERMANENT OR A CARD for the draw, ruled 2026-11-07 with "a permanent
+        // paid is not a card" ("No, conta la mano"): "sacrifice an artifact or
+        // discard a card. If you do, draw" gains when the permanent is paid and
+        // breaks even when the card is, the conditional gain of 2026-11-06, so
+        // both tags. Chandra, Spark Hunter's +2 and Reckless Detective's attack
+        // repeat and draw one; Highway Robbery and Demand Answers are spells and
+        // draw two. Asked as DrawThenDiscardUnless is, by classifying the card
+        // twice, once with each payment.
+        private static readonly Regex PermanentOrACard = Rx(
+            @"\bsacrifice (?<permanent>an? (?!card\b)[\w ]{1,25}?) or discard (?:a|one) card\b"
+            + @"|\bdiscard (?:a|one) card or sacrifice (?<permanent>an? [\w ]{1,25}?)\b");
+
+        private static bool PaysAPermanentOrACardForTheDraw(Card card, string text)
+        {
+            Match m = PermanentOrACard.Match(text);
+            if (!m.Success)
+            {
+                return false;
+            }
+
+            string permanent = text.Remove(m.Index, m.Length).Insert(m.Index, "sacrifice " + m.Groups["permanent"].Value);
+            string aCard = text.Remove(m.Index, m.Length).Insert(m.Index, "discard a card");
+
+            return Classify(new OneAbility(card, permanent)).HasFlag(CardEffect.CardAdvantage)
+                && !Classify(new OneAbility(card, aCard)).HasFlag(CardEffect.CardAdvantage);
+        }
+
         // A SELECTION EVERY TIME AND A CARD SOMETIMES, the other shape, asked
         // only of a card already CardAdvantage. Measured before it was ruled:
         // 12 reviewed cards, 3 with both tags (Kellan, Daring Traveler, Rumor
@@ -2076,8 +2163,12 @@ namespace ScatoloneDownloader.Cube
         // cards" with it — 8 of the 10 reviewed cards that sacrifice
         // themselves for X or more are tagged, and the two that are not hand a
         // card back (Conch Horn puts one on top, Starting Column discards one).
+        // A scry or a surveil may come first: Cryptex's "Sacrifice this
+        // artifact: Surveil 3, then draw three cards" is -1 +3, ruled
+        // 2026-11-07 ("CA, via Filter": Ramp and CardAdvantage, the 09-27
+        // exclusivity taking the surveil's Filter off the same ability).
         private static readonly Regex SelfSacrificeBuysSeveral = Rx(
-            @"^[^\n:]{0,60}sacrifice this [\w]+[^\n:]{0,30}: ?"
+            @"^[^\n:]{0,60}sacrifice this [\w]+[^\n:]{0,30}: ?(?:(?:scry|surveil) \d+, then )?"
             + @"(?:you )?draws? (?:two|three|four|five|six|seven|x|\d+) cards"
             + @"(?![^\n]{0,80}(?:discard|put (?:a|one|\w+) cards? from your hand))",
             RegexOptions.Multiline);
@@ -2418,16 +2509,12 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex PaysAClueForTheCast = Rx(
             @"you may sacrifice a clue\. when you do,[^\n]{0,120}\b(?:flashback|cast)\b");
 
-        // A cast out of a graveyard, or a keyword granted to the graveyard, that
-        // CHARGES OTHER CARDS FROM THAT GRAVEYARD — forage ("exile three cards
-        // from your graveyard or sacrifice a Food") or escape ("Exile four
-        // other cards from your graveyard") — pays cards for the card it gets
-        // back: 0 of 11 reviewed cards written this way are tagged CardAdvantage
-        // (read 2026-10-16: The Grim Captain's Locker, Osteomancer Adept).
-        // Tarrian's Journal // Tomb of Aclazotz casts for nothing and keeps the
-        // tag from the stream it already had.
-        private static readonly Regex ChargesOtherGraveyardCards = Rx(
-            @"\bforag(?:e|ing)\b|\bescape—[^""\n]{0,40}exile \w+ other cards from your graveyard");
+        // A cast out of a graveyard that CHARGES OTHER CARDS FROM THAT GRAVEYARD
+        // (forage, escape) was vetoed here from 2026-10-16 to 2026-11-07, 0 of
+        // 11 reviewed (The Grim Captain's Locker, Osteomancer Adept). WITHDRAWN
+        // 2026-11-07 ("Tutti CA"): the count is the hand, so graveyard cards
+        // paid cost nothing, as a permanent paid does, and a stream that comes
+        // round every turn is a card each time however it is paid.
 
         // An ability paid by sacrificing the card BY ITS SHORT NAME runs once,
         // like "Sacrifice this artifact:" does — and the self-sacrifice veto
@@ -2484,7 +2571,10 @@ namespace ScatoloneDownloader.Cube
             + @"you may (?:cast|play) (?:that card|it)\b"
             // The top of EACH of the opponents a trigger names (Breeches, Brazen
             // Plunderer, read 2026-10-23).
-            + @"|\bexile the top card of each of (?:those|your) opponents'? libraries\.[^\n]{0,40}\byou may play those cards");
+            + @"|\bexile the top card of each of (?:those|your) opponents'? libraries\.[^\n]{0,40}\byou may play those cards"
+            // The top card PLAYED where it lies, for a turn (Xanathar, Guild
+            // Kingpin's upkeep, +CardAdvantage by hand 2026-11-06).
+            + @"|\byou may play the top card of (?:their|that player's) library");
 
         // Their top several, taken in one go: a draw-two wearing a different coat
         // (the "take more than one" reading, as Petty Larceny's two cards and

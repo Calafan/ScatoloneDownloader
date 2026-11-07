@@ -872,9 +872,11 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
-    // PARITY ACROSS THE TABLE. The 2026-09-20 parity ruling was about one
-    // player trading a card for a card; this is the two-player version, where
-    // the count is level and nobody has gained on anybody.
+    // ONLY YOUR PART COUNTS (2026-11-07, "conta solo la tua parte"): Tataru
+    // draws you one card for itself, Mog trades one for one. Until 2026-11-07
+    // this read "parity across the table", the opponent's draw cancelling
+    // yours; that reading is overturned, see The Legend of Yangchen in
+    // Classify_TheNovember7CardAdvantage_OnlyYourPartCounts_IsCardAdvantage.
     [InlineData("Tataru Taru", "Legendary Creature — Dwarf Advisor",
         "When Tataru Taru enters, you draw a card and target opponent may draw a card.\n"
         + "Scions' Secretary — Whenever an opponent draws a card, if it isn't that player's turn, create a "
@@ -1234,14 +1236,12 @@ public sealed partial class EffectClassifierTests
         + "Start your engines!\n"
         + "Max speed — Whenever you cast an artifact spell, you may pay {1}. If you do, copy it. "
         + "(The copy becomes a token.)")]
-    // Two more triggers that NAME their own difficulty, confirmed 2026-09-22.
-    // Bending is a keyword action a deck has to be built to perform…
-    [InlineData("Avatar Aang", "Legendary Creature — Human Avatar Ally",
-        "Flying, firebending 2\n"
-        + "Whenever you waterbend, earthbend, firebend, or airbend, draw a card. Then if you've done all "
-        + "four this turn, transform Avatar Aang.")]
-    // …and a CHOSEN CARD NAME asks you to name a card and then meet it, that
-    // same turn.
+    // A trigger that NAMES its own difficulty, confirmed 2026-09-22: a CHOSEN
+    // CARD NAME asks you to name a card and then meet it, that same turn.
+    // Avatar Aang stood here beside it (bending as a difficulty) until
+    // 2026-11-07, overturned ("Aang: CA"): its own firebending 2 meets the
+    // trigger on every attack, see
+    // Classify_TheNovember7CardAdvantage_TheDifficultyIsInsideTheCount_IsCardAdvantage.
     [InlineData("The Clone Saga", "Enchantment — Saga",
         "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\n"
         + "I — Surveil 3.\n"
@@ -1559,15 +1559,10 @@ public sealed partial class EffectClassifierTests
         + "opponent loses 1 life and you gain 1 life.\n{2}, Sacrifice Vohar: You may cast target instant or "
         + "sorcery card from your graveyard this turn. If that spell would be put into your graveyard, exile it "
         + "instead. Activate only as a sorcery.")]
-    [InlineData("Osteomancer Adept", "Creature — Squirrel Warlock",
-        "Deathtouch\n{T}: Until end of turn, you may cast creature spells from your graveyard by foraging in "
-        + "addition to paying their other costs. If you cast a spell this way, that creature enters with a "
-        + "finality counter on it. (To forage, exile three cards from your graveyard or sacrifice a Food. If a "
-        + "creature with a finality counter on it would die, exile it instead.)")]
-    [InlineData("The Grim Captain's Locker", "Legendary Artifact",
-        "{T}: Surveil 1. (Look at the top card of your library. You may put it into your graveyard.)\n{T}: "
-        + "Until end of turn, each creature card in your graveyard gains \"Escape—{3}{B}, Exile four other cards "
-        + "from your graveyard.\" (You may cast a card with escape from your graveyard for its escape cost.)")]
+    // Osteomancer Adept and The Grim Captain's Locker stood here (the cards
+    // they charge from the graveyard spent the gain) until 2026-11-07,
+    // overturned ("Tutti CA"): a graveyard card paid is no card of the hand, see
+    // Classify_TheNovember7CardAdvantage_AGraveyardCastEveryTurn_IsCardAdvantage.
     [InlineData("Waltz of Rage", "Sorcery",
         "Target creature you control deals damage equal to its power to each other creature. Until end of "
         + "turn, whenever a creature you control dies, exile the top card of your library. You may play it "
@@ -2466,5 +2461,223 @@ public sealed partial class EffectClassifierTests
     public void Classify_TheNovember5ADrawForEachBesideExilingItself_IsCardAdvantage(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // CONTO NETTO, ruled 2026-11-07 ('No, conta la mano'): a permanent paid is no
+    // card of the hand, so only the discard is charged. Falkenrath Pit Fighter
+    // discards one and sacrifices a Vampire for two, Soldevi Sage sacrifices two
+    // lands for three and puts one back: both net a card, and a certain gain on
+    // the ability is CardAdvantage alone (the 2026-09-27 exclusivity). Overturns
+    // 2026-09-19 (Soldevi) and 2026-11-03 (Falkenrath).
+    [InlineData("Falkenrath Pit Fighter", "Creature — Vampire Warrior",
+        "{1}{R}, Discard a card, Sacrifice a Vampire: Draw two cards. Activate only if an opponent lost life "
+        + "this turn.")]
+    [InlineData("Soldevi Sage", "Creature — Human Wizard",
+        "{T}, Sacrifice two lands: Draw three cards, then discard one of them.")]
+    public void Classify_TheNovember7CardAdvantage_APermanentPaidIsNoCard_IsCardAdvantageNotFilter(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.False(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // A permanent OR a card for the draw (2026-11-07): paid with the permanent the
+    // draw nets a card, paid with the card it is parity, so the gain is
+    // conditional and the card is both tags (the 2026-11-06 reading). Highway
+    // Robbery was Filter alone from 2026-09-27.
+    [InlineData("Highway Robbery", "Sorcery",
+        "You may discard a card or sacrifice a land. If you do, draw two cards.\nPlot {1}{R} (You may pay "
+        + "{1}{R} and exile this card from your hand. Cast it as a sorcery on a later turn without paying its "
+        + "mana cost. Plot only as a sorcery.)")]
+    [InlineData("Demand Answers", "Instant",
+        "As an additional cost to cast this spell, sacrifice an artifact or discard a card.\nDraw two cards.")]
+    [InlineData("Reckless Detective", "Creature — Devil Detective",
+        "Whenever this creature attacks, you may sacrifice an artifact or discard a card. If you do, draw a "
+        + "card and this creature gets +2/+0 until end of turn.")]
+    [InlineData("Chandra, Spark Hunter", "Legendary Planeswalker — Chandra",
+        "At the beginning of combat on your turn, choose up to one target Vehicle you control. Until end of "
+        + "turn, it becomes an artifact creature and gains haste.\n+2: You may sacrifice an artifact or discard "
+        + "a card. If you do, draw a card.\n0: Create a 3/2 colorless Vehicle artifact token with crew 1.\n−7: "
+        + "You get an emblem with \"Whenever an artifact you control enters, this emblem deals 3 damage to any "
+        + "target.\"")]
+    public void Classify_TheNovember7CardAdvantage_APermanentOrACard_IsCardAdvantageAndFilter(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.True(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // A card cast from the graveyard turn after turn is a card gained each time
+    // ('Tutti CA', 2026-11-07), and the graveyard cards it charges cost nothing,
+    // since they are no cards of the hand: forage and escape no longer veto the
+    // tag. Serra Paragon and The Eighth Doctor play a land OR cast a spell from
+    // the graveyard.
+    [InlineData("Serra Paragon", "Creature — Angel",
+        "Flying\nOnce during each of your turns, you may play a land from your graveyard or cast a permanent "
+        + "spell with mana value 3 or less from your graveyard. If you do, it gains \"When this permanent is put "
+        + "into a graveyard from the battlefield, exile it and you gain 2 life.\"")]
+    [InlineData("The Eighth Doctor", "Legendary Creature — Time Lord Doctor",
+        "When The Eighth Doctor enters, mill three cards.\nOnce during each of your turns, you may play a "
+        + "historic land or cast a historic permanent spell from your graveyard. If you do, it gains \"If this "
+        + "permanent would leave the battlefield, exile it instead of putting it anywhere else.\"")]
+    [InlineData("Osteomancer Adept", "Creature — Squirrel Warlock",
+        "Deathtouch\n{T}: Until end of turn, you may cast creature spells from your graveyard by foraging in "
+        + "addition to paying their other costs. If you cast a spell this way, that creature enters with a "
+        + "finality counter on it. (To forage, exile three cards from your graveyard or sacrifice a Food. If a "
+        + "creature with a finality counter on it would die, exile it instead.)")]
+    [InlineData("The Grim Captain's Locker", "Legendary Artifact",
+        "{T}: Surveil 1. (Look at the top card of your library. You may put it into your graveyard.)\n{T}: "
+        + "Until end of turn, each creature card in your graveyard gains \"Escape—{3}{B}, Exile four other cards "
+        + "from your graveyard.\" (You may cast a card with escape from your graveyard for its escape cost.)")]
+    public void Classify_TheNovember7CardAdvantage_AGraveyardCastEveryTurn_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // A window of one turn on the graveyard is CardAdvantage like the stream ('CA
+    // come la finestra', 2026-11-07): every spell cast through it is a card gained
+    // (GraveyardWindowForOneTurn). Backdraft Hellkite is reached, not named, and
+    // was handed back.
+    [InlineData("Gaea's Will", "Sorcery",
+        "Suspend 4—{G}\nUntil end of turn, you may play lands and cast spells from your graveyard.\nIf a card "
+        + "would be put into your graveyard from anywhere this turn, exile that card instead.")]
+    [InlineData("Urabrask // The Great Work", "Legendary Creature — Phyrexian Praetor // Enchantment — Saga",
+        "First strike\nWhenever you cast an instant or sorcery spell, Urabrask deals 1 damage to target "
+        + "opponent. Add {R}.\n{R}: Exile Urabrask, then return it to the battlefield transformed under its "
+        + "owner's control. Activate only as a sorcery and only if you've cast three or more instant and/or "
+        + "sorcery spells this turn.\n(As this Saga enters and after your draw step, add a lore counter.)\nI — "
+        + "This Saga deals 3 damage to target opponent and each creature they control.\nII — Create three "
+        + "Treasure tokens.\nIII — Until end of turn, you may cast instant and sorcery spells from any "
+        + "graveyard. If a spell cast this way would be put into a graveyard, exile it instead. Exile this "
+        + "Saga, then return it to the battlefield (front face up).")]
+    [InlineData("Backdraft Hellkite", "Creature — Dragon",
+        "Flying\nWhenever this creature attacks, each instant and sorcery card in your graveyard gains "
+        + "flashback until end of turn. The flashback cost is equal to its mana cost.")]
+    // Reached, unreviewed: Mizzix's Mastery copies every card exiled from the
+    // graveyard on overload, the window's third wording.
+    [InlineData("Mizzix's Mastery", "Sorcery",
+        "Exile target card that's an instant or sorcery from your graveyard. For each card exiled this way, "
+        + "copy it, and you may cast the copy without paying its mana cost. Exile Mizzix's Mastery.\nOverload "
+        + "{5}{R}{R}{R} (You may cast this spell for its overload cost. If you do, change \"target\" in its text "
+        + "to \"each.\")")]
+    public void Classify_TheNovember7CardAdvantage_AGraveyardWindowForOneTurn_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Only your part of a symmetric draw counts (2026-11-07): Yangchen's chapter
+    // II draws you three for one, whatever the opponent draws. It was parity
+    // across the table before (EverybodyDrawsTheSame, withdrawn).
+    [InlineData("The Legend of Yangchen // Avatar Yangchen", "Enchantment — Saga // Legendary Creature — Avatar",
+        "(As this Saga enters and after your draw step, add a lore counter.)\nI — Starting with you, each "
+        + "player chooses up to one permanent with mana value 3 or greater from among permanents your opponents "
+        + "control. Exile those permanents.\nII — You may have target opponent draw three cards. If you do, draw "
+        + "three cards.\nIII — Exile this Saga, then return it to the battlefield transformed under your "
+        + "control.\nFlying\nWhenever you cast your second spell each turn, airbend up to one other target "
+        + "nonland permanent. (Exile it. While it's exiled, its owner may cast it for {2} rather than its mana "
+        + "cost.)")]
+    public void Classify_TheNovember7CardAdvantage_OnlyYourPartCounts_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // How hard a draw is to set up sits inside the count, not outside it ('Dentro
+    // il conto', 2026-11-07). Avatar Aang meets its own bending trigger with
+    // firebending 2 on every attack ('Aang: CA'), and Lich turns every life gained
+    // into cards ('Lich: CA').
+    [InlineData("Avatar Aang // Aang, Master of Elements", "Legendary Creature — Human Avatar Ally // Legendary Creature — Avatar Ally",
+        "Flying, firebending 2\nWhenever you waterbend, earthbend, firebend, or airbend, draw a card. Then if "
+        + "you've done all four this turn, transform Avatar Aang.\nFlying\nSpells you cast cost {W}{U}{B}{R}{G} "
+        + "less to cast. (This can reduce generic costs.)\nAt the beginning of each upkeep, you may transform "
+        + "Aang, Master of Elements. If you do, you gain 4 life, draw four cards, put four +1/+1 counters on "
+        + "him, and he deals 4 damage to each opponent.")]
+    [InlineData("Lich", "Enchantment",
+        "As this enchantment enters, you lose life equal to your life total.\nYou don't lose the game for "
+        + "having 0 or less life.\nIf you would gain life, draw that many cards instead.\nWhenever you're dealt "
+        + "damage, sacrifice that many nontoken permanents. If you can't, you lose the game.\nWhen this "
+        + "enchantment is put into a graveyard from the battlefield, you lose the game.")]
+    public void Classify_TheNovember7CardAdvantage_TheDifficultyIsInsideTheCount_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // A scry or surveil in front of a self-sacrifice that draws several is the
+    // draw's, not a selection of its own ('CA, via Filter', 2026-11-07): Cryptex
+    // nets cards and loses Filter by the 2026-09-27 exclusivity.
+    [InlineData("Cryptex", "Artifact",
+        "{T}, Collect evidence 3: Add one mana of any color. Put an unlock counter on this artifact. (To "
+        + "collect evidence 3, exile cards with total mana value 3 or greater from your graveyard.)\nSacrifice "
+        + "this artifact: Surveil 3, then draw three cards. Activate only if this artifact has five or more "
+        + "unlock counters on it.")]
+    public void Classify_TheNovember7CardAdvantage_AScryBeforeTheSelfSacrificeDraw_IsCardAdvantageNotFilter(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.False(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Readings of 2026-11-07, each a wording the rules could not read: Galvanic
+    // Relay's storm copies an impulse draw, Wall of Mourning puts a card it exiled
+    // into the hand each turn, Investigator's Journal draws again from another
+    // ability besides the self-sacrifice, Xanathar plays the opponent's top card,
+    // Random Encounter returns the milled creatures to hand, Cryptic Pursuit casts
+    // the face-down card that died.
+    [InlineData("Galvanic Relay", "Sorcery",
+        "Exile the top card of your library. During your next turn, you may play that card.\nStorm (When you "
+        + "cast this spell, copy it for each spell cast before it this turn.)")]
+    [InlineData("Investigator's Journal", "Artifact — Book Clue",
+        "This artifact enters with a number of suspect counters on it equal to the greatest number of "
+        + "creatures a player controls.\n{2}, {T}, Remove a suspect counter from this artifact: Draw a "
+        + "card.\n{2}, Sacrifice this artifact: Draw a card.")]
+    [InlineData("Wall of Mourning", "Creature — Wall",
+        "Defender\nWhen this creature enters, exile a card from the top of your library face down for each "
+        + "opponent you have.\nCoven — At the beginning of your end step, if you control three or more creatures "
+        + "with different powers, put a card exiled with this creature into its owner's hand.")]
+    [InlineData("Xanathar, Guild Kingpin", "Legendary Creature — Beholder",
+        "At the beginning of your upkeep, choose target opponent. Until end of turn, that player can't cast "
+        + "spells, you may look at the top card of their library any time, you may play the top card of their "
+        + "library, and you may spend mana as though it were mana of any color to cast spells this way.")]
+    [InlineData("Random Encounter", "Sorcery",
+        "Shuffle your library, then mill four cards. Put each creature card milled this way onto the "
+        + "battlefield. They gain haste. At the beginning of the next end step, return those creatures to their "
+        + "owner's hand.\nFlashback {6}{R}{R} (You may cast this card from your graveyard for its flashback "
+        + "cost. Then exile it.)")]
+    [InlineData("Cryptic Pursuit", "Enchantment",
+        "Whenever you cast an instant or sorcery spell from your hand, manifest the top card of your library. "
+        + "(Put that card onto the battlefield face down as a 2/2 creature. Turn it face up any time for its "
+        + "mana cost if it's a creature card.)\nWhenever a face-down creature you control dies, exile it if it's "
+        + "an instant or sorcery card. You may cast that card until the end of your next turn.")]
+    public void Classify_TheNovember7CardAdvantage_Readings_AreCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Not CardAdvantage (2026-11-07). Karazikar's draw waits for an opponent to
+    // attack another opponent, and in the 2vs2 cube the two opponents are a team
+    // ('In 2vs2 non scatta'). Ecstatic Awakener draws once and transforms, so the
+    // draw never repeats and pays for itself.
+    [InlineData("Karazikar, the Eye Tyrant", "Legendary Creature — Beholder",
+        "Whenever you attack a player, tap target creature that player controls and goad it. (Until your next "
+        + "turn, that creature attacks each combat if able and attacks a player other than you if "
+        + "able.)\nWhenever an opponent attacks another one of your opponents, you and the attacking player each "
+        + "draw a card and lose 1 life.")]
+    [InlineData("Ecstatic Awakener // Awoken Demon", "Creature — Human Wizard // Creature — Demon",
+        "{2}{B}, Sacrifice another creature: Draw a card, then transform this creature. Activate only once "
+        + "each turn.")]
+    public void Classify_TheNovember7CardAdvantage_ADrawTheCardCannotMakeHappen_IsNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
     }
 }

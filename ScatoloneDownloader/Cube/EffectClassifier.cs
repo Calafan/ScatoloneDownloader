@@ -842,16 +842,17 @@ namespace ScatoloneDownloader.Cube
 
             if (result.HasFlag(CardEffect.CardAdvantage)
                 && (Loot.IsMatch(oneSidedLoot) || Cycling.IsMatch(text) || ReplacesTheDraw.IsMatch(text)
-                    || ADrawYouCannotCount.IsMatch(text) || EverybodyDrawsTheSame.IsMatch(text)
+                    || ADrawYouCannotCount.IsMatch(text) || EachPlayerMayLoot.IsMatch(text)
                     || (DrawBySacrificingItself.IsMatch(text)
                         && !DrawGrantedToOtherPermanents.IsMatch(text)
-                        && !SacrificeRefundedByACopy.IsMatch(text))
+                        && !SacrificeRefundedByACopy.IsMatch(text)
+                        && !AnotherAbilityDrawsAgain(text))
                     || SpendsItselfOutOfTheGraveyard(text)
                     || SpendsItselfWithoutAColon.IsMatch(text) || DrawByExilingItself.IsMatch(text)
                     || AdditionalCostDiscard.IsMatch(text) || PaysACardPerActivation(text)
                     || DrawPaidForWithACard.IsMatch(text)
                     || DrawsOnceBySacrificingItsName(card, text)
-                    || DrawOnceOnly.IsMatch(text)
+                    || DrawOnceOnly.IsMatch(text) || DrawsOnceThenTransforms.IsMatch(text)
                     || (BloodReminder.IsMatch(text) && !YouDraw.IsMatch(BloodReminder.Replace(text, " ")))))
             {
                 result &= ~CardEffect.CardAdvantage;
@@ -862,8 +863,16 @@ namespace ScatoloneDownloader.Cube
             // note that both are asked only once the card has no draw of its own.
             bool somebodyElsesDraw = TheirDraw.IsMatch(text) || TriggersOffDrawing.IsMatch(text);
 
+            // …and a single enters draw left over is a cantrip, read 2026-11-07:
+            // Tataru Taru's "you draw a card and target opponent may draw a card"
+            // as it enters, beside a "whenever an opponent draws" Treasure
+            // trigger (EverybodyDrawsTheSame had kept it out until the symmetric
+            // draw was ruled a card). Counting what is left with Classify was
+            // tried and rejected the same day: the blank takes the trigger word
+            // with it, and The Council of Four and Wiretapping lost the tag.
+            string yourDraws = OneDrawOnce.Replace(TriggersOffDrawing.Replace(TheirDraw.Replace(text, " "), " "), " ");
             if (result.HasFlag(CardEffect.CardAdvantage) && somebodyElsesDraw
-                && !YouDraw.IsMatch(TriggersOffDrawing.Replace(TheirDraw.Replace(text, " "), " ")))
+                && !YouDraw.IsMatch(yourDraws))
             {
                 result &= ~CardEffect.CardAdvantage;
             }
@@ -927,7 +936,6 @@ namespace ScatoloneDownloader.Cube
             // Gannon, tagged) — is not only the tribe's.
             if (CastsAStreamFromElsewhere.IsMatch(
                     TribeOrACardType.IsMatch(notSpentByName) ? notSpentByName : WithoutTribalRecursion(notSpentByName))
-                && !ChargesOtherGraveyardCards.IsMatch(notSpentByName)
                 && !ExilesYourOwnAndPlaysItBack.IsMatch(notSpentByName)
                 && !PaysAClueForTheCast.IsMatch(notSpentByName)
                 && (RepeatableWording.IsMatch(notSpentByName) || StandingPermission.IsMatch(notSpentByName)))
@@ -1025,7 +1033,14 @@ namespace ScatoloneDownloader.Cube
                 || LifePaidForADraw.IsMatch(text) || SplicedCantrip.IsMatch(text)
                 // The readings of 2026-10-27 — see DrawClosingAMoveThisWay.
                 || DrawClosingAMoveThisWay.IsMatch(text) || SpellExiledToCastAgain.IsMatch(text)
-                || D20DrawOnARepeatingTrigger.IsMatch(text) || EachDrawsHalfThatMany.IsMatch(text))
+                || D20DrawOnARepeatingTrigger.IsMatch(text) || EachDrawsHalfThatMany.IsMatch(text)
+                // The rulings and readings of 2026-11-07 — see
+                // GraveyardWindowForOneTurn and ExiledPileIntoTheHandEachTurn.
+                || GraveyardWindowForOneTurn.IsMatch(text)
+                || (ImpulseDraw.IsMatch(text) && StormKeyword.IsMatch(text))
+                || ExiledPileIntoTheHandEachTurn.IsMatch(text)
+                || (MilledCreaturesBackToHand.IsMatch(text) && !SacrificedAtTheEndStep.IsMatch(text))
+                || FaceDownCardDiesAndIsCast.IsMatch(text))
             {
                 result |= CardEffect.CardAdvantage;
             }
@@ -1310,8 +1325,11 @@ namespace ScatoloneDownloader.Cube
             // call CardAdvantage, so it adds Filter and never decides the card:
             // without that guard no card moved on 2026-11-06, and it stays to keep
             // a one-shot enters look (Wall of Omens' count) out of CardAdvantage.
+            // A permanent or a card for the draw is the same shape, ruled
+            // 2026-11-07: see PaysAPermanentOrACardForTheDraw.
             if (DrawThenDiscardUnlessGainsWhenMet(card, text)
-                || (result.HasFlag(CardEffect.CardAdvantage) && SelectsEveryTimeGainsSometimes(text)))
+                || (result.HasFlag(CardEffect.CardAdvantage) && SelectsEveryTimeGainsSometimes(text))
+                || PaysAPermanentOrACardForTheDraw(card, text))
             {
                 result |= CardEffect.CardAdvantage | CardEffect.Filter;
             }

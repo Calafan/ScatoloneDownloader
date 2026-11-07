@@ -3,6 +3,21 @@
 Canonical record of the rulings for `CardEffect.CardAdvantage`. The one-line tooltip shown in the
 tagger is in [`EffectGlossary.cs`](../../ScatoloneDownloader/Mtg/EffectGlossary.cs).
 
+The card's NET COUNT of cards is more than zero. The card itself costs one, every card it charges
+from the hand costs one more, and every card it gains is one back: drawn, put into your hand, or
+played from the top of a library, from exile or from a graveyard. Ancestral Recall is the card:
+minus one, plus three. An ability you can go back to pays its price once and gains on every
+repetition. The rest follows from the count: a permanent paid is no card of the hand (Soldevi Sage,
+Falkenrath Pit Fighter), nor is a card paid out of the graveyard (Osteomancer Adept); only your own
+part of a draw counts, whatever the opponent draws beside it (The Legend of Yangchen); how hard a
+draw is to bring about sits inside the count (Avatar Aang, Lich), unless the card cannot bring it
+about by itself at all, because it waits on chance, on a second card of yours aimed at it, or on the
+opponents' choice, and in the 2vs2 cube the opponents are a team (Karazikar). A net of zero is
+parity, which is Filter when the card chooses and nothing when it does not; a certain gain on the
+same ability is this tag alone (2026-09-27), a gain that depends on a condition or on which price is
+paid is both tags (2026-11-06). Redefined 2026-11-07, the answers at the end; every earlier
+paragraph is history where it disagrees with the count.
+
 a card the opponent does not get: draw two or more, a draw you can go back to (an activated ability
 or a recurring trigger — an ETB fires once and is a cantrip), or "draw a card for each X", which is
 the same thing counted the other way round.
@@ -517,3 +532,33 @@ by the same player is a wheel and not this tag (Change of Fortune, Mishra's Comm
 Mind's draw for the other players' discards stays; several under a cap on an ability that repeats
 (Ayesha Tanaka, Armorer), "put up to two of them into your hand" (Shadow Prophecy) and Guild Feud's
 "you do the same" every upkeep are this tag and not Filter.
+
+Redefined 2026-11-07 as the NET COUNT (the paragraph at the head), each question asked one at a
+time. A PERMANENT PAID is no card ("No, conta la mano", overturning 2026-09-19): Soldevi Sage nets
+one (minus one, plus three, minus one) and Falkenrath Pit Fighter discards one for two, so both are
+this tag and lose Filter by the 2026-09-27 exclusivity; a choice between a permanent and a card
+(Highway Robbery, Demand Answers, Reckless Detective, Chandra, Spark Hunter) gains with the one and
+not with the other, so it is both tags. ONLY YOUR PART of a draw counts: The Legend of Yangchen
+draws you three and is this tag, Tataru Taru draws you one for itself and Mog trades one for one, so
+neither is; the parity across the table (EverybodyDrawsTheSame) is withdrawn, and Karazikar's draw
+waits on an opponent attacking another, which in the 2vs2 cube does not happen ("In 2vs2 non
+scatta"). The DIFFICULTY sits inside the count ("Dentro il conto"): Avatar Aang, whose firebending 2
+meets its own bending trigger on every attack, is this tag ("CA"), and so is Lich ("CA"); The Clone
+Saga's chosen name stays out. A GRAVEYARD CAST every turn is this tag, and the graveyard cards it
+charges cost nothing ("Tutti CA"): forage (Osteomancer Adept) and escape (The Grim Captain's Locker)
+no longer veto it, and "play a land or cast a spell" from the graveyard (Serra Paragon, The Eighth
+Doctor) is the stream. A WINDOW of one turn on the graveyard is the same ("CA come la finestra"):
+Gaea's Will, Urabrask's third chapter, Backdraft Hellkite, Past in Flames, Yawgmoth's Will, Mizzix's
+Mastery. A scry in front of a self-sacrifice that draws several belongs to the draw (Cryptex, "CA,
+via Filter").
+
+Read the same day, no ruling asked: storm copying an impulse draw (Galvanic Relay); a card the card
+exiled put into the hand on a repeating trigger (Wall of Mourning); the top of an opponent's library
+playable every upkeep (Xanathar, Guild Kingpin); creature cards milled onto the battlefield and
+returned to the hand (Random Encounter); a draw from a second ability beside the self-sacrifice
+(Investigator's Journal); a face-down creature that dies and is cast as itself, every time (Cryptic
+Pursuit): all this tag. A draw that transforms the card at once runs once (Ecstatic Awakener) and is
+not. Rejected by measurement: recounting the card with the opponent's draw blanked out took the tag
+from The Council of Four and Wiretapping, both reviewed CardAdvantage, so the guard blanks a
+one-shot draw of yours instead (Tataru Taru); the manifest itself is a body, not a card (Tokens, 1
+of 11 tagged), and only the cast that follows counts. Innocent Bystander stays a known disagreement.

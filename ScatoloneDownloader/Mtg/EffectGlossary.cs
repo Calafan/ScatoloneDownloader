@@ -75,10 +75,10 @@
                 + "discard.",
 
             [CardEffect.CardAdvantage] =
-                "A card no opponent gets. COUNT the card ITSELF: Ponder nets 0. A one-shot draws two more "
-                + "than it pays; a REPEATABLE ability one more, even paid with a card, permanent or THEIR card. "
-                + "Two off, ONE played: Filter unless it repeats; both on two abilities or a SOMETIMES gain. "
-                + "Not THEIR draw, a tribe's graveyard, an unreachable trigger.",
+                "Net count over zero (Ancestral Recall: -1 +3). The card itself and each card paid from HAND "
+                + "cost one; each card drawn, put in hand or played from a library, exile or graveyard gains "
+                + "one; a repeatable ability pays once. A permanent or graveyard card paid is free; only YOUR "
+                + "part counts. Net 0 is Filter if chosen; a sometimes gain is both.",
 
             [CardEffect.Filter] =
                 "YOU choose which cards you will have, not more: see more than you keep (one at most) or hand "

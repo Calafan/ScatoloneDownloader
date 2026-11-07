@@ -432,9 +432,10 @@ namespace ScatoloneDownloader.Cube
 
                 if (AdditionalCostDiscard.IsMatch(text) || ActivationCostDiscard.IsMatch(line)) { net -= 1; }
 
-                Match lands = SacrificedLands.Match(line);
-                if (lands.Success) { net -= CardCount(lands.Groups[1].Value); }
-
+                // A PERMANENT paid is not a card, ruled 2026-11-07 ("No, conta la
+                // mano"): one on the battlefield is a card already played, so the
+                // lands Soldevi Sage sacrifices cost nothing in the count, which
+                // overturns the 2026-09-19 subtraction (-1 +3 -1 = +1, on a tap).
                 if (net > 0)
                 {
                     return true;

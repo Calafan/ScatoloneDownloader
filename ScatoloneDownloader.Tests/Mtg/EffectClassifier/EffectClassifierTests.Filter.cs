@@ -239,12 +239,11 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
-    // Parity however it is worded, named Filter by the human on 2026-09-27:
-    // a land may stand in for the discard, and N for N is still a rummage.
-    [InlineData("Highway Robbery", "Sorcery",
-        "You may discard a card or sacrifice a land. If you do, draw two cards.\nPlot {1}{R} (You may pay "
-        + "{1}{R} and exile this card from your hand. Cast it as a sorcery on a later turn without paying its "
-        + "mana cost. Plot only as a sorcery.)")]
+    // Parity however it is worded: N for N is still a rummage. Highway Robbery
+    // stood here (a land standing in for the discard, named Filter 2026-09-27)
+    // until 2026-11-07: a permanent paid is no card ("No, conta la mano"), so
+    // the land gains a card and the discard does not, see
+    // Classify_TheNovember7CardAdvantage_APermanentPaidIsNoCard_IsCardAdvantage.
     [InlineData("Horrid Shadowspinner", "Creature — Horror",
         "Lifelink\nWhenever this creature attacks, you may draw cards equal to its power. If you do, discard "
         + "that many cards.")]
@@ -867,15 +866,15 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
-    // What the 2026-11-03 ruling does NOT reach: two cards paid for two or three
-    // (Pumpkin Bombs, Falkenrath Pit Fighter, which also sacrifices a Vampire) and
-    // a draw of two with one card back (Krovikan Sorcerer, 2026-09-19).
+    // What the 2026-11-03 ruling does NOT reach: two cards paid for three
+    // (Pumpkin Bombs) and a draw of two with one card back (Krovikan Sorcerer,
+    // 2026-09-19). Falkenrath Pit Fighter stood here too, its sacrificed Vampire
+    // counted as a card, until 2026-11-07: a permanent paid is no card ("No,
+    // conta la mano"), see
+    // Classify_TheNovember7CardAdvantage_APermanentPaidIsNoCard_IsCardAdvantage.
     [InlineData("Pumpkin Bombs", "Artifact",
         "{T}, Discard two cards: Draw three cards, then put a fuse counter on this artifact. It deals damage "
         + "equal to the number of fuse counters on it to target opponent. They gain control of this artifact.")]
-    [InlineData("Falkenrath Pit Fighter", "Creature — Vampire Warrior",
-        "{1}{R}, Discard a card, Sacrifice a Vampire: Draw two cards. Activate only if an opponent lost life "
-        + "this turn.")]
     [InlineData("Krovikan Sorcerer", "Creature — Human Wizard Sorcerer",
         "{T}, Discard a nonblack card: Draw a card.\n{T}, Discard a black card: Draw two cards, then discard "
         + "one of them.")]
