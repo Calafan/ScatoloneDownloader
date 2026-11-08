@@ -117,10 +117,10 @@
                 + "not an artifact token.",
 
             [CardEffect.Steal] =
-                "Takes what is somebody else's: control of a permanent, an EXCHANGE of two, the player, their "
-                + "life total, an AURA moved off their permanent, or a CARD out of their library, hand or "
-                + "graveyard — played, or reanimated onto your side. Giving one AWAY is the mirror image, and "
-                + "\"from A graveyard\" names no victim: that is Reanimate alone.",
+                "Takes control of a PERMANENT somebody else controls, for a turn (Ray of Command) or for good "
+                + "(Control Magic), an EXCHANGE included, and the PLAYER for a turn (Mindslaver). A card of theirs "
+                + "played is CardAdvantage at most; their graveyard is Reanimate, Bribery Cheat, a life swap Burn. "
+                + "Not what you own, nor giving one AWAY.",
 
             [CardEffect.Tutor] =
                 "Searches a library for a card you CHOOSE — by type, subtype, colour, count, by NAME, or just "
@@ -158,7 +158,7 @@
 
             [CardEffect.Cheat] =
                 "Skips the mana cost of a card YOU CHOSE: a NONLAND permanent from hand (Sneak Attack) or SEARCHED "
-                + "from the library (Natural Order), or a standing free cast or fixed alternative cost (Omniscience). "
+                + "from any library (Natural Order, Bribery), or a standing free cast or fixed alternative cost (Omniscience). "
                 + "Nothing off the TOP of a library, under any mana-value cap, tribal, or sent back to hand. "
                 + "A graveyard is Reanimate, a land Ramp.",
 

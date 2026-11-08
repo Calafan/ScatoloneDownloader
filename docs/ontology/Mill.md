@@ -13,7 +13,8 @@ since a price is always paid by yourself.
 
 The top of their library EXILED is the same attack, read 2026-10-15 from the three reviewed cards
 that say it (Ulamog, the Defiler; Ashiok, Wicked Manipulator; Malboro) — unless the exiled cards are
-then played, which is Steal (Outrageous Robbery, Bloodsoaked Insight, Crabomination).
+then played, which was Steal until 2026-11-08 and is CardAdvantage at most since (Outrageous Robbery,
+Bloodsoaked Insight, Crabomination).
 
 RAD COUNTERS handed to a player are Mill too, "each player" included (13 of 13 reviewed), but not
 the ones you get.
@@ -21,11 +22,11 @@ the ones you get.
 Read 2026-11-06: "exiles CARDS FROM the top of their library until they exile a land card" is the
 same attack as "exiles the top three cards" (Umbris, Fear Manifest, 1 of 1; Tasha's Hideous Laughter
 is proposed the same, and the five reviewed cards that say it and then cast the card stay Steal or
-Removal). And "for each opponent, YOU mill a card" mills you, not them (Sivriss, Nightmare Speaker,
+Removal; no Steal since 2026-11-08). And "for each opponent, YOU mill a card" mills you, not them (Sivriss, Nightmare Speaker,
 untagged, 0 of 1).
 
 RULED 2026-11-06, "Sì, entrambe Mill" (Curse of Unbinding, Mill by hand, against Sméagol, Helpful
-Guide, Steal alone): an OPPONENT who reveals cards from the top of their library until a card of
+Guide, Steal alone until 2026-11-08): an OPPONENT who reveals cards from the top of their library until a card of
 some kind, that card taken (to your battlefield, your hand, wherever) and the REST of the revealed
 cards put into their graveyard, is Mill, in both wordings: "That player puts the rest of the
 revealed cards into their graveyard" and "and the rest into their graveyard". Another player's

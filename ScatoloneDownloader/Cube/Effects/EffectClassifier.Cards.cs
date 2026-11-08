@@ -87,7 +87,8 @@ namespace ScatoloneDownloader.Cube
             @"flip a coin[^\n]{0,80}draws? (?:a|one) card"
             // Mister Negative draws only when the life he swapped left him
             // WORSE OFF, which is the same "you cannot ask for this" the coin
-            // flip is; he is hand-tagged Steal alone.
+            // flip is; he was hand-tagged Steal alone, and is Burn alone since
+            // the swap went to Burn on 2026-11-08.
             + @"|exchange life totals[^\n]{0,80}draws? that many cards"
             + @"|becomes? the target of an (?:aura spell|activated ability)[^\n]{0,80}draws? (?:a|one) card"
             + @"|become the target of an activated ability, draws? (?:a|one) card"
@@ -529,8 +530,23 @@ namespace ScatoloneDownloader.Cube
             Rx(@"(?:target|up to \w+ target) [\w ,'\-/]{0,40}cards? (?:from|in) your graveyard\b[^\n]{0,160}?"
                 + @"\bput (?:it|that card|one of those cards)\b[^.\n]{0,60}onto the battlefield"),
             Rx(@"exiles? all creature cards from their graveyards?[^.\n]{0,100}puts? all cards they exiled this way onto the battlefield"),
-            Rx(@"creature cards? in [\w ']{0,30}graveyard\. put (?:those cards|that card|them|it) onto the battlefield"
+            // Any permanent card chosen there, read 2026-11-08 with the ruling
+            // that the graveyard's owner no longer matters ("Solo Reanimate,
+            // anche i 4"): Breach the Multiverse's "creature or planeswalker
+            // card in that player's graveyard" and Captain N'ghathrod's
+            // "artifact or creature card in an opponent's graveyard THAT WAS PUT
+            // THERE from their library this turn", both named. Counted broad: 3
+            // reviewed, Afterlife from the Loam already tagged; 4 unreviewed.
+            Rx(@"\b" + APermanentCardType + @"\b[\w ,']{0,30}?cards? in [\w ']{0,30}graveyard(?: that [\w ']{0,60})?\. put (?:those cards|that card|them|it) onto the battlefield"
                 + @"|creature cards? (?:in|from) your graveyard[^\n]{0,160}\breturn (?:each card chosen this way|the other) to the battlefield"),
+            // A creature card PUT INTO a graveyard and then put onto the
+            // battlefield, the same ruling: Helm of Obedience mills until one
+            // turns up, Lorcan, Warlock Collector takes each that reaches an
+            // opponent's graveyard, both named; a mill is Path of the Schemer's
+            // route, tagged. Counted broad: 3 reviewed, none tagged — the third,
+            // Colossal Grave-Reaver, mills YOUR library and was reviewed untagged
+            // on 2026-09-10, reached by the ruling and handed back.
+            Rx(@"creature cards? (?:is|are|were) put into [\w ']{0,30}graveyard[^\n]{0,120}?\bput (?:it|one of them|that card) onto the battlefield"),
             Rx(@"search your library and/or graveyard for[^.\n]{0,60}creature card[^.\n]{0,80}put it onto the battlefield"),
             Rx(@"whenever (?:a|another) [^.\n]{0,40}creature you control dies, return that card to the battlefield"),
             // …and the one creature an Aura is on, "when enchanted creature dies,

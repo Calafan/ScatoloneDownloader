@@ -1236,11 +1236,6 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Steal;
             }
 
-            if (TakesSomebodyElsesCard(text))
-            {
-                result |= CardEffect.Steal;
-            }
-
             // Blood made again and again is a stream of rummages. See MakesBlood.
             if (MakesBloodAgainAndAgain(text) || MakesMapsAgainAndAgain(text))
             {

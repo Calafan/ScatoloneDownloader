@@ -36,7 +36,8 @@ keeping the card (Harvest Wurm) and a keyword's reminder (Deeproot Historian's "
 are not.
 
 Ruled 2026-10-16 (G1, "Solo Steal"): a card cast from an OPPONENT'S graveyard is NOT this tag but
-Steal alone (Deluxe Dragster named, Tinybones, Bauble Burglar realigned); from ANY graveyard it
+Steal alone (Deluxe Dragster named, Tinybones, Bauble Burglar realigned; no Steal either since
+2026-11-08, CardAdvantage at most, Steal.md); from ANY graveyard it
 still is, since yours is among them (C4, Urabrask // The Great Work). Read the same day: a target
 card in your graveyard you may then cast (Conduit of Worlds), one put into your hand two sentences
 later (Cosmic Rebirth), the top card of your graveyard put on top of your library (Guiding Spirit)

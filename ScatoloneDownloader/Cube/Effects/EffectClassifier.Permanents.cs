@@ -284,131 +284,57 @@ namespace ScatoloneDownloader.Cube
         // sweeps: every sweep that takes the opponents' lands is this tag, and a
         // basic offered back is consolation (Wave of Vitriol, From the Ashes).
 
+        // Steal was REDEFINED 2026-11-08 (docs/ontology/Steal.md, in its head):
+        // you take control of a PERMANENT somebody else controls, for a turn (Ray
+        // of Command) or for good (Control Magic, the card). A CARD taken out of
+        // their library, hand or graveyard and played is CardAdvantage at most,
+        // never this tag ("Sì, solo permanenti"), so the family that stood here
+        // went that day with its eleven members (TakesSomebodyElsesCard: their
+        // zone and you playing out of it, their graveyard onto your side of the
+        // board, "they may play" against a named zone, their spell exiled and
+        // cast): 78 hand tags of the 234 were a card of theirs played. With it
+        // went "exchange life totals" (Burn since that day), Word of Command's
+        // "you control that player" (a card of theirs played, no tag), and the
+        // Aura moved, "attach target Aura" (Enchantment Alteration, Crown of the
+        // Ages: nobody's control changes, no tag). Reanimating out of THEIR
+        // graveyard is Reanimate alone and Bribery is Cheat, ruled the same day.
+        //
         // Hoisted for the same reason as MillPatterns: the donation guard below
         // strips the clause that gives a permanent AWAY and then re-runs these,
         // so a card that steals and donates in the same text keeps the tag.
         private static readonly Regex[] StealPatterns =
         [
-            // …but not of a SPELL, which is Redirect's (Invert Polarity).
-            Rx(@"gains? control of(?! (?:target|that) spell)"),
+            // …but not of a SPELL, which is Redirect's (Invert Polarity), nor of
+            // what is already YOURS, read 2026-11-08 under the definition: "gain
+            // control of target permanent you own but don't control" (Coveted
+            // Falcon, CardAdvantage alone by hand) and "each player gains control
+            // of all permanents they own" (The Fall of Lord Konda, Removal alone)
+            // take nothing from anybody.
+            Rx(@"gains? control of(?! (?:target|that) spell)(?![^.\n]{0,40}\b(?:you|they) own\b)"),
             // "AS LONG AS you control enchanted creature" is a condition on the
             // Aura's own creature, not a theft (Mishra's Domination, Buff alone
             // by hand, read 2026-11-03; the one card in the store worded so).
+            // "You control target PLAYER during that player's next turn" is the
+            // one thing kept that is no permanent, ruled 2026-11-08 ("Steal,
+            // eccezione col perché"): for that turn every permanent of theirs is
+            // yours to run (Mindslaver, Worst Fears, Secret of Bloodbending).
             Rx(@"(?<!as long as )you control (enchanted|target)"),
             Rx(@"untap target creature[\w ]*gain control"),
             // An exchange is a theft you paid for. Five cards, and the only way
             // any of them was ever going to be found.
             Rx(@"exchange control of"),
-            // Word of Command takes the player rather than the permanent.
-            Rx(@"you control that player"),
-            // And Mister Negative and Psychic Transfer take the life total.
-            // Ruled 2026-09-19.
-            Rx(@"exchange life totals"),
             // Desertion takes the spell it just countered, which is the only place
             // "under your control" appears without a zone to read it against.
+            // Kept 2026-11-08 ("Desertion resta"): the spell ends as a permanent
+            // of theirs on your side, where Smirking Spelljacker and Gale's
+            // Redirection only cast it, a card of theirs played.
             Rx(@"counter target spell[\s\S]{0,180}onto the battlefield (?:tapped )?under your control"),
-            // Enchantment Alteration moves somebody else's Aura onto a permanent
-            // of your choosing — theft of the Aura's job if not of its control.
-            // Ruled 2026-09-19. Moving an Aura "you control" is your own, though:
-            // Codsworth re-equips, and was tagged Ramp alone.
-            Rx(@"attach (?:target|enchanted) aura(?![\w ]{0,40} you control to )"),
             // A permanent exiled and then CAST by you is taken twice over:
             // "Exile target nonland permanent. You may cast that card for as
             // long as it remains exiled" (Abstruse Appropriation, 2026-10-16).
             // A permanent CARD is your own graveyard's (Savvy Trader).
             Rx(@"exile target (?:nonland )?permanent\b(?! cards?\b)[^.\n]{0,30}\. you may (?:cast|play) that card\b"),
         ];
-
-        /// <summary>Reanimating out of an OPPONENT'S graveyard is both Reanimate
-        /// and Steal — ruled 2026-09-19, after the tags split on cards that share
-        /// a sentence: Bone Dancer and Helm of Obedience were tagged Steal against
-        /// Ashen Powder and Chorale of the Void, which were not.
-        /// <para>
-        /// It is read as two halves for the same reason the stolen-card family is.
-        /// "Under your control" alone is how ordinary reanimation is worded —
-        /// Reanimate, Hymn of Rebirth and Coffin Queen all say "from A graveyard"
-        /// and belong to nobody in particular — so the theft only exists once the
-        /// card names whose graveyard it is.
-        /// </para></summary>
-        // "tapped" may sit INSIDE the phrase: an Oracle update between 22 and 24
-        // Sep 2026 rewrote Geth, Lord of the Vault from "onto the battlefield
-        // under your control tapped" to "onto the battlefield tapped under your
-        // control", and the card lost Steal with no change to this file.
-        private static readonly Regex OntoYourSideOfTheBoard = Rx(
-            @"onto the battlefield (?:tapped )?under your control");
-
-        /// <summary>Somebody else's zone, NAMED — "target opponent's library",
-        /// "defending player's graveyard". Kept apart from the pronoun form below
-        /// because it is the only one "THEY may cast" can be read against: in
-        /// Transforming Flourish the player who exiles from "THEIR library" and
-        /// the one who then casts are the same person, so no theft happens, while
-        /// Gonti exiles from "that OPPONENT'S library" and hands the card to the
-        /// creature's controller.</summary>
-        private static readonly Regex SomebodyElsesNamedZone = Rx(
-            @"(?:target opponent|an opponent|each opponent|that opponent|target player|that player"
-            + @"|defending player|another player|each player|opponent'?s|player'?s)"
-            + @"[\w ,'\-]{0,60}(?:library|hand|graveyard)"
-            + @"|(?:library|hand|graveyard) of (?:target |an |each |that )?(?:opponent|player)");
-
-        /// <summary>A mill IS the zone, and the only way Locke could ever be found:
-        /// "each player mills a card … you may cast a spell from among those cards"
-        /// never names a library at all. It only pairs with YOU playing the card,
-        /// though — "each player mills two cards. Then you put a creature card from
-        /// a graveyard onto the battlefield" is Path of the Schemer reanimating
-        /// from any graveyard, which no victim was named for.</summary>
-        private static readonly Regex MillsSomebody = Rx(
-            @"(?:each|target|an|another|that) (?:player|opponent)[\w ,'\-]{0,20}mills?\b");
-
-        /// <summary>Taking a CARD rather than a permanent — the other half of this
-        /// tag, and 15 of the 28 cards it used to miss. It reads as two halves
-        /// because either half alone is something else entirely: the zone alone is
-        /// Mill, and "you may play" alone is your own impulse draw.</summary>
-        // The filler stops at "your": Virtue of Courage, Fireglass Mentor and
-        // Powerbalance name an opponent only as the trigger ("an opponent casts a
-        // spell, you may reveal the top card of YOUR library") and then play their
-        // own card. And "their library. They may play it" is the opponent playing
-        // their own: Urabrask makes them exile instead of drawing.
-        private static readonly Regex SomebodyElsesZone = Rx(
-            @"(?:target opponent|an opponent|each opponent|that opponent|target player|that player"
-            + @"|defending player|another player|each player|opponent'?s|player'?s)"
-            + @"(?:(?!\byour\b)[\w ,'\-]){0,60}(?:library|hand|graveyard)"
-            + @"|(?:library|hand|graveyard) of (?:target |an |each |that )?(?:opponent|player)"
-            + @"|\btheir (?:library|hand|graveyard)\b(?!\. they may (?:play|cast))");
-
-        /// <summary>A LAND out of their graveyard is Ramp, not theft — Realmbreaker
-        /// mills the opponent to find one, and was tagged Ramp alone.</summary>
-        private static readonly Regex LandCardFromAGraveyard = Rx(
-            @"land cards? from [\w' ]{0,30}graveyard");
-
-        /// <summary>…and then YOU play it. Everything excluded here is a card of
-        /// your own that happens to share a text with somebody else's zone: an
-        /// extra land drop (Ramp), a card giving ITSELF a second cast (Regrowth),
-        /// the back face Jidoor plays out of exile, and the "cards you own" that
-        /// Triple Triad and Wheel of Potential hand back after a symmetric exile.
-        /// "They may cast" is excluded for the same reason — Transforming Flourish
-        /// makes the OPPONENT cast the card it dug up.</summary>
-        private static readonly Regex AndPlaysThem = Rx(
-            @"you may (?:look at and )?(?:play|cast) (?!an additional land|this spell|this card|the land\b)");
-
-        /// <summary>The same clause with the thief named in the third person. It
-        /// only counts against a NAMED zone — see
-        /// <see cref="SomebodyElsesNamedZone"/> for why.</summary>
-        private static readonly Regex AndSomebodyPlaysThem = Rx(
-            @"they may (?:look at and )?(?:play|cast) (?!an additional land|this spell|this card|the land\b)");
-
-        /// <summary>Playing what was always yours. "Cards you own" is how a
-        /// symmetric exile hands everything back, and "from YOUR graveyard" is
-        /// Regrowth's business — Glacierwood Siege mills a player on one half and
-        /// plays your own lands on the other, and only a rule reading the whole
-        /// card could mistake that for a theft.</summary>
-        // Press the Enemy casts "an instant or sorcery spell with equal or lesser
-        // mana value FROM YOUR HAND", which no twenty letters could reach.
-        // "Cast a spell from among cards IN your graveyard that were milled this
-        // turn" is your own as well (Raul, Trouble Shooter, whose tap mills
-        // every player; 2026-10-16).
-        private static readonly Regex PlaysACardYouOwn = Rx(
-            @"(?:cards?|spells?) you own"
-            + @"|(?:play|cast)[\w ]{0,70}(?:from|in) your (?:graveyard|hand|library)");
 
         /// <summary>The mirror image of Steal, and 12 of its 14 false positives:
         /// the card hands a permanent to somebody ELSE. It is the price Jinxed
@@ -421,9 +347,12 @@ namespace ScatoloneDownloader.Cube
         /// "may" or "can't". Letting any filler in cost Ray of Command and Magus
         /// of the Unseen, where "untap target creature AN OPPONENT CONTROLS and
         /// gain control of it" puts the victim in front of a verb that is yours.
+        /// "An opponent OF YOUR CHOICE gains control of it" is the same subject,
+        /// read 2026-11-08 (Khârn the Betrayer hands itself over and took
+        /// nothing: CardAdvantage alone, its Steal handed back).
         /// </para></summary>
         private static readonly Regex GivesControlAway = Rx(
-            @"(?:target opponent|an opponent|each opponent|that opponent|another player|target player"
+            @"(?:target opponent|an opponent(?: of your choice)?|each opponent|that opponent|another player|target player"
             + @"|that player|other players|they|the player with the most life"
             + @"|that permanent's controller|the attacking player|the player to your right)"
             + @" (?:may |can't )?gains? control");
@@ -434,45 +363,6 @@ namespace ScatoloneDownloader.Cube
         /// Burn.</summary>
         private static readonly Regex TokenSteals = Rx(
             @"\btoken with [\w ,]{0,40}""[^""]*gains? control of[^""]*""");
-
-        /// <summary>Taking somebody else's CARD: their zone and you playing out of
-        /// it, or their graveyard onto your side of the board. Read one MODE at a
-        /// time — Riveteers Charm exiles a player's graveyard in one bullet and
-        /// plays your own library in another — and outside reminder text, where
-        /// an Adventure's "you may cast the creature later" and a legendary
-        /// sorcery's "you may cast" stood in for a play that never happens.</summary>
-        private static bool TakesSomebodyElsesCard(string text)
-        {
-            string spoken = Parenthetical.Replace(text, " ");
-            string[] lines = spoken.Split('\n');
-            string[] modes = lines.Where(l => l.TrimStart().StartsWith('•')).ToArray();
-            if (modes.Length == 0)
-            {
-                return TakesSomebodyElsesCard(spoken, text);
-            }
-
-            string rest = string.Join('\n', lines.Where(l => !l.TrimStart().StartsWith('•')));
-            return modes.Any(mode => TakesSomebodyElsesCard(rest + "\n" + mode, text));
-        }
-
-        // The card you own is read on the WHOLE text, reminders included: Lidless
-        // Gaze plays the top of each player's library and was tagged CardAdvantage
-        // alone, and its flashback reminder is the only thing that says so.
-        private static bool TakesSomebodyElsesCard(string spoken, string text)
-        {
-            bool yours = PlaysACardYouOwn.IsMatch(text);
-            return ((SomebodyElsesZone.IsMatch(spoken) || MillsSomebody.IsMatch(spoken))
-                    && AndPlaysThem.IsMatch(spoken) && !yours)
-                || (SomebodyElsesZone.IsMatch(LandCardFromAGraveyard.Replace(spoken, " "))
-                    && OntoYourSideOfTheBoard.IsMatch(spoken))
-                || (SomebodyElsesNamedZone.IsMatch(spoken) && AndSomebodyPlaysThem.IsMatch(spoken) && !yours)
-                || (TheirSpellExiled.IsMatch(spoken) && AndPlaysThem.IsMatch(spoken) && !yours);
-        }
-
-        /// <summary>Their SPELL exiled off the stack and cast by you: the card is
-        /// somebody else's with no zone named (Smirking Spelljacker, Counter and
-        /// Steal by hand). Read 2026-10-16.</summary>
-        private static readonly Regex TheirSpellExiled = Rx(@"exile target spell an opponent controls");
 
         private static readonly Regex[] MillPatterns =
         [

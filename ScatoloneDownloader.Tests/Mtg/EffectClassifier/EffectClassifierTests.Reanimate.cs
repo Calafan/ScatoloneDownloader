@@ -548,4 +548,53 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Steal));
     }
+
+    [Theory]
+    // Ruled 2026-11-08 ('Solo Reanimate, anche i 4'): whose graveyard it is no
+    // longer matters. A card in a graveyard is no permanent, so reanimating out of
+    // an opponent's is Reanimate alone; Breach the Multiverse, Captain N'ghathrod,
+    // Helm of Obedience and Lorcan gained the tag, named, and Colossal Grave-
+    // Reaver (your own mill, reached) with them.
+    [InlineData("Ashen Powder", "Sorcery",
+        "Put target creature card from an opponent's graveyard onto the battlefield under your control.")]
+    [InlineData("Geth's Summons", "Sorcery",
+        "Return up to one target creature card from your graveyard to the battlefield.\nCorrupted — For each "
+        + "opponent who has three or more poison counters as you cast this spell, put up to one target creature "
+        + "card from that player's graveyard onto the battlefield under your control.")]
+    [InlineData("Geth, Lord of the Vault", "Legendary Creature — Phyrexian Zombie",
+        "Intimidate (This creature can't be blocked except by artifact creatures and/or creatures that share "
+        + "a color with it.)\n{X}{B}: Put target artifact or creature card with mana value X from an opponent's "
+        + "graveyard onto the battlefield tapped under your control. Then that player mills X cards.")]
+    [InlineData("Bone Dancer", "Creature — Zombie",
+        "Whenever this creature attacks and isn't blocked, you may put the top creature card of defending "
+        + "player's graveyard onto the battlefield under your control. If you do, this creature assigns no "
+        + "combat damage this turn.")]
+    [InlineData("Breach the Multiverse", "Sorcery",
+        "Each player mills ten cards. For each player, choose a creature or planeswalker card in that "
+        + "player's graveyard. Put those cards onto the battlefield under your control. Then each creature you "
+        + "control becomes a Phyrexian in addition to its other types.")]
+    [InlineData("Captain N'ghathrod", "Legendary Creature — Horror Pirate",
+        "Horrors you control have menace.\nWhenever a Horror you control deals combat damage to a player, that "
+        + "player mills that many cards.\nAt the beginning of your end step, choose target artifact or creature "
+        + "card in an opponent's graveyard that was put there from their library this turn. Put it onto the "
+        + "battlefield under your control.")]
+    [InlineData("Helm of Obedience", "Artifact",
+        "{X}, {T}: Target opponent mills a card, then repeats this process until a creature card or X cards "
+        + "have been put into their graveyard this way, whichever comes first. If one or more creature cards "
+        + "were put into that graveyard this way, sacrifice this artifact and put one of them onto the "
+        + "battlefield under your control. X can't be 0.")]
+    [InlineData("Lorcan, Warlock Collector", "Legendary Creature — Devil",
+        "Flying\nWhenever a creature card is put into an opponent's graveyard from anywhere, you may pay life "
+        + "equal to its mana value. If you do, put it onto the battlefield under your control. It's a Warlock "
+        + "in addition to its other types.\nIf a Warlock you control would die, exile it instead.")]
+    [InlineData("Colossal Grave-Reaver", "Creature — Dragon",
+        "Flying\nWhenever this creature enters or attacks, mill three cards.\nWhenever one or more creature "
+        + "cards are put into your graveyard from your library, put one of them onto the battlefield.")]
+    public void Classify_TheNovember8Ruling_TheirGraveyard_IsReanimateNotSteal(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Reanimate));
+        Assert.False(result.HasFlag(CardEffect.Steal));
+    }
 }

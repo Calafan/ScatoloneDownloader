@@ -160,7 +160,7 @@ growing pile ("you may play cards exiled with this creature" — Evendo Brushraz
 Triad); that pile going to your HAND instead (Necropotence, Duplicity, Knowledge Vault); casting for
 free from among the exiled cards (Kefka, Portent of Calamity); and the top of SOMEBODY ELSE'S
 library (Vaan, Outrageous Robbery). The one line inside it: when the pile is THEIRS ALREADY the card
-is Steal and not this — Azula exiles a creature an opponent controls and a card from their
+is Steal and not this (no Steal either since 2026-11-08, Steal.md: a card of theirs played) — Azula exiles a creature an opponent controls and a card from their
 graveyard, Crabomination does it in three zones, and both are hand-tagged without CardAdvantage,
 while Vaan and Outrageous Robbery take cards nobody had yet. Esoteric Duplicator was put to the
 human as the one card standing against the self-sacrifice rule and RULED to keep the tag: the
@@ -341,7 +341,7 @@ and 3 after, every one of them a ruling below or a known disagreement): a card o
 OPPONENT's library that you may play is this tag when the ability REPEATS ("CA se ripete":
 Dream-Thief's Bandana, Edward Kenway, Rev, Tithe Extractor — the family stood 9 tagged to 6), and so
 is a card out of THEIR graveyard (3 to 3: Saruman of Many Colors), while the one that fires once
-stays Steal alone (Azula, Cunning Usurper; Crabomination); a sacrifice that buys TWO modes, one of
+stays Steal alone (Azula, Cunning Usurper; Crabomination; no Steal since 2026-11-08); a sacrifice that buys TWO modes, one of
 them a draw, is this tag (Caesar, Legion's Emperor) and a choose-one is not (Gorbag); a graveyard
 cast for ONE turn is not this tag but Regrowth ("Una volta = no CA": Urabrask // The Great Work);
 exiling that many and playing one is Filter, not this tag (Vault 112: Sadistic Simulation; Cheat
@@ -352,7 +352,7 @@ Historian, Rivaz of the Claw), unless a card type stands beside the type (Arcade
 Read the same day — not this tag: a draw when the card ITSELF becomes the target of an opponent's
 spell (Altanak, Cactarantula: 0 of 2, where "a creature you control" is 2 of 2, Surrak and Elrond)
 or of your OWN, which needs a second card to fire (Nadu); "that player draws" after combat damage
-(Red Death, Shipwrecker); THEIR spell exiled and cast, which is Steal (Smirking Spelljacker);
+(Red Death, Shipwrecker); THEIR spell exiled and cast, Steal until 2026-11-08 (Smirking Spelljacker);
 "Activate only once" (Thought Shucker); a look at the top any time with no leave to play it (Vesuvan
 Drifter: the other 24 reviewed looks all play it); a card sacrificing itself by its short name
 (Vohar); a graveyard cast paid by exiling OTHER graveyard cards, forage and escape (Osteomancer
@@ -407,7 +407,7 @@ draw (Tamiyo, Compleated Sage); up to two kept from a look (The Mana Rig); a dea
 repeats (Trove Tracker); the same mode chosen for a target player (Unite the Coalition); a loyalty
 reveal-until into the hand (Vivien, Nature's Avenger); a life cost before a land's draw (War Room).
 Not this tag: a curse watching the enchanted player draw (Curse of Fool's Wisdom); a tutor into
-exile cast from there (Evolving Door); ANY target spell exiled and cast, which is Steal (Gale's
+exile cast from there (Evolving Door); ANY target spell exiled and cast, Steal until 2026-11-08 (Gale's
 Redirection); a draw an opponent pays for to free their creature (Hold for Ransom); an impulse only
 a Goblin may be cast from (Rundvelt Hordemaster, the tribal ruling of 2026-10-16), where an Otter
 spell that triggers it (Harnesser of Storms) or a Hero card that pumps (Daredevil) is no tribe.

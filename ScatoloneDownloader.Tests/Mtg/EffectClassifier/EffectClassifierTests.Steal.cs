@@ -21,6 +21,12 @@ public sealed partial class EffectClassifierTests
     [InlineData("Emberwilde Djinn", "Creature — Djinn",
         "Flying\nAt the beginning of each player's upkeep, that player may pay {R}{R} or 2 life. "
         + "If the player does, they gain control of this creature.")]
+    // 'An opponent OF YOUR CHOICE gains control', read 2026-11-08: Khârn hands
+    // itself over (CardAdvantage alone).
+    [InlineData("Khârn the Betrayer", "Legendary Creature — Astartes Berserker",
+        "Berzerker — Khârn the Betrayer attacks or blocks each combat if able.\nSigil of Corruption — When you "
+        + "lose control of Khârn the Betrayer, draw two cards.\nThe Betrayer — If damage would be dealt to Khârn "
+        + "the Betrayer, prevent that damage and an opponent of your choice gains control of it.")]
     public void Classify_GivingAPermanentAway_IsNotSteal(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Steal));
@@ -43,8 +49,16 @@ public sealed partial class EffectClassifierTests
     [InlineData("Legerdemain", "Sorcery",
         "Exchange control of target artifact or creature and another target permanent that shares one "
         + "of those types with it. (This effect lasts indefinitely.)")]
-    // Taking a CARD out of somebody else's library, hand or graveyard and playing
-    // it is a theft of a card rather than of a permanent.
+    public void Classify_TakingWhatIsSomebodyElses_IsSteal(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Steal));
+    }
+
+    [Theory]
+    // MOVED 2026-11-08 from the theory above, with the definition: Steal is a
+    // PERMANENT taken, and these take something else. A CARD taken out of
+    // somebody else's library, hand or graveyard and played is CardAdvantage at
+    // most (the theft of a card, 2026-09-19 to 2026-11-08).
     [InlineData("Outrageous Robbery", "Sorcery",
         "Target opponent exiles the top X cards of their library face down. You may look at and play "
         + "those cards for as long as they remain exiled. If you cast a spell this way, you may spend "
@@ -58,49 +72,34 @@ public sealed partial class EffectClassifierTests
         "Whenever one or more Scouts, Pirates, and/or Rogues you control deal combat damage to a "
         + "player, exile the top card of that player's library. You may cast it. If you don't, create "
         + "a Treasure token.")]
-    // Word of Command takes the player rather than the permanent.
+    // Word of Command controls the player only to play a card of theirs: no
+    // turn of theirs is taken, unlike Mindslaver (ruled 2026-11-08).
     [InlineData("Word of Command", "Sorcery",
         "Look at target opponent's hand and choose a card from it. You control that player until Word "
         + "of Command finishes resolving. The player plays that card if able.")]
-    // Reanimating out of an OPPONENT'S graveyard is both Reanimate and this,
-    // ruled 2026-09-19.
-    [InlineData("Ashen Powder", "Sorcery",
-        "Put target creature card from an opponent's graveyard onto the battlefield under your control.")]
-    [InlineData("Bone Dancer", "Creature — Zombie",
-        "Whenever this creature attacks and isn't blocked, you may put the top creature card of "
-        + "defending player's graveyard onto the battlefield under your control. If you do, this "
-        + "creature assigns no combat damage this turn.")]
-    // "TAPPED" inside the phrase: an Oracle update in September 2026 rewrote
-    // Geth from "under your control tapped" to this, and the card quietly lost
-    // the tag.
-    [InlineData("Geth, Lord of the Vault", "Legendary Creature — Phyrexian Zombie",
-        "Intimidate (This creature can't be blocked except by artifact creatures and/or creatures that share a "
-        + "color with it.)\n{X}{B}: Put target artifact or creature card with mana value X from an opponent's "
-        + "graveyard onto the battlefield tapped under your control. Then that player mills X cards.")]
-    // And the life total is a thing you can take.
-    [InlineData("Mirror Universe", "Artifact",
-        "{T}, Sacrifice this artifact: Exchange life totals with target opponent. "
-        + "Activate only during your upkeep.")]
-    // "THEY may play" against a NAMED zone: the creature's controller takes a card
-    // out of the opponent's library, so the two are different people.
+    // Ashen Powder, Bone Dancer, Geth and Mirror Universe stood here too: their
+    // graveyard is Reanimate's, the life total Burn's, both in those files.
+    // "THEY may play" against a NAMED zone, the creature's controller taking a
+    // card out of the opponent's library.
     [InlineData("Gonti, Night Minister", "Legendary Creature — Phyrexian Rogue",
         "Whenever a player casts a spell they don't own, that player creates a Treasure token.\n"
         + "Whenever a creature deals combat damage to one of your opponents, its controller looks at "
         + "the top card of that opponent's library and exiles it face down. They may play that card "
         + "for as long as it remains exiled. Mana of any type can be spent to cast a spell this way.")]
-    // A mill IS the zone — Locke never names a library at all.
+    // A mill, Locke's zone.
     [InlineData("Locke, Treasure Hunter", "Legendary Creature — Human Rogue",
         "Locke can't be blocked by creatures with greater power.\n"
         + "Mug — Whenever Locke attacks, each player mills a card. If a land card was milled this "
         + "way, create a Treasure token. Until end of turn, you may cast a spell from among those cards.")]
-    // Moving somebody else's Aura is theft of its job if not of its control.
+    // Somebody else's Aura moved changes nobody's control (ruled 2026-11-08,
+    // "Nessun tag"; theft of its job from 2026-09-19).
     [InlineData("Enchantment Alteration", "Instant",
         "Attach target Aura attached to a creature or land to another permanent of that type.")]
     [InlineData("Crown of the Ages", "Artifact",
         "{4}, {T}: Attach target Aura attached to a creature to another creature.")]
-    public void Classify_TakingWhatIsSomebodyElses_IsSteal(string name, string typeLine, string oracle)
+    public void Classify_TheNovember8Definition_NoPermanentTaken_IsNotSteal(string name, string typeLine, string oracle)
     {
-        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Steal));
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Steal));
     }
 
     [Theory]
@@ -235,13 +234,59 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
-    // V3, 2026-10-16: exile target spell an opponent controls and play it is a
-    // theft.
+    // MOVED 2026-11-08 ("-Steal, Desertion resta"): their spell exiled and cast
+    // by you is a card of theirs played, no permanent taken. It was a theft from
+    // V3, 2026-10-16, to 2026-11-08.
     [InlineData("Smirking Spelljacker", "Creature — Djinn Wizard Rogue",
         "Flash\nFlying\nWhen this creature enters, exile target spell an opponent controls.\nWhenever this "
         + "creature attacks, if a card is exiled with it, you may cast the exiled card without paying its mana "
         + "cost.")]
-    public void Classify_TheOctober16Pass_TheirSpellTaken_IsSteal(string name, string typeLine, string oracle)
+    // Gale's Redirection the same, named.
+    [InlineData("Gale's Redirection", "Instant",
+        "Exile target spell, then roll a d20 and add that spell's mana value.\n1—14 | You may cast the exiled "
+        + "card for as long as it remains exiled, and you may spend mana as though it were mana of any color to "
+        + "cast that spell.\n15+ | You may cast the exiled card without paying its mana cost for as long as it "
+        + "remains exiled.")]
+    public void Classify_TheNovember8Ruling_TheirSpellCast_IsNotSteal(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Steal));
+    }
+
+    [Theory]
+    // Read 2026-11-08 under the definition: control of what you OWN taken back
+    // takes nothing from anybody (Coveted Falcon, CardAdvantage alone by hand; The
+    // Fall of Lord Konda, Removal alone).
+    [InlineData("Coveted Falcon", "Artifact Creature — Bird",
+        "Flying\nWhenever this creature attacks, gain control of target permanent you own but don't "
+        + "control.\nDisguise {1}{U}\nWhen this creature is turned face up, target opponent gains control of any "
+        + "number of target permanents you control. Draw a card for each one they gained control of this way.")]
+    [InlineData("The Fall of Lord Konda // Fragment of Konda", "Enchantment — Saga // Enchantment Creature — Human Noble",
+        "(As this Saga enters and after your draw step, add a lore counter.)\nI — Exile target creature an "
+        + "opponent controls with mana value 4 or greater.\nII — Each player gains control of all permanents "
+        + "they own.\nIII — Exile this Saga, then return it to the battlefield transformed under your "
+        + "control.\nDefender\nWhen this creature dies, draw a card.")]
+    public void Classify_TheNovember8Readings_WhatYouOwn_IsNotSteal(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Steal));
+    }
+
+    [Theory]
+    // Kept 2026-11-08, each with its why: a PLAYER controlled for a turn or a
+    // combat runs every permanent of theirs ('Steal, eccezione col perché':
+    // Mindslaver, Secret of Bloodbending), and Desertion's countered spell ends as
+    // a permanent of theirs under your control ('Desertion resta').
+    [InlineData("Mindslaver", "Legendary Artifact",
+        "{4}, {T}, Sacrifice Mindslaver: You control target player during that player's next turn. (You see "
+        + "all cards that player could see and make all decisions for them.)")]
+    [InlineData("Secret of Bloodbending", "Sorcery — Lesson",
+        "As an additional cost to cast this spell, you may waterbend {10}.\nYou control target opponent during "
+        + "their next combat phase. If this spell's additional cost was paid, you control that player during "
+        + "their next turn instead. (You see all cards that player could see and make all decisions for "
+        + "them.)\nExile Secret of Bloodbending.")]
+    [InlineData("Desertion", "Instant",
+        "Counter target spell. If an artifact or creature spell is countered this way, put that card onto the "
+        + "battlefield under your control instead of into its owner's graveyard.")]
+    public void Classify_TheNovember8Ruling_KeptBesideThePermanent_IsSteal(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Steal));
     }

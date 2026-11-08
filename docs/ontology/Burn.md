@@ -267,3 +267,8 @@ handed back as life is read by its shape, damage then "target opponent gains N l
 Left as known disagreements, each the only card with its wording: Blim, Comedic Genius, Yurlok of
 Scorch Thrash, and Deadpool, Trading Card, whose "you lose 3 life" reaches an opponent only through
 the exchange of text boxes.
+
+RULED 2026-11-08 with the Steal definition (Steal.md, Q3 "Burn"): an EXCHANGE of life totals is life
+the opponent loses, and no permanent taken. Mirror Universe, Mister Negative, Psychic Transfer and
+Profane Transfusion, Steal by hand until then, named; Axis of Mortality, Magus of the Mirror and Soul
+Conduit unreviewed.

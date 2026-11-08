@@ -1397,6 +1397,12 @@ namespace ScatoloneDownloader.Cube
                     // because X is not one (Northern Air Temple). The subject list
                     // is spelled out so that "you lose 2 life" stays a price.
                     Rx(LosesLifeSubject + @" ?loses? (?:[2-9]|\d\d+|x) life"),
+                    // An EXCHANGE of life totals is life the opponent loses,
+                    // ruled 2026-11-08 ("Burn"), when Steal stopped taking
+                    // anything but a permanent: Mirror Universe, Mister Negative,
+                    // Psychic Transfer and Profane Transfusion, Steal by hand
+                    // until then and all four named in the question.
+                    Rx(@"exchange life totals"),
                     // …unless the one point comes AGAIN AND AGAIN. Revised
                     // 2026-09-29 ("ripetuto sì, singolo no"): since 09-23 the
                     // human had tagged twelve of sixteen repeated one-point drains
@@ -1647,16 +1653,10 @@ namespace ScatoloneDownloader.Cube
                         + @"|" + SacrificesOneOfThem),
                     Rx(SacrificesYourOwnByAnotherVerb, RegexOptions.Multiline)]),
 
-                // Three patterns of "gain control" saw one third of this tag. The rest
-                // is in StealPatterns (declared in EffectClassifier.Permanents.cs,
-                // not above) and in TakesSomebodyElsesCard, which Classify calls:
-                // an EXCHANGE is a theft you paid for (Juxtapose, Legerdemain,
-                // Political Trickery, Trade the Helm, Gauntlets of Chaos), a card
-                // taken out of somebody else's LIBRARY, HAND or GRAVEYARD and played
-                // is a theft of a card rather than of a permanent (15 of the 28
-                // misses, from Outrageous Robbery to Gonti: TakesSomebodyElsesCard),
-                // and "onto the battlefield UNDER YOUR CONTROL" is how Bone Dancer,
-                // Helm of Obedience and Desertion say it.
+                // A PERMANENT somebody else controls, taken (redefined 2026-11-08).
+                // The patterns are in StealPatterns, declared in
+                // EffectClassifier.Permanents.cs with the definition and what it
+                // dropped; the exiled-then-yours route (Sothera) is in Classify.
                 (CardEffect.Steal, StealPatterns),
 
                 // Widened 2026-09-19. The old pair read "search your library for a
@@ -1801,7 +1801,11 @@ namespace ScatoloneDownloader.Cube
                     // nothing red, 2026-11-03). Protean Hulk's "total mana value 6
                     // or less" is the fixed cap's own words; a separate "total"
                     // alternative moved no card.
-                    Rx(@"search your library for (?:an?|any number of|up to \w+) "
+                    // Any player's library, ruled 2026-11-08 ("Cheat", Bribery,
+                    // when Steal stopped taking cards): the card is chosen and its
+                    // cost skipped all the same (Inevitable Betrayal, named, Steal
+                    // alone by hand until then).
+                    Rx(@"search (?:your|target opponent's|an opponent's|that player's) library for (?:an?|any number of|up to \w+) "
                         + @"(?![^.\n]{0,60}?\b(?:mana value (?:\d+|x) or less\b|lesser mana value\b))"
                         + @"[\w ]{0,30}creature cards?(?! with the same name)"
                         + @"[\w ,']{0,40}put (?:it|that card|them|those cards) onto the battlefield"),

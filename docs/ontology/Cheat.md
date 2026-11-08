@@ -168,7 +168,8 @@ cap is unchanged.
 Ruled 2026-11-03 on Gríma, Saruman's Footman ("Gríma +Cheat", asked against Bismuth Mindrender,
 the same trigger paid with life): the Caves ruling holds off the top of an OPPONENT's library too.
 A card exiled from it and cast or played free by YOU, with no cap, by an ability that repeats, is
-this tag, as the life-paid one has been since 2026-10-25; it keeps CardAdvantage and Steal. Gríma
+this tag, as the life-paid one has been since 2026-10-25; it keeps CardAdvantage (and Steal until
+2026-11-08). Gríma
 named and corrected; reached, reviewed without the tag and handed back: Strago and Relm, Fallen
 Shinobi (the top two cards, "those cards"), Fire Lord Ozai ("one of those cards") and Court of
 Locthwain (a spell from its pile once you are the monarch); proposed: Chaos Wand, Dazzling Sphinx,
@@ -238,3 +239,10 @@ creature, or enchantment an opponent controls. That player may put a permanent c
 onto the battlefield" (Divine Gambit, Removal and Disenchant by hand). A clause that carries you as
 well stays: Braids, Conjurer Adept's "at the beginning of each player's upkeep, that player may
 put".
+
+RULED 2026-11-08 with the Steal definition (Steal.md, Q1 "Cheat"): a creature card SEARCHED out of
+an OPPONENT'S library and put onto the battlefield under your control is this tag, the card chosen
+and its cost skipped as Natural Order's. Inevitable Betrayal named (Steal alone by hand until then),
+Bribery unreviewed. The same limits hold as for your own library: nothing off the top (Fishing Gear,
+Curse of Unbinding), a creature card, no cap. Read the same day under Gríma, 2026-11-03, above: the
+top of an opponent's library played free keeps CardAdvantage and this tag, but no longer Steal.

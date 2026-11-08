@@ -138,3 +138,14 @@ from your graveyard). Read on the two misses, each Reanimate by hand: a real alt
 Anrakyr the Traveller's life "rather than paying its mana cost" (as Cheat counts Leyline of
 Mutation), and Crabomination's spell cast free from among the cards an opponent exiled, one of them
 from their graveyard. Not a card casting itself for an alternative cost (Scourge of Nel Toth).
+
+RULED 2026-11-08 with the Steal definition (Steal.md, Q2 "Solo Reanimate, anche i 4"): out of an
+OPPONENT'S graveyard is this tag alone, never Steal as well (a card in a graveyard is no permanent),
+the pair Necromancy and Coffin Queen against Ashen Powder and Geth's Summons; 17 cards lost Steal.
+Two wordings read with it, each named: any permanent card CHOSEN in a graveyard and then put, "a
+creature or planeswalker card in that player's graveyard. Put those cards" (Breach the Multiverse)
+and "artifact or creature card in an opponent's graveyard that was put there from their library
+this turn. Put it" (Captain N'ghathrod); and a creature card PUT INTO a graveyard and then put onto
+the battlefield (Helm of Obedience, which mills until one turns up; Lorcan, Warlock Collector).
+Colossal Grave-Reaver, the same with your own mill, reviewed untagged on 2026-09-10, was reached and
+handed back; Grim Return and Scrounge are proposed the same.

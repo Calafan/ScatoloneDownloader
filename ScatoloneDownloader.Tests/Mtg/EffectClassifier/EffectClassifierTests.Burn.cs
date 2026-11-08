@@ -785,4 +785,28 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
     }
+
+    [Theory]
+    // Ruled 2026-11-08 with the Steal definition ('Burn'): an exchange of life
+    // totals is life the opponent loses, no permanent taken. Steal by hand until
+    // then, all four named.
+    [InlineData("Mirror Universe", "Artifact",
+        "{T}, Sacrifice this artifact: Exchange life totals with target opponent. Activate only during your "
+        + "upkeep.")]
+    [InlineData("Mister Negative", "Legendary Creature — Human Villain",
+        "Vigilance, lifelink\nDarkforce Inversion — When Mister Negative enters, you may exchange life totals "
+        + "with target opponent. If you lost life this way, draw that many cards.")]
+    [InlineData("Psychic Transfer", "Sorcery",
+        "If the difference between your life total and target player's life total is 5 or less, exchange life "
+        + "totals with that player.")]
+    [InlineData("Profane Transfusion", "Sorcery",
+        "Two target players exchange life totals. You create an X/X colorless Horror artifact creature token, "
+        + "where X is the difference between those players' life totals.")]
+    public void Classify_TheNovember8Ruling_AnExchangeOfLifeTotals_IsBurnNotSteal(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Burn));
+        Assert.False(result.HasFlag(CardEffect.Steal));
+    }
 }

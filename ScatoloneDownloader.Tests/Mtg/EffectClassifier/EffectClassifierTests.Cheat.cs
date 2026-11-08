@@ -840,4 +840,24 @@ public sealed partial class EffectClassifierTests
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Cheat));
     }
+
+    [Theory]
+    // Ruled 2026-11-08 ('Cheat'): a creature card searched out of an OPPONENT'S
+    // library and put onto the battlefield is a chosen card with its cost skipped,
+    // as Natural Order; no permanent of theirs is taken, so no Steal.
+    [InlineData("Bribery", "Sorcery",
+        "Search target opponent's library for a creature card and put that card onto the battlefield under "
+        + "your control. Then that player shuffles.")]
+    [InlineData("Inevitable Betrayal", "Sorcery",
+        "Suspend 3—{1}{U}{U} (Rather than cast this card from your hand, pay {1}{U}{U} and exile it with "
+        + "three time counters on it. At the beginning of your upkeep, remove a time counter. When the last is "
+        + "removed, you may cast it without paying its mana cost.)\nSearch target opponent's library for a "
+        + "creature card and put that card onto the battlefield under your control. Then that player shuffles.")]
+    public void Classify_TheNovember8Ruling_BriberySearchesTheirLibrary_IsCheatNotSteal(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Cheat));
+        Assert.False(result.HasFlag(CardEffect.Steal));
+    }
 }
