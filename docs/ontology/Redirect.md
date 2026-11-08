@@ -3,6 +3,17 @@
 Canonical record of the rulings for `CardEffect.Redirect`. The one-line tooltip shown in the tagger
 is in [`EffectGlossary.cs`](../../ScatoloneDownloader/Mtg/EffectGlossary.cs).
 
+**Definition, 2026-11-09** ("Sì, così"): a spell or ability ALREADY ON THE STACK, anybody's, made
+over without being countered: new targets, a new controller, or a copy (aimed at a target spell,
+the next one you cast, or each one of a kind you cast). Redirect is the card: "You may choose new
+targets for target spell." Out: a card copying only itself, a copy that is always a creature or
+another permanent (Tokens), a trigger that "triggers an additional time", and the three exceptions
+ruled below with their reasons (an ability copied on every activation, demonstrate, a copy aimed
+only at the card itself). It held on 84 reviewed cards (FP 0, FN 4, every miss a wording).
+
+The rulings below are the history; each one is consistent with the definition or kept as an
+exception with its reason.
+
 act on a spell already on the stack WITHOUT countering it: change its target (Misdirection,
 Deflection) or copy it (Fork, Reverberate, Twincast).
 
@@ -40,3 +51,28 @@ Read 2026-10-30: a copy of the NEXT instant or sorcery you cast this turn, with 
 you activate (Dynaheir, Invoker Adept, 2 of 2 with Pit Automaton). A TRIGGER on every activation,
 "whenever you activate …, copy that ability", stays out (0 of 10, Leori, Sparktouched Hunter in the
 same sitting).
+
+Ruled 2026-11-09 with the definition, Q1 ("Fuori"): an ABILITY copied on EVERY activation or
+trigger stays out, an exception kept with its reason: doubling your own abilities each time is a
+doubler like Panharmonicon's "triggers an additional time", not a play on the stack. 11 of 12
+reviewed were untagged (Rowan's Talent, Leori, Ertha Jo, Ashnod, Verrak, Chandra's Regulator,
+Mirror-Shield Hoplite, Aboleth Spawn, Agrus Kos, Firebender Ascension, Ulalek's abilities); The
+Enigma Jewel's Locus ("Whenever you activate an ability that isn't a mana ability, copy it") was
+the twelfth, ruled -Redirect. The ability AIMED ("copy target activated or triggered ability") and
+the NEXT one (Dynaheir, Pit Automaton) stay in.
+
+Ruled the same day, Q2 ("Fuori"): DEMONSTRATE given to your spells is not this. The copy handed to
+an opponent as well cancels yours: The Twelfth Doctor stays untagged, unlike storm or replicate
+given to your spells (Crackling Spellslinger, Threefold Signal).
+
+Ruled the same day, Q3 ("Fuori, regola di sé"): a copy that can only target the CARD ITSELF is the
+self rule every tag keeps (Mistfolk, 2026-11-08). Ivy, Gleeful Spellthief copies anybody's spell
+but "The copy targets Ivy": untagged. A copy aimed at "the chosen" permanent or at "that" creature
+is this tag (Exterminator Magmarch, Zevlor).
+
+Read the same day under the definition: an exchange of control takes the spell (Sudden
+Substitution, Steal for its creature); a target spell chosen and copied in the next sentence
+(Tempt with Mayhem, Radiate); "…, YOU MAY copy it" (Spider-Verse, Spinerock Tyrant); every spell
+you control copied at once (Ulalek). Reached and handed back, all reviewed before the ruling of
+09-28: Spider-Verse, Ulalek, Feather, Frontline Heroism (+Redirect). A copied ARTIFACT spell is
+always a permanent and becomes a token (Iron Man, Bleeding Edge), as the creature spell does.

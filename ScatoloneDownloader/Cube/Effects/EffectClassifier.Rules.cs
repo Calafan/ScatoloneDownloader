@@ -727,6 +727,17 @@ namespace ScatoloneDownloader.Cube
                         + @"|\bchoose target spell\b[^.\n]{0,60}\.\s*its owner puts it\b"),
                     Rx(@"(?<!\bto )\bairbend [^.\n]{0,40}\bspells?\b")]),
 
+                // Defined 2026-11-09 from Redirect ("You may choose new targets for
+                // target spell"; docs/ontology/Redirect.md): a spell or ability
+                // ALREADY ON THE STACK, anybody's, made over without being
+                // countered — new targets, a new controller, or a copy (aimed, the
+                // next one, or each one of a kind you cast). Out: a card copying
+                // only itself, a copy that is always a creature or another
+                // permanent (Tokens), a trigger that "triggers an additional time",
+                // an ability copied on every activation (Q1), a copy handed to an
+                // opponent as well (demonstrate, Q2), and a copy that can only
+                // target the card itself (Q3).
+                //
                 // The other way to answer something on the stack. "copy target" is
                 // required rather than the bare word "copy": a token that enters "as a
                 // copy OF target creature" is Tokens, not stack interaction.
@@ -757,8 +768,32 @@ namespace ScatoloneDownloader.Cube
                     // TARGETS for other spells outright (Boltbender), and taking
                     // CONTROL of the spell (Invert Polarity), which is not Steal —
                     // a spell is not a permanent.
+                    // An EXCHANGE of control takes the spell too, read 2026-11-09:
+                    // Sudden Substitution's "exchange control of target noncreature
+                    // spell and target creature" (Steal and Redirect by hand, 1 of
+                    // 1; the creature is Steal's).
                     Rx(@"choose new targets for (?:any number of )?(?:other |target )?spells?"
-                        + @"|gains? control of (?:target|that) spell"),
+                        + @"|gains? control of (?:target|that) spell"
+                        + @"|\bexchange control of target [\w ]{0,30}\bspell\b"),
+                    // Read 2026-11-09 under the definition. A copy AIMED by the
+                    // card: "Copy that spell. The copy targets the chosen permanent"
+                    // (Exterminator Magmarch, Zevlor, 2 of 2 by hand; Feather and
+                    // Frontline Heroism, untagged on 09-23 before the ruling of
+                    // 09-28, handed back). The aim must be "the chosen" or "that":
+                    // a copy that can only target the card itself is the self rule
+                    // (Q3, "Fuori, regola di sé": Ivy, Gleeful Spellthief's "The
+                    // copy targets Ivy", untagged).
+                    Rx(@"\bcopy that spell(?: for each [^.\n]{0,80})?(?:\.|,)(?: and)? the copy targets (?:the chosen|that)\b"),
+                    // A target spell chosen first and copied in the next sentence:
+                    // Tempt with Mayhem's "Choose target instant or sorcery spell.
+                    // … You copy that spell once plus an additional time" (1 of 1
+                    // by hand), and Radiate's "Copy that spell for each other
+                    // permanent or player".
+                    Rx(@"\bchoose target [\w ]{0,40}\bspell\b[^.\n]{0,100}\.[^\n]{0,200}?\bcop(?:y|ies) that spell\b"),
+                    // Every spell of yours on the stack copied at once: Ulalek,
+                    // Fused Atrocity's "copy all spells you control" (untagged on
+                    // 09-12 before the ruling of 09-28, handed back).
+                    Rx(@"\bcop(?:y|ies) (?:all|each) (?:other )?spells? you control\b"),
                     // Copying a spell of YOUR OWN is this tag too, ruled 2026-09-28,
                     // which OVERTURNS the 2026-09-19 ruling that took it off: every
                     // such card reviewed since 09-23 had been tagged (Sword of Wealth
@@ -779,7 +814,16 @@ namespace ScatoloneDownloader.Cube
                     // none at all in the cube (Thunderclap Drake). A copy of a
                     // CREATURE spell is a token and is Tokens, not this — see
                     // CopiesYourCreatureSpell.
-                    Rx(@"(?<!\bcast this spell\b[^.\n]{0,80})\bcop(?:y|ies) (?:it|that spell(?: or ability)?|them)\b"
+                    // An ability copied on EVERY activation stays out, ruled
+                    // 2026-11-09 (Q1, "Fuori"): doubling your own abilities each
+                    // time is a doubler like Panharmonicon's "triggers an
+                    // additional time", not a play on the stack. 11 of 12 reviewed
+                    // were untagged (Rowan's Talent, Leori, Ertha Jo, Ashnod,
+                    // Verrak, Chandra's Regulator, …); The Enigma Jewel's Locus
+                    // ("Whenever you activate an ability that isn't a mana
+                    // ability, copy it") was the twelfth and was ruled -Redirect.
+                    Rx(@"(?<!\bcast this spell\b[^.\n]{0,80})(?<!\bwhenever you activate [^.\n]{0,120})"
+                        + @"\bcop(?:y|ies) (?:it|that spell(?: or ability)?|them)\b"
                         + @"[^.\n]{0,60}?(?:\.|,| and) you may choose new targets for the cop(?:y|ies)"
                         // Two more delayed copies, read 2026-10-30: "copy THE NEXT
                         // instant or sorcery spell you cast this turn when you cast
@@ -792,9 +836,21 @@ namespace ScatoloneDownloader.Cube
                         // in the same sitting).
                         + @"|\bcopy the next [\w ]{0,40}spell you cast this turn when you cast it\. you may choose new targets for the copy"
                         + @"|\bwhen you next activate [^.\n]{0,120}, copy that ability\. you may choose new targets for the copy"),
+                    // "…, YOU MAY copy it" is the same copy, read 2026-11-09:
+                    // Spider-Verse (untagged on 09-10 before the ruling of 09-28,
+                    // handed back) and three reviewed cards already tagged. Not
+                    // when an opponent copies it as well: demonstrate's reminder
+                    // "When you cast that spell, you may copy it. If you do,
+                    // choose an opponent to also copy it" (Q2, "Fuori": The
+                    // Twelfth Doctor, untagged). A spell that is always a
+                    // permanent becomes a token (artifact: Iron Man, Bleeding
+                    // Edge); historic and colorless are not always one (The Sixth
+                    // Doctor, Echoes of Eternity, Redirect by hand).
                     Rx(@"\b(?:whenever|when) you (?:next )?cast "
-                        + @"(?!this spell\b)(?![^.\n,]{0,60}\b(?:creature|outlaw|permanent) spell)[^.\n,]{0,60}\bspells?\b[^.\n,]{0,40}, "
-                        + @"copy (?:it|that spell)\b(?! for each time you've cast your commander)")]),
+                        + @"(?!this spell\b)(?![^.\n,]{0,60}\b(?:creature|outlaw|permanent|artifact) spell)"
+                        + @"[^.\n,]{0,60}\bspells?\b[^.\n,]{0,40}, "
+                        + @"(?:you may )?copy (?:it|that spell)\b(?! for each time you've cast your commander)"
+                        + @"(?!\. if you do, choose an opponent to also copy)")]),
 
                 // Bounce has to say WHICH permanent goes back, because the bare
                 // sentence is just as often the price the card pays: Ovinomancer's

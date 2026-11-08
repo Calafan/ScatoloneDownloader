@@ -45,6 +45,28 @@ public sealed partial class EffectClassifierTests
     [InlineData("Invert Polarity", "Instant",
         "Choose target spell, then flip a coin. If you win the flip, gain control of that spell and you may "
         + "choose new targets for it. If you lose the flip, counter that spell.")]
+    // Read 2026-11-09 under the definition (Redirect, docs/ontology/Redirect.md):
+    // an exchange of control takes the spell (Sudden Substitution, Steal for the
+    // creature), a target spell chosen and copied in the next sentence (Tempt with
+    // Mayhem), and a copy aimed at the chosen permanent (Exterminator Magmarch,
+    // Zevlor).
+    [InlineData("Sudden Substitution", "Instant",
+        "Split second (As long as this spell is on the stack, players can't cast spells or activate abilities "
+        + "that aren't mana abilities.)\nExchange control of target noncreature spell and target creature. Then "
+        + "the spell's controller may choose new targets for it.")]
+    [InlineData("Tempt with Mayhem", "Instant",
+        "Tempting offer — Choose target instant or sorcery spell. Each opponent may copy that spell and may "
+        + "choose new targets for the copy they control. You copy that spell once plus an additional time for "
+        + "each opponent who copied the spell this way. You may choose new targets for the copies you control.")]
+    [InlineData("Exterminator Magmarch", "Artifact Creature — Phyrexian Construct",
+        "Whenever you cast an instant or sorcery spell that targets only a single nonland permanent an "
+        + "opponent controls, if another opponent controls one or more nonland permanents that spell could "
+        + "target, choose one of those permanents. Copy that spell. The copy targets the chosen "
+        + "permanent.\n{1}{B}: Regenerate this creature.")]
+    [InlineData("Zevlor, Elturel Exile", "Legendary Creature — Tiefling Warrior",
+        "Haste\n{2}, {T}: When you next cast an instant or sorcery spell that targets only a single opponent "
+        + "or a single permanent an opponent controls this turn, for each other opponent, choose that player or "
+        + "a permanent they control, copy that spell, and the copy targets the chosen player or permanent.")]
     public void Classify_ActingOnASpellWithoutCounteringIt_IsRedirect(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Redirect));
@@ -86,6 +108,27 @@ public sealed partial class EffectClassifierTests
         "({U/R} can be paid with either {U} or {R}.)\nFlying\nEach instant and sorcery spell you cast has "
         + "replicate. The replicate cost is equal to its mana cost. (When you cast it, copy it for each time "
         + "you paid its replicate cost. You may choose new targets for the copies.)")]
+    // Reached 2026-11-09 by the definition, all reviewed before the ruling of
+    // 09-28 and handed back: "you may copy it" (Spider-Verse), every spell you
+    // control copied (Ulalek), and the copy aimed at your other creatures or at
+    // the token (Feather, Frontline Heroism).
+    [InlineData("Spider-Verse", "Enchantment",
+        "The \"legend rule\" doesn't apply to Spiders you control.\nWhenever you cast a spell from anywhere "
+        + "other than your hand, you may copy it. If you do, you may choose new targets for the copy. If the "
+        + "copy is a permanent spell, it gains haste. Do this only once each turn.")]
+    [InlineData("Ulalek, Fused Atrocity", "Legendary Creature — Eldrazi",
+        "Devoid (This card has no color.)\nWhenever you cast an Eldrazi spell, you may pay {C}{C}. If you do, "
+        + "copy all spells you control, then copy all other activated and triggered abilities you control. You "
+        + "may choose new targets for the copies. (Mana abilities can't be copied.)")]
+    [InlineData("Feather, Radiant Arbiter", "Legendary Creature — Angel",
+        "Flying, lifelink\nWhenever you cast a noncreature spell that targets only Feather, you may choose any "
+        + "number of other creatures that spell could target and pay {2} for each of those creatures. If you "
+        + "do, for each of those creatures, copy that spell. The copy targets that creature. (Copies of "
+        + "permanent spells become tokens.)")]
+    [InlineData("Frontline Heroism", "Enchantment",
+        "When this enchantment enters, create a 1/1 red Soldier creature token with haste.\nWhenever you cast "
+        + "a spell that targets only a single creature you control, create a 1/1 red Soldier creature token "
+        + "with haste, then copy that spell. The copy targets that token.")]
     public void Classify_CopyingYourOwnSpell_IsRedirect(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Redirect));
@@ -112,6 +155,42 @@ public sealed partial class EffectClassifierTests
         + "When you next cast an instant or sorcery spell this turn, copy it for each time you've cast your "
         + "commander from the command zone this game. You may choose new targets for the copies.")]
     public void Classify_ACardCopyingOnlyItself_IsNotRedirect(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Redirect));
+    }
+
+    [Theory]
+    // Ruled 2026-11-09 with the definition. Q1: an ability copied on EVERY
+    // activation is a doubler like Panharmonicon, not a play on the stack (The
+    // Enigma Jewel ruled -Redirect, Rowan's Talent untagged, 11 of 12). Q2:
+    // demonstrate hands an opponent a copy too (The Twelfth Doctor). Q3: a copy
+    // that can only target the card itself is the self rule (Ivy). A copied
+    // ARTIFACT spell is always a permanent and becomes a token (Iron Man,
+    // unreviewed).
+    [InlineData("The Enigma Jewel // Locus of Enlightenment", "Legendary Artifact // Legendary Artifact",
+        "The Enigma Jewel enters tapped.\n{T}: Add {C}{C}. Spend this mana only to activate abilities.\nCraft "
+        + "with four or more nonlands with activated abilities {8}{U} ({8}{U}, Exile this artifact, Exile the "
+        + "four or more from among other permanents you control and/or cards in your graveyard: Return this "
+        + "card transformed under its owner's control. Craft only as a sorcery.)\nLocus of Enlightenment has "
+        + "each activated ability of the exiled cards used to craft it. You may activate each of those "
+        + "abilities only once each turn.\nWhenever you activate an ability that isn't a mana ability, copy it. "
+        + "You may choose new targets for the copy.")]
+    [InlineData("Rowan's Talent", "Enchantment — Aura",
+        "Enchant planeswalker\nEnchanted planeswalker has \"[+1]: Up to one target creature gets +2/+0 and "
+        + "gains first strike and trample until end of turn.\"\nWhenever you activate a loyalty ability of "
+        + "enchanted planeswalker, copy that ability. You may choose new targets for the copy.")]
+    [InlineData("The Twelfth Doctor", "Legendary Creature — Time Lord Doctor",
+        "The first spell you cast from anywhere other than your hand each turn has demonstrate. (When you "
+        + "cast that spell, you may copy it. If you do, choose an opponent to also copy it. A copy of a "
+        + "permanent spell becomes a token.)\nWhenever you copy a spell, put a +1/+1 counter on The Twelfth "
+        + "Doctor.")]
+    [InlineData("Ivy, Gleeful Spellthief", "Legendary Creature — Faerie Rogue",
+        "Flying\nWhenever a player casts a spell that targets only a single creature other than Ivy, you may "
+        + "copy that spell. The copy targets Ivy. (A copy of an Aura spell becomes a token.)")]
+    [InlineData("Iron Man, Bleeding Edge", "Legendary Artifact Creature — Human Hero",
+        "Flying\nWhenever you cast an artifact spell, you may copy it, except the copy isn't legendary. Do "
+        + "this only once each turn. (The copy becomes a token.)")]
+    public void Classify_OutsideTheRedirectDefinition_IsNotRedirect(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Redirect));
     }

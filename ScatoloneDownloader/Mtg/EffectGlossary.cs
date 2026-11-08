@@ -165,10 +165,10 @@
                 + "A graveyard is Reanimate, a land Ramp.",
 
             [CardEffect.Redirect] =
-                "Acts on a spell without countering it: changes its targets, takes control of it, or copies it — "
-                + "anybody's (\"copy TARGET spell\") or YOUR OWN (\"when you next cast… copy that spell\", or "
-                + "storm or replicate given to your spells). Not a card copying only itself, and not a copied "
-                + "CREATURE spell, which is Tokens.",
+                "A spell or ability ALREADY ON THE STACK, anybody's, made over without countering it: new targets, "
+                + "a new controller, or a copy — aimed, the next one, or each one you cast (Redirect, Fork). Not a card "
+                + "copying itself, a copied permanent spell (Tokens), an ability copied on every use, demonstrate, "
+                + "or a copy aimed only at itself.",
         };
 
         /// <summary>The line for one effect, or an empty string when a member has
