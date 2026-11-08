@@ -1325,12 +1325,20 @@ namespace ScatoloneDownloader.Cube
         // cards that return your own permanent are tagged, and those three are
         // taken to the human as probable slips. Blanked and the Bounce patterns
         // asked again.
+        // Two more read 2026-11-08 under the definition (a PERMANENT goes back,
+        // docs/ontology/Bounce.md): every card exiled with the card, "return ALL
+        // cards exiled with" (Bag of Holding, untagged by hand; Asmodeus,
+        // Northampton Farm), and a CARD from a graveyard (Disturbing Plot, Pulse
+        // of Murasa, Saprazzan Bailiff: Regrowth, not this; 10 proposed, none
+        // reviewed). "All creatures ON THE BATTLEFIELD and all creature cards in
+        // graveyards" (Soulquake) still returns the board.
         private static readonly Regex NotAnAnswerToHand = Rx(
             @"\breturn (?:(?!to (?:its|their) owners?'?s? hands?|don'?t control|opponents? controls?|auras? you (?:control|own))[^.\n]){0,60}"
             + @"\byou (?:control|own)\b"
             + @"(?:(?!to (?:its|their) owners?'?s? hands?|don'?t control|opponents? controls?)[^.\n]){0,60}to (?:its|their) owners?'?s? hands?"
             + @"|\breturn target (?:island|swamp|mountain|forest|plains|land)\b[^.\n]*"
-            + @"|\breturn target card exiled with[^.\n]*");
+            + @"|\breturn (?:target|all|each other) cards? exiled with[^.\n]*"
+            + @"|\breturn (?:(?!battlefield)[^.\n]){0,50}?\bcards? (?:from|in) [^.\n]{0,30}?graveyards?[^.\n]{0,20}?to (?:its|their) owners?'?s? hands?");
 
         // The lines a Protection effect can be held up from without being an
         // instant or having flash: an ACTIVATED ability, a card turned FACE UP

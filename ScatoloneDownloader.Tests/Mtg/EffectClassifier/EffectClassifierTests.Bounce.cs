@@ -203,4 +203,111 @@ public sealed partial class EffectClassifierTests
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Bounce));
     }
+
+    [Theory]
+    // Defined 2026-11-08 from Unsummon: a nonland permanent that can be somebody
+    // else's leaves the battlefield and stays its owner's, in hand, on or near the
+    // top of the library. Read the same day: the owner of a longer target list
+    // (Endless Detour) or of up to one other target (Plan for All Outcomes); any
+    // nonland permanent put on top, not a creature alone (Disempower, corrected by
+    // name; Temporal Eddy, Metamorphose, Dovin's Dismissal); 'and/or' and 'non-
+    // Spacecraft' in the list (Sea God's Scorn, Roaming Ghostlight, Specimen
+    // Freighter, handed back); an Aura's creature put near the top (Shattered
+    // Ego); a CLEAVE card read with the cost paid (Lunar Rejection, Alchemist's
+    // Retrieval). Creatures on the battlefield beside creature cards in graveyards
+    // still bounce (Soulquake).
+    [InlineData("Endless Detour", "Instant",
+        "The owner of target spell, nonland permanent, or card in a graveyard puts it on their choice of the "
+        + "top or bottom of their library.")]
+    [InlineData("Plan for All Outcomes", "Enchantment",
+        "When this enchantment enters, the owner of up to one other target nonland permanent puts it on their "
+        + "choice of the top or bottom of their library.\nWhenever you cast your first noncreature spell each "
+        + "turn, empower Jace 1. (Put a loyalty counter on a Jace token you control. If you don't control one, "
+        + "first create a blue Jace planeswalker token with \"[−1]: Surveil 1\" and \"[−3]: Draw a card.\")")]
+    [InlineData("Disempower", "Instant",
+        "Put target artifact or enchantment on top of its owner's library.")]
+    [InlineData("Temporal Eddy", "Sorcery",
+        "Put target creature or land on top of its owner's library.")]
+    [InlineData("Metamorphose", "Instant",
+        "Put target permanent an opponent controls on top of its owner's library. That opponent may put an "
+        + "artifact, creature, enchantment, or land card from their hand onto the battlefield.")]
+    [InlineData("Dovin's Dismissal", "Instant",
+        "Put up to one target tapped creature on top of its owner's library. You may search your library "
+        + "and/or graveyard for a card named Dovin, Architect of Law, reveal it, and put it into your hand. If "
+        + "you search your library this way, shuffle.")]
+    [InlineData("Sea God's Scorn", "Sorcery",
+        "Return up to three target creatures and/or enchantments to their owners' hands.")]
+    [InlineData("Roaming Ghostlight", "Creature — Spirit",
+        "Flying\nWhen this creature enters, return up to one target non-Spirit creature to its owner's hand.")]
+    [InlineData("Specimen Freighter", "Artifact — Spacecraft",
+        "When this Spacecraft enters, return up to two target non-Spacecraft creatures to their owners' "
+        + "hands.\nStation (Tap another creature you control: Put charge counters equal to its power on this "
+        + "Spacecraft. Station only as a sorcery. It's an artifact creature at 9+.)\n9+ | Flying\nWhenever this "
+        + "Spacecraft attacks, defending player mills four cards.")]
+    [InlineData("Shattered Ego", "Enchantment — Aura",
+        "Enchant creature\nEnchanted creature gets -3/-0.\n{3}{U}{U}: Put enchanted creature into its owner's "
+        + "library third from the top.")]
+    [InlineData("Lunar Rejection", "Instant",
+        "Cleave {3}{U} (You may cast this spell for its cleave cost. If you do, remove the words in square "
+        + "brackets.)\nReturn target [Wolf or Werewolf] creature to its owner's hand.\nDraw a card.")]
+    [InlineData("Alchemist's Retrieval", "Instant",
+        "Cleave {1}{U} (You may cast this spell for its cleave cost. If you do, remove the words in square "
+        + "brackets.)\nReturn target nonland permanent [you control] to its owner's hand.")]
+    [InlineData("Soulquake", "Sorcery",
+        "Return all creatures on the battlefield and all creature cards in graveyards to their owners' hands.")]
+    public void Classify_TheNovember8BounceDefinition_IsBounce(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Bounce));
+    }
+
+    [Theory]
+    // Not a permanent, 2026-11-08: every card exiled with the card (Bag of
+    // Holding, untagged by hand; Asmodeus, Northampton Farm) and a card from a
+    // graveyard, which is Regrowth (Disturbing Plot, Saprazzan Bailiff). A
+    // commander sent to the command zone, Q1: a cube game has no commander, as for
+    // Lieutenant (Leadership Vacuum, corrected by name). A land alone on top stays
+    // out (Uproot).
+    [InlineData("Bag of Holding", "Artifact",
+        "Whenever you discard a card, exile that card from your graveyard.\n{2}, {T}: Draw a card, then "
+        + "discard a card.\n{4}, {T}, Sacrifice this artifact: Return all cards exiled with this artifact to "
+        + "their owner's hand.")]
+    [InlineData("Asmodeus the Archfiend", "Legendary Creature — Devil God",
+        "Binding Contract — If you would draw a card, exile the top card of your library face down "
+        + "instead.\n{B}{B}{B}: Draw seven cards.\n{B}: Return all cards exiled with Asmodeus to their owner's "
+        + "hand and you lose that much life.")]
+    [InlineData("Northampton Farm", "Land",
+        "{T}: Add {C}.\n{1}, {T}: Exile target creature you own.\n{2}, {T}, Sacrifice this land: Return a "
+        + "creature card exiled with this land to the battlefield under your control. Return each other card "
+        + "exiled with this land to its owner's hand.")]
+    [InlineData("Disturbing Plot", "Sorcery",
+        "Return target creature card from a graveyard to its owner's hand.\nConspire (As you cast this spell, "
+        + "you may tap two untapped creatures you control that share a color with it. When you do, copy it and "
+        + "you may choose a new target for the copy.)")]
+    [InlineData("Saprazzan Bailiff", "Creature — Merfolk",
+        "When this creature enters, exile all artifact and enchantment cards from all graveyards.\nWhen this "
+        + "creature leaves the battlefield, return all artifact and enchantment cards from all graveyards to "
+        + "their owners' hands.")]
+    [InlineData("Leadership Vacuum", "Instant",
+        "Target player returns each commander they control from the battlefield to the command zone.\nDraw a "
+        + "card.")]
+    [InlineData("Uproot", "Sorcery — Arcane",
+        "Put target land on top of its owner's library.")]
+    public void Classify_TheNovember8BounceDefinition_IsNotBounce(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Bounce));
+    }
+
+    [Theory]
+    // Q2 of 2026-11-08: an exile its owner may play only until the end of their
+    // next turn is played again at once, a bounce like Soul Partition.
+    [InlineData("Suspend Aggression", "Instant",
+        "Exile target nonland permanent and the top card of your library. For each of those cards, its owner "
+        + "may play it until the end of their next turn.")]
+    public void Classify_AnExileItsOwnerMayPlayUntilTheirNextTurn_IsBounceNotRemovePermanent(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Bounce));
+        Assert.False(result.HasFlag(CardEffect.RemovePermanent));
+    }
 }

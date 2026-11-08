@@ -763,6 +763,34 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
+    // Q3 of 2026-11-08, for every tag: a CLEAVE card is read with the words in
+    // square brackets and without them, and keeps what either reading earns.
+    // Fierce Retribution's '[attacking]' and Parasitic Grasp's '[Human]' go with
+    // the cleave cost.
+    [InlineData("Fierce Retribution", "Instant",
+        "Cleave {5}{W} (You may cast this spell for its cleave cost. If you do, remove the words in square "
+        + "brackets.)\nDestroy target [attacking] creature.")]
+    [InlineData("Parasitic Grasp", "Instant",
+        "Cleave {1}{B}{B} (You may cast this spell for its cleave cost. If you do, remove the words in square "
+        + "brackets.)\nParasitic Grasp deals 3 damage to target [Human] creature. You gain 3 life.")]
+    public void Classify_ACleaveCard_IsReadWithTheCleaveCostPaidToo(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
+    // …and the printed reading stays: Alchemist's Retrieval returns a nonland
+    // permanent YOU control as printed, Protection, and anybody's cleaved, Bounce
+    // (2026-11-08).
+    [InlineData("Alchemist's Retrieval", "Instant",
+        "Cleave {1}{U} (You may cast this spell for its cleave cost. If you do, remove the words in square "
+        + "brackets.)\nReturn target nonland permanent [you control] to its owner's hand.")]
+    public void Classify_ACleaveCard_KeepsThePrintedReading(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
     // A card nobody casts carries no tags (2026-10-23): a token, a dungeon, an
     // emblem, a designation. 29 reviewed, all untagged; Treasure's Ramp is the
     // Ramp of the card that makes it.

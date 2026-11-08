@@ -172,6 +172,15 @@ namespace ScatoloneDownloader.Cube
         /// veto at the top of <see cref="Classify"/>.</summary>
         private static readonly Regex LieutenantAbility = Rx(@"^lieutenant — [^\n]*", RegexOptions.Multiline);
 
+        /// <summary>A CLEAVE card, by its keyword line, and the words in square
+        /// brackets that paying the cleave cost removes, with the space before
+        /// them. See the reading at the top of <see cref="Classify"/>.</summary>
+        private static readonly Regex CleaveKeyword = Rx(@"^cleave\b", RegexOptions.Multiline);
+
+        private static readonly Regex CleaveWords = Rx(@" ?\[[^\]\n]*\]");
+
+        private static readonly Regex CleaveBracket = Rx(@"[\[\]]");
+
         /// <summary>The front type line of a card nobody casts: a token, a
         /// dungeon, an emblem or a designation ("Card"). See the veto at the
         /// top of <see cref="Classify"/>.</summary>
@@ -224,6 +233,20 @@ namespace ScatoloneDownloader.Cube
             if (LieutenantAbility.IsMatch(text))
             {
                 return Classify(new OneAbility(card, LieutenantAbility.Replace(text, " ")));
+            }
+
+            // A CLEAVE card is read both ways, ruled 2026-11-08 for every tag
+            // ("cleave pagato, ogni tag"): with the words in square brackets, as
+            // printed, and without them, as cast for the cleave cost; it keeps
+            // what either reading earns. Alchemist's Retrieval's "Return target
+            // nonland permanent [you control]" is an Unsummon cleaved, and Wash
+            // Away, the one reviewed cleave card with a tag, was already Counter
+            // by hand for "Counter target spell" whoever cast it. Neither reading
+            // has a bracket left, so neither comes back here.
+            if (CleaveKeyword.IsMatch(text) && CleaveWords.IsMatch(text))
+            {
+                return Classify(new OneAbility(card, CleaveBracket.Replace(text, string.Empty)))
+                    | Classify(new OneAbility(card, CleaveWords.Replace(text, string.Empty)));
             }
 
             if (text.Length > 0)

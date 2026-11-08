@@ -26,6 +26,13 @@
     /// 2026-10-23: 29 reviewed, all 29 untagged. Ante cards are the same
     /// (docs/ontology/CardAdvantage.md).
     ///
+    /// A cube game has no COMMANDER, ruled 2026-10-15 for Lieutenant ("mai
+    /// conta, per nessun tag") and again 2026-11-08 for a commander sent to the
+    /// command zone (Leadership Vacuum, docs/ontology/Bounce.md). A CLEAVE card
+    /// is read twice, with the words in square brackets and without, and keeps
+    /// what either reading earns, ruled 2026-11-08 for every tag ("cleave
+    /// pagato, ogni tag"; docs/ontology/Bounce.md, Q3).
+    ///
     /// Deliberately absent, decided 2026-09-05 — every tag is a question asked of
     /// 30k cards, so one that never changes a design decision costs and returns
     /// nothing:

@@ -285,7 +285,9 @@ namespace ScatoloneDownloader.Cube
                     Rx(@"(?:destroy|exile) (?:[\w ]{0,15})?target (?:(?:non[\w-]+|legendary),? )*permanent"
                         + @"(?!s? you (?:own|control)\b)(?!s? cards?\b)"
                         + @"(?![\w ,]{0,30}(?:,? then return it|\. return (?:it|that card)) to the battlefield)"
-                        + @"(?!s?\.[^.\n]{0,60}\bits owner may (?:play|cast) it\b)"
+                        // " and the top card of your library" may stand before the
+                        // period (Suspend Aggression, Bounce, Q2 of 2026-11-08).
+                        + @"(?!s?(?: and [^.\n]{0,40})?\.[^.\n]{0,60}\bits owner may (?:play|cast) it\b)"
                         + @"(?![\s\S]*\breturn the exiled cards? to (?:their|its) owners?'? hands?)"
                         + @"|destroy up to \w+ other target nonland permanents"),
                     Rx(@"(?:destroy|exile) (?:[\w ]{0,15})?target tokens?\b"),
@@ -808,8 +810,16 @@ namespace ScatoloneDownloader.Cube
                 // A SPELL returned and nothing else is Counter instead (Reprieve,
                 // Spellscorn Coven, 2026-10-13); "target spell OR nonland
                 // permanent" keeps this for its permanent.
+                //
+                // Defined 2026-11-08 from Unsummon (docs/ontology/Bounce.md): a
+                // NONLAND permanent that can be somebody else's leaves the
+                // battlefield but stays its owner's, who has to play it again —
+                // in hand, on or near the top of the library, or in an exile its
+                // owner may play it from. Tempo, not removal. Read the same day:
+                // the list may say "and/or" and "non-Spirit" (Sea God's Scorn,
+                // Baral's Expertise, Repulsor Bots, Roaming Ghostlight).
                 (CardEffect.Bounce, [
-                    Rx(@"return (?:[\w' ]{0,30})?target(?! spells?(?: you don't control)? to )[\w ,']*to (?:its|their) owner(?:'s|s'|s)? hands?"),
+                    Rx(@"return (?:[\w' ]{0,30})?target(?! spells?(?: you don't control)? to )[\w ,'/-]*to (?:its|their) owner(?:'s|s'|s)? hands?"),
                     // …but not LANDS alone: returning every Island is a mana base
                     // set back, which the human tags LandDestruction and Wipe and not
                     // this (Omen of Fire, 2026-09-28).
@@ -824,7 +834,11 @@ namespace ScatoloneDownloader.Cube
                     // Jailbreak Scheme), and none was read before 2026-09-25.
                     // Widened 2026-09-29 for "THE OWNER OF TARGET nonland permanent
                     // puts it on their choice" (Riverwalk Technique, Sudden Setback).
-                    Rx(@"owner (?:of target [^.\n]{0,40})?puts it on their choice of the top or bottom of their library"),
+                    // Read 2026-11-08: a longer list, "target spell, nonland
+                    // permanent, or card in a graveyard" (Endless Detour, Bounce
+                    // by hand), and "of UP TO ONE OTHER target" (Plan for All
+                    // Outcomes).
+                    Rx(@"owner (?:of (?:up to \w+ )?(?:other )?target [^.\n]{0,60})?puts it on their choice of the top or bottom of their library"),
                     // …and the other library placements the hand tags carry on every
                     // reviewed card (8 of 8), read the same day: ON TOP of its
                     // owner's library (Time Ebb, Ether Well — "creature" must meet
@@ -835,7 +849,17 @@ namespace ScatoloneDownloader.Cube
                     // Gearhulk) — of a TARGET, because the God-Eternals, Borborygmos
                     // and Fblthp and Braided Net put THEMSELVES there, and Lost Hours
                     // a card from a hand.
-                    Rx(@"put target [\w ]{0,30}creature on top of its owner's library"
+                    // Read 2026-11-08 under the definition: ANY nonland permanent
+                    // put on top, not a creature alone — "target artifact or
+                    // enchantment" (Disempower, untagged by hand on 09-08 and
+                    // corrected by name), "nonland permanent" (Set Adrift,
+                    // Vanishment), "permanent an opponent controls" (Metamorphose),
+                    // "creature or land" (Temporal Eddy), "up to one target tapped
+                    // creature" (Dovin's Dismissal). A land alone stays out
+                    // (Uproot, Rootrunner: LandDestruction), and so does a card
+                    // from a graveyard (Noxious Revival).
+                    Rx(@"put (?:up to \w+ )?target (?:[\w,]+ ){0,5}?(?:creature|permanent|artifact|enchantment|planeswalker)"
+                        + @"(?: or land)?(?: an opponent controls)? on top of its owner's library"
                         // FOURTH joined 2026-10-14 (Lost to Legend).
                         + @"|\btarget [^.\n]{0,60}\binto (?:their|its owner's) library (?:second|third|fourth) from the top"),
                     // Creatures the OPPONENTS chose, returned (Summon: Valefor),
@@ -854,7 +878,10 @@ namespace ScatoloneDownloader.Cube
                         + @"(?![^.\n]{0,50}\byou control)[^.\n]{0,40}?\b(?:creatures?|permanents?|spells?)\b"),
                     // An Aura's creature returned, however it is paid for (Phantom
                     // Wings, Sun Clasp — "bounce entrambe", 2026-09-29).
-                    Rx(@"return enchanted creature to its owner's hand"),
+                    // Read 2026-11-08: or put into its owner's library third from
+                    // the top (Shattered Ego).
+                    Rx(@"return enchanted creature to its owner's hand"
+                        + @"|put enchanted creature (?:on top of|into) its owner's library(?: (?:second|third|fourth) from the top)?"),
                     // A permanent exiled until the card leaves or dies and then
                     // returned to its owner's HAND is bounced, if late (Aurelia's
                     // Vindicator, The Spot — ruled Bounce and Regrowth, 2026-09-29).
@@ -870,8 +897,12 @@ namespace ScatoloneDownloader.Cube
                     // ruled 2026-11-08 under the RemovePermanent definition: Soul
                     // Partition (RemovePermanent by hand, corrected by name) and
                     // Aerial Extortionist (Bounce by hand), like airbend.
+                    // Ruled 2026-11-08 (Q2): one its owner may play only UNTIL THE
+                    // END OF THEIR NEXT TURN is this too, played again at once
+                    // (Suspend Aggression, proposed RemovePermanent before).
                     Rx(@"exile (?:up to (?:\w+|x) )?target [\w ]{0,30}creatures?\.[^.\n]{0,30}\bits owner may play it for as long as it remains exiled"
-                        + @"|exile (?:up to (?:\w+|x) )?(?:other )?target [\w ]{0,30}(?:creatures?(?: or vehicles?)?|permanents?)\. for as long as that card remains exiled, its owner may (?:play|cast) it")]),
+                        + @"|exile (?:up to (?:\w+|x) )?(?:other )?target [\w ]{0,30}(?:creatures?(?: or vehicles?)?|permanents?)(?: and [^.\n]{0,40})?\. "
+                        + @"(?:for as long as that card remains exiled|for each of those cards), its owner may (?:play|cast) it")]),
 
                 // The old rule was two lines of `destroy target[\w ]*(artifact|
                 // enchantment)`, and that `[\w ]*` was free to run the length of the

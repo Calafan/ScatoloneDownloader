@@ -53,10 +53,10 @@
                 + "own, lands or artifacts alone.",
 
             [CardEffect.Bounce] =
-                "Returns a NAMED permanent to its owner's hand (\"return target …\", or a mass \"return each/all\"), "
-                + "or puts it on top of, or near the top of, its owner's library. Returning itself as a cost or a "
-                + "drawback is a price, not an answer; so is returning your OWN permanent, and a land returned "
-                + "sets a mana base back and is not a bounce.",
+                "A nonland permanent that can be somebody else's leaves the battlefield but stays its owner's, "
+                + "who plays it again: back in hand, on or near the top of the library, or exiled where they may "
+                + "play it. Unsummon. Not itself as a price, your own alone, lands, spells, cards in a graveyard, "
+                + "the bottom or a shuffle.",
 
             [CardEffect.Ramp] =
                 "More mana, or sooner: a mana ability on a creature or rock, a land onto the battlefield, a ritual, "
