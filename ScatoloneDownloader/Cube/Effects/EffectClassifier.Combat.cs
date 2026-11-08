@@ -903,8 +903,9 @@ namespace ScatoloneDownloader.Cube
         // sull'opponent per prendere tempo che su di te per salvare qualcosa".
         // The permanent has to be a CREATURE — Vision Charm phases an artifact
         // and is Mill and Protection — and an O-RING phase-out that lasts until
-        // the enchantment leaves is Removal instead (Oubliette, The Phasing of
-        // Zhalfir): a phasing that lasts as long as the card does, settled in
+        // the enchantment leaves is Removal instead (Oubliette; a nonland
+        // permanent so, The Phasing of Zhalfir, is RemovePermanent since
+        // 2026-11-08): a phasing that lasts as long as the card does, settled in
         // Removal.md and read in the Removal table; the "until" look-ahead
         // below keeps it out of this tag. (Until 2026-10-14 this read "no
         // ruling yet".)

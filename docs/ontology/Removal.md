@@ -169,3 +169,7 @@ control" shows its "you control" now that the type list may close with and/or an
 type list is a blink again (Flicker of Fate, the 2026-10-14 reading, was proposed Removal until
 then; Vizier of Deferment, which exiles a creature that attacked or blocked and returns it at the
 end step, goes the same way). Both are unreviewed.
+
+Moved 2026-11-08 with the RemovePermanent definition: a nonland PERMANENT phased out for as long as
+you control the card is RemovePermanent, not this tag (The Phasing of Zhalfir, corrected by name;
+RemovePermanent.md, Q3). The creature phased out so stays here (Oubliette).

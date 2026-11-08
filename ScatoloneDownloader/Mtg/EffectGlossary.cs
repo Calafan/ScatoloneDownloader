@@ -41,9 +41,10 @@
                 + "counter for the card itself.",
 
             [CardEffect.RemovePermanent] =
-                "Answers ANY permanent — \"destroy/exile target (nonland) permanent\", a token, the O-ring family, "
-                + "and a kill narrowed only by COLOUR (\"target red permanent\") or by what it is NOT (\"noncreature\"). "
-                + "The breadth is the point, even if you would usually aim it at a creature. Not your own, nor a blink.",
+                "Somebody else's permanent of ANY type, chosen by you, gone for good: \"destroy/exile target "
+                + "(nonland) permanent\", a token, a colour, the O-ring family, shuffled away, made a Treasure. "
+                + "Vindicate. Not an edict (they choose), a list of types, your own, a blink, nor an exile its "
+                + "owner may play.",
 
             [CardEffect.Wipe] =
                 "Mass removal: the board emptied — destroyed, exiled, damaged (players too), shrunk, airbent, "

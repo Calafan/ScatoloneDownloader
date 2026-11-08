@@ -245,10 +245,21 @@ namespace ScatoloneDownloader.Cube
                 // off is somebody else's (Unyielding Gatekeeper returns only your
                 // own; Dion destroys before it exiles). And The Spot hands its
                 // exile back to the owners' hands, which the human tags Bounce.
+                //
+                // Defined 2026-11-08 from Vindicate (docs/ontology/RemovePermanent.md):
+                // somebody else's permanent of ANY type — the card says
+                // "permanent", narrowed or not — that YOU choose, taken off the
+                // battlefield for good: destroyed, exiled, shuffled away or turned
+                // into a Treasure. An edict, where THEY choose, stays out (Shard of
+                // the Void Dragon, Lord Xander and Braids corrected by name). An
+                // exile its OWNER MAY PLAY for as long as it stays exiled is a
+                // bounce with a tax, like airbend (Soul Partition corrected by
+                // name to Bounce, Aerial Extortionist was Bounce by hand already).
                 (CardEffect.RemovePermanent, [
                     Rx(@"(?:destroy|exile) (?:[\w ]{0,15})?target (?:(?:non[\w-]+|legendary),? )*permanent"
                         + @"(?!s? you (?:own|control)\b)(?!s? cards?\b)"
                         + @"(?![\w ,]{0,30}(?:,? then return it|\. return (?:it|that card)) to the battlefield)"
+                        + @"(?!s?\.[^.\n]{0,60}\bits owner may (?:play|cast) it\b)"
                         + @"(?![\s\S]*\breturn the exiled cards? to (?:their|its) owners?'? hands?)"
                         + @"|destroy up to \w+ other target nonland permanents"),
                     Rx(@"(?:destroy|exile) (?:[\w ]{0,15})?target tokens?\b"),
@@ -300,7 +311,13 @@ namespace ScatoloneDownloader.Cube
                     // "NONLAND permanent", which the first rule above already reads —
                     // 26 false positives in one measurement while it sat on Removal.
                     Rx(@"(?:destroy|exile) target (?:white|blue|black|red|green|colorless|multicolored"
-                        + @"|nonwhite|nonblue|nonblack|nonred|nongreen)[\w ]{0,15}permanent")]),
+                        + @"|nonwhite|nonblue|nonblack|nonred|nongreen)[\w ]{0,15}permanent"),
+                    // A permanent PHASED OUT for as long as the card that did it
+                    // stays is an O-ring on any permanent (The Phasing of
+                    // Zhalfir, Removal by hand, ruled RemovePermanent 2026-11-08);
+                    // the creature form stays Removal's (Oubliette).
+                    Rx(@"target [\w ,-]{0,30}permanent phases out"
+                        + @"(?: until [\w' ]{0,40}leaves the battlefield|\. it can't phase in for as long as you control)")]),
 
                 // Three deliberate tightenings, each from a card that fooled a looser
                 // version of these rules:
@@ -612,10 +629,11 @@ namespace ScatoloneDownloader.Cube
                         + @"|(?<!\Aenchant nonland permanent\n)enchanted (?:permanent|creature) is an? (?:colorless )?(?:Treasure|Clue|Food)\b"
                         + @"|turn target [\w ,-]{0,30}(?<!non)creature face down"),
                     // Phased out for as long as the card that did it stays, the
-                    // way an O-ring exiles (Oubliette, The Phasing of Zhalfir).
-                    // "For as long as The Pandorica REMAINS TAPPED" is a tapper's
-                    // lock and Pacify's, by hand.
-                    Rx(@"target [\w ,-]{0,30}(?:creature|permanent) phases out"
+                    // way an O-ring exiles (Oubliette). A PERMANENT phased out so
+                    // is RemovePermanent's since 2026-11-08 (The Phasing of
+                    // Zhalfir). "For as long as The Pandorica REMAINS TAPPED" is a
+                    // tapper's lock and Pacify's, by hand.
+                    Rx(@"target [\w ,-]{0,30}creature phases out"
                         + @"(?: until [\w' ]{0,40}leaves the battlefield|\. it can't phase in for as long as you control)"),
                     // An Aura that can EXILE what it holds, for a price (Cooped
                     // Up, Redemption Arc, Utter Insignificance: 3 of 4 by hand).
@@ -825,8 +843,12 @@ namespace ScatoloneDownloader.Cube
                     // "For as long as that card remains exiled, its owner may play
                     // it", on "up to one other target tapped creature or Vehicle"
                     // (Prowl, Stoic Strategist, Bounce by hand), read 2026-10-27.
+                    // A nonland PERMANENT so, which its owner may play or CAST,
+                    // ruled 2026-11-08 under the RemovePermanent definition: Soul
+                    // Partition (RemovePermanent by hand, corrected by name) and
+                    // Aerial Extortionist (Bounce by hand), like airbend.
                     Rx(@"exile (?:up to (?:\w+|x) )?target [\w ]{0,30}creatures?\.[^.\n]{0,30}\bits owner may play it for as long as it remains exiled"
-                        + @"|exile (?:up to (?:\w+|x) )?(?:other )?target [\w ]{0,30}creatures?(?: or vehicles?)?\. for as long as that card remains exiled, its owner may play it")]),
+                        + @"|exile (?:up to (?:\w+|x) )?(?:other )?target [\w ]{0,30}(?:creatures?(?: or vehicles?)?|permanents?)\. for as long as that card remains exiled, its owner may (?:play|cast) it")]),
 
                 // The old rule was two lines of `destroy target[\w ]*(artifact|
                 // enchantment)`, and that `[\w ]*` was free to run the length of the

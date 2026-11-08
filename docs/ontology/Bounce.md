@@ -33,3 +33,7 @@ Baldesion's tag was a misclick for Regrowth.
 Read 2026-10-27: the other word order of Extraordinary Journey, "For as long as that card remains
 exiled, its owner may play it", on "up to one other target tapped creature or Vehicle" (Prowl,
 Stoic Strategist).
+
+Ruled 2026-11-08 with the RemovePermanent definition: a nonland PERMANENT exiled while its owner
+may play or CAST it is this tag, a bounce with a tax like airbend (Soul Partition, RemovePermanent
+by hand, corrected by name; Aerial Extortionist, Bounce by hand). See RemovePermanent.md, Q2.

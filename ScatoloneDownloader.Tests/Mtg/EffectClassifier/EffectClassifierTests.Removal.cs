@@ -396,14 +396,10 @@ public sealed partial class EffectClassifierTests
         "Flash\nEnchant creature or Food\nEnchanted permanent is a colorless Food artifact with \"{2}, {T}, "
         + "Sacrifice this artifact: You gain 3 life\" and loses all other card types and abilities.")]
     // An Aura that can exile what it holds; a phasing that lasts as long as
-    // the card does.
+    // the card does. (The Phasing of Zhalfir, a nonland PERMANENT phased out so,
+    // moved on 2026-11-08 to RemovePermanent alone, in that tag's file.)
     [InlineData("Cooped Up", "Enchantment — Aura",
         "Enchant creature\nEnchanted creature can't attack or block.\n{2}{W}: Exile enchanted creature.")]
-    [InlineData("The Phasing of Zhalfir", "Enchantment — Saga",
-        "Read ahead (Choose a chapter and start with that many lore counters. Add one after your draw step. "
-        + "Skipped chapters don't trigger. Sacrifice after III.)\nI, II — Another target nonland permanent "
-        + "phases out. It can't phase in for as long as you control this Saga.\nIII — Destroy all creatures. "
-        + "For each creature destroyed this way, its controller creates a 2/2 black Phyrexian creature token.")]
     [InlineData("Oubliette", "Enchantment",
         "When this enchantment enters, target creature phases out until this enchantment leaves the "
         + "battlefield. Tap that creature as it phases in this way. (Auras and Equipment phase out with it. "
