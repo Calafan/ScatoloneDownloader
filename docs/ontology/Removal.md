@@ -173,3 +173,9 @@ end step, goes the same way). Both are unreviewed.
 Moved 2026-11-08 with the RemovePermanent definition: a nonland PERMANENT phased out for as long as
 you control the card is RemovePermanent, not this tag (The Phasing of Zhalfir, corrected by name;
 RemovePermanent.md, Q3). The creature phased out so stays here (Oubliette).
+
+Moved 2026-11-08 with the Wipe definition (Wipe.md, Q5): TWO or more creatures, or half of them,
+sacrificed from ONE side are Wipe alone, as from every side since 2026-09-27 — Jecht's "each
+opponent sacrifices two creatures", Rush of Dread's half and Make an Example's pile (read here
+2026-10-16 and 2026-11-05) are handed back with Wipe and without this tag. This tag keeps the
+single creature.

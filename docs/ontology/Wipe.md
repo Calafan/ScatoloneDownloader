@@ -3,9 +3,24 @@
 Canonical record of the rulings for `CardEffect.Wipe`. The one-line tooltip shown in the tagger is
 in [`EffectGlossary.cs`](../../ScatoloneDownloader/Mtg/EffectGlossary.cs).
 
-mass removal: the board is emptied, by any verb. Destroy, exile, damage, shrink, or return it all to
-hand — Desynchronization is a Wrath that happens to give the cards back, and "each player sacrifices
-all but one" is a Wrath somebody else performs.
+**Definition, 2026-11-08: SEVERAL creatures of somebody else's (or the permanents that include
+them) leave the battlefield AT ONCE, taken by a RULE and not target by target. Wrath of God is the
+card.** The rule is all or each, whatever the adjective (a colour, a mana value, tapped,
+non-Dragon), damage or -X/-X to each, a return to hand, a shuffle into the library, or two or more
+creatures — or half, or a third — sacrificed by each player or by each opponent. One side or every
+side alike (Plague Wind, Wrath of God). Out: X or "any number of" TARGET creatures (Removal); ONE
+creature each, the edict (Removal); your own creatures; creature cards in a graveyard; lands alone
+(LandDestruction); artifacts or enchantments alone (Disenchant); an edict of PERMANENTS of the
+victim's choice, who gives lands or tokens (annihilator). Kept as exceptions, each with its why, in
+the answers of that day at the end: the same edict every turn (Dystopia), one creature type, and
+the two combat shapes.
+
+Every ruling below is coherent with the definition or is one of those exceptions; Illithid
+Harvester is the one card corrected by name.
+
+Before 2026-11-08: mass removal, the board is emptied by any verb. Destroy, exile, damage, shrink,
+or return it all to hand — Desynchronization is a Wrath that happens to give the cards back, and
+"each player sacrifices all but one" is a Wrath somebody else performs.
 
 Widened 2026-09-15 to read past the ADJECTIVE, which is where half the sweepers in the game put one:
 Anarchy destroys all WHITE permanents, Perish all GREEN creatures, Evaporate damages each WHITE
@@ -102,3 +117,40 @@ Read 2026-11-05: a shrink of every creature TOKEN, "creature tokens get -2/-2 un
 (a mode of Bloodline Culling, Removal and Wipe by hand, 1 of 1 reviewed): the tokens are all the
 creatures it reaches and all of them die. Tokens are not a creature TYPE for the tribal veto above.
 Proposed with it, unreviewed: Illness in the Ranks and Virulent Plague.
+
+DEFINED 2026-11-08, the definition at the top ("Più creature, una regola"), from Wrath of God. Five
+answers the same day:
+
+RULED 2026-11-08, Q1: the SAME EDICT EVERY TURN for every player stays this tag ("Resta Wipe"),
+kept as an exception to "at once": no creature outlives the turns, for every player and with no
+target, a Wrath by instalments. Dystopia and The Abyss keep their tags; Woebringer Demon, Magus of
+the Abyss, Smokestack and the other unreviewed every-upkeep edicts stay proposed Wipe.
+
+RULED 2026-11-08, Q2: both COMBAT shapes stay out ("Entrambe fuori"), kept as exceptions: what
+fights THIS card (Abu Ja'far, Kjeldoran Frostbeast, Coils of the Medusa, Defiant Vanguard; 0 of 28
+reviewed) is the card's own block, not the board; and what DIDN'T ATTACK (Season of the Witch,
+Total War; 0 of 14) is a rule the victim dodges by attacking. A whole side of the combat stays
+this tag (Lava Storm, Hezrou's "each blocking creature").
+
+RULED 2026-11-08, Q3: ONE CREATURE TYPE stays out ("Tenuta, come gli altri"), the tribal exception
+of Reanimate and Burn: a type is the tribal card's business, not the board (Goblin Shrine, Scorch
+the Fields; 0 of 5). A "non-Type" is still a sweeper (Ruthless Winnower, Genesis of the Daleks).
+
+RULED 2026-11-08, Q4: "any number of TARGET creatures" is targets picked one by one ("-Wipe, resta
+Pacify"): Illithid Harvester's "turn any number of target tapped nontoken creatures face down",
+Wipe from 2026-10-14, is corrected by name to Pacify alone, like Phyrexian Purge and V.A.T.S.
+(Removal by hand; 27 of the 29 reviewed with that phrase are not Wipe, the other 2 through another
+line).
+
+RULED 2026-11-08, Q5: two or more creatures, or half, sacrificed from ONE side is this tag ALONE
+("Wipe da solo"), as from every side since 2026-09-27; Removal keeps the single creature. Portal to
+Phyrexia ("each opponent sacrifices three creatures") was Wipe by hand; Jecht ("each opponent
+sacrifices two creatures"), Rush of Dread ("half the creatures they control") and Make an Example
+(the pile you choose) were Removal by hand and are handed back with Wipe and without Removal. The
+Removal rule no longer reads "two", the half or the pile.
+
+Read 2026-11-08, each Wipe by hand: a type list before the creature, "exile Ajani and each artifact
+and creature your opponents control" (Ajani, Strength of the Pride); the two creatures each player
+chooses, one of theirs and one not, "destroy each creature chosen this way" (Call to the Void, while
+The Horus Heresy's ONE each stays Removal's edict); and "each player shuffles all creatures they own
+into their library" (Collision of Realms; Warp World, unreviewed, follows).

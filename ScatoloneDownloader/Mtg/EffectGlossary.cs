@@ -47,10 +47,10 @@
                 + "owner may play.",
 
             [CardEffect.Wipe] =
-                "Mass removal: the board emptied — destroyed, exiled, damaged (players too), shrunk, airbent, "
-                + "returned, two or more sacrificed each, or an edict every turn. An adjective does not narrow it; "
-                + "a creature TYPE does. Not what fights it or didn't attack, your own, a graveyard, lands alone "
-                + "(Armageddon is LandDestruction).",
+                "Several of somebody else's creatures gone at once, taken by a rule and not target by target: "
+                + "all or each, damage or -X/-X to each, returned, shuffled away, two or more or half sacrificed, "
+                + "an edict every turn. Wrath of God. Not one creature type, what fights it or didn't attack, your "
+                + "own, lands or artifacts alone.",
 
             [CardEffect.Bounce] =
                 "Returns a NAMED permanent to its owner's hand (\"return target …\", or a mass \"return each/all\"), "

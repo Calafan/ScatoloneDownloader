@@ -128,8 +128,11 @@ namespace ScatoloneDownloader.Cube
                     // counter on it" and Gideon, the Oathsworn's −9 "exile Gideon
                     // and each creature your opponents control", both Wipe by hand
                     // (2 of 2). Defiant Vanguard's "destroy it and ALL creatures it
-                    // blocked this turn" is its own block, not a board.
-                    Rx(@"\b(?:destroy|exile) (?!target\b)[\w,' ]{1,40} and each (?:other )?creature\b(?! you control)"),
+                    // blocked this turn" is its own block, not a board. A type list
+                    // may stand before the creature, read 2026-11-08: Ajani,
+                    // Strength of the Pride's "exile Ajani and each ARTIFACT AND
+                    // creature your opponents control" (Wipe by hand, 1 of 1).
+                    Rx(@"\b(?:destroy|exile) (?!target\b)[\w,' ]{1,40} and each (?:other )?(?:[\w-]+(?:,| and| or) ){0,3}creature\b(?! you control)"),
                     Rx(@"(?<!target |attacking |blocking )\bcreatures\b(?:(?! you control\b| with the same name\b)[^.\n]){0,60}? get -[\dX]+/-[1-9X]"),
                     Rx(@"\beach(?: [\w-]{1,15}){0,3} creature\b(?:(?! you control\b)[^.\n]){0,60}? gets (?:twice )?-[\dX]+/-[1-9X]"),
                     Rx(@"-1/-1 counters? on each(?: [\w-]{1,15}){0,3} creature\b(?! you control)"),
@@ -154,15 +157,23 @@ namespace ScatoloneDownloader.Cube
                     // Goodbye's "each creature without a +1/+1 counter on it",
                     // 2026-10-14).
                     Rx(@"return (?:all|each)(?![\w ,-]{0,30}attached to)[\w ,-]{0,30}(?:permanent|creature)s?[\w ,'+/-]{0,40}to (?:their owners'|its owner's) hands?"),
-                    // Three more ways to empty the board, read 2026-10-14: every
+                    // Two more ways to empty the board, read 2026-10-14: every
                     // permanent of a player SHUFFLED into the library (Teferi,
-                    // Temporal Pilgrim's -12), all but the creatures chosen
-                    // destroyed (Mount Doom, Duneblast, Divine Reckoning), and any
-                    // number of tapped creatures turned face down (Illithid
-                    // Harvester).
-                    Rx(@"shuffles? (?:each|all) [\w ]{0,20}(?:permanents?|creatures?)[^.\n]{0,40} into (?:its owner's|their owners') librar"
-                        + @"|\bdestroy the rest\b"
-                        + @"|turn any number of target [\w ]{0,30}creatures face down"),
+                    // Temporal Pilgrim's -12), and all but the creatures chosen
+                    // destroyed (Mount Doom, Duneblast, Divine Reckoning). The
+                    // library may be "their library", read 2026-11-08: Collision of
+                    // Realms' "each player shuffles all creatures they own into their
+                    // library" (Wipe by hand, 1 of 1). A guard against creature
+                    // CARDS shuffled back was tried and dropped: no card in the
+                    // store is written so, a dead alternative.
+                    // RULED 2026-11-08 (Q4, "-Wipe, resta Pacify"): "any number of
+                    // TARGET tapped creatures turned face down" (Illithid Harvester,
+                    // Wipe here from 2026-10-14) is targets picked one by one, like
+                    // Phyrexian Purge's "destroy any number of target creatures"
+                    // (Removal by hand, 27 of 29 reviewed with that phrase untagged
+                    // Wipe), and the 2/2 left face down is Pacify's.
+                    Rx(@"shuffles? (?:each|all) [\w ]{0,20}(?:permanents?|creatures?)[^.\n]{0,40} into (?:its owner's|their owners'|their) librar"
+                        + @"|\bdestroy the rest\b"),
                     // ONE creature each is an edict and is Removal, ruled 2026-09-27
                     // after the hand tags split three to two on the same sentence
                     // (Abyssal Gatekeeper against Accursed Marauder): "un singolo
@@ -173,6 +184,21 @@ namespace ScatoloneDownloader.Cube
                     // Balance's line the other way round ("sacrifice creatures and
                     // discard cards the same way"), and Death Cloud's "sacrifices X
                     // creatures" closes a list of what each player loses.
+                    // RULED 2026-11-08 (Q5, "Wipe da solo"): two or more creatures, or
+                    // half of them, from ONE side is the same Wrath as from every
+                    // side — Portal to Phyrexia's "each opponent sacrifices three
+                    // creatures" (Wipe by hand), Jecht's two, Rush of Dread's half
+                    // and Make an Example's pile (Removal by hand until that day,
+                    // handed back); Removal keeps the single creature. And Call to
+                    // the Void's TWO creatures each player chooses, one of theirs and
+                    // one of somebody else's (Wipe by hand, 1 of 1), read the same
+                    // day — The Horus Heresy's one each stays Removal's edict.
+                    // Not an edict of PERMANENTS of the victim's choice
+                    // (annihilator, 0 of the 8 reviewed; Lord Xander's "half the
+                    // nonland permanents", 0 of 1): they give lands or tokens.
+                    Rx(@"(?:each opponent|target opponent|target player) sacrifices (?!(?:a|an|one|the|that|it|this)\b)[\w ]{0,20}creatures\b"
+                        + @"|each opponent sacrifices the creatures in their chosen pile"
+                        + @"|chooses a creature they control and a creature they don't control\.[^\n]{0,60}\bdestroy each creature chosen this way"),
                     Rx(@"each player[^.\n]{0,120}\b(?:creatures?|permanents?)\b[^.\n]{0,120}sacrifices the rest"
                         + @"|sacrifice creatures (?:and discard cards )?the same way"
                         + @"|each player[^.\n]{0,160}\bsacrifices? (?:all|half|a third of) (?:the |other )?(?:[\w-]+ )?creatures"
@@ -530,7 +556,13 @@ namespace ScatoloneDownloader.Cube
                     // exile edict — the one card it reaches (Valki's "for each
                     // opponent, exile a creature card") is Removal by its back
                     // face anyway.
-                    Rx(@"(?:target player|target opponent|each opponent|(?<!unless )defending player)[\w ,]{0,30}(?:sacrifices?|exiles?) (?:a|an|one|two|\d+)[\w ]{0,25}(?<!non)creature"
+                    // RULED 2026-11-08 (Wipe, Q5 "Wipe da solo"): TWO or more
+                    // creatures, or half of them, from one side are Wipe's and not
+                    // this tag's, like two or more from every side since
+                    // 2026-09-27 — Jecht's "each opponent sacrifices two
+                    // creatures", Rush of Dread's half and Make an Example's pile
+                    // (read here 2026-10-16 and 2026-11-05) left this table.
+                    Rx(@"(?:target player|target opponent|each opponent|(?<!unless )defending player)[\w ,]{0,30}(?:sacrifices?|exiles?) (?:a|an|one)[\w ]{0,25}(?<!non)creature"
                         + @"|each player sacrifices (?:a|an|one|the) [\w ]{0,25}(?<!non)creature"
                         + @"|(?:each|target) opponent chooses (?:a|an|one) [\w ,-]{0,30}creature they control and (?:exiles|sacrifices) it"
                         + @"|villainous choice — that player sacrifices a [\w ]{0,25}(?<!non)creature"
@@ -549,18 +581,9 @@ namespace ScatoloneDownloader.Cube
                         // Retribution's "Choose two target creatures controlled by
                         // the same opponent. That player chooses and sacrifices one
                         // of those creatures."
-                        // …and HALF of them, read 2026-10-16: Rush of Dread's "Target
-                        // opponent sacrifices half the creatures they control".
-                        + @"|target opponent sacrifices half the creatures they control"
-                        // …and the half you pick from two piles, read 2026-11-05:
-                        // Make an Example's "Each opponent separates the creatures
-                        // they control into two piles. … you choose one of their
-                        // piles. Each opponent sacrifices the creatures in their
-                        // chosen pile" (Removal by hand, 1 of 1 reviewed; no other
-                        // creature card is written so, Bend or Break and Whims of
-                        // the Fates pile lands and permanents), Rush of Dread's
-                        // half by another route.
-                        + @"|each opponent sacrifices the creatures in their chosen pile"
+                        // HALF of them (Rush of Dread, read 2026-10-16) and the pile
+                        // you pick (Make an Example, read 2026-11-05) were here until
+                        // the Wipe ruling of 2026-11-08 above.
                         // …and the edict that takes a permanent FIRST, read 2026-10-16:
                         // Vile Mutilator's "each opponent sacrifices a nontoken
                         // enchantment of their choice, then sacrifices a nontoken

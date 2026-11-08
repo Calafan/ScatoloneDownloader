@@ -177,11 +177,9 @@ public sealed partial class EffectClassifierTests
         + "{5}{B}{R}, {T}, Sacrifice Mount Doom and a legendary artifact: Choose up to two creatures, then "
         + "destroy the rest. Activate only as a sorcery.")]
     [InlineData("Duneblast", "Sorcery", CardEffect.Wipe, "Choose up to one creature. Destroy the rest.")]
-    // Any number of tapped creatures turned face down.
-    [InlineData("Illithid Harvester // Plant Tadpoles", "Creature — Horror // Sorcery — Adventure", CardEffect.Wipe,
-        "Ceremorphosis — When this creature enters, turn any number of target tapped nontoken creatures face "
-        + "down. They're 2/2 Horror creatures.\nTap X target creatures. They don't untap during their "
-        + "controllers' next untap steps. (Then exile this card. You may cast the creature later from exile.)")]
+    // Illithid Harvester's "any number of target tapped creatures turned face
+    // down" was here until the Wipe ruling of 2026-11-08 took it out, see
+    // Classify_TheNovember8Ruling_AnyNumberOfTargets_IsNotWipe.
     public void Classify_TheOctoberBounceAndWipeGaps_CarryTheTag(string name, string typeLine, CardEffect effect, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(effect));

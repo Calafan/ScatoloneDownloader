@@ -387,8 +387,9 @@ public sealed partial class EffectClassifierTests
 
     [Fact]
     // The other half of the Jecht ruling: taking Filter away must not take the
-    // three tags it really has. The edict on chapter III is Removal, the
-    // opponents' discard is Discard, and the draw beside it is yours.
+    // three tags it really has. The edict of TWO creatures on chapter III is
+    // Wipe (Removal until the Wipe ruling of 2026-11-08), the opponents' discard
+    // is Discard, and the draw beside it is yours.
     public void Classify_ALootSplitBetweenTwoPlayers_KeepsItsOtherTags()
     {
         Card card = MakeCard("Jecht, Reluctant Guardian", "Legendary Enchantment Creature — Saga Human",
@@ -400,7 +401,7 @@ public sealed partial class EffectClassifierTests
 
         Assert.True(effects.HasFlag(CardEffect.Discard));
         Assert.True(effects.HasFlag(CardEffect.CardAdvantage));
-        Assert.True(effects.HasFlag(CardEffect.Removal));
+        Assert.True(effects.HasFlag(CardEffect.Wipe));
         Assert.False(effects.HasFlag(CardEffect.Filter));
     }
 

@@ -634,10 +634,8 @@ public sealed partial class EffectClassifierTests
     [InlineData("Retribution", "Sorcery",
         "Choose two target creatures controlled by the same opponent. That player chooses and sacrifices one "
         + "of those creatures. Put a -1/-1 counter on the other.")]
-    [InlineData("Rush of Dread", "Sorcery",
-        "Spree (Choose one or more additional costs.)\n+ {1} — Target opponent sacrifices half the creatures "
-        + "they control of their choice, rounded up.\n+ {2} — Target opponent discards half the cards in their "
-        + "hand, rounded up.\n+ {2} — Target opponent loses half their life, rounded up.")]
+    // Rush of Dread's half moved to Wipe on 2026-11-08, see
+    // Classify_TheNovember8Ruling_SeveralCreaturesFromOneSide_IsWipeNotRemoval.
     [InlineData("Soltari Guerrillas", "Creature — Soltari Soldier",
         "Shadow (This creature can block or be blocked by only creatures with shadow.)\n{0}: The next time "
         + "this creature would deal combat damage to an opponent this turn, it deals that damage to target "
@@ -823,15 +821,13 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
-    // Read 2026-11-05: an edict by piles (Make an Example), the statistic edict
-    // (Fall of the Impostor: the creature with the greatest power among those a
-    // target opponent controls), loyalty counters taken off a planeswalker an
-    // opponent controls (Confront the Past), and a target that may be a creature
-    // on the battlefield OR a card in a graveyard (Savior of Ollenbock, so the
-    // graveyard half does not make the whole an answer to nobody).
-    [InlineData("Make an Example", "Sorcery",
-        "Each opponent separates the creatures they control into two piles. For each opponent, you choose one "
-        + "of their piles. Each opponent sacrifices the creatures in their chosen pile. (Piles can be empty.)")]
+    // Read 2026-11-05: the statistic edict (Fall of the Impostor: the creature
+    // with the greatest power among those a target opponent controls), loyalty
+    // counters taken off a planeswalker an opponent controls (Confront the Past),
+    // and a target that may be a creature on the battlefield OR a card in a
+    // graveyard (Savior of Ollenbock, so the graveyard half does not make the
+    // whole an answer to nobody). The edict by piles read the same day (Make an
+    // Example) moved to Wipe on 2026-11-08.
     [InlineData("Fall of the Impostor", "Enchantment — Saga",
         "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI, II — Put "
         + "a +1/+1 counter on up to one target creature.\nIII — Exile a creature with the greatest power among "

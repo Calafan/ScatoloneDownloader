@@ -472,4 +472,81 @@ public sealed partial class EffectClassifierTests
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Wipe));
     }
+
+    [Theory]
+    // Read 2026-11-08 under the definition (Wrath of God: more than one creature
+    // of somebody else's leaves the battlefield at once, taken by a rule and not
+    // target by target), each Wipe by hand: a type list before the creature in
+    // 'exile Ajani and each artifact and creature' (Ajani, Strength of the Pride),
+    // two creatures each player chooses, one theirs and one not (Call to the
+    // Void), and the creatures shuffled into 'their library' (Collision of
+    // Realms).
+    [InlineData("Ajani, Strength of the Pride", "Legendary Planeswalker — Ajani",
+        "+1: You gain life equal to the number of creatures you control plus the number of planeswalkers you "
+        + "control.\n−2: Create a 2/2 white Cat Soldier creature token named Ajani's Pridemate with \"Whenever "
+        + "you gain life, put a +1/+1 counter on this token.\"\n0: If you have at least 15 life more than your "
+        + "starting life total, exile Ajani and each artifact and creature your opponents control.")]
+    [InlineData("Call to the Void", "Sorcery",
+        "Each player secretly chooses a creature they control and a creature they don't control. Then those "
+        + "choices are revealed. Destroy each creature chosen this way.")]
+    [InlineData("Collision of Realms", "Sorcery",
+        "Each player shuffles all creatures they own into their library. Each player who shuffled a nontoken "
+        + "creature into their library this way reveals cards from the top of their library until they reveal a "
+        + "creature card, then puts that card onto the battlefield and the rest on the bottom of their library "
+        + "in a random order.")]
+    public void Classify_TheNovember8Readings_IsWipe(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Wipe));
+    }
+
+    [Theory]
+    // RULED 2026-11-08 (Q5, 'Wipe da solo'): two or more creatures, or half of
+    // them, sacrificed from ONE side is the Wrath that two or more from every side
+    // has been since 2026-09-27, and Removal keeps the single creature. Portal to
+    // Phyrexia was Wipe by hand; Jecht, Rush of Dread and Make an Example were
+    // Removal (pinned in the Removal and Filter files until that day) and were
+    // handed back.
+    [InlineData("Portal to Phyrexia", "Artifact",
+        "When this artifact enters, each opponent sacrifices three creatures of their choice.\nAt the "
+        + "beginning of your upkeep, put target creature card from a graveyard onto the battlefield under your "
+        + "control. It's a Phyrexian in addition to its other types.")]
+    [InlineData("Rush of Dread", "Sorcery",
+        "Spree (Choose one or more additional costs.)\n+ {1} — Target opponent sacrifices half the creatures "
+        + "they control of their choice, rounded up.\n+ {2} — Target opponent discards half the cards in their "
+        + "hand, rounded up.\n+ {2} — Target opponent loses half their life, rounded up.")]
+    [InlineData("Make an Example", "Sorcery",
+        "Each opponent separates the creatures they control into two piles. For each opponent, you choose one "
+        + "of their piles. Each opponent sacrifices the creatures in their chosen pile. (Piles can be empty.)")]
+    // Jecht's two creatures from each opponent, Removal by hand on 2026-09-11.
+    [InlineData("Jecht, Reluctant Guardian // Braska's Final Aeon", "Legendary Creature — Human Warrior // Legendary Enchantment Creature — Saga Nightmare",
+        "Menace\nWhenever Jecht deals combat damage to a player, you may exile it, then return it to the "
+        + "battlefield transformed under its owner's control.\n(As this Saga enters and after your draw step, "
+        + "add a lore counter. Sacrifice after III.)\nI, II — Jecht Beam — Each opponent discards a card and you "
+        + "draw a card.\nIII — Ultimate Jecht Shot — Each opponent sacrifices two creatures of their "
+        + "choice.\nMenace")]
+    public void Classify_TheNovember8Ruling_SeveralCreaturesFromOneSide_IsWipeNotRemoval(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Wipe));
+        Assert.False(result.HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
+    // RULED 2026-11-08 (Q4, '-Wipe, resta Pacify'): 'any number of TARGET tapped
+    // creatures turned face down' is targets picked one by one, like Phyrexian
+    // Purge (Removal by hand), and the 2/2 left face down is Pacify's. Illithid
+    // Harvester was Wipe from 2026-10-14 (pinned in EffectClassifierTests.cs until
+    // that day).
+    [InlineData("Illithid Harvester // Plant Tadpoles", "Creature — Horror // Sorcery — Adventure",
+        "Ceremorphosis — When this creature enters, turn any number of target tapped nontoken creatures face "
+        + "down. They're 2/2 Horror creatures.\nTap X target creatures. They don't untap during their "
+        + "controllers' next untap steps. (Then exile this card. You may cast the creature later from exile.)")]
+    public void Classify_TheNovember8Ruling_AnyNumberOfTargets_IsNotWipe(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.False(result.HasFlag(CardEffect.Wipe));
+        Assert.True(result.HasFlag(CardEffect.Pacify));
+    }
 }
