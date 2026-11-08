@@ -3,7 +3,21 @@
 Canonical record of the rulings for `CardEffect.Regrowth`. The one-line tooltip shown in the tagger
 is in [`EffectGlossary.cs`](../../ScatoloneDownloader/Mtg/EffectGlossary.cs).
 
-a card from a graveyard back to HAND — the sibling of Reanimate, same origin, different destination
+**Definition, 2026-11-08: a card of YOUR graveyard, not the card itself, comes back to you as a CARD
+to play again: into the hand, onto the top of the library, or cast from there (also out of the
+exile the card moved it to, or as a copy). Lands count when they go to the hand (Druidic Ritual, 10
+of 11 reviewed). Regrowth is the card.** Straight onto the battlefield without a cast is Reanimate;
+a free cast of a card that can be a permanent is both (Counterpoint). Out: the card itself, the
+bottom of a library, an opponent's graveyard alone (any graveyard counts, yours being among them), a
+land PLAYED from the graveyard (Icetill Explorer: a land drop is not a cast, 0 of 4 reviewed), and a
+creature TYPE only. Accepted as proposed ("Sì, così").
+
+Every ruling below is coherent with the definition but three, ruled at the end: Shiko's named
+exception (overturned), the tribal cast (out, as the tribal return to the hand) and Harvest Wurm's
+price (kept out, with its reason). Shiko, Zul Ashur, Rivaz of the Claw, Zask and Jacob Frye are the
+cards corrected by name.
+
+Before 2026-11-08: a card from a graveyard back to HAND — the sibling of Reanimate, same origin, different destination
 (Regrowth, Raise Dead, Eternal Witness). Deliberately NOT merged with Reanimate, which puts it
 straight onto the battlefield: one hands back a card you still have to pay for, the other cheats the
 cost — different speeds, different decks.
@@ -73,4 +87,27 @@ the tribal return to the battlefield stays Reanimate, untouched. A card type, a 
 like is no tribe (Aura, Equipment, Vehicle, Saga: Satsuki, Dogmeat, Imperial Recovery Unit stay),
 and the tag stays when another Regrowth stands on the card (Kami of Restless Shadows puts a creature
 card on top of its library in its other mode). Cast from a graveyard is not touched (Zul Ashur,
-Jacob Frye: asked as a question). 7 reviewed cards lose the tag and are handed back.
+Jacob Frye: asked as a question, answered 2026-11-08, Q2 below: out too). 7 reviewed cards lose the tag and are handed back.
+
+The questions of the definition, 2026-11-08:
+
+Q1, Shiko, Paragon of the Way, named the exception on 10-13 (its copy is a Reanimate) against
+Counterpoint, Reanimate and Regrowth by hand on 10-15 for the same free cast out of the graveyard of
+a card that can be a permanent. Ruled "+Regrowth, come Counterpoint": the copy of a nonland card
+cast out of the graveyard is Regrowth whatever lands, and Reanimate when it lands a permanent. The
+exile-and-copy shape is now 6 of 6 reviewed, and no card is kept by name.
+
+Q2, the tribal CAST, left out of the 11-06 ruling: Zul Ashur ("cast target Zombie creature card from
+your graveyard"), Rivaz of the Claw (a Dragon creature spell), Zask (Insect spells) and Jacob Frye
+("an Assassin card or card with freerunning", exiled and copied) were Regrowth by hand, against
+Elderfang Ritualist's Elf card to the hand, untagged since 11-06, and Deeproot Historian's Merfolk
+and Druid cards with retrace, untagged. Ruled "tribale mai Regrowth": the four lose the tag by name,
+and every sentence that names a graveyard is asked, so the top of the library goes too (Aphetto
+Vulture, Unholy Grotto: a Zombie card, unreviewed). A tribe joined to a type any card can be keeps
+it: Arcade Gannon ("an artifact or Human spell") and Nashi, Moon's Legacy ("legendary or Rat card").
+
+Q3, Harvest Wurm, "sacrifice it unless you return a basic land card from your graveyard to your
+hand": a land of your graveyard into the hand, as Druidic Ritual, but kept out ("Resta fuori, è un
+prezzo"). The reason: the return is the condition for keeping the creature, a cost the card asks,
+and the card is not there to buy anything back. The form is "unless you return", not the name; it
+is the only card in the store that says it.

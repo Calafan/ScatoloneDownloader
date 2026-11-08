@@ -368,6 +368,58 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
+    // RULED 2026-11-08 (tribale mai Regrowth): a tribal card CAST out of the
+    // graveyard, or exiled from there and copied, is not Regrowth either, as the
+    // return to hand of 11-06. Named: Zul Ashur, Rivaz of the Claw, Zask, Jacob
+    // Frye.
+    [InlineData("Zul Ashur, Lich Lord", "Legendary Creature — Zombie Warlock",
+        "Ward—Pay 2 life. (Whenever this creature becomes the target of a spell or ability an opponent "
+        + "controls, counter it unless that player pays 2 life.)\n{T}: You may cast target Zombie creature card "
+        + "from your graveyard this turn.")]
+    [InlineData("Rivaz of the Claw", "Legendary Creature — Lizard Warlock",
+        "Menace\n{T}: Add two mana in any combination of colors. Spend this mana only to cast Dragon creature "
+        + "spells.\nOnce during each of your turns, you may cast a Dragon creature spell from your "
+        + "graveyard.\nWhenever you cast a Dragon creature spell from your graveyard, it gains \"When this "
+        + "creature dies, exile it.\"")]
+    [InlineData("Zask, Skittering Swarmlord", "Legendary Creature — Insect",
+        "You may play lands and cast Insect spells from your graveyard.\nWhenever another Insect you control "
+        + "dies, put it on the bottom of its owner's library, then mill two cards. (Put the top two cards of "
+        + "your library into your graveyard.)\n{1}{B/G}: Target Insect gets +1/+0 and gains deathtouch until end "
+        + "of turn. ({B/G} can be paid with either {B} or {G}.)")]
+    [InlineData("Jacob Frye", "Legendary Creature — Human Assassin",
+        "Partner with Evie Frye (When this creature enters, target player may put Evie into their hand from "
+        + "their library, then shuffle.)\nWhenever one or more Assassins you control deal combat damage to a "
+        + "player, exile up to one target Assassin card or card with freerunning from your graveyard. If you "
+        + "do, copy it. You may cast the copy.")]
+    public void Classify_TheNovember8Ruling_ATribalCastFromTheGraveyard_IsNotRegrowth(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Regrowth));
+    }
+
+    [Theory]
+    // ...but a tribe JOINED to an artifact or a legend is open to more than the
+    // tribe and keeps the tag (Arcade Gannon's artifact or Human spell, Nashi's
+    // legendary or Rat card), and Shiko's copy of a nonland card cast from the
+    // graveyard is Regrowth as well as Reanimate since 2026-11-08 (+Regrowth, come
+    // Counterpoint): the named exception of 10-13 is overturned.
+    [InlineData("Arcade Gannon", "Legendary Creature — Human Doctor",
+        "{T}: Draw a card, then discard a card. Put a quest counter on Arcade Gannon.\nFor Auld Lang Syne — "
+        + "Once during each of your turns, you may cast an artifact or Human spell from your graveyard with "
+        + "mana value less than or equal to the number of quest counters on Arcade Gannon.")]
+    [InlineData("Nashi, Moon's Legacy", "Legendary Creature — Rat Shaman",
+        "Menace, ward {1}\nWhenever Nashi attacks, exile up to one target legendary or Rat card from your "
+        + "graveyard and copy it. You may cast the copy. (You still pay its costs. A copy of a permanent spell "
+        + "becomes a token.)")]
+    [InlineData("Shiko, Paragon of the Way", "Legendary Creature — Spirit Dragon",
+        "Flying, vigilance\nWhen Shiko enters, exile target nonland card with mana value 3 or less from your "
+        + "graveyard. Copy it, then you may cast the copy without paying its mana cost. (A copy of a permanent "
+        + "spell becomes a token.)")]
+    public void Classify_TheNovember8Ruling_ACastOpenToMoreThanTheTribe_IsRegrowth(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Regrowth));
+    }
+
+    [Theory]
     // A card type, a supertype or the like is no tribe (Aura, Equipment, Vehicle,
     // Saga), and a card with another Regrowth on it keeps the tag when its tribal
     // return is blanked (Kami of Restless Shadows puts a creature card on top of

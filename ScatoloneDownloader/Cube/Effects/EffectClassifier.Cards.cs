@@ -635,9 +635,11 @@ namespace ScatoloneDownloader.Cube
             // card or its copy. Ruled 2026-10-13 ("Sì", 17 tagged: Kaervek,
             // Arcane Bombardment, Capricious Hellraiser, Scholar of Combustion,
             // Tersa, Quintorius Loremaster, The Tale of Tamiyo …); Nashi, Jacob
-            // Frye, Storm of Memories and Containment Construct reached; Shiko,
-            // Paragon of the Way named as the exception (its copy is a
-            // Reanimate). Out of "A graveyard" only when the card is copied there
+            // Frye, Storm of Memories and Containment Construct reached. Shiko,
+            // Paragon of the Way, named as the exception that day (its copy is a
+            // Reanimate), is Regrowth AND Reanimate since 2026-11-08 ("+Regrowth,
+            // come Counterpoint"): its copy of a nonland card is a cast out of
+            // the graveyard whatever lands. Out of "A graveyard" only when the card is copied there
             // and then (Narset, Enlightened Exile, Psionic Ritual): Intrepid
             // Paleontologist and Boiling Rock Rioter exile from any graveyard as
             // hate, and cast from among what they exiled only later.
@@ -985,9 +987,20 @@ namespace ScatoloneDownloader.Cube
         // Regrowth only — a tribal return to the BATTLEFIELD stays Reanimate
         // (WithoutTribalRecursion above). It is the same TribalCard, applied to
         // the sentences that put a card INTO YOUR HAND, and it blanks the
-        // sentence so a card with another Regrowth on it keeps the tag. A
-        // CAST of a tribal card out of the graveyard is not touched (Zul Ashur,
-        // asked as a question). Not a tribe, besides what TribalCard refuses
+        // sentence so a card with another Regrowth on it keeps the tag.
+        // A CAST of a tribal card out of the graveyard, left out on 2026-11-06,
+        // is not Regrowth either, RULED 2026-11-08 ("tribale mai Regrowth"):
+        // Zul Ashur's "cast target Zombie creature card from your graveyard",
+        // Rivaz of the Claw's Dragon creature spell, Zask's Insect spells and
+        // Jacob Frye's exiled and copied "Assassin card or card with
+        // freerunning" lose the tag by name, as Deeproot Historian's Merfolk
+        // and Druid cards with retrace were already untagged. So every sentence
+        // that names a graveyard is asked, not only the ones into the hand.
+        // Counted 2026-11-08: 6 reviewed casts of a tribal card from a
+        // graveyard, all tagged; the 4 tribe-only ones lose it, Arcade Gannon
+        // ("an artifact or Human spell") and Nashi, Moon's Legacy ("legendary
+        // or Rat card") keep it, being open to any artifact or legend.
+        // Not a tribe, besides what TribalCard refuses
         // (Aura, Equipment, Vehicle, Spacecraft, Cave, Saga since 2026-11-06, the
         // card types; the Saga was here first: Satsuki, hand Regrowth) and an
         // Arcane card (Hana Kami, The Unspeakable, unreviewed) — the ruling's "card types and supertypes
@@ -1006,18 +1019,21 @@ namespace ScatoloneDownloader.Cube
             @"(?!Arcanes?\b)" + TribalCard.ToString(), RegexOptions.CultureInvariant);
 
         // creature, land and planeswalker are the plain types that stand beside
-        // a tribe on a card; no card writes the others there.
+        // a tribe in a return to the hand; the casts add artifact (Arcade
+        // Gannon's "artifact or Human spell") and legendary (Nashi, Moon's
+        // Legacy's "legendary or Rat card"), 2026-11-08. ("artifact spell" was
+        // tried beside "card" and moved no card of the store: removed.)
         private static readonly Regex APlainTypeBesidesTheTribe = new(
-            @"\b(?:creature|land|planeswalker) (?:cards?\b|or\b)", RegexOptions.CultureInvariant);
+            @"\b(?:creature|land|planeswalker|artifact|legendary) (?:cards?\b|or\b)", RegexOptions.CultureInvariant);
 
-        private static readonly Regex IntoYourHand = new(
-            @"\b(?:to|into) (?:your|its owner's|their owner's) hand\b", RegexOptions.CultureInvariant);
+        private static readonly Regex IntoYourHandOrAGraveyard = new(
+            @"\b(?:to|into) (?:your|its owner's|their owner's) hand\b|\bgraveyards?\b", RegexOptions.CultureInvariant);
 
         /// <summary>The text without the sentences that return a tribal card
-        /// to the hand. See TribalCardForRegrowth.</summary>
-        private static string WithoutTribalReturnToHand(string text) =>
+        /// to the hand or cast one out of a graveyard. See TribalCardForRegrowth.</summary>
+        private static string WithoutTribalRegrowth(string text) =>
             OneSentence.Replace(text, sentence =>
-                IntoYourHand.IsMatch(sentence.Value) && TribalCardForRegrowth.IsMatch(sentence.Value)
+                IntoYourHandOrAGraveyard.IsMatch(sentence.Value) && TribalCardForRegrowth.IsMatch(sentence.Value)
                     && !APlainTypeBesidesTheTribe.IsMatch(TribalCardForRegrowth.Replace(sentence.Value, " ")) ? " " : sentence.Value);
 
         // The LINE that puts a creature onto the battlefield and gives it back

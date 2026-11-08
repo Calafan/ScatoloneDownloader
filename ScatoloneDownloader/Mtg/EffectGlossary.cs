@@ -153,9 +153,9 @@
                 + "what the card does next, not an attack — dredge is a graveyard card, not a mill card.",
 
             [CardEffect.Regrowth] =
-                "Buys a card back out of a graveyard: to HAND, to the TOP of a library, or by CASTING it there or "
-                + "out of the exile it was moved to — reanimation for spells. Not a card coming back ITSELF (flashback, unearth), "
-                + "one for a creature TYPE only, the BOTTOM of a library or an opponent's graveyard. "
+                "A card of YOUR graveyard comes back as a card to play: into the HAND (lands too), onto the TOP of "
+                + "the library, or CAST from there or from the exile it was moved to, a copy too. Not the card ITSELF "
+                + "(flashback, unearth), a creature TYPE only, the BOTTOM of a library, an opponent's graveyard alone. "
                 + "Straight to the battlefield is Reanimate.",
 
             [CardEffect.Cheat] =

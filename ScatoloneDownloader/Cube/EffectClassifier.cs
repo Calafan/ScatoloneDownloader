@@ -742,7 +742,8 @@ namespace ScatoloneDownloader.Cube
             // ruled 2026-10-13), and a creature put back for somebody else for
             // Reanimate (ReanimatedForSomebodyElse), and one only a creature TYPE
             // can use (WithoutTribalRecursion), and for Regrowth a card of a
-            // creature type returned TO HAND (WithoutTribalReturnToHand, 2026-11-06).
+            // creature type returned TO HAND (2026-11-06) or cast out of a
+            // graveyard (2026-11-08): WithoutTribalRegrowth.
             if (result.HasFlag(CardEffect.Reanimate) || result.HasFlag(CardEffect.Regrowth))
             {
                 string aimed = LandOutOfTheGraveyard.Replace(text, " ");
@@ -751,7 +752,7 @@ namespace ScatoloneDownloader.Cube
 
                 if (!ReanimatePatterns.Any(p => p.IsMatch(WithoutTribalRecursion(ReanimatedForSomebodyElse.Replace(ownRecursion, " "))))) { result &= ~CardEffect.Reanimate; }
 
-                if (!RegrowthPatterns.Any(p => p.IsMatch(WithoutTribalReturnToHand(ownRecursion)))) { result &= ~CardEffect.Regrowth; }
+                if (!RegrowthPatterns.Any(p => p.IsMatch(WithoutTribalRegrowth(ownRecursion)))) { result &= ~CardEffect.Regrowth; }
             }
 
             // The same tribal guard for Cheat, ruled the same day: a type card
