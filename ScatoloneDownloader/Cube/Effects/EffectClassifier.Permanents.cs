@@ -129,12 +129,20 @@ namespace ScatoloneDownloader.Cube
         // Hoisted for the same reason as MillPatterns: the guard below re-runs
         // them one line at a time, so a card that fetches a land on one mode and a
         // creature on another is judged mode by mode.
+        // Redefined 2026-11-08 (Tutor.md): the player who searches CHOOSES one card
+        // out of their whole library, or out of the sideboard, and takes it out to
+        // wherever the card says. Demonic Tutor is the card. Not what turns up at
+        // random, not the top N, not a land.
         private static readonly Regex[] TutorPatterns =
         [
             // The zones may be LISTED with commas — "search your library,
             // graveyard, and/or outside the game for" (Invasion of Arcavios,
             // tagged by the human on 2026-09-29) — hence the comma and the 40.
-            Rx(@"search (?:your|their) library[\w ,/]{0,40}for (?:up to \w+ |two |three |four |five |\d+ )?"
+            // "SEARCHES their library" is the same search said of another player
+            // (read 2026-11-08: Scheming Symmetry's "each of them searches", and
+            // Varragoth's "target player searches", 2 of 2 tagged by hand), as
+            // Noble Benefactor's "each player may search" already was.
+            Rx(@"search(?:es)? (?:your|their) library[\w ,/]{0,40}for (?:up to \w+ |two |three |four |five |\d+ )?"
                 + @"[\w ,'\-/]{0,50}cards?\b"),
             // Demonic Consultation never searches: it names a card and then digs
             // until the NAME turns up. The name is the whole point — "reveal cards
@@ -157,6 +165,11 @@ namespace ScatoloneDownloader.Cube
             // Lesson and stay, as Tutor.md records the sideboard. Measured as a
             // family on 2026-11-05: learn 1 tagged of 2 reviewed, and the Lesson
             // reminder is on exactly the cards that say learn.
+            // Kept on 2026-11-08 as the one exception to the redefinition (Q2,
+            // "learn fuori, eccezione"), with a new reason, since the Wishes
+            // search no library either: learn is a rider with a fallback, the
+            // rummage, and it fetches only a Lesson, a pool the cube has only
+            // if somebody drafted it on purpose.
             Rx(@"(?<!\blesson )card you own from outside the game"),
         ];
 
@@ -164,9 +177,24 @@ namespace ScatoloneDownloader.Cube
         /// written around, and the only reason the wide rule above is safe. The
         /// word boundary is what keeps "a NONLAND permanent card" out, and
         /// <see cref="SearchesForSomethingElseToo"/> is what keeps Starfield
-        /// Shepherd's "a basic Plains card OR a creature card" in.</summary>
+        /// Shepherd's "a basic Plains card OR a creature card" in.
+        /// <para>ANY land, ruled 2026-11-08 ("terra mai Tutor"): "a land card"
+        /// was already this (12 reviewed cards without the tag against Elvish
+        /// Reclaimer, Golos and Elemental Teachings, the three untagged by
+        /// name), and a NONBASIC SUBTYPE is a land too — "a Desert card"
+        /// (Colossal Rattlewurm, Sand Scout), "a Cave card" (Cosmium
+        /// Confluence), the three handed back without the tag. The subtype
+        /// has to be followed by "card", or "a card named Command Tower" would
+        /// read as one; Tower Winder, untagged by name the same day (Command
+        /// Tower is a land), is a disagreement the text cannot settle.</para></summary>
         private static readonly Regex SearchesOnlyForALand = Rx(
-            @"library[^.\n]{0,40}for [^.\n]{0,25}(?:basic |snow |nonbasic )*(?:\blands?\b|" + BasicLandType + ")");
+            @"library[^.\n]{0,40}for [^.\n]{0,25}(?:basic |snow |nonbasic )*(?:\blands?\b|" + BasicLandType
+            + "|" + NonbasicLandType + ")");
+
+        // Only the subtypes some card in the store searches for: Desert, Cave and
+        // Gate (Maze's End, unreviewed). Lair, Locus, Sphere, Urza's and the rest
+        // were in the first draft and moved no card, so they are not here.
+        private const string NonbasicLandType = @"\b(?:caves?|deserts?|gates?) cards?\b";
 
         // "A creature OR LAND card" too: Analyze the Pollen searches for a basic
         // land, and "instead" for either once evidence is collected (2026-10-16).

@@ -1770,9 +1770,9 @@ namespace ScatoloneDownloader.Cube
                 // Twenty-one of the 48 hand-tagged cards went untouched.
                 //
                 // Still deliberately NOT a land search, which is Ramp or ManaFixing —
-                // that reading costs Elemental Teachings, whose four land cards end up
-                // split between a graveyard and the battlefield by an opponent, and it
-                // is one card against the family.
+                // ANY land since the redefinition of 2026-11-08 (Demonic Tutor: a
+                // card the searcher chooses), when Elemental Teachings, the one card
+                // that had held out against the family, was untagged by name.
                 (CardEffect.Tutor, TutorPatterns),
 
                 // The one-line fixers are FixesColourOnThisLine (Combat.cs): any

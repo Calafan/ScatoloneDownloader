@@ -3,7 +3,19 @@
 Canonical record of the rulings for `CardEffect.Tutor`. The one-line tooltip shown in the tagger is
 in [`EffectGlossary.cs`](../../ScatoloneDownloader/Mtg/EffectGlossary.cs).
 
-search library for a card (Demonic Tutor, Green Sun's Zenith, creature fetch) —
+**Definition, 2026-11-08: the player who searches CHOOSES one card out of their whole library, or
+out of the sideboard ("outside the game"), and takes it out to wherever the card says: hand, top,
+battlefield, graveyard, exile. Usually you; a player you target, or every player, counts too
+(Varragoth, Noble Benefactor). Demonic Tutor is the card.** Out: what turns up at random (revealing
+until a type); the top N cards (Filter, CardAdvantage); an opponent's library searched for you
+(Cheat, Steal); and a LAND, any land, which is Ramp or ManaFixing ("terra mai Tutor"). Accepted as
+proposed, with the land question answered the same day.
+
+Every ruling below is coherent with the definition but two, ruled at the end: a land named by its
+name (Tower Winder) and learn, kept out with its reason. Elvish Reclaimer, Golos, Elemental Teachings
+and Tower Winder are the cards corrected by name.
+
+Before 2026-11-08: search library for a card (Demonic Tutor, Green Sun's Zenith, creature fetch) —
 selection/consistency, not raw card advantage.
 
 Widened 2026-09-19: the game names what it fetches in every way there is, and the old rule knew only
@@ -41,3 +53,34 @@ the human's own case (the tag taken off by hand); Igneous Inspiration is reached
 without it; 19 unreviewed learn cards lose the proposal (Academic Dispute, Cram Session, Field Trip,
 Guiding Voice and the like). The veto is the one word "Lesson": the other cards that fetch from
 outside the game never name one and stay Tutor (the Wishes, Ring of Ma'ruf, Vivien, Arkbow Ranger).
+
+REDEFINED 2026-11-08, the answers of that day.
+
+Land: a search for ANY land is Ramp or ManaFixing, never Tutor ("Terra mai Tutor", chosen over
+"Desert and Cave stay" and "a land chosen for what it does"). "A land card" already was: 12 reviewed
+cards without the tag (Urza's Cave, Wight of the Reliquary, Kura, World Map, Sowing Mycospawn…)
+against three with it, Elvish Reclaimer and Golos (both 10-20) and Elemental Teachings, which are
+untagged by name. A NONBASIC SUBTYPE is a land too: "a Desert card" (Colossal Rattlewurm, Sand
+Scout), "a Cave card" (Cosmium Confluence) were tagged and are handed back without the tag; Maze's
+End's "a Gate card" loses the proposal. Elemental Teachings ends with no tag at all: the Ramp rules
+do not read its two lands put onto the battlefield, a question for Ramp.
+
+Q1, a land named by its name: Tower Winder ("a card named Command Tower", Tutor by hand on 09-12
+and pinned by the 09-19 test) against Urza's Cave ("a land card", ManaFixing alone). Command Tower
+is a land, and with no commander in the cube it makes no mana; ruled "-Tutor, terra mai", so Tower
+Winder has no tag. The classifier cannot know from the text that a NAME is a land and still proposes
+Tutor: a known disagreement, the one false positive left. It is the only card in the store that
+searches for a land by name.
+
+Q2, learn against the Wishes: kept out ("Learn fuori, eccezione"). Burning Wish, Ring of Ma'ruf,
+Vivien Arkbow Ranger and The Raven's Warning are Tutor by hand (3 of 3 reviewed); Gnarled Professor
+and Cram Session stay untagged. The reason of 11-05 ("Tutor searches a LIBRARY") does not hold
+against the Wishes; the reason kept is that learn is a rider with a fallback (the rummage) and it
+fetches only a Lesson, a pool the cube has only if you drafted it on purpose.
+
+Read the same day: "SEARCHES their library" is the same search said of another player — Scheming
+Symmetry ("each of them searches") and Varragoth ("target player searches"), the two misses of the
+day, 2 of 2 tagged by hand, as Noble Benefactor's "each player may search" already was. It reaches
+Auditore Ambush ("target player searches … for a card named Ezio, Blade of Vengeance"), reviewed on
+09-12 before the name was ruled Tutor and handed back with the tag, and Maralen of the Mornsong and
+Mornsong Aria, unreviewed, where every player tutors instead of drawing.

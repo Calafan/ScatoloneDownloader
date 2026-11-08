@@ -34,13 +34,16 @@ public sealed partial class EffectClassifierTests
         + "into their hand. Then each player who searched their library this way shuffles.")]
     // Naming the card you want is the purest form of this tag, ruled 2026-09-19
     // — whether it finds another copy of itself or somebody else's payoff.
+    // Tower Winder left this theory on 2026-11-08: Command Tower is a LAND, and
+    // a land is never Tutor (Q1, untagged by name); the classifier cannot read
+    // that from the name and still proposes it, a disagreement recorded in
+    // Tutor.md.
     [InlineData("Llanowar Sentinel", "Creature — Elf",
         "When this creature enters, you may pay {1}{G}. If you do, search your library for a card "
         + "named Llanowar Sentinel, put that card onto the battlefield, then shuffle.")]
-    [InlineData("Tower Winder", "Creature — Snake",
-        "Reach, deathtouch\nWhen this creature enters, search your library and/or graveyard for a "
-        + "card named Command Tower, reveal it, and put it into your hand. If you search your library "
-        + "this way, shuffle.")]
+    [InlineData("Dragonstorm Forecaster", "Creature — Human Scout",
+        "{2}, {T}: Search your library for a card named Dragonstorm Globe or Boulderborn Dragon, reveal it, "
+        + "put it into your hand, then shuffle.")]
     // Demonic Consultation never searches — it names a card and digs for the NAME.
     [InlineData("Demonic Consultation", "Instant",
         "Choose a card name. Exile the top six cards of your library, then reveal cards from the top "
@@ -137,5 +140,61 @@ public sealed partial class EffectClassifierTests
     public void Classify_TheNovember5Ruling_TheSideboardWishesStayTutor(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tutor));
+    }
+
+    [Theory]
+    // Redefined 2026-11-08: the player who searches chooses a card from their own
+    // library. 'Searches their library' is that search said of another player
+    // (Scheming Symmetry, Varragoth, tagged by hand); Auditore Ambush names the
+    // card, reached and handed back with the tag.
+    [InlineData("Scheming Symmetry", "Sorcery",
+        "Choose two target players. Each of them searches their library for a card, then shuffles and puts "
+        + "that card on top.")]
+    [InlineData("Varragoth, Bloodsky Sire", "Legendary Creature — Demon Rogue",
+        "Deathtouch\nBoast — {1}{B}: Target player searches their library for a card, then shuffles and puts "
+        + "that card on top. (Activate only if this creature attacked this turn and only once each turn.)")]
+    [InlineData("Auditore Ambush", "Sorcery",
+        "Choose one or both —\n• Return target creature to its owner's hand.\n• Target player searches their "
+        + "library and/or graveyard for a card named Ezio, Blade of Vengeance, reveals it, and puts it into "
+        + "their hand. If they search their library this way, they shuffle.")]
+    public void Classify_TheNovember8Redefinition_AnotherPlayersOwnSearch_IsTutor(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tutor));
+    }
+
+    [Theory]
+    // Ruled 2026-11-08 (terra mai Tutor): a search for ANY land is Ramp or
+    // ManaFixing. 'A land card' (Elvish Reclaimer, Golos, untagged by name) and a
+    // nonbasic subtype, 'a Desert card' or 'a Cave card' (Colossal Rattlewurm,
+    // Sand Scout, Cosmium Confluence, handed back without the tag).
+    [InlineData("Elvish Reclaimer", "Creature — Elf Warrior",
+        "This creature gets +2/+2 as long as there are three or more land cards in your graveyard.\n{2}, {T}, "
+        + "Sacrifice a land: Search your library for a land card, put it onto the battlefield tapped, then "
+        + "shuffle.")]
+    [InlineData("Golos, Tireless Pilgrim", "Legendary Artifact Creature — Scout",
+        "When Golos enters, you may search your library for a land card, put that card onto the battlefield "
+        + "tapped, then shuffle.\n{2}{W}{U}{B}{R}{G}: Exile the top three cards of your library. You may play "
+        + "them this turn without paying their mana costs.")]
+    [InlineData("Colossal Rattlewurm", "Creature — Wurm",
+        "Colossal Rattlewurm has flash as long as you control a Desert.\nTrample\n{1}{G}, Exile this card from "
+        + "your graveyard: Search your library for a Desert card, put it onto the battlefield tapped, then "
+        + "shuffle.")]
+    [InlineData("Sand Scout", "Creature — Human Scout",
+        "When this creature enters, if an opponent controls more lands than you, search your library for a "
+        + "Desert card, put it onto the battlefield tapped, then shuffle.\nWhenever one or more land cards are "
+        + "put into your graveyard from anywhere, create a 1/1 red, green, and white Sand Warrior creature "
+        + "token. This ability triggers only once each turn.")]
+    [InlineData("Cosmium Confluence", "Sorcery",
+        "Choose three. You may choose the same mode more than once.\n• Search your library for a Cave card, "
+        + "put it onto the battlefield tapped, then shuffle.\n• Put three +1/+1 counters on a Cave you control. "
+        + "It becomes a 0/0 Elemental creature with haste. It's still a land.\n• Destroy target enchantment.")]
+    // 'A Gate card' (Maze's End, unreviewed) is the third subtype in the store.
+    [InlineData("Maze's End", "Land",
+        "This land enters tapped.\n{T}: Add {C}.\n{3}, {T}, Return this land to its owner's hand: Search your "
+        + "library for a Gate card, put it onto the battlefield, then shuffle. If you control ten or more Gates "
+        + "with different names, you win the game.")]
+    public void Classify_TheNovember8Redefinition_ALandOfAnyKind_IsNotTutor(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tutor));
     }
 }

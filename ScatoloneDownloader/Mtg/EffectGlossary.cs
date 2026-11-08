@@ -125,9 +125,9 @@
                 + "Not what you own, nor giving one AWAY.",
 
             [CardEffect.Tutor] =
-                "Searches a library for a card you CHOOSE — by type, subtype, colour, count, by NAME, or just "
-                + "\"a card\" — to hand, battlefield, top, graveyard or exile. A land search is Ramp or "
-                + "ManaFixing. Revealing until a type turns up is not this: that picks for you.",
+                "A card the searcher CHOOSES from their whole library or the sideboard — by type, by NAME, or "
+                + "just \"a card\" — taken to hand, top, battlefield, graveyard or exile (Demonic Tutor). Not "
+                + "ANY land (Ramp or ManaFixing), not learn's Lesson, not what turns up at random, not the top N.",
 
             [CardEffect.ManaFixing] =
                 "Fixes colours: a choice paid in MANA, any landcycling, a land with two abilities, a land fetched "
