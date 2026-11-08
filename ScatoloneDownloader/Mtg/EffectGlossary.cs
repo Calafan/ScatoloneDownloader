@@ -35,9 +35,10 @@
                 + "token's 1-point ping, or what only touches its blocker.",
 
             [CardEffect.Counter] =
-                "Answers a spell on the stack — countered, or taken off it to its owner's hand, to exile or into "
-                + "the library — or an activated or triggered ability. Not one of your own spells, nor one aimed at "
-                + "the card itself.",
+                "Somebody else's spell or ability taken off the stack — countered, exiled, back to hand or into "
+                + "the library — by an answer you time: a target, or a moment (flash, entering, face up, an "
+                + "instant that ends the turn). Counterspell. Not a trigger that counters whatever is cast, nor a "
+                + "counter for the card itself.",
 
             [CardEffect.RemovePermanent] =
                 "Answers ANY permanent — \"destroy/exile target (nonland) permanent\", a token, the O-ring family, "

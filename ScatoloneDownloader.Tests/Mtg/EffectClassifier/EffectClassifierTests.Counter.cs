@@ -58,4 +58,70 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Counter));
     }
+
+    [Theory]
+    // The definition of 2026-11-08 (Counterspell): somebody else's spell or
+    // ability taken off the stack by an answer you time. Read the same day: up to
+    // four or two targets, any number of targets exiled, all abilities of your
+    // opponents countered as the card turns face up, every spell and ability of
+    // theirs countered by an instant, and an INSTANT that ends the turn ('Solo
+    // istantanei').
+    [InlineData("Katara's Reversal", "Instant",
+        "Counter up to four target spells and/or abilities.\nUntap up to four target artifacts and/or "
+        + "creatures.")]
+    [InlineData("Double Negative", "Instant",
+        "Counter up to two target spells.")]
+    [InlineData("Mindbreak Trap", "Instant — Trap",
+        "If an opponent cast three or more spells this turn, you may pay {0} rather than pay this spell's "
+        + "mana cost.\nExile any number of target spells.")]
+    [InlineData("Kadena's Silencer", "Creature — Snake Wizard",
+        "When this creature is turned face up, counter all abilities your opponents control.\nMegamorph {1}{U} "
+        + "(You may cast this card face down as a 2/2 creature for {3}. Turn it face up any time for its "
+        + "megamorph cost and put a +1/+1 counter on it.)")]
+    [InlineData("Summary Dismissal", "Instant",
+        "Exile all other spells and counter all abilities.")]
+    [InlineData("Whirlwind Denial", "Instant",
+        "For each spell and ability your opponents control, counter it unless its controller pays {4}.")]
+    [InlineData("Hurkyl's Final Meditation", "Instant",
+        "During turns other than yours, this spell costs {3} more to cast.\nReturn all nonland permanents to "
+        + "their owners' hands. End the turn. (Exile all spells and abilities from the stack, including this "
+        + "card. The player whose turn it is discards down to their maximum hand size. Damage wears off, and "
+        + "\"this turn\" and \"until end of turn\" effects end.)")]
+    [InlineData("Time Stop", "Instant",
+        "End the turn. (Exile all spells and abilities, including this spell. The player whose turn it is "
+        + "discards down to their maximum hand size. Damage heals and \"this turn\" and \"until end of turn\" "
+        + "effects end.)")]
+    public void Classify_TheNovember8Counter_AnAnswerYouTime_IsCounter(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Counter));
+    }
+
+    [Theory]
+    // Not Counter under the definition of 2026-11-08: a trigger that counters by
+    // itself whatever is cast is a rule of the table, like ward (Jin-Gitaxias lost
+    // its hand tag; Invoke Prejudice, Void Mirror untagged), and the turn ended by
+    // a sorcery or by an ability usable only on your turn (Ultima, Obeka, 'Solo
+    // istantanei').
+    [InlineData("Jin-Gitaxias, Progress Tyrant", "Legendary Creature — Phyrexian Praetor",
+        "Whenever you cast an artifact, instant, or sorcery spell, copy that spell. You may choose new "
+        + "targets for the copy. This ability triggers only once each turn. (A copy of a permanent spell "
+        + "becomes a token.)\nWhenever an opponent casts an artifact, instant, or sorcery spell, counter that "
+        + "spell. This ability triggers only once each turn.")]
+    [InlineData("Invoke Prejudice", "Enchantment",
+        "Whenever an opponent casts a creature spell that doesn't share a color with a creature you control, "
+        + "counter that spell unless that player pays {X}, where X is its mana value.")]
+    [InlineData("Void Mirror", "Artifact",
+        "Whenever a player casts a spell, if no colored mana was spent to cast it, counter that spell.")]
+    [InlineData("Ultima", "Sorcery",
+        "Destroy all artifacts and creatures. End the turn. (Exile all spells and abilities from the stack, "
+        + "including this card. The player whose turn it is discards down to their maximum hand size. Damage "
+        + "wears off, and \"this turn\" and \"until end of turn\" effects end.)")]
+    [InlineData("Obeka, Brute Chronologist", "Legendary Creature — Ogre Wizard",
+        "{T}: The player whose turn it is may end the turn. (Exile all spells and abilities from the stack. "
+        + "The player whose turn it is discards down to their maximum hand size. Damage wears off, and \"this "
+        + "turn\" and \"until end of turn\" effects end.)")]
+    public void Classify_TheNovember8Counter_ARuleOfTheTable_IsNotCounter(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Counter));
+    }
 }

@@ -623,6 +623,16 @@ namespace ScatoloneDownloader.Cube
                     // AND ALL AURAS" — a blink of your own — out.
                     Rx(@": exile enchanted creature\.")]),
 
+                // Defined 2026-11-08 from Counterspell (docs/ontology/Counter.md):
+                // somebody else's spell or ability taken off the stack — countered,
+                // exiled, back to hand or into the library — by an answer YOU
+                // time, a target or a moment (flash, entering, turned face up).
+                // A trigger that counters by itself whatever is cast is a rule of
+                // the table, like ward, and no rule here reads one: Jin-Gitaxias's
+                // "whenever an opponent casts …, counter that spell" lost its hand
+                // tag, the one of 10 such cards reviewed that had it (Invoke
+                // Prejudice, Swindler's Scheme, Nether Void, Void Mirror untagged).
+                //
                 // The stack answer, whatever it answers. Read 2026-10-13 from the
                 // sitting of 10-06..10-11: an ABILITY countered is the same
                 // answer ("Sì, tutti Counter" — Tishana's Tidebinder, Emerald
@@ -643,18 +653,33 @@ namespace ScatoloneDownloader.Cube
                 // "artifact, creature, or planeswalker spell" across its commas
                 // (Strix Serenade) and of "up to one" (Repulsive Mutation).
                 //
-                // Not a counter: one of YOUR OWN spells (Goblin Artisans), and
-                // one that targets THIS creature, which the card protects itself
-                // with (Mistfolk) — both untagged. A counterspell printed in a
-                // created TOKEN's quotes is the token's (Mage's Attendant's
-                // Wizard), as its damage is (DamageFromSomethingItMade).
+                // Not a counter: one of YOUR OWN spells (Goblin Artisans) — the
+                // definition says somebody else's; and one that targets THIS
+                // creature, which only protects the card itself and is neither
+                // Counter nor Protection ("È protezione per se stessi. Non conta
+                // Counter nè Protection", 2026-11-08, the self rule every tag
+                // keeps; Mistfolk, against Cerulean Drake's "targets you" and Avoid
+                // Fate's "a permanent you control", both Counter). A counterspell
+                // printed in a created TOKEN's quotes is the token's (Mage's
+                // Attendant's Wizard), as its damage is (DamageFromSomethingItMade).
+                //
+                // Read 2026-11-08 under the definition, every one tagged by hand
+                // or unreviewed: a counter of "up to FOUR" or "up to TWO" targets
+                // (Katara's Reversal, Double Negative) and of "any number of"
+                // (Mindbreak Trap's exile), "counter all ABILITIES your opponents
+                // control" at the moment the card is turned face up (Kadena's
+                // Silencer, Summary Dismissal), and an instant's "for each spell
+                // and ability your opponents control, counter it" (Whirlwind
+                // Denial). An instant that ENDS THE TURN is in Classify, because
+                // it asks the type line.
                 (CardEffect.Counter, [
-                    Rx(@"(?<!\btokens? with ""[^""]{0,120})counter (?:up to one )?target [\w ,]{0,60}?spell(?! you control| that targets this\b)"),
+                    Rx(@"(?<!\btokens? with ""[^""]{0,120})counter (?:up to \w+ |any number of )?target [\w ,]{0,60}?spell(?! you control| that targets this\b)"),
                     Rx(@"counter (?:up to one )?target (?:activated|triggered)\b"),
-                    Rx(@"counter all (?:other )?spells\b"),
+                    Rx(@"counter all (?:other )?spells\b|\bcounter all abilities\b"
+                        + @"|\bfor each spell (?:and ability )?your opponents control, counter it\b"),
                     Rx(@"return (?:up to one )?target spells?\b[^.\n]{0,60}?to its owner's hand"),
                     Rx(@"\bchoose target spell\b[\s\S]{0,250}?\bcounter (?:that|the chosen) spell\b"),
-                    Rx(@"\bexile (?:up to one )?target spells?\b|\btarget spell's controller exiles it\b"),
+                    Rx(@"\bexile (?:up to one |any number of )?target spells?\b|\btarget spell's controller exiles it\b"),
                     Rx(@"\bowner of target spell\b[^.\n]{0,60}\bputs it\b"
                         + @"|\bchoose target spell\b[^.\n]{0,60}\.\s*its owner puts it\b"),
                     Rx(@"(?<!\bto )\bairbend [^.\n]{0,40}\bspells?\b")]),
@@ -2080,6 +2105,14 @@ namespace ScatoloneDownloader.Cube
             + @"|return this creature to (?:its|their) owner'?s hand)");
 
         private static readonly Regex Hasty = Rx(@"\bhaste\b");
+
+        // "End the turn" exiles every spell and ability on the stack. It is
+        // Counter on an INSTANT only, ruled 2026-11-08 ("Solo istantanei"):
+        // Hurkyl's Final Meditation (tagged) is cast with their spell on the
+        // stack; a sorcery never is (Ultima, Day's Undoing), and an ability
+        // that ends the turn only on yours is a combo piece, not an answer
+        // (Obeka, Sundial of the Infinite) — both untagged or unproposed.
+        private static readonly Regex EndsTheTurn = Rx(@"\bend the turn\b");
 
         // The same creature by keyword, ruled 2026-10-23 ("Sì, sempre Burn" for
         // encore, then "tutto allineato" for the rest): each of these gives the

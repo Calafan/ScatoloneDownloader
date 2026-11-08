@@ -252,6 +252,14 @@ namespace ScatoloneDownloader.Cube
                 }
             }
 
+            // An INSTANT that ends the turn takes their spell off the stack. See
+            // EndsTheTurn. Before the ritual rider below, which asks for Counter.
+            if (EndsTheTurn.IsMatch(text)
+                && (card.TypeLine ?? string.Empty).Contains("Instant", StringComparison.OrdinalIgnoreCase))
+            {
+                result |= CardEffect.Counter;
+            }
+
             // A land tapping for its own mana is not Ramp (it is just a land —
             // structural, tracked by MacroType). Its ManaFixing, if any, still stands.
             if (card.MacroType == MacroType.Land)
