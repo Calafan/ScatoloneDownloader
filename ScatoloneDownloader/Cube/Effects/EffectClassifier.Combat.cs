@@ -91,8 +91,10 @@ namespace ScatoloneDownloader.Cube
         // Buried Treasure and Courier's Briefcase are ManaFixing alone by
         // hand, read 2026-10-15; Glittering Stockpile taps for {R} every turn
         // as well and stays Ramp, and the untyped Lotus Petal is Ramp alone.
+        // A CREATURE typed Treasure too, ruled 2026-11-09 ("-Ramp +ManaFixing"):
+        // Goldhound, the Treasure Dog, is one Treasure at a time, colour.
         private static readonly Regex TreasureItself = Rx(
-            @"^\{t\}, sacrifice this artifact: add one mana of any colou?r\.?$", RegexOptions.Multiline);
+            @"^\{t\}, sacrifice this (?:artifact|creature): add one mana of any colou?r\.?$", RegexOptions.Multiline);
 
         private static readonly Regex RitualAddsMana = Rx(@"(?:^|\n|\. )add [\w ]{0,20}\{[wubrgc]");
 
@@ -162,7 +164,8 @@ namespace ScatoloneDownloader.Cube
         // …and a spell's mana that RIDES ON AN ANSWER is not Ramp: Narset's
         // Rebuke, Sorceress's Schemes, Mana Drain and Reckless Blaze add mana
         // beside a kill, a counter, a sweep or a regrowth and are untagged —
-        // 4 of 5 reviewed, The Last Agni Kai the one tagged, handed back.
+        // 4 of 5 reviewed. The fifth, The Last Agni Kai's excess damage as {R},
+        // lost its hand Ramp on 2026-11-09 (the mana rides on the fight).
         private const CardEffect AnswersARitualRidesOn =
             CardEffect.Removal | CardEffect.Counter | CardEffect.Wipe | CardEffect.Regrowth
             | CardEffect.RemovePermanent | CardEffect.Burn;
@@ -205,6 +208,38 @@ namespace ScatoloneDownloader.Cube
 
         private static readonly Regex OnAnAttack = Rx(
             @"\bwhenever [^,.\n]*\b(?:attacks?|attack with|deals? combat damage)\b");
+
+        // A MODE that adds mana on a permanent's trigger that fires again, the
+        // modes coming back every turn: Galadriel, Light of Valinor's "choose
+        // one that hasn't been chosen this turn — • Add {G}{G}{G}", Ramp by hand
+        // (10-26), read 2026-11-09. Not a mode chosen ONCE for good (Zuko,
+        // Conflicted's "choose one that hasn't been chosen and you lose 2 life",
+        // untagged). A spell's mode is SpellAddsMana. Family: 1 reviewed
+        // permanent each way, and Galadriel is the only store card the rule
+        // reaches — an attack guard ("mai Ramp dall'attacco") was tried and
+        // removed, no card has a mana mode on an attack trigger.
+        private static readonly Regex ModeAddsManaOnATrigger = Rx(
+            @"^(?:[^\n—]{1,30} — )?(?:whenever|at the beginning of)\b"
+            + @"[^\n]*\bchoose (?:one|two)(?: that hasn't been chosen this turn)? —(?:\n• [^\n]*)*?"
+            + @"\n• (?:[^\n—]{1,30} — )?add (?:\{|one mana|two mana|three mana|x mana)",
+            RegexOptions.Multiline);
+
+        // An ATTACK or combat-damage trigger with the modes under it, blanked
+        // before UntapsLands is asked: lands untapped by an attack are mana
+        // from the attack ("mai Ramp dall'attacco", 2026-09-29), read
+        // 2026-11-09 — Pip-Boy 3000's "Whenever equipped creature attacks,
+        // choose one — … • Check Map — Untap up to two target lands" (Filter
+        // alone by hand) and Bumi, Unleashed's "Whenever Bumi deals combat
+        // damage to a player, untap all lands you control" (handed back).
+        // Lost Jitte's "• Untap target land" is under the charge-counter
+        // activation, not under its combat trigger, and stays Ramp.
+        // Ruled 2026-11-09 ("Solo i Treasure"): from an attack only what lasts
+        // past the turn counts, so several Treasures from combat damage stay
+        // Ramp (Prosperous Bandit, 11 of 11 reviewed), and mana or lands
+        // untapped by the attack, spent in that turn, never are.
+        private static readonly Regex AttackTriggerWithItsModes = Rx(
+            @"^[^\n]*\bwhenever [^,.\n]*\b(?:attacks?|attack with|deals? combat damage)\b[^\n]*(?:\n• [^\n]*)*",
+            RegexOptions.Multiline);
 
         // …but not a SAGA CHAPTER's burst of mana, ruled 2026-09-29 ("non è
         // Ramp"): 4 of the 6 reviewed chapters that add mana are untagged
@@ -1939,10 +1974,17 @@ namespace ScatoloneDownloader.Cube
         // Uncle Iroh's Lesson spells stay Ramp, and so do face-down creature
         // spells (Dream Chisel). Blanked before CostsLessToCast is asked;
         // case-sensitive, like TribalCard.
+        // The NEXT spell of a tribe too, read 2026-11-09 under the same ruling:
+        // Invasion of the Giants' chapter III, "The next Giant spell you cast
+        // this turn costs {2} less to cast", Filter alone by hand (11-06).
         private static readonly Regex TribalCostReduction = new(
-            @"(?!(?:Instant|Sorcery|Lesson|Arcane|Adventure|Historic|Aura|Equipment|Vehicle|Kicked|Spells|Face-down)\b)"
-            + ACreatureType + @" (?:creature )?spells you cast cost (?:\{\d+\}|(?:\{[WUBRG]\})+) less to cast",
+            NotASpellSubtype + ACreatureType + @" (?:creature )?spells you cast cost (?:\{\d+\}|(?:\{[WUBRG]\})+) less to cast"
+            + @"|\bnext " + NotASpellSubtype + ACreatureType
+            + @" (?:creature )?spell you cast this turn costs (?:\{\d+\}|(?:\{[WUBRG]\})+) less to cast",
             RegexOptions.CultureInvariant);
+
+        private const string NotASpellSubtype =
+            @"(?!(?:Instant|Sorcery|Lesson|Arcane|Adventure|Historic|Aura|Equipment|Vehicle|Kicked|Spells|Face-down)\b)";
 
         private static readonly Regex ExtraLandDrop = Rx(
             @"play an additional land|play any number of lands|play up to \w+ additional lands"
@@ -2114,16 +2156,16 @@ namespace ScatoloneDownloader.Cube
         // TARGET player is not in it: you point the fetch at yourself, and the
         // one reviewed card written that way is Ramp (Fertilid's Favor, tagged
         // by the human on 2026-09-29), while "its controller" is 0 of 12.
-        // Read 2026-10-24, untagged by hand, one card each: the land the OWNER
-        // of a shuffled-away permanent finds on top (Audacious Swap, Removal
-        // alone), and the lands EACH PLAYER short of them may search for after
-        // a sweep (Natural Balance, LandDestruction alone after its hand-back
-        // of 2026-10-16).
+        // Read 2026-10-24, untagged by hand: the land the OWNER of a
+        // shuffled-away permanent finds on top (Audacious Swap, Removal alone).
+        // NOT the lands EACH PLAYER short of them may search for after a sweep:
+        // read here on 2026-10-24, overturned 2026-11-09 ("+Ramp"), Natural
+        // Balance is Ramp — whoever casts it is usually the one under five
+        // lands, and the lands are theirs, as Veteran Explorer's are.
         private static readonly Regex LandForSomebodyElse = Rx(
             @"its controller (?:creates|may search|searches|puts)"
             + @"|(?:that|defending) player (?:creates|may search|searches|puts)"
-            + @"|\bif it's a land card, they put it onto the battlefield"
-            + @"|\beach player who controls [^.\n]{0,40}\blands? may search their library");
+            + @"|\bif it's a land card, they put it onto the battlefield");
 
         // A Treasure is a Lotus Petal in token form, so it always FIXES. Whether
         // it also RAMPS is a question of how many you get: one, once, is a rider
@@ -2151,6 +2193,20 @@ namespace ScatoloneDownloader.Cube
         // makes a Treasure outside the token's quotes.
         private static readonly Regex TreasureATokenMakes = Rx(
             @"\btokens? with [^""\n]{0,60}""[^""]*\btreasure\b[^""]*""");
+
+        // An ELDRAZI SPAWN or SCION is a Treasure, ruled 2026-11-09 ("Come i
+        // Treasure"): a token whose point is "Sacrifice this token: Add {C}".
+        // So the Treasure's line holds for it — several at once or made by an
+        // activation is Ramp, one once is a rider, one per trigger never — and
+        // Spawnbed Protector's two Scions at every end step are Ramp, as
+        // Spawn-Gang Commander's three when cast are. Before this they were
+        // read as the token's own mana and never the card's (Chittering
+        // Dispatcher, 2026-09-29; 2 of 21 reviewed tagged). Rewritten to a
+        // Treasure token, with its quoted ability, before TreasureAlsoRamps is
+        // asked; Tokens is not touched, the Spawn is still a creature.
+        private static readonly Regex SpawnOrScionToken = Rx(
+            @"\b(?:\d+/\d+ )?colorless eldrazi (?:spawn|scion) creature (tokens?)"
+            + @"(?: with ""sacrifice this token: add \{c\}\.?"")?");
         // Past five as well: Ancient Adamantoise dies into ten, Ramp by hand.
         private static readonly Regex SeveralTreasures = Rx(
             @"creates? (?:two|three|four|five|six|seven|eight|nine|ten|x|\d+) (?:tapped )?treasure tokens"

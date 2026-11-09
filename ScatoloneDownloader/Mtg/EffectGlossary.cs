@@ -59,10 +59,10 @@
                 + "the bottom or a shuffle.",
 
             [CardEffect.Ramp] =
-                "More mana, or sooner: a mana ability on a creature or rock, a land onto the battlefield, a ritual, "
-                + "a cost reduction (not a tribe's), an extra land drop, untapping lands, several Treasures, mana kept "
-                + "for good. Mana that COSTS mana fixes colour instead. A land tapping for one is just a land, its own "
-                + "mana or one GRANTED to it.",
+                "Mana of yours beyond the land of the turn: one more land in play, a source adding mana or "
+                + "discounting other spells every turn, or a burst of mana that is the card's point. Rampant "
+                + "Growth. Not a land tapping for one, mana costing mana, a land for a land, mana for others, one "
+                + "Treasure per trigger, or mana and lands untapped by an attack.",
 
             [CardEffect.Disenchant] =
                 "Answers an artifact or enchantment, at any count — \"up to one\", \"X target\", \"another\", "

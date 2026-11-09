@@ -577,9 +577,11 @@ namespace ScatoloneDownloader.Cube
         /// Kenway, whose triggers each make one. "A Treasure for each" on a
         /// trigger is still one per trigger (Edward Kenway). The reminder text
         /// is blanked first, because it carries a colon and would read as an
-        /// activation.</summary>
+        /// activation. An Eldrazi Spawn or Scion is read as a Treasure since
+        /// 2026-11-09, see SpawnOrScionToken.</summary>
         private static bool TreasureAlsoRamps(string text)
         {
+            text = SpawnOrScionToken.Replace(text, "treasure $1");
             text = TreasuresForExcessDamage.Replace(
                 TreasureReminderText.Replace(
                     TreasureForSomebodyElse.Replace(TreasureATokenMakes.Replace(text, " "), " "), " "), " ");

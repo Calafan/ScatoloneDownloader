@@ -3,6 +3,19 @@
 Canonical record of the rulings for `CardEffect.Ramp`. The one-line tooltip shown in the tagger is
 in [`EffectGlossary.cs`](../../ScatoloneDownloader/Mtg/EffectGlossary.cs).
 
+**Definition, 2026-11-09** ("Mana TUO in più"): mana of YOURS beyond the land of the turn, given by
+the card: one more land on the battlefield, a source that adds mana (or discounts your OTHER spells)
+every turn, or a burst of mana that is the card's point. Rampant Growth is the card. Out as
+consequences, not exceptions: a land tapping for one, mana that costs mana (it fixes colour), one
+land for one land, mana or lands given to somebody else, and a Treasure or mana riding on another
+action. Kept as exceptions with their reasons, ruled below: one Treasure per trigger, a card typed
+Treasure, a tribe's discount, and from an attack nothing but several Treasures. It held on 801
+reviewed cards after the realignment of the same day (FP 0, FN 0; FP 8 and FN 3 before it, each a
+card the answers of 2026-11-09 reached).
+
+The rulings below are the history; each one is consistent with the definition or kept as an
+exception with its reason.
+
 more mana, or sooner: a mana ability on a creature or rock, a land put onto the battlefield.
 
 A land tapping for its own single mana is just a land — with ONE exception, ruled 2026-09-15: a land
@@ -44,7 +57,8 @@ review), while a chapter that grants a mana ability for good is read as one (Hua
 MANA A PERMANENT ADDS ON A TRIGGER is this tag, read 2026-09-29 (Electro, Rodeo Pyromancers, Muerra,
 Eladamri's Vineyard, Karn — 10 of 12 reviewed), but never mana from an ATTACK or combat damage,
 ruled the same day ("mai Ramp dall'attacco": Tesak untagged, Brazen Collector and Pygmy Hippo handed
-back), nor a spell's trigger riding on what the spell does (Mana Drain, Reckless Blaze).
+back; lands untapped by an attack too since 2026-11-09, Q6 below), nor a spell's trigger riding on
+what the spell does (Mana Drain, Reckless Blaze).
 
 The LAND FACE of a modal double-faced card is a land and its mana is just a land's (9 of 10 reviewed
 pay-3-life MDFCs untagged; Witch Enchanter handed back); a front that taps for mana keeps it
@@ -62,14 +76,14 @@ somebody else's explore.
 A SPELL's mana is read after a comma or counted before its symbol (Energy Tap, Channel, Spoils of
 Evil, Burnt Offering, Metamorphosis), and counts only when it is the spell's point: mana riding on a
 kill, a counter, a sweep or a regrowth is not this tag (Narset's Rebuke, Mana Drain, Reckless Blaze,
-Sorceress's Schemes — 4 of 5, The Last Agni Kai the exception). Against all of that stands one
-subtraction, and it is the same ruling read backwards: MANA THAT COSTS MANA adds none, it converts
-colour, so Celestial Prism and Fire Sprites are ManaFixing and not Ramp — unless the trade comes
-back up, as Astrolabe pays {1} for two. Asked of every mana line on the card, so one free ability
-beside a paid one keeps the tag (Mana Prism). Two things the land family does NOT include, both
-learned by breaking them: the land handed to the player a removal spell was aimed at is their
-consolation, not your ramp (Emergency Eject, Price of Freedom), and ONE land sacrificed for ONE land
-is a swap (Renewal) while one for TWO is not (Harrow).
+Sorceress's Schemes — 5 of 5 since The Last Agni Kai lost the tag on 2026-11-09). Against all of
+that stands one subtraction, and it is the same ruling read backwards: MANA THAT COSTS MANA adds
+none, it converts colour, so Celestial Prism and Fire Sprites are ManaFixing and not Ramp — unless
+the trade comes back up, as Astrolabe pays {1} for two. Asked of every mana line on the card, so one
+free ability beside a paid one keeps the tag (Mana Prism). Two things the land family does NOT
+include, both learned by breaking them: the land handed to the player a removal spell was aimed at
+is their consolation, not your ramp (Emergency Eject, Price of Freedom), and ONE land sacrificed for
+ONE land is a swap (Renewal) while one for TWO is not (Harrow).
 
 The LANDER token is not in either exclusion and fetches a real land — all 17 reviewed cards that
 make one are Ramp.
@@ -130,10 +144,11 @@ the Emerald Grove); "until you EXILE a land card" (Venture Forth). Not this tag:
 of a shuffled permanent finds on top, their consolation (Audacious Swap); one land sacrificed by an
 activation for one land, a swap (Elvish Reclaimer); one Treasure from exiling the card from the
 graveyard (Halo Scarab) or when its last counter is gone (Reckoner Bankbuster), both riders; the
-lands each player short of them may search for after a sweep (Natural Balance); "all lands have
-'{T}: Add one mana of any color'", the one mana granted to lands, which fixes (Toxicrene); Treasures
-a TARGET OPPONENT creates, theirs (Vazi, Keen Negotiator, neither Ramp nor ManaFixing). Left as a
-known disagreement: The Last Agni Kai.
+lands each player short of them may search for after a sweep (Natural Balance, OVERTURNED
+2026-11-09, below); "all lands have '{T}: Add one mana of any color'", the one mana granted to
+lands, which fixes (Toxicrene); Treasures a TARGET OPPONENT creates, theirs (Vazi, Keen Negotiator,
+neither Ramp nor ManaFixing). The known disagreement left that day, The Last Agni Kai, was settled
+on 2026-11-09.
 
 Read 2026-10-30: two mana for {2} is mana that costs mana and adds none (Guild Globe, ManaFixing
 alone by hand; Terrarion follows), and "untap target creature or land" is not a land untapped for
@@ -169,3 +184,38 @@ Sungrass) and Kaleidostone, unreviewed. The abilities that cost less than they a
 Read 2026-11-05 under the 2026-10-15 "No Ramp" ruling: one Treasure from an ability that DISCARDS
 the card itself is a rider, like the sacrifice (Magma Opus, untagged by hand; Creative Outburst and
 Elemental Masterpiece, unreviewed, lose the proposal).
+
+Ruled 2026-11-09, six answers under the definition:
+
+- Q1 ("Tenere: mai Ramp"): ONE Treasure per trigger stays out, an exception kept with its reason: a
+  Treasure at a time is colour, not quantity. 0 of 28 reviewed cards carried Ramp for it outside an
+  attack and 0 of 32 from one, all ManaFixing, while mana ADDED on a trigger is Ramp (20 of 31): the
+  pair was Hulking Raptor's "add {G}{G}" each first main phase and Ultimate Green Goblin's Treasure
+  each upkeep. Several Treasures from one trigger stay Ramp (Gluntch, Ziatora). No card moved.
+- Q2 ("Come i Treasure"): an Eldrazi SPAWN or SCION is read as a Treasure, overturning the reading
+  of 2026-09-29 that a token's quoted mana is the token's own (Chittering Dispatcher): several at
+  once, or made by an activated ability, are Ramp; one per trigger is not (Basking Broodscale).
+  Spawnbed Protector's two Scions at every end step were tagged by hand (11-06). Spawn-Gang
+  Commander, Writhing Chrysalis, Drowner of Truth, Kozilek's Command, Kozilek's Unsealing, Idol of
+  False Gods and Propagator Drone, reviewed without it (2 of 21 reviewed Spawn cards were Ramp),
+  took the tag and went back for review. Path of Annihilation keeps its Ramp for the mana ability
+  it grants.
+- Q3 ("-Ramp +ManaFixing"): a CREATURE typed Treasure that cracks itself for one mana of any colour
+  is the typed Treasure of 2026-10-15 (Buried Treasure): Goldhound loses Ramp and takes ManaFixing.
+  The untyped Blood Pet and Lotus Petal stay.
+- Q4 ("-Ramp, solo Removal"): The Last Agni Kai's excess damage as {R} rides on the fight, like the
+  other kills that add mana; it loses Ramp and keeps Removal.
+- Q5 ("+Ramp"): Natural Balance's lands for each player with four or fewer are lands of yours when
+  you cast it short of five, symmetric like Veteran Explorer's and Mana Flare's: it takes Ramp and
+  keeps LandDestruction, overturning the "Not this tag" of 2026-10-24.
+- Q6 ("Solo i Treasure"): from an ATTACK or combat damage only what outlasts the turn counts,
+  several Treasures (Prosperous Bandit's "that many", 11 of 11 reviewed; Rapacious One's Spawn).
+  Mana and lands UNTAPPED by an attack are spent that turn and are never this tag, which sharpens
+  "mai Ramp dall'attacco" of 2026-09-29: Bumi, Unleashed lost Ramp and went back for review; Pip-Boy
+  3000's "Untap up to two target lands" mode stays out, and Sword of Feast and Famine, Bear Umbra
+  and Nature's Will lose the proposal.
+
+Read the same day: a MODE that adds mana on a REPEATING trigger of a permanent is a source every
+turn (Galadriel, Light of Valinor's "Add {G}{G}{G}" as each creature enters, tagged by hand; a
+one-time mode stays out, Zuko, Conflicted); the NEXT spell of a tribe costing less is the tribe's
+discount of 2026-10-24 (Invasion of the Giants' chapter III, Filter alone by hand).

@@ -334,7 +334,8 @@ public sealed partial class EffectClassifierTests
     // A mana ability in quotes that is a TOKEN's own (an Eldrazi Spawn's
     // "Sacrifice this token: Add {C}") or the victim's Treasure ("sacrifice this
     // artifact", Kitesail Larcenist) is not the card's, read with the quoted mana
-    // abilities on 2026-09-29.
+    // abilities on 2026-09-29. Since 2026-11-09 a Spawn is read as a Treasure,
+    // and Chittering Dispatcher's ONE, once, is still a rider.
     [InlineData("Chittering Dispatcher", "Creature — Eldrazi Drone",
         "Devoid (This card has no color.)\nMyriad\nWhen this creature leaves the battlefield, create a 0/1 "
         + "colorless Eldrazi Spawn creature token with \"Sacrifice this token: Add {C}.\"")]
@@ -368,15 +369,12 @@ public sealed partial class EffectClassifierTests
     [Theory]
     // The LAND FACE of a modal double-faced card is a land, whose mana is just a
     // land's: 9 of the 10 reviewed pay-3-life MDFCs are untagged, and the human
-    // left Boggart Bog and Drowned Jungle without Ramp on 2026-09-23/25 (Drowned
-    // Jungle's two colours are its ManaFixing).
+    // left Boggart Bog without Ramp on 2026-09-23. (Drowner of Truth // Drowned
+    // Jungle was pinned here too until 2026-11-09, when its front's two Eldrazi
+    // Spawn became Ramp as Treasures; its land face still adds none.)
     [InlineData("Boggart Trawler // Boggart Bog", "Creature — Goblin // Land",
         "When this creature enters, exile target player's graveyard.\nAs this land enters, you may pay 3 life. "
         + "If you don't, it enters tapped.\n{T}: Add {B}.")]
-    [InlineData("Drowner of Truth // Drowned Jungle", "Creature — Eldrazi // Land",
-        "Devoid (This card has no color.)\nWhen you cast this spell, if {C} was spent to cast it, create two "
-        + "0/1 colorless Eldrazi Spawn creature tokens with \"Sacrifice this token: Add {C}.\"\nThis land enters "
-        + "tapped.\n{T}: Add {G} or {U}.")]
     public void Classify_TheLandFaceOfAModalCard_IsJustALand(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
@@ -403,7 +401,8 @@ public sealed partial class EffectClassifierTests
     [Theory]
     // A spell's mana that rides on an answer — a kill, a counter, a sweep, a
     // regrowth — is not Ramp: 4 of 5 reviewed (Narset's Rebuke, Mana Drain,
-    // Reckless Blaze, Sorceress's Schemes), The Last Agni Kai the exception. And
+    // Reckless Blaze, Sorceress's Schemes); The Last Agni Kai, the fifth, lost its
+    // hand Ramp on 2026-11-09. And
     // mana in a keyword's reminder is not the spell's (Fire Nation Attacks'
     // firebending).
     [InlineData("Narset's Rebuke", "Instant",
@@ -424,8 +423,9 @@ public sealed partial class EffectClassifierTests
     [Theory]
     // …but not mana from an ATTACK or combat damage, ruled 2026-09-29 ("mai Ramp
     // dall'attacco": Tesak), a SPELL's trigger that rides on what it does
-    // (Reckless Blaze), or a token's own mana ability quoted inside the trigger
-    // (Basking Broodscale's Eldrazi Spawn).
+    // (Reckless Blaze), or ONE Eldrazi Spawn per trigger (Basking Broodscale) —
+    // read as the token's own mana until 2026-11-09, and since then as a
+    // Treasure, which one per trigger never ramps.
     [InlineData("Tesak, Judith's Hellhound", "Legendary Creature — Elemental Dog",
         "Unleash (You may have this creature enter with a +1/+1 counter on it. It can't block as long as it "
         + "has a +1/+1 counter on it.)\nOther Dogs you control have unleash.\nCreatures you control with counters "
@@ -578,9 +578,10 @@ public sealed partial class EffectClassifierTests
     // the Phoenix King's firebending). Read the same day, untagged by hand: the
     // land the owner of a shuffled permanent finds (Audacious Swap), one land
     // sacrificed for one (Elvish Reclaimer), one Treasure from exiling the card
-    // (Halo Scarab) or when its last counter is gone (Reckoner Bankbuster), the
-    // lands each player short of them searches for (Natural Balance), and a one-
-    // time mana mode on a permanent's trigger (Zuko, Conflicted).
+    // (Halo Scarab) or when its last counter is gone (Reckoner Bankbuster), and a
+    // one-time mana mode on a permanent's trigger (Zuko, Conflicted). (Natural
+    // Balance, the lands each player short of them searches for, was pinned here
+    // until 2026-11-09, when it was ruled Ramp — see TheNovember9RampPass_IsRamp.)
     [InlineData("Gargos, Vicious Watcher", "Legendary Creature — Hydra",
         "Vigilance\nHydra spells you cast cost {4} less to cast.\nWhenever a creature you control becomes the "
         + "target of a spell, Gargos fights up to one target creature you don't control.")]
@@ -615,11 +616,6 @@ public sealed partial class EffectClassifierTests
         + "Vehicle: Draw a card. Then if there are no charge counters on this Vehicle, create a Treasure token "
         + "and a 1/1 colorless Pilot creature token with \"This token crews Vehicles as though its power were 2 "
         + "greater.\"\nCrew 3")]
-    [InlineData("Natural Balance", "Sorcery",
-        "Each player who controls six or more lands chooses five lands they control and sacrifices the rest. "
-        + "Each player who controls four or fewer lands may search their library for up to X basic land cards "
-        + "and put them onto the battlefield, where X is five minus the number of lands they control. Then each "
-        + "player who searched their library this way shuffles.")]
     [InlineData("Zuko, Conflicted", "Legendary Creature — Human Rogue",
         "At the beginning of your first main phase, choose one that hasn't been chosen and you lose 2 life "
         + "—\n• Draw a card.\n• Put a +1/+1 counter on Zuko.\n• Add {R}.\n• Exile Zuko, then return him to the "
@@ -888,5 +884,84 @@ public sealed partial class EffectClassifierTests
     public void Classify_TheNovember5Readings_ADiscardedCardsTreasure_IsNotRamp(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // Ruled 2026-11-09, the Ramp definition (mana YOURS beyond the land of the
+    // turn, Rampant Growth): an Eldrazi Spawn or Scion is a Treasure ('Come i
+    // Treasure'), so two Scions at every end step (Spawnbed Protector), three when
+    // cast (Spawn-Gang Commander) and 'that many' from combat damage (Rapacious
+    // One, as the 11 reviewed Treasure cards that make several from combat: 'Solo
+    // i Treasure') are Ramp; the lands each player short of them searches for are
+    // yours too (Natural Balance, '+Ramp', as Veteran Explorer); and a mana mode
+    // on a trigger whose modes come back every turn (Galadriel, Light of Valinor,
+    // read).
+    [InlineData("Spawnbed Protector", "Creature — Eldrazi",
+        "At the beginning of your end step, return up to one target Eldrazi creature card from your graveyard "
+        + "to your hand. Create two 1/1 colorless Eldrazi Scion creature tokens with \"Sacrifice this token: Add "
+        + "{C}.\"")]
+    [InlineData("Spawn-Gang Commander", "Creature — Eldrazi Goblin",
+        "Devoid (This card has no color.)\nWhen you cast this spell, create three 0/1 colorless Eldrazi Spawn "
+        + "creature tokens with \"Sacrifice this token: Add {C}.\"\n{1}{C}, Sacrifice an Eldrazi: This creature "
+        + "deals 2 damage to any target.")]
+    [InlineData("Rapacious One", "Creature — Eldrazi Drone",
+        "Trample\nWhenever this creature deals combat damage to a player, create that many 0/1 colorless "
+        + "Eldrazi Spawn creature tokens. They have \"Sacrifice this token: Add {C}.\"")]
+    [InlineData("Natural Balance", "Sorcery",
+        "Each player who controls six or more lands chooses five lands they control and sacrifices the rest. "
+        + "Each player who controls four or fewer lands may search their library for up to X basic land cards "
+        + "and put them onto the battlefield, where X is five minus the number of lands they control. Then each "
+        + "player who searched their library this way shuffles.")]
+    [InlineData("Galadriel, Light of Valinor", "Legendary Creature — Elf Noble",
+        "Alliance — Whenever another creature you control enters, choose one that hasn't been chosen this "
+        + "turn —\n• Add {G}{G}{G}.\n• Put a +1/+1 counter on each creature you control.\n• Scry 2, then draw a "
+        + "card.")]
+    public void Classify_TheNovember9RampPass_IsRamp(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // Ruled 2026-11-09: lands untapped by an attack or by combat damage are mana
+    // from the attack and never Ramp, only several Treasures last past the turn
+    // ('Solo i Treasure': Pip-Boy 3000's mode, Bumi, Unleashed handed back); the
+    // NEXT spell of a tribe costing less is the tribe's (Invasion of the Giants,
+    // read); a creature typed Treasure cracking itself is one Treasure, colour
+    // ('-Ramp +ManaFixing': Goldhound).
+    [InlineData("Pip-Boy 3000", "Artifact — Equipment",
+        "Whenever equipped creature attacks, choose one —\n• Sort Inventory — Draw a card, then discard a "
+        + "card.\n• Pick a Perk — Put a +1/+1 counter on that creature.\n• Check Map — Untap up to two target "
+        + "lands.\nEquip {2}")]
+    [InlineData("Bumi, Unleashed", "Legendary Creature — Human Noble Ally",
+        "Trample\nWhen Bumi enters, earthbend 4.\nWhenever Bumi deals combat damage to a player, untap all "
+        + "lands you control. After this phase, there is an additional combat phase. Only land creatures can "
+        + "attack during that combat phase.")]
+    [InlineData("Invasion of the Giants", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Scry "
+        + "2.\nII — Draw a card. Then you may reveal a Giant card from your hand. When you do, this Saga deals 2 "
+        + "damage to target opponent or planeswalker.\nIII — The next Giant spell you cast this turn costs {2} "
+        + "less to cast.")]
+    [InlineData("Goldhound", "Artifact Creature — Treasure Dog",
+        "First strike\nMenace (This creature can't be blocked except by two or more creatures.)\n{T}, Sacrifice "
+        + "this creature: Add one mana of any color.")]
+    public void Classify_TheNovember9RampPass_IsNotRamp(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // Ruled 2026-11-09 ('-Ramp +ManaFixing'): the 2026-10-15 ruling on a card
+    // typed Treasure cracking itself covers a creature too, so Goldhound fixes
+    // once like Buried Treasure, while the untyped Lotus Petal and Blood Pet stay
+    // Ramp.
+    [InlineData("Goldhound", "Artifact Creature — Treasure Dog",
+        "First strike\nMenace (This creature can't be blocked except by two or more creatures.)\n{T}, Sacrifice "
+        + "this creature: Add one mana of any color.")]
+    public void Classify_TheNovember9RampPass_ACreatureTypedTreasure_IsManaFixingNotRamp(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.ManaFixing));
+        Assert.False(result.HasFlag(CardEffect.Ramp));
     }
 }

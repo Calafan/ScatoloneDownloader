@@ -352,8 +352,9 @@ namespace ScatoloneDownloader.Cube
                 || (card.MacroType == MacroType.Land && LandPutsItselfFromHand.IsMatch(text))
                 || (card.MacroType != MacroType.Spell
                     && Quoted.Replace(text, " ").Split('\n').Any(line => TriggeredMana.IsMatch(line) && !OnAnAttack.IsMatch(line)))
+                || (card.MacroType != MacroType.Spell && ModeAddsManaOnATrigger.IsMatch(text))
                 || LandFromHandToPlay.IsMatch(ownLandDrops)
-                || UntapsLands.IsMatch(text)
+                || UntapsLands.IsMatch(AttackTriggerWithItsModes.Replace(text, " "))
                 || (card.MacroType != MacroType.Land
                     && LandOntoTheBattlefield.IsMatch(ownLandDrops)
                     && !LandForSomebodyElse.IsMatch(text) && !PaysALandForTheLand.IsMatch(text)
