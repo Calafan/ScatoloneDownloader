@@ -2177,6 +2177,17 @@ namespace ScatoloneDownloader.Cube
             + @"(?:creatures? )?you control (?:enters?|attacks?|dies|die)[^\n]*\bloses? [\dX]+ life[^\n]*",
             RegexOptions.Multiline);
 
+        // The same wait in another wording, read 2026-11-10 under Q7 ("Tribale
+        // fuori, come Reanimate"): damage that needs a card OF A TRIBE revealed
+        // from the hand is fed only by a tribal deck. Invasion of the Giants'
+        // "you may reveal a Giant card from your hand. When you do, this Saga
+        // deals 2 damage to target opponent" is Filter alone by hand (11-06), and
+        // it is the only card of the store written this way. Case-sensitive like
+        // TribalCard, because the tribe is the capitalised word.
+        private static readonly Regex BurnOnARevealedTribeCard = new(
+            @"\breveal an? " + ACreatureType + @" card from your hand\. (?i:when|if) you do, [^.\n]*\.?",
+            RegexOptions.CultureInvariant);
+
         /// <summary>"Target player draws three cards and loses 3 life" is never
         /// Burn, ruled 2026-10-16 ("mai Burn"): the life is what the cards cost,
         /// whoever is pointed at. Monumental Corruption was changed by name;

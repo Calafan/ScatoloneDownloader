@@ -200,15 +200,22 @@ public sealed partial class EffectClassifierTests
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
     }
 
-    [Fact]
+    [Theory]
     // …but a drain waiting on OTHER members of a tribe is not, ruled
     // 2026-10-13 ("dipendono da condizioni esterne").
-    public void Classify_ADrainOnSomebodyElseOfTheTribe_IsNotBurn()
+    [InlineData("Obyra, Dreaming Duelist", "Legendary Creature — Faerie Warrior",
+        "Flash\nFlying\nWhenever another Faerie you control enters, each opponent loses 1 life.")]
+    // Read 2026-11-10 under Q7: damage behind a card OF A TRIBE revealed from the
+    // hand waits on a tribal deck (Filter alone by hand, 11-06). A Fact until
+    // that day, when it became a Theory to take the second card.
+    [InlineData("Invasion of the Giants", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Scry "
+        + "2.\nII — Draw a card. Then you may reveal a Giant card from your hand. When you do, this Saga deals 2 "
+        + "damage to target opponent or planeswalker.\nIII — The next Giant spell you cast this turn costs {2} "
+        + "less to cast.")]
+    public void Classify_ADrainOnSomebodyElseOfTheTribe_IsNotBurn(string name, string typeLine, string oracle)
     {
-        CardEffect result = EffectClassifier.Classify(MakeCard("Obyra, Dreaming Duelist", "Legendary Creature — Faerie Warrior",
-            "Flash\nFlying\nWhenever another Faerie you control enters, each opponent loses 1 life."));
-
-        Assert.False(result.HasFlag(CardEffect.Burn));
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
     }
 
     [Theory]
@@ -549,6 +556,25 @@ public sealed partial class EffectClassifierTests
         + "to one target planeswalker.\nNightbound (If a player casts at least two spells during their own turn, "
         + "it becomes day next turn.)")]
     public void Classify_TheNovember5Readings_DamageDividedAmongOneOrTwoTargets_IsBurn(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
+    // Read 2026-11-10, two faces BurnTarget did not name, both Burn by hand on
+    // 11-06: UP TO ONE target player on a loyalty ability that comes again, and an
+    // opponent CHOSEN AT RANDOM.
+    [InlineData("Chandra, Dressed to Kill", "Legendary Planeswalker — Chandra",
+        "+1: Add {R}. Chandra deals 1 damage to up to one target player or planeswalker.\n+1: Exile the top "
+        + "card of your library. If it's red, you may cast it this turn.\n−7: Exile the top five cards of your "
+        + "library. You may cast red spells from among them this turn. You get an emblem with \"Whenever you "
+        + "cast a red spell, this emblem deals X damage to any target, where X is the amount of mana spent to "
+        + "cast that spell.\"")]
+    [InlineData("Zaffai, Thunder Conductor", "Legendary Creature — Human Shaman",
+        "Magecraft — Whenever you cast or copy an instant or sorcery spell, scry 1. If that spell's mana "
+        + "value is 5 or greater, create a 4/4 blue and red Elemental creature token. If that spell's mana "
+        + "value is 10 or greater, Zaffai deals 10 damage to an opponent chosen at random.")]
+    public void Classify_TheNovember10Readings_UpToOnePlayerOrOneAtRandom_IsBurn(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
     }

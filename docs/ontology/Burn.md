@@ -272,3 +272,9 @@ RULED 2026-11-08 with the Steal definition (Steal.md, Q3 "Burn"): an EXCHANGE of
 the opponent loses, and no permanent taken. Mirror Universe, Mister Negative, Psychic Transfer and
 Profane Transfusion, Steal by hand until then, named; Axis of Mortality, Magus of the Mirror and Soul
 Conduit unreviewed.
+
+Read 2026-11-10, each Burn by hand on 11-06 and a family of one: "UP TO ONE target player" on a
+loyalty ability that comes again (Chandra, Dressed to Kill's +1) and "an opponent CHOSEN AT RANDOM"
+(Zaffai, Thunder Conductor's 10 damage) are faces. Under Q7, damage behind a card OF A TRIBE revealed
+from the hand waits on a tribal deck: Invasion of the Giants' "reveal a Giant card from your hand.
+When you do, this Saga deals 2 damage to target opponent", untagged for Burn by hand.

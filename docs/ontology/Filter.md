@@ -329,3 +329,7 @@ Ajani, Outland Chaperone). "Put UP TO TWO of them into your hand" keeps more tha
 Prophecy, CardAdvantage). Guild Feud's own half, "you do the same with the top three cards of your
 library" every upkeep, is one chosen again, CardAdvantage by "Si ripete = CA" (11-03); its
 opponent's half is theirs.
+
+RULED 2026-11-10 under Q4 ("-Filter, Q4 regge"): Invasion of the Giants' Scry 2 is the one chapter
+that selects, and chapter II's draw selects nothing by itself, so the Saga carries the rider and not
+the tag. It was Filter by hand on 11-06 and is corrected, with no rule of its own.

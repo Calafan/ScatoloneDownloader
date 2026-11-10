@@ -399,6 +399,45 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
+    // Read 2026-11-10 under the 11-09 definition (a land of yours in play): a
+    // Desert or Cave searched onto the battlefield (7 of 7 reviewed subtype
+    // searches are Ramp), and Elemental Teachings' lands put onto the battlefield
+    // as the rest after the opponent's pick (+Ramp ruled that day).
+    [InlineData("Colossal Rattlewurm", "Creature — Wurm",
+        "Colossal Rattlewurm has flash as long as you control a Desert.\nTrample\n{1}{G}, Exile this card from "
+        + "your graveyard: Search your library for a Desert card, put it onto the battlefield tapped, then "
+        + "shuffle.")]
+    [InlineData("Sand Scout", "Creature — Human Scout",
+        "When this creature enters, if an opponent controls more lands than you, search your library for a "
+        + "Desert card, put it onto the battlefield tapped, then shuffle.\nWhenever one or more land cards are "
+        + "put into your graveyard from anywhere, create a 1/1 red, green, and white Sand Warrior creature "
+        + "token. This ability triggers only once each turn.")]
+    [InlineData("Cosmium Confluence", "Sorcery",
+        "Choose three. You may choose the same mode more than once.\n• Search your library for a Cave card, "
+        + "put it onto the battlefield tapped, then shuffle.\n• Put three +1/+1 counters on a Cave you control. "
+        + "It becomes a 0/0 Elemental creature with haste. It's still a land.\n• Destroy target enchantment.")]
+    [InlineData("Elemental Teachings", "Instant — Lesson",
+        "Search your library for up to four land cards with different names and reveal them. An opponent "
+        + "chooses two of those cards. Put the chosen cards into your graveyard and the rest onto the "
+        + "battlefield tapped, then shuffle.")]
+    public void Classify_TheNovember10Readings_ALandSubtypeOrTheRestOntoTheBattlefield_IsRamp(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // The edge of the subtype reading: a Gate fetched by a LAND that returns
+    // itself is a fetch land, which fixes (LandFetchesALand).
+    [InlineData("Maze's End", "Land",
+        "This land enters tapped.\n{T}: Add {C}.\n{3}, {T}, Return this land to its owner's hand: Search your "
+        + "library for a Gate card, put it onto the battlefield, then shuffle. If you control ten or more Gates "
+        + "with different names, you win the game.")]
+    public void Classify_TheNovember10Readings_AGateFetchedByALand_IsNotRamp(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
     // A spell's mana that rides on an answer — a kill, a counter, a sweep, a
     // regrowth — is not Ramp: 4 of 5 reviewed (Narset's Rebuke, Mana Drain,
     // Reckless Blaze, Sorceress's Schemes); The Last Agni Kai, the fifth, lost its

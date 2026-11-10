@@ -75,7 +75,12 @@ namespace ScatoloneDownloader.Cube
             // deal damage to "the chosen player" (Saskia the Unyielding and Stuffy
             // Doll, unreviewed, gain Burn); Sawhorn Nemesis (reviewed, untagged)
             // only DOUBLES damage dealt to the chosen player and never matches.
-            + @"|the chosen player)";
+            + @"|the chosen player"
+            // 2026-11-10, two faces the list did not name, each tagged Burn by hand
+            // on 11-06 and a family of one: "UP TO ONE target player" on a loyalty
+            // ability that comes again (Chandra, Dressed to Kill's +1), and "an
+            // opponent CHOSEN AT RANDOM" (Zaffai, Thunder Conductor's 10 damage).
+            + @"|up to one target (?:player|opponent)|an opponent chosen at random)";
 
         /// <summary>The players a life-loss clause can name, with room for the
         /// relative clause the modern templating puts between the subject and
@@ -833,6 +838,13 @@ namespace ScatoloneDownloader.Cube
             // DrainOnATribe.
             if (result.HasFlag(CardEffect.Burn) && DrainsOnATribeItDoesNotMake(card, text)
                 && !BurnPatterns.Any(p => p.IsMatch(DrainOnATribe.Replace(text, " "))))
+            {
+                result &= ~CardEffect.Burn;
+            }
+
+            // …nor one behind a revealed card of a tribe. See BurnOnARevealedTribeCard.
+            if (result.HasFlag(CardEffect.Burn) && BurnOnARevealedTribeCard.IsMatch(text)
+                && !BurnPatterns.Any(p => p.IsMatch(BurnOnARevealedTribeCard.Replace(text, " "))))
             {
                 result &= ~CardEffect.Burn;
             }

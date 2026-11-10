@@ -2090,7 +2090,15 @@ namespace ScatoloneDownloader.Cube
         // Guardian Sunmare, and it is a tutor, not a fetch.
         private static readonly Regex LandOntoTheBattlefield = Rx(
             @"(?<!non)lands? cards?[\w ,'\/]{0,60}onto the battlefield"
-            + @"|search your library for[\w ,'\/]{0,80}(?<!non)(?:land|forest|plains|island|swamp|mountain)"
+            // A land SUBTYPE that is always a land counts as the word land, read
+            // 2026-11-10 (Ramp.md: a land onto the battlefield by any wording):
+            // "search your library for a Desert / Cave / Gate card, put it onto
+            // the battlefield". 7 of 7 reviewed cards with one of these subtypes
+            // in the search are Ramp by hand (through "basic land card or a Desert
+            // card"); Colossal Rattlewurm, Sand Scout and Cosmium Confluence,
+            // unreviewed, said only the subtype and were missed. Maze's End's Gate
+            // fetched by a land stays a fetch land (LandFetchesALand).
+            + @"|search your library for[\w ,'\/]{0,80}(?<!non)(?:land|forest|plains|island|swamp|mountain|(?:desert|cave|gate)\b)"
             // Gap 60 -> 110 on 2026-11-05: "up to X basic land cards, where X is the
             // number of creatures attacking you, put those cards onto the battlefield
             // tapped" (Jaheira's Respite, Ramp by hand; Ramp.md: a land onto the
@@ -2118,6 +2126,10 @@ namespace ScatoloneDownloader.Cube
             // "Until you EXILE a land card" too (Venture Forth, Ramp by hand,
             // read 2026-10-24).
             + @"|until you (?:reveal|exile) a land card\. put that card onto the battlefield"
+            // Lands searched, the opponent's pick binned, and "the REST onto the
+            // battlefield tapped" (Elemental Teachings, +Ramp ruled 2026-11-10 on
+            // the 11-09 definition: two lands in play; family of one).
+            + @"|search your library for [^.\n]{0,80}\bland cards?\b[^\n]{0,200}\bthe rest onto the battlefield"
             + @"|search your library for [^.\n]{0,80}(?<!non)(?:land|forest|plains|island|swamp|mountain) cards?[^.\n]{0,60}\. "
             + @"put (?:those cards|them|one of them|two of them|that card|it) onto the battlefield"
             // …and the same put behind a CONDITION, "If an opponent controls more lands

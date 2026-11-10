@@ -219,3 +219,10 @@ Read the same day: a MODE that adds mana on a REPEATING trigger of a permanent i
 turn (Galadriel, Light of Valinor's "Add {G}{G}{G}" as each creature enters, tagged by hand; a
 one-time mode stays out, Zuko, Conflicted); the NEXT spell of a tribe costing less is the tribe's
 discount of 2026-10-24 (Invasion of the Giants' chapter III, Filter alone by hand).
+
+RULED 2026-11-10 on the 11-09 definition ("+Ramp"): Elemental Teachings, reviewed untagged on
+09-10, puts "the rest" of the lands it searched onto the battlefield tapped after the opponent bins
+two, which is two lands in play, and is Ramp. Read the same day: a land SUBTYPE that is always a land
+is the word land in a search ("a Desert card", "a Cave card", "a Gate card"; 7 of 7 reviewed cards
+with one are Ramp), so Colossal Rattlewurm, Sand Scout and Cosmium Confluence, unreviewed, gain it.
+Maze's End's Gate, fetched by a land that returns itself, stays a fetch land.
