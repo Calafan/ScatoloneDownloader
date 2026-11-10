@@ -625,3 +625,9 @@ CREATURE'S TOUGHNESS fires once, because the creature dies of it, so it is read 
 Bystander, a 2/1 that investigates when dealt 3 or more, makes one Clue, a rider: untagged, as the
 hand left it on 09-23. "Whenever this creature is dealt damage" with no threshold still repeats
 (Ripjaw Raptor, Body of Knowledge).
+
+Ruled 2026-11-10 ("Thief of Sanity è CA"): ONE of the several cards looked at off an opponent's top,
+exiled for you to cast, on a trigger that repeats is the C1 stream of 2026-10-16 — "look at the top
+three cards of that player's library, exile one of them face down, then put the rest into their
+graveyard. You may cast that card". It is Mill too, for the rest. The same words once (Gonti, Lord
+of Luxury on entering; Siphon Insight) are one card once, outside the C1 gate, unreviewed.

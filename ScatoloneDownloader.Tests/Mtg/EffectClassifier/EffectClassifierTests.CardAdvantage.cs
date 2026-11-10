@@ -2761,6 +2761,12 @@ public sealed partial class EffectClassifierTests
         + "exile a nonland card, then you may cast that card without paying its mana cost, or that player "
         + "exiles the top four cards of their library and Ensnared by the Mara deals damage equal to the total "
         + "mana value of those exiled cards to that player.")]
+    // Ruled 2026-11-10, 'Thief of Sanity è CA': one of the several looked at,
+    // exiled for you to cast, on every hit.
+    [InlineData("Thief of Sanity", "Creature — Specter",
+        "Flying\nWhenever this creature deals combat damage to a player, look at the top three cards of that "
+        + "player's library, exile one of them face down, then put the rest into their graveyard. You may cast "
+        + "that card for as long as it remains exiled, and mana of any type can be spent to cast that spell.")]
     public void Classify_TheNovember10CardAdvantage_TheirCardsForYou_IsCardAdvantage(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));

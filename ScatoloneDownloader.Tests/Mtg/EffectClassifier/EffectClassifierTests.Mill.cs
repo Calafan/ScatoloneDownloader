@@ -190,4 +190,15 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Mill));
     }
+
+    [Theory]
+    // Ruled 2026-11-10, 'Cellar Door è in effetti macina': the bottom card of
+    // their library put into their graveyard is the same attack as the top.
+    [InlineData("Cellar Door", "Artifact",
+        "{3}, {T}: Target player puts the bottom card of their library into their graveyard. If it's a "
+        + "creature card, you create a 2/2 black Zombie creature token.")]
+    public void Classify_TheNovember10Ruling_TheBottomOfTheirLibrary_IsMill(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Mill));
+    }
 }

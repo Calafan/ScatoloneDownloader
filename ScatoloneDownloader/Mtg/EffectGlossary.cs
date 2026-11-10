@@ -149,7 +149,7 @@
                 + "one, not your own, not mana denial.",
 
             [CardEffect.Mill] =
-                "ANOTHER player loses cards off the TOP of their library to your card (Glimpse the Unthinkable): into "
+                "ANOTHER player loses cards off the top or bottom of their library to your card (Glimpse the Unthinkable): into "
                 + "their graveyard, blind or chosen by you, or exiled when nobody plays them; 'each player' and rad "
                 + "counters count. Not your own library (fuel), not a reveal they keep part of.",
 

@@ -471,10 +471,14 @@ namespace ScatoloneDownloader.Cube
             // unreviewed one; the 25 reviewed cards that say "you mill" at all carry
             // no Mill.
             Rx(OtherPlayer + @"(?:(?!\byou\b)[\w ,]){0,40}mills?\b"),
-            Rx(@"put(?:s)? the top [\w ]{0,25}" + OtherPlayer + @"[\w' ]{0,20}library into"),
+            // The BOTTOM of their library is the same attack as the top, ruled
+            // 2026-11-10 ("Cellar Door è in effetti macina": "Target player puts
+            // the bottom card of their library into their graveyard", the one
+            // card that says it, unreviewed; 0 reviewed).
+            Rx(@"put(?:s)? the (?:top|bottom) [\w ]{0,25}" + OtherPlayer + @"[\w' ]{0,20}library into"),
             // Same sentence with the victim in front of the verb, which is how
             // Millstone and most pre-2021 mill is actually written.
-            Rx(OtherPlayer + @"[\w ,]{0,30}puts? the top [\w ]{0,30}library into"),
+            Rx(OtherPlayer + @"[\w ,]{0,30}puts? the (?:top|bottom) [\w ]{0,30}library into"),
             // The top of their library EXILED is the same attack, read
             // 2026-10-15 from the three reviewed cards that say it and nothing
             // more (Ulamog, the Defiler; Ashiok, Wicked Manipulator's -7;

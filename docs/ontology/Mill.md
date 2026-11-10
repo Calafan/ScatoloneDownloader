@@ -4,8 +4,8 @@ Canonical record of the rulings for `CardEffect.Mill`. The one-line tooltip show
 in [`EffectGlossary.cs`](../../ScatoloneDownloader/Mtg/EffectGlossary.cs).
 
 **Definition, 2026-11-10** ("Sì, così"; Glimpse the Unthinkable is the card): ANOTHER player loses
-cards off the TOP of their library to your card — put into their graveyard, or exiled when the card
-plays none of them. "Target player" counts, and so does "each player" (13 of 13 reviewed for
+cards off the TOP of their library — or the BOTTOM, see the end — to your card, put into their
+graveyard, or exiled when the card plays none of them. "Target player" counts, and so does "each player" (13 of 13 reviewed for
 "mills"), and so do rad counters handed to a player (16 of 16). Out: your own library, which is
 fuel (0 of 7 reviewed "you mill"), and the top exiled for cards you then play, which is
 CardAdvantage at most (0 of 25 reviewed, 21 of them in the sitting of 2026-11-10). Every ruling
@@ -63,3 +63,9 @@ onto their own battlefield (Over the Top, CardAdvantage) — is not Mill, 0 of 3
 hands them something, so it is no attack on their library. Guild Feud and Pyxis of Pandemonium
 follow, unreviewed. The card taken "under your control" is yours, not theirs, so Curse of Unbinding,
 Sméagol and Telemin Performance stay Mill.
+
+RULED 2026-11-10, "Cellar Door è in effetti macina": the BOTTOM card of their library put into their
+graveyard is the same attack as the top ("Target player puts the bottom card of their library into
+their graveyard"). Cellar Door is the one card that says it, unreviewed; 0 reviewed. A library
+SEARCHED into their graveyard (Life's Finale, Quiet Speculation, unreviewed) was not asked and stays
+out.

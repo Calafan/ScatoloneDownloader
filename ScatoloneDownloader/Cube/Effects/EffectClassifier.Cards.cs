@@ -2656,11 +2656,20 @@ namespace ScatoloneDownloader.Cube
         // down. THEY may play" by a trigger that hands the card to the creature's
         // controller (Gonti, Night Minister), and a permanent off their top put
         // onto the battlefield on every hit (Fishing Gear), 1 of 1 each.
+        //
+        // Ruled 2026-11-10 ("Thief of Sanity è CA"): ONE of the several looked
+        // at, exiled for you to cast, on every hit — "look at the top three
+        // cards of that player's library, exile one of them face down, then put
+        // the rest into their graveyard. You may cast that card". Counted broad,
+        // "look at their top ... exile <n> of them": 1 reviewed card (Black Cat,
+        // two of nine, CardAdvantage by SeveralOffTheirTop), and of the 4
+        // unreviewed only Thief of Sanity repeats; Gonti, Lord of Luxury and
+        // Siphon Insight run once, Thoughtpicker Witch casts nothing.
         private static readonly Regex TheirTopForYou = Rx(
             // The LOOK first, then the exile face down (the sentence about the
             // play may follow the exile by a sentence of its own).
             @"look at the top (?:\w+ )?cards? of (?:that|target|each|their) ?(?:player|opponent)?'?s? ?library"
-            + @"[^\n]{0,60}\bexile (?:it|those cards|them)\b[^\n]{0,120}\byou may (?:play|cast)"
+            + @"[^\n]{0,60}\bexile (?:it|those cards|them|one of them)\b[^\n]{0,120}\byou may (?:play|cast)"
             // The EXILE of the top card, with a sentence or a price before the
             // permission: Reno and Rude's "Then you may sacrifice another
             // creature or artifact. If you do, you may play the exiled card",
