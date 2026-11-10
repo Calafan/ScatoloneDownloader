@@ -441,4 +441,91 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
     }
+
+    [Theory]
+    // The Cultivate split, ruled 2026-11-10 (Q1, "Ramp+MF a tutte"): the land put
+    // onto the battlefield is Ramp, the land put into your hand is ManaFixing, as
+    // a land to hand has been since 2026-09-18. "The rest" too (Boreas Charger),
+    // across a sentence (Verdant Mastery), and in a d20 table (Druid of the
+    // Emerald Grove, tagged by hand before the ruling).
+    [InlineData("Flare of Cultivation", "Sorcery",
+        "You may sacrifice a nontoken green creature rather than pay this spell's mana cost.\nSearch your "
+        + "library for up to two basic land cards, reveal those cards, put one onto the battlefield tapped and "
+        + "the other into your hand, then shuffle.")]
+    [InlineData("Navigation Orb", "Artifact",
+        "{2}, {T}, Sacrifice this artifact: Search your library for up to two basic land cards and/or Gate "
+        + "cards, reveal those cards, put one onto the battlefield tapped and the other into your hand, then "
+        + "shuffle.")]
+    [InlineData("Boreas Charger", "Creature — Pegasus",
+        "Flying\nWhen this creature leaves the battlefield, choose an opponent who controls more lands than "
+        + "you. Search your library for a number of Plains cards equal to the difference, reveal those cards, "
+        + "put one of them onto the battlefield tapped and the rest into your hand, then shuffle.")]
+    [InlineData("Verdant Mastery", "Sorcery",
+        "You may pay {3}{G} rather than pay this spell's mana cost.\nSearch your library for up to four basic "
+        + "land cards and reveal them. Put one of them onto the battlefield tapped under an opponent's control "
+        + "if the {3}{G} cost was paid. Put two of them onto the battlefield tapped under your control and the "
+        + "rest into your hand. Then shuffle.")]
+    [InlineData("Druid of the Emerald Grove", "Creature — Dwarf Druid",
+        "When this creature enters, search your library for up to two basic land cards and reveal them, then "
+        + "roll a d20.\n9 or less | Put those cards into your hand, then shuffle.\n10—19 | Put one of those cards "
+        + "onto the battlefield tapped and the other into your hand, then shuffle.\n20+ | Put those cards onto "
+        + "the battlefield tapped, then shuffle.")]
+    public void Classify_TheNovember10Ruling_TheCultivateSplit_IsRampAndManaFixing(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.ManaFixing));
+        Assert.True(result.HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // One basic land type ADDED to every land, ruled 2026-11-10 (Q2, "MF a
+    // tutte"): the colour lands on all your lands, symmetric (Yavimaya, Blanket of
+    // Night) or yours alone (Swampbenders).
+    [InlineData("Yavimaya, Cradle of Growth", "Legendary Land",
+        "Each land is a Forest in addition to its other land types.")]
+    [InlineData("Blanket of Night", "Enchantment",
+        "Each land is a Swamp in addition to its other land types.")]
+    [InlineData("Swampbenders", "Creature — Human Druid Ally",
+        "Swampbenders's power and toughness are each equal to the number of Swamps on the battlefield.\nLands "
+        + "you control are Swamps in addition to their other types.")]
+    // All lands, unreviewed (Stormtide Leviathan).
+    [InlineData("Stormtide Leviathan", "Creature — Leviathan",
+        "Islandwalk (This creature can't be blocked as long as defending player controls an Island.)\nAll "
+        + "lands are Islands in addition to their other types.\nCreatures without flying or islandwalk can't "
+        + "attack.")]
+    public void Classify_TheNovember10Ruling_ABasicTypeAddedToEveryLand_IsManaFixing(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
+    }
+
+    [Theory]
+    // Read 2026-11-10 beside the two rulings: one TARGET land of a fixed type
+    // (Xolatoyac, 0 of 2 reviewed), a type that replaces instead of adding (Blood
+    // Moon), the non-lands that remain after a land search (Nissa, Nature's
+    // Artisan), a permission to spend one colour as any riding on what the card
+    // does (Grell Philosopher), and counters stored by a bare tap and cashed on a
+    // trigger, a source (Coalition Relic, Ramp alone).
+    [InlineData("Xolatoyac, the Smiling Flood", "Legendary Creature — Salamander Serpent",
+        "Whenever Xolatoyac enters or attacks, put a flood counter on target land. That land is an Island in "
+        + "addition to its other types for as long as it has a flood counter on it.\nAt the beginning of your "
+        + "end step, untap each permanent you control with a counter on it.")]
+    [InlineData("Blood Moon", "Enchantment",
+        "Nonbasic lands are Mountains.")]
+    [InlineData("Nissa, Nature's Artisan", "Legendary Planeswalker — Nissa",
+        "+3: You gain 3 life.\n−4: Reveal the top two cards of your library. Put all land cards from among "
+        + "them onto the battlefield and the rest into your hand.\n−12: Creatures you control get +5/+5 and gain "
+        + "trample until end of turn.")]
+    [InlineData("Grell Philosopher", "Creature — Horror Wizard",
+        "Aberrant Tinkering — When this creature enters and at the beginning of your upkeep, each Horror you "
+        + "control gains all activated abilities of target artifact an opponent controls until end of turn. You "
+        + "may spend blue mana as though it were mana of any color to activate those abilities.")]
+    [InlineData("Coalition Relic", "Artifact",
+        "{T}: Add one mana of any color.\n{T}: Put a charge counter on this artifact.\nAt the beginning of your "
+        + "first main phase, remove all charge counters from this artifact. Add one mana of any color for each "
+        + "charge counter removed this way.")]
+    public void Classify_TheNovember10ManaFixingPass_IsNotManaFixing(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
+    }
 }

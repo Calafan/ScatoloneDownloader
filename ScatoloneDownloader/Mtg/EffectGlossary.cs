@@ -131,10 +131,10 @@
                 + "learn's Lesson, not what turns up at random, not the top N.",
 
             [CardEffect.ManaFixing] =
-                "Fixes colours: a choice paid in MANA, any landcycling, a land with two abilities, a land fetched "
-                + "to HAND or kept from a few milled, a Treasure of YOURS. Free for a tap, a life, a sacrifice or a trigger "
-                + "is just Ramp (Birds), unless it's a land. A land onto the battlefield only if a LAND fetched it, "
-                + "restricted mana only if a land makes it.",
+                "The colour you lack, not more mana: a land of several colours or fetching a land, a land to HAND "
+                + "(also beside one put in play) or landcycling, mana PAID that comes back another colour, a Treasure "
+                + "of yours, a basic type added to lands. Evolving Wilds. Any colour for a tap, a life, a sacrifice or "
+                + "a trigger is Ramp (Birds), unless a land.",
 
             [CardEffect.Pacify] =
                 "Neutralises somebody else's creature without killing it: tapped, stunned, phased out, kept from "

@@ -3,6 +3,22 @@
 Canonical record of the rulings for `CardEffect.ManaFixing`. The one-line tooltip shown in the
 tagger is in [`EffectGlossary.cs`](../../ScatoloneDownloader/Mtg/EffectGlossary.cs).
 
+**Definition, 2026-11-10** ("Colore, non quantità"): the card CONVERTS what you already have — the
+land drop, a land, a card, mana you pay — into the COLOUR you lack, without more mana: a land of
+several colours or one that fetches a land, a land searched to HAND (or to the top) and every
+landcycling, mana PAID that comes back in another colour (Signets, Chromatic Sphere, the filters),
+a Treasure of yours, a basic land type or a colour given to lands. Evolving Wilds is the card. Out
+as consequences, not exceptions: mana of any colour for nothing but a tap, or for a price that is
+not mana (a life, a sacrifice, energy, a trigger), on a non-land is a mana SOURCE, Ramp alone (Birds
+of Paradise, Lotus Petal); a permission riding on what the card does; types that REPLACE instead of
+adding (Blood Moon). Kept as exceptions with their reasons, ruled below: the Treasure, a sacrifice
+for any colour that is colour and not quantity (Ramp, Q1 of 2026-11-09); restricted mana on a land;
+lands are never asked whether their mana is free. It held on 657 of 659 reviewed cards before the
+answers of the same day (FP 1, FN 2: Grell Philosopher, Druid of the Emerald Grove, Yavimaya).
+
+The rulings below are the history; each one is consistent with the definition or kept as an
+exception with its reason.
+
 mana colour fixing (dual/fetch lands, multicolour rocks) — distinct from Ramp; a card can be both.
 
 Two shapes added 2026-09-15 that never say "or" on one line: TYPECYCLING, which fetches the colour
@@ -95,4 +111,25 @@ opponent controls more lands than you, put it onto the battlefield tapped. Other
 your hand", a basic land or a "Plains card" alike. Scholar of New Horizons says the same, Ruin in
 Their Wake is unreviewed; all three are Ramp as well. "A creature or land card" stays out
 (Archdruid's Charm), and so does Boreas Charger's split, one onto the battlefield and the rest into
-the hand, unreviewed and a family of one.
+the hand, unreviewed and a family of one (overturned 2026-11-10, Q1 below).
+
+Ruled 2026-11-10, Q1 ("Ramp+MF a tutte"): the CULTIVATE split, "put one onto the battlefield
+tapped and the other into your hand", is Ramp for the land in play and this tag for the land in
+hand — "the rest" (Boreas Charger, Nissa's Pilgrimage) and "two of them onto the battlefield"
+(Viewpoint Synchronization, Verdant Mastery) alike, and a basic Forest only (Bloomvine Regent) as
+well, as Forestcycling is. The reviewed cards were 1 of 6 before it: Druid of the Emerald Grove,
+read in its d20 table; Flare of Cultivation, Navigation Orb and Bloomvine Regent named; Flourishing
+Bloom-Kin and Viewpoint Synchronization handed back. Only a LAND search: the cards Nissa, Nature's
+Artisan sends to hand are the ones that are not lands.
+
+Ruled 2026-11-10, Q2 ("MF a tutte"): ONE basic land type ADDED to every land, "Each land is a Swamp
+in addition to its other land types", symmetric or yours alone: Yavimaya, Cradle of Growth
+(tagged), Blanket of Night and Swampbenders named, Urborg and Stormtide Leviathan unreviewed. A
+type that replaces (Blood Moon's "Nonbasic lands are Mountains", Celestial Dawn's "Lands you
+control are Plains") takes colours away and stays out, and so does ONE TARGET land of a fixed type
+(Xolatoyac, The Flood of Mars; 0 of 2 reviewed), where the type of your choice is this tag (Jinx).
+
+Read the same day: a permission to spend mana of ONE colour as any riding on what the card does
+(Grell Philosopher, Quicksilver Elemental; 0 of 3 reviewed), and the counters a bare tap stores
+and a trigger cashes for any colour, a source (Coalition Relic, Ramp alone). The land search to
+hand across "where X is …" (Oreskos Explorer, Prismatic Undercurrents) moved with the split.

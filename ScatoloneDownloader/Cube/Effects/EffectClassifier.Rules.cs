@@ -1887,7 +1887,7 @@ namespace ScatoloneDownloader.Cube
                     // Ramp instead, and deliberately stays out: measured 2026-09-18
                     // over the 5,035 reviewed cards, to-hand was tagged 28 of 30
                     // (93.3%) and to-battlefield 8 of 51 (15.7%). Worth 17 on its own.
-                    LandSearchToHand, LandSearchToTop,
+                    LandSearchToHand, LandSearchToTop, LandSearchSplitToHand,
                     // …and dug up to hand, "reveal cards from the top of your
                     // library until you reveal a land card. Put that card into
                     // your hand" (House Cartographer, 2026-10-16).

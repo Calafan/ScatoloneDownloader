@@ -1335,7 +1335,7 @@ namespace ScatoloneDownloader.Cube
             // Lands made every type, one land swapped for one, and a card
             // typed Treasure fix too. See LandsOfEveryType,
             // PaysALandForTheLand and TreasureItself.
-            if (LandsOfEveryType.IsMatch(text) || PaysALandForTheLand.IsMatch(text)
+            if (LandsOfEveryType.IsMatch(text) || LandsGainABasicType.IsMatch(text) || PaysALandForTheLand.IsMatch(text)
                 || (IsATreasure(card) && TreasureItself.IsMatch(text)))
             {
                 result |= CardEffect.ManaFixing;

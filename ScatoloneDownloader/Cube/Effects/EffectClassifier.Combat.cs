@@ -135,14 +135,28 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex LandsOfEveryType = Rx(
             @"\blands? you control (?:are|gain) (?:every|all) basic land types?\b|\bis every land type\b");
 
+        // ONE basic land type ADDED to every land, ruled 2026-11-10 (Q2, "MF a
+        // tutte"): the colour lands on all your lands, symmetric or not —
+        // Yavimaya, Cradle of Growth (tagged), Blanket of Night and Swampbenders
+        // (named), Urborg and Stormtide Leviathan unreviewed. "In addition" is
+        // the point: Blood Moon's "Nonbasic lands are Mountains" and Celestial
+        // Dawn's "Lands you control are Plains" take colours away. One TARGET
+        // land of a fixed type stays out, 0 of 2 reviewed (Xolatoyac, The Flood
+        // of Mars), where the type of your CHOICE is in the Rules table.
+        private static readonly Regex LandsGainABasicType = Rx(
+            @"\b(?:each land is an?|(?:all lands|lands you control) are) "
+            + @"(?:plains|islands?|swamps?|mountains?|forests?) in addition to (?:its|their) other");
+
         // "Spend mana AS THOUGH it were mana of any type" rides on what the
         // card does — a stolen card you may cast (Abstruse Appropriation,
         // Outrageous Robbery), a Case spell (Case File Auditor), a Celestial
         // Dawn — and fixes no mana base: 4 of the 5 reviewed cards that say it
         // are untagged. The fifth is NORTH STAR, whose whole activation is the
-        // permission, and it stays.
+        // permission, and it stays. Any colour of mana, read 2026-11-10 from
+        // Grell Philosopher's "spend BLUE mana as though it were mana of any
+        // color to activate those abilities", untagged by hand.
         private static readonly Regex SpendAsThoughAny = Rx(
-            @"(?:you may )?spend (?:mana|white mana|colorless mana) as though it were mana of any (?:type|colou?r)");
+            @"(?:you may )?spend (?:(?:white|blue|black|red|green|colorless) )?mana as though it were mana of any (?:type|colou?r)");
 
         private static readonly Regex SpendAsThoughIsTheAbility = Rx(
             @"^[^\n:]{1,40}: for one spell this turn, you may spend mana as though", RegexOptions.Multiline);
@@ -2410,14 +2424,31 @@ namespace ScatoloneDownloader.Cube
             // as well, a basic or a "Plains card" alike; ManaFixing.md, a land
             // searched to hand). Only a land, never "creature or land card"
             // (Archdruid's Charm is Ramp and Tutor). Family: 2 cards, both tagged
-            // (Scholar of New Horizons the other); Boreas Charger, which splits
-            // "one onto the battlefield, the rest into your hand", is unreviewed
-            // and left out, a family of one.
+            // (Scholar of New Horizons the other). The split of Boreas Charger is
+            // LandSearchSplitToHand, below.
             + @"|search your library for an? (?:basic )?(?:land|plains|island|swamp|mountain|forest) card(?: and reveal it)?\."
             + @"(?: [^.\n]{0,100}\.)? (?:otherwise|if you don't put[^.\n]{0,60}),? put (?:it|that card) into your hand");
         private static readonly Regex LandSearchToTop = Rx(
             @"search your library for[\w ,'-]{0,60}(?:land|plains|island|swamp|mountain|forest)"
             + @"[\w ,'-]{0,60}put (?:that card|it) on top");
+
+        // The CULTIVATE split, ruled 2026-11-10 (Q1, "Ramp+MF a tutte"): "put one
+        // onto the battlefield tapped and the other into your hand" is Ramp for
+        // the land in play and ManaFixing for the land in hand, as the land to
+        // hand has been since 2026-09-18. Before the ruling the reviewed cards
+        // were 1 of 6 (Druid of the Emerald Grove the one; Flare of Cultivation,
+        // Navigation Orb and Bloomvine Regent named, Flourishing Bloom-Kin and
+        // Viewpoint Synchronization handed back). "The rest" too (Boreas
+        // Charger, Nissa's Pilgrimage), and "two of them onto the battlefield".
+        // Only a LAND search: Nissa, Nature's Artisan's "put all land cards
+        // from among them onto the battlefield and the rest into your hand"
+        // sends the rest that are not lands, and stays out. The middle may
+        // cross into a d20 table (Druid's "9 or less | Put those cards into
+        // your hand"), and nowhere else past a line.
+        private static readonly Regex LandSearchSplitToHand = Rx(
+            @"search your library for[\w ,'/-]{0,60}(?:land|plains|island|swamp|mountain|forest)[\w ,'/-]{0,40}cards?\b"
+            + @"(?:[^\n]|\n(?=[^\n|]{1,12}\| )){0,200}?"
+            + @"(?:\bput (?:those cards|them) into your hand|\bonto the battlefield[^.\n]{0,60}\band the (?:other|rest) into your hand)");
 
         // A mana ability that costs nothing but the tap is a mana SOURCE: the
         // card is Ramp, and the colour it happens to make is a property of the
@@ -2447,8 +2478,11 @@ namespace ScatoloneDownloader.Cube
         // "Its controller adds an additional one mana of any color" when the
         // enchanted land is tapped is the same free trigger, read 2026-10-15:
         // Blighted Burgeoning and Buried in the Garden are Ramp alone by hand.
+        // The mana may open the trigger's next sentence, read 2026-11-10 from
+        // Coalition Relic's "remove all charge counters from this artifact. Add
+        // one mana of any color for each": counters stored by a bare tap.
         private static readonly Regex FreeTriggeredAdd = Rx(
-            @"^(?:[\w' ]+ — )?(?:when|whenever|at the beginning)\b[^\n:]*?, (?:its controller adds|add) ");
+            @"^(?:[\w' ]+ — )?(?:when|whenever|at the beginning)\b[^\n:]*?(?:, |\. )(?:its controller adds|add) ");
 
         // Anchored at the start of the line, or at the start of a QUOTED ability
         // granted to something else ("Other permanents you control have \"{T}:
