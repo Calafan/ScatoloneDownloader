@@ -3,6 +3,19 @@
 Canonical record of the rulings for `CardEffect.Sacrifice`. The one-line tooltip shown in the tagger
 is in [`EffectGlossary.cs`](../../ScatoloneDownloader/Mtg/EffectGlossary.cs).
 
+**Definition, 2026-11-10 ("Tutto come prima").** A place where you put YOUR OWN creatures or
+artifacts AGAIN AND AGAIN, at a rhythm the opponent does not set: a cost in front of a colon, a
+trigger of yours that repeats (an attack, your upkeep or end step, a spell you cast), or a card you
+cast again for it. The card is Ashnod's Altar, "Sacrifice a creature: Add {C}{C}." Out: a sacrifice
+made once (entering, a cost to cast, kicker, exploit, a cost that transforms the card), an edict,
+a land, an enchantment, a price for damage or lost life. Measured before any code, it already held
+on all 242 reviewed cards but one, Ecstatic Awakener, which the hand had right (read at the end):
+land fuel 0 of 99, enchantment fuel 0 of 29, "each player sacrifices" 0 of 28, an additional cost
+to cast 1 of 52 (Worthy Cause, cast again by buyback), a sacrifice on an attack 33 of 37 (the four
+untagged are edicts). The one exception kept with its reason is the artifact TOKEN of a resource
+(Clue, Food, Blood, Treasure: Sophia, Feasting Troll King), 0 of 30 reviewed: the card cashes the
+currency it made, not the board a Steal fills. The paragraphs below are its readings.
+
 a sacrifice OUTLET for your own creatures (Ashnod's Altar, Goblin Bombardment, Viscera Seer) — the
 half of the combo that makes a stolen creature worth taking, so read it next to Steal.
 
@@ -45,3 +58,19 @@ their choice that shares a card type" (Braids, Arisen Nightmare, 1 of 1): the op
 empties nobody's board, so it is no edict. An opponent's "may sacrifice" without your own sacrifice
 before it stays an edict (Fandaniel, Osseous Sticktwister, Rakdos, Braids's Frightful Return, 0 of
 4).
+
+Read 2026-11-10 under the 2026-09-25 "una tantum": a cost in front of a colon whose effect
+TRANSFORMS THE CARD is paid once, because the ability is gone after it — Ecstatic Awakener, "{2}{B},
+Sacrifice another creature: Draw a card, then transform this creature" (untagged by hand on
+2026-11-06, 0 of 1), and Pious Evangel ("Sacrifice another permanent: Transform this creature",
+unreviewed) with it. Not Hostile Hostel, which transforms only after three sacrifices ("then if
+there are three or more soul counters on it, … transform it"). Counted broad, a cost whose effect
+transforms, sacrifices, exiles or returns the card itself: no other card.
+
+Asked 2026-11-10 and withdrawn by the human the same day: narrowing to "solo a comando" (a forced
+upkeep sacrifice out: Lord of the Pit and 13 unreviewed demons), then "mantenimento mai" (no upkeep
+trigger at all, even Redcap Gutter-Dweller's "you may sacrifice"). The follow-up showed the end step
+(Ziatora, Kethek, Braids, 8 reviewed), the beginning of combat (Sokenzan Smelter) and the first main
+phase (Cabal Therapist) in the same shape, all tagged by hand, and that a creature stolen for a turn
+can still be fed there; the answer was "Torniamo indietro, bene mantenimento", then "Tutto come
+prima". So the 2026-09-25 upkeep stands, forced or not: Lord of the Pit stays.

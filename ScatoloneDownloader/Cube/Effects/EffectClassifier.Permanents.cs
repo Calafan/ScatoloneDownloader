@@ -1190,11 +1190,29 @@ namespace ScatoloneDownloader.Cube
 
         private static readonly Regex SacrificeAsAdditionalCost = Rx(@"as an additional cost to cast this spell,[^\n]{0,40}sacrifice");
 
+        // A cost in front of a colon is paid ONCE when its effect turns the card
+        // into something else: Ecstatic Awakener's "{2}{B}, Sacrifice another
+        // creature: Draw a card, then transform this creature" is gone after the
+        // first time (untagged by hand 2026-11-06; read 2026-11-10 under the
+        // 09-25 "una tantum"). Pious Evangel ("Sacrifice another permanent:
+        // Transform this creature", unreviewed) is the other card. Not Hostile
+        // Hostel's "Then if there are three or more soul counters on it, …
+        // transform it": three sacrifices first, so it repeats (a guard for
+        // "if" was tried and moved no card, so it is not here). Counted broad
+        // 2026-11-10, a cost whose effect transforms, sacrifices, exiles or
+        // returns the card itself: 0 reviewed tagged, 1 untagged (Ecstatic
+        // Awakener); the sacrifice/exile/return shapes matched no such card.
+        // The transform is TransformsItselfAway, the same reading CardAdvantage
+        // asks of a draw (2026-09-22), asked here of each sacrifice-cost line.
+        private static readonly Regex SacrificeCostLine = Rx(@"^[^\n:]*sacrifices? [^\n:]*:[^\n]*", RegexOptions.Multiline);
+
         /// <summary>Can you feed your own creatures or artifacts to this card
         /// again and again? See <see cref="SacrificeOutlet"/>.</summary>
         private static bool IsSacrificeOutlet(string text)
         {
-            string own = Parenthetical.Replace(text, " ");
+            string own = SacrificeCostLine.Replace(
+                Parenthetical.Replace(text, " "),
+                line => TransformsItselfAway.IsMatch(line.Value) ? " " : line.Value);
             return SacrificeOutlet.IsMatch(own)
                 || (Buyback.IsMatch(own) && SacrificeAsAdditionalCost.IsMatch(own));
         }

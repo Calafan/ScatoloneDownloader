@@ -98,6 +98,31 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
+    // Read 2026-11-10 under the 09-25 "una tantum": a cost whose effect turns the
+    // card into something else is paid once (Ecstatic Awakener, untagged by hand
+    // 2026-11-06)…
+    [InlineData("Ecstatic Awakener // Awoken Demon", "Creature — Human Wizard // Creature — Demon",
+        "{2}{B}, Sacrifice another creature: Draw a card, then transform this creature. Activate only once "
+        + "each turn.")]
+    public void Classify_ACostThatTransformsTheCardAway_IsNotSacrifice(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Sacrifice));
+    }
+
+    [Theory]
+    // …but not one that transforms only after three sacrifices (Hostile Hostel).
+    [InlineData("Hostile Hostel // Creeping Inn", "Land // Artifact Creature — Horror Construct",
+        "{T}: Add {C}.\n{1}, {T}, Sacrifice a creature: Put a soul counter on this land. Then if there are "
+        + "three or more soul counters on it, remove those counters, transform it, then untap it. Activate only "
+        + "as a sorcery.\nWhenever this creature attacks, you may exile a creature card from your graveyard. If "
+        + "you do, each opponent loses X life and you gain X life, where X is the number of creature cards "
+        + "exiled with this creature.\n{4}: This creature phases out.")]
+    public void Classify_ACostThatTransformsTheCardOnlyLater_IsSacrifice(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Sacrifice));
+    }
+
+    [Theory]
     // Three things that are not an outlet: an edict empties somebody ELSE's
     // board, an additional cost to cast is paid once on the way to a different
     // effect, and a land is not a creature.
