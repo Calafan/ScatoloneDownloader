@@ -617,10 +617,11 @@ namespace ScatoloneDownloader.Cube
         // that cloak a card, read 2026-10-27.
         // MYRIAD printed bare, with no reminder to say "create": a temporary
         // body is a body, ruled 2026-11-10 ("Contano tutti"), and myriad's
-        // copies come on every attack (BodiesOnEveryAttack). Battle Angels of
-        // Tyr and The Master, Multiplied, untagged without the reminder against
-        // 22 of 24 reviewed myriad cards tagged with it, handed back. Asked as
-        // the keyword, not the word: The Everflowing Well's land face is The
+        // copies come on every attack (BodiesOnEveryAttack). 22 of the 25
+        // reviewed myriad cards are tagged; Battle Angels of Tyr and The
+        // Master, Multiplied, untagged and printing no other body, are handed
+        // back, and Ironwill Forger stays out as a Lieutenant. Asked as the
+        // keyword, not the word: The Everflowing Well's land face is The
         // Myriad Pools.
         private static readonly Regex MakesABodyByKeyword = Rx(
             @"\bcloaks? (?:the|two|three|four|\w+ of them|up to|those cards)\b|(?<!whenever you )manifest dread"

@@ -205,14 +205,15 @@ Hobbling Zombie, unreviewed, loses the tag). A decayed maker on a repeating trig
 Stitcher, Jadar).
 
 Ruled 2026-11-10 with the definition, two questions. A TEMPORARY body is a body ("Contano tutti"),
-sacrificed or exiled at the end step or at end of combat: it attacks and can be sacrificed, and 75
-reviewed cards were already tagged that way (Kiki-Jiki copies, myriad, mobilize, Nahiri, the
-Unforgiving). Counting none of them was measured and set aside, since it would have untagged those
-75. This overturns "le copie non contano" of 2026-10-27: ENCORE GRANTED to every card of a kind in
+sacrificed or exiled at the end step or at end of combat: it attacks and can be sacrificed, and 86
+reviewed cards were already tagged with such a body (Kiki-Jiki copies, myriad, mobilize, Nahiri, the
+Unforgiving). Counting none of them was measured and set aside: 75 of the 86 make no other body and
+would have lost the tag (a regex count over the store, 2026-11-10). This overturns "le copie non contano" of 2026-10-27: ENCORE GRANTED to every card of a kind in
 your graveyard repeats, so Graywater's Fixer, Wire Surgeons and Sliver Gravemother are tagged by
 name; a card's own encore makes two copies, under three alone, and moves nothing. Myriad printed
-bare is myriad: Battle Angels of Tyr and The Master, Multiplied, untagged without the reminder text
-against 22 of 24 reviewed myriad cards tagged with it, are tagged and handed back. A TRIBE's spell
+bare is myriad: 22 of the 25 reviewed myriad cards are tagged, and Battle Angels of Tyr and The
+Master, Multiplied, untagged and printing no other body, are tagged and handed back (Ironwill Forger
+stays out as a Lieutenant). A TRIBE's spell
 copied falls under the 2026-10-27 tribal rule ("Fuori, come 10-27"): the card does not make the
 body by itself, so Thurid, Mare of Destiny, Archmage of Echoes and Double Down (an outlaw spell)
 are untagged by name, and Tawnos, the Toymaker already was.
