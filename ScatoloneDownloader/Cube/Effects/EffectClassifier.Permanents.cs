@@ -178,15 +178,13 @@ namespace ScatoloneDownloader.Cube
         /// word boundary is what keeps "a NONLAND permanent card" out, and
         /// <see cref="SearchesForSomethingElseToo"/> is what keeps Starfield
         /// Shepherd's "a basic Plains card OR a creature card" in.
-        /// <para>ANY land, ruled 2026-11-08 ("terra mai Tutor"): "a land card"
-        /// was already this (12 reviewed cards without the tag against Elvish
-        /// Reclaimer, Golos and Elemental Teachings, the three untagged by
-        /// name), and a NONBASIC SUBTYPE is a land too — "a Desert card"
-        /// (Colossal Rattlewurm, Sand Scout), "a Cave card" (Cosmium
-        /// Confluence), the three handed back without the tag. The subtype
-        /// has to be followed by "card", or "a card named Command Tower" would
-        /// read as one; Tower Winder, untagged by name the same day (Command
-        /// Tower is a land), is a disagreement the text cannot settle.</para></summary>
+        /// <para>ANY land was ruled out on 2026-11-08 ("terra mai Tutor") and
+        /// is OVERTURNED for a land that may be nonbasic on 2026-11-10: see
+        /// <see cref="SearchesForANonbasicLand"/>, which takes a line back from
+        /// this veto. What stays here is the basic land and the basic land TYPE.
+        /// The subtype has to be followed by "card", or "a card named Command
+        /// Tower" would read as one; Tower Winder is Tutor through the name
+        /// either way.</para></summary>
         private static readonly Regex SearchesOnlyForALand = Rx(
             @"library[^.\n]{0,40}for [^.\n]{0,25}(?:basic |snow |nonbasic )*(?:\blands?\b|" + BasicLandType
             + "|" + NonbasicLandType + ")");
@@ -195,6 +193,21 @@ namespace ScatoloneDownloader.Cube
         // Gate (Maze's End, unreviewed). Lair, Locus, Sphere, Urza's and the rest
         // were in the first draft and moved no card, so they are not here.
         private const string NonbasicLandType = @"\b(?:caves?|deserts?|gates?) cards?\b";
+
+        /// <summary>A land that MAY BE NONBASIC is chosen, and is Tutor: ruled
+        /// 2026-11-10 ("versione stretta"), overturning "terra mai Tutor" of
+        /// 11-08 for these lands. "A land card" not qualified as basic (Elvish
+        /// Reclaimer, Golos, Expedition Map, Primeval Titan, Elemental Teachings)
+        /// and a nonbasic SUBTYPE ("a Desert / Cave / Gate card") find a land with
+        /// something of its own, so the player who searches chooses one. A BASIC
+        /// land, a basic land TYPE ("an Island or Swamp card", the fetch wording,
+        /// which also finds the typed duals) and "a land card WITH / OF EACH basic
+        /// land type" (Boseiju's consolation, Gaea's Balance) stay Ramp or
+        /// ManaFixing: they fix, and the choice is the colour. Measured before the
+        /// code: 69 cards say it, 65 of them without the tag, 32 reviewed.</summary>
+        private static readonly Regex SearchesForANonbasicLand = Rx(
+            @"library[^.\n]{0,40}for [^.\n]{0,60}?(?<!basic )(?<!snow )\blands? cards?\b(?! (?:with|of each) (?:a )?basic land type)"
+            + @"|library[^.\n]{0,40}for [^.\n]{0,80}?" + NonbasicLandType);
 
         // "A creature OR LAND card" too: Analyze the Pollen searches for a basic
         // land, and "instead" for either once evidence is collected (2026-10-16).

@@ -91,7 +91,7 @@ def main():
         # A [Fact] takes no data: InlineData spliced above it compiles and is
         # never run, so its neutralisation turns nothing red (2026-11-10,
         # Classify_ADrainOnSomebodyElseOfTheTribe_IsNotBurn). Refuse instead.
-        if text.index("()", i) < text.index("\n", i):
+        if text[i:text.find("\n", i)].rstrip().endswith("()"):
             sys.exit("%s takes no parameters (a [Fact]): make it a [Theory] first, or use new" % args.into)
         text = text[:i] + comment_lines(args.comment) + cases + text[i:]
     else:

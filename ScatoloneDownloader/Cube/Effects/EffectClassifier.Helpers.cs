@@ -47,7 +47,8 @@ namespace ScatoloneDownloader.Cube
                     continue;
                 }
 
-                if (SearchesOnlyForALand.IsMatch(line) && !SearchesForSomethingElseToo.IsMatch(line))
+                if (SearchesOnlyForALand.IsMatch(line) && !SearchesForSomethingElseToo.IsMatch(line)
+                    && !SearchesForANonbasicLand.IsMatch(line))
                 {
                     continue;
                 }

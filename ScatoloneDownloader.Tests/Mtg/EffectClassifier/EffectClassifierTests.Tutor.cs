@@ -34,10 +34,9 @@ public sealed partial class EffectClassifierTests
         + "into their hand. Then each player who searched their library this way shuffles.")]
     // Naming the card you want is the purest form of this tag, ruled 2026-09-19
     // — whether it finds another copy of itself or somebody else's payoff.
-    // Tower Winder left this theory on 2026-11-08: Command Tower is a LAND, and
-    // a land is never Tutor (Q1, untagged by name); the classifier cannot read
-    // that from the name and still proposes it, a disagreement recorded in
-    // Tutor.md.
+    // Tower Winder left this theory on 2026-11-08 (Q1, "terra mai Tutor") and
+    // is back since 2026-11-10: a land named by its name may be nonbasic, and
+    // is chosen.
     [InlineData("Llanowar Sentinel", "Creature — Elf",
         "When this creature enters, you may pay {1}{G}. If you do, search your library for a card "
         + "named Llanowar Sentinel, put that card onto the battlefield, then shuffle.")]
@@ -57,6 +56,10 @@ public sealed partial class EffectClassifierTests
         + "graveyard, and/or outside the game for an instant or sorcery card you own, reveal it, and put it "
         + "into your hand. If you search your library this way, shuffle.\nWhenever you cast an instant or "
         + "sorcery spell from your hand, you may copy that spell. You may choose new targets for the copy.")]
+    // Back 2026-11-10: Command Tower is a land that may be nonbasic, named.
+    [InlineData("Tower Winder", "Creature — Snake",
+        "Reach, deathtouch\nWhen this creature enters, search your library and/or graveyard for a card named "
+        + "Command Tower, reveal it, and put it into your hand. If you search your library this way, shuffle.")]
     public void Classify_FetchingANamedCardOutOfYourLibrary_IsTutor(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tutor));
@@ -163,10 +166,12 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
-    // Ruled 2026-11-08 (terra mai Tutor): a search for ANY land is Ramp or
-    // ManaFixing. 'A land card' (Elvish Reclaimer, Golos, untagged by name) and a
+    // Ruled 2026-11-10 ("versione stretta"): a land that may be NONBASIC is
+    // chosen, and is Tutor. 'A land card' (Elvish Reclaimer, Golos) and a
     // nonbasic subtype, 'a Desert card' or 'a Cave card' (Colossal Rattlewurm,
-    // Sand Scout, Cosmium Confluence, handed back without the tag).
+    // Sand Scout, Cosmium Confluence). These six were pinned as NOT Tutor from
+    // 2026-11-08 ("terra mai Tutor") until 2026-11-10, when it was overturned
+    // for these lands.
     [InlineData("Elvish Reclaimer", "Creature — Elf Warrior",
         "This creature gets +2/+2 as long as there are three or more land cards in your graveyard.\n{2}, {T}, "
         + "Sacrifice a land: Search your library for a land card, put it onto the battlefield tapped, then "
@@ -189,11 +194,50 @@ public sealed partial class EffectClassifierTests
         + "put it onto the battlefield tapped, then shuffle.\n• Put three +1/+1 counters on a Cave you control. "
         + "It becomes a 0/0 Elemental creature with haste. It's still a land.\n• Destroy target enchantment.")]
     // 'A Gate card' (Maze's End, unreviewed) is the third subtype in the store.
+    // Since 2026-11-10 Maze's End is Tutor too, the Gate chosen.
     [InlineData("Maze's End", "Land",
         "This land enters tapped.\n{T}: Add {C}.\n{3}, {T}, Return this land to its owner's hand: Search your "
         + "library for a Gate card, put it onto the battlefield, then shuffle. If you control ten or more Gates "
         + "with different names, you win the game.")]
-    public void Classify_TheNovember8Redefinition_ALandOfAnyKind_IsNotTutor(string name, string typeLine, string oracle)
+    // And the rest of the 2026-11-10 family: a land card to hand (Expedition Map),
+    // up to N land cards (Primeval Titan), a basic land OR a Gate card (Circuitous
+    // Route), and four land cards the opponent splits, as Intuition (Elemental
+    // Teachings).
+    [InlineData("Expedition Map", "Artifact",
+        "{2}, {T}, Sacrifice this artifact: Search your library for a land card, reveal it, put it into your "
+        + "hand, then shuffle.")]
+    [InlineData("Primeval Titan", "Creature — Giant",
+        "Trample\nWhenever this creature enters or attacks, you may search your library for up to two land "
+        + "cards, put them onto the battlefield tapped, then shuffle.")]
+    [InlineData("Circuitous Route", "Sorcery",
+        "Search your library for up to two basic land cards and/or Gate cards, put them onto the battlefield "
+        + "tapped, then shuffle.")]
+    [InlineData("Elemental Teachings", "Instant — Lesson",
+        "Search your library for up to four land cards with different names and reveal them. An opponent "
+        + "chooses two of those cards. Put the chosen cards into your graveyard and the rest onto the "
+        + "battlefield tapped, then shuffle.")]
+    public void Classify_TheNovember10Ruling_ALandThatMayBeNonbasic_IsTutor(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tutor));
+    }
+
+    [Theory]
+    // The edge of the 2026-11-10 ruling: a basic land TYPE (the fetch wording) and
+    // a land card WITH or OF EACH basic land type are there to fix, and stay Ramp
+    // or ManaFixing.
+    [InlineData("Sylvan Primordial", "Creature — Avatar",
+        "Reach\nWhen this creature enters, for each opponent, destroy target noncreature permanent that player "
+        + "controls. Search your library for up to X Forest cards, where X is the number of permanents "
+        + "destroyed this way, put those cards onto the battlefield tapped, then shuffle.")]
+    [InlineData("Gaea's Balance", "Sorcery",
+        "As an additional cost to cast this spell, sacrifice five lands.\nSearch your library for a land card "
+        + "of each basic land type, put those cards onto the battlefield, then shuffle.")]
+    [InlineData("Boseiju, Who Endures", "Legendary Land",
+        "{T}: Add {G}.\nChannel — {1}{G}, Discard this card: Destroy target artifact, enchantment, or nonbasic "
+        + "land an opponent controls. That player may search their library for a land card with a basic land "
+        + "type, put it onto the battlefield, then shuffle. This ability costs {1} less to activate for each "
+        + "legendary creature you control.")]
+    public void Classify_TheNovember10Ruling_ABasicLandTypeOrABasicTypedLand_IsNotTutor(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tutor));
     }

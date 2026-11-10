@@ -8,12 +8,13 @@ out of the sideboard ("outside the game"), and takes it out to wherever the card
 battlefield, graveyard, exile. Usually you; a player you target, or every player, counts too
 (Varragoth, Noble Benefactor). Demonic Tutor is the card.** Out: what turns up at random (revealing
 until a type); the top N cards (Filter, CardAdvantage); an opponent's library searched for you
-(Cheat, Steal); and a LAND, any land, which is Ramp or ManaFixing ("terra mai Tutor"). Accepted as
-proposed, with the land question answered the same day.
+(Cheat, Steal); and a BASIC land or a basic land TYPE, which is Ramp or ManaFixing. A land that may
+be NONBASIC ("a land card", "a Desert card", a land by name) is chosen and counts, since 2026-11-10;
+"terra mai Tutor" of 11-08 is overturned for it (the last ruling below). Accepted as proposed, with
+the land question answered the same day.
 
-Every ruling below is coherent with the definition but two, ruled at the end: a land named by its
-name (Tower Winder) and learn, kept out with its reason. Elvish Reclaimer, Golos, Elemental Teachings
-and Tower Winder are the cards corrected by name.
+Every ruling below is coherent with the definition but learn, kept out with its reason. The land
+paragraphs of 11-08 (Land, Q1) are history since 2026-11-10.
 
 Before 2026-11-08: search library for a card (Demonic Tutor, Green Sun's Zenith, creature fetch) —
 selection/consistency, not raw card advantage.
@@ -56,8 +57,9 @@ outside the game never name one and stay Tutor (the Wishes, Ring of Ma'ruf, Vivi
 
 REDEFINED 2026-11-08, the answers of that day.
 
-Land: a search for ANY land is Ramp or ManaFixing, never Tutor ("Terra mai Tutor", chosen over
-"Desert and Cave stay" and "a land chosen for what it does"). "A land card" already was: 12 reviewed
+Land (OVERTURNED 2026-11-10 for a land that may be nonbasic, see the end): a search for ANY land is
+Ramp or ManaFixing, never Tutor ("Terra mai Tutor", chosen over "Desert and Cave stay" and "a land
+chosen for what it does"). "A land card" already was: 12 reviewed
 cards without the tag (Urza's Cave, Wight of the Reliquary, Kura, World Map, Sowing Mycospawn…)
 against three with it, Elvish Reclaimer and Golos (both 10-20) and Elemental Teachings, which are
 untagged by name. A NONBASIC SUBTYPE is a land too: "a Desert card" (Colossal Rattlewurm, Sand
@@ -65,9 +67,9 @@ Scout), "a Cave card" (Cosmium Confluence) were tagged and are handed back witho
 End's "a Gate card" loses the proposal. Elemental Teachings ends with no tag at all: the Ramp rules
 do not read its two lands put onto the battlefield, a question for Ramp.
 
-Q1, a land named by its name: Tower Winder ("a card named Command Tower", Tutor by hand on 09-12
-and pinned by the 09-19 test) against Urza's Cave ("a land card", ManaFixing alone). Command Tower
-is a land, and with no commander in the cube it makes no mana; ruled "-Tutor, terra mai", so Tower
+Q1 (OVERTURNED 2026-11-10: Tower Winder is Tutor), a land named by its name: Tower Winder ("a card
+named Command Tower", Tutor by hand on 09-12 and pinned by the 09-19 test) against Urza's Cave ("a
+land card", ManaFixing alone). Command Tower is a land, and with no commander in the cube it makes no mana; ruled "-Tutor, terra mai", so Tower
 Winder has no tag. The classifier cannot know from the text that a NAME is a land and still proposes
 Tutor: a known disagreement, the one false positive left. It is the only card in the store that
 searches for a land by name.
@@ -84,3 +86,18 @@ day, 2 of 2 tagged by hand, as Noble Benefactor's "each player may search" alrea
 Auditore Ambush ("target player searches … for a card named Ezio, Blade of Vengeance"), reviewed on
 09-12 before the name was ruled Tutor and handed back with the tag, and Maralen of the Mornsong and
 Mornsong Aria, unreviewed, where every player tutors instead of drawing.
+
+RULED 2026-11-10 ("Applichiamo la versione stretta"), OVERTURNING "terra mai Tutor" and Q1 of 11-08
+for a land that may be NONBASIC: "a land card" not qualified as basic, a nonbasic SUBTYPE ("a Desert
+card", "a Cave card", "basic land cards and/or Gate cards") and a land named by its name are a card
+the searcher chooses, and are Tutor beside the Ramp or ManaFixing they already have. Out stay the
+BASIC land ("a basic land card", "a basic Forest card"), the basic land TYPE of the fetch wording
+("an Island or Swamp card", which also finds the typed duals but is there to fix) and "a land card
+WITH / OF EACH basic land type" (Boseiju's consolation, Gaea's Balance). Measured before the code:
+69 cards say it, 65 without the tag; the code moves 26 reviewed cards (Elvish Reclaimer, Golos,
+Elemental Teachings, Urza's Cave, World Map, Kura, Mana Severance, the Desert and Cave searches …)
+and Tower Winder, already proposed through its name, all handed back with the tag, and 32 unreviewed
+(Primeval Titan, Expedition Map, Knight of the Reliquary, Scapeshift, Sylvan Scrying …). Read by the
+same words, each a card to look at in the tagger: Hired Giant (only the OTHER players search, a
+gift), Sojourner's Companion (artifact landcycling's reminder), Strata Scythe, Trench Gorger and
+Mana Severance (the land chosen is exiled, as Foresight's cards are).
