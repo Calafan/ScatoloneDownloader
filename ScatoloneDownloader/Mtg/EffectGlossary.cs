@@ -71,10 +71,10 @@
                 + "or a sweeper taking creatures too (Wipe).",
 
             [CardEffect.Discard] =
-                "Empties somebody ELSE'S hand: they discard, you pick, they pay to dodge a punisher, or it is exiled "
-                + "or put back on their library. Your own discard is a cost — madness, blitz, cycling, a loot, even "
-                + "one handed to a player — and so is \"each player MAY discard\" and a card that only WATCHES a "
-                + "discard.",
+                "An opponent loses cards from HAND by your card (Hymn to Tourach): discarded, exiled, put back on "
+                + "their library, or a whole hand shuffled away when you choose (Timetwister, Wheel). Not your own "
+                + "discard (a cost), a choice every player makes (\"each player MAY\", \"any number\"), or a hand "
+                + "reset every turn by itself.",
 
             [CardEffect.CardAdvantage] =
                 "Net count over zero (Ancestral Recall: -1 +3). The card itself and each card paid from HAND "

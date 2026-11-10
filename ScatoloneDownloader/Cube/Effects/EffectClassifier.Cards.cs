@@ -1248,6 +1248,10 @@ namespace ScatoloneDownloader.Cube
             + @"|whenever (?:an opponent|a player|one or more (?:of your )?opponents?) discards? [^,\n]*,"
             + @"|its controller may discard[^.\n]*"
             + @"|each player may discard[^.\n]*"
+            // "Each player discards ANY NUMBER of cards, then draws that many" is
+            // the same choice, ruled 2026-11-10 (Flux -Discard by name; Steal the
+            // Show, Fervent Mastery the same words): a loot given away, Filter.
+            + @"|(?:each player|target player|target opponent|each opponent|an opponent) discards any number of cards[^.\n]*"
             + @"|each player [^.\n]{0,60}\bunless they discard (?:a|two) cards?"
             + @"|at the beginning of each player's upkeep, that player [^\n]{0,200}?\bthey discard (?:a|two) cards?");
 

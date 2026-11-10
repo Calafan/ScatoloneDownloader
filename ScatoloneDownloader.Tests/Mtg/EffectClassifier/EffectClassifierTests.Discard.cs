@@ -216,4 +216,77 @@ public sealed partial class EffectClassifierTests
 
         Assert.False(EffectClassifier.Classify(card).HasFlag(CardEffect.Discard));
     }
+
+    [Theory]
+    // Ruled 2026-11-10 with the definition (Hymn to Tourach): a hand shuffled into
+    // its library when the card makes everybody, or a player it names, do it
+    // ('anche Timetwister o Wheel of Fortune lo sono perché scegli tu quando
+    // farlo'; Winds of Change reached, Sway of the Stars past the graveyard and
+    // the permanents, Jace's -12 on 'that player'), and a card of their hand put
+    // back on their library: Jester's Mask by name, where you then pick their new
+    // hand, Chittering Rats and Sadistic Augermage, where they pick the card and
+    // lose the draw ('perde una pescata').
+    [InlineData("Timetwister", "Sorcery",
+        "Each player shuffles their hand and graveyard into their library, then draws seven cards. (Then put "
+        + "Timetwister into its owner's graveyard.)")]
+    [InlineData("Winds of Change", "Sorcery",
+        "Each player shuffles the cards from their hand into their library, then draws that many cards.")]
+    [InlineData("Sway of the Stars", "Sorcery",
+        "Each player shuffles their hand, graveyard, and all permanents they own into their library, then "
+        + "draws seven cards. Each player's life total becomes 7.")]
+    [InlineData("Jace, the Mind Sculptor", "Legendary Planeswalker — Jace",
+        "+2: Look at the top card of target player's library. You may put that card on the bottom of that "
+        + "player's library.\n0: Draw three cards, then put two cards from your hand on top of your library in "
+        + "any order.\n−1: Return target creature to its owner's hand.\n−12: Exile all cards from target player's "
+        + "library, then that player shuffles their hand into their library.")]
+    [InlineData("Jester's Mask", "Artifact",
+        "This artifact enters tapped.\n{1}, {T}, Sacrifice this artifact: Target opponent puts the cards from "
+        + "their hand on top of their library. Search that player's library for that many cards. That player "
+        + "puts those cards into their hand, then shuffles.")]
+    [InlineData("Chittering Rats", "Creature — Rat",
+        "When this creature enters, target opponent puts a card from their hand on top of their library.")]
+    [InlineData("Sadistic Augermage", "Creature — Human Wizard",
+        "When this creature dies, each player puts a card from their hand on top of their library.")]
+    public void Classify_TheNovember10Definition_AHandShuffledOrPutBack_IsDiscard(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Discard));
+    }
+
+    [Theory]
+    // Ruled 2026-11-10, the other side of the same definition: Teferi's Puzzle Box
+    // resets every hand every draw step by itself, nobody chooses when, and
+    // Widespread Panic waits on THEIR shuffle; Step Between Worlds lets each
+    // player choose and Weftwalking shuffles your own hand; 'discards ANY NUMBER
+    // of cards, then draws that many' is the same choice as 'each player may
+    // discard', a loot given away (Flux -Discard by name, Steal the Show and
+    // Fervent Mastery the same words).
+    [InlineData("Teferi's Puzzle Box", "Artifact",
+        "At the beginning of each player's draw step, that player puts the cards in their hand on the bottom "
+        + "of their library in any order, then draws that many cards.")]
+    [InlineData("Widespread Panic", "Enchantment",
+        "Whenever a spell or ability causes its controller to shuffle their library, that player puts a card "
+        + "from their hand on top of their library.")]
+    [InlineData("Step Between Worlds", "Sorcery",
+        "Each player may shuffle their hand and graveyard into their library. Each player who does draws "
+        + "seven cards. Exile Step Between Worlds.\nPlot {4}{U}{U} (You may pay {4}{U}{U} and exile this card "
+        + "from your hand. Cast it as a sorcery on a later turn without paying its mana cost. Plot only as a "
+        + "sorcery.)")]
+    [InlineData("Weftwalking", "Enchantment",
+        "When this enchantment enters, if you cast it, shuffle your hand and graveyard into your library, "
+        + "then draw seven cards.\nThe first spell each player casts during each of their turns may be cast "
+        + "without paying its mana cost.")]
+    [InlineData("Flux", "Sorcery",
+        "Each player discards any number of cards, then draws that many cards.\nDraw a card.")]
+    [InlineData("Steal the Show", "Sorcery",
+        "Choose one or both —\n• Target player discards any number of cards, then draws that many cards.\n• "
+        + "Steal the Show deals damage equal to the number of instant and sorcery cards in your graveyard to "
+        + "target creature or planeswalker.")]
+    [InlineData("Fervent Mastery", "Sorcery",
+        "You may pay {2}{R}{R} rather than pay this spell's mana cost.\nIf the {2}{R}{R} cost was paid, an "
+        + "opponent discards any number of cards, then draws that many cards.\nSearch your library for up to "
+        + "three cards, put them into your hand, shuffle, then discard three cards at random.")]
+    public void Classify_TheNovember10Definition_NotChosenWhenOrTheirOwnChoice_IsNotDiscard(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Discard));
+    }
 }

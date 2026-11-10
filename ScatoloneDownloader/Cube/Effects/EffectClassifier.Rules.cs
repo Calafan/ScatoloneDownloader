@@ -1091,7 +1091,28 @@ namespace ScatoloneDownloader.Cube
                         // (Invasion of Gobakhan, Elite Spellbinder). The card
                         // THEY choose or lose at random and may play stays out
                         // above (Lightstall Inquisitor, Elkin Lair).
-                        + @"|look at target (?:player|opponent)'s hand\. you may exile [^.\n]{0,40}\bfrom it")]),
+                        + @"|look at target (?:player|opponent)'s hand\. you may exile [^.\n]{0,40}\bfrom it"),
+                    // A hand SHUFFLED into its library is this tag when the card
+                    // makes everybody (or a player it names) do it, ruled
+                    // 2026-11-10 ("anche Timetwister o Wheel of Fortune lo sono
+                    // perché scegli tu quando farlo"): Timetwister named, Echo of
+                    // Eons, Diminishing Returns and Winds of Change reached (0 of 4
+                    // tagged before). Your own hand (Weftwalking, Midnight Clock)
+                    // and "each player MAY shuffle" (Step Between Worlds) are not
+                    // written this way; Teferi's Puzzle Box, every draw step by
+                    // itself, puts the cards "in" a hand on the bottom and is not
+                    // read here — not chosen when, so no tag (same day).
+                    Rx(@"\b(?:each player|target player|target opponent|each opponent|that player) shuffles "
+                        + @"(?:their hand|the cards from their hand)[^.\n]{0,60}\binto their library"),
+                    // …and a card of their hand PUT BACK on their library because
+                    // the card says so, ruled the same day: Jester's Mask named
+                    // ("target opponent puts the cards from their hand on top of
+                    // their library", then YOU pick their new hand), and Chittering
+                    // Rats, where they pick the card and lose the draw ("perde una
+                    // pescata"), with no reviewed card. Widespread Panic's "that
+                    // player puts" on THEIR shuffle is a table rule, as Puzzle Box.
+                    Rx(@"\b(?:target opponent|target player|each opponent|each player)\b[^.\n]{0,30}?\bputs? "
+                        + @"(?:a|one|two|the|all)? ?(?:\w+ )?cards? from their hand on (?:top|the bottom) of their library")]),
 
                 // Drawing ONE card off a spell you cast replaces the spell — that is
                 // card parity, not advantage, which is why Eject and Broadside
