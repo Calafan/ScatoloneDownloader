@@ -88,6 +88,11 @@ def main():
     if args.mode == "add":
         anchor = "    public void %s(" % args.into
         i = text.index(anchor)
+        # A [Fact] takes no data: InlineData spliced above it compiles and is
+        # never run, so its neutralisation turns nothing red (2026-11-10,
+        # Classify_ADrainOnSomebodyElseOfTheTribe_IsNotBurn). Refuse instead.
+        if text.index("()", i) < text.index("\n", i):
+            sys.exit("%s takes no parameters (a [Fact]): make it a [Theory] first, or use new" % args.into)
         text = text[:i] + comment_lines(args.comment) + cases + text[i:]
     else:
         clash = [p.name for p in set(every) | {path} if "void %s(" % args.method in read(p)[0]]

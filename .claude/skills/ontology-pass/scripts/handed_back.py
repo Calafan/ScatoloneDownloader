@@ -21,7 +21,11 @@ import re
 
 from common import HANDED_BACK, STORE_REPO, git, load_store, read_json, utf8_stdout, write_json
 
-HAND_BACK_SUBJECT = re.compile(r"^chore\(metadata\): hand\b")
+# Two subject shapes: "hand back the N cards ..." / "hand X back for review", and, since the
+# Redirect and Ramp passes of 2026-11-09, "eight cards handed back, the Ramp definition ...".
+# Missing the second dropped ten waiting cards from the rebuild on 2026-11-10. A commit that
+# only REVIEWS cards may say "handed back" too; it is scanned and finds no lost reviewedAt.
+HAND_BACK_SUBJECT = re.compile(r"^chore\(metadata\): (hand\b|.*\bhanded back\b)")
 
 
 def from_git():
