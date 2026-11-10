@@ -1292,18 +1292,22 @@ namespace ScatoloneDownloader.Cube
         // eccezioni alla regola"), overturning 2026-10-25's "a death trigger that
         // returns your creature is no save": Valkyrie's Call's "Whenever a
         // nontoken, non-Angel creature you control dies, return that card to the
-        // battlefield" and Yarus's face-down ones, both named; and persist or
-        // undying handed to the same area (Isilu's "Each other nontoken creature
-        // you control has persist", Mikaeus). Its own shape because the area sits
-        // in the TRIGGER, and the return's rider ("with a +1/+1 counter on it")
-        // is no condition. A condition keeps it out by not fitting, as it does an
-        // area shield: a counter on the creature (Marchesa), a budget the card
-        // spends (Magnanimous Magistrate's "if its mana value was 1 or greater,
-        // you may remove that many reprieve counters"), one TRIBE (Thunderbolts
+        // battlefield", named; and persist or undying handed to the same area
+        // (Isilu's "Each other nontoken creature you control has persist",
+        // Mikaeus). Its own shape because the area sits in the TRIGGER, and the
+        // return's rider ("with a +1/+1 counter on it") is no condition. A
+        // condition keeps it out by not fitting, as it does an area shield: a
+        // counter on the creature (Marchesa), a budget the card spends
+        // (Magnanimous Magistrate's "if its mana value was 1 or greater, you may
+        // remove that many reprieve counters"), one TRIBE (Thunderbolts
         // Conspiracy's Villains), a creature you do not own (Edea), anybody's
         // (Missy), or the one an Equipment is on (Resurrection Orb).
+        // RULED the same evening ("Yarus non è protection. Yedora, Grave Gardener
+        // neanche"): only FACE-DOWN creatures is a condition (Yarus, named, out
+        // again), and a return FACE DOWN brings back something else, not the
+        // creature (Yedora's "face down … It's a Forest land", Missy's 2/2).
         private static readonly Regex AreaReturnsFromDeath = Rx(
-            @"^whenever (?:[^,.\n]{1,40} or )?(?:a|another) (?:(?:nontoken|non-[\w']+|face-down),? )*creature you control (?:without \w+ )?dies, (?:you may )?return (?:it|that card) to the battlefield"
+            @"^whenever (?:[^,.\n]{1,40} or )?(?:a|another) (?:(?:nontoken|non-[\w']+),? )*creature you control (?:without \w+ )?dies, (?:you may )?return (?:it|that card) to the battlefield(?! face down)"
             + @"|^(?:each )?(?:other )?(?:(?:nontoken|non-[\w']+) )*creatures? you control (?:get [^.\n]{1,20} and )?(?:have|has) (?:persist|undying)\b",
             RegexOptions.Multiline);
 

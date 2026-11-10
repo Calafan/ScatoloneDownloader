@@ -881,16 +881,13 @@ public sealed partial class EffectClassifierTests
     [Theory]
     // Ruled 2026-11-10 (Protection.md, Q2), overturning 2026-10-25: a return from
     // death over an area of your creatures with no condition is the static area
-    // shield. Valkyrie's Call and Yarus named; persist and undying handed to the
-    // same area (Isilu, Mikaeus), Avacyn and Luminous Broodmoth reached.
+    // shield. Valkyrie's Call named; persist and undying handed to the same area
+    // (Isilu, Mikaeus), Avacyn and Luminous Broodmoth reached. Yarus, named here
+    // too, was moved to the NOT theory below the same evening.
     [InlineData("Valkyrie's Call", "Enchantment",
         "Whenever a nontoken, non-Angel creature you control dies, return that card to the battlefield under "
         + "its owner's control with a +1/+1 counter on it. It has flying and is an Angel in addition to its "
         + "other types.")]
-    [InlineData("Yarus, Roar of the Old Gods", "Legendary Creature — Centaur Druid",
-        "Other creatures you control have haste.\nWhenever one or more face-down creatures you control deal "
-        + "combat damage to a player, draw a card.\nWhenever a face-down creature you control dies, return it to "
-        + "the battlefield face down under its owner's control if it's a permanent card, then turn it face up.")]
     [InlineData("Eirdu, Carrier of Dawn // Isilu, Carrier of Twilight", "Legendary Creature — Elemental God // Legendary Creature — Elemental God",
         "Flying, lifelink\nCreature spells you cast have convoke. (Your creatures can help cast those spells. "
         + "Each creature you tap while casting a creature spell pays for {1} or one mana of that creature's "
@@ -918,7 +915,15 @@ public sealed partial class EffectClassifierTests
     [Theory]
     // Under the same ruling, out: a counter the creature must have (Marchesa), one
     // tribe (Thunderbolts Conspiracy), a creature you do not own (Edea), anybody's
-    // (Missy), and the one an Equipment is on (Resurrection Orb).
+    // (Missy), and the one an Equipment is on (Resurrection Orb). Ruled the same
+    // evening ("Yarus non è protection. Yedora, Grave Gardener neanche"): only
+    // FACE-DOWN creatures is a condition (Yarus, moved here from the theory
+    // above), and a return FACE DOWN is something else, not the creature (Yedora's
+    // Forest land).
+    [InlineData("Yarus, Roar of the Old Gods", "Legendary Creature — Centaur Druid",
+        "Other creatures you control have haste.\nWhenever one or more face-down creatures you control deal "
+        + "combat damage to a player, draw a card.\nWhenever a face-down creature you control dies, return it to "
+        + "the battlefield face down under its owner's control if it's a permanent card, then turn it face up.")]
     [InlineData("Marchesa, the Black Rose", "Legendary Creature — Human Wizard",
         "Dethrone (Whenever this creature attacks the player with the most life or tied for most life, put a "
         + "+1/+1 counter on it.)\nOther creatures you control have dethrone.\nWhenever a creature you control "
@@ -942,6 +947,11 @@ public sealed partial class EffectClassifierTests
         "Equipped creature has lifelink.\nWhenever equipped creature dies, return that card to the battlefield "
         + "under its owner's control at the beginning of the next end step.\nEquip {4} ({4}: Attach to target "
         + "creature you control. Equip only as a sorcery.)")]
+    // Yedora, Grave Gardener: the creature comes back face down as a Forest land
+    // (2026-11-10 evening).
+    [InlineData("Yedora, Grave Gardener", "Legendary Creature — Treefolk Druid",
+        "Whenever another nontoken creature you control dies, you may return it to the battlefield face down "
+        + "under its owner's control. It's a Forest land. (It has no other types or abilities.)")]
     public void Classify_TheNovember10Ruling_AReturnFromDeathThatIsNoArea_IsNotProtection(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));

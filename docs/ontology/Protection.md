@@ -18,7 +18,7 @@ below: one TRIBE or TOKENS (the Buff reading of 2026-09-21, as in Reanimate and 
 protection from a creature TYPE over the area (2026-10-25, the same tribe seen from the other
 side). It held on 296 of the 297 reviewed cards tagged by hand (FN Become Anonymous) with one
 proposed wrongly (FP Ellie, Vengeful Hunter), both readings below; the two answers of the same day
-moved three more, all named (Q1, Q2).
+moved two more, both named (Q1, Q2; Yarus, given the tag in Q2, lost it again that evening).
 
 The rulings below are the history; each one is consistent with the definition or kept as an
 exception with its reason.
@@ -207,12 +207,14 @@ speed is on no card. Fated Clash keeps the tag: it is cast "as though it had fla
 RULED 2026-11-10, Q2 ("ci sta e così rimuoviamo eccezioni alla regola"): a RETURN FROM DEATH over
 an area of your creatures with no condition is the static area shield of 2026-09-29, overturning
 the 2026-10-25 line on death triggers. Valkyrie's Call ("Whenever a nontoken, non-Angel creature
-you control dies, return that card to the battlefield", Reanimate by hand) and Yarus, Roar of the
-Old Gods (its face-down creatures, returned face down and turned face up; CardAdvantage by hand)
-are named and gain the tag. Persist or undying handed to the same area reads the same way. Reached,
-all unreviewed: Avacyn, Angel of Horror; Luminous Broodmoth ("without flying" filters the area, as
-"non-Angel" does); Isilu, Carrier of Twilight; Mikaeus, the Unhallowed; and Yedora, Grave Gardener,
-whose creature comes back as a Forest land, to be looked at in the tagger. Still out, by the
+you control dies, return that card to the battlefield", Reanimate by hand) is named and gains the
+tag. Persist or undying handed to the same area reads the same way. Reached, all unreviewed:
+Avacyn, Angel of Horror; Luminous Broodmoth ("without flying" filters the area, as "non-Angel"
+does); Isilu, Carrier of Twilight; Mikaeus, the Unhallowed. Ruled the same evening ("Yarus non è
+protection. Yedora, Grave Gardener neanche"): only FACE-DOWN creatures is a condition — Yarus, Roar
+of the Old Gods, named in Q2 and given the tag, loses it again and keeps CardAdvantage — and a
+return FACE DOWN brings back something that is not the creature (Yedora's Forest land, Missy's 2/2
+Cyberman). Still out, by the
 definition's condition: a +1/+1 counter the creature must have (Marchesa), a budget of reprieve
 counters (Magnanimous Magistrate), one tribe (Thunderbolts Conspiracy's Villains), a creature you
 do not own (Edea), anybody's (Missy), the creature an Equipment is on (Resurrection Orb).
