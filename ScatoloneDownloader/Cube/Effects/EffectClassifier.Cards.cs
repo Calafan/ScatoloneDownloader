@@ -204,6 +204,38 @@ namespace ScatoloneDownloader.Cube
         // Unending Whisper is "Draw a card." plus harmonize and nothing else.
         private static readonly Regex OneDrawButTwoCasts = Rx(@"^draw a card\.", RegexOptions.Multiline);
 
+        // The same count for ONE CARD FETCHED BACK to the hand, ruled 2026-11-10
+        // ("CA ok"): Inspiration from Beyond, Regrowth alone by hand on 09-23,
+        // returns an instant or sorcery and does it again with its flashback,
+        // minus one, plus one, plus one. It overturns the reading of the cipher
+        // ruling the same day, which had kept Midnight Recovery out on that card
+        // and Charred Graverobber (0 of 2). The noun is a card TYPE or none: a
+        // creature type is the tribal ruling of 2026-10-16, and Charred
+        // Graverobber's "outlaw card" (Assassins, Mercenaries, Pirates, Rogues
+        // and Warlocks) stays Regrowth alone, as the hand left it on 09-25.
+        private static readonly Regex OneRegrowthButTwoCasts = Rx(
+            @"\breturn (?:target|an?|up to one target) "
+            + @"(?:(?:instant or sorcery|creature|artifact|enchantment|land|permanent|nonland) )?"
+            + @"card from your graveyard to your hand\b");
+
+        // A trigger on DAMAGE AT LEAST THE CARD'S TOUGHNESS fires once, because
+        // the creature dies of it. Ruled 2026-11-10 ("La tua analisi è corretta,
+        // correggi"): Innocent Bystander, a 2/1 that investigates when it is
+        // dealt 3 or more, makes one Clue, a rider, untagged by hand on 09-23.
+        // Classify reads it as "When". A bare "is dealt damage" (Ripjaw Raptor,
+        // Body of Knowledge) and a threshold under the toughness stay as they
+        // are, and so does a toughness that is not a number.
+        private static readonly Regex DealtItsToughnessOrMore = Rx(
+            @"\bwhenever (this creature is dealt (?<n>\d+) or more damage\b)");
+
+        private static bool DiesOfTheDamageItTriggersOn(Card card, string text)
+        {
+            Match m = DealtItsToughnessOrMore.Match(text);
+            return m.Success
+                && int.TryParse(card.Toughness, NumberStyles.Integer, CultureInfo.InvariantCulture, out int toughness)
+                && int.Parse(m.Groups["n"].Value, CultureInfo.InvariantCulture) >= toughness;
+        }
+
         // …unless the pile is THEIRS. The second wording above reads "you may
         // cast cards exiled with Azula", and Azula exiles a creature an
         // opponent controls and a card from their graveyard — which is Steal
@@ -1108,10 +1140,8 @@ namespace ScatoloneDownloader.Cube
         // cipher ripete"): the card is encoded on a creature and cast again on
         // every hit, as an Equipment's trigger comes back (Arcane Heist named,
         // against Deluxe Dragster's same cast on combat damage; Last Thoughts
-        // unreviewed). Not for a card fetched back to the hand: Regrowth beside
-        // a second cast is Regrowth alone by hand (Inspiration from Beyond's
-        // flashback, Charred Graverobber's escape: 0 of 2), so Midnight
-        // Recovery stays Regrowth.
+        // unreviewed). A card fetched back to the hand counts the same, since
+        // 2026-11-10: see OneRegrowthButTwoCasts.
         private static readonly Regex CastsItselfASecondTime = Rx(
             @"\b(?:flashback|harmonize|escape|jump-start|aftermath|buyback|rebound|retrace|encore|cipher)\b");
 

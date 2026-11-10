@@ -2785,11 +2785,54 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
+    // Ruled 2026-11-10 ('CA ok'): one card fetched back to the hand by a card that
+    // casts itself a second time is two for one, the count a one-card draw makes
+    // beside flashback. Inspiration from Beyond named; Disturbed Burial's buyback
+    // handed back, the twin of Whispers of the Muse; Midnight Recovery's cipher
+    // moved here from the theory below, and the rebound mode of Fantastic
+    // Elasticity.
+    [InlineData("Inspiration from Beyond", "Sorcery",
+        "Mill three cards, then return an instant or sorcery card from your graveyard to your hand.\nFlashback "
+        + "{5}{U}{U} (You may cast this card from your graveyard for its flashback cost. Then exile it.)")]
+    [InlineData("Disturbed Burial", "Sorcery",
+        "Buyback {3} (You may pay an additional {3} as you cast this spell. If you do, put this card into "
+        + "your hand as it resolves.)\nReturn target creature card from your graveyard to your hand.")]
+    [InlineData("Midnight Recovery", "Sorcery",
+        "Return target creature card from your graveyard to your hand.\nCipher (Then you may exile this spell "
+        + "card encoded on a creature you control. Whenever that creature deals combat damage to a player, its "
+        + "controller may cast a copy of the encoded card without paying its mana cost.)")]
+    [InlineData("Mystic Retrieval", "Sorcery",
+        "Return target instant or sorcery card from your graveyard to your hand.\nFlashback {2}{R} (You may "
+        + "cast this card from your graveyard for its flashback cost. Then exile it.)")]
+    [InlineData("Fantastic Elasticity", "Sorcery",
+        "Choose one —\n• Return target nonland permanent to its owner's hand.\n• Return target instant or "
+        + "sorcery card from your graveyard to your hand.\nRebound (If you cast this spell from your hand, exile "
+        + "it as it resolves. At the beginning of your next upkeep, you may cast this card from exile without "
+        + "paying its mana cost.)")]
+    public void Classify_TheNovember10CardAdvantage_OneCardFetchedBackTwice_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Not this tag, 2026-11-10: the card fetched back is a creature type, the
+    // tribal ruling of 2026-10-16. Charred Graverobber's outlaw card beside its
+    // escape stays Regrowth alone, as the hand left it on 09-25.
+    [InlineData("Charred Graverobber", "Creature — Skeleton Mercenary",
+        "When this creature enters, return target outlaw card from your graveyard to your "
+        + "hand.\nEscape—{3}{B}{B}, Exile four other cards from your graveyard. (You may cast this card from "
+        + "your graveyard for its escape cost.)\nThis creature escapes with a +1/+1 counter on it.")]
+    public void Classify_TheNovember10CardAdvantage_ATribeFetchedBackTwice_IsNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
     // Not this tag, 2026-11-10: a repeated reanimation is Reanimate alone ('Solo
     // Reanimate', Nautiloid Ship named, Virtue of Persistence and Chorale of the
     // Void 0 of 8); ONE card of theirs cast once is parity (Chancellor of the
-    // Spires, Hama, Kotose); a card fetched back beside its cipher stays Regrowth
-    // (Midnight Recovery, as Inspiration from Beyond's flashback).
+    // Spires, Hama, Kotose). Midnight Recovery, a card fetched back beside its
+    // cipher, moved out the same day when Inspiration from Beyond was ruled 'CA ok'.
     [InlineData("Nautiloid Ship", "Artifact — Vehicle",
         "Flying\nWhen this Vehicle enters, exile target player's graveyard.\nWhenever this Vehicle deals combat "
         + "damage to a player, you may put a creature card exiled with this Vehicle onto the battlefield under "
@@ -2816,12 +2859,27 @@ public sealed partial class EffectClassifierTests
         + "Search that player's graveyard, hand, and library for any number of cards with the same name as that "
         + "card and exile them. Then that player shuffles. For as long as you control Kotose, you may play one "
         + "of the exiled cards, and you may spend mana as though it were mana of any color to cast it.")]
-    [InlineData("Midnight Recovery", "Sorcery",
-        "Return target creature card from your graveyard to your hand.\nCipher (Then you may exile this spell "
-        + "card encoded on a creature you control. Whenever that creature deals combat damage to a player, its "
-        + "controller may cast a copy of the encoded card without paying its mana cost.)")]
     public void Classify_TheNovember10CardAdvantage_ReanimatedOrOneCardOnce_IsNotCardAdvantage(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Ruled 2026-11-10 ('La tua analisi è corretta, correggi'): a trigger on damage
+    // at least the creature's toughness fires once, because it dies of it.
+    // Innocent Bystander, a 2/1 dealt 3 or more, makes one Clue (untagged by hand
+    // on 09-23). Ripjaw Raptor, a 4/5 that draws whenever it is dealt damage, is
+    // the control: no threshold, so it still repeats.
+    [InlineData("Innocent Bystander", "Creature — Goblin Citizen", "2", "1",
+        "Whenever this creature is dealt 3 or more damage, investigate. (Create a Clue token. It's an artifact "
+        + "with \"{2}, Sacrifice this token: Draw a card.\")", false)]
+    [InlineData("Ripjaw Raptor", "Creature — Dinosaur", "4", "5",
+        "Enrage — Whenever this creature is dealt damage, draw a card.", true)]
+    public void Classify_TheNovember10CardAdvantage_DealtItsToughnessOrMore_FiresOnce(
+        string name, string typeLine, string power, string toughness, string oracle, bool expected)
+    {
+        Card card = TestCards.Make(name, typeLine, oracle, power: power, toughness: toughness);
+
+        Assert.Equal(expected, EffectClassifier.Classify(card).HasFlag(CardEffect.CardAdvantage));
     }
 }

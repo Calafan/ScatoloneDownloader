@@ -254,6 +254,14 @@ namespace ScatoloneDownloader.Cube
                     | Classify(new OneAbility(card, CleaveWords.Replace(text, string.Empty)));
             }
 
+            // A creature dealt at least its toughness dies of it, so the
+            // trigger fires once: read as "When" (DiesOfTheDamageItTriggersOn,
+            // Innocent Bystander, 2026-11-10).
+            if (DiesOfTheDamageItTriggersOn(card, text))
+            {
+                return Classify(new OneAbility(card, DealtItsToughnessOrMore.Replace(text, "When $1")));
+            }
+
             if (text.Length > 0)
             {
                 foreach ((CardEffect effect, Regex[] patterns) in Rules)
@@ -1031,6 +1039,7 @@ namespace ScatoloneDownloader.Cube
                     && !TutoredIntoExile.IsMatch(text) && !onlyOneOfThem)
                 || Abilities(text).Any(a => Discovers.IsMatch(a) && AbilityRepeatsAtNoCostToItself(a))
                 || (OneDrawButTwoCasts.IsMatch(text) && CastsItselfASecondTime.IsMatch(text))
+                || (OneRegrowthButTwoCasts.IsMatch(text) && CastsItselfASecondTime.IsMatch(text))
                 || SelfSacrificeBuysSeveral.IsMatch(text)
                 || DiscardYourHandThenDrawSeveral.IsMatch(text)
                 || EntersSacrificeThenDraws.IsMatch(text)

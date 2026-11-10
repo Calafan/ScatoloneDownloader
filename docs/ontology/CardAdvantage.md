@@ -599,6 +599,20 @@ every hit stays this tag (Fishing Gear, the ruling of 2026-11-03).
 Ruled 2026-11-10 ("Sì, cipher ripete", asked on Arcane Heist against Deluxe Dragster): CIPHER is a
 second cast, and a third, like flashback: the card is encoded on a creature and cast again on every
 hit, the same wait on a creature that an Equipment's trigger has. Arcane Heist +CardAdvantage,
-named (minus one, plus one now, plus one each hit); Last Thoughts reached. Not a card fetched back
-to the hand beside a second cast: Inspiration from Beyond (flashback) and Charred Graverobber
-(escape) are Regrowth alone by hand, 0 of 2, so Midnight Recovery's cipher stays Regrowth.
+named (minus one, plus one now, plus one each hit); Last Thoughts reached. A card fetched back to
+the hand beside a second cast was first held out on Inspiration from Beyond and Charred Graverobber
+(0 of 2), then ruled in the same day, below.
+
+Ruled 2026-11-10 ("CA ok"): ONE CARD FETCHED BACK to the hand by a card that casts itself a second
+time is this tag, the count a one-card draw makes beside flashback (minus one, plus one, plus one).
+Inspiration from Beyond +CardAdvantage, named; Disturbed Burial (buyback, the twin of Whispers of
+the Muse) +CardAdvantage, handed back; Midnight Recovery's cipher, Mystic Retrieval, Dryad's
+Revival, Morgue Theft, Crawl from the Cellar and Fantastic Elasticity's rebound reached. Not a
+creature TYPE fetched back: Charred Graverobber's "outlaw card" beside its escape stays Regrowth
+alone (the tribal ruling of 2026-10-16).
+
+Ruled 2026-11-10 ("La tua analisi è corretta, correggi"): a trigger on DAMAGE AT LEAST THE
+CREATURE'S TOUGHNESS fires once, because the creature dies of it, so it is read as "When". Innocent
+Bystander, a 2/1 that investigates when dealt 3 or more, makes one Clue, a rider: untagged, as the
+hand left it on 09-23. "Whenever this creature is dealt damage" with no threshold still repeats
+(Ripjaw Raptor, Body of Knowledge).
