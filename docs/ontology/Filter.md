@@ -333,3 +333,8 @@ opponent's half is theirs.
 RULED 2026-11-10 under Q4 ("-Filter, Q4 regge"): Invasion of the Giants' Scry 2 is the one chapter
 that selects, and chapter II's draw selects nothing by itself, so the Saga carries the rider and not
 the tag. It was Filter by hand on 11-06 and is corrected, with no rule of its own.
+
+RULED 2026-11-10 ("puliscono il mazzo ma poi la terra non è in uso"): a land the search EXILES
+thins the library and is this tag, not Tutor — Mana Severance (Filter by hand), Trench Gorger, and
+ONE land exiled too (Strata Scythe, the only card the new reading moves). Only for a land: one card
+of another type exiled to be had later selects nothing (Hoarding Dragon, Distant Memories, Tutor).

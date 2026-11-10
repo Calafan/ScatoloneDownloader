@@ -181,7 +181,8 @@ namespace ScatoloneDownloader.Cube
         /// <para>ANY land was ruled out on 2026-11-08 ("terra mai Tutor") and
         /// is OVERTURNED for a land that may be nonbasic on 2026-11-10: see
         /// <see cref="SearchesForANonbasicLand"/>, which takes a line back from
-        /// this veto. What stays here is the basic land and the basic land TYPE.
+        /// this veto. What stays here is the basic land, the basic land TYPE and
+        /// (narrowed the same day) the nonbasic subtype and the exiled land.
         /// The subtype has to be followed by "card", or "a card named Command
         /// Tower" would read as one; Tower Winder is Tutor through the name
         /// either way.</para></summary>
@@ -198,16 +199,25 @@ namespace ScatoloneDownloader.Cube
         /// 2026-11-10 ("versione stretta"), overturning "terra mai Tutor" of
         /// 11-08 for these lands. "A land card" not qualified as basic (Elvish
         /// Reclaimer, Golos, Expedition Map, Primeval Titan, Elemental Teachings)
-        /// and a nonbasic SUBTYPE ("a Desert / Cave / Gate card") find a land with
-        /// something of its own, so the player who searches chooses one. A BASIC
-        /// land, a basic land TYPE ("an Island or Swamp card", the fetch wording,
-        /// which also finds the typed duals) and "a land card WITH / OF EACH basic
-        /// land type" (Boseiju's consolation, Gaea's Balance) stay Ramp or
-        /// ManaFixing: they fix, and the choice is the colour. Measured before the
-        /// code: 69 cards say it, 65 of them without the tag, 32 reviewed.</summary>
+        /// finds a land with something of its own, so the player who searches
+        /// chooses one. A BASIC land, a basic land TYPE ("an Island or Swamp
+        /// card", the fetch wording, which also finds the typed duals) and "a land
+        /// card WITH / OF EACH basic land type" (Boseiju's consolation, Gaea's
+        /// Balance) stay Ramp or ManaFixing: they fix, and the choice is the
+        /// colour. Measured before the code: 69 cards say it, 65 of them without
+        /// the tag, 32 reviewed.
+        /// <para>Narrowed the same day, from the human's sitting. A nonbasic
+        /// SUBTYPE ("a Desert / Cave / Gate card") is OUT, ruled "escludere i tipi
+        /// di terra definiti": the subtype is a pool as narrow as a basic type
+        /// (4 reviewed untagged in the sitting, Map the Frontier, Sand Scout; The
+        /// Cave of Two Lovers, confirmed before the ruling, realigned). And a land
+        /// the search EXILES is gained by nobody (Mana Severance, untagged in the
+        /// sitting; Strata Scythe and Trench Gorger say the same). Only for a
+        /// land: a card tutored into exile stays Tutor (Beseech the Mirror,
+        /// Foresight: 6 reviewed searches of your own library, all 6 tagged).</para></summary>
         private static readonly Regex SearchesForANonbasicLand = Rx(
-            @"library[^.\n]{0,40}for [^.\n]{0,60}?(?<!basic )(?<!snow )\blands? cards?\b(?! (?:with|of each) (?:a )?basic land type)"
-            + @"|library[^.\n]{0,40}for [^.\n]{0,80}?" + NonbasicLandType);
+            @"library[^.\n]{0,40}for [^.\n]{0,60}?(?<!basic )(?<!snow )\blands? cards?\b"
+            + @"(?! (?:with|of each) (?:a )?basic land type)(?!,? (?:and )?exile\b)");
 
         // "A creature OR LAND card" too: Analyze the Pollen searches for a basic
         // land, and "instead" for either once evidence is collected (2026-10-16).

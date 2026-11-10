@@ -127,8 +127,8 @@
             [CardEffect.Tutor] =
                 "A card the searcher CHOOSES from their whole library or the sideboard, by type, NAME or just "
                 + "\"a card\", taken anywhere (Demonic Tutor). A land that may be NONBASIC counts (\"a land "
-                + "card\", a Desert); not a basic land or basic land type (Ramp, ManaFixing), not learn's "
-                + "Lesson, not what turns up at random, not the top N.",
+                + "card\"); not a basic land, a land type or a land exiled (Ramp, ManaFixing, Filter), not "
+                + "learn's Lesson, not what turns up at random, not the top N.",
 
             [CardEffect.ManaFixing] =
                 "Fixes colours: a choice paid in MANA, any landcycling, a land with two abilities, a land fetched "

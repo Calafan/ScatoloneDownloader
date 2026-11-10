@@ -1474,8 +1474,14 @@ namespace ScatoloneDownloader.Cube
                     Rx(@"discard all the cards in your hand[^\n]{0,60}then draw that many"),
                     // …but not cards exiled to be CAST, which is no thinning of
                     // the library (Ugin, Eye of the Storms' −11, 2026-09-29).
+                    // ONE land exiled thins the same way: Strata Scythe, named
+                    // Filter with Mana Severance and Trench Gorger on 2026-11-10
+                    // ("puliscono il mazzo ma poi la terra non è in uso"). Only a
+                    // land: Distant Memories and Hoarding Dragon exile ONE card
+                    // to have it later, and are Tutor.
                     Rx(@"search your library for [^.\n]{0,40}cards?, exile them, then shuffle"
-                        + @"(?!\.[^\n]{0,30}you may (?:cast|play) (?:those cards|them))"),
+                        + @"(?!\.[^\n]{0,30}you may (?:cast|play) (?:those cards|them))"
+                        + @"|search your library for [^.\n]{0,40}\bland card, exile it, then shuffle"),
                     Rx(@"put that many cards from the top of your library into your hand"),
                     // Vault 112: Sadistic Simulation's chapter III exiles that
                     // many off the top and lets you play ONE of them free: a

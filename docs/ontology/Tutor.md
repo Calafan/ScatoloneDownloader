@@ -8,10 +8,11 @@ out of the sideboard ("outside the game"), and takes it out to wherever the card
 battlefield, graveyard, exile. Usually you; a player you target, or every player, counts too
 (Varragoth, Noble Benefactor). Demonic Tutor is the card.** Out: what turns up at random (revealing
 until a type); the top N cards (Filter, CardAdvantage); an opponent's library searched for you
-(Cheat, Steal); and a BASIC land or a basic land TYPE, which is Ramp or ManaFixing. A land that may
-be NONBASIC ("a land card", "a Desert card", a land by name) is chosen and counts, since 2026-11-10;
-"terra mai Tutor" of 11-08 is overturned for it (the last ruling below). Accepted as proposed, with
-the land question answered the same day.
+(Cheat, Steal); and a BASIC land, a basic land TYPE or a nonbasic SUBTYPE (Desert, Cave, Gate),
+which is Ramp or ManaFixing, and a land the search exiles, which is Filter. A land that may be
+NONBASIC ("a land card", a land by name) is chosen and counts, since 2026-11-10; "terra mai Tutor"
+of 11-08 is overturned for it (the last two rulings below). Accepted as proposed, with the land
+question answered the same day.
 
 Every ruling below is coherent with the definition but learn, kept out with its reason. The land
 paragraphs of 11-08 (Land, Q1) are history since 2026-11-10.
@@ -101,3 +102,15 @@ and Tower Winder, already proposed through its name, all handed back with the ta
 same words, each a card to look at in the tagger: Hired Giant (only the OTHER players search, a
 gift), Sojourner's Companion (artifact landcycling's reminder), Strata Scythe, Trench Gorger and
 Mana Severance (the land chosen is exiled, as Foresight's cards are).
+
+NARROWED 2026-11-10, the same day, from the human's sitting ("escludere i tipi di terra definiti";
+"puliscono il mazzo ma poi la terra non è in uso"). A nonbasic SUBTYPE is out again: "a Desert
+card", "a Cave card", "basic land cards and/or Gate cards" search a pool as narrow as a basic type
+and stay Ramp or ManaFixing (Map the Frontier, Dance of the Tumbleweeds, Sand Scout and Spinewoods
+Armadillo untagged by hand in the sitting; The Cave of Two Lovers, confirmed with the tag before
+the ruling, realigned). And a land the search EXILES is gained by nobody: Mana Severance, Strata
+Scythe and Trench Gorger thin the library and are Filter, not this tag. Only for a land: Foresight's
+three cards stay both, and one card exiled to be had later stays Tutor and selects nothing (Hoarding
+Dragon, Distant Memories). The code moves 6 reviewed cards, 5 of them already untagged by hand, and
+16 unreviewed (Maze's End, Gatecreeper Vine, District Guide, Open the Gates …); Strata Scythe gains
+Filter, the only Filter move.

@@ -212,6 +212,37 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
+    // Named Filter with Mana Severance on 2026-11-10 ("puliscono il mazzo ma poi
+    // la terra non è in uso"): ONE land exiled thins too (Strata Scythe), and so
+    // do any number with a body that counts them (Trench Gorger).
+    [InlineData("Strata Scythe", "Artifact — Equipment",
+        "Imprint — When this Equipment enters, search your library for a land card, exile it, then "
+        + "shuffle.\nEquipped creature gets +1/+1 for each land on the battlefield with the same name as the "
+        + "exiled card.\nEquip {3}")]
+    [InlineData("Trench Gorger", "Creature — Leviathan",
+        "Trample\nWhen this creature enters, you may search your library for any number of land cards, exile "
+        + "them, then shuffle. If you do, this creature has base power and base toughness each equal to the "
+        + "number of cards exiled this way.")]
+    public void Classify_TheNovember10Ruling_ALandExiledToThinTheLibrary_IsFilter(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // The edge of it: ONE card that is not a land, exiled to be had later, is
+    // Tutor and selects nothing (Hoarding Dragon, Distant Memories).
+    [InlineData("Hoarding Dragon", "Creature — Dragon",
+        "Flying\nWhen this creature enters, you may search your library for an artifact card, exile it, then "
+        + "shuffle.\nWhen this creature dies, you may put the exiled card into its owner's hand.")]
+    [InlineData("Distant Memories", "Sorcery",
+        "Search your library for a card, exile it, then shuffle. Any opponent may have you put that card into "
+        + "your hand. If no player does, you draw three cards.")]
+    public void Classify_TheNovember10Ruling_ACardExiledToBeHadLater_IsNotFilter(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
     // Only LOOKING at somebody's top is nothing, and manifest dread's reminder
     // has the victim look at their own.
     [InlineData("Orcish Spy", "Creature — Orc Rogue",

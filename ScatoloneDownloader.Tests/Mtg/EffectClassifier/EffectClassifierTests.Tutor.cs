@@ -167,11 +167,9 @@ public sealed partial class EffectClassifierTests
 
     [Theory]
     // Ruled 2026-11-10 ("versione stretta"): a land that may be NONBASIC is
-    // chosen, and is Tutor. 'A land card' (Elvish Reclaimer, Golos) and a
-    // nonbasic subtype, 'a Desert card' or 'a Cave card' (Colossal Rattlewurm,
-    // Sand Scout, Cosmium Confluence). These six were pinned as NOT Tutor from
-    // 2026-11-08 ("terra mai Tutor") until 2026-11-10, when it was overturned
-    // for these lands.
+    // chosen, and is Tutor. 'A land card' (Elvish Reclaimer, Golos). Both were
+    // pinned as NOT Tutor from 2026-11-08 ("terra mai Tutor") until 2026-11-10,
+    // when it was overturned for these lands.
     [InlineData("Elvish Reclaimer", "Creature — Elf Warrior",
         "This creature gets +2/+2 as long as there are three or more land cards in your graveyard.\n{2}, {T}, "
         + "Sacrifice a land: Search your library for a land card, put it onto the battlefield tapped, then "
@@ -180,38 +178,15 @@ public sealed partial class EffectClassifierTests
         "When Golos enters, you may search your library for a land card, put that card onto the battlefield "
         + "tapped, then shuffle.\n{2}{W}{U}{B}{R}{G}: Exile the top three cards of your library. You may play "
         + "them this turn without paying their mana costs.")]
-    [InlineData("Colossal Rattlewurm", "Creature — Wurm",
-        "Colossal Rattlewurm has flash as long as you control a Desert.\nTrample\n{1}{G}, Exile this card from "
-        + "your graveyard: Search your library for a Desert card, put it onto the battlefield tapped, then "
-        + "shuffle.")]
-    [InlineData("Sand Scout", "Creature — Human Scout",
-        "When this creature enters, if an opponent controls more lands than you, search your library for a "
-        + "Desert card, put it onto the battlefield tapped, then shuffle.\nWhenever one or more land cards are "
-        + "put into your graveyard from anywhere, create a 1/1 red, green, and white Sand Warrior creature "
-        + "token. This ability triggers only once each turn.")]
-    [InlineData("Cosmium Confluence", "Sorcery",
-        "Choose three. You may choose the same mode more than once.\n• Search your library for a Cave card, "
-        + "put it onto the battlefield tapped, then shuffle.\n• Put three +1/+1 counters on a Cave you control. "
-        + "It becomes a 0/0 Elemental creature with haste. It's still a land.\n• Destroy target enchantment.")]
-    // 'A Gate card' (Maze's End, unreviewed) is the third subtype in the store.
-    // Since 2026-11-10 Maze's End is Tutor too, the Gate chosen.
-    [InlineData("Maze's End", "Land",
-        "This land enters tapped.\n{T}: Add {C}.\n{3}, {T}, Return this land to its owner's hand: Search your "
-        + "library for a Gate card, put it onto the battlefield, then shuffle. If you control ten or more Gates "
-        + "with different names, you win the game.")]
     // And the rest of the 2026-11-10 family: a land card to hand (Expedition Map),
-    // up to N land cards (Primeval Titan), a basic land OR a Gate card (Circuitous
-    // Route), and four land cards the opponent splits, as Intuition (Elemental
-    // Teachings).
+    // up to N land cards (Primeval Titan), and four land cards the opponent
+    // splits, as Intuition (Elemental Teachings).
     [InlineData("Expedition Map", "Artifact",
         "{2}, {T}, Sacrifice this artifact: Search your library for a land card, reveal it, put it into your "
         + "hand, then shuffle.")]
     [InlineData("Primeval Titan", "Creature — Giant",
         "Trample\nWhenever this creature enters or attacks, you may search your library for up to two land "
         + "cards, put them onto the battlefield tapped, then shuffle.")]
-    [InlineData("Circuitous Route", "Sorcery",
-        "Search your library for up to two basic land cards and/or Gate cards, put them onto the battlefield "
-        + "tapped, then shuffle.")]
     [InlineData("Elemental Teachings", "Instant — Lesson",
         "Search your library for up to four land cards with different names and reveal them. An opponent "
         + "chooses two of those cards. Put the chosen cards into your graveyard and the rest onto the "
@@ -238,6 +213,51 @@ public sealed partial class EffectClassifierTests
         + "type, put it onto the battlefield, then shuffle. This ability costs {1} less to activate for each "
         + "legendary creature you control.")]
     public void Classify_TheNovember10Ruling_ABasicLandTypeOrABasicTypedLand_IsNotTutor(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tutor));
+    }
+
+    [Theory]
+    // Narrowed the same day, from the human's sitting of 2026-11-10. A nonbasic
+    // SUBTYPE, 'a Desert / Cave / Gate card', is out ("escludere i tipi di terra
+    // definiti"): Map the Frontier and Sand Scout untagged by hand. These five
+    // were pinned as Tutor for the morning of 2026-11-10.
+    [InlineData("Colossal Rattlewurm", "Creature — Wurm",
+        "Colossal Rattlewurm has flash as long as you control a Desert.\nTrample\n{1}{G}, Exile this card from "
+        + "your graveyard: Search your library for a Desert card, put it onto the battlefield tapped, then "
+        + "shuffle.")]
+    [InlineData("Sand Scout", "Creature — Human Scout",
+        "When this creature enters, if an opponent controls more lands than you, search your library for a "
+        + "Desert card, put it onto the battlefield tapped, then shuffle.\nWhenever one or more land cards are "
+        + "put into your graveyard from anywhere, create a 1/1 red, green, and white Sand Warrior creature "
+        + "token. This ability triggers only once each turn.")]
+    [InlineData("Cosmium Confluence", "Sorcery",
+        "Choose three. You may choose the same mode more than once.\n• Search your library for a Cave card, "
+        + "put it onto the battlefield tapped, then shuffle.\n• Put three +1/+1 counters on a Cave you control. "
+        + "It becomes a 0/0 Elemental creature with haste. It's still a land.\n• Destroy target enchantment.")]
+    [InlineData("Maze's End", "Land",
+        "This land enters tapped.\n{T}: Add {C}.\n{3}, {T}, Return this land to its owner's hand: Search your "
+        + "library for a Gate card, put it onto the battlefield, then shuffle. If you control ten or more Gates "
+        + "with different names, you win the game.")]
+    [InlineData("Circuitous Route", "Sorcery",
+        "Search your library for up to two basic land cards and/or Gate cards, put them onto the battlefield "
+        + "tapped, then shuffle.")]
+    [InlineData("Map the Frontier", "Sorcery",
+        "Search your library for up to two basic land cards and/or Desert cards, put them onto the "
+        + "battlefield tapped, then shuffle.")]
+    // And a land the search EXILES is gained by nobody: it thins the library,
+    // Filter ("puliscono il mazzo ma poi la terra non è in uso").
+    [InlineData("Mana Severance", "Sorcery",
+        "Search your library for any number of land cards, exile them, then shuffle.")]
+    [InlineData("Strata Scythe", "Artifact — Equipment",
+        "Imprint — When this Equipment enters, search your library for a land card, exile it, then "
+        + "shuffle.\nEquipped creature gets +1/+1 for each land on the battlefield with the same name as the "
+        + "exiled card.\nEquip {3}")]
+    [InlineData("Trench Gorger", "Creature — Leviathan",
+        "Trample\nWhen this creature enters, you may search your library for any number of land cards, exile "
+        + "them, then shuffle. If you do, this creature has base power and base toughness each equal to the "
+        + "number of cards exiled this way.")]
+    public void Classify_TheNovember10Ruling_ANonbasicSubtypeOrAnExiledLand_IsNotTutor(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tutor));
     }
