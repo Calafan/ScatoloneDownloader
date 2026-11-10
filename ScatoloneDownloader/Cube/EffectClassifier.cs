@@ -1243,14 +1243,15 @@ namespace ScatoloneDownloader.Cube
             // Each names its beneficiary inside the match, so, like prevention,
             // they are added here after the self gate; each must be held up.
             if (HeldUp(card, RegeneratesATribe.Replace(protectable, " "), RegeneratesSomebody)
-                || HeldUp(card, protectable, BlinksToSave, onlyInResponse: true)
+                || HeldUp(card, protectable, BlinksToSave)
                 || HeldUp(card, protectable, ShieldCounterOnSomebody)
                 || HeldUp(card, protectable, SavesFromDeathOrDamage)
                 || HeldUp(card, protectable, UmbraArmor)
                 || HeldUp(card, protectable, PhasesYourPermanentsOut)
                 || HeldUp(card, protectable, BackupGrantsAShield)
                 || HeldUp(card, protectable, ReturnsWhatDiedThisTurn)
-                || ShieldsAnAreaStatically(protectable))
+                || ShieldsAnAreaStatically(protectable)
+                || AreaReturnsFromDeath.IsMatch(protectable))
             {
                 result |= CardEffect.Protection;
             }

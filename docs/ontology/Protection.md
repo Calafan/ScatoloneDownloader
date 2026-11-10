@@ -3,6 +3,26 @@
 Canonical record of the rulings for `CardEffect.Protection`. The one-line tooltip shown in the
 tagger is in [`EffectGlossary.cs`](../../ScatoloneDownloader/Mtg/EffectGlossary.cs).
 
+**Definition, 2026-11-10** ("Scudo pronto"): a PERMANENT that is not the card itself survives an
+answer because the card gives it a shield — a keyword (hexproof, indestructible, protection, shroud,
+ward), damage prevented or redirected, regeneration, a return from death, a shield counter, a
+blink, an unsummon or a phasing of your own — choosing WHO at a moment of yours (an instant, flash,
+an activated ability, a trigger on being targeted), or covering ALWAYS a group of your permanents
+with no condition. Mother of Runes is the card. Out as consequences, not exceptions: a shield on
+itself; on the player alone; on a SPELL, which is no permanent ("can't be countered"); a recipient
+chosen at SORCERY SPEED (an Aura or an Equipment on its creature, an enters trigger without flash,
+"Activate only as a sorcery"); an area with a CONDITION; a fog, which stops a combat and saves no
+permanent from a threat (CardEffect.cs); damage a creature DEALS (Pacify); a toughness-only bonus
+(Buff); a shield on what the card itself destroys. Kept as exceptions with their reasons, ruled
+below: one TRIBE or TOKENS (the Buff reading of 2026-09-21, as in Reanimate and Burn), and
+protection from a creature TYPE over the area (2026-10-25, the same tribe seen from the other
+side). It held on 296 of the 297 reviewed cards tagged by hand (FN Become Anonymous) with one
+proposed wrongly (FP Ellie, Vengeful Hunter), both readings below; the two answers of the same day
+moved three more, all named (Q1, Q2).
+
+The rulings below are the history; each one is consistent with the definition or kept as an
+exception with its reason.
+
 keep something alive, for somebody other than the card itself.
 
 TWO vocabularies, ruled equal on 2026-09-15: the keyword shield GRANTED to something else (Mother of
@@ -75,10 +95,10 @@ ruled 2026-10-13).
 A BLINK behind an activation limited to SORCERY SPEED saves nothing, corrected 2026-09-29
 (Lilysplash Mentor): a blink dodges only what is already on the stack. A shield that lasts the turn
 still counts at sorcery speed, which is why Endurance Bobblehead's indestructible "until end of
-turn" was ruled this tag by name on 2026-09-25. A shield an AURA or an EQUIPMENT gives the creature
-it is ON is not this tag even behind a cost you can pay in response, ruled 2026-09-29 on the
-regeneration Auras ("non è instant e non è ad area" — Carapace, Thrull Retainer, The Brute,
-Regeneration): the Aura went on at sorcery speed.
+turn" was ruled this tag by name on 2026-09-25 — OVERTURNED 2026-11-10 (Q1, below). A shield an AURA
+or an EQUIPMENT gives the creature it is ON is not this tag even behind a cost you can pay in
+response, ruled 2026-09-29 on the regeneration Auras ("non è instant e non è ad area" — Carapace,
+Thrull Retainer, The Brute, Regeneration): the Aura went on at sorcery speed.
 
 A FLASH Aura still answers (Fae Flight, Serpent Skin), and so does an ability the Aura hands its
 creature in quotes or aims at a target (Samite Blessing, Healer's Headdress, Floating Shield).
@@ -127,11 +147,12 @@ protection from Salamanders", like Lord of the Nazgûl's Ring-bearers and Haytha
 0 of 3 tagged); a condition the card makes TRUE ITSELF as it enters is no condition (Dawnglade
 Regent makes you the monarch, so its hexproof over your permanents is static, and the initiative
 reads the same way); a death TRIGGER that returns your creature is no save (Magnanimous Magistrate,
-untagged by hand like Valkyrie's Call and Yarus), while a return HELD UP for one creature that dies
-this turn is (Cryptek, tagged by hand; Reincarnation, which returns another card, stays out). Gift
-of Doom and Livio, Oathsworn Sentinel keep the tag ("una specie di Protection"), Rescue Retriever
-stays out, and March of Swirling Mist gains Pacify beside it (Pacify.md). Measured with the readings
-of 2026-10-24: Protection 12 wrong to none, F1 97.6 to 100.
+untagged by hand like Valkyrie's Call and Yarus) — OVERTURNED 2026-11-10 for an area with no
+condition (Q2, below; Magistrate stays out on its condition), while a return HELD UP for one
+creature that dies this turn is (Cryptek, tagged by hand; Reincarnation, which returns another card,
+stays out). Gift of Doom and Livio, Oathsworn Sentinel keep the tag ("una specie di Protection"),
+Rescue Retriever stays out, and March of Swirling Mist gains Pacify beside it (Pacify.md). Measured
+with the readings of 2026-10-24: Protection 12 wrong to none, F1 97.6 to 100.
 
 Read 2026-10-30: a keyword granted beside the return from death ("gains lifelink and "When this
 creature dies, return it to the battlefield…"", Return to Action; 6 of 7, the seventh Perigee
@@ -174,3 +195,33 @@ store, lose that old proposal with it.
 RULED 2026-11-05 ("Solo Buff"): a toughness-only bonus is Buff and not this tag, flash or not.
 Paladin's Shield (flash, attaches to a creature you control as it enters, +0/+2) is named: its hand
 tags become Buff alone, as Great Defender's instant +0/+X already is.
+
+RULED 2026-11-10, Q1 ("Bobblehead -Protection"): a shield whose recipient is chosen at SORCERY
+SPEED answers nothing, whatever the shield is. Endurance Bobblehead ("Up to X target creatures you
+control get +1/+0 and gain indestructible until end of turn … Activate only as a sorcery") is named
+and keeps Ramp and Buff, like Last Night Together, a sorcery whose indestructible until end of turn
+is Buff alone; the blink of Lilysplash Mentor was already out for the same reason. Unreviewed, lost
+with it: Burdened Stoneback, and Daring Fiendbonder's indestructible counter. Prevention at sorcery
+speed is on no card. Fated Clash keeps the tag: it is cast "as though it had flash" in combat.
+
+RULED 2026-11-10, Q2 ("ci sta e così rimuoviamo eccezioni alla regola"): a RETURN FROM DEATH over
+an area of your creatures with no condition is the static area shield of 2026-09-29, overturning
+the 2026-10-25 line on death triggers. Valkyrie's Call ("Whenever a nontoken, non-Angel creature
+you control dies, return that card to the battlefield", Reanimate by hand) and Yarus, Roar of the
+Old Gods (its face-down creatures, returned face down and turned face up; CardAdvantage by hand)
+are named and gain the tag. Persist or undying handed to the same area reads the same way. Reached,
+all unreviewed: Avacyn, Angel of Horror; Luminous Broodmoth ("without flying" filters the area, as
+"non-Angel" does); Isilu, Carrier of Twilight; Mikaeus, the Unhallowed; and Yedora, Grave Gardener,
+whose creature comes back as a Forest land, to be looked at in the tagger. Still out, by the
+definition's condition: a +1/+1 counter the creature must have (Marchesa), a budget of reprieve
+counters (Magnanimous Magistrate), one tribe (Thunderbolts Conspiracy's Villains), a creature you
+do not own (Edea), anybody's (Missy), the creature an Equipment is on (Resurrection Orb).
+
+Read 2026-11-10: the TARGET of the damage the card deals is not who the grant after "and" goes to —
+"Ellie deals 2 damage to target player and gains indestructible until end of turn" shields Ellie
+(Burn and Sacrifice by hand, the one false positive); no Buff moved with it. Your own creature
+exiled and CLOAKED back at instant speed is the blink that saves (Become Anonymous, Tokens and
+Protection by hand, 1 of 1). And a spell kept from a counter is no permanent saved: "can't be
+countered" left the vocabulary, 0 of 7 reviewed cards so worded tagged (Mistrise Village's held-up
+"The next spell you cast this turn can't be countered", Frenzied Baloth, Rhythm of the Wild);
+Vexing Shusher, Surrak Dragonclaw, Cavern of Souls and Bound // Determined, unreviewed, lose it.

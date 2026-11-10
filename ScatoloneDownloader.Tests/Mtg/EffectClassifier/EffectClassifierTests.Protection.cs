@@ -433,8 +433,8 @@ public sealed partial class EffectClassifierTests
         + "+1/+1 counter on Ultimate Spider-Man. He gains hexproof and becomes colorless until end of "
         + "turn.\nWhenever you attack, double the number of each kind of counter on each Spider and legendary "
         + "creature you control.")]
-    // A BLINK at SORCERY SPEED saves nothing (2026-09-29); a shield that lasts
-    // the turn still does, see Classify_EnduranceBobblehead_IsBuffAndProtection.
+    // A BLINK at SORCERY SPEED saves nothing (2026-09-29), and since 2026-11-10
+    // no shield does (Classify_EnduranceBobblehead_IsBuffNotProtection).
     [InlineData("Lilysplash Mentor", "Creature — Frog Druid",
         "Reach\n{1}{G}{U}: Exile another target creature you control, then return it to the battlefield under "
         + "its owner's control with a +1/+1 counter on it. Activate only as a sorcery.")]
@@ -720,7 +720,10 @@ public sealed partial class EffectClassifierTests
     [Theory]
     // Ruled 2026-10-25: protection from a creature type over the area is no shield
     // of this tag (Gor Muldrak's Salamanders), and a death trigger that returns
-    // your creature is not one either (Magnanimous Magistrate).
+    // your creature is not one either (Magnanimous Magistrate). The second half
+    // was overturned 2026-11-10 for an area with no condition (Valkyrie's Call,
+    // Classify_TheNovember10Ruling_AReturnFromDeathOverAnArea_IsProtection);
+    // Magistrate stays out on its condition, a budget of reprieve counters.
     [InlineData("Gor Muldrak, Amphinologist", "Legendary Creature — Human Scout",
         "You and permanents you control have protection from Salamanders.\nAt the beginning of your end step, "
         + "each player who controls the fewest creatures creates a 4/3 blue Salamander Warrior creature token.")]
@@ -856,5 +859,131 @@ public sealed partial class EffectClassifierTests
 
         Assert.True(result.HasFlag(CardEffect.Buff));
         Assert.False(result.HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // Ruled 2026-11-10 (Protection.md, Q1): a shield whose recipient is chosen at
+    // sorcery speed answers nothing, whatever it is - indestructible until end of
+    // turn, an indestructible counter - as Lilysplash Mentor's blink already did
+    // not (Endurance Bobblehead is pinned in the Buff file).
+    [InlineData("Burdened Stoneback", "Creature — Giant Warrior",
+        "This creature enters with two -1/-1 counters on it.\n{1}{W}, Remove a counter from this creature: "
+        + "Target creature gains indestructible until end of turn. Activate only as a sorcery. (Damage and "
+        + "effects that say \"destroy\" don't destroy it. If its toughness is 0 or less, it still dies.)")]
+    [InlineData("Daring Fiendbonder", "Creature — Human Warlock",
+        "Haste\nThis creature attacks each combat if able.\n{1}{B}, Exile this card from your graveyard: Put an "
+        + "indestructible counter on target creature. Activate only as a sorcery.")]
+    public void Classify_TheNovember10Ruling_AShieldChosenAtSorcerySpeed_IsNotProtection(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // Ruled 2026-11-10 (Protection.md, Q2), overturning 2026-10-25: a return from
+    // death over an area of your creatures with no condition is the static area
+    // shield. Valkyrie's Call and Yarus named; persist and undying handed to the
+    // same area (Isilu, Mikaeus), Avacyn and Luminous Broodmoth reached.
+    [InlineData("Valkyrie's Call", "Enchantment",
+        "Whenever a nontoken, non-Angel creature you control dies, return that card to the battlefield under "
+        + "its owner's control with a +1/+1 counter on it. It has flying and is an Angel in addition to its "
+        + "other types.")]
+    [InlineData("Yarus, Roar of the Old Gods", "Legendary Creature — Centaur Druid",
+        "Other creatures you control have haste.\nWhenever one or more face-down creatures you control deal "
+        + "combat damage to a player, draw a card.\nWhenever a face-down creature you control dies, return it to "
+        + "the battlefield face down under its owner's control if it's a permanent card, then turn it face up.")]
+    [InlineData("Eirdu, Carrier of Dawn // Isilu, Carrier of Twilight", "Legendary Creature — Elemental God // Legendary Creature — Elemental God",
+        "Flying, lifelink\nCreature spells you cast have convoke. (Your creatures can help cast those spells. "
+        + "Each creature you tap while casting a creature spell pays for {1} or one mana of that creature's "
+        + "color.)\nAt the beginning of your first main phase, you may pay {B}. If you do, transform "
+        + "Eirdu.\nFlying, lifelink\nEach other nontoken creature you control has persist. (When it dies, if it "
+        + "had no -1/-1 counters on it, return it to the battlefield under its owner's control with a -1/-1 "
+        + "counter on it.)\nAt the beginning of your first main phase, you may pay {W}. If you do, transform "
+        + "Isilu.")]
+    [InlineData("Mikaeus, the Unhallowed", "Legendary Creature — Zombie Cleric",
+        "Intimidate (This creature can't be blocked except by artifact creatures and/or creatures that share "
+        + "a color with it.)\nWhenever a Human deals damage to you, destroy it.\nOther non-Human creatures you "
+        + "control get +1/+1 and have undying. (When a creature with undying dies, if it had no +1/+1 counters "
+        + "on it, return it to the battlefield under its owner's control with a +1/+1 counter on it.)")]
+    [InlineData("Avacyn, Angel of Horror", "Legendary Creature — Angel",
+        "Flying, deathtouch\nWhenever Avacyn or another nontoken creature you control dies, return that card "
+        + "to the battlefield under your control at the beginning of the next end step.")]
+    [InlineData("Luminous Broodmoth", "Creature — Insect",
+        "Flying\nWhenever a creature you control without flying dies, return it to the battlefield under its "
+        + "owner's control with a flying counter on it.")]
+    public void Classify_TheNovember10Ruling_AReturnFromDeathOverAnArea_IsProtection(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // Under the same ruling, out: a counter the creature must have (Marchesa), one
+    // tribe (Thunderbolts Conspiracy), a creature you do not own (Edea), anybody's
+    // (Missy), and the one an Equipment is on (Resurrection Orb).
+    [InlineData("Marchesa, the Black Rose", "Legendary Creature — Human Wizard",
+        "Dethrone (Whenever this creature attacks the player with the most life or tied for most life, put a "
+        + "+1/+1 counter on it.)\nOther creatures you control have dethrone.\nWhenever a creature you control "
+        + "with a +1/+1 counter on it dies, return that card to the battlefield under your control at the "
+        + "beginning of the next end step.")]
+    [InlineData("Thunderbolts Conspiracy", "Enchantment",
+        "Flash\nWhenever a Villain you control dies, return it to the battlefield under its owner's control "
+        + "with a finality counter on it. That creature is a Hero in addition to its other types. (If a "
+        + "creature with a finality counter on it would die, exile it instead.)")]
+    [InlineData("Edea, Possessed Sorceress", "Legendary Creature — Human Warlock",
+        "Ward {2}\nAt the beginning of combat on your turn, gain control of target creature an opponent "
+        + "controls until end of turn. Untap that creature. It gains haste until end of turn.\nWhenever a "
+        + "creature you control but don't own dies, return it to the battlefield under its owner's control and "
+        + "you draw a card.")]
+    [InlineData("Missy", "Legendary Creature — Time Lord Rogue",
+        "Whenever another nonartifact creature dies, return it to the battlefield under your control face "
+        + "down and tapped. It's a 2/2 Cyberman artifact creature.\nAt the beginning of your end step, each "
+        + "opponent faces a villainous choice — Each artifact creature you control deals 1 damage to that "
+        + "opponent, or you draw a card and chaos ensues.")]
+    [InlineData("Resurrection Orb", "Artifact — Equipment",
+        "Equipped creature has lifelink.\nWhenever equipped creature dies, return that card to the battlefield "
+        + "under its owner's control at the beginning of the next end step.\nEquip {4} ({4}: Attach to target "
+        + "creature you control. Equip only as a sorcery.)")]
+    public void Classify_TheNovember10Ruling_AReturnFromDeathThatIsNoArea_IsNotProtection(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // Read 2026-11-10: your own creature exiled and CLOAKED back, at instant
+    // speed, is the blink that saves (Become Anonymous, Tokens and Protection by
+    // hand).
+    [InlineData("Become Anonymous", "Instant",
+        "Exile target nontoken creature you own and the top two cards of your library in a face-down pile, "
+        + "shuffle that pile, then cloak those cards. They enter tapped. (To cloak a card, put it onto the "
+        + "battlefield face down as a 2/2 creature with ward {2}. Turn it face up any time for its mana cost if "
+        + "it's a creature card.)")]
+    public void Classify_TheNovember10Readings_AreProtection(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // Read 2026-11-10: the target of the damage the card deals is not who the
+    // grant after and goes to (Ellie, Vengeful Hunter shields herself); and a
+    // spell kept from a counter is no permanent saved, 0 of 7 reviewed tagged
+    // (Mistrise Village, held up; Vexing Shusher, Surrak Dragonclaw, Cavern of
+    // Souls).
+    [InlineData("Ellie, Vengeful Hunter", "Legendary Creature — Human Survivor",
+        "Pay 2 life, Sacrifice another creature: Ellie deals 2 damage to target player and gains "
+        + "indestructible until end of turn.\nPartner—Survivors (You can have two commanders if both have this "
+        + "ability.)")]
+    [InlineData("Mistrise Village", "Land",
+        "This land enters tapped unless you control a Mountain or a Forest.\n{T}: Add {U}.\n{U}, {T}: The next "
+        + "spell you cast this turn can't be countered.")]
+    [InlineData("Vexing Shusher", "Creature — Goblin Shaman",
+        "This spell can't be countered.\n{R/G}: Target spell can't be countered.")]
+    [InlineData("Surrak Dragonclaw", "Legendary Creature — Human Warrior",
+        "Flash\nThis spell can't be countered.\nCreature spells you control can't be countered.\nOther creatures "
+        + "you control have trample.")]
+    [InlineData("Cavern of Souls", "Land",
+        "As this land enters, choose a creature type.\n{T}: Add {C}.\n{T}: Add one mana of any color. Spend "
+        + "this mana only to cast a creature spell of the chosen type, and that spell can't be countered.")]
+    public void Classify_TheNovember10Readings_AreNotProtection(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
     }
 }

@@ -788,6 +788,14 @@ namespace ScatoloneDownloader.Cube
 
         private static readonly Regex ItOpensTheSentence = Rx(@"^\s*it\b");
 
+        // The RECIPIENT of the damage the subject deals is not who the grant
+        // after "and" goes to: in "Ellie deals 2 damage to target player and
+        // gains indestructible until end of turn" Ellie gains it, and "target
+        // player" vouched for a shield on somebody else (Ellie, Vengeful Hunter,
+        // Burn and Sacrifice by hand; read 2026-11-10, the one Protection FP).
+        private static readonly Regex DamageRecipientBeforeAGrant =
+            Rx(@"\bdamage to (?:up to \w+ )?(?:target|any|each|another)\b[^.:;\n]*?(?=\band (?:gains?|gets?)\b)");
+
         private static readonly Regex HeOrSheOpensTheSentence = Rx(@"^\s*(?:he|she)\b");
 
         /// <summary>Whether every match of <paramref name="patterns"/> lands on the
@@ -879,7 +887,7 @@ namespace ScatoloneDownloader.Cube
                     // the window for both questions reads it as a gift to
                     // somebody. Measured both ways — cutting for both is 22
                     // false positives worse than doing nothing.
-                    string effectOnly = TriggerClause.Replace(before, " ");
+                    string effectOnly = DamageRecipientBeforeAGrant.Replace(TriggerClause.Replace(before, " "), " ");
 
                     if (Beneficiary.IsMatch(effectOnly)
                         || Beneficiary.IsMatch(AfterCounterClause(text, match)))
@@ -1030,11 +1038,10 @@ namespace ScatoloneDownloader.Cube
         /// equip cost for its ward. Reminder text is blanked first, because
         /// ward's own reminder says "whenever it becomes the target".
         /// <para>
-        /// <paramref name="onlyInResponse"/> is for a save that lasts an instant
-        /// — a BLINK dodges only what is already on the stack — so an activation
-        /// limited to sorcery speed does not hold it up (see OnlyAsASorcery).
+        /// An activation limited to SORCERY SPEED does not hold anything up
+        /// (see OnlyAsASorcery).
         /// </para></summary>
-        private static bool HeldUp(Card card, string text, Regex pattern, bool onlyInResponse = false)
+        private static bool HeldUp(Card card, string text, Regex pattern)
         {
             if (IsCastInResponse(card))
             {
@@ -1057,7 +1064,7 @@ namespace ScatoloneDownloader.Cube
 
                 string line = Parenthetical.Replace(text[start..(end < 0 ? text.Length : end)], " ");
 
-                if ((ActivatedAbility.Any(a => a.IsMatch(line)) && !(onlyInResponse && OnlyAsASorcery.IsMatch(line)))
+                if ((ActivatedAbility.Any(a => a.IsMatch(line)) && !OnlyAsASorcery.IsMatch(line))
                     || ReactiveTrigger.IsMatch(line))
                 {
                     return true;
@@ -1107,13 +1114,17 @@ namespace ScatoloneDownloader.Cube
             Rx(@"^[^\n]*\b(?:destroy|sacrifice) (?:it|that creature) at the beginning of the next end step\b[^\n]*",
                 RegexOptions.Multiline);
 
-        // A BLINK at sorcery speed saves nothing: Lilysplash Mentor exiles your
-        // own creature for {1}{G}{U} "Activate only as a sorcery", which is a
-        // second enters trigger, and the human took its Protection off on
-        // 2026-09-29. Asked of the blink ALONE, because a shield that lasts
-        // the turn still covers it at sorcery speed: Endurance Bobblehead's
-        // indestructible "until end of turn" was ruled Protection by name on
-        // 2026-09-25, and so stay Burdened Stoneback and Daring Fiendbonder.
+        // A shield whose recipient is chosen at SORCERY SPEED answers nothing.
+        // First ruled for the BLINK on 2026-09-29: Lilysplash Mentor exiles
+        // your own creature for {1}{G}{U} "Activate only as a sorcery", which is
+        // a second enters trigger, and the human took its Protection off. Asked
+        // of the blink alone until 2026-11-10, because a shield that lasts the
+        // turn was held to cover it at sorcery speed (Endurance Bobblehead's
+        // indestructible "until end of turn", ruled by name on 2026-09-25).
+        // RULED 2026-11-10 under the definition (Protection.md, Q1): Bobblehead
+        // loses the tag like Last Night Together, a sorcery whose indestructible
+        // until end of turn is Buff alone, and so does every shield on such a
+        // line (Burdened Stoneback, Daring Fiendbonder's indestructible counter).
         private static readonly Regex OnlyAsASorcery =
             Rx(@"activate (?:this ability )?only (?:as a sorcery|any time you could cast a sorcery)");
 

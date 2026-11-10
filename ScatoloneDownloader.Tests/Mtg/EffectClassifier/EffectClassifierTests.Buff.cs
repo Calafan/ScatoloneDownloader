@@ -472,8 +472,10 @@ public sealed partial class EffectClassifierTests
     }
 
     [Fact]
-    // Several targets and a shield: Buff and Protection, ruled 2026-09-25.
-    public void Classify_EnduranceBobblehead_IsBuffAndProtection()
+    // Several targets and a shield: Buff and Protection, ruled 2026-09-25. Moved
+    // 2026-11-10 (Protection.md, Q1): the shield's recipient is chosen at sorcery
+    // speed, so it answers nothing and the card is Buff alone.
+    public void Classify_EnduranceBobblehead_IsBuffNotProtection()
     {
         CardEffect result = EffectClassifier.Classify(MakeCard("Endurance Bobblehead", "Artifact — Bobblehead",
             "{T}: Add one mana of any color.\n{3}, {T}: Up to X target creatures you control get +1/+0 and gain "
@@ -481,7 +483,7 @@ public sealed partial class EffectClassifierTests
             + "this ability. Activate only as a sorcery."));
 
         Assert.True(result.HasFlag(CardEffect.Buff));
-        Assert.True(result.HasFlag(CardEffect.Protection));
+        Assert.False(result.HasFlag(CardEffect.Protection));
     }
 
     [Fact]

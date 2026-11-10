@@ -101,10 +101,10 @@
                 + "tokens get, or a keyword but double strike.",
 
             [CardEffect.Protection] =
-                "Keeps something ELSE alive, held up in response or over an AREA: a keyword shield, prevention, "
-                + "redirection, regeneration, a saving blink or unsummon, a shield counter, phasing. Not one "
-                + "creature's static, conditional or Aura/Equipment shield, a tribe's, a fog, its own, nor "
-                + "damage a creature DEALS or REPEATING prevention to YOU (Pacify).",
+                "Keeps another PERMANENT alive, chosen in response or over an unconditional AREA of yours: "
+                + "keyword shield, prevention, redirection, regeneration, return from death, saving blink or "
+                + "unsummon, shield counter, phasing. Not chosen at sorcery speed, a tribe's, a fog, its own, a "
+                + "spell's, nor damage a creature DEALS (Pacify).",
 
             [CardEffect.Burn] =
                 "An OPPONENT loses life to what the card does (Lightning Bolt): damage reaching a face, life lost or "

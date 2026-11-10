@@ -998,7 +998,13 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex[] ProtectionPatterns =
         [
             Rx(@"hexproof|indestructible|shroud|protection from"),
-            Rx(@"can'?t be (countered|the target)"),
+            // "can't be COUNTERED" is not here since 2026-11-10: a spell is not a
+            // permanent (the definition in Protection.md), and the reviewed cards
+            // that keep somebody else's spell from a counter are untagged, 0 of
+            // 7 (Mistrise Village's held-up "{U}, {T}: The next spell you cast
+            // this turn can't be countered", Frenzied Baloth, Rhythm of the
+            // Wild). This spell's own was always a self-shield.
+            Rx(@"can'?t be the target"),
             Rx(@"\bward\b"),
         ];
 
@@ -1081,7 +1087,7 @@ namespace ScatoloneDownloader.Cube
         // creature when it is targeted (Monk Gyatso). A return to hand paid as a
         // COST is not — the colon of an activation, or the ADDITIONAL COST of a
         // counterspell (Familiar's Ruse, Disappearing Act) — and nor is one at
-        // sorcery speed (Chulane), which HeldUp's onlyInResponse keeps out.
+        // sorcery speed (Chulane), which HeldUp keeps out (OnlyAsASorcery).
         //
         // The UNSUMMON of your own was taken out on 2026-09-29 ("Unsummon su se
         // stessi non è protection") and put back the same day: "una creatura
@@ -1096,7 +1102,12 @@ namespace ScatoloneDownloader.Cube
         // of target creatures and/or planeswalkers you control", Protection
         // alone by hand, read 2026-11-05).
         private static readonly Regex BlinksToSave = Rx(
-            @"exile (?:up to \w+ |x |any number of |another )?(?:other )?target [\w ,]{0,30}?(?:creatures?|permanents?)(?:,? [\w /]{0,20})? you (?:control|own)\b[\s\S]{0,120}?\breturn"
+            // A CLOAK brings it back too, face down, as the d20 table's form
+            // below already reads: Become Anonymous's "Exile target nontoken
+            // creature you own and the top two cards of your library in a
+            // face-down pile, shuffle that pile, then cloak those cards" (an
+            // instant, Tokens and Protection by hand; read 2026-11-10, 1 of 1).
+            @"exile (?:up to \w+ |x |any number of |another )?(?:other )?target [\w ,]{0,30}?(?:creatures?|permanents?)(?:,? [\w /]{0,20})? you (?:control|own)\b[\s\S]{0,120}?\b(?:return|cloak)"
             // …and ANYBODY'S, returned on the spot (Planar Incision's "Exile
             // target artifact or creature, then return it to the battlefield
             // under its owner's control", read 2026-11-05): the same save as
@@ -1274,6 +1285,26 @@ namespace ScatoloneDownloader.Cube
             // ability an opponent controls, counter that spell or ability unless
             // that player pays 4 life" (1 of 1 reviewed, tagged).
             + @"|^whenever (?:you or )?(?:a|another) (?:permanent|creature) you control becomes the target of a spell or ability an opponent controls, counter that spell or ability",
+            RegexOptions.Multiline);
+
+        // A RETURN FROM DEATH over an area of your creatures is the static shield
+        // above, RULED 2026-11-10 (Protection.md, Q2: "ci sta e così rimuoviamo
+        // eccezioni alla regola"), overturning 2026-10-25's "a death trigger that
+        // returns your creature is no save": Valkyrie's Call's "Whenever a
+        // nontoken, non-Angel creature you control dies, return that card to the
+        // battlefield" and Yarus's face-down ones, both named; and persist or
+        // undying handed to the same area (Isilu's "Each other nontoken creature
+        // you control has persist", Mikaeus). Its own shape because the area sits
+        // in the TRIGGER, and the return's rider ("with a +1/+1 counter on it")
+        // is no condition. A condition keeps it out by not fitting, as it does an
+        // area shield: a counter on the creature (Marchesa), a budget the card
+        // spends (Magnanimous Magistrate's "if its mana value was 1 or greater,
+        // you may remove that many reprieve counters"), one TRIBE (Thunderbolts
+        // Conspiracy's Villains), a creature you do not own (Edea), anybody's
+        // (Missy), or the one an Equipment is on (Resurrection Orb).
+        private static readonly Regex AreaReturnsFromDeath = Rx(
+            @"^whenever (?:[^,.\n]{1,40} or )?(?:a|another) (?:(?:nontoken|non-[\w']+|face-down),? )*creature you control (?:without \w+ )?dies, (?:you may )?return (?:it|that card) to the battlefield"
+            + @"|^(?:each )?(?:other )?(?:(?:nontoken|non-[\w']+) )*creatures? you control (?:get [^.\n]{1,20} and )?(?:have|has) (?:persist|undying)\b",
             RegexOptions.Multiline);
 
         // …and a creature TYPE in front of "creatures" is a tribe, not an area
