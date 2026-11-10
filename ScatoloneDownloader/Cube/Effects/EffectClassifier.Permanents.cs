@@ -448,6 +448,18 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex TokenSteals = Rx(
             @"\btoken with [\w ,]{0,40}""[^""]*gains? control of[^""]*""");
 
+        /// <summary>The player who reveals their top KEEPS part of it: the
+        /// revealed permanents onto their own battlefield (Over the Top, Guild
+        /// Feud, Pyxis of Pandemonium). Ruled 2026-11-10 Q3 "Fuori" for Mill. A
+        /// card put "under your control" is yours, not theirs (Curse of
+        /// Unbinding, Telemin Performance). The other half of Q3, the named card
+        /// into their hand (Petra Sphinx, Vexing Arcanix), needs no branch here:
+        /// "Target player chooses a card name, then reveals" puts the player too
+        /// far from the verb for the Mill rule to read it. Tried as a branch on
+        /// 2026-11-10 and removed: no card in the store moved without it.</summary>
+        private const string KeepsPartOfTheReveal =
+            @"\b(?:may )?puts? (?:a|an|all|any number of) [\w ]{0,40}?(?:(?:from )?among them|revealed this way) onto the battlefield(?! under your control)";
+
         private static readonly Regex[] MillPatterns =
         [
             // The run in between may not say "YOU": Sivriss, Nightmare Speaker's
@@ -467,47 +479,67 @@ namespace ScatoloneDownloader.Cube
             // 2026-10-15 from the three reviewed cards that say it and nothing
             // more (Ulamog, the Defiler; Ashiok, Wicked Manipulator's -7;
             // Malboro). Not when a card is PLAYED, cast or put under your
-            // control anywhere on that line or the next — that is Steal, and the
-            // seven reviewed cards that say so carry no Mill (Outrageous
-            // Robbery, Bloodsoaked Insight, Crabomination; Ensnared by the Mara,
-            // whose OTHER villainous branch casts) — unless it is the card
-            // itself cast face down (Raven Guild Master's megamorph reminder);
-            // not when "each player" exiles, which
-            // includes you (Memory Vessel, Triple Triad); and not inside a
-            // TOKEN's quoted ability (Ashiok, Nightmare Muse).
-            Rx(@"^(?![^\n]*(?:\n[^\n]*)?\b(?:(?:may|can) (?:cast|play)(?! this card\b)|(?:cast|play)s? (?:it|them|that card|those cards)|under your control)\b)"
-                + @"(?:[^""\n]|""[^""\n]*"")*?\b(?:target (?:player|opponent)|each opponent|an opponent|that player|defending player|its controller)"
+            // control anywhere on that line or the next — that is CardAdvantage
+            // at most, and the twelve reviewed cards with this subject that say
+            // so carry no Mill (Outrageous Robbery, Bloodsoaked Insight,
+            // Crabomination, Gríma, Ian Malcolm; Ensnared by the Mara, whose
+            // OTHER villainous branch casts; measured 2026-11-10) — unless it is
+            // the card itself cast face down (Raven Guild Master's megamorph
+            // reminder).
+            // EACH PLAYER exiling counts as each player milling does, by the
+            // definition of 2026-11-10 ("each player" 13 of 13 for "mills"): the
+            // five reviewed cards that say it (Memory Vessel, Triple Triad,
+            // Rocco, Etali, Plargg and Nassari) all play the cards, so the veto
+            // keeps them out, as it did when "each player" was left off for them.
+            // A TOKEN's quoted ability counts, ruled 2026-11-10 Q2 "Conta, come
+            // Burn" (Ashiok, Nightmare Muse, the one card, unreviewed): the
+            // quotes are no longer skipped.
+            // Nor when the players keep part of what they exiled, Q3 below
+            // (Pyxis of Pandemonium's permanents, unreviewed).
+            Rx(@"^(?![^\n]*(?:\n[^\n]*)?(?:\b(?:(?:may|can) (?:cast|play)(?! this card\b)|(?:cast|play)s? (?:it|them|that card|those cards)|under your control)\b|"
+                + KeepsPartOfTheReveal + @"))"
+                + @"[^\n]*?\b(?:target (?:player|opponent)|each opponent|an opponent|that player|defending player|each player|its controller)"
                 // "Exiles CARDS FROM the top of their library until they exile a
                 // land card" is the same attack in the other order (Umbris, Fear
                 // Manifest, Mill by hand, read 2026-11-06). Counted broad,
                 // "<a player> ... exiles cards from the top of their library": 1
                 // reviewed card tagged and 5 untagged, and all 5 carry the cast
                 // above (Bismuth Mindrender, Gríma, Wand of Wonder, Strago and
-                // Relm: Steal; Transforming Flourish: "they may cast"), so the
+                // Relm: Steal then, CardAdvantage since 2026-11-08; Transforming
+                // Flourish: "they may cast"), so the
                 // veto already keeps them out; 11 unreviewed, 1 of them proposed.
                 + @"[\w ,]{0,40}exiles? (?:the top [\w ]{0,30}|cards from the top )of their library",
                 RegexOptions.Multiline),
-            // An OPPONENT who reveals cards from the top of THEIR library until a
-            // card of some kind, that card taken (to your battlefield, your hand,
-            // wherever) and the REST of the revealed cards put into THEIR
-            // graveyard, is Mill. Ruled 2026-11-06, "Sì, entrambe Mill" (Curse of
-            // Unbinding, Mill by hand, against Sméagol, Helpful Guide, Steal
-            // alone): "That player puts the rest of the revealed cards into their
-            // graveyard" and "and the rest into their graveyard" are one wording.
-            // Counted broad, "<another player> reveals cards from the top of their
-            // library until ... the rest / all other cards ... into their
-            // graveyard": 2 reviewed cards (Curse, tagged; Sméagol, not), 2
-            // unreviewed (Thought Dissector, Steal; Tunnel Vision, whose card
-            // taken goes back on top of the library). Another player's library
-            // ONLY, not "each player" (it includes you) and not the first player
-            // of Oath of Druids: your own library revealed into your own
-            // graveyard is a different question (0 reviewed cards say it; Avenging
-            // Druid, Foster, Gamekeeper, Hermit Druid are unreviewed and untagged)
-            // and "puts all cards revealed this way into their graveyard" with no
-            // card taken (Mind Funeral and 8 more, all unreviewed) another.
-            Rx(@"\b(?:target player|target opponent|each opponent|an opponent|that player|defending player)"
-                + @"[^.\n]{0,20}\breveals? cards from the top of their library until"
-                + @"[^\n]*?\b(?:the rest|all other cards)\b[^.\n]*?\binto (?:their|that player's) graveyard"),
+            // ANOTHER player's top REVEALED or LOOKED AT, and cards from it put
+            // into THEIR graveyard: the definition of 2026-11-10 read on the
+            // reveal and look-at wordings, which no rule above can read.
+            // - Reveal until, the card taken by YOU and the rest into their
+            //   graveyard: ruled 2026-11-06, "Sì, entrambe Mill" (Curse of
+            //   Unbinding; Sméagol, Helpful Guide), the two reviewed cards.
+            // - Reveal until, ALL the revealed cards into their graveyard (Mind
+            //   Funeral, Mind Grind, Balustrade Spy, Mirko Vosk, Trepanation
+            //   Blade, Destroy the Evidence's "its controller"), or all but the
+            //   card you take (Telemin Performance's "all noncreature cards"):
+            //   read 2026-11-10 with the definition, 0 reviewed cards say it.
+            // - A top LOOKED AT or revealed and the cards for the graveyard
+            //   CHOSEN by you: ruled 2026-11-10 Q1 "Mill" (Cruel Fate, Eye Spy,
+            //   Wand of Denial named; Wu Spy, Dimir Charm, Thief of Sanity,
+            //   Bamboozle, Balshan Beguiler follow, unreviewed). A card chosen out
+            //   of their top is still a card they lose, as Ray of Erasure's blind
+            //   one is.
+            // Not when the player KEEPS part of the reveal, into their hand or
+            // onto their battlefield: ruled 2026-11-10 Q3 "Fuori", 0 of 3
+            // reviewed (Over the Top, Petra Sphinx, Vexing Arcanix; Guild Feud,
+            // unreviewed, follows): the card hands them something, so it is no
+            // attack on their library. The card taken "under your control" is
+            // not theirs (Curse of Unbinding). And not your own library: Oath of
+            // Druids' first player and Mirror-Mad Phantasm's "that library" are
+            // not reached, nor Hermit Druid's "your graveyard".
+            Rx(@"^(?![^\n]*" + KeepsPartOfTheReveal + @")[^\n]*?"
+                + @"(?:\b(?:target player|target opponent|each opponent|an opponent|that player|defending player|each player|its controller)"
+                + @"[^.\n]{0,20}\breveals?|\blook at) [\w ]{0,30}?\btop\b[\w ]{0,30}?\bof (?:their|(?:target|each|that) (?:player|opponent)'s) library"
+                + @"[^\n]*?\binto (?:their|that player's|their owners'?) graveyards?",
+                RegexOptions.Multiline),
             // RAD COUNTERS mill whoever gets them, one card each at the start of
             // their main phase — 13 of 13 reviewed cards that hand them to a
             // player carry this tag, "each player" included (Nuclear Fallout,

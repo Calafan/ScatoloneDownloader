@@ -3,6 +3,19 @@
 Canonical record of the rulings for `CardEffect.Mill`. The one-line tooltip shown in the tagger is
 in [`EffectGlossary.cs`](../../ScatoloneDownloader/Mtg/EffectGlossary.cs).
 
+**Definition, 2026-11-10** ("Sì, così"; Glimpse the Unthinkable is the card): ANOTHER player loses
+cards off the TOP of their library to your card — put into their graveyard, or exiled when the card
+plays none of them. "Target player" counts, and so does "each player" (13 of 13 reviewed for
+"mills"), and so do rad counters handed to a player (16 of 16). Out: your own library, which is
+fuel (0 of 7 reviewed "you mill"), and the top exiled for cards you then play, which is
+CardAdvantage at most (0 of 25 reviewed, 21 of them in the sitting of 2026-11-10). Every ruling
+below is consistent with it; the two exceptions it keeps are a top the player keeps part of (Q3) and
+the top exiled to be played. Read with it the same day: "puts all cards revealed this way into their
+graveyard" (Mind Funeral, Mind Grind), "all noncreature cards revealed this way" (Telemin
+Performance), "then puts those cards into their graveyard" (Balustrade Spy, Mirko Vosk, Undercity
+Informer, Trepanation Blade, Destroy the Evidence's "its controller"), and "each player exiles the
+top" with nothing played (Timesifter) — all unreviewed, none read before.
+
 put cards from a library into a graveyard (Glimpse the Unthinkable, Millstone, Altar of Dementia).
 Only when it is aimed at SOMEBODY ELSE. A bare "mill three cards" fills your own graveyard, which is
 fuel for what the card does next rather than an attack on anybody — Stinkweed Imp's dredge and Fell
@@ -32,3 +45,21 @@ cards put into their graveyard, is Mill, in both wordings: "That player puts the
 revealed cards into their graveyard" and "and the rest into their graveyard". Another player's
 library only: your own library revealed into your own graveyard is another question (0 reviewed
 cards say it).
+
+RULED 2026-11-10, Q1 "Mill": a top LOOKED AT or revealed, and the cards for the graveyard CHOSEN by
+you, is Mill — a card chosen out of their top is still a card they lose, as Ray of Erasure's blind
+one is. Cruel Fate (no tag since Filter's Q6 of 2026-11-06), Eye Spy and Wand of Denial (Filter,
+"target player") +Mill, named; 0 of 3 reviewed before, the question had never been asked. Wu Spy,
+Dimir Charm, Lurking Informant, Draugr Thought-Thief, Thief of Sanity, Bamboozle, Balshan Beguiler
+and Dakra Mystic follow, unreviewed.
+
+RULED 2026-11-10, Q2 "Conta, come Burn": a TOKEN's quoted ability that exiles their top counts, as
+Burn's Q6 of 2026-11-06 counts a token's. The veto written for Ashiok, Nightmare Muse is gone; it
+was the one card, unreviewed, and the "mills" rule never had it.
+
+RULED 2026-11-10, Q3 "Fuori": a player who reveals their top and KEEPS part of it — the card they
+named into their hand (Petra Sphinx, untagged; Vexing Arcanix, Burn), or the revealed permanents
+onto their own battlefield (Over the Top, CardAdvantage) — is not Mill, 0 of 3 reviewed: the card
+hands them something, so it is no attack on their library. Guild Feud and Pyxis of Pandemonium
+follow, unreviewed. The card taken "under your control" is yours, not theirs, so Curse of Unbinding,
+Sméagol and Telemin Performance stay Mill.

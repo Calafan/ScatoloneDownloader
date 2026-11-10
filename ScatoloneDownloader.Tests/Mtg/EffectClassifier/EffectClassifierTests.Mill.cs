@@ -108,4 +108,86 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Mill));
     }
+
+    [Theory]
+    // The definition of 2026-11-10 (Glimpse the Unthinkable): ANOTHER player loses
+    // cards off the top of their library to your card, into their graveyard, or
+    // exiled when the card plays none of them. Read on the reveal wordings (Mind
+    // Funeral's 'all cards revealed this way', Telemin Performance's 'all
+    // noncreature cards', Destroy the Evidence's 'its controller', Dakra Mystic's
+    // 'their owners' graveyards'); Q1 'Mill', a top looked at and the card for the
+    // graveyard chosen by you (Cruel Fate, Eye Spy, Wand of Denial, Thief of
+    // Sanity); 'each player' exiling (Timesifter); Q2 'Conta, come Burn', a
+    // token's quoted ability (Ashiok, Nightmare Muse).
+    [InlineData("Mind Funeral", "Sorcery",
+        "Target opponent reveals cards from the top of their library until four land cards are revealed. That "
+        + "player puts all cards revealed this way into their graveyard.")]
+    [InlineData("Telemin Performance", "Sorcery",
+        "Target opponent reveals cards from the top of their library until they reveal a creature card. That "
+        + "player puts all noncreature cards revealed this way into their graveyard, then you put the creature "
+        + "card onto the battlefield under your control.")]
+    [InlineData("Destroy the Evidence", "Sorcery",
+        "Destroy target land. Its controller reveals cards from the top of their library until they reveal a "
+        + "land card, then puts those cards into their graveyard.")]
+    [InlineData("Dakra Mystic", "Creature — Merfolk Wizard",
+        "{U}, {T}: Each player reveals the top card of their library. You may put the revealed cards into "
+        + "their owners' graveyards. If you don't, each player draws a card.")]
+    [InlineData("Cruel Fate", "Sorcery",
+        "Look at the top five cards of target opponent's library. Put one of those cards into that player's "
+        + "graveyard and the rest on top of their library in any order.")]
+    [InlineData("Eye Spy", "Sorcery",
+        "Look at the top card of target player's library. You may put that card into their graveyard.")]
+    [InlineData("Wand of Denial", "Artifact",
+        "{T}: Look at the top card of target player's library. If it's a nonland card, you may pay 2 life. If "
+        + "you do, put it into that player's graveyard.")]
+    [InlineData("Thief of Sanity", "Creature — Specter",
+        "Flying\nWhenever this creature deals combat damage to a player, look at the top three cards of that "
+        + "player's library, exile one of them face down, then put the rest into their graveyard. You may cast "
+        + "that card for as long as it remains exiled, and mana of any type can be spent to cast that spell.")]
+    [InlineData("Timesifter", "Artifact",
+        "At the beginning of each upkeep, each player exiles the top card of their library. The player who "
+        + "exiled the card with the greatest mana value takes an extra turn after this one. If two or more "
+        + "players' cards are tied for greatest, the tied players repeat this process until the tie is broken.")]
+    [InlineData("Ashiok, Nightmare Muse", "Legendary Planeswalker — Ashiok",
+        "+1: Create a 2/3 blue and black Nightmare creature token with \"Whenever this token attacks or "
+        + "blocks, each opponent exiles the top two cards of their library.\"\n−3: Return target nonland "
+        + "permanent to its owner's hand, then that player exiles a card from their hand.\n−7: You may cast up "
+        + "to three spells from among face-up cards your opponents own from exile without paying their mana "
+        + "costs.")]
+    public void Classify_TheNovember10Definition_AnotherPlayersTopIntoTheirGraveyard_IsMill(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Mill));
+    }
+
+    [Theory]
+    // Ruled 2026-11-10 Q3 'Fuori': the player who reveals their top KEEPS part of
+    // it, the named card into their hand (Petra Sphinx, Vexing Arcanix) or the
+    // permanents onto their own battlefield (Over the Top, Guild Feud, Pyxis of
+    // Pandemonium), so the card hands them something and is no attack on their
+    // library.
+    [InlineData("Over the Top", "Sorcery",
+        "Each player reveals a number of cards from the top of their library equal to the number of nonland "
+        + "permanents they control, puts all permanent cards they revealed this way onto the battlefield, and "
+        + "puts the rest into their graveyard.")]
+    [InlineData("Petra Sphinx", "Creature — Sphinx",
+        "{T}: Target player chooses a card name, then reveals the top card of their library. If that card has "
+        + "the chosen name, that player puts it into their hand. If it doesn't, the player puts it into their "
+        + "graveyard.")]
+    [InlineData("Vexing Arcanix", "Artifact",
+        "{3}, {T}: Target player chooses a card name, then reveals the top card of their library. If that "
+        + "card has the chosen name, that player puts it into their hand. Otherwise, they put it into their "
+        + "graveyard and this artifact deals 2 damage to them.")]
+    [InlineData("Guild Feud", "Enchantment",
+        "At the beginning of your upkeep, target opponent reveals the top three cards of their library, may "
+        + "put a creature card from among them onto the battlefield, then puts the rest into their graveyard. "
+        + "You do the same with the top three cards of your library. If two creatures are put onto the "
+        + "battlefield this way, those creatures fight each other.")]
+    [InlineData("Pyxis of Pandemonium", "Artifact",
+        "{T}: Each player exiles the top card of their library face down.\n{7}, {T}, Sacrifice this artifact: "
+        + "Each player turns face up all cards they own exiled with this artifact, then puts all permanent "
+        + "cards among them onto the battlefield.")]
+    public void Classify_TheNovember10Ruling_ARevealThePlayerKeepsPartOf_IsNotMill(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Mill));
+    }
 }

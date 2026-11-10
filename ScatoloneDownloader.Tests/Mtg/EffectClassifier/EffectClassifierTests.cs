@@ -290,12 +290,9 @@ public sealed partial class EffectClassifierTests
     [InlineData("Nightveil Specter", "Creature — Specter", CardEffect.Mill,
         "Flying\nWhenever this creature deals combat damage to a player, that player exiles the top card of "
         + "their library.\nYou may play lands and cast spells from among cards exiled with this creature.")]
-    // …and a token's quoted ability is the token's.
-    [InlineData("Ashiok, Nightmare Muse", "Legendary Planeswalker — Ashiok", CardEffect.Mill,
-        "+1: Create a 2/3 blue and black Nightmare creature token with \"Whenever this token attacks or blocks, "
-        + "each opponent exiles the top two cards of their library.\"\n−3: Return target nonland permanent to "
-        + "its owner's hand, then that player exiles a card from their hand.\n−7: You may cast up to three "
-        + "spells from among face-up cards your opponents own from exile without paying their mana costs.")]
+    // Ashiok, Nightmare Muse was here ("a token's quoted ability is the token's")
+    // until 2026-11-10, when Mill's Q2 "Conta, come Burn" overturned it; it is in
+    // EffectClassifierTests.Mill.cs now, expected Mill.
     public void Classify_TheOctoberSmallGaps_DoNotCarryTheTag(string name, string typeLine, CardEffect effect, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(effect));

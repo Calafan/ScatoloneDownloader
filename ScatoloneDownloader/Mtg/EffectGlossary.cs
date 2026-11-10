@@ -149,9 +149,9 @@
                 + "one, not your own, not mana denial.",
 
             [CardEffect.Mill] =
-                "Puts cards from ANOTHER player's library into their graveyard, or into exile when nobody plays them "
-                + "after, and rad counters handed to them. Filling your own graveyard is fuel for "
-                + "what the card does next, not an attack — dredge is a graveyard card, not a mill card.",
+                "ANOTHER player loses cards off the TOP of their library to your card (Glimpse the Unthinkable): into "
+                + "their graveyard, blind or chosen by you, or exiled when nobody plays them; 'each player' and rad "
+                + "counters count. Not your own library (fuel), not a reveal they keep part of.",
 
             [CardEffect.Regrowth] =
                 "A card of YOUR graveyard comes back as a card to play: into the HAND (lands too), onto the TOP of "
