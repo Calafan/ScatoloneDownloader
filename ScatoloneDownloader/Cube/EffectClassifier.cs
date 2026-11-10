@@ -458,7 +458,7 @@ namespace ScatoloneDownloader.Cube
                 || AnimatesAnArtifact.IsMatch(text)
                 || AmassesAnArmy.IsMatch(Parenthetical.Replace(text, " "))
                 || FaceDownFromYourSide.IsMatch(Parenthetical.Replace(text, " "))
-                || CopiesYourCreatureSpell.IsMatch(text)
+                || CopiesYourCreatureSpell.IsMatch(Parenthetical.Replace(ownBodies, " "))
                 || (FrontFaceIsACreature(card) && StormCopiesBecomeTokens.IsMatch(text))
                 || (!FrontFaceIsACreature(card) && NoncreatureCastFaceDown.IsMatch(Parenthetical.Replace(text, " ")))
                 || Incubates.IsMatch(text))
@@ -473,8 +473,9 @@ namespace ScatoloneDownloader.Cube
             // type line, so a Saga or a Sidequest that transforms into a
             // creature ("Enchantment // Creature — Bird") would count as one,
             // and the card you cast is the enchantment.
-            // Nor when the bodies come from an Adventure's or an Omen's spell
-            // face, which counts on its own (SpellFaceMakesABody).
+            // Nor when the bodies come from an instant or sorcery face (an
+            // Adventure, an Omen, a modal back), which counts on its own
+            // (SpellFaceMakesABody).
             if (result.HasFlag(CardEffect.Tokens) && FrontFaceIsACreature(card) && OnlyAFewBodiesOnce(ownBodies)
                 && !SpellFaceMakesABody(card, ownBodies))
             {

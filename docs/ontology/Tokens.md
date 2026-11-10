@@ -3,6 +3,19 @@
 Canonical record of the rulings for `CardEffect.Tokens`. The one-line tooltip shown in the tagger is
 in [`EffectGlossary.cs`](../../ScatoloneDownloader/Mtg/EffectGlossary.cs).
 
+**Definition** (accepted 2026-11-10, "Sì, così"): CREATURE BODIES added to YOUR side that are not
+the card itself — a creature token, a land, artifact, enchantment or token animated, a card face
+down as a 2/2, a copy of a creature or of a creature spell, for good or for a turn. From a
+NONCREATURE card, or from a card's instant or sorcery face, one body is enough; a CREATURE must make
+three at once, or make them again and again. Lingering Souls is the card (one body is enough from a
+spell); Bitterblossom shows the repeat and Siege-Gang Commander the three at once. Out, each with its
+reason below: a Treasure, Clue or Food (no creature), a Vehicle (needs crew), a body handed to
+somebody else, a Lieutenant (no commander in a cube), and a body on a tribe's trigger the card
+cannot set off by itself.
+
+Every ruling below was read against it on 2026-11-10; two were contradictions and were asked (the
+last paragraph), the rest hold.
+
 put CREATURE bodies onto the battlefield (Lingering Souls, Bitterblossom, Grave Titan) — and yours,
 not somebody else's. A Treasure, Clue, Food or Lander token is a resource the card hands over in
 passing, not a board presence, and Afterlife's Spirit goes to the creature's own controller; neither
@@ -190,3 +203,24 @@ attacks, sacrifice it at end of combat", is the token's own life and no repeat o
 creature that makes ONE decayed Zombie once is not Tokens (Falcon Abomination, reviewed untagged;
 Hobbling Zombie, unreviewed, loses the tag). A decayed maker on a repeating trigger keeps it (Poppet
 Stitcher, Jadar).
+
+Ruled 2026-11-10 with the definition, two questions. A TEMPORARY body is a body ("Contano tutti"),
+sacrificed or exiled at the end step or at end of combat: it attacks and can be sacrificed, and 75
+reviewed cards were already tagged that way (Kiki-Jiki copies, myriad, mobilize, Nahiri, the
+Unforgiving). Counting none of them was measured and set aside, since it would have untagged those
+75. This overturns "le copie non contano" of 2026-10-27: ENCORE GRANTED to every card of a kind in
+your graveyard repeats, so Graywater's Fixer, Wire Surgeons and Sliver Gravemother are tagged by
+name; a card's own encore makes two copies, under three alone, and moves nothing. Myriad printed
+bare is myriad: Battle Angels of Tyr and The Master, Multiplied, untagged without the reminder text
+against 22 of 24 reviewed myriad cards tagged with it, are tagged and handed back. A TRIBE's spell
+copied falls under the 2026-10-27 tribal rule ("Fuori, come 10-27"): the card does not make the
+body by itself, so Thurid, Mare of Destiny, Archmage of Echoes and Double Down (an outlaw spell)
+are untagged by name, and Tawnos, the Toymaker already was.
+
+Read the same day: an INSTANT or SORCERY face is cast on its own like the Adventure of 2026-10-30
+(Extus, Oriq Overlord's Awaken the Blood Avatar, Tokens by hand; the prepared creatures' spells,
+unreviewed); "target NONTOKEN artifact" animated is the artifact of 2026-10-15 (The Blackstaff of
+Waterdeep, Tokens by hand); "you may copy it" is the creature spell copied of 2026-09-28 (Donal,
+Herald of Wings), with demonstrate's reminder left out (Silverquill Lecturer, untagged, Redirect's
+2026-11-09 ruling); and a copied ARTIFACT spell asks for no creature (Iron Man, Bleeding Edge, no
+tag), as Tamiyo's permanent card did on 2026-10-24.

@@ -92,9 +92,8 @@ public sealed partial class EffectClassifierTests
         "Flying\nWhenever this Vehicle deals combat damage to a player, put the top two cards of that player's "
         + "library onto the battlefield face down under your control. They're 2/2 Cyberman artifact "
         + "creatures.\nCrew 4")]
-    [InlineData("Archmage of Echoes", "Creature — Faerie Wizard",
-        "Flying, ward {2}\nWhenever you cast a Faerie or Wizard permanent spell, copy it. (The copy becomes a "
-        + "token.)")]
+    // Archmage of Echoes' copied permanent spell moved 2026-11-10 to
+    // Classify_ATribesSpellCopied_IsNotTokens (the tribal rule).
     // Somebody else creating is blanked sentence by sentence, not for the whole
     // card: the Spirits of chapter III and the Samurai you make are yours.
     [InlineData("Oath of the Grey Host", "Enchantment — Saga",
@@ -166,6 +165,11 @@ public sealed partial class EffectClassifierTests
         + "Draw two cards. Then discard two cards unless you discard an artifact card.\n−2: Target artifact "
         + "becomes an artifact creature. If it isn't a Vehicle, it has base power and toughness 4/4.\n−6: You "
         + "get an emblem with \"Whenever an artifact you control becomes tapped, draw a card.\"")]
+    // A NONTOKEN artifact is the same artifact, read 2026-11-10 (tagged by hand).
+    [InlineData("The Blackstaff of Waterdeep", "Legendary Artifact",
+        "You may choose not to untap The Blackstaff of Waterdeep during your untap step.\nAnimate Walking "
+        + "Statue — {1}{U}, {T}: Another target nontoken artifact you control becomes a 4/4 artifact creature "
+        + "for as long as The Blackstaff of Waterdeep remains tapped. Activate only as a sorcery.")]
     public void Classify_AnArtifactAnimated_IsTokens(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
@@ -396,8 +400,8 @@ public sealed partial class EffectClassifierTests
         + "face down as a 2/2 creature. Turn it face up any time for its mana cost if it's a creature card.)")]
     // Under the 2026-10-27 encore and unearth count: one body unearthed is two
     // (Scrapwork Cohort); the exiled creature's 4/3 is its controller's (Amphin
-    // Mutineer); the encore copies themselves are no bodies, 'le copie non
-    // contano' (Graywater's Fixer).
+    // Mutineer). Graywater's Fixer, here under 'le copie non contano', moved
+    // 2026-11-10 to Classify_TemporaryBodies_AreTokens ("Contano tutti").
     [InlineData("Scrapwork Cohort", "Artifact Creature — Soldier",
         "When this creature enters, create a 1/1 colorless Soldier artifact creature token.\nUnearth {2}{W} "
         + "({2}{W}: Return this card from your graveyard to the battlefield. It gains haste. Exile it at the "
@@ -408,14 +412,45 @@ public sealed partial class EffectClassifierTests
         + "this card from your graveyard: For each opponent, create a token copy that attacks that opponent "
         + "this turn if able. They gain haste. Sacrifice them at the beginning of the next end step. Activate "
         + "only as a sorcery.)")]
+    public void Classify_ACreatureMakingOneOrTwoBodiesOnce_IsNotTokens(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    // A temporary body is a body, ruled 2026-11-10 ('Contano tutti': it attacks
+    // and can be sacrificed), overturning 'le copie non contano' of 2026-10-27:
+    // encore GRANTED to every card of a kind in your graveyard repeats
+    // (Graywater's Fixer, Wire Surgeons, Sliver Gravemother, tagged by name), and
+    // myriad printed bare is myriad (Battle Angels of Tyr, The Master, Multiplied,
+    // handed back).
     [InlineData("Graywater's Fixer", "Creature — Lizard Mercenary",
         "Each outlaw creature card in your graveyard has encore {X}, where X is its mana value. (Exile it and "
         + "pay its encore cost: For each opponent, create a token copy that attacks that opponent this turn if "
         + "able. They gain haste. Sacrifice them at the beginning of the next end step. Activate only as a "
         + "sorcery.)")]
-    public void Classify_ACreatureMakingOneOrTwoBodiesOnce_IsNotTokens(string name, string typeLine, string oracle)
+    [InlineData("Wire Surgeons", "Creature — Human Artificer",
+        "Fear (This creature can't be blocked except by artifact creatures and/or black creatures.)\nEach "
+        + "artifact creature card in your graveyard has encore. Its encore cost is equal to its mana cost. "
+        + "(Exile it and pay its mana cost: For each opponent, create a token copy that attacks that opponent "
+        + "this turn if able. They gain haste. Sacrifice them at the beginning of the next end step. Activate "
+        + "only as a sorcery.)")]
+    [InlineData("Sliver Gravemother", "Legendary Creature — Sliver",
+        "The \"legend rule\" doesn't apply to Slivers you control.\nEach Sliver creature card in your graveyard "
+        + "has encore {X}, where X is its mana value.\nEncore {5} ({5}, Exile this card from your graveyard: For "
+        + "each opponent, create a token copy that attacks that opponent this turn if able. They gain haste. "
+        + "Sacrifice them at the beginning of the next end step. Activate only as a sorcery.)")]
+    [InlineData("Battle Angels of Tyr", "Creature — Angel Knight",
+        "Flying, myriad\nWhenever this creature deals combat damage to a player, draw a card if that player "
+        + "has more cards in hand than each other player. Then you create a Treasure token if that player "
+        + "controls more lands than each other player. Then you gain 3 life if that player has more life than "
+        + "each other player.")]
+    [InlineData("The Master, Multiplied", "Legendary Creature — Time Lord Rogue",
+        "Myriad\nThe \"legend rule\" doesn't apply to creature tokens you control.\nTriggered abilities you "
+        + "control can't cause you to sacrifice or exile creature tokens you control.")]
+    public void Classify_TemporaryBodies_AreTokens(string name, string typeLine, string oracle)
     {
-        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
     }
 
     [Theory]
@@ -773,6 +808,18 @@ public sealed partial class EffectClassifierTests
         "Menace, trample\nAt the beginning of your upkeep, you may sacrifice an artifact, enchantment, or "
         + "token. If you don't, tap this creature.\nCreate a 1/1 white Human creature token and a Food token. "
         + "(Then exile this card. You may cast the creature later from exile.)")]
+    // Any instant or sorcery face is cast on its own, read 2026-11-10: a modal
+    // back (Extus, tagged by hand) and a prepared creature's spell.
+    [InlineData("Extus, Oriq Overlord // Awaken the Blood Avatar", "Legendary Creature — Human Warlock // Sorcery",
+        "Double strike\nMagecraft — Whenever you cast or copy an instant or sorcery spell, return target "
+        + "nonlegendary creature card from your graveyard to your hand.\nAs an additional cost to cast this "
+        + "spell, you may sacrifice any number of creatures. This spell costs {2} less to cast for each "
+        + "creature sacrificed this way.\nEach opponent sacrifices a creature of their choice. Create a 3/6 "
+        + "black and red Avatar creature token with haste and \"Whenever this token attacks, it deals 3 damage "
+        + "to each opponent.\"")]
+    [InlineData("Strife Scholar // Awaken the Ages", "Creature — Orc Sorcerer // Sorcery",
+        "Ward—Pay 2 life.\nThis creature enters prepared. (While it's prepared, you may cast a copy of its "
+        + "spell. Doing so unprepares it.)\nCreate two 2/2 red and white Spirit creature tokens.")]
     public void Classify_TheBodiesOfAnAdventuresSpellFace_AreTokens(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
@@ -785,21 +832,47 @@ public sealed partial class EffectClassifierTests
         "At the beginning of your upkeep, surveil 1.\nTo solve — There are fifteen or more cards in your "
         + "graveyard. (If unsolved, solve at the beginning of your end step.)\nSolved — Whenever you cast a "
         + "nonlegendary creature spell, copy that spell. (The copy becomes a token.)")]
-    [InlineData("Double Down", "Enchantment",
-        "Whenever you cast an outlaw spell, copy that spell. (Assassins, Mercenaries, Pirates, Rogues, and "
-        + "Warlocks are outlaws. Copies of permanent spells become tokens.)")]
-    [InlineData("Thurid, Mare of Destiny", "Legendary Creature — Pegasus",
-        "Flying, lifelink\nWhenever you cast a Pegasus, Unicorn, or Horse creature spell, copy it. (The copy "
-        + "becomes a token.)\nOther Pegasi, Unicorns, and Horses you control get +1/+1.")]
+    // Double Down and Thurid moved 2026-11-10 to
+    // Classify_ATribesSpellCopied_IsNotTokens (the tribal rule).
     [InlineData("Jackal, Genius Geneticist", "Legendary Creature — Human Scientist Villain",
         "Trample\nWhenever you cast a creature spell with mana value equal to Jackal's power, copy that spell, "
         + "except the copy isn't legendary. Then put a +1/+1 counter on Jackal. (The copy becomes a token.)")]
+    // 'You may copy it' is the same copy, read 2026-11-10.
+    [InlineData("Donal, Herald of Wings", "Legendary Creature — Human Wizard",
+        "Whenever you cast a nonlegendary creature spell with flying, you may copy it, except the copy is a "
+        + "1/1 Spirit in addition to its other types. Do this only once each turn. (The copy becomes a token.)")]
     public void Classify_CopyingYourCreatureSpell_IsTokensNotRedirect(string name, string typeLine, string oracle)
     {
         CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
 
         Assert.True(result.HasFlag(CardEffect.Tokens));
         Assert.False(result.HasFlag(CardEffect.Redirect));
+    }
+
+    [Theory]
+    // A TRIBE's spell copied is the 2026-10-27 tribal rule, ruled 2026-11-10
+    // ('Fuori, come 10-27'): the card does not make the body by itself. Thurid,
+    // Archmage of Echoes and Double Down untagged by name (moved here from the
+    // Tokens theories), Tawnos untagged by hand; demonstrate's reminder hands an
+    // opponent a copy (Silverquill Lecturer, untagged).
+    [InlineData("Thurid, Mare of Destiny", "Legendary Creature — Pegasus",
+        "Flying, lifelink\nWhenever you cast a Pegasus, Unicorn, or Horse creature spell, copy it. (The copy "
+        + "becomes a token.)\nOther Pegasi, Unicorns, and Horses you control get +1/+1.")]
+    [InlineData("Archmage of Echoes", "Creature — Faerie Wizard",
+        "Flying, ward {2}\nWhenever you cast a Faerie or Wizard permanent spell, copy it. (The copy becomes a "
+        + "token.)")]
+    [InlineData("Double Down", "Enchantment",
+        "Whenever you cast an outlaw spell, copy that spell. (Assassins, Mercenaries, Pirates, Rogues, and "
+        + "Warlocks are outlaws. Copies of permanent spells become tokens.)")]
+    [InlineData("Tawnos, the Toymaker", "Legendary Creature — Human Artificer",
+        "Whenever you cast a Beast or Bird creature spell, you may copy it, except the copy is an artifact in "
+        + "addition to its other types. (The copy becomes a token.)")]
+    [InlineData("Silverquill Lecturer", "Creature — Kor Wizard",
+        "Creature spells you cast have demonstrate. (Whenever you cast a creature spell, you may copy it. If "
+        + "you do, choose an opponent to also copy it. Each copy becomes a token.)")]
+    public void Classify_ATribesSpellCopied_IsNotTokens(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
     }
 
     [Theory]

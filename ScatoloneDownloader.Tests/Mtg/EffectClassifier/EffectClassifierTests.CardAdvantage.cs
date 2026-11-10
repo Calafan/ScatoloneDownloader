@@ -783,7 +783,8 @@ public sealed partial class EffectClassifierTests
 
     [Fact]
     // A copied PERMANENT spell is a token, not a second card: Archmage of
-    // Echoes is Tokens alone by hand (2026-10-13).
+    // Echoes was Tokens alone by hand (2026-10-13), and is no tag at all since
+    // the tribal copy ruling of 2026-11-10.
     public void Classify_CopyingYourPermanentSpell_IsNotCardAdvantage()
     {
         CardEffect result = EffectClassifier.Classify(MakeCard("Archmage of Echoes", "Creature — Faerie Wizard",

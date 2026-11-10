@@ -615,9 +615,16 @@ namespace ScatoloneDownloader.Cube
         // exiles your creature and the top two cards of your library and
         // cloaks all three, tagged by hand like the other 7 reviewed cards
         // that cloak a card, read 2026-10-27.
+        // MYRIAD printed bare, with no reminder to say "create": a temporary
+        // body is a body, ruled 2026-11-10 ("Contano tutti"), and myriad's
+        // copies come on every attack (BodiesOnEveryAttack). Battle Angels of
+        // Tyr and The Master, Multiplied, untagged without the reminder against
+        // 22 of 24 reviewed myriad cards tagged with it, handed back. Asked as
+        // the keyword, not the word: The Everflowing Well's land face is The
+        // Myriad Pools.
         private static readonly Regex MakesABodyByKeyword = Rx(
             @"\bcloaks? (?:the|two|three|four|\w+ of them|up to|those cards)\b|(?<!whenever you )manifest dread"
-            + @"|\bliving weapon\b|\bjob select\b");
+            + @"|\bliving weapon\b|\bjob select\b|(?:(?m:^)|, |\b(?:has|have|gains?) )myriad\b");
 
         // MANIFEST is a body like cloak, ruled 2026-10-15 ("Tokens come
         // cloak"): Orochi Soul-Reaver and Kozilek, the Broken Reality tagged by
@@ -690,9 +697,10 @@ namespace ScatoloneDownloader.Cube
         // Any TOKEN of yours made a creature is the same body, ruled 2026-10-27
         // on Halsin, Emerald Archdruid's 4/4 Bear ("Tokens, niente Buff"): a
         // Treasure or a Clue is an artifact by another name. Not a creature
-        // token, which is a body already.
+        // token, which is a body already. "Target NONTOKEN artifact" is the
+        // same artifact, read 2026-11-10 (The Blackstaff of Waterdeep, tagged).
         private static readonly Regex AnimatesAnArtifact = Rx(
-            @"\b(?:target|enchanted) (?:noncreature )?(?:artifacts?(?: token| or creature)?|(?:(?!creature\b)\w+ )?tokens?)"
+            @"\b(?:target|enchanted) (?:non(?:creature|token) )?(?:artifacts?(?: token| or creature)?|(?:(?!creature\b)\w+ )?tokens?)"
             + @"(?: you control)? (?:becomes?|is|are) (?!a copy\b)(?:an? )?[\w ,/]{0,40}?\bcreatures?\b");
 
         // STORM on a creature card puts its copies on the board as tokens,
@@ -718,14 +726,22 @@ namespace ScatoloneDownloader.Cube
 
         // A copy of a CREATURE spell becomes a token, and that is how the human
         // tags it, ruled 2026-09-28: "copia una magia creature è Token" (Case of
-        // the Shifting Visage, Double Down's outlaws, Thurid, Jackal). Never says
-        // "create", so the token wording above cannot see it. Copying any OTHER
-        // spell of yours is Redirect. A PERMANENT spell copied becomes a token
-        // too (Archmage of Echoes' Faeries and Wizards, tagged Tokens and not
-        // CardAdvantage, read 2026-10-13).
+        // the Shifting Visage, Jackal, The Clone Saga). Never says "create", so
+        // the token wording above cannot see it. Copying any OTHER spell of
+        // yours is Redirect. A PERMANENT spell copied becomes a token too
+        // (read 2026-10-13). "You may copy it" is the same copy, read
+        // 2026-11-10 (Donal, Herald of Wings).
+        // A TRIBE's spell copied is the 2026-10-27 tribal rule, ruled
+        // 2026-11-10 ("Fuori, come 10-27"): the card does not make the body by
+        // itself. Thurid, Archmage of Echoes and Double Down untagged by name,
+        // Tawnos, the Toymaker already was; so the rule is asked of the text
+        // BlankTribalBodyTriggers leaves, and "outlaw" is no longer read here.
+        // Asked without reminder text too: demonstrate's reminder says "you
+        // may copy it" and hands an opponent a copy (Silverquill Lecturer,
+        // untagged; Redirect's demonstrate ruling of 2026-11-09).
         private static readonly Regex CopiesYourCreatureSpell = Rx(
-            @"(?:whenever|when) you (?:next )?cast [^.\n]{0,60}\b(?:creature|outlaw|permanent) spells?\b[^.\n]{0,60}, "
-            + @"copy (?:it|that spell)\b");
+            @"(?:whenever|when) you (?:next )?cast [^.\n]{0,60}\b(?:creature|permanent) spells?\b[^.\n]{0,60}, "
+            + @"(?:you may )?copy (?:it|that spell)\b");
 
         // ---- A CREATURE that makes one or two bodies, once ------------------
         //
@@ -895,9 +911,9 @@ namespace ScatoloneDownloader.Cube
                 // …or the count comes FIRST, earlier in the same sentence:
                 // "for each nontoken creature you controlled that died this
                 // turn, create a 2/2 black Zombie" (Tobias). Encore's "for each
-                // opponent, create a token copy" stays one: the copies are no
-                // bodies (2026-10-27), and what they make again is counted in
-                // OnlyAFewBodiesOnce.
+                // opponent, create a token copy" stays one here: its two copies
+                // never reach three alone (2026-11-10), and what they make again
+                // is counted in OnlyAFewBodiesOnce.
                 int sentenceStart = Math.Max(
                     ability.LastIndexOfAny(['.', '\n', '•'], Math.Max(m.Index - 1, 0)) + 1, 0);
                 if (CountComesFirst.IsMatch(ability[sentenceStart..m.Index]))
@@ -976,11 +992,15 @@ namespace ScatoloneDownloader.Cube
         // and handed back. The face is the type line's second, and its text the
         // last line: the faces are joined in order, and Bring to Life prints no
         // reminder to find it by.
+        // Any INSTANT or SORCERY face is cast on its own the same way, read
+        // 2026-11-10: a modal double-faced card's back (Extus, Oriq Overlord's
+        // Awaken the Blood Avatar, Tokens by hand) and a prepared creature's
+        // spell. An Adventure or an Omen is one of them.
         private static bool SpellFaceMakesABody(Card card, string text)
         {
             string[] faces = (card.TypeLine ?? string.Empty).Split(" // ");
-            if (faces.Length < 2 || (!faces[1].Contains("Adventure", StringComparison.Ordinal)
-                && !faces[1].Contains("Omen", StringComparison.Ordinal)))
+            if (faces.Length < 2 || (!faces[1].Contains("Instant", StringComparison.Ordinal)
+                && !faces[1].Contains("Sorcery", StringComparison.Ordinal)))
             {
                 return false;
             }
@@ -1003,7 +1023,7 @@ namespace ScatoloneDownloader.Cube
             // control, create a Wicked Role" read as a Rat for each, 2026-10-15.
             string own = Quoted.Replace(text, m => m.Value.EndsWith(".\"", StringComparison.Ordinal) ? ". " : " ");
 
-            if (BodiesOnEveryAttack.IsMatch(own) || DashRepeatsTheEntry.IsMatch(own))
+            if (BodiesOnEveryAttack.IsMatch(own) || DashRepeatsTheEntry.IsMatch(own) || GrantsEncore.IsMatch(own))
             {
                 return false;
             }
@@ -1060,6 +1080,8 @@ namespace ScatoloneDownloader.Cube
         // Blanking the modes such a trigger chooses among ("•" lines) too was
         // tried and moved no card: Black Panther, Vanguard loses its bodies to
         // OnlyAFewBodiesOnce once the trigger line is gone.
+        // A LIST of tribes ends its first name with a comma: "a Pegasus,
+        // Unicorn, or Horse creature spell" (Thurid), read 2026-11-10.
         private const string NotACreatureType =
             @"Desert|Forest|Plains|Island|Swamp|Mountain|Gate|Cave|Shrine|Sphere|Town|Lair|Locus|Aura|Equipment"
             + @"|Vehicle|Saga|Treasure|Clue|Food|Blood|Map|Powerstone|Arcane|Lesson|Adventure";
@@ -1067,7 +1089,7 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex BodyOnATribe = Rx(
             @"^(?:[^—\n]{1,40}— )?whenever (?:(?<another>another|a|an|one or more(?: other)?) (?<nontoken>nontoken )?"
             + @"|(?<cast>you cast (?:a|an|another)) )"
-            + @"(?!(?-i:" + NotACreatureType + @")\b)(?<tribe>(?-i:[A-Z])[a-z]+?)(?:s|es)? [^\n]*",
+            + @"(?!(?-i:" + NotACreatureType + @")\b)(?<tribe>(?-i:[A-Z])[a-z]+?)(?:s|es)?[ ,][^\n]*",
             RegexOptions.Multiline);
 
         /// <summary>The text with every body-making line on a tribe the card
@@ -1097,12 +1119,19 @@ namespace ScatoloneDownloader.Cube
         // so encore makes a copy for EACH of two opponents ("encore vale
         // doppio"): the card enters three times, and dies three times, its
         // copies sacrificed at the end step — Exquisite Huntmaster's Elf on
-        // death is "1 + 2 token", tagged by name. The copies themselves are no
-        // bodies ("le copie non contano"). Unearth returns the card once and
-        // exiles it, so only its entry counts: Royal Warden's two Necrons are
-        // four. Warp casts it again once too, and no warp card makes two as it
-        // enters (Knight Luminary makes one, untagged).
+        // death is "1 + 2 token", tagged by name. Unearth returns the card once
+        // and exiles it, so only its entry counts: Royal Warden's two Necrons
+        // are four. Warp casts it again once too, and no warp card makes two as
+        // it enters (Knight Luminary makes one, untagged).
+        // The copies ARE bodies, ruled 2026-11-10 ("Contano tutti": a temporary
+        // body attacks and can be sacrificed), which overturns "le copie non
+        // contano" of 2026-10-27. A card's own encore makes two, under three
+        // alone, so no card of its own moves; ENCORE GRANTED to every card of a
+        // kind in your graveyard repeats (GrantsEncore): Graywater's Fixer,
+        // Wire Surgeons and Sliver Gravemother tagged by name.
         private static readonly Regex EncoreKeyword = Rx(@"^encore\b", RegexOptions.Multiline);
+
+        private static readonly Regex GrantsEncore = Rx(@"\bin your graveyard ha(?:s|ve) encore\b");
 
         private static readonly Regex UnearthKeyword = Rx(@"^unearth\b", RegexOptions.Multiline);
 
@@ -1111,8 +1140,8 @@ namespace ScatoloneDownloader.Cube
         // Simian Simulacrum, Kinsbaile Courier): UNEARTH and ENCORE SUM the
         // entries of the card for CardAdvantage and Buff as they do for
         // Tokens. The card enters once, +1 for unearth, +2 for encore (a copy
-        // for each of two opponents, "encore vale doppio"); the copies are no
-        // bodies of their own. Asked of the text WITHOUT its reminder, which
+        // for each of two opponents, "encore vale doppio"); each copy is one
+        // more entry of the card. Asked of the text WITHOUT its reminder, which
         // names both keywords again.
         private static int EntriesOf(string text)
         {
