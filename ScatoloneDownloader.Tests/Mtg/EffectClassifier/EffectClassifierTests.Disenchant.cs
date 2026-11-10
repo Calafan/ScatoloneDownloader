@@ -63,10 +63,9 @@ public sealed partial class EffectClassifierTests
     [InlineData("Jokulhaups", "Sorcery", "Destroy all artifacts, creatures, and lands. They can't be regenerated.")]
     [InlineData("Death Begets Life", "Sorcery",
         "Destroy all creatures and enchantments. Draw a card for each permanent destroyed this way.")]
-    // An Aura attached to a named thing is about that thing.
-    [InlineData("Savaen Elves", "Creature — Elf", "{G}{G}, {T}: Destroy target Aura attached to a land.")]
-    [InlineData("Miracle Worker", "Creature — Human Cleric",
-        "{T}: Destroy target Aura attached to a creature you control.")]
+    // (Savaen Elves and Miracle Worker, "an Aura attached to a named thing is
+    // about that thing", stood here until 2026-11-10, "Disenchant a tutte":
+    // moved to Classify_TheNovember10Ruling_AnAuraAttachedToSomething_IsDisenchant.)
     // Exile that hands the card straight back is a blink.
     [InlineData("Hide on the Ceiling", "Instant",
         "Exile X target artifacts and/or creatures. Return the exiled cards to the battlefield under "
@@ -134,6 +133,65 @@ public sealed partial class EffectClassifierTests
         + "enchantment, instant, or sorcery card with equal or lesser mana value than that spell from an "
         + "opponent's graveyard. Copy the exiled card. You may cast the copy without paying its mana cost.")]
     public void Classify_TheOctober16DisenchantPass_IsNotDisenchant(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Disenchant));
+    }
+
+    [Theory]
+    // Ruled 2026-11-10, 'Disenchant a tutte', overturning the 2026-09-19 reading
+    // that an Aura attached to a named thing is about that thing: the Pacifism on
+    // your creature, the Utopia Sprawl on a land, is somebody else's enchantment.
+    // A target Aura attached to a creature or a land, or every Aura attached to a
+    // target permanent, and the permanent stays (Strip Bare's creature is not
+    // swept, Miracle Worker's 'you control' is the creature's).
+    [InlineData("Miracle Worker", "Creature — Human Cleric",
+        "{T}: Destroy target Aura attached to a creature you control.")]
+    [InlineData("Savaen Elves", "Creature — Elf",
+        "{G}{G}, {T}: Destroy target Aura attached to a land.")]
+    [InlineData("Pyramids", "Artifact",
+        "{2}: Choose one —\n• Destroy target Aura attached to a land.\n• The next time target land would be "
+        + "destroyed this turn, remove all damage marked on it instead.")]
+    [InlineData("Strip Bare", "Instant",
+        "Destroy all Auras and Equipment attached to target creature.")]
+    [InlineData("Street Sweeper", "Artifact Creature — Construct",
+        "Whenever this creature attacks, destroy all Auras attached to target land.")]
+    public void Classify_TheNovember10Ruling_AnAuraAttachedToSomething_IsDisenchant(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Disenchant));
+    }
+
+    [Theory]
+    // The same ruling keeps out the Auras that leave WITH the permanent they are
+    // on (Silence the Believers, 'attached to them'; Hakim, attached to itself)
+    // and the ones a fight reaches with no target (Treefolk Mystic, 'that
+    // creature'): the card answers the permanent, or nothing.
+    [InlineData("Silence the Believers", "Instant",
+        "Strive — This spell costs {2}{B} more to cast for each target beyond the first.\nExile any number of "
+        + "target creatures and all Auras attached to them.")]
+    [InlineData("Hakim, Loreweaver", "Legendary Creature — Human Wizard",
+        "Flying\n{U}{U}: Return target Aura card from your graveyard to the battlefield attached to Hakim. "
+        + "Activate only during your upkeep and only if Hakim isn't enchanted.\n{U}{U}, {T}: Destroy all Auras "
+        + "attached to Hakim.")]
+    [InlineData("Treefolk Mystic", "Creature — Treefolk",
+        "Whenever this creature blocks or becomes blocked by a creature, destroy all Auras attached to that "
+        + "creature.")]
+    public void Classify_TheNovember10Ruling_AurasThatGoWithTheirPermanent_IsNotDisenchant(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Disenchant));
+    }
+
+    [Theory]
+    // Ruled 2026-11-10, 'nessun sottotipo', 'risposta stretta': Equipment,
+    // Vehicle, Room or Curse is a niche answer to one kind of permanent, 0 of 6
+    // reviewed tagged; the Aura stays because it is the shape in which an
+    // enchantment takes a creature out.
+    [InlineData("Molten Rebuke", "Sorcery",
+        "Choose one or both —\n• Molten Rebuke deals 5 damage to target creature or planeswalker.\n• Destroy "
+        + "target Equipment.")]
+    [InlineData("Anthropede", "Creature — Insect",
+        "Reach\nWhen this creature enters, you may discard a card or pay {2}. When you do, destroy target "
+        + "Room.")]
+    public void Classify_TheNovember10Ruling_ASubtypeOtherThanAura_IsNotDisenchant(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Disenchant));
     }

@@ -65,10 +65,10 @@
                 + "Treasure per trigger, or mana and lands untapped by an attack.",
 
             [CardEffect.Disenchant] =
-                "Answers an artifact or enchantment, at any count — \"up to one\", \"X target\", \"another\", "
-                + "\"all\" — and an edict aimed at one counts too. A bare Aura counts; an Aura ATTACHED to a "
-                + "named thing does not. An artifact CREATURE is Removal, a sweeper that takes the creatures "
-                + "too is Wipe, and your own is never an answer.",
+                "An artifact or enchantment that can be somebody else's, named as artifact, enchantment or Aura "
+                + "(no other subtype), gone for good: destroyed, exiled, shuffled or sacrificed to an edict, one "
+                + "or all. Disenchant. An Aura on a creature or land counts. Not an artifact CREATURE (Removal) "
+                + "or a sweeper taking creatures too (Wipe).",
 
             [CardEffect.Discard] =
                 "Empties somebody ELSE'S hand: they discard, you pick, they pay to dodge a punisher, or it is exiled "

@@ -3,28 +3,32 @@
 Canonical record of the rulings for `CardEffect.Disenchant`. The one-line tooltip shown in the
 tagger is in [`EffectGlossary.cs`](../../ScatoloneDownloader/Mtg/EffectGlossary.cs).
 
-a targeted answer to an artifact or an enchantment, by any count and any verb: "destroy target
-artifact", "destroy UP TO ONE target artifact", "destroy X target artifacts", "exile TWO target
-artifacts", "destroy ANOTHER target artifact", and the mass form — Shatterstorm, Tranquility,
-Serenity, Seeds of Innocence.
+**Definition, 2026-11-10 ("Sì, così").** An ARTIFACT or an ENCHANTMENT that is not a creature and
+can be somebody else's, named by its type — artifact, enchantment, or Aura — leaves the battlefield
+for good: destroyed, exiled (also until the card that exiled it leaves), shuffled into its owner's
+library, or sacrificed to an edict; one, several or all, as long as a mass blow does not take the
+creatures too (that is Wipe). The card is Disenchant, "Destroy target artifact or enchantment."
+Measured before any code, it already held on all 229 reviewed cards: edicts 9 of 9 tagged, a mass
+blow that takes the creatures 0 of 10, "target artifact creature" 0 of 10, your own only 0 of 5, a
+blink 0 of 7. The paragraphs below are its readings, and the two rulings of the same day are at the
+end.
 
-An EDICT aimed at an artifact answers one too, and unlike the creature edict a token cannot blank
-it: Pick Your Poison and Gaius van Baelsar are tagged here.
+Any count and any verb: "destroy target artifact", "destroy UP TO ONE target artifact", "destroy X
+target artifacts", "exile TWO target artifacts", "destroy ANOTHER target artifact", and the mass
+form — Shatterstorm, Tranquility, Serenity, Seeds of Innocence.
 
-AURA is the third noun, bare — Serene Heart and Hope Charm. Four shapes match the words and are not
-this tag.
+An EDICT aimed at an artifact answers one too, as the creature edict is Removal: Pick Your Poison
+and Gaius van Baelsar are tagged here.
 
-A SWEEPER that takes the creatures in the same breath is Wipe (Jokulhaups, Nevinyrral's Disk,
-Ultima, Death Begets Life) — every mass Disenchant that counts leaves creatures alone. An artifact
+AURA is the third noun. A SWEEPER that takes the creatures in the same breath is Wipe (Jokulhaups,
+Nevinyrral's Disk, Ultima, Death Begets Life) — every mass Disenchant that counts leaves creatures
+alone; Structural Assault destroys the artifacts alone and only then deals damage. An artifact
 CREATURE is a creature, so Chandler and Hearth Charm are Removal.
 
-An AURA ATTACHED TO a named thing is about that thing: Savaen Elves and Pyramids are land
-protection, Miracle Worker pulls an Aura off your own creature, Hakim and Gauntlets of Chaos strip
-the ones on a permanent they just touched. And your OWN is never an answer (Rats of Rath). The
-O-ring family splits on what it NAMES rather than on the exile coming back: "exile target ARTIFACT
-or creature … until this leaves the battlefield" counts (Mystical Tether, Detention Chariot, Trapped
-in the Screen), "exile target nonland PERMANENT" is RemovePermanent (Web Up, Seam Rip, White
-Auracite).
+Your OWN is never an answer (Rats of Rath). The O-ring family splits on what it NAMES rather than
+on the exile coming back: "exile target ARTIFACT or creature … until this leaves the battlefield"
+counts (Mystical Tether, Detention Chariot, Trapped in the Screen, Earth Kingdom Jailer), "exile
+target nonland PERMANENT" is RemovePermanent (Web Up, Seam Rip, White Auracite).
 
 Ruled 2026-09-19; took the tag from 43 wrong out of 5,037 reviewed cards to 2.
 
@@ -40,3 +44,22 @@ this way" (Druid of Purification, as Ultimate Magic: Meteor, 2 of 2); a second t
 "destroy up to one target planeswalker and up to one target artifact" (Sword of Sinew and Steel; 2
 of 2 with Convert to Slime); and the edict repeated for another noun, "then repeat this process for
 an enchantment and a planeswalker" (Invoke Despair, as Pick Your Poison; 1 of 1).
+
+RULED 2026-11-10, Q1 ("Disenchant a tutte"): an AURA ATTACHED TO a creature or a land is the
+answer, and the 2026-09-19 reading that it was about that thing is overturned. The Pacifism on your
+creature, the Utopia Sprawl on a land, is somebody else's enchantment, so Miracle Worker ("destroy
+target Aura attached to a creature you control"), Savaen Elves and Pyramids ("… attached to a
+land") are tagged by name; they were 0 of 3 reviewed, all from 2026-09-04. Every Aura attached to a
+TARGET permanent counts too, the permanent staying: Strip Bare ("destroy all Auras and Equipment
+attached to target creature"), Street Sweeper; Devout Harpist and Piety Charm follow, all four
+unreviewed. Still out: the Auras that leave WITH their permanent (Silence the Believers, Gauntlets
+of Chaos, Flickerform, "attached to them / it"), the Auras on the card itself (Hakim, Loreweaver),
+and a fight that reaches them with no target (Treefolk Mystic, "that creature").
+
+RULED 2026-11-10, Q2 ("nessun sottotipo", "risposta stretta"): no subtype but Aura is read.
+Equipment, Vehicle, Room or Curse is a niche answer to one kind of permanent, not to "an artifact
+or an enchantment" — Molten Rebuke ("destroy target Equipment"), Anthropede ("destroy target
+Room"), Crash and Burn and Plow Through ("destroy target Vehicle"), Fiery Annihilation, Ray of Ruin:
+0 of 6 reviewed. The Aura stays because it is the shape in which an enchantment takes a creature
+out, the answer Disenchant is for. Unreviewed and left without the tag: Rustspore Ram, Turn to
+Dust, Unforge, Witchbane Orb ("destroy all Curses attached to you").

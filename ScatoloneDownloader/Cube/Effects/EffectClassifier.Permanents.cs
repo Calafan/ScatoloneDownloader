@@ -15,12 +15,29 @@ namespace ScatoloneDownloader.Cube
         /// <summary>The noun Disenchant answers, with the traps built in: the
         /// filler in front of it is short enough that it cannot reach across a
         /// sentence, "non"/"non-" may not be crossed to get to it, an artifact
-        /// CREATURE is a creature rather than an artifact, and an Aura ATTACHED TO
-        /// a named thing is about that thing rather than about the Aura. See the
-        /// rule table and <see cref="AnswersAnArtifactOrEnchantment"/> for the
-        /// cards that taught each clause.</summary>
+        /// CREATURE is a creature rather than an artifact, and Auras attached to
+        /// IT, THEM, THAT creature or a name leave WITH that permanent (Silence
+        /// the Believers, Gauntlets of Chaos, Hakim) or in a fight (Treefolk
+        /// Mystic), so they are not what the card answers.
+        /// <para>
+        /// An Aura attached to "a"/"an"/"target" thing IS the answer, ruled
+        /// 2026-11-10 ("Disenchant a tutte"), overturning the 2026-09-19 reading
+        /// that it was about the thing: the Pacifism on your creature is somebody
+        /// else's enchantment. Miracle Worker, Savaen Elves and Pyramids were 0 of
+        /// 3 reviewed and are tagged by that ruling; Devout Harpist, Piety Charm,
+        /// Street Sweeper and Strip Bare, unreviewed, follow.
+        /// </para>
+        /// <para>
+        /// No other SUBTYPE is read, ruled 2026-11-10 ("nessun sottotipo",
+        /// "risposta stretta"): Equipment, Vehicle, Room or Curse is a niche answer
+        /// to one kind of permanent (Molten Rebuke, Anthropede, Crash and Burn: 0
+        /// of 6 reviewed), while the Aura is the shape in which an enchantment
+        /// takes a creature out, the answer Disenchant is for.
+        /// </para>
+        /// See the rule table and <see cref="AnswersAnArtifactOrEnchantment"/>
+        /// for the cards that taught each clause.</summary>
         private const string DisenchantNoun =
-            @"[\w '\-]{0,14}(?<!non)(?<!non-)(?:artifact|enchantment|aura)s?\b(?! creature)(?! attached to)";
+            @"[\w '\-]{0,14}(?<!non)(?<!non-)(?:artifact|enchantment|aura)s?\b(?! creature)(?! attached to (?!(?:a|an|target) ))";
 
         // Hoisted for the same reason as MillPatterns: the guard below re-runs
         // them one line at a time, so a card with two modes is judged mode by
@@ -98,9 +115,14 @@ namespace ScatoloneDownloader.Cube
         /// Nevinyrral's Disk, Ultima and Death Begets Life all take the creatures
         /// in the same breath and the human tags none of them Disenchant, while
         /// every mass Disenchant that IS tagged — Shatterstorm, Tranquility,
-        /// Serenity, Seeds of Innocence — leaves creatures alone.</summary>
+        /// Serenity, Seeds of Innocence — leaves creatures alone.
+        /// <para>
+        /// The creature an Aura is attached to is not swept: "destroy all Auras and
+        /// Equipment attached to target creature" (Strip Bare) leaves it where it
+        /// is, read with the 2026-11-10 Aura ruling.
+        /// </para></summary>
         private static readonly Regex SweepsCreaturesToo = Rx(
-            @"(?:destroy|exile) (?:all|each)[\w ,'\-]{0,40}creatures?\b");
+            @"(?:destroy|exile) (?:all|each)[\w ,'\-]{0,40}(?<!attached to (?:a|an|target) )creatures?\b");
 
         /// <summary>Exile that hands the card straight back is a blink, not an
         /// answer: Hide on the Ceiling and Explosive Getaway both "return … to the
@@ -114,15 +136,22 @@ namespace ScatoloneDownloader.Cube
         /// and Perilous Snare say "target nonland permanent" and are tagged
         /// RemovePermanent instead — and the noun above already refuses to reach a
         /// generic permanent. Vetoing the wording cost those three and bought only
-        /// Earth Kingdom Jailer, which names an artifact and reads like a slip.
+        /// Earth Kingdom Jailer, which names an artifact and was then tagged here
+        /// by hand too (2026-10-15).
         /// </para></summary>
         private static readonly Regex ExileThatComesBack = Rx(
             @"return (?:it|them|the exiled cards?|that card)[\w ,'\-]{0,40}to the battlefield");
 
         /// <summary>Destroying your own is never an answer: Rats of Rath reads
-        /// "destroy target artifact, creature, or land you control".</summary>
+        /// "destroy target artifact, creature, or land you control".
+        /// <para>
+        /// "You control" after "ATTACHED TO" is the creature's, not the Aura's:
+        /// Miracle Worker's "destroy target Aura attached to a creature you
+        /// control" takes the opponent's Pacifism off your creature (ruled
+        /// 2026-11-10).
+        /// </para></summary>
         private static readonly Regex DisenchantsYourOwn = Rx(
-            @"(?:destroy|exile) (?:up to \w+ |another |x |\d+ )?target[\w ,'\-]{0,40}you control");
+            @"(?:destroy|exile) (?:up to \w+ |another |x |\d+ )?target(?:(?!attached to\b)[\w ,'\-]){0,40}you control");
 
         private const string BasicLandType = @"\b(?:plains|islands?|swamps?|mountains?|forests?)\b";
 
