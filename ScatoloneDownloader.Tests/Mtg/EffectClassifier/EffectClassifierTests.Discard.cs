@@ -127,6 +127,17 @@ public sealed partial class EffectClassifierTests
     [InlineData("Deep-Cavern Bat", "Creature — Bat",
         "Flying, lifelink\nWhen this creature enters, look at target opponent's hand. You may exile a nonland "
         + "card from it until this creature leaves the battlefield.")]
+    // Read 2026-11-10 (the second sitting): the exile from their hand written as
+    // YOURS, 'exile all cards from that player's hand' (Elder Brain, Thought
+    // Distortion; 3 of 3 reviewed with Isildur's Fateful Strike).
+    [InlineData("Elder Brain", "Creature — Horror",
+        "Menace\nWhenever this creature attacks a player, exile all cards from that player's hand, then they "
+        + "draw that many cards. You may play lands and cast spells from among the exiled cards for as long as "
+        + "they remain exiled. If you cast a spell this way, you may spend mana as though it were mana of any "
+        + "color to cast it.")]
+    [InlineData("Thought Distortion", "Sorcery",
+        "This spell can't be countered.\nTarget opponent reveals their hand. Exile all noncreature, nonland "
+        + "cards from that player's hand and graveyard.")]
     public void Classify_AHandAttackRuledIn_IsDiscard(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Discard));
@@ -180,6 +191,13 @@ public sealed partial class EffectClassifierTests
     // from a hand you looked at was ruled Discard even though its owner may
     // still play it (Invasion of Gobakhan, in
     // Classify_TheOctoberSmallGaps_CarryTheTag).
+    // Read 2026-11-10 (the second sitting): a name search that starts from a card
+    // in a GRAVEYARD (Kotose, untagged; Deadly Cover-Up the same).
+    [InlineData("Kotose, the Silent Spider", "Legendary Creature — Human Ninja",
+        "When Kotose enters, exile target card other than a basic land card from an opponent's graveyard. "
+        + "Search that player's graveyard, hand, and library for any number of cards with the same name as that "
+        + "card and exile them. Then that player shuffles. For as long as you control Kotose, you may play one "
+        + "of the exiled cards, and you may spend mana as though it were mana of any color to cast it.")]
     public void Classify_AHandAttackRuledOut_IsNotDiscard(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Discard));

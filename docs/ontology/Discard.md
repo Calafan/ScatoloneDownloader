@@ -35,3 +35,13 @@ looked at and EXILED (Apple of Eden, "come Wheel of Fortune e sorelle"), and a s
 of the draw (Chains of Mephistopheles, Breathstealer's Crypt). A discard of YOUR OWN is a cost, and
 the four hand tags that said otherwise were ruled errors (Professor Zei, Sabin, Stormbind, Summon:
 G.F. Ifrit); Nicol Bolas's missing tag was a slip.
+
+Read 2026-11-10, from the second sitting. The exile from their hand written as YOURS is the same
+attack: Elder Brain's "exile all cards from that player's hand, then they draw that many cards" and
+Thought Distortion's "Exile all noncreature, nonland cards from that player's hand and graveyard"
+(Discard by hand, 3 of 3 reviewed with Isildur's Fateful Strike); that YOU may play them afterwards
+changes nothing, only the owner's "may play" keeps a card out (Lightstall Inquisitor). And a NAME
+SEARCH through their hand that starts from a card in a GRAVEYARD is not this tag: Kotose, the Silent
+Spider's "exile target card … from an opponent's graveyard. Search that player's graveyard, hand,
+and library for any number of cards with the same name" is untagged, as Deadly Cover-Up (Wipe
+alone); Lobotomy's name chosen from their hand and Ancient Vendetta's named card stay.

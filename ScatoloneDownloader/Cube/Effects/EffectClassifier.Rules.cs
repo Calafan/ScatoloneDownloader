@@ -777,23 +777,37 @@ namespace ScatoloneDownloader.Cube
                         + @"|\bexchange control of target [\w ]{0,30}\bspell\b"),
                     // Read 2026-11-09 under the definition. A copy AIMED by the
                     // card: "Copy that spell. The copy targets the chosen permanent"
-                    // (Exterminator Magmarch, Zevlor, 2 of 2 by hand; Feather and
-                    // Frontline Heroism, untagged on 09-23 before the ruling of
-                    // 09-28, handed back). The aim must be "the chosen" or "that":
-                    // a copy that can only target the card itself is the self rule
-                    // (Q3, "Fuori, regola di sé": Ivy, Gleeful Spellthief's "The
-                    // copy targets Ivy", untagged).
-                    Rx(@"\bcopy that spell(?: for each [^.\n]{0,80})?(?:\.|,)(?: and)? the copy targets (?:the chosen|that)\b"),
+                    // (Exterminator Magmarch, Zevlor, 2 of 2 by hand), where the
+                    // chosen one is an opponent's. A copy that can only target the
+                    // card itself is the self rule (Q3, "Fuori, regola di sé": Ivy,
+                    // Gleeful Spellthief's "The copy targets Ivy", untagged).
+                    // RULED 2026-11-10 evening (R2), overturning the reading of
+                    // 11-09 that handed them back with +Redirect: a copy of your
+                    // spell on your own creature, aimed at "THAT creature / token"
+                    // the trigger picked, is not this — the copy can only land on
+                    // one of yours (Feather, Radiant Arbiter and Frontline Heroism,
+                    // named, -Redirect). A copy with new targets free (Leyline of
+                    // Resonance) stays. Counted: "the copy targets that" 0 of 2
+                    // reviewed, "the copy targets the chosen" 2 of 2.
+                    Rx(@"\bcopy that spell(?: for each [^.\n]{0,80})?(?:\.|,)(?: and)? the copy targets the chosen\b"),
                     // A target spell chosen first and copied in the next sentence:
                     // Tempt with Mayhem's "Choose target instant or sorcery spell.
                     // … You copy that spell once plus an additional time" (1 of 1
                     // by hand), and Radiate's "Copy that spell for each other
                     // permanent or player".
                     Rx(@"\bchoose target [\w ]{0,40}\bspell\b[^.\n]{0,100}\.[^\n]{0,200}?\bcop(?:y|ies) that spell\b"),
-                    // Every spell of yours on the stack copied at once: Ulalek,
-                    // Fused Atrocity's "copy all spells you control" (untagged on
-                    // 09-12 before the ruling of 09-28, handed back).
-                    Rx(@"\bcop(?:y|ies) (?:all|each) (?:other )?spells? you control\b"),
+                    // NOT every spell of yours copied at once, RULED 2026-11-10
+                    // evening (R3, "Sia 1 che 2"), overturning the reading of 11-09:
+                    // Ulalek, Fused Atrocity's "Whenever you cast an Eldrazi spell,
+                    // … copy all spells you control, then copy all other activated
+                    // and triggered abilities you control" is -Redirect for both
+                    // reasons — a TRIBAL trigger is never this tag, and copying all
+                    // you control is a doubler, as Q1's ability copied on every
+                    // activation. The rule "copy all spells you control" read
+                    // Ulalek alone and is removed. No other card in the store has a
+                    // copy on a creature-type cast trigger (Chancellor of Tales,
+                    // Gorion and Jeong Jeong name Adventure and Lesson, not a
+                    // tribe), so the tribal half needs no guard.
                     // Copying a spell of YOUR OWN is this tag too, ruled 2026-09-28,
                     // which OVERTURNS the 2026-09-19 ruling that took it off: every
                     // such card reviewed since 09-23 had been tagged (Sword of Wealth
@@ -1036,7 +1050,15 @@ namespace ScatoloneDownloader.Cube
                     Rx(@"choose (?:a|an|one|two|up to \w+)[^.\n]{0,60}from it[^\n]{0,60}\b(?:they|the player) discards?\b"
                         + @"|\bthey discard (?:a|two|three|that|their)\b"),
                     Rx(@"(?:target opponent|each opponent|target player)[^.\n]{0,50}, discards? a card"),
-                    Rx(@"search (?:target (?:player|opponent)'s|that player's) [\w ,]{0,30}\bhand\b[^.\n]{0,100}\bexile"),
+                    // Not when the name comes from a card in a GRAVEYARD, read
+                    // 2026-11-10 (the second sitting): Kotose, the Silent Spider's
+                    // "exile target card … from an opponent's graveyard. Search
+                    // that player's graveyard, hand, and library for any number of
+                    // cards with the same name" is untagged by hand, as Deadly
+                    // Cover-Up's "its owner's" search after a graveyard card (Wipe
+                    // alone). Counted: 0 of 1 reviewed with "that player's".
+                    Rx(@"(?<!graveyard[^.\n]{0,40}\.\s{0,2}(?:then )?)"
+                        + @"search (?:target (?:player|opponent)'s|that player's) [\w ,]{0,30}\bhand\b[^.\n]{0,100}\bexile"),
                     // Three hand attacks ruled 2026-09-28, each settling a split in
                     // the hand tags: a card EXILED from their hand, however many and
                     // however chosen (Ruthless Negotiation against Unscrupulous Agent,
@@ -1048,7 +1070,17 @@ namespace ScatoloneDownloader.Cube
                     // "They" once the player is named (Isildur's Fateful Strike,
                     // 2026-10-15).
                     Rx(@"(?:target opponent|each opponent|target player|that player|\bthey) exiles? [^.\n]{0,100}?\bcards?(?: at random)? "
-                        + @"from their hand(?![^\n]{0,60}\bmay play)"),
+                        + @"from their hand(?![^\n]{0,60}\bmay play)"
+                        // …and the same exile written as YOURS, read 2026-11-10
+                        // (the second sitting): Elder Brain's "exile all cards from
+                        // that player's hand, then they draw that many cards" and
+                        // Thought Distortion's "Exile all noncreature, nonland
+                        // cards from that player's hand and graveyard", Discard by
+                        // hand, as Isildur's Fateful Strike — 3 of 3 reviewed.
+                        // YOU may play them afterwards (Elder Brain): the owner's
+                        // "may play" above is the one that stays out.
+                        + @"|(?<!\bthey |\bplayer |\bopponent )\bexile (?:all |each |up to \w+ |a |an |one |two |three |x )?[^.\n]{0,50}?\bcards? "
+                        + @"from (?:that player's|target (?:player|opponent)'s|their|each opponent's|an opponent's|defending player's) hands?\b"),
                     Rx(@"look at target (?:player|opponent)'s hand and choose [^.\n]{0,40}\. put (?:them|it|that card) on (?:top|the bottom)"
                         + @"|look at target (?:player|opponent)'s hand and exile"
                         // The same exile as a second sentence, "look at target

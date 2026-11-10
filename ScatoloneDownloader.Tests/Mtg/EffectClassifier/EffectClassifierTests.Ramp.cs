@@ -399,10 +399,25 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
-    // Read 2026-11-10 under the 11-09 definition (a land of yours in play): a
-    // Desert or Cave searched onto the battlefield (7 of 7 reviewed subtype
-    // searches are Ramp), and Elemental Teachings' lands put onto the battlefield
-    // as the rest after the opponent's pick (+Ramp ruled that day).
+    // Read 2026-11-10 under the 11-09 definition (a land of yours in play):
+    // Elemental Teachings' lands put onto the battlefield as the rest after the
+    // opponent's pick (+Ramp ruled that day). A Desert or Cave searched alone
+    // was pinned here too and moved below with the ruling of that evening.
+    [InlineData("Elemental Teachings", "Instant — Lesson",
+        "Search your library for up to four land cards with different names and reveal them. An opponent "
+        + "chooses two of those cards. Put the chosen cards into your graveyard and the rest onto the "
+        + "battlefield tapped, then shuffle.")]
+    public void Classify_TheNovember10Readings_TheRestOntoTheBattlefield_IsRamp(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // RULED 2026-11-10 evening (R1, "L'ho tenuto sulle carte che prendono anche
+    // terre base"), overturning the reading of that morning: a search for a land
+    // SUBTYPE alone is not Ramp (Colossal Rattlewurm, Cosmium Confluence
+    // untagged in the sitting; Sand Scout reached and handed back). And a land
+    // out of an opponent's hand (Rona, Filter alone by hand, read the same day).
     [InlineData("Colossal Rattlewurm", "Creature — Wurm",
         "Colossal Rattlewurm has flash as long as you control a Desert.\nTrample\n{1}{G}, Exile this card from "
         + "your graveyard: Search your library for a Desert card, put it onto the battlefield tapped, then "
@@ -416,13 +431,16 @@ public sealed partial class EffectClassifierTests
         "Choose three. You may choose the same mode more than once.\n• Search your library for a Cave card, "
         + "put it onto the battlefield tapped, then shuffle.\n• Put three +1/+1 counters on a Cave you control. "
         + "It becomes a 0/0 Elemental creature with haste. It's still a land.\n• Destroy target enchantment.")]
-    [InlineData("Elemental Teachings", "Instant — Lesson",
-        "Search your library for up to four land cards with different names and reveal them. An opponent "
-        + "chooses two of those cards. Put the chosen cards into your graveyard and the rest onto the "
-        + "battlefield tapped, then shuffle.")]
-    public void Classify_TheNovember10Readings_ALandSubtypeOrTheRestOntoTheBattlefield_IsRamp(string name, string typeLine, string oracle)
+    // Rona: a land out of an opponent's hand at random (LandOutOfTheirHand).
+    [InlineData("Rona, Herald of Invasion // Rona, Tolarian Obliterator", "Legendary Creature — Human Wizard // Legendary Creature — Phyrexian Wizard",
+        "Whenever you cast a legendary spell, untap Rona.\n{T}: Draw a card, then discard a card.\n{5}{B/P}: "
+        + "Transform Rona. Activate only as a sorcery. ({B/P} can be paid with either {B} or 2 "
+        + "life.)\nTrample\nWhenever a source deals damage to Rona, that source's controller exiles a card from "
+        + "their hand at random. If it's a land card, you may put it onto the battlefield under your control. "
+        + "Otherwise, you may cast it without paying its mana cost.")]
+    public void Classify_TheNovember10Ruling_ALandSubtypeAloneOrALandOfTheirs_IsNotRamp(string name, string typeLine, string oracle)
     {
-        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
     }
 
     [Theory]

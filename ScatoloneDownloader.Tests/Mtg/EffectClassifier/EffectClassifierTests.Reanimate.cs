@@ -435,22 +435,31 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
-    // Read 2026-11-06 under the definition, each Reanimate by hand: a real
+    // Read 2026-11-06 under the definition, Reanimate by hand: a real
     // alternative cost is a cost skipped (Anrakyr the Traveller pays life rather
-    // than its mana cost), and a spell cast free from among the cards exiled from
-    // an opponent's graveyard (Crabomination).
+    // than its mana cost). Crabomination was pinned here too and moved below on
+    // 2026-11-10.
     [InlineData("Anrakyr the Traveller", "Legendary Artifact Creature — Necron",
         "Lord of the Pyrrhian Legions — Whenever Anrakyr the Traveller attacks, you may cast an artifact "
         + "spell from your hand or graveyard by paying life equal to its mana value rather than paying its mana "
         + "cost.")]
+    public void Classify_TheNovember6Definition_ACostSkipped_IsReanimate(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
+    }
+
+    [Theory]
+    // Read 2026-11-10 (the second sitting), overturning the reading of 11-06:
+    // a spell cast free from among cards an opponent exiled from three zones at
+    // once is Discard alone by hand (Crabomination, the one card that says it).
     [InlineData("Crabomination", "Creature — Crab Demon",
         "Emerge from artifact {5}{B}{B} (You may cast this spell by sacrificing an artifact and paying the "
         + "emerge cost reduced by that artifact's mana value.)\nWhen this creature enters, target opponent "
         + "exiles the top card of their library, a card at random from their graveyard, and a card at random "
         + "from their hand. You may cast a spell from among cards exiled this way without paying its mana cost.")]
-    public void Classify_TheNovember6Definition_ACostSkipped_IsReanimate(string name, string typeLine, string oracle)
+    public void Classify_TheNovember10Reading_ACastFromThreeOfTheirZones_IsNotReanimate(string name, string typeLine, string oracle)
     {
-        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
     }
 
     [Theory]

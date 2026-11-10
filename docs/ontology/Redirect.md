@@ -68,11 +68,25 @@ given to your spells (Crackling Spellslinger, Threefold Signal).
 Ruled the same day, Q3 ("Fuori, regola di sé"): a copy that can only target the CARD ITSELF is the
 self rule every tag keeps (Mistfolk, 2026-11-08). Ivy, Gleeful Spellthief copies anybody's spell
 but "The copy targets Ivy": untagged. A copy aimed at "the chosen" permanent or at "that" creature
-is this tag (Exterminator Magmarch, Zevlor).
+is this tag (Exterminator Magmarch, Zevlor; "that" OVERTURNED 11-10, R2 below).
 
 Read the same day under the definition: an exchange of control takes the spell (Sudden
 Substitution, Steal for its creature); a target spell chosen and copied in the next sentence
 (Tempt with Mayhem, Radiate); "…, YOU MAY copy it" (Spider-Verse, Spinerock Tyrant); every spell
-you control copied at once (Ulalek). Reached and handed back, all reviewed before the ruling of
-09-28: Spider-Verse, Ulalek, Feather, Frontline Heroism (+Redirect). A copied ARTIFACT spell is
-always a permanent and becomes a token (Iron Man, Bleeding Edge), as the creature spell does.
+you control copied at once (Ulalek, OVERTURNED 11-10, R3). Reached and handed back, all reviewed
+before the ruling of 09-28: Spider-Verse, Ulalek, Feather, Frontline Heroism (+Redirect; the last
+three OVERTURNED 11-10, below). A copied ARTIFACT spell is always a permanent and becomes a token
+(Iron Man, Bleeding Edge), as the creature spell does.
+
+RULED 2026-11-10 evening, from the second sitting, R2: a copy of your spell on your own creature,
+aimed by the card at "THAT creature / token" the trigger picked, can only land on one of yours and
+is not this tag — Feather, Radiant Arbiter and Frontline Heroism, named (-Redirect), overturning the
+reading of 11-09. A copy aimed at "the chosen" permanent of an opponent stays (Exterminator
+Magmarch, Zevlor), and so does a copy with new targets free (Leyline of Resonance). Counted: "the
+copy targets that" 0 of 2 reviewed, "the copy targets the chosen" 2 of 2.
+
+RULED the same evening, R3 ("Sia 1 che 2"), on Ulalek, Fused Atrocity (named, -Redirect): a TRIBAL
+cast trigger is never this tag, and copying ALL the spells and abilities you control is a doubler, as
+Q1's ability copied on every activation. The rule "copy all spells you control" read Ulalek alone and
+is gone. No other card has a copy on a creature-type cast trigger (Chancellor of Tales and Gorion
+name Adventure, Jeong Jeong a Lesson), so the tribal half needs no guard in the code.

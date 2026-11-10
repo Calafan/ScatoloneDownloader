@@ -214,10 +214,14 @@ namespace ScatoloneDownloader.Cube
         /// the search EXILES is gained by nobody (Mana Severance, untagged in the
         /// sitting; Strata Scythe and Trench Gorger say the same). Only for a
         /// land: a card tutored into exile stays Tutor (Beseech the Mirror,
-        /// Foresight: 6 reviewed searches of your own library, all 6 tagged).</para></summary>
+        /// Foresight: 6 reviewed searches of your own library, all 6 tagged).</para>
+        /// <para>Read 2026-11-10 (second sitting): "land cards THAT EACH HAVE a
+        /// basic land type" is the same pool as "with a basic land type"
+        /// (Slimefoot's Survey, Ramp and Filter by hand; the one card that says
+        /// it).</para></summary>
         private static readonly Regex SearchesForANonbasicLand = Rx(
             @"library[^.\n]{0,40}for [^.\n]{0,60}?(?<!basic )(?<!snow )\blands? cards?\b"
-            + @"(?! (?:with|of each) (?:a )?basic land type)(?!,? (?:and )?exile\b)");
+            + @"(?! (?:with|of each|that each have) (?:a )?basic land type)(?!,? (?:and )?exile\b)");
 
         // "A creature OR LAND card" too: Analyze the Pollen searches for a basic
         // land, and "instead" for either once evidence is collected (2026-10-16).

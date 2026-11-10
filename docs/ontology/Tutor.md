@@ -114,3 +114,7 @@ three cards stay both, and one card exiled to be had later stays Tutor and selec
 Dragon, Distant Memories). The code moves 6 reviewed cards, 5 of them already untagged by hand, and
 16 unreviewed (Maze's End, Gatecreeper Vine, District Guide, Open the Gates …); Strata Scythe gains
 Filter, the only Filter move.
+
+Read 2026-11-10, from the second sitting: "land cards THAT EACH HAVE a basic land type" is the same
+pool as "with a basic land type" (Slimefoot's Survey, Ramp and Filter by hand), so it stays out with
+Boseiju's consolation and Gaea's Balance.

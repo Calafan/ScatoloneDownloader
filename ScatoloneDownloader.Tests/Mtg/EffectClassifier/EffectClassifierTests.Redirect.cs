@@ -108,18 +108,26 @@ public sealed partial class EffectClassifierTests
         "({U/R} can be paid with either {U} or {R}.)\nFlying\nEach instant and sorcery spell you cast has "
         + "replicate. The replicate cost is equal to its mana cost. (When you cast it, copy it for each time "
         + "you paid its replicate cost. You may choose new targets for the copies.)")]
-    // Reached 2026-11-09 by the definition, all reviewed before the ruling of
-    // 09-28 and handed back: "you may copy it" (Spider-Verse), every spell you
-    // control copied (Ulalek), and the copy aimed at your other creatures or at
-    // the token (Feather, Frontline Heroism).
+    // Reached 2026-11-09 by the definition, reviewed before the ruling of
+    // 09-28 and handed back: "you may copy it" (Spider-Verse, confirmed in the
+    // sitting of 11-10). Ulalek, Feather and Frontline Heroism were here too
+    // and moved below with the ruling of 11-10 evening.
     [InlineData("Spider-Verse", "Enchantment",
         "The \"legend rule\" doesn't apply to Spiders you control.\nWhenever you cast a spell from anywhere "
         + "other than your hand, you may copy it. If you do, you may choose new targets for the copy. If the "
         + "copy is a permanent spell, it gains haste. Do this only once each turn.")]
-    [InlineData("Ulalek, Fused Atrocity", "Legendary Creature — Eldrazi",
-        "Devoid (This card has no color.)\nWhenever you cast an Eldrazi spell, you may pay {C}{C}. If you do, "
-        + "copy all spells you control, then copy all other activated and triggered abilities you control. You "
-        + "may choose new targets for the copies. (Mana abilities can't be copied.)")]
+    public void Classify_CopyingYourOwnSpell_IsRedirect(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Redirect));
+    }
+
+    [Theory]
+    // Ruled 2026-11-10 evening, overturning the readings of 11-09 that the
+    // three cards were pinned by above. R2: a copy aimed at "that creature /
+    // token" the trigger picked off your own spell on your own creature can
+    // only land on one of yours (Feather, Frontline Heroism, named). R3 ("Sia
+    // 1 che 2"): a tribal trigger is never Redirect, and copying everything
+    // you control is a doubler (Ulalek, named).
     [InlineData("Feather, Radiant Arbiter", "Legendary Creature — Angel",
         "Flying, lifelink\nWhenever you cast a noncreature spell that targets only Feather, you may choose any "
         + "number of other creatures that spell could target and pay {2} for each of those creatures. If you "
@@ -129,9 +137,13 @@ public sealed partial class EffectClassifierTests
         "When this enchantment enters, create a 1/1 red Soldier creature token with haste.\nWhenever you cast "
         + "a spell that targets only a single creature you control, create a 1/1 red Soldier creature token "
         + "with haste, then copy that spell. The copy targets that token.")]
-    public void Classify_CopyingYourOwnSpell_IsRedirect(string name, string typeLine, string oracle)
+    [InlineData("Ulalek, Fused Atrocity", "Legendary Creature — Eldrazi",
+        "Devoid (This card has no color.)\nWhenever you cast an Eldrazi spell, you may pay {C}{C}. If you do, "
+        + "copy all spells you control, then copy all other activated and triggered abilities you control. You "
+        + "may choose new targets for the copies. (Mana abilities can't be copied.)")]
+    public void Classify_TheNovember10Ruling_ACopyOnlyOnYoursOrAllYouControl_IsNotRedirect(string name, string typeLine, string oracle)
     {
-        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Redirect));
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Redirect));
     }
 
     [Theory]

@@ -363,7 +363,7 @@ namespace ScatoloneDownloader.Cube
                 || (card.MacroType != MacroType.Land
                     && LandOntoTheBattlefield.IsMatch(ownLandDrops)
                     && !LandForSomebodyElse.IsMatch(text) && !PaysALandForTheLand.IsMatch(text)
-                    && !SwapsLandsForLands.IsMatch(text))
+                    && !SwapsLandsForLands.IsMatch(text) && !LandOutOfTheirHand.IsMatch(text))
                 || LandsBackAfterFillingTheGraveyard.IsMatch(text)
                 || (MakesAPowerstone.IsMatch(text) && !PowerstoneForSomebodyElse.IsMatch(text))
                 || TreasureAlsoRamps(text)

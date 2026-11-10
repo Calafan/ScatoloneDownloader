@@ -571,19 +571,21 @@ namespace ScatoloneDownloader.Cube
             // "rather than paying" its mana cost: 3 reviewed, Anrakyr tagged, and
             // Squee, Dubious Monarch and Raffine's Guidance cast THEMSELVES
             // (SelfRecursionWording). Noctis pays "in addition to" and stays
-            // Regrowth. And a spell cast free from among the cards an opponent
-            // exiled from a graveyard, Crabomination's "a card at random from
-            // their graveyard … You may cast a spell from among cards exiled this
-            // way without paying its mana cost" (Reanimate by hand, 1 of 1: Kefka
-            // and Portent of Calamity cast from among cards off a library). Never
-            // "cast THIS creature": Scourge of Nel Toth's "by paying {B}{B} and
-            // sacrificing two creatures rather than paying its mana cost" is the
-            // card casting itself (unreviewed, moved by the alternative cost).
+            // Regrowth. Never "cast THIS creature": Scourge of Nel Toth's "by
+            // paying {B}{B} and sacrificing two creatures rather than paying its
+            // mana cost" is the card casting itself (unreviewed, moved by the
+            // alternative cost).
+            // NOT a spell cast free from among the cards an opponent exiled
+            // from three zones at once, read 2026-11-10 (the second sitting):
+            // Crabomination's "the top card of their library, a card at random
+            // from their graveyard, and a card at random from their hand. You may
+            // cast a spell from among cards exiled this way without paying its
+            // mana cost" is Discard alone by hand, which overturns the reading of
+            // 11-06 (Reanimate, 1 of 1) and removes its alternative: no other
+            // card says it.
             Rx(@"cast (?!this\b)(?:a |an |target )?[\w ,'\-/]{0,40}\b(?:creature|permanent|nonland|artifact|enchantment|planeswalker)\b[\w ,'\-/]{0,60}"
                 + @"from your (?:hand or )?graveyard[^.\n]{0,80}(?:without paying|rather than paying (?:its|their) mana costs?)"
-                + @"|\b(?:creature|permanent|nonland) card[\w ,'\-/]{0,40}from your graveyard\. copy it, then you may cast the copy without paying"
-                + @"|\bexiles?\b[^.\n]{0,100}\bfrom (?:their|your|a|an opponent's|target player's|that player's) graveyards?\b[^\n]{0,100}"
-                + @"you may cast a spell from among cards exiled this way without paying"),
+                + @"|\b(?:creature|permanent|nonland) card[\w ,'\-/]{0,40}from your graveyard\. copy it, then you may cast the copy without paying"),
         ];
 
         private static readonly Regex[] RegrowthPatterns =

@@ -318,8 +318,18 @@ namespace ScatoloneDownloader.Cube
         // A target creature CARD described at length before its zone is one
         // too, read 2026-10-16: Lazotep Quarry's "exile target creature card
         // WITH MANA VALUE X from your graveyard" ran past the tail.
+        // And a creature card OR ANOTHER card, read 2026-11-10: Nahiri, the
+        // Unforgiving's "Exile target creature or Equipment card with mana
+        // value less than Nahiri's loyalty from your graveyard" (Removal never
+        // tagged by hand). Counted broad, a target creature followed by "(or
+        // X) card" after an exile: 26 reviewed, Nahiri the only one proposed
+        // Removal; Savior of Ollenbock's "creature from the battlefield or
+        // creature card", the one tagged, is BattlefieldOrGraveyard's. Widening
+        // TargetsAGraveyard the same way was tried and dropped: it reads the
+        // whole card, and took Yawgmoth's Vile Offering's real "Destroy up to
+        // one target creature or planeswalker" for its reanimated card.
         private static readonly Regex AnswersNobody = Rx(
-            @"you control|you own|cards? (?:from|in)[\w ']{0,25}graveyard|\bcreature cards? from\b|\btarget creature cards?\b"
+            @"you control|you own|cards? (?:from|in)[\w ']{0,25}graveyard|\bcreature cards? from\b|\btarget creature (?:or [\w-]+ )?cards?\b"
             + @"|\breturn (?:it|that card|them|those cards)\b|\bits owner may play it\b");
 
         // A TARGET LIMITED TO A CREATURE TYPE is never Removal, ruled 2026-10-16
@@ -2085,20 +2095,36 @@ namespace ScatoloneDownloader.Cube
             + @"(?![^\n]{0,40}\byou can't cast spells\b)"
             + @"|untaps all basic lands");
 
+        // A land out of an OPPONENT'S HAND is not Ramp, read 2026-11-10 (the
+        // second sitting): Rona, Tolarian Obliterator's "that source's
+        // controller exiles a card from their hand at random. If it's a land
+        // card, you may put it onto the battlefield under your control" is
+        // Filter alone by hand — the card of theirs you get to play is a
+        // hand attack at most, as Steal.md has a card of theirs played. The
+        // same "if it's a land card" off YOUR library stays Ramp (8 of 8
+        // reviewed: Risen Reef, Nadu, Lantern of Revealing). Counted broad,
+        // a land from their hand put onto the battlefield: 1 reviewed,
+        // untagged, none unreviewed. Oblivion Sower's lands from THEIR
+        // LIBRARY are not this sentence and stay proposed.
+        private static readonly Regex LandOutOfTheirHand = Rx(
+            @"\bfrom (?:their|that player's|an opponent's) hand(?: at random)?\. if it's a land card, (?:you may )?put it onto the battlefield");
+
         // (?<!non) again, and for the third time this session: "search your
         // library for a NONLAND permanent card, put it onto the battlefield" is
         // Guardian Sunmare, and it is a tutor, not a fetch.
         private static readonly Regex LandOntoTheBattlefield = Rx(
             @"(?<!non)lands? cards?[\w ,'\/]{0,60}onto the battlefield"
-            // A land SUBTYPE that is always a land counts as the word land, read
-            // 2026-11-10 (Ramp.md: a land onto the battlefield by any wording):
-            // "search your library for a Desert / Cave / Gate card, put it onto
-            // the battlefield". 7 of 7 reviewed cards with one of these subtypes
-            // in the search are Ramp by hand (through "basic land card or a Desert
-            // card"); Colossal Rattlewurm, Sand Scout and Cosmium Confluence,
-            // unreviewed, said only the subtype and were missed. Maze's End's Gate
-            // fetched by a land stays a fetch land (LandFetchesALand).
-            + @"|search your library for[\w ,'\/]{0,80}(?<!non)(?:land|forest|plains|island|swamp|mountain|(?:desert|cave|gate)\b)"
+            // A search for a land SUBTYPE ALONE is not Ramp, RULED 2026-11-10
+            // evening ("L'ho tenuto sulle carte che prendono anche terre base"),
+            // which overturns the reading of that morning that counted "a Desert
+            // / Cave / Gate card" as the word land: Colossal Rattlewurm and
+            // Cosmium Confluence untagged in the sitting, Sand Scout reached and
+            // handed back. The subtype BESIDE a land stays, through the word
+            // land: "basic land card or a Desert card" (Dance of the Tumbleweeds,
+            // Map the Frontier, Navigation Orb, Scampering Surveyor, Explore the
+            // Underdark: 5 of 5 reviewed put onto the battlefield are Ramp),
+            // "basic land cards and/or Gate cards".
+            + @"|search your library for[\w ,'\/]{0,80}(?<!non)(?:land|forest|plains|island|swamp|mountain)"
             // Gap 60 -> 110 on 2026-11-05: "up to X basic land cards, where X is the
             // number of creatures attacking you, put those cards onto the battlefield
             // tapped" (Jaheira's Respite, Ramp by hand; Ramp.md: a land onto the

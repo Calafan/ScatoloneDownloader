@@ -137,7 +137,13 @@ at the end step), Leonardo da Vinci and Osgir, the Reconstructor (a token copy o
 from your graveyard). Read on the two misses, each Reanimate by hand: a real alternative cost,
 Anrakyr the Traveller's life "rather than paying its mana cost" (as Cheat counts Leyline of
 Mutation), and Crabomination's spell cast free from among the cards an opponent exiled, one of them
-from their graveyard. Not a card casting itself for an alternative cost (Scourge of Nel Toth).
+from their graveyard (OVERTURNED 2026-11-10, below). Not a card casting itself for an alternative
+cost (Scourge of Nel Toth).
+
+Read 2026-11-10, from the second sitting: Crabomination is Discard alone by hand. A spell cast free
+from among the cards an opponent exiled from three zones at once (the top of their library, a card
+at random from their graveyard and one from their hand) is not this tag, and the alternative written
+for it on 11-06 is gone: no other card says it.
 
 RULED 2026-11-08 with the Steal definition (Steal.md, Q2 "Solo Reanimate, anche i 4"): out of an
 OPPONENT'S graveyard is this tag alone, never Steal as well (a card in a graveyard is no permanent),

@@ -884,4 +884,19 @@ public sealed partial class EffectClassifierTests
         Assert.True(result.HasFlag(CardEffect.Removal));
         Assert.True(result.HasFlag(CardEffect.Steal));
     }
+
+    [Theory]
+    // Read 2026-11-10: 'exile target creature or Equipment card ... from your
+    // graveyard' is a card already dead, as 'target creature card' (Nahiri, the
+    // Unforgiving, Removal never tagged by hand; AnswersNobody).
+    [InlineData("Nahiri, the Unforgiving", "Legendary Planeswalker — Nahiri",
+        "Compleated ({R/W/P} can be paid with {R}, {W}, or 2 life. If life was paid, this planeswalker enters "
+        + "with two fewer loyalty counters.)\n+1: Until your next turn, up to one target creature attacks a "
+        + "player each combat if able.\n+1: Discard a card, then draw a card.\n0: Exile target creature or "
+        + "Equipment card with mana value less than Nahiri's loyalty from your graveyard. Create a token that's "
+        + "a copy of it. That token gains haste. Exile it at the beginning of the next end step.")]
+    public void Classify_TheNovember10Reading_ACreatureOrOtherCardInAGraveyard_IsNotRemoval(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
+    }
 }

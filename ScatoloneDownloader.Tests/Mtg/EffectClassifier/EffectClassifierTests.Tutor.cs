@@ -212,6 +212,13 @@ public sealed partial class EffectClassifierTests
         + "land an opponent controls. That player may search their library for a land card with a basic land "
         + "type, put it onto the battlefield, then shuffle. This ability costs {1} less to activate for each "
         + "legendary creature you control.")]
+    // Read 2026-11-10 (the second sitting): 'land cards that each have a basic
+    // land type' is 'with a basic land type' (Slimefoot's Survey).
+    [InlineData("Slimefoot's Survey", "Sorcery",
+        "Domain — Search your library for up to two land cards that each have a basic land type, put them "
+        + "onto the battlefield tapped, then shuffle. Look at the top X cards of your library, where X is the "
+        + "number of basic land types among lands you control. Put up to one of them on top of your library and "
+        + "the rest on the bottom of your library in a random order.")]
     public void Classify_TheNovember10Ruling_ABasicLandTypeOrABasicTypedLand_IsNotTutor(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tutor));

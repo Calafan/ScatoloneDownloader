@@ -169,7 +169,7 @@
                 "A spell or ability ALREADY ON THE STACK, anybody's, made over without countering it: new targets, "
                 + "a new controller, or a copy — aimed, the next one, or each one you cast (Redirect, Fork). Not a card "
                 + "copying itself, a copied permanent spell (Tokens), an ability copied on every use, demonstrate, "
-                + "or a copy aimed only at itself.",
+                + "or a copy only on itself or yours.",
         };
 
         /// <summary>The line for one effect, or an empty string when a member has

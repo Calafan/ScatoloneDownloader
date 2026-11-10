@@ -222,7 +222,23 @@ discount of 2026-10-24 (Invasion of the Giants' chapter III, Filter alone by han
 
 RULED 2026-11-10 on the 11-09 definition ("+Ramp"): Elemental Teachings, reviewed untagged on
 09-10, puts "the rest" of the lands it searched onto the battlefield tapped after the opponent bins
-two, which is two lands in play, and is Ramp. Read the same day: a land SUBTYPE that is always a land
-is the word land in a search ("a Desert card", "a Cave card", "a Gate card"; 7 of 7 reviewed cards
-with one are Ramp), so Colossal Rattlewurm, Sand Scout and Cosmium Confluence, unreviewed, gain it.
-Maze's End's Gate, fetched by a land that returns itself, stays a fetch land.
+two, which is two lands in play, and is Ramp. Read the same day (OVERTURNED that evening, see
+below): a land SUBTYPE that is always a land is the word land in a search ("a Desert card", "a Cave
+card", "a Gate card"; 7 of 7 reviewed cards with one are Ramp), so Colossal Rattlewurm, Sand Scout
+and Cosmium Confluence, unreviewed, gain it. Maze's End's Gate, fetched by a land that returns
+itself, stays a fetch land.
+
+RULED 2026-11-10 evening, from the second sitting ("L'ho tenuto sulle carte che prendono anche
+terre base"), OVERTURNING the subtype reading of that morning: a search for a land SUBTYPE ALONE ("a
+Desert card", "a Cave card") is not Ramp — Colossal Rattlewurm and Cosmium Confluence untagged in
+the sitting, Sand Scout reached and handed back (-Ramp). The subtype BESIDE a land stays Ramp
+through the word land: "basic land card or a Desert card" (Dance of the Tumbleweeds, Map the
+Frontier, Navigation Orb, Scampering Surveyor, Explore the Underdark: 5 of 5 put onto the
+battlefield), "basic land cards and/or Gate cards".
+
+Read the same day: a land out of an OPPONENT'S HAND is not Ramp — Rona, Tolarian Obliterator's "that
+source's controller exiles a card from their hand at random. If it's a land card, you may put it
+onto the battlefield under your control" is Filter alone by hand, a card of theirs played (Steal.md:
+CardAdvantage at most). The same "if it's a land card" off YOUR library stays (8 of 8: Risen Reef,
+Nadu, Lantern of Revealing). Oblivion Sower's lands from their LIBRARY are another sentence and stay
+proposed, unreviewed.

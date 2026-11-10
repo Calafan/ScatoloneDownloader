@@ -179,3 +179,10 @@ sacrificed from ONE side are Wipe alone, as from every side since 2026-09-27 —
 opponent sacrifices two creatures", Rush of Dread's half and Make an Example's pile (read here
 2026-10-16 and 2026-11-05) are handed back with Wipe and without this tag. This tag keeps the
 single creature.
+
+Read 2026-11-10: a target "creature OR ANOTHER CARD" in a graveyard is a card already dead, as
+"target creature card" is — Nahiri, the Unforgiving's "Exile target creature or Equipment card with
+mana value less than Nahiri's loyalty from your graveyard" (Removal never tagged by hand, reviewed
+11-06). Counted broad, a target creature followed by "(or X) card": 26 reviewed, Nahiri the only one
+proposed this tag; Savior of Ollenbock's "creature from the battlefield or creature card from a
+graveyard", the one tagged, keeps its battlefield half.
