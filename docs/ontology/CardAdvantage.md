@@ -611,6 +611,15 @@ Revival, Morgue Theft, Crawl from the Cellar and Fantastic Elasticity's rebound 
 creature TYPE fetched back: Charred Graverobber's "outlaw card" beside its escape stays Regrowth
 alone (the tribal ruling of 2026-10-16).
 
+Ruled 2026-11-10 ("Solo CA", asked on Scour All Possibilities against Unending Whisper): a
+SELECTION BEFORE THE ONE CARD, cast twice, is the same count, a certain gain, so this tag alone and
+Filter goes (2026-09-27). "Scry 2, then draw a card" or one of the top few into the hand, beside
+flashback or rebound: Scour All Possibilities, Dreams of Laguna and Resentful Revelation
+-Filter +CardAdvantage, named; Flash of Insight, Forbidden Alchemy and Sight Beyond Sight reached.
+Read the same day, the net count of 2026-11-07: JUMP-START pays a card from the hand for the second
+cast, so one card cast twice is parity (Start the TARDIS Filter alone by hand; Radical Idea, "Draw
+a card." and jump-start, loses the tag).
+
 Ruled 2026-11-10 ("La tua analisi è corretta, correggi"): a trigger on DAMAGE AT LEAST THE
 CREATURE'S TOUGHNESS fires once, because the creature dies of it, so it is read as "When". Innocent
 Bystander, a 2/1 that investigates when dealt 3 or more, makes one Clue, a rider: untagged, as the

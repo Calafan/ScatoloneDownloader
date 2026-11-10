@@ -2815,6 +2815,35 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
+    // Ruled 2026-11-10 ('Solo CA', Scour All Possibilities against Unending
+    // Whisper): a selection before the one card, cast twice, is a certain gain, so
+    // this tag alone. Scour All Possibilities, Dreams of Laguna and Resentful
+    // Revelation named (Filter alone by hand); Sight Beyond Sight's rebound
+    // reached.
+    [InlineData("Scour All Possibilities", "Sorcery",
+        "Scry 2, then draw a card.\nFlashback {4}{U} (You may cast this card from your graveyard for its "
+        + "flashback cost. Then exile it.)")]
+    [InlineData("Dreams of Laguna", "Instant",
+        "Surveil 1, then draw a card. (To surveil 1, look at the top card of your library. You may put it "
+        + "into your graveyard.)\nFlashback {3}{U} (You may cast this card from your graveyard for its flashback "
+        + "cost. Then exile it.)")]
+    [InlineData("Resentful Revelation", "Sorcery",
+        "Look at the top three cards of your library. Put one of them into your hand and the rest into your "
+        + "graveyard.\nFlashback {6}{B} (You may cast this card from your graveyard for its flashback cost. Then "
+        + "exile it.)")]
+    [InlineData("Sight Beyond Sight", "Sorcery",
+        "Look at the top two cards of your library. Put one of them into your hand and the other on the "
+        + "bottom of your library.\nRebound (If you cast this spell from your hand, exile it as it resolves. At "
+        + "the beginning of your next upkeep, you may cast this card from exile without paying its mana cost.)")]
+    public void Classify_TheNovember10CardAdvantage_ASelectionAndOneCardTwice_IsCardAdvantageNotFilter(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.False(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
     // Not this tag, 2026-11-10: the card fetched back is a creature type, the
     // tribal ruling of 2026-10-16. Charred Graverobber's outlaw card beside its
     // escape stays Regrowth alone, as the hand left it on 09-25.
@@ -2823,6 +2852,23 @@ public sealed partial class EffectClassifierTests
         + "hand.\nEscape—{3}{B}{B}, Exile four other cards from your graveyard. (You may cast this card from "
         + "your graveyard for its escape cost.)\nThis creature escapes with a +1/+1 counter on it.")]
     public void Classify_TheNovember10CardAdvantage_ATribeFetchedBackTwice_IsNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Not this tag, 2026-11-10: jump-start discards a card for the second cast, so
+    // one card cast twice nets zero. Start the TARDIS is Filter alone by hand;
+    // Radical Idea, 'Draw a card.' and jump-start, loses the tag.
+    [InlineData("Start the TARDIS", "Sorcery",
+        "Surveil 2, then draw a card. You may planeswalk. (To surveil 2, look at the top two cards of your "
+        + "library, then put any number of them into your graveyard and the rest on top of your library in any "
+        + "order.)\nJump-start (You may cast this card from your graveyard by discarding a card in addition to "
+        + "paying its other costs. Then exile this card.)")]
+    [InlineData("Radical Idea", "Instant",
+        "Draw a card.\nJump-start (You may cast this card from your graveyard by discarding a card in addition "
+        + "to paying its other costs. Then exile this card.)")]
+    public void Classify_TheNovember10CardAdvantage_JumpStartPaysACard_IsNotCardAdvantage(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
     }

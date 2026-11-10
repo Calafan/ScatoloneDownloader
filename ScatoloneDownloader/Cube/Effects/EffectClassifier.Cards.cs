@@ -202,7 +202,24 @@ namespace ScatoloneDownloader.Cube
         // A one-card draw on a spell that can be CAST TWICE is two cards for
         // one, which is the same count Welcome the Dead's flashback makes.
         // Unending Whisper is "Draw a card." plus harmonize and nothing else.
-        private static readonly Regex OneDrawButTwoCasts = Rx(@"^draw a card\.", RegexOptions.Multiline);
+        // A SELECTION BEFORE THE ONE CARD is the same count, ruled 2026-11-10
+        // ("Solo CA", asked on Scour All Possibilities against Unending
+        // Whisper): "Scry 2, then draw a card" or one of the top few into the
+        // hand, cast twice, is a certain gain and so this tag alone, Filter
+        // going by the 2026-09-27 rule. Scour All Possibilities, Dreams of
+        // Laguna and Resentful Revelation named (Filter alone by hand, 0 of 3).
+        private static readonly Regex OneDrawButTwoCasts = Rx(
+            @"^(?:(?:scry|surveil) \d+, then )?draw a card\."
+            + @"|^look at the top (?:two|three|four|five|x|\d+) cards of your library\. "
+            + @"put one of them into your hand and the (?:rest|other)\b",
+            RegexOptions.Multiline);
+
+        // JUMP-START pays a card from the hand for its second cast, so one card
+        // cast twice is parity under the net count of 2026-11-07: minus one,
+        // plus one, then minus one, plus one. Start the TARDIS is Filter alone
+        // by hand; Radical Idea ("Draw a card." and jump-start, unreviewed)
+        // lost the tag OneDrawButTwoCasts had given it.
+        private static readonly Regex PaysACardForTheSecondCast = Rx(@"^jump-start\b", RegexOptions.Multiline);
 
         // The same count for ONE CARD FETCHED BACK to the hand, ruled 2026-11-10
         // ("CA ok"): Inspiration from Beyond, Regrowth alone by hand on 09-23,
@@ -1575,7 +1592,8 @@ namespace ScatoloneDownloader.Cube
         // scry again and again and keep the tag (both named as slips the same
         // day). SECONDARY means a creature, artifact or enchantment — the body or
         // the Saga is what the card is for — or a spell that earns another tag;
-        // Opt and Dreams of Laguna select and do nothing else, and keep it.
+        // Opt selects and does nothing else, and keeps it (Dreams of Laguna did
+        // too, until its flashback made it CardAdvantage alone on 2026-11-10).
         // A LAND keeps it too, ruled the same day after the first cut had taken
         // it off the 20 surveil lands: "Surveil e scry land, teniamole. Mi serve
         // come filtro sulle terre doppie" — the tag is how the dual lands that

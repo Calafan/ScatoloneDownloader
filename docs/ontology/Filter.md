@@ -100,7 +100,8 @@ is advantage alone.
 
 A SCRY OR SURVEIL MADE ONCE, BESIDE WHAT THE CARD IS FOR, IS NOT THIS — "non li voglio come Filter,
 generano troppo rumore": a creature's or an artifact's enters trigger, a bounce spell's rider. What
-keeps the tag is a spell that selects and does nothing else (Opt, Dreams of Laguna) and a scry that
+keeps the tag is a spell that selects and does nothing else (Opt; Dreams of Laguna until its
+flashback made it CardAdvantage alone, 2026-11-10, see CardAdvantage.md) and a scry that
 COMES AGAIN (Veteran Guardmouse's valiant, Clandestine Meddler's attacks, both named as slips). 55
 reviewed cards, every one tagged under the old ruling.
 

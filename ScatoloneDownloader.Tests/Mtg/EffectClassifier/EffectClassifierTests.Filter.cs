@@ -93,14 +93,11 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
-    // What keeps the tag: a spell that selects and does nothing else (Dreams of
-    // Laguna), a scry that comes again (Veteran Guardmouse's valiant, Clandestine
+    // What keeps the tag: a spell that selects and does nothing else (Opt; Dreams
+    // of Laguna moved out 2026-11-10, its flashback makes it CardAdvantage alone),
+    // a scry that comes again (Veteran Guardmouse's valiant, Clandestine
     // Meddler's attacks — both named as slips on 2026-09-27), and Blood made
     // again and again ("se ripetuti sì").
-    [InlineData("Dreams of Laguna", "Instant",
-        "Surveil 1, then draw a card. (To surveil 1, look at the top card of your library. You may put it "
-        + "into your graveyard.)\nFlashback {3}{U} (You may cast this card from your graveyard for its flashback "
-        + "cost. Then exile it.)")]
     // A LAND's scry or surveil keeps the tag, ruled later the same day: "mi
     // serve come filtro sulle terre doppie".
     [InlineData("Undercity Sewers", "Land — Island Swamp",
@@ -139,6 +136,10 @@ public sealed partial class EffectClassifierTests
         "Whenever this Vehicle attacks, target creature that crewed it this turn explores. (Reveal the top "
         + "card of your library. Put that card into your hand if it's a land. Otherwise, put a +1/+1 counter on "
         + "that creature, then put the card back or put it into your graveyard.)\nCrew 1")]
+    // A spell that selects and does nothing else, in Dreams of Laguna's place
+    // since 2026-11-10.
+    [InlineData("Opt", "Instant",
+        "Scry 1. (Look at the top card of your library. You may put that card on the bottom.)\nDraw a card.")]
     public void Classify_ASelectionThatIsTheCardOrComesAgain_IsFilter(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
