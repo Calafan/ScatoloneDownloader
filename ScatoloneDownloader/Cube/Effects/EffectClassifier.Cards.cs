@@ -1103,8 +1103,17 @@ namespace ScatoloneDownloader.Cube
         // cards" nets zero like Abandon Attachments and is Filter alone. The
         // alternative that read that reminder as a rebuy matched nothing in
         // the store but the five Omens, and was removed.
+        //
+        // CIPHER is a second cast too, and a third, ruled 2026-11-10 ("Sì,
+        // cipher ripete"): the card is encoded on a creature and cast again on
+        // every hit, as an Equipment's trigger comes back (Arcane Heist named,
+        // against Deluxe Dragster's same cast on combat damage; Last Thoughts
+        // unreviewed). Not for a card fetched back to the hand: Regrowth beside
+        // a second cast is Regrowth alone by hand (Inspiration from Beyond's
+        // flashback, Charred Graverobber's escape: 0 of 2), so Midnight
+        // Recovery stays Regrowth.
         private static readonly Regex CastsItselfASecondTime = Rx(
-            @"\b(?:flashback|harmonize|escape|jump-start|aftermath|buyback|rebound|retrace|encore)\b");
+            @"\b(?:flashback|harmonize|escape|jump-start|aftermath|buyback|rebound|retrace|encore|cipher)\b");
 
         private static readonly Regex AnyAbilityWithACost = Rx(@"^[^\n:]{1,70}:", RegexOptions.Multiline);
 
@@ -2583,10 +2592,18 @@ namespace ScatoloneDownloader.Cube
         // Fire Lord Ozai, Rakdos, the Muscle's mana value in cards).
         //
         // Out, by the gate rather than the wording: a one-shot single card
-        // (Ensnared by the Mara; Crabomination, whose pile is theirs by the
-        // graveyard half), a repeat that spends the card itself (Grinning Totem
-        // sacrifices itself), and a repeat PAID WITH A CARD (Synthesis Pod:
-        // "Exile a spell you control" is a card for a card, parity).
+        // (Crabomination, whose pile is theirs by the graveyard half), a repeat
+        // that spends the card itself (Grinning Totem sacrifices itself), and a
+        // repeat PAID WITH A CARD (Synthesis Pod: "Exile a spell you control" is
+        // a card for a card, parity). A one-shot that takes ONE card from EACH
+        // opponent is two in the 2vs2 cube and is in, by SeveralOfTheirCardsOnce
+        // (Ensnared by the Mara, 2026-11-10).
+        //
+        // Read 2026-11-10 from the sitting of the same day (CA FN 13, every card
+        // tagged by hand): the look written "LOOKS at ... and EXILES it face
+        // down. THEY may play" by a trigger that hands the card to the creature's
+        // controller (Gonti, Night Minister), and a permanent off their top put
+        // onto the battlefield on every hit (Fishing Gear), 1 of 1 each.
         private static readonly Regex TheirTopForYou = Rx(
             // The LOOK first, then the exile face down (the sentence about the
             // play may follow the exile by a sentence of its own).
@@ -2605,7 +2622,8 @@ namespace ScatoloneDownloader.Cube
             + @"[^\n]{0,80}\byou may (?:play|cast) those cards"
             // THEY dig until they find the card, and you cast it. A sentence
             // of its own for the cast, not the villainous choice's ", then you
-            // may cast" (Ensnared by the Mara, a one-shot in any case).
+            // may cast" (Ensnared by the Mara, a one-shot read by
+            // SeveralOfTheirCardsOnce).
             + @"|\bexiles? cards from the top of their library until (?:they|that player) exile [^.\n]{0,80}\. "
             + @"you may (?:cast|play) (?:that card|it)\b"
             // The top of EACH of the opponents a trigger names (Breeches, Brazen
@@ -2613,7 +2631,13 @@ namespace ScatoloneDownloader.Cube
             + @"|\bexile the top card of each of (?:those|your) opponents'? libraries\.[^\n]{0,40}\byou may play those cards"
             // The top card PLAYED where it lies, for a turn (Xanathar, Guild
             // Kingpin's upkeep, +CardAdvantage by hand 2026-11-06).
-            + @"|\byou may play the top card of (?:their|that player's) library");
+            + @"|\byou may play the top card of (?:their|that player's) library"
+            // Gonti, Night Minister (read 2026-11-10, above).
+            + @"|\blooks? at the top card of (?:that|target|each) (?:player|opponent)'?s library and exiles? it face down\. "
+            + @"(?:you|they) may play that card"
+            // Fishing Gear (read 2026-11-10, above).
+            + @"|\bexile the top card of (?:that|target|each|defending) (?:player|opponent)'?s library\. "
+            + @"if it'?s an? [\w ]{0,30}card, you may put it onto the battlefield under your control");
 
         // Their top several, taken in one go: a draw-two wearing a different coat
         // (the "take more than one" reading, as Petty Larceny's two cards and
@@ -2626,13 +2650,56 @@ namespace ScatoloneDownloader.Cube
         // A card out of an opponent's GRAVEYARD that you may then cast, under an
         // ability that repeats, ruled 2026-10-16 (C2). Saruman of Many Colors
         // copies a spell from their graveyard on every second spell; a
-        // one-shot stays Steal alone (Hama, the Bloodbender; Shadow of the
-        // Enemy), and so do the cards that put theirs onto the battlefield
-        // (Ashen Powder, Fire Nation Salvagers: Reanimate) and the pile that is
-        // theirs already (Azula, Cunning Usurper; Crabomination).
+        // one-shot of ONE card is parity and no tag (Hama, the Bloodbender;
+        // Kotose; no Steal since 2026-11-08), while a one-shot of several is in
+        // by SeveralOfTheirCardsOnce (Shadow of the Enemy). The cards that put
+        // theirs onto the battlefield are Reanimate (Ashen Powder, Fire Nation
+        // Salvagers), even on every turn: Nautiloid Ship -CardAdvantage named
+        // 2026-11-10 ("Solo Reanimate", Virtue of Persistence, Portal to
+        // Phyrexia, Chorale of the Void: 0 of 8 repeated reanimations tagged).
+        //
+        // Read 2026-11-10 from the sitting of the same day (CA FN 13, every card
+        // tagged by hand): "you may cast TARGET … card from that player's
+        // graveyard" on every hit (Tinybones, the Pickpocket; Deluxe Dragster;
+        // Memory Vampire behind its collect evidence; 3 of 3 on a trigger,
+        // Wrexial unreviewed — the one-shots Chancellor of the Spires and
+        // Memory Plunder stay out by the gate, Arcane Heist is in by its
+        // cipher), the copy written "If you do, copy it." or "Copy it." from
+        // DEFENDING player's or THEIR graveyard (Blue Mage's Cane, Soundwave),
+        // and a spell cast from among the cards EACH PLAYER milled (Locke,
+        // Treasure Hunter).
         private static readonly Regex TheirGraveyardCardForYou = Rx(
-            @"from (?:an|that|target|each) (?:opponent|player)'?s graveyard\.(?: copy the exiled card\.)? "
-            + @"you may (?:cast|play) (?:the copy|that card|it|the exiled card)\b");
+            @"from (?:(?:an|that|target|each|defending) (?:opponent|player)'?s|their) graveyard\."
+            + @"(?: (?:if you do, )?copy (?:the exiled card|it)\.)? "
+            + @"you may (?:cast|play) (?:the copy|that card|it|the exiled card)\b"
+            + @"|\byou may cast target [^.\n]{0,60}\bcards? from (?:an|that|target|defending) (?:opponent|player)'?s graveyard"
+            + @"|\beach player mills (?:a|one|two|three|\d+) cards?\.[^\n]{0,120}\byou may cast a spell from among (?:those|the milled) cards");
+
+        // A one-shot that takes SEVERAL of their cards nets more than the card
+        // it costs (the count of 2026-11-07), read 2026-11-10 from the sitting
+        // of the same day, 1 of 1 each: every creature card of a graveyard
+        // (Shadow of the Enemy), a spell from EACH opponent's graveyard
+        // (Flotsam // Jetsam), and a villainous choice put to EACH opponent
+        // whose one half gives you the card they dig to (Ensnared by the Mara,
+        // like the villainous draws 5 of 5). Each opponent is two in the 2vs2
+        // cube, as Xander's Pact's "each opponent exiles the top card" was.
+        private static readonly Regex SeveralOfTheirCardsOnce = Rx(
+            @"\bexile all [\w ]{0,30}cards from (?:target|that|an|each) (?:player|opponent)'?s graveyard\. "
+            + @"you may cast spells from among (?:those|them|the exiled) cards"
+            + @"|\byou may cast (?:a|an|one) [\w ]{0,30}spell from each opponent'?s graveyard"
+            + @"|\beach opponent faces a villainous choice — [^\n]{0,120}\byou may (?:cast|play) (?:that card|it)\b");
+
+        // A pile of anyone's spells, one of them cast at random every turn
+        // (River Song's Diary's upkeep, read 2026-11-10, 1 of 1): random, but
+        // a card each time the ability comes back.
+        private static readonly Regex OneOfThePileAtRandom = Rx(
+            @"\bcards? exiled with this \w+, choose one of them at random\. you may cast it\b");
+
+        // An ability printed INSIDE QUOTES and handed to the creature the card
+        // equips: the creature keeps it and triggers it again, the same reading
+        // GrantedTriggeredDraw gives a draw (Blue Mage's Cane, 2026-11-10).
+        private static IEnumerable<string> GrantedAbilities(string text) =>
+            Quoted.Matches(text).Select(m => m.Value.Trim('"'));
 
         // Cards you do not own, exiled out of an opponent's graveyard and played
         // from exile on every one of your turns: Tinybones, Bauble Burglar's

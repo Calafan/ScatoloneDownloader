@@ -570,3 +570,35 @@ three: parity, Filter as tagged on 2026-10-26. The count holds on both sides of 
 gives itself away too but draws two for the card alone and nets one, while Ormos, Archive Keeper
 keeps its three-for-five and nets two on every activation; both stay this tag. No code: Pumpkin
 Bombs is the only card of its shape in the store, and the shape already keeps it out.
+
+Read 2026-11-10, from the sitting of the same day (13 cards tagged by hand and missed, each a
+card of an OPPONENT's played by you, which the count at the head already counts one): on every
+hit, "you may cast target … card from that player's graveyard" (Tinybones, the Pickpocket;
+Deluxe Dragster; Memory Vampire behind its collect evidence; Wrexial, the Risen Deep reached),
+"looks at the top card … and exiles it face down. They may play that card" (Gonti, Night
+Minister), a permanent off their top put onto the battlefield (Fishing Gear), the same cast
+inside the quotes an Equipment hands its creature (Blue Mage's Cane, read like a granted draw), a
+copy from THEIR graveyard (Soundwave, Sonic Spy), a spell from among what each player milled
+(Locke, Treasure Hunter), one card of a pile cast at random every upkeep (River Song's Diary). A
+ONE-SHOT counts when it takes several: every creature card of a graveyard (Shadow of the Enemy), a
+spell from EACH opponent's graveyard (Flotsam // Jetsam), a villainous choice put to EACH opponent
+(Ensnared by the Mara, like the villainous draws, 5 of 5; pinned out on 2026-10-16 as a one-shot
+single card), because each opponent is two in the 2vs2 cube, as Xander's Pact's top cards were.
+ONE card of theirs cast once is parity and no tag (Hama, the Bloodbender; Kotose, the Silent
+Spider; Chancellor of the Spires and Memory Plunder unreviewed), where the 2026-10-16 paragraph
+said Steal alone.
+
+Ruled 2026-11-10 ("Solo Reanimate", asked on Nautiloid Ship against Virtue of Persistence): a
+creature card put onto the battlefield out of a graveyard, even on every turn, is Reanimate alone,
+not this tag. The count says PLAYED from a graveyard; Reanimate owns the battlefield, and 0 of 8
+reviewed repeated reanimations were tagged (Virtue of Persistence, Portal to Phyrexia, Chorale of
+the Void, Archpriest of Shadows, Kroxa and Kunoros, Terror of Towashi, Scavenger's Talent, The
+Falcon). Nautiloid Ship -CardAdvantage, named. Off the TOP of a library onto the battlefield on
+every hit stays this tag (Fishing Gear, the ruling of 2026-11-03).
+
+Ruled 2026-11-10 ("Sì, cipher ripete", asked on Arcane Heist against Deluxe Dragster): CIPHER is a
+second cast, and a third, like flashback: the card is encoded on a creature and cast again on every
+hit, the same wait on a creature that an Equipment's trigger has. Arcane Heist +CardAdvantage,
+named (minus one, plus one now, plus one each hit); Last Thoughts reached. Not a card fetched back
+to the hand beside a second cast: Inspiration from Beyond (flashback) and Charred Graverobber
+(escape) are Regrowth alone by hand, 0 of 2, so Midnight Recovery's cipher stays Regrowth.

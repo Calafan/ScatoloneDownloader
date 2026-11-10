@@ -1595,11 +1595,8 @@ public sealed partial class EffectClassifierTests
     [InlineData("Deeproot Historian", "Creature — Merfolk Druid",
         "Merfolk and Druid cards in your graveyard have retrace. (You may cast cards with retrace from your "
         + "graveyard by discarding a land card in addition to paying their other costs.)")]
-    [InlineData("Ensnared by the Mara", "Sorcery",
-        "Each opponent faces a villainous choice — They exile cards from the top of their library until they "
-        + "exile a nonland card, then you may cast that card without paying its mana cost, or that player "
-        + "exiles the top four cards of their library and Ensnared by the Mara deals damage equal to the total "
-        + "mana value of those exiled cards to that player.")]
+    // Ensnared by the Mara moved out 2026-11-10: CardAdvantage by hand, each
+    // opponent is two in the 2vs2 cube (TheirCardsForYou below).
     [InlineData("Grinning Totem", "Artifact",
         "{2}, {T}, Sacrifice this artifact: Search target opponent's library for a card and exile it. Then "
         + "that player shuffles. Until the beginning of your next upkeep, you may play that card. At the "
@@ -2696,5 +2693,135 @@ public sealed partial class EffectClassifierTests
     public void Classify_TheNovember7CardAdvantage_TheOtherSideOfPumpkinBombs_IsCardAdvantage(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Read 2026-11-10 from the sitting of the same day (CA FN 13): a card of an
+    // opponent's played by you is +1 (the count of 2026-11-07). On every hit, from
+    // their graveyard or their top (Tinybones, Deluxe Dragster, Memory Vampire,
+    // Gonti, Fishing Gear), from a quoted ability the Equipment hands out (Blue
+    // Mage's Cane), copied (Soundwave), out of what each player milled (Locke), a
+    // pile cast at random every upkeep (River Song's Diary); and the one-shots
+    // that take several (Shadow of the Enemy, Flotsam // Jetsam, Ensnared by the
+    // Mara: each opponent is two in the 2vs2 cube). Ensnared was pinned out on
+    // 2026-10-16 as a one-shot single card, overturned by the sitting.
+    [InlineData("Tinybones, the Pickpocket", "Legendary Creature — Skeleton Rogue",
+        "Deathtouch\nWhenever Tinybones deals combat damage to a player, you may cast target nonland permanent "
+        + "card from that player's graveyard, and mana of any type can be spent to cast that spell.")]
+    [InlineData("Deluxe Dragster", "Artifact — Vehicle",
+        "This Vehicle can't be blocked except by Vehicles.\nWhenever this Vehicle deals combat damage to a "
+        + "player, you may cast target instant or sorcery card from that player's graveyard without paying its "
+        + "mana cost. If that spell would be put into a graveyard, exile it instead.\nCrew 2")]
+    [InlineData("Memory Vampire", "Creature — Vampire Detective",
+        "Flying\nWhenever this creature deals combat damage to a player, any number of target players each "
+        + "mill that many cards. Then you may collect evidence 9. When you do, you may cast target nonland card "
+        + "from defending player's graveyard without paying its mana cost.")]
+    [InlineData("Gonti, Night Minister", "Legendary Creature — Aetherborn Rogue",
+        "Whenever a player casts a spell they don't own, that player creates a Treasure token.\nWhenever a "
+        + "creature deals combat damage to one of your opponents, its controller looks at the top card of that "
+        + "opponent's library and exiles it face down. They may play that card for as long as it remains "
+        + "exiled. Mana of any type can be spent to cast a spell this way.")]
+    [InlineData("Fishing Gear", "Artifact — Equipment",
+        "Whenever equipped creature deals combat damage to a player, exile the top card of that player's "
+        + "library. If it's a permanent card, you may put it onto the battlefield under your control. If you "
+        + "don't, create a 1/1 blue Fish creature token.\nEquip {2}")]
+    [InlineData("Blue Mage's Cane", "Artifact — Equipment",
+        "Job select\nEquipped creature gets +0/+2, is a Wizard in addition to its other types, and has "
+        + "\"Whenever this creature attacks, exile up to one target instant or sorcery card from defending "
+        + "player's graveyard. If you do, copy it. You may cast the copy by paying {3} rather than paying its "
+        + "mana cost.\"\nSpirit of the Whalaqee — Equip {2}")]
+    [InlineData("Soundwave, Sonic Spy // Soundwave, Superior Captain", "Legendary Artifact Creature — Robot // Legendary Artifact",
+        "More Than Meets the Eye {2}{W}{U}{B} (You may cast this card converted for {2}{W}{U}{B}.)\nWhenever "
+        + "one or more creature tokens you control deal combat damage to a player, exile target instant or "
+        + "sorcery card with mana value equal to the damage dealt from their graveyard. Copy it. You may cast "
+        + "the copy without paying its mana cost. If you do, convert Soundwave.\nWhenever you cast a spell with "
+        + "an odd mana value, convert Soundwave. If you do, create Ravage, a legendary 3/3 black Robot artifact "
+        + "creature token with menace and deathtouch.\nWhenever you cast a spell with an even mana value, "
+        + "convert Soundwave. If you do, create Laserbeak, a legendary 2/2 blue Robot artifact creature token "
+        + "with flying and hexproof.")]
+    [InlineData("Locke, Treasure Hunter", "Legendary Creature — Human Rogue",
+        "Locke can't be blocked by creatures with greater power.\nMug — Whenever Locke attacks, each player "
+        + "mills a card. If a land card was milled this way, create a Treasure token. Until end of turn, you "
+        + "may cast a spell from among those cards.")]
+    [InlineData("River Song's Diary", "Artifact — Book",
+        "Imprint — Whenever a player casts an instant or sorcery spell from their hand, exile it instead of "
+        + "putting it into a graveyard as it resolves.\nAt the beginning of your upkeep, if there are four or "
+        + "more cards exiled with this artifact, choose one of them at random. You may cast it without paying "
+        + "its mana cost.")]
+    [InlineData("Shadow of the Enemy", "Sorcery",
+        "Exile all creature cards from target player's graveyard. You may cast spells from among those cards "
+        + "for as long as they remain exiled, and mana of any type can be spent to cast them.")]
+    [InlineData("Flotsam // Jetsam", "Instant // Sorcery",
+        "Mill three cards. Investigate. (Create a Clue token. It's an artifact with \"{2}, Sacrifice this "
+        + "token: Draw a card.\")\nEach opponent mills three cards, then you may cast a spell from each "
+        + "opponent's graveyard without paying its mana cost. If a spell cast this way would be put into a "
+        + "graveyard, exile it instead.")]
+    [InlineData("Ensnared by the Mara", "Sorcery",
+        "Each opponent faces a villainous choice — They exile cards from the top of their library until they "
+        + "exile a nonland card, then you may cast that card without paying its mana cost, or that player "
+        + "exiles the top four cards of their library and Ensnared by the Mara deals damage equal to the total "
+        + "mana value of those exiled cards to that player.")]
+    public void Classify_TheNovember10CardAdvantage_TheirCardsForYou_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Ruled 2026-11-10 ('Sì, cipher ripete'): cipher casts the card again on every
+    // hit, a second and a third cast like flashback. Arcane Heist named (untagged
+    // by hand the same day), against Deluxe Dragster's same cast on combat damage.
+    [InlineData("Arcane Heist", "Sorcery",
+        "You may cast target instant or sorcery card from an opponent's graveyard without paying its mana "
+        + "cost. If that spell would be put into their graveyard, exile it instead.\nCipher (Then you may exile "
+        + "this spell card encoded on a creature you control. Whenever that creature deals combat damage to a "
+        + "player, its controller may cast a copy of the encoded card without paying its mana cost.)")]
+    [InlineData("Last Thoughts", "Sorcery",
+        "Draw a card.\nCipher (Then you may exile this spell card encoded on a creature you control. Whenever "
+        + "that creature deals combat damage to a player, its controller may cast a copy of the encoded card "
+        + "without paying its mana cost.)")]
+    public void Classify_TheNovember10CardAdvantage_CipherCastsAgain_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Not this tag, 2026-11-10: a repeated reanimation is Reanimate alone ('Solo
+    // Reanimate', Nautiloid Ship named, Virtue of Persistence and Chorale of the
+    // Void 0 of 8); ONE card of theirs cast once is parity (Chancellor of the
+    // Spires, Hama, Kotose); a card fetched back beside its cipher stays Regrowth
+    // (Midnight Recovery, as Inspiration from Beyond's flashback).
+    [InlineData("Nautiloid Ship", "Artifact — Vehicle",
+        "Flying\nWhen this Vehicle enters, exile target player's graveyard.\nWhenever this Vehicle deals combat "
+        + "damage to a player, you may put a creature card exiled with this Vehicle onto the battlefield under "
+        + "your control.\nCrew 3")]
+    [InlineData("Virtue of Persistence // Locthwain Scorn", "Enchantment // Sorcery — Adventure",
+        "At the beginning of your upkeep, put target creature card from a graveyard onto the battlefield "
+        + "under your control.\nTarget creature gets -3/-3 until end of turn. You gain 2 life.")]
+    [InlineData("Chorale of the Void", "Enchantment — Aura",
+        "Enchant creature you control\nWhenever enchanted creature attacks, put target creature card from "
+        + "defending player's graveyard onto the battlefield under your control tapped and attacking.\nVoid — At "
+        + "the beginning of your end step, sacrifice this Aura unless a nonland permanent left the battlefield "
+        + "this turn or a spell was warped this turn.")]
+    [InlineData("Chancellor of the Spires", "Creature — Phyrexian Sphinx",
+        "You may reveal this card from your opening hand. If you do, at the beginning of the first upkeep, "
+        + "each opponent mills seven cards.\nFlying\nWhen this creature enters, you may cast target instant or "
+        + "sorcery card from an opponent's graveyard without paying its mana cost.")]
+    [InlineData("Hama, the Bloodbender", "Legendary Creature — Human Warlock",
+        "When Hama enters, target opponent mills three cards. Exile up to one noncreature, nonland card from "
+        + "that player's graveyard. For as long as you control Hama, you may cast the exiled card during your "
+        + "turn by waterbending {X} rather than paying its mana cost, where X is its mana value. (While paying "
+        + "a waterbend cost, you can tap your artifacts and creatures to help. Each one pays for {1}.)")]
+    [InlineData("Kotose, the Silent Spider", "Legendary Creature — Human Ninja",
+        "When Kotose enters, exile target card other than a basic land card from an opponent's graveyard. "
+        + "Search that player's graveyard, hand, and library for any number of cards with the same name as that "
+        + "card and exile them. Then that player shuffles. For as long as you control Kotose, you may play one "
+        + "of the exiled cards, and you may spend mana as though it were mana of any color to cast it.")]
+    [InlineData("Midnight Recovery", "Sorcery",
+        "Return target creature card from your graveyard to your hand.\nCipher (Then you may exile this spell "
+        + "card encoded on a creature you control. Whenever that creature deals combat damage to a player, its "
+        + "controller may cast a copy of the encoded card without paying its mana cost.)")]
+    public void Classify_TheNovember10CardAdvantage_ReanimatedOrOneCardOnce_IsNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
     }
 }

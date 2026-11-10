@@ -1061,10 +1061,17 @@ namespace ScatoloneDownloader.Cube
                 // A card off the top of an OPPONENT's library, or out of their
                 // graveyard, that you may play: a stream when the ability
                 // comes back, and a draw-two when it takes more than one.
-                // Ruled 2026-10-16 (C1, C2) — see TheirTopForYou.
-                || Abilities(text).Any(a => (TheirTopForYou.IsMatch(a) || TheirGraveyardCardForYou.IsMatch(a))
+                // Ruled 2026-10-16 (C1, C2) — see TheirTopForYou. The ability
+                // may be one the card hands to the creature it equips (Blue
+                // Mage's Cane), and a pile cast at random is the same stream
+                // (River Song's Diary), read 2026-11-10.
+                || Abilities(text).Concat(GrantedAbilities(text)).Any(a =>
+                    (TheirTopForYou.IsMatch(a) || TheirGraveyardCardForYou.IsMatch(a) || OneOfThePileAtRandom.IsMatch(a))
                     && RepeatsWithoutPayingACard(a))
+                // …or a spell cast again by its cipher (Arcane Heist, 2026-11-10).
+                || (TheirGraveyardCardForYou.IsMatch(text) && CastsItselfASecondTime.IsMatch(text))
                 || SeveralOffTheirTop.IsMatch(text) || TheirCardsFromExile.IsMatch(text)
+                || SeveralOfTheirCardsOnce.IsMatch(text)
                 // The readings of 2026-10-23 — see EntersOrLeavesImpulse.
                 || EntersOrLeavesImpulse.IsMatch(text)
                 || Abilities(text).Any(a => RevealsAnyNumberIntoHand.IsMatch(a) && !TribalCard.IsMatch(a))
