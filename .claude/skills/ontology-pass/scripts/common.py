@@ -19,7 +19,7 @@ SKILL_DIR = Path(__file__).resolve().parents[1]
 CODE_REPO = SKILL_DIR.parents[2]
 STORE_REPO = Path(r"E:\Working\Repos\ScatoloneQuintet")
 STORE = STORE_REPO / "metadata"
-FILES = ["fringe.json", "pool.json", "unrated.json"]
+FILES = ["bench.json", "fringe.json", "pool.json", "unrated.json"]
 STATE_DIR = SKILL_DIR / "state"
 HANDED_BACK = STATE_DIR / "handed-back.json"
 WORK_DIR = Path(os.environ.get("ONTOLOGY_DIR") or STATE_DIR / "work")
@@ -44,9 +44,16 @@ def load_store(rev=None, store=STORE):
     cards = {}
     for name in FILES:
         if rev is None:
+            if not (Path(store) / name).is_file():
+                continue  # a tier file the store does not have (bench.json before 2026-11-12)
             text = (Path(store) / name).read_text(encoding="utf-8")
         else:
-            text = git(STORE_REPO, "show", "%s:metadata/%s" % (rev, name))
+            try:
+                text = git(STORE_REPO, "show", "%s:metadata/%s" % (rev, name))
+            except Exception:
+                continue  # that revision predates this tier file
+            if not text.strip():
+                continue
         for oid, entry in json.loads(text).get("cards", {}).items():
             cards[oid] = (name, entry)
     return cards

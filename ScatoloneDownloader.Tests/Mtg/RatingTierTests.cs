@@ -29,7 +29,7 @@ public sealed class RatingTierTests
     [Theory]
     [InlineData(0, "unrated.json")]
     [InlineData(1, "fringe.json")]
-    [InlineData(2, "fringe.json")]
+    [InlineData(2, "bench.json")]
     [InlineData(3, "pool.json")]
     [InlineData(4, "pool.json")]
     [InlineData(5, "pool.json")]
@@ -41,9 +41,9 @@ public sealed class RatingTierTests
         string expectedFromTier = RatingTierClassifier.Classify(rating).ToString() switch
         {
             "Pool" => "pool.json",
-            // Fringe and Bench are one storage band split only for view purposes,
-            // so both must keep resolving to the same file.
-            "Fringe" or "Bench" => "fringe.json",
+            // Since 2026-11-12 Fringe and Bench each have their own file.
+            "Bench" => "bench.json",
+            "Fringe" => "fringe.json",
             _ => "unrated.json",
         };
         Assert.Equal(expectedFromTier, CubeMetadataStore.TierFileName(rating));

@@ -76,7 +76,9 @@ def face(c, key):
 
 
 adds = []
-for tier in ("pool", "fringe", "unrated"):
+for tier in ("pool", "bench", "fringe", "unrated"):
+    if not (Path(store_dir) / f"{tier}.json").is_file():
+        continue  # bench.json is absent from stores older than 2026-11-12
     data = json.loads((Path(store_dir) / f"{tier}.json").read_text(encoding="utf-8-sig"))
     for oid, e in data.get("cards", {}).items():
         c = oracle.get(oid)

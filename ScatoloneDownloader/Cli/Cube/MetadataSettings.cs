@@ -20,7 +20,7 @@ namespace ScatoloneDownloader.Cli.Cube
     internal class MetadataSettings : CommandSettings
     {
         internal const string MetadataDescription =
-            "Path to the git-tracked metadata directory (pool.json/fringe.json/unrated.json). "
+            "Path to the git-tracked metadata directory (pool.json/bench.json/fringe.json/unrated.json). "
             + "Defaults to the 'metadata' folder of the library root.";
 
         [CommandOption("--root <DIR>")]

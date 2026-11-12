@@ -94,10 +94,11 @@ namespace ScatoloneDownloader.Metadata
     /// rating keeps the actively-curated pool small:
     /// <list type="bullet">
     /// <item><description><c>pool.json</c> — rating 3-5 (the active cube; small; main hand-edit target).</description></item>
-    /// <item><description><c>fringe.json</c> — rating 1-2 (evaluated but cut; grows over time).</description></item>
+    /// <item><description><c>bench.json</c> — rating 2 (the bench: cut from the pool but kept close).</description></item>
+    /// <item><description><c>fringe.json</c> — rating 1 (evaluated but cut; grows over time).</description></item>
     /// <item><description><c>unrated.json</c> — rating 0 (the bulk library manifest; changes only when new cards appear).</description></item>
     /// </list>
-    /// <see cref="Save"/> rewrites all three files from the full in-memory set
+    /// <see cref="Save"/> rewrites all four files from the full in-memory set
     /// (used by batch commands like <c>sync</c>), while <see cref="SaveEntry"/>
     /// persists one card incrementally by touching only the tier file(s) it
     /// belongs in (the hot path for the web tagger). Either way a rating change
@@ -113,9 +114,10 @@ namespace ScatoloneDownloader.Metadata
         /// somehow appears in more than one file (shouldn't happen from normal
         /// use — <see cref="Save"/> always partitions a card into exactly one
         /// tier — but a hand-edited directory could produce one).</summary>
-        private static readonly string[] TierFileNames = [PoolFile, FringeFile, UnratedFile];
+        private static readonly string[] TierFileNames = [PoolFile, BenchFile, FringeFile, UnratedFile];
 
         private const string PoolFile = "pool.json";
+        private const string BenchFile = "bench.json";
         private const string FringeFile = "fringe.json";
         private const string UnratedFile = "unrated.json";
 
@@ -134,15 +136,16 @@ namespace ScatoloneDownloader.Metadata
         /// using the shared <see cref="RatingTierClassifier"/> so the rating
         /// boundaries live in exactly one place (also read by
         /// <see cref="CardAnalyzer"/>). <see cref="RatingTier.Fringe"/> and
-        /// <see cref="RatingTier.Bench"/> deliberately share one file: they are
-        /// browsed differently but stored identically, so splitting them moved no
-        /// entry on disk.</summary>
+        /// <see cref="RatingTier.Bench"/> each have their own file: since
+        /// 2026-11-12 rating 2 lives in <c>bench.json</c> and rating 1 in
+        /// <c>fringe.json</c>, at the user's request.</summary>
         internal static string TierFileName(int rating)
         {
             return RatingTierClassifier.Classify(rating) switch
             {
                 RatingTier.Pool => PoolFile,
-                RatingTier.Fringe or RatingTier.Bench => FringeFile,
+                RatingTier.Bench => BenchFile,
+                RatingTier.Fringe => FringeFile,
                 _ => UnratedFile,
             };
         }
@@ -155,7 +158,7 @@ namespace ScatoloneDownloader.Metadata
         /// corrupt THROWS <see cref="InvalidDataException"/> (see
         /// <see cref="LoadTierFile"/>). If the same <c>oracle_id</c> somehow appears in more than one
         /// tier file, the first one encountered in <see cref="TierFileNames"/>
-        /// order (pool -> fringe -> unrated) wins, so the merge is deterministic.
+        /// order (pool -> bench -> fringe -> unrated) wins, so the merge is deterministic.
         /// </summary>
         internal static CubeMetadata Load(string metadataDirectory)
         {
@@ -217,7 +220,7 @@ namespace ScatoloneDownloader.Metadata
 
         /// <summary>
         /// Writes the metadata directory, creating it if needed. ALWAYS rewrites
-        /// all three tier files from the full in-memory <paramref name="data"/>
+        /// all four tier files from the full in-memory <paramref name="data"/>
         /// set — each entry is routed to <see cref="TierFileName"/> by its
         /// CURRENT rating, so a rating change moves it into a different file and
         /// disappears from its old one (that is the whole point of B1/B2: no
@@ -242,7 +245,7 @@ namespace ScatoloneDownloader.Metadata
             // Stage EVERY tier to a temp file first, then move them all into place.
             // Each move is atomic on the same volume (so a crash mid-write never
             // leaves a torn tier file), and staging first shrinks the window in
-            // which the three files are mutually inconsistent — a card demoted
+            // which the four files are mutually inconsistent — a card demoted
             // across tiers momentarily absent from all of them — to just the few
             // fast File.Move calls rather than the full ~30k serialization.
             List<(string TempPath, string FinalPath)> staged = [];
@@ -270,7 +273,7 @@ namespace ScatoloneDownloader.Metadata
         /// Persists a SINGLE entry incrementally — the hot path used by the web
         /// tagger on every edit. Touches only the tier file(s) the entry belongs
         /// in: always the new-rating tier, plus the previous-rating tier when the
-        /// rating change moved the card across a pool/fringe/unrated boundary. This
+        /// rating change moved the card across a pool/bench/fringe/unrated boundary. This
         /// replaces the whole-library rewrite the tagger used to do per keystroke
         /// (which re-serialized all ~30k entries — including the huge, unchanged
         /// unrated backlog — every time).

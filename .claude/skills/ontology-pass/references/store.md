@@ -1,7 +1,7 @@
 # The metadata store
 
 Truth lives in `E:\Working\Repos\ScatoloneQuintet\metadata` — a separate repo from
-the code — as three tier files: `fringe.json`, `pool.json`, `unrated.json`. One
+the code — as four tier files: `bench.json`, `fringe.json`, `pool.json`, `unrated.json`. One
 entry per `oracle_id`, so a card is one entry however many printings it has.
 
 ```json

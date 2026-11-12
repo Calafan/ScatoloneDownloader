@@ -25,7 +25,7 @@ survives a re-clone.
 
 ## Metadata directory layout (rating-tier partition)
 
-`metadata/` is deliberately a **directory of three files**, not one
+`metadata/` is deliberately a **directory of four files**, not one
 monolithic JSON blob, because it doubles as the disaster-recovery manifest
 for the whole library — every printing Scryfall knows about is kept on
 purpose, even ones nobody has looked at yet, so a single all-cards file would
@@ -35,10 +35,11 @@ lives in exactly one file, chosen by its **current rating**:
 | File | Rating | Contents |
 |---|---|---|
 | `metadata/pool.json` | 3-5 | The active cube — small, the main hand-edit target, tiny diffs. |
-| `metadata/fringe.json` | 1-2 | Evaluated but cut. Grows over time as more of the backlog gets rated and rejected. Rating 1 and rating 2 share this file on purpose: they are reported differently (only `2` appears, in the stats page's bench tables, see below) but stored identically, so the split moves nothing on disk. |
+| `metadata/bench.json` | 2 | The bench: cut, but only just. Rating 2 appears in the stats page's bench tables (see below). Its own file since 2026-11-12, at the user's request; before that rating 2 shared `fringe.json` with rating 1. |
+| `metadata/fringe.json` | 1 | Evaluated and cut. Grows over time as more of the backlog gets rated and rejected. |
 | `metadata/unrated.json` | 0 | The bulk library manifest (tens of thousands of entries). Written by `sync` (new cards, restamped `scryfallId`), by `classify` (proposals for unrated cards) and by `tag` when an unrated card is edited or rated out of it; day-to-day curation of the pool does not touch it. |
 
-Beside the three tiers sits one file that is **not** a tier and holds no card
+Beside the four tiers sits one file that is **not** a tier and holds no card
 state:
 
 | File | Contents |
@@ -61,7 +62,7 @@ and nothing else. It is also a HISTORY — a card reviewed twice leaves two
 lines, which is what makes a trend readable at all. Writing it is never
 load-bearing: an I/O failure logs a warning and the tag is still saved.
 
-**Loading** (`CubeMetadataStore.Load`) reads whichever of the three files are
+**Loading** (`CubeMetadataStore.Load`) reads whichever of the four files are
 present and merges them into one in-memory set, keyed by `oracle_id`. A
 missing `metadata/` directory, a missing individual tier file, or a blank
 (whitespace-only) tier file all just contribute nothing. But a tier file that
@@ -71,14 +72,16 @@ of being silently treated as empty — otherwise the next save would overwrite
 and permanently destroy that tier of the recovery manifest. Fix or remove the
 file and retry. (If the same `oracle_id` somehow appears in more than one file
 — should never happen from normal use — the first one found in `pool.json` →
-`fringe.json` → `unrated.json` order wins.)
+`bench.json` → `fringe.json` → `unrated.json` order wins. A store written before
+2026-11-12 has no `bench.json` and keeps its rating-2 cards in `fringe.json`:
+they load as usual and the next `Save` moves them to `bench.json`.)
 
 **Saving** comes in two forms:
 
 - **`CubeMetadataStore.SaveEntry`** — the hot path the tagger uses on every
   edit. It persists a *single* card, touching only the tier file(s) it belongs
   in: the new-rating tier always, plus the previous-rating tier when the
-  rating crossed a `pool`/`fringe`/`unrated` boundary. Each touched tier is
+  rating crossed a `pool`/`bench`/`fringe`/`unrated` boundary. Each touched tier is
   **re-read from disk first**, so a concurrent external change (a `git pull`, a
   second editor, a hand-edit) to *other* entries survives instead of being
   clobbered by the tagger's in-memory snapshot. The new tier is written
@@ -86,8 +89,8 @@ file and retry. (If the same `oracle_id` somehow appears in more than one file
   card momentarily in both tiers (resolved pool-first by `Load`) rather than
   missing from all of them.
 - **`CubeMetadataStore.Save`** — the batch path (e.g. `sync`) that rewrites
-  all three files from the full in-memory set, routing each entry by
-  `TierFileName(rating)`. It stages all three temp files first, then moves them
+  all four files from the full in-memory set, routing each entry by
+  `TierFileName(rating)`. It stages all four temp files first, then moves them
   into place, so the window in which the tiers are mutually inconsistent is
   just the fast `File.Move` calls.
 
@@ -120,7 +123,7 @@ the first line instead of as a mysteriously empty store.
         sync       (download what is missing + register + propose, in one go;
            |        new PNGs -> unrated entries, never touches existing ones)
            v
-   metadata/{pool,fringe,unrated}.json  <-------+
+   metadata/{pool,bench,fringe,unrated}.json  <-------+
            |                                    |
            v                                    |
         classify  (propose effects)             |
@@ -185,7 +188,7 @@ the first line instead of as a mysteriously empty store.
    "which part of the library am I on?" are independent, so collapsing them
    into one list would force choosing between *pool* and *to review* instead
    of asking for both:
-   - **Rating** (picker): any / pool (3-5) / fringe (1-2) /
+   - **Rating** (picker): any / pool (3-5) / fringe (1-2, the UI filter spans bench.json and fringe.json) /
      unrated / each exact star. The first three mirror the store's own tier
      files, so "pool" here means what it means in `pool.json` — the ~2600
      cards that actually make the cube, against 30k in the library.
@@ -218,7 +221,7 @@ the first line instead of as a mysteriously empty store.
    in its header, `Download .html` and `Download .md`, build the two report
    files (see below) from the same live cards.
 4. **`restore -m metadata --images <dir>`** — disaster recovery. Loads the
-   **union of all three tier files** (the full library manifest, not just the
+   **union of all four tier files** (the full library manifest, not just the
    pool), downloads the Scryfall bulk card list, resolves each entry to its
    exact printing (preferring `scryfallId`), and re-downloads + recomposes
    any `.png` missing from `<dir>\<year>\<set>\<Name>.png` (the library layout
@@ -273,7 +276,7 @@ the first line instead of as a mysteriously empty store.
 
 ## Metadata entry schema
 
-Each of the three tier files has the same shape:
+Each of the four tier files has the same shape:
 
 ```json
 {
@@ -302,7 +305,7 @@ Each of the three tier files has the same shape:
 |---|---|---|---|
 | `name` | `string` | `sync`, `tag` | Card name. **Informational only, not a key** — safe to leave stale after a rename; the app always looks the entry up by `oracle_id`. |
 | `scryfallId` | `string` (nullable, omitted when absent) | `tag`, `sync` | The Scryfall printing `id` (not `oracle_id`) of the art in the library: the printing the library rules pick, which `sync` restamps when a rule change moves the card to another printing. `restore` prefers this to re-download the *same* printing/art; if it's missing or the printing has vanished from the current bulk data, `restore` falls back to the first printing found for the `oracle_id`. Hand-editing this is fine if you know the correct printing UUID; leaving it blank just means `restore` uses the fallback. |
-| `rating` | `int`, 0-5 | `sync` (always `0`), `tag` (authoritative) | Cube rating; `0` = unrated. **This is also the field that decides which tier file (`pool.json`/`fringe.json`/`unrated.json`) the entry lives in** — the next `Save` moves it if you hand-edit this to cross a tier boundary. Rating `1` is deliberately left out of the analysis (see D7 below) — it still round-trips. Rating `2` appears only in the stats page's bench tables. |
+| `rating` | `int`, 0-5 | `sync` (always `0`), `tag` (authoritative) | Cube rating; `0` = unrated. **This is also the field that decides which tier file (`pool.json`/`bench.json`/`fringe.json`/`unrated.json`) the entry lives in** — the next `Save` moves it if you hand-edit this to cross a tier boundary. Rating `1` is deliberately left out of the analysis (see D7 below) — it still round-trips. Rating `2` appears only in the stats page's bench tables. |
 | `status` | `string`, one of `Banned \| Token \| Jolly`, or omitted/null for a normal card | `tag` | Mutually-exclusive pool status. A tagged card (`Banned`/`Token`/`Jolly`) is excluded from the stats page's pool at any rating. Hand-editable directly as one of the strings (case-insensitive on read); an unrecognized or blank value is treated as no status. |
 | `effects` | `string[]`, canonical `CardEffect` member names | `tag`; `classify` and `sync` write proposals | Functional effect tags (a card can carry several). Stored as an array of names, not a packed bitmask, so git diffs show exactly which tag changed. Unknown/duplicate names are dropped on the next `Save` (round-tripped through the resolver). Hand-editable with any of the canonical names in `Mtg/CardEffect.cs` (aliases like `"board wipe"` are also accepted on read, but always re-written canonically). Empty/absent = untagged. |
 | `reviewedAt` | ISO-8601 UTC timestamp (`DateTimeOffset?`), omitted when null | `tag` only | Stamped automatically the instant a human changes anything for a card in the tagger (rating, status, or an effect toggle) — it is the "someone actually looked at this" marker used by the tagger's progress counter and its default to-review filter. `null`/absent = never manually reviewed. The store preserves this verbatim on every `Save` — nothing else re-stamps or clears it, so do not hand-edit it unless you intend to reset the review flag for that card. |
@@ -316,12 +319,12 @@ the key disappears from a tier the next time that tier is saved.
 - Edit whichever tier file currently holds the card (`pool.json` for your
   active cube is the common case). Don't rename the `oracle_id` keys.
 - If you hand-edit `rating` to cross a tier boundary (e.g. bump a
-  `fringe.json` entry from 2 to 4), it stays in the "wrong" file until a
+  `bench.json` entry from 2 to 4), it stays in the "wrong" file until a
   command re-saves *that card*: editing it in `tag` moves it (the incremental
   save prunes the old tier), and `sync` (which, when it adds a card, does a
   full re-partitioning save) moves every mis-filed entry at once. Simplest: just fix the entry in the
   correct tier file directly (add it to `pool.json`, remove it from
-  `fringe.json`).
+  `bench.json`).
 - `effects` must use member names from `Mtg/CardEffect.cs` (or a recognized
   alias); anything else is silently dropped on the next save by any command.
 - `status` must be one of `Banned`, `Token`, `Jolly`, or omitted — anything

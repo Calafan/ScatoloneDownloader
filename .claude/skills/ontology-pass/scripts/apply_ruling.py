@@ -34,7 +34,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-FILES = ["fringe.json", "pool.json", "unrated.json"]
+FILES = ["bench.json", "fringe.json", "pool.json", "unrated.json"]
 DEFAULT_STORE = Path(r"E:\Working\Repos\ScatoloneQuintet\metadata")
 
 # Effects are stored in ENUM DECLARATION ORDER, not alphabetically. A diff that
@@ -50,9 +50,11 @@ def dump(data):
 
 
 def load_head(repo, name):
-    raw = subprocess.run(["git", "show", f"HEAD:metadata/{name}"], cwd=repo,
-                         capture_output=True, check=True).stdout.decode("utf-8")
-    return json.loads(raw)
+    done = subprocess.run(["git", "show", f"HEAD:metadata/{name}"], cwd=repo, capture_output=True)
+    if done.returncode != 0:
+        # A tier file HEAD does not have yet (bench.json before the 2026-11-12 split).
+        return {"version": 1, "cards": {}}
+    return json.loads(done.stdout.decode("utf-8"))
 
 
 def apply(data_by_file, rulings, reviewed_only=False):
@@ -117,7 +119,7 @@ def main():
     ap.add_argument("--mode", choices=["head", "tree"], required=True)
     ap.add_argument("--store", default=str(DEFAULT_STORE))
     ap.add_argument("--backed-up-to", help="--mode head only: a directory holding byte-identical copies "
-                                           "of the three tier files as they are in the tree now")
+                                           "of the four tier files as they are in the tree now")
     args = ap.parse_args()
 
     meta = Path(args.store)
@@ -135,6 +137,8 @@ def main():
             sys.exit("--mode head overwrites the working tree: run it through `store_pass.py rulings` "
                      "or `handback`, which back the tree up and restore it (see references/store.md)")
         for name in FILES:
+            if not (backup / name).is_file() and not (meta / name).is_file():
+                continue
             if not (backup / name).is_file() or (backup / name).read_bytes() != (meta / name).read_bytes():
                 sys.exit("--backed-up-to %s does not hold the tree's %s as it is now — nothing written"
                          % (backup, name))
@@ -142,11 +146,14 @@ def main():
     if args.mode == "head":
         data_by_file = {name: load_head(repo, name) for name in FILES}
     else:
-        data_by_file = {name: json.loads((meta / name).read_text(encoding="utf-8")) for name in FILES}
+        data_by_file = {name: json.loads((meta / name).read_text(encoding="utf-8"))
+                        for name in FILES if (meta / name).is_file()}
 
     touched, skipped = apply(data_by_file, rulings, reviewed_only=args.mode == "head")
 
     for name, data in data_by_file.items():
+        if not (meta / name).is_file() and not data.get("cards"):
+            continue
         (meta / name).write_bytes(dump(data).encode("utf-8"))
 
     # Verify against HEAD: report what moved and, crucially, whether anything
@@ -157,6 +164,8 @@ def main():
     unreviewing = {e["oracleId"] for e in rulings if e.get("op") == "unreview"}
 
     for name in FILES:
+        if not (meta / name).is_file():
+            continue
         after = json.loads((meta / name).read_text(encoding="utf-8")).get("cards", {})
         before = head[name].get("cards", {})
 

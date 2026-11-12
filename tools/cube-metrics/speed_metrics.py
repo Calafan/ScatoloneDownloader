@@ -15,7 +15,9 @@ from pathlib import Path
 box_path, sets_dir, store_dir = sys.argv[1:4]
 
 store = {}
-for tier in ("pool", "fringe", "unrated"):
+for tier in ("pool", "bench", "fringe", "unrated"):
+    if not (Path(store_dir) / f"{tier}.json").is_file():
+        continue  # bench.json is absent from stores older than 2026-11-12
     data = json.loads((Path(store_dir) / f"{tier}.json").read_text(encoding="utf-8-sig"))
     for oid, e in data.get("cards", {}).items():
         store[oid] = e

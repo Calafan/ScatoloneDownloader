@@ -18,13 +18,15 @@ import re
 import sys
 from pathlib import Path
 
-FILES = ["fringe.json", "pool.json", "unrated.json"]
+FILES = ["bench.json", "fringe.json", "pool.json", "unrated.json"]
 DEFAULT_STORE = Path(r"E:\Working\Repos\ScatoloneQuintet\metadata")
 
 
 def load(meta):
     cards = {}
     for name in FILES:
+        if not (meta / name).is_file():
+            continue
         data = json.loads((meta / name).read_text(encoding="utf-8"))
         for oracle, entry in data.get("cards", {}).items():
             cards[oracle] = (name, entry)

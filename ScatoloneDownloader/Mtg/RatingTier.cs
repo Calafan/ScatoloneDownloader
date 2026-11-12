@@ -22,9 +22,9 @@ namespace ScatoloneDownloader.Mtg
         /// <summary>Rating 2 — cut, but only just. Listed in the stats page's bench
         /// appendix so a card can be promoted back when the pool turns out to be
         /// short somewhere (a top-heavy curve needing more two-drops, a color
-        /// missing removal). Shares <c>fringe.json</c> with <see cref="Fringe"/>:
-        /// this split is an ANALYSIS distinction, deliberately not a storage one, so
-        /// introducing it moved no entry between tier files.</summary>
+        /// missing removal). Has its own tier file, <c>bench.json</c> (fringe.json holds
+        /// <see cref="Fringe"/>), since 2026-11-12, at the user's request; it is
+        /// also an ANALYSIS distinction (the availability appendix).</summary>
         Bench,
 
         /// <summary>Rating 3-5 — the active, curated cube pool.</summary>

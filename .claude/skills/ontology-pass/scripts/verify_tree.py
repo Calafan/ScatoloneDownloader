@@ -22,12 +22,14 @@ import subprocess
 from pathlib import Path
 
 DEFAULT_STORE = Path(r"E:\Working\Repos\ScatoloneQuintet\metadata")
-FILES = ["fringe.json", "pool.json", "unrated.json"]
+FILES = ["bench.json", "fringe.json", "pool.json", "unrated.json"]
 
 
 def cards_of(texts):
     out = {}
     for t in texts:
+        if not t:
+            continue  # tier file absent (bench.json before 2026-11-12)
         out.update(json.loads(t).get("cards", {}))
     return out
 
@@ -37,14 +39,14 @@ def main():
     default_list = Path(__file__).resolve().parents[1] / "state" / "handed-back.json"
     ap.add_argument("--handed-back", default=str(default_list) if default_list.exists() else None,
                     help="JSON list of {oracleId}; defaults to state/handed-back.json")
-    ap.add_argument("--compare", help="backup directory holding the three tier files")
+    ap.add_argument("--compare", help="backup directory holding the four tier files")
     ap.add_argument("--store", default=str(DEFAULT_STORE))
     args = ap.parse_args()
 
     meta = Path(args.store)
     head = cards_of(subprocess.run(["git", "show", f"HEAD:metadata/{f}"], cwd=meta.parent,
                                    capture_output=True, text=True, encoding="utf-8").stdout for f in FILES)
-    tree = cards_of((meta / f).read_text(encoding="utf-8") for f in FILES)
+    tree = cards_of((meta / f).read_text(encoding="utf-8") if (meta / f).is_file() else "" for f in FILES)
     handed = set()
     if args.handed_back:
         handed = {e["oracleId"] for e in json.loads(Path(args.handed_back).read_text(encoding="utf-8-sig"))}
@@ -61,7 +63,8 @@ def main():
         print(f"handed back, unreviewed in the tree: {still} of {len(handed)}")
 
     if args.compare:
-        backup = cards_of((Path(args.compare) / f).read_text(encoding="utf-8") for f in FILES)
+        backup = cards_of((Path(args.compare) / f).read_text(encoding="utf-8")
+                          if (Path(args.compare) / f).is_file() else "" for f in FILES)
         moved = [k for k in tree if tree[k] != backup.get(k)]
         print(f"entries differing from {args.compare}: {len(moved)}")
         for k in moved[:30]:

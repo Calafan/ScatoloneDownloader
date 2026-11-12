@@ -15,7 +15,7 @@ import json
 import sys
 from pathlib import Path
 
-FILES = ["fringe.json", "pool.json", "unrated.json"]
+FILES = ["bench.json", "fringe.json", "pool.json", "unrated.json"]
 DEFAULT_LIST = Path(__file__).resolve().parents[1] / "state" / "handed-back.json"
 
 
@@ -26,6 +26,8 @@ def main():
 
     restored = found = 0
     for name in FILES:
+        if not (pre / name).is_file() or not (post / name).is_file():
+            continue
         before = json.loads((pre / name).read_text(encoding="utf-8"))["cards"]
         data = json.loads((post / name).read_text(encoding="utf-8"))
         for k in ids & set(before):

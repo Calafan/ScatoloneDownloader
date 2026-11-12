@@ -6,8 +6,8 @@ namespace ScatoloneDownloader.Tests.Metadata;
 /// <summary>
 /// Round-trip, ordering, and rating-tier-partition coverage for
 /// <see cref="CubeMetadataStore"/> (Phase 1 + Plan Part B). The store is a
-/// DIRECTORY of three files — <c>pool.json</c> (rating 3-5), <c>fringe.json</c>
-/// (rating 1-2), <c>unrated.json</c> (rating 0) — so besides the original
+/// DIRECTORY of four files — <c>pool.json</c> (rating 3-5), <c>bench.json</c>
+/// (rating 2), <c>fringe.json</c> (rating 1), <c>unrated.json</c> (rating 0) — so besides the original
 /// round-trip/ordering guarantees, <see cref="CubeMetadataStore.Save"/> must route every entry to
 /// the right tier file by its CURRENT rating and <see cref="CubeMetadataStore.Load"/> must merge
 /// all present tier files back into one document.
@@ -141,7 +141,7 @@ public sealed class CubeMetadataStoreTests : IDisposable
     [Theory]
     [InlineData(0, "unrated.json")]
     [InlineData(1, "fringe.json")]
-    [InlineData(2, "fringe.json")]
+    [InlineData(2, "bench.json")]
     [InlineData(3, "pool.json")]
     [InlineData(4, "pool.json")]
     [InlineData(5, "pool.json")]
@@ -155,7 +155,7 @@ public sealed class CubeMetadataStoreTests : IDisposable
     {
         CubeMetadata data = new();
         data.Cards["oracle-pool"] = new CardMetadataEntry { Name = "Pool Card", Rating = 4 };
-        data.Cards["oracle-fringe"] = new CardMetadataEntry { Name = "Fringe Card", Rating = 2 };
+        data.Cards["oracle-fringe"] = new CardMetadataEntry { Name = "Fringe Card", Rating = 1 };
         data.Cards["oracle-unrated"] = new CardMetadataEntry { Name = "Unrated Card", Rating = 0 };
 
         CubeMetadataStore.Save(tempDir, data);
@@ -170,7 +170,62 @@ public sealed class CubeMetadataStoreTests : IDisposable
     }
 
     [Fact]
-    public void Save_AlwaysWritesAllThreeTierFiles_EvenWhenSomeAreEmpty()
+    public void Save_PutsRating1InFringeAndRating2InBench_AndNeitherInTheOther()
+    {
+        CubeMetadata data = new();
+        data.Cards["oracle-r1"] = new CardMetadataEntry { Name = "Rated One", Rating = 1 };
+        data.Cards["oracle-r2"] = new CardMetadataEntry { Name = "Rated Two", Rating = 2 };
+
+        CubeMetadataStore.Save(tempDir, data);
+
+        Assert.Equal("Rated One", Assert.Single(ReadTierFile("fringe.json").Cards).Value.Name);
+        Assert.Equal("Rated Two", Assert.Single(ReadTierFile("bench.json").Cards).Value.Name);
+        Assert.DoesNotContain("oracle-r2", ReadTierFile("fringe.json").Cards.Keys);
+        Assert.DoesNotContain("oracle-r1", ReadTierFile("bench.json").Cards.Keys);
+    }
+
+    [Fact]
+    public void SaveEntry_MovesBetweenBenchAndFringe_AndPrunesTheOldFile()
+    {
+        CubeMetadata seed = new();
+        seed.Cards["oracle-1"] = new CardMetadataEntry { Name = "Mover", Rating = 2 };
+        CubeMetadataStore.Save(tempDir, seed);
+        Assert.Single(ReadTierFile("bench.json").Cards);
+
+        CubeMetadataStore.SaveEntry(tempDir, "oracle-1",
+            new CardMetadataEntry { Name = "Mover", Rating = 1 }, previousRating: 2);
+
+        Assert.Empty(ReadTierFile("bench.json").Cards);
+        Assert.Equal(1, Assert.Single(ReadTierFile("fringe.json").Cards).Value.Rating);
+
+        CubeMetadataStore.SaveEntry(tempDir, "oracle-1",
+            new CardMetadataEntry { Name = "Mover", Rating = 2 }, previousRating: 1);
+
+        Assert.Empty(ReadTierFile("fringe.json").Cards);
+        Assert.Equal(2, Assert.Single(ReadTierFile("bench.json").Cards).Value.Rating);
+    }
+
+    [Fact]
+    public void LegacyLayout_Rating2InFringeFile_LoadsAndSaveMovesItToBench()
+    {
+        // Before 2026-11-12 fringe.json held ratings 1 and 2, and bench.json did not exist.
+        WriteTierFile("fringe.json",
+            ("oracle-r1", new CardMetadataEntry { Name = "Rated One", Rating = 1 }),
+            ("oracle-r2", new CardMetadataEntry { Name = "Rated Two", Rating = 2 }));
+        Assert.False(File.Exists(Path.Combine(tempDir, "bench.json")));
+
+        CubeMetadata loaded = CubeMetadataStore.Load(tempDir);
+        Assert.Equal(2, loaded.Cards["oracle-r2"].Rating);
+        Assert.Equal(2, loaded.Cards.Count);
+
+        CubeMetadataStore.Save(tempDir, loaded);
+
+        Assert.Equal("Rated Two", Assert.Single(ReadTierFile("bench.json").Cards).Value.Name);
+        Assert.Equal("Rated One", Assert.Single(ReadTierFile("fringe.json").Cards).Value.Name);
+    }
+
+    [Fact]
+    public void Save_AlwaysWritesAllFourTierFiles_EvenWhenSomeAreEmpty()
     {
         CubeMetadata data = new();
         data.Cards["oracle-1"] = new CardMetadataEntry { Name = "Only Pool Card", Rating = 5 };
@@ -178,8 +233,10 @@ public sealed class CubeMetadataStoreTests : IDisposable
         CubeMetadataStore.Save(tempDir, data);
 
         Assert.True(File.Exists(Path.Combine(tempDir, "pool.json")));
+        Assert.True(File.Exists(Path.Combine(tempDir, "bench.json")));
         Assert.True(File.Exists(Path.Combine(tempDir, "fringe.json")));
         Assert.True(File.Exists(Path.Combine(tempDir, "unrated.json")));
+        Assert.Empty(ReadTierFile("bench.json").Cards);
         Assert.Empty(ReadTierFile("fringe.json").Cards);
         Assert.Empty(ReadTierFile("unrated.json").Cards);
     }
@@ -240,7 +297,7 @@ public sealed class CubeMetadataStoreTests : IDisposable
     }
 
     [Fact]
-    public void Load_DuplicateOracleIdAcrossTierFiles_FirstInPoolFringeUnratedOrderWins()
+    public void Load_DuplicateOracleIdAcrossTierFiles_FirstInPoolBenchFringeUnratedOrderWins()
     {
         // Should never happen from normal Save (which partitions into exactly
         // one tier), but a hand-edited directory could produce it — Load must
@@ -331,7 +388,7 @@ public sealed class CubeMetadataStoreTests : IDisposable
             new CardMetadataEntry { Name = "Pool Card", Rating = 5 }, previousRating: null);
 
         Assert.Equal("Pool Card", Assert.Single(ReadTierFile("pool.json").Cards).Value.Name);
-        // Incremental: a pool-card save must not spawn empty fringe/unrated files.
+        // Incremental: a pool-card save must not spawn empty bench/fringe/unrated files.
         Assert.False(File.Exists(Path.Combine(tempDir, "fringe.json")));
         Assert.False(File.Exists(Path.Combine(tempDir, "unrated.json")));
     }

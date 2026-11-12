@@ -170,7 +170,8 @@ small even with 30k+ cards:
 | File | Rating | Contents |
 |---|---|---|
 | `pool.json` | 3–5 | the cube |
-| `fringe.json` | 1–2 | evaluated and cut |
+| `bench.json` | 2 | cut, but only just (the bench) |
+| `fringe.json` | 1 | evaluated and cut |
 | `unrated.json` | 0 | the rest of the library, not yet evaluated |
 
 The rating scale, the statuses (Banned, Token, Jolly), the entry schema and the

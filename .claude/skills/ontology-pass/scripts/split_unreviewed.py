@@ -19,14 +19,14 @@ import subprocess
 import sys
 from pathlib import Path
 
-FILES = ["fringe.json", "pool.json", "unrated.json"]
+FILES = ["bench.json", "fringe.json", "pool.json", "unrated.json"]
 DEFAULT_STORE = Path(r"E:\Working\Repos\ScatoloneQuintet\metadata")
 
 
 def load_head(repo, name):
     blob = subprocess.run(["git", "show", f"HEAD:metadata/{name}"], cwd=repo,
                           capture_output=True, text=True, encoding="utf-8").stdout
-    return json.loads(blob) if blob else {"version": 1, "cards": {}}
+    return json.loads(blob) if blob else {"version": 1, "cards": {}}  # empty: HEAD has no such file
 
 
 def main():
@@ -56,11 +56,13 @@ def main():
     repo = meta.parent
     source_dir = Path(args.source)
 
-    # Keyed across ALL THREE files, because the human moves a card between tiers
+    # Keyed across ALL FOUR files, because the human moves a card between tiers
     # when they rate it, and that move is their work and not the classifier's:
     # the entry stays where HEAD has it and only its effects may travel.
     source_cards = {}
     for name in FILES:
+        if not (source_dir / name).is_file():
+            continue
         source_cards.update(json.loads((source_dir / name).read_text(encoding="utf-8")).get("cards", {}))
 
     moved = touched_reviewed = kept = 0
