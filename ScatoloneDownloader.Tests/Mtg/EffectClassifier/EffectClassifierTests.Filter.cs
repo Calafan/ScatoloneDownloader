@@ -1310,4 +1310,27 @@ public sealed partial class EffectClassifierTests
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
     }
+
+    [Theory]
+    // Ruled 2026-11-12 (F1, "Learn = Filter"): learn's rummage is a loot. Pop
+    // Quiz, Filter by hand; Divide by Zero, Dream Strix and Overgrown Arch among
+    // the 14 handed back — a sentence, a dies trigger, a sacrifice cost.
+    [InlineData("Pop Quiz", "Instant",
+        "Draw a card.\nLearn. (You may reveal a Lesson card you own from outside the game and put it into your "
+        + "hand, or discard a card to draw a card.)")]
+    [InlineData("Divide by Zero", "Instant",
+        "Return target spell or permanent with mana value 1 or greater to its owner's hand.\nLearn. (You may "
+        + "reveal a Lesson card you own from outside the game and put it into your hand, or discard a card to "
+        + "draw a card.)")]
+    [InlineData("Dream Strix", "Creature — Bird Illusion",
+        "Flying\nWhen this creature becomes the target of a spell, sacrifice it.\nWhen this creature dies, "
+        + "learn. (You may reveal a Lesson card you own from outside the game and put it into your hand, or "
+        + "discard a card to draw a card.)")]
+    [InlineData("Overgrown Arch", "Creature — Plant Wall",
+        "Defender\n{T}: You gain 1 life.\n{2}, Sacrifice this creature: Learn. (You may reveal a Lesson card "
+        + "you own from outside the game and put it into your hand, or discard a card to draw a card.)")]
+    public void Classify_TheNovember12Ruling_Learn_IsFilter(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
 }

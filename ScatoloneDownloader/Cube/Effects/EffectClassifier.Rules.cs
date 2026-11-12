@@ -1425,6 +1425,14 @@ namespace ScatoloneDownloader.Cube
                 // The token is a PLANESWALKER, so Tokens stays out of it.
                 (CardEffect.Filter, [Rx(@"\bempowers? jace\b"),
                     Rx(@"\b(?:scry|scries|surveil|surveils) (?:\d+|x)\b"),
+                    // LEARN is this tag, ruled 2026-11-12 (F1, "Learn = Filter"):
+                    // the rummage it offers is a loot. Pop Quiz, tagged by hand;
+                    // the other 14 reviewed learn cards (Divide by Zero, Cram
+                    // Session, Field Trip, Study Break …) handed back. None of
+                    // them is CardAdvantage, which would exclude it (09-27). Not
+                    // You Find the Villains' Lair's mode NAMED "Learn Their
+                    // Secrets", whose loot is read by its own words.
+                    Rx(@"(?:^|\n|\. |, |: )learn\b(?! their)", RegexOptions.Multiline),
                     Rx(@"look at the top \w+ cards? of your library"),
                     // A dig for a creature of the SACRIFICED creature's type, which
                     // TribalCard keeps from being Cheat: Descendants' Fury, Filter
@@ -2229,13 +2237,26 @@ namespace ScatoloneDownloader.Cube
         // untagged. That OVERTURNS the 2026-09-20 land exception, which had
         // tagged Choking Sands, Icequake (one point, once: under the threshold
         // anyway), Stench of Evil and Orcish Mine; the four were handed back.
-        // EXCESS damage handed on to the controller is not a charge for the
-        // kill but the burn that goes past it (Gandalf's Sanction, 2026-10-14).
+        // EXCESS damage handed on to the controller was read as the burn that
+        // goes past the kill (Gandalf's Sanction, 2026-10-14) until 2026-11-12,
+        // and is never Burn since — see ExcessDamageToTheController.
         private static readonly Regex ChargesForAKillItJustMade = Rx(
             @"(?:destroy|exile|deals? [\dX]+ damage to target creature"
             + @"|damage equal to [\w' ]{0,25}to itself)"
             + @"[\s\S]{0,160}(?:deals? )?(?:[\dX]+|that much|half [\dX]+)? ?(?<!\bexcess )damage"
             + @"[\w ,'-]{0,40}to (?:that|the) (?:creature|land|artifact|permanent|spell)'s controller");
+
+        // EXCESS DAMAGE DEALT TO THE CONTROLLER is never Burn, ruled 2026-11-12
+        // (B1, "L'eccesso non è mai Burn"), overturning the 2026-10-14 reading
+        // of Gandalf's Sanction: Pigment Storm, Removal alone by hand;
+        // Gandalf's Sanction and Ravenous Tyrannosaurus, Removal and Burn
+        // before, handed back; Flame Spill and Ram Through lose the proposal.
+        // Blanked and the card asked again, so a burn of its own elsewhere
+        // stays. Noted for Burn's next pass, in the human's words: "se la carta
+        // fa anche altro conta l'altro a meno che il danno sia grande, tipo 4+
+        // da guardare".
+        private static readonly Regex ExcessDamageToTheController = Rx(
+            @"(?:if [^.\n]{0,60}, )?excess damage is dealt to (?:that|the) (?:creature|permanent|planeswalker)'s controller instead\.?");
 
         // Damage a TOKEN does, printed inside the quotes the token is created
         // with. Ruled 2026-09-20 with the opposite answer to the one Tokens

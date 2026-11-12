@@ -470,9 +470,58 @@ public sealed partial class EffectClassifierTests
         "Flash\nWhenever Phelia attacks, exile up to one other target nonland permanent. At the beginning of "
         + "the next end step, return that card to the battlefield under its owner's control. If it entered "
         + "under your control, put a +1/+1 counter on Phelia.")]
+    // Under 5 an instant's -N/-0 until end of turn stays a trick (P1, 2026-11-12:
+    // 12 reviewed instants untagged); and a blink that returns the card under YOUR
+    // control is a theft for the turn, not a tap (P2, Vindictive Triumph).
+    [InlineData("Deceive the Messenger", "Instant",
+        "Target creature gets -3/-0 until end of turn.\nAmass Orcs 1. (Put a +1/+1 counter on an Army you "
+        + "control. It's also an Orc. If you don't control an Army, create a 0/0 black Orc Army creature token "
+        + "first.)")]
+    [InlineData("Vindictive Triumph", "Instant",
+        "Exile target creature or planeswalker. If that permanent's mana value was 3 or less, return it to "
+        + "the battlefield tapped under your control. Exile it at the beginning of the next end step.")]
+    // A blink back tapped is a tap, with the tap's speed (P2, 2026-11-12): not on
+    // an attack trigger (The Mighty Thor, Jane Foster) nor on a sorcery
+    // (Morningtide's Light).
+    [InlineData("The Mighty Thor, Jane Foster", "Legendary Creature — Human God Hero",
+        "Flying\nWhenever The Mighty Thor attacks, exile up to one target nontoken artifact or creature, then "
+        + "return that card to the battlefield tapped under its owner's control.\nWhenever an Equipment you "
+        + "control enters, draw a card.")]
+    [InlineData("Morningtide's Light", "Sorcery",
+        "Exile any number of target creatures. At the beginning of the next end step, return those cards to "
+        + "the battlefield tapped under their owners' control.\nUntil your next turn, prevent all damage that "
+        + "would be dealt to you.\nExile Morningtide's Light.")]
     public void Classify_WhatOnlyLooksLikeALock_IsNotPacify(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
+    }
+
+    [Theory]
+    // Ruled 2026-11-12. P1 ("Instant e -5 o più"): an instant's -N/-0 until end of
+    // turn on one target, N of 5 or more — Twisted Reflection (-6), tagged by
+    // hand, and Shrink (-5), handed back. P2 ("Torna tappato = Pacify"): a blink
+    // that puts the target back tapped under its owner's control, at instant speed
+    // — Disorder in the Court, Eldrazi Confluence; Mystifying Maze's activation,
+    // unreviewed.
+    [InlineData("Twisted Reflection", "Instant",
+        "Choose one —\n• Target creature gets -6/-0 until end of turn.\n• Switch target creature's power and "
+        + "toughness until end of turn.\nEntwine {B} (Choose both if you pay the entwine cost.)")]
+    [InlineData("Shrink", "Instant",
+        "Target creature gets -5/-0 until end of turn.")]
+    [InlineData("Disorder in the Court", "Instant",
+        "Exile X target creatures, then investigate X times. Return the exiled cards to the battlefield "
+        + "tapped under their owners' control at the beginning of the next end step. (To investigate, create a "
+        + "Clue token. It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")")]
+    [InlineData("Eldrazi Confluence", "Instant",
+        "Choose three. You may choose the same mode more than once.\n• Target creature gets +3/-3 until end of "
+        + "turn.\n• Exile target nonland permanent, then return it to the battlefield tapped under its owner's "
+        + "control.\n• Create a 1/1 colorless Eldrazi Scion creature token with \"Sacrifice this token: Add {C}.\"")]
+    [InlineData("Mystifying Maze", "Land",
+        "{T}: Add {C}.\n{4}, {T}: Exile target attacking creature an opponent controls. At the beginning of "
+        + "the next end step, return it to the battlefield tapped under its owner's control.")]
+    public void Classify_TheNovember12Rulings_ABigShrinkOrABlinkBackTapped_IsPacify(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
     }
 
     [Fact]

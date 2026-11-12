@@ -104,7 +104,8 @@ Read the same day: "each of UP TO TWO targets" (Chandra, Hope's Beacon), "anothe
 opponent" (Invasion of Regatha), "its OWNER loses life equal to" for a spell cast from an opponent's
 library (The Ruinous Powers), a relative clause opened by "who" or "dealt" up to 90 characters
 (Gollum, Obsessed Stalker — widening every subject reached Scarring Memories, then untagged), EXCESS
-damage handed on to the controller, which is not a charge for the kill (Gandalf's Sanction), and an
+damage handed on to the controller, which is not a charge for the kill (Gandalf's Sanction;
+OVERTURNED 2026-11-12, excess is never this tag, see the end), and an
 Aura handing its creature "unless you pay 2 life" every upkeep (Morgul-Knife Wound); Kaito, Dancing
 Shadow's Drone keeps its drain to itself. Measured: Burn F1 98.1 to 98.6 before the store pass.
 
@@ -282,3 +283,10 @@ When you do, this Saga deals 2 damage to target opponent", untagged for Burn by 
 Read 2026-11-12 under the graveyard ruling of 2026-11-05: the creature cards chosen first and "the
 other" returned with haste and exiled at the next end step (Wake to Slaughter, Reanimate and Burn by
 hand).
+
+Ruled 2026-11-12 (B1, "L'eccesso non è mai Burn"): EXCESS damage dealt to the creature's controller
+is never this tag, overturning the reading of Gandalf's Sanction of 2026-10-14. Pigment Storm, Removal
+alone by hand; Gandalf's Sanction and Ravenous Tyrannosaurus, Removal and Burn before, handed back;
+Flame Spill and Ram Through, unreviewed, lose the proposal. The sentence is blanked and the card asked
+again, so a burn of its own elsewhere stays. For Burn's next pass, the human's note in their words:
+"se la carta fa anche altro conta l'altro a meno che il danno sia grande, tipo 4+ da guardare".

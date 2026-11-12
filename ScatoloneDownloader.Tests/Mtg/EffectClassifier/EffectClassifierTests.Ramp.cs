@@ -494,6 +494,11 @@ public sealed partial class EffectClassifierTests
         "Devoid (This card has no color.)\n{1}{G}: Adapt 1. (If this creature has no +1/+1 counters on it, put "
         + "a +1/+1 counter on it.)\nWhenever one or more +1/+1 counters are put on this creature, you may create "
         + "a 0/1 colorless Eldrazi Spawn creature token with \"Sacrifice this token: Add {C}.\"")]
+    // Mana an attack keeps only until end of COMBAT is not the mana that stays
+    // (2026-11-12, 0 of 2 reviewed: Avatar Roku, Fire Lord Ozai).
+    [InlineData("Avatar Roku, Firebender", "Legendary Creature — Human Avatar",
+        "Whenever a player attacks, add six {R}. Until end of combat, you don't lose this mana as steps "
+        + "end.\n{R}{R}{R}: Target creature gets +3/+0 until end of turn.")]
     public void Classify_TriggeredManaThatIsNotTheCards_IsNotRamp(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
@@ -630,9 +635,10 @@ public sealed partial class EffectClassifierTests
 
     [Theory]
     // Ruled 2026-10-24: a cost reduction for a TRIBE's spells is nothing (Gargos's
-    // Hydras, Herald of Slaanesh's Demons, Nogi's Dragons), and kept mana is not
-    // Ramp when what is kept comes from attacking (Fangorn, Tree Shepherd; Ozai,
-    // the Phoenix King's firebending). Read the same day, untagged by hand: the
+    // Hydras, Herald of Slaanesh's Demons, Nogi's Dragons). Kept mana from
+    // attacking (Fangorn, Tree Shepherd; Ozai, the Phoenix King's firebending)
+    // was pinned here as not Ramp until 2026-11-12, when "Resta = Ramp" moved it
+    // — see TheNovember12Ruling_AttackManaThatStays_IsRamp. Read the same day, untagged by hand: the
     // land the owner of a shuffled permanent finds (Audacious Swap), one land
     // sacrificed for one (Elvish Reclaimer), one Treasure from exiling the card
     // (Halo Scarab) or when its last counter is gone (Reckoner Bankbuster), and a
@@ -649,12 +655,6 @@ public sealed partial class EffectClassifierTests
         "Dragon spells you cast cost {1} less to cast.\nWhenever Nogi attacks, if you control three or more "
         + "Dragons, until end of turn, Nogi becomes a Dragon with base power and toughness 5/5 and gains "
         + "flying.")]
-    [InlineData("Fangorn, Tree Shepherd", "Legendary Creature — Treefolk",
-        "Treefolk you control have vigilance.\nWhenever one or more Treefolk you control attack, add twice "
-        + "that much {G}.\nYou don't lose unspent green mana as steps and phases end.")]
-    [InlineData("Ozai, the Phoenix King", "Legendary Creature — Human Noble",
-        "Trample, firebending 4, haste\nIf you would lose unspent mana, that mana becomes red instead.\nOzai "
-        + "has flying and indestructible as long as you have six or more unspent mana.")]
     [InlineData("Audacious Swap", "Instant",
         "Casualty 2 (As you cast this spell, you may sacrifice a creature with power 2 or greater. When you "
         + "do, copy this spell and you may choose a new target for the copy.)\nThe owner of target "
@@ -680,6 +680,36 @@ public sealed partial class EffectClassifierTests
     public void Classify_TheOctober24RampPass_IsNotRamp(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // Mana from an attack or combat damage that STAYS the turn is Ramp, ruled
+    // 2026-11-12 ("Resta = Ramp", superseding "mai Ramp dall'attacco" of 09-29 for
+    // this shape): Kessig Naturalist and Klauth by hand, Brazen Collector and
+    // Tanuki Transplanter handed back; and mana from attacking kept for good
+    // (Fangorn, Ozai, the Phoenix King), handed back.
+    [InlineData("Kessig Naturalist // Lord of the Ulvenwald", "Creature — Human Werewolf // Creature — Werewolf",
+        "Whenever this creature attacks, add {R} or {G}. Until end of turn, you don't lose this mana as steps "
+        + "and phases end.\nDaybound (If a player casts no spells during their own turn, it becomes night next "
+        + "turn.)\nOther Wolves and Werewolves you control get +1/+1.\nWhenever this creature attacks, add {R} or "
+        + "{G}. Until end of turn, you don't lose this mana as steps and phases end.\nNightbound (If a player "
+        + "casts at least two spells during their own turn, it becomes day next turn.)")]
+    [InlineData("Klauth, Unrivaled Ancient", "Legendary Creature — Dragon",
+        "Flying, haste\nWhenever Klauth attacks, add X mana in any combination of colors, where X is the total "
+        + "power of attacking creatures. Spend this mana only to cast spells. Until end of turn, you don't lose "
+        + "this mana as steps and phases end.")]
+    [InlineData("Brazen Collector", "Creature — Raccoon Rogue",
+        "First strike\nWhenever this creature attacks, add {R}. Until end of turn, you don't lose this mana as "
+        + "steps and phases end.")]
+    [InlineData("Fangorn, Tree Shepherd", "Legendary Creature — Treefolk",
+        "Treefolk you control have vigilance.\nWhenever one or more Treefolk you control attack, add twice "
+        + "that much {G}.\nYou don't lose unspent green mana as steps and phases end.")]
+    [InlineData("Ozai, the Phoenix King", "Legendary Creature — Human Noble",
+        "Trample, firebending 4, haste\nIf you would lose unspent mana, that mana becomes red instead.\nOzai "
+        + "has flying and indestructible as long as you have six or more unspent mana.")]
+    public void Classify_TheNovember12Ruling_AttackManaThatStays_IsRamp(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
     }
 
     [Theory]

@@ -364,7 +364,7 @@ namespace ScatoloneDownloader.Cube
                 || (ManaMultiplier.IsMatch(text) && !ManaOnlyForUpkeep.IsMatch(text))
                 || (card.MacroType == MacroType.Land && LandPutsItselfFromHand.IsMatch(text))
                 || (card.MacroType != MacroType.Spell
-                    && Quoted.Replace(text, " ").Split('\n').Any(line => TriggeredMana.IsMatch(line) && !OnAnAttack.IsMatch(line)))
+                    && Quoted.Replace(text, " ").Split('\n').Any(line => TriggeredMana.IsMatch(line) && (!OnAnAttack.IsMatch(line) || AttackManaKeptTheTurn.IsMatch(line))))
                 || (card.MacroType != MacroType.Spell && ModeAddsManaOnATrigger.IsMatch(text))
                 || LandFromHandToPlay.IsMatch(ownLandDrops)
                 || UntapsLands.IsMatch(AttackTriggerWithItsModes.Replace(text, " "))
@@ -376,7 +376,7 @@ namespace ScatoloneDownloader.Cube
                 || (MakesAPowerstone.IsMatch(text) && !PowerstoneForSomebodyElse.IsMatch(text))
                 || TreasureAlsoRamps(text)
                 || ActivatedManaTokenMaker.IsMatch(text)
-                || (ManaKeptForGood.IsMatch(text) && !KeepsAttackMana.IsMatch(text)))
+                || ManaKeptForGood.IsMatch(text))
             {
                 result |= CardEffect.Ramp;
             }
@@ -650,6 +650,21 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Pacify;
             }
 
+            // A big one-shot shrink on an INSTANT stops an attacker. Granted
+            // after the vetoes above, which read a one-turn trick. See
+            // BigShrinkOnAnInstant.
+            if (card.MacroType == MacroType.Spell && IsCastInResponse(card) && BigShrinkOnAnInstant.IsMatch(text))
+            {
+                result |= CardEffect.Pacify;
+            }
+
+            // …and a blink that puts the target back tapped, at instant speed.
+            // See BlinkBackTapped.
+            if (IsInstantSpeed(card) && BlinkBackTapped.IsMatch(text))
+            {
+                result |= CardEffect.Pacify;
+            }
+
             // "Destroy all creatures blocking or blocked by this creature" reads
             // like a sweeper and only ever touches what is already in combat with
             // it — Abu Ja'far, Kjeldoran Frostbeast, the Glyph cycle. It is a
@@ -861,6 +876,14 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Burn;
             }
 
+            // …nor the EXCESS of a kill handed to the controller. See
+            // ExcessDamageToTheController; the card is asked again without it.
+            if (result.HasFlag(CardEffect.Burn) && ExcessDamageToTheController.IsMatch(text)
+                && !Classify(new OneAbility(card, ExcessDamageToTheController.Replace(text, " "))).HasFlag(CardEffect.Burn))
+            {
+                result &= ~CardEffect.Burn;
+            }
+
             // …nor one behind a revealed card of a tribe. See BurnOnARevealedTribeCard.
             if (result.HasFlag(CardEffect.Burn) && BurnOnARevealedTribeCard.IsMatch(text)
                 && !BurnPatterns.Any(p => p.IsMatch(BurnOnARevealedTribeCard.Replace(text, " "))))
@@ -916,6 +939,7 @@ namespace ScatoloneDownloader.Cube
                     || AdditionalCostDiscard.IsMatch(text) || PaysACardPerActivation(text)
                     || DrawPaidForWithACard.IsMatch(text)
                     || DrawsOnceBySacrificingItsName(card, text)
+                    || DrawsOnlyForATribesSpell(card, text)
                     || DrawOnceOnly.IsMatch(text) || DrawsOnceThenTransforms.IsMatch(text)
                     || (BloodReminder.IsMatch(text) && !YouDraw.IsMatch(BloodReminder.Replace(text, " ")))))
             {

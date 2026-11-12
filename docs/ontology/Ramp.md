@@ -9,7 +9,8 @@ every turn, or a burst of mana that is the card's point. Rampant Growth is the c
 consequences, not exceptions: a land tapping for one, mana that costs mana (it fixes colour), one
 land for one land, mana or lands given to somebody else, and a Treasure or mana riding on another
 action. Kept as exceptions with their reasons, ruled below: one Treasure per trigger, a card typed
-Treasure, a tribe's discount, and from an attack nothing but several Treasures. It held on 801
+Treasure, a tribe's discount, and from an attack nothing but several Treasures or mana that stays
+the turn (2026-11-12). It held on 801
 reviewed cards after the realignment of the same day (FP 0, FN 0; FP 8 and FN 3 before it, each a
 card the answers of 2026-11-09 reached).
 
@@ -132,8 +133,8 @@ no tribe (Uncle Iroh's Lesson spells), nor is face-down (Dream Chisel). Mana KEP
 the next for good is this tag ("Ramp se è standing": Horizon Stone, tagged by hand; Kruphix,
 Upwelling, Omnath, Locus of Mana with it; Ashling, Flame Dancer went back for review), but not when
 what is kept is mana from attacking ("mai Ramp dall'attacco": Fangorn, Tree Shepherd; Ozai, the
-Phoenix King's firebending) nor for the one turn a spell or a death keeps it (The Last Agni Kai,
-Su-Chi Cave Guard).
+Phoenix King's firebending — overturned 2026-11-12, see the end) nor for the one turn a spell or a
+death keeps it (The Last Agni Kai, Su-Chi Cave Guard).
 
 Read the same day — this tag: a spell's MODE that adds mana (Jeska's Will; a one-time mode on a
 permanent's trigger is not, Zuko, Conflicted); the lands each opponent searches and puts under your
@@ -249,3 +250,12 @@ Harvest's "X is the number of different powers among creatures you control") or 
 tap-and-sacrifice whose mana comes a sentence later (Priest of Forgotten Gods' "… You add {B}{B}").
 Out: Treasures an OPPONENT creates (Ingenious Mastery, CardAdvantage alone; not ManaFixing either).
 Bloom Tender and Surveyor's Scope follow among the unreviewed.
+
+Ruled 2026-11-12 ("Resta = Ramp"): mana from an ATTACK or combat damage that STAYS is this tag,
+superseding "mai Ramp dall'attacco" of 2026-09-29 for that shape. The turn's worth ("Until end of
+turn, you don't lose this mana as steps and phases end"): Kessig Naturalist and Klauth, Unrivaled
+Ancient, Ramp by hand, Brazen Collector and Tanuki Transplanter handed back with it (2 of 4 reviewed
+before the ruling); Photon, Mighty Marvel, Sakiko, Colossal Plow, Grand Warlord Radha and Savage
+Ventmaw follow among the unreviewed. Kept for good: Fangorn, Tree Shepherd's "unspent green" and
+Ozai, the Phoenix King's firebending turned red, handed back. Out: mana kept only until end of
+COMBAT (Avatar Roku, Fire Lord Ozai, 0 of 2) and mana that is lost (Tesak).

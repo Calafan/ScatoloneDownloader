@@ -322,16 +322,18 @@ public sealed partial class EffectClassifierTests
     }
 
     [Fact]
-    // The victim has to be the one DRAWING. "A creature you control becomes the
-    // target of a spell AN OPPONENT CONTROLS, draw a card" names an opponent in a
-    // possessive clause and hands the card to you; twenty characters of filler
-    // between the subject and the verb read that as somebody else's draw. Ruled
-    // 2026-09-20 — the same trap GivesControlAway fell into the day before.
+    // The victim has to be the one DRAWING. "A Zombie AN OPPONENT CONTROLS dies,
+    // draw a card" names an opponent in a possessive clause and hands the card to
+    // you; twenty characters of filler between the subject and the verb read that
+    // as somebody else's draw. Ruled 2026-09-20 — the same trap GivesControlAway
+    // fell into the day before. Pinned on Surrak, Elusive Hunter until 2026-11-12,
+    // when C1 took its CardAdvantage for another reason (the opponent's choice).
     public void Classify_ADrawNamingAnOpponentInPassing_IsStillCardAdvantage()
     {
-        Card card = MakeCard("Surrak, Elusive Hunter", "Legendary Creature — Human Warrior",
-            "This spell can't be countered.\nTrample\nWhenever a creature you control or a creature spell "
-            + "you control becomes the target of a spell or ability an opponent controls, draw a card.");
+        Card card = MakeCard("Hansk, Slayer Zealot", "Legendary Creature — Human Archer",
+            "At the beginning of your upkeep, target opponent creates three Walker tokens. (They're 2/2 black "
+            + "Zombie creatures.)\n{T}: Hansk, Slayer Zealot deals 2 damage to target creature.\nWhenever a Zombie an "
+            + "opponent controls dies, draw a card.");
 
         Assert.True(EffectClassifier.Classify(card).HasFlag(CardEffect.CardAdvantage));
     }
@@ -1180,6 +1182,11 @@ public sealed partial class EffectClassifierTests
         + "defeated, exile it, then cast it transformed.)\nWhen this Siege enters, you may discard a card. If "
         + "you do, draw two cards.\n{2}{R}, {T}, Discard a card: Create two 1/1 blue and red Elemental "
         + "creature tokens. Creatures you control get +1/+0 and gain haste until end of turn.")]
+    // An Adventure spell copied is narrow like a tribe, ruled 2026-11-12 (C2):
+    // Lucky Clover, Redirect alone by hand.
+    [InlineData("Lucky Clover", "Artifact",
+        "Whenever you cast an Adventure instant or sorcery spell, copy it. You may choose new targets for the "
+        + "copy.")]
     public void Classify_TheOctoberCardAdvantageGaps_AreNotCardAdvantage(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
@@ -1477,13 +1484,8 @@ public sealed partial class EffectClassifierTests
         + "equal to 1 plus the sacrificed creature's mana value, put it onto the battlefield, then shuffle.\n+1: "
         + "Mill five cards, then put any number of creature cards milled this way into your hand.\n−1: Create a "
         + "4/4 green Rhino Warrior creature token.")]
-    [InlineData("Surrak, Elusive Hunter", "Legendary Creature — Human Warrior",
-        "This spell can't be countered.\nTrample\nWhenever a creature you control or a creature spell you "
-        + "control becomes the target of a spell or ability an opponent controls, draw a card.")]
-    [InlineData("Elrond, Master of Healing", "Legendary Creature — Elf Noble",
-        "Whenever you scry, put a +1/+1 counter on each of up to X target creatures, where X is the number of "
-        + "cards looked at while scrying this way.\nWhenever a creature you control with a +1/+1 counter on it "
-        + "becomes the target of a spell or ability an opponent controls, you may draw a card.")]
+    // Surrak, Elusive Hunter and Elrond, Master of Healing were pinned here until
+    // 2026-11-12, when C1 moved them — see TheNovember12Ruling_ADrawAnOpponentAimsFor_IsNotCardAdvantage.
     [InlineData("Lazav, Wearer of Faces", "Legendary Creature — Shapeshifter Detective",
         "Whenever Lazav attacks, exile target card from a graveyard, then investigate. (Create a Clue token. "
         + "It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")\nWhenever you sacrifice a Clue, you "
@@ -1752,6 +1754,67 @@ public sealed partial class EffectClassifierTests
     public void Classify_TheOctober16CardAdvantagePassRemovals_AreNotCardAdvantage(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Ruled 2026-11-12 (C1, under the definition of 2026-11-07): a draw that waits
+    // for an opponent's spell or ability to target something of yours is their
+    // choice, not a card the card can count on — the board (Battle Mammoth, Fey
+    // Steed, untagged by hand; Surrak, Elusive Hunter and Elrond, Master of
+    // Healing, handed back) as much as the card itself (Altanak, above).
+    [InlineData("Battle Mammoth", "Creature — Elephant",
+        "Trample\nWhenever a permanent you control becomes the target of a spell or ability an opponent "
+        + "controls, you may draw a card.\nForetell {2}{G}{G} (During your turn, you may pay {2} and exile this "
+        + "card from your hand face down. Cast it on a later turn for its foretell cost.)")]
+    [InlineData("Fey Steed", "Creature — Elk",
+        "Whenever this creature attacks, another target attacking creature you control gains indestructible "
+        + "until end of turn.\nWhenever a creature or planeswalker you control becomes the target of a spell or "
+        + "ability an opponent controls, you may draw a card.")]
+    [InlineData("Surrak, Elusive Hunter", "Legendary Creature — Human Warrior",
+        "This spell can't be countered.\nTrample\nWhenever a creature you control or a creature spell you "
+        + "control becomes the target of a spell or ability an opponent controls, draw a card.")]
+    [InlineData("Elrond, Master of Healing", "Legendary Creature — Elf Noble",
+        "Whenever you scry, put a +1/+1 counter on each of up to X target creatures, where X is the number of "
+        + "cards looked at while scrying this way.\nWhenever a creature you control with a +1/+1 counter on it "
+        + "becomes the target of a spell or ability an opponent controls, you may draw a card.")]
+    public void Classify_TheNovember12Ruling_ADrawAnOpponentAimsFor_IsNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Ruled 2026-11-12 (C3, "Tribale mai CA"): a draw on casting a TRIBE's spell
+    // is not CardAdvantage — Tyvar Kell's Elf emblem, untagged by hand; Leaf-
+    // Crowned Visionary (Elf) and Rose Noble (Doctor), handed back.
+    [InlineData("Tyvar Kell", "Legendary Planeswalker — Tyvar",
+        "Elves you control have \"{T}: Add {B}.\"\n+1: Put a +1/+1 counter on up to one target Elf. Untap it. It "
+        + "gains deathtouch until end of turn.\n0: Create a 1/1 green Elf Warrior creature token.\n−6: You get an "
+        + "emblem with \"Whenever you cast an Elf spell, it gains haste until end of turn and you draw two "
+        + "cards.\"")]
+    [InlineData("Leaf-Crowned Visionary", "Creature — Elf Druid",
+        "Other Elves you control get +1/+1.\nWhenever you cast an Elf spell, you may pay {G}. If you do, draw "
+        + "a card.")]
+    [InlineData("Rose Noble", "Legendary Creature — Human",
+        "Ward {2}\nWhenever you cast a Doctor spell or creature spell with doctor's companion, draw a "
+        + "card.\nDoctor's companion (You can have two commanders if the other is the Doctor.)")]
+    public void Classify_TheNovember12Ruling_ADrawForATribesSpell_IsNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // …but the subtype of a SPELL is no tribe (C3, 2026-11-12): an Adventure
+    // (Storyteller Pixie) and an Aura (Pearl-Ear, Imperial Advisor), CardAdvantage
+    // by hand.
+    [InlineData("Storyteller Pixie", "Creature — Faerie Wizard",
+        "Flying\nWhenever you cast an Adventure spell, draw a card.")]
+    [InlineData("Pearl-Ear, Imperial Advisor", "Legendary Creature — Fox Advisor",
+        "Lifelink\nEnchantment spells you cast have affinity for Auras. (They cost {1} less to cast for each "
+        + "Aura you control.)\nWhenever you cast an Aura spell that targets a modified permanent you control, "
+        + "draw a card. (Equipment, Auras you control, and counters are modifications.)")]
+    public void Classify_TheNovember12Ruling_ADrawForASpellSubtype_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
     }
 
     [Theory]

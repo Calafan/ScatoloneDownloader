@@ -344,3 +344,15 @@ RULED 2026-11-12, "Com'è, Odric -Filter": Blood made once stays a rider, howeve
 Odric, Blood-Cursed's "When Odric enters, create X Blood tokens", Filter by hand on 11-10, is
 corrected and stays reviewed; the other 31 of the 32 reviewed Blood cards already followed the line
 (17 Blood made again and again tagged, 14 made once untagged).
+
+Ruled 2026-11-12 (F1, "Learn = Filter"): LEARN is this tag, the rummage it offers being a loot. Pop
+Quiz, tagged by hand; the other 14 reviewed learn cards, untagged here (Divide by Zero, Cram Session,
+Field Trip, Study Break, Dream Strix, Overgrown Arch …), handed back; Academic Dispute, Arcane
+Subtraction, Enthusiastic Study, Eyetwitch, Poet's Quill and Sparring Regimen follow, unreviewed.
+None of them is CardAdvantage, which would exclude it (2026-09-27). You Find the Villains' Lair's mode
+NAMED "Learn Their Secrets" is not the keyword.
+
+Read the same evening, not ruled: four cards tagged CardAdvantage and Filter by hand (Conspiracy
+Theorist, Suspicious Stowaway, Kianne, Dean of Substance, Plargg, Dean of Chaos) keep both, because
+the selection and the gain are separate abilities (Qiqirn Merchant, 2026-09-29). The answer to C4
+(Tapping at the Window, CardAdvantage alone) is the same-ability case.

@@ -73,7 +73,8 @@ on 2026-10-13, ruled "Pacify solo se dura": a power shrink that LASTS is this ta
 (Cryoshatter, Morgul-Knife Wound, Disturbing Conversion, 4 of 4) or an activation you can aim every
 turn (Jace, the Perfected Mind's +1, Pradesh Gypsies, Ghosts of the Damned and Staff of Zegon
 realigned and handed back) — while a one-shot until end of turn is not (Desperate Parry, Deceive the
-Messenger and Sea Hag untagged by name; Shrink, Unagi's Spray never were), nor one on a repeating
+Messenger and Sea Hag untagged by name; Shrink, Unagi's Spray never were; an instant's -5 or more is,
+since 2026-11-12, see the end), nor one on a repeating
 trigger (0 of 6, Fear of Falling, which 2026-10-27 moved in because its shrink lasts until your
 next turn), nor an activation that sacrifices the card (Cabal Trainee), nor an Aura on a creature
 that becomes yours (Duskmourn's Domination, Animate Dead).
@@ -119,7 +120,8 @@ the only two of seven reviewed flickers of somebody's permanent to the next end 
 and both lose it and were handed back. Twining Twins says Parting Gust's very words and is
 Protection alone; the gift that exiles for good is what makes Parting Gust Removal ("Parting Gust ha
 l'opzione per rimuovere definitivamente la creatura"). The Eternal Wanderer's exile to ITS
-CONTROLLER'S next end step, a whole turn of theirs, stays.
+CONTROLLER'S next end step, a whole turn of theirs, stays. A blink that puts the card back TAPPED is
+a tap and is this tag since 2026-11-12, see the end.
 
 An O-RING ON A SAGA is this tag ALONE, not Removal ("Sì, solo Pacify"): the creature comes back when
 the Saga is sacrificed after its last chapter. Summon: Ixion (Removal and Pacify by hand) and Trial
@@ -240,3 +242,19 @@ one saves nothing of yours, so Protection no longer reads it: Sapphire Charm's m
 Pacify by hand on 2026-09-08 before the both-tags ruling, loses Protection and is handed back. Out:
 "whenever you attack a player, tap target creature that player controls" is the attack trigger's tap
 (Karazikar, the Eye Tyrant, untagged 2026-11-06).
+
+Ruled 2026-11-12 (P1, "Instant e -5 o più"): an INSTANT's "-N/-0 until end of turn" on one target,
+N of 5 or more, is this tag, overturning "Pacify solo se dura" of 2026-10-13 for that shape. Twisted
+Reflection's -6 mode, tagged by hand, and Shrink's -5, untagged before and handed back; Disorient,
+Hydrosurge, Icy Reception and Protect // Serve follow among the unreviewed. Under 5 stays a trick (12
+reviewed instants untagged: Deceive the Messenger, Desperate Parry …), and so does a variable X.
+Ivory Charm keeps the tag by its other mode, "Tap target creature" on an instant (2026-10-27), not by
+its "-2/-0"; Code of Constraint keeps it by the tap that does not untap.
+
+Ruled 2026-11-12 (P2, "Torna tappato = Pacify"): a blink that returns the target TAPPED under its
+owner's control is a tap and this tag — Disorder in the Court and Eldrazi Confluence, 2 of 2 reviewed,
+Pacify by hand; Eldrazi Displacer and Mystifying Maze follow, unreviewed. Read as a tap, with the
+tap's speed of 2026-10-27: not on a sorcery (Morningtide's Light) nor on an attack trigger (The
+Mighty Thor, Jane Foster). A flicker that returns the card untapped stays out (Parting Gust, Phelia),
+and so does a return under YOUR control (Vindictive Triumph, a theft for the turn) or of your own
+(Golden Argosy's crew, Gandalf, Shadow's Foe's lands).

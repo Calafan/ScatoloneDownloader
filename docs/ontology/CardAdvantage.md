@@ -143,7 +143,8 @@ becoming the target of an AURA SPELL or an ACTIVATED ABILITY, which needs a seco
 draw happens at all (Fugitive Druid, Professor Hojo), and a draw bought by handing an opponent a
 permanent (Stiltzkin; overturned 2026-10-14, below). The line it does NOT cross is Surrak, Elusive
 Hunter: his trigger is ANY spell or ability an opponent aims at your creatures, which happens by
-itself, and he keeps the tag. Recorded as four cards read one at a time rather than a principle.
+itself, and he keeps the tag (OVERTURNED 2026-11-12, C1: the opponent's choice, see the end).
+Recorded as four cards read one at a time rather than a principle.
 Four wordings were simply unreadable and are now read: an ADDITIONAL card (Howling Mine, Sylvan
 Library), "draws UP TO n cards" without the "may" that separates Diminishing Returns from Truce, a
 trigger with one sentence in front of it (Rowen), and "that many cards FROM THE TOP of your library"
@@ -327,7 +328,7 @@ due CA": Discerning Financier, Stiltzkin, Moogle Merchant — overturning 09-21 
 Dragoon, who hands over himself like Yes Man), and a COPY of your own spell is this tag when the
 spell can be anything (Storm of Saruman, like Taigam) but not when it is historic or colorless,
 which copies a permanent as a token as often as not (The Sixth Doctor, Echoes of Eternity — "Dipende
-dal tipo copiato"). The same pass read the sitting's shapes: a PILE off your library into your hand
+dal tipo copiato"; an Adventure is narrow like a tribe since 2026-11-12, C2). The same pass read the sitting's shapes: a PILE off your library into your hand
 (Fact or Fiction, not Split the Spoils' graveyard pile), SEVERAL kept from one look, saga chapters
 and Junk that repeat, a draw mode you may choose more than once, rebound granted, the monarch given
 to any player, "that many" exiled and played, and three late-draw trigger shapes. Not this tag:
@@ -350,7 +351,8 @@ creature TYPE is not this tag ("Tribale = niente CA": Solemn Doomguide, Zul Ashu
 Historian, Rivaz of the Claw), unless a card type stands beside the type (Arcade Gannon).
 
 Read the same day — not this tag: a draw when the card ITSELF becomes the target of an opponent's
-spell (Altanak, Cactarantula: 0 of 2, where "a creature you control" is 2 of 2, Surrak and Elrond)
+spell (Altanak, Cactarantula: 0 of 2, where "a creature you control" was 2 of 2, Surrak and Elrond,
+until C1 of 2026-11-12)
 or of your OWN, which needs a second card to fire (Nadu); "that player draws" after combat damage
 (Red Death, Shipwrecker); THEIR spell exiled and cast, Steal until 2026-11-08 (Smirking Spelljacker);
 "Activate only once" (Thought Shucker); a look at the top any time with no leave to play it (Vesuvan
@@ -640,3 +642,23 @@ when a creature becomes the target of a spell YOU control (Stormchaser Drake), a
 TOKEN's combat damage (Curiosity Crafter), and a nonland card revealed, exiled and cast free once
 (Creative Technique). Measured and rejected the same day: the type-reveal of a look as both tags (17
 reviewed cards that say it are CardAdvantage alone).
+
+Ruled 2026-11-12, the evening's answers, under the definition of 2026-11-07:
+
+- C1: a draw that waits for an opponent's spell or ability to TARGET something of yours is their
+  choice, not a card the card can count on — the board as much as the card itself. Battle Mammoth
+  ("a permanent you control") and Fey Steed ("a creature or planeswalker"), untagged by hand; Surrak,
+  Elusive Hunter and Elrond, Master of Healing, tagged under the 2026-10-16 reading that the board
+  "happens by itself", handed back; Leovold, Rayne and Shapers' Sanctuary lose the proposal.
+- C2: a COPY of an Adventure spell is narrow like a tribe, an exception to "Dipende dal tipo copiato"
+  (2026-10-14): Lucky Clover is Redirect alone by hand.
+- C3 ("Tribale mai CA"): a draw on casting a TRIBE's spell is not this tag — Tyvar Kell's Elf
+  emblem, untagged by hand ("l'emblema conterebbe, ma è tribale"), and Leaf-Crowned Visionary (Elf)
+  and Rose Noble (Doctor), tagged before and handed back (2 of 3 reviewed were tagged, asked with the
+  pair). Gilt-Leaf Archdruid, Jarvis, Emrakul's Influence and Sire of the Storm (a Spirit or Arcane)
+  lose the proposal. The subtype of a SPELL is no tribe: Storyteller Pixie's Adventure and
+  Pearl-Ear's Aura stay.
+- C4: Tapping at the Window, CardAdvantage and Filter by hand, is CardAdvantage alone (named): one
+  ability that looks and keeps the type is advantage alone (2026-09-27). Not extended to Conspiracy
+  Theorist, Suspicious Stowaway, Kianne, Dean of Substance and Plargg, Dean of Chaos, whose selection
+  and gain are separate abilities and keep both (Qiqirn Merchant, 2026-09-29).

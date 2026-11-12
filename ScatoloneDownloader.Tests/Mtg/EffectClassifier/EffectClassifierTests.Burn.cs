@@ -239,10 +239,9 @@ public sealed partial class EffectClassifierTests
         "Skulk (This creature can't be blocked by creatures with greater power.)\nAt the beginning of your end "
         + "step, each opponent dealt combat damage this game by a creature named Gollum, Obsessed Stalker loses "
         + "life equal to the amount of life you gained this turn.")]
-    // Excess damage is the burn that goes past the kill.
-    [InlineData("Gandalf's Sanction", "Sorcery",
-        "Gandalf's Sanction deals X damage to target creature, where X is the number of instant and sorcery "
-        + "cards in your graveyard. Excess damage is dealt to that creature's controller instead.")]
+    // Gandalf's Sanction (excess damage as the burn past the kill) was pinned
+    // here until 2026-11-12, when B1 moved it — see
+    // TheNovember12Ruling_ExcessDamage_IsNeverBurn.
     // The life the enchanted creature's controller pays every upkeep.
     [InlineData("Morgul-Knife Wound", "Enchantment — Aura",
         "Enchant creature\nEnchanted creature gets -3/-0 and has \"At the beginning of your upkeep, exile this "
@@ -269,6 +268,30 @@ public sealed partial class EffectClassifierTests
     public void Classify_TheOctoberBurnGaps_AreBurn(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
+
+    [Theory]
+    // Ruled 2026-11-12 (B1, "L'eccesso non è mai Burn"): excess damage dealt to
+    // the creature's controller is never Burn — Pigment Storm, Removal alone by
+    // hand; Gandalf's Sanction and Ravenous Tyrannosaurus, handed back; Ram
+    // Through, unreviewed, the same words behind trample.
+    [InlineData("Pigment Storm", "Sorcery",
+        "Pigment Storm deals 5 damage to target creature. Excess damage is dealt to that creature's "
+        + "controller instead.")]
+    [InlineData("Gandalf's Sanction", "Sorcery",
+        "Gandalf's Sanction deals X damage to target creature, where X is the number of instant and sorcery "
+        + "cards in your graveyard. Excess damage is dealt to that creature's controller instead.")]
+    [InlineData("Ravenous Tyrannosaurus", "Creature — Dinosaur",
+        "Devour 3 (As this creature enters, you may sacrifice any number of creatures. It enters with three "
+        + "times that many +1/+1 counters on it.)\nWhenever this creature attacks, it deals damage equal to its "
+        + "power to up to one other target creature. Excess damage is dealt to that creature's controller "
+        + "instead.")]
+    [InlineData("Ram Through", "Instant",
+        "Target creature you control deals damage equal to its power to target creature you don't control. If "
+        + "the creature you control has trample, excess damage is dealt to that creature's controller instead.")]
+    public void Classify_TheNovember12Ruling_ExcessDamage_IsNeverBurn(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
     }
 
     [Theory]

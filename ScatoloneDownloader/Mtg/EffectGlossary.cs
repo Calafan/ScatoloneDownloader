@@ -60,9 +60,9 @@
 
             [CardEffect.Ramp] =
                 "Mana of yours beyond the land of the turn: one more land in play, a source adding mana or "
-                + "discounting other spells every turn, or a burst of mana that is the card's point. Rampant "
-                + "Growth. Not a land tapping for one, mana costing mana, a land for a land, mana for others, one "
-                + "Treasure per trigger, or mana and lands untapped by an attack.",
+                + "discounting other spells every turn, or a burst that is the card's point. Rampant Growth. "
+                + "Not a land tapping for one, mana costing mana, a land for a land, mana for others, one "
+                + "Treasure per trigger, or attack mana or lands that don't stay the turn.",
 
             [CardEffect.Disenchant] =
                 "An artifact or enchantment that can be somebody else's, named as artifact, enchantment or Aura "
@@ -109,8 +109,8 @@
             [CardEffect.Burn] =
                 "An OPPONENT loses life to what the card does (Lightning Bolt): damage reaching a face, life lost or "
                 + "paid to stop the card, from two or one again and again; a hasty body gone at end step. Damage at "
-                + "a creature is Removal, \"any target\" both. Not your own life, a charge on a kill, a token's "
-                + "ability, nor life that buys cards or a target.",
+                + "a creature is Removal, \"any target\" both. Not your own life, a kill's charge or excess, a "
+                + "token's ability, nor life buying cards or a target.",
 
             [CardEffect.Sacrifice] =
                 "An outlet you can feed your OWN creatures or artifacts AGAIN AND AGAIN — a cost, a repeating trigger, "
@@ -138,7 +138,8 @@
 
             [CardEffect.Pacify] =
                 "Neutralises somebody else's creature without killing it: tapped, stunned, phased out, kept from "
-                + "untapping, can't attack or block, base power 0 or a -N/-0 that lasts, or the damage it DEALS "
+                + "untapping, can't attack or block, base power 0, a -N/-0 that lasts or -5/-0 on an instant, or "
+                + "the damage it DEALS "
                 + "prevented. Not a bare tap on your own turn, a LAND that won't untap, an artifact tap, or a "
                 + "price the card pays.",
 

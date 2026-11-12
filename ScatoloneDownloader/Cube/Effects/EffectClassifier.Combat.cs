@@ -212,9 +212,9 @@ namespace ScatoloneDownloader.Cube
         // no rule looked past a colon or a spell. Two limits, both measured:
         // a SPELL's trigger is a rider on what the spell does (Mana Drain,
         // Reckless Blaze, untagged), and mana from an ATTACK or combat damage
-        // is never Ramp, ruled 2026-09-29 — "mai Ramp dall'attacco" (Brazen
-        // Collector went back for review, Tesak stays untagged) — the same
-        // reading as the Treasure one Jolene got.
+        // is not Ramp, ruled 2026-09-29 — "mai Ramp dall'attacco" (Tesak stays
+        // untagged) — the same reading as the Treasure one Jolene got, UNLESS
+        // the mana stays: see AttackManaKeptTheTurn.
         // The mana may come a sentence later, "IF YOU DO, add three mana in any
         // combination of its colors" (Omnath, Locus of All, Ramp by hand;
         // 2026-10-16).
@@ -225,6 +225,46 @@ namespace ScatoloneDownloader.Cube
 
         private static readonly Regex OnAnAttack = Rx(
             @"\bwhenever [^,.\n]*\b(?:attacks?|attack with|deals? combat damage)\b");
+
+        // Mana from an attack that STAYS the turn is Ramp, ruled 2026-11-12
+        // ("Resta = Ramp", superseding "mai Ramp dall'attacco" of 09-29 for this
+        // shape): Kessig Naturalist and Klauth, Unrivaled Ancient, Ramp by
+        // hand, and Brazen Collector and Tanuki Transplanter, untagged before,
+        // handed back — 2 of 4 reviewed attack lines that keep the mana. Not
+        // mana kept only "until end of combat" (Avatar Roku, Fire Lord Ozai,
+        // 0 of 2), nor mana that is lost (Tesak).
+        private static readonly Regex AttackManaKeptTheTurn = Rx(
+            @"\buntil end of turn, you don't lose this mana\b");
+
+        // An INSTANT's "-N/-0 until end of turn" on one target, N of 5 or more,
+        // is Pacify, ruled 2026-11-12 (P1, "Instant e -5 o più", superseding
+        // "Pacify solo se dura" of 2026-10-13 in part): Twisted Reflection's
+        // -6, tagged by hand, and Shrink's -5, untagged before and handed back;
+        // Disorient, Hydrosurge, Icy Reception and Protect // Serve follow
+        // among the unreviewed. Under 5 stays a trick (Deceive the Messenger,
+        // Desperate Parry, 12 reviewed instants untagged), and so does a
+        // variable X (Silvergill Douser's is an activation, read elsewhere).
+        // Asked of the card in EffectClassifier.Classify, which checks it is
+        // an instant.
+        private static readonly Regex BigShrinkOnAnInstant = Rx(
+            @"target creature(?! you control)[^.\n]{0,40} gets? -(?:[5-9]|[1-9]\d)/-0 until end of turn");
+
+        // A blink that puts the target back TAPPED is a tap, Pacify, ruled
+        // 2026-11-12 (P2, "Torna tappato = Pacify"): Disorder in the Court and
+        // Eldrazi Confluence, 2 of 2 reviewed, Pacify by hand. A flicker that
+        // returns it untapped stays out (Parting Gust, Phelia), and so does
+        // your own (Golden Argosy's crew, Gandalf's lands). Read as a tap,
+        // with the tap's speed (BareTap, 2026-10-27): asked only of a card
+        // deployed at instant speed (Morningtide's Light, a sorcery, and The
+        // Mighty Thor, Jane Foster's attack trigger stay out, unreviewed). A
+        // guard against "whenever ... attacks" was tried and moved no card on
+        // 2026-11-13: the speed already keeps Thor out.
+        private static readonly Regex BlinkBackTapped = Rx(
+            @"\bexile (?:x |up to (?:one|two|three|x) |any number of )?(?:another )?target "
+            + @"(?![^.\n]{0,40}\byou control\b)[^\n]{0,160}?\breturn (?:it|them|that card|those cards|the exiled cards?) to the battlefield tapped "
+            // Back to its OWNER: Vindictive Triumph's "tapped under your
+            // control" is a theft for the turn, Removal by hand.
+            + @"under (?:its|their) owner(?:'s|s') control");
 
         // A MODE that adds mana on a permanent's trigger that fires again, the
         // modes coming back every turn: Galadriel, Light of Valinor's "choose
@@ -1589,7 +1629,8 @@ namespace ScatoloneDownloader.Cube
         // untagged; Shrink, Unagi's Spray never were), and nor is one on a
         // repeating TRIGGER (0 of 6: Fear of Falling, Spring Splasher). An
         // Aura on a creature that becomes YOURS shrinks your own (Animate
-        // Dead, Duskmourn's Domination).
+        // Dead, Duskmourn's Domination). The one-shot came back in part on
+        // 2026-11-12 — see BigShrinkOnAnInstant.
         //
         // Read 2026-10-16: a base 0 set on a creature YOU cast or control is
         // a trick of yours (Cycle of Life, untagged; 0 of 8 reviewed say it).
@@ -2115,18 +2156,16 @@ namespace ScatoloneDownloader.Cube
 
         // Mana KEPT from one step to the next for good is more mana, ruled
         // 2026-10-24 ("Ramp se è standing"): Horizon Stone, tagged by hand, and
-        // Kruphix, Upwelling and Omnath, Locus of Mana with it. Not when what is
-        // kept is mana from attacking ("mai Ramp dall'attacco": Fangorn, Tree
-        // Shepherd and Ozai, the Phoenix King, untagged), and not the one turn
-        // a spell or a death keeps it ("until end of turn, you don't lose":
-        // The Last Agni Kai, Su-Chi Cave Guard).
+        // Kruphix, Upwelling and Omnath, Locus of Mana with it. Mana from
+        // attacking kept this way counts too since 2026-11-12 ("Resta = Ramp"):
+        // Fangorn, Tree Shepherd and Ozai, the Phoenix King, untagged under
+        // "mai Ramp dall'attacco", handed back; the attack veto that kept them
+        // out is gone. Not the one turn a spell or a death keeps it ("until end
+        // of turn, you don't lose": The Last Agni Kai, Su-Chi Cave Guard).
         private static readonly Regex ManaKeptForGood = Rx(
             @"^(?:if you would lose unspent mana, that mana becomes \w+ instead"
             + @"|(?:you|players) don't lose unspent (?:\w+ )?mana as steps and phases end)",
             RegexOptions.Multiline);
-
-        private static readonly Regex KeepsAttackMana = Rx(
-            @"\bfirebending\b|^whenever [^\n]{0,60}\battacks?\b[^\n]{0,40}, add\b", RegexOptions.Multiline);
 
         // A cost reduction for a TRIBE's spells is nothing, ruled 2026-10-24 ("No
         // Ramp, è tribale", the free cast of a tribe of 2026-10-16): Gargos's

@@ -75,9 +75,9 @@ namespace ScatoloneDownloader.Cube
         //   handing your creature back, or attacking their own teammate, which
         //   in the cube's 2vs2 never happens (Karazikar, the Eye Tyrant).
         //
-        //   The line this does NOT cross is Surrak, Elusive Hunter, which is
-        //   tagged: it triggers on ANY spell or ability an opponent controls
-        //   touching your creatures, which happens by itself. Nor a draw the
+        //   Surrak, Elusive Hunter was the line this did not cross until
+        //   2026-11-12 (C1): an opponent's spell touching your creatures is
+        //   their choice too, and it is in the list below. Not a draw the
         //   card feeds itself: Avatar Aang's "whenever you ... firebend, draw a
         //   card" was a difficulty from 2026-09-22 and is CardAdvantage since
         //   2026-11-07, because its own firebending 2 fires on every attack.
@@ -98,16 +98,15 @@ namespace ScatoloneDownloader.Cube
             // Deathless Prince, the one reviewed card that says it, is Steal
             // alone by hand (read 2026-10-16).
             + @"|combat damage to its owner,[^\n]{0,40}draws? (?:a|one) card"
-            // THE CARD ITSELF becoming the target of an opponent's spell or
-            // ability is a tax they pay, not a card you gained: Altanak and
-            // Cactarantula, 0 of 2 tagged (read 2026-10-16). "A creature you
-            // control" is the other reading and stays (Surrak, Elusive Hunter
-            // and Elrond, Master of Healing, 2 of 2 tagged): it happens by
-            // itself, to any of a board of creatures. The subject may not open
-            // with an article or a count, which is what separates the card
-            // from the board.
-            + @"|\bwhenever (?!an? |another |one or more |each |creatures? |you\b)[^,\n]{0,40}? becomes? the target of a spell or ability "
-            + @"an opponent controls, (?:you may )?draws? (?:a|one) card"
+            // Anything of yours becoming the target of an opponent's spell or
+            // ability waits on THEIR choice, ruled 2026-11-12 (C1, under the
+            // definition of 2026-11-07): the card itself (Altanak,
+            // Cactarantula, read 2026-10-16) and the board alike — Battle
+            // Mammoth's "a permanent you control" and Fey Steed's "a creature
+            // or planeswalker", untagged by hand; Surrak, Elusive Hunter and
+            // Elrond, Master of Healing, tagged under the 10-16 reading that
+            // the board "happens by itself", handed back. 0 of 6 reviewed now.
+            + @"|\bbecomes? the target of a spell or ability an opponent controls, (?:you may )?draws? (?:a|one) card"
             // …and the card becoming the target of a spell YOU control, which
             // needs a second card of yours aimed at it (Nadu's reading, below):
             // Stormchaser Drake, untagged by hand, the one reviewed card that
@@ -1037,6 +1036,20 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex TribalCard = new(
             ACreatureType + @"(?:(?:,(?: or| and)?| or| and) [A-Z][\w'-]+)*" + @" (?:creature |permanent )?(?:cards?|spells?)\b"
             + @"|\bcreature cards? that shares? a creature type\b",
+            RegexOptions.CultureInvariant);
+
+        // A DRAW ON CASTING A TRIBE's SPELL is not CardAdvantage, ruled
+        // 2026-11-12 (C3, "Tribale mai CA"): Tyvar Kell's emblem "Whenever you
+        // cast an Elf spell, … you draw two cards", untagged by hand, and
+        // Leaf-Crowned Visionary (Elf) and Rose Noble (Doctor), tagged before
+        // and handed back — 2 of 3 reviewed were CardAdvantage. The type is a
+        // creature type, case-sensitive as in TribalCard; the subtypes of a
+        // spell are no tribe (Storyteller Pixie's Adventure, Pearl-Ear's Aura,
+        // CardAdvantage by hand). Blanked, not vetoed: the card keeps a draw it
+        // has elsewhere (DrawsOnlyForATribesSpell).
+        private static readonly Regex DrawForATribesSpell = new(
+            @"[Ww]henever you cast (?:an? |your first )?(?!(?:Adventure|Lesson|Arcane|Trap|Omen)s?\b)"
+            + ACreatureType + @"(?:(?:,(?: or| and)?| or| and) [A-Z][\w'-]+)* (?:creature )?spells?\b[^\n]*?\bdraws?\b[^\n]*",
             RegexOptions.CultureInvariant);
 
         // …unless the same sentence names a card ANY creature could be: Thwart
@@ -2453,9 +2466,12 @@ namespace ScatoloneDownloader.Cube
         // So is a HISTORIC or COLORLESS spell, which is a permanent nearly every
         // time: ruled 2026-10-14 ("Dipende dal tipo copiato"), The Sixth Doctor
         // and Echoes of Eternity Redirect alone, while Storm of Saruman copies
-        // any second spell, as Taigam does, and is CardAdvantage.
+        // any second spell, as Taigam does, and is CardAdvantage. An ADVENTURE
+        // spell is narrow like a tribe, ruled 2026-11-12 (C2, an exception to
+        // "Dipende dal tipo copiato"): Lucky Clover copies only Adventure
+        // instants and sorceries and is Redirect alone by hand.
         private static readonly Regex CopiesYourOwnSpell = Rx(
-            @"whenever you cast (?:your |a |an )?(?![\w' ]{0,40}\b(?:permanent|historic|colorless) spell)[\w' ]{0,40}, copy it");
+            @"whenever you cast (?:your |a |an )?(?![\w' ]{0,40}\b(?:(?:permanent|historic|colorless) spell|adventure\b))[\w' ]{0,40}, copy it");
 
         // A LOOT SPLIT ACROSS TWO TRIGGERS is still a loot, ruled 2026-09-22:
         // Teferi's Imp discards when it phases out and draws when it phases
@@ -2615,6 +2631,13 @@ namespace ScatoloneDownloader.Cube
         // bare "Draw a card." closing the line: Hylda's Crown of Winter draws
         // one for each tapped creature and ED-E, Lonesome Eyebot one per
         // counter more, and both are tagged.
+        /// <summary>The card's CardAdvantage comes only from a draw on casting a
+        /// tribe's spell (DrawForATribesSpell): asked again with that sentence
+        /// blanked.</summary>
+        private static bool DrawsOnlyForATribesSpell(Card card, string text) =>
+            DrawForATribesSpell.IsMatch(text)
+            && !Classify(new OneAbility(card, DrawForATribesSpell.Replace(text, " "))).HasFlag(CardEffect.CardAdvantage);
+
         private static bool DrawsOnceBySacrificingItsName(Card card, string text) =>
             CostSacrificingItsName(card) is string cost
             && Regex.IsMatch(text, cost + @"[^\n:]{0,30}:[^\n]{0,60}\bdraw a card\.?$", ByNameOptions);
