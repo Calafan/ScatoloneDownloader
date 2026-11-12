@@ -662,3 +662,30 @@ Ruled 2026-11-12, the evening's answers, under the definition of 2026-11-07:
   ability that looks and keeps the type is advantage alone (2026-09-27). Not extended to Conspiracy
   Theorist, Suspicious Stowaway, Kianne, Dean of Substance and Plargg, Dean of Chaos, whose selection
   and gain are separate abilities and keep both (Qiqirn Merchant, 2026-09-29).
+
+Read 2026-11-13, twelve single cards, each narrowed to its hand tag set. Bag of Tricks (a reveal
+until a card, with a trailing "with mana value" clause), Draugr Necromancer and Grolnok (a standing
+permission to cast spells from among cards in exile with counters on them, anchored to a line of its
+own), Keen Duelist (both players reveal, each puts the card into hand), Niv-Mizzet Reborn (one
+chosen per colour pair, all chosen put into hand), Conspiracy Theorist (one exiled from the
+graveyard and played), Florian, Voldaren Scion (a look that exiles one card to play, every
+postcombat main phase: CardAdvantage alone, Filter goes), Kianne, Dean of Substance (the exile whose
+card goes to hand, CardAdvantage; its land-or-counter exile is an explore in its own words, Filter
+by "explore = Filter" of 2026-09-29, both kept), Plargg, Dean of
+Chaos (the free cast until a nonland card now allows "mana value" after it, on an ability that
+repeats), Priest of Forgotten Gods ("sacrifice two other creatures, you draw a card": sacrificing
+another permanent to draw, 2026-09-21/22) and Suspicious Stowaway (a loot beside a separate
+repeating draw: both, Qiqirn Merchant 2026-09-29). Old Stickfingers, whose reveal-until is "this
+spell", loses the proposal. Treasure Keeper is read OUT: the same qualified free cast on a death
+trigger fires once, and "one cascade is a discover" (2026-10-23) while "a discover made ONCE is not
+CardAdvantage" (2026-09-29); the four reviewed cards of the unqualified rule all repeat (Breaching
+Dragonstorm, Sarevok's Tome, Solstice Revelations, Neera). The older clause for a loot beside a draw
+of several (The Royal Scions) is subsumed by the Stowaway reading: removed, no card moved. Measured:
+14 reviewed cards right, none wrong; exact match 12758 to 12770. Rejected: the standing
+exile-with-counters permission unanchored (5 reviewed right, The Dragon-Kami Reborn wrong, Goliath
+Daydreamer moved); a bare "put the chosen cards into your hand" (reaches Guided Passage, Manifold
+Insights, Turtles Forever, unreviewed); the graveyard-exile alternative widened from "play" to
+"cast" (Tlincalli Hunter and Radiant Scrollwielder, 0 of 2 tagged); "play the exiled card" as a
+whole (6 tagged, 7 untagged); the qualifier on a one-shot (moved only Treasure Keeper). Moved among
+the unreviewed, to CardAdvantage: Enclave Cryptologist, Raving Visionary and Conqueror's Galleon (a
+loot beside a separate repeating draw, so both tags, the reading of C4 and Qiqirn Merchant).

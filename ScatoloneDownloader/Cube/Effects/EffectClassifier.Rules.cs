@@ -1175,6 +1175,18 @@ namespace ScatoloneDownloader.Cube
                 (CardEffect.CardAdvantage, [
                     Rx(@"draws? (?:two|three|four|five|six|seven|eight|nine|ten|x|\d+) cards"),
                     Rx(@"^[^\n:]{1,70}:[^\n]{0,100}draws? (?:a|one) card", RegexOptions.Multiline),
+                    // SACRIFICING ANOTHER PERMANENT to draw is advantage (2026-09-21/
+                    // 22, 10 of 10), read past the 100 window, 2026-11-13: Priest of
+                    // Forgotten Gods' "{T}, Sacrifice two other creatures: Any number
+                    // of target players each lose 2 life and sacrifice a creature of
+                    // their choice. You add {B}{B} and draw a card" (Removal, Ramp,
+                    // CardAdvantage and Burn by hand). The window is not widened for
+                    // every activated draw, which was measured and rejected at 260
+                    // (3 right, 3 wrong, see below); only a cost that names ANOTHER or
+                    // OTHER permanent is asked, and Priest is the only card in the
+                    // store that says it past the 100.
+                    Rx(@"^[^\n:]{0,60}\bsacrifice [^\n:]{0,60}\b(?:another|other)\b[^\n:]{0,60}:[^\n]*\bdraws? (?:a|one) card",
+                        RegexOptions.Multiline),
                     // The station prefix is part of the anchor: a Spacecraft
                     // prints its abilities behind "3+ | " and "12+ | ", and the
                     // trigger word is no longer first on the line. Uthros
@@ -1313,8 +1325,16 @@ namespace ScatoloneDownloader.Cube
                     // reads a draw for somebody else has nothing to withdraw
                     // because you are one of the somebodies. Parker Luck is the
                     // one reviewed card written this way and it is tagged.
+                    // Said from YOUR side, read 2026-11-13: Keen Duelist's "you and
+                    // target opponent each reveal the top card of your library …
+                    // You each put the card you revealed into your hand", every
+                    // upkeep, the same Howling Mine reading (CardAdvantage by
+                    // hand). Counted: 2 reviewed cards, both tagged, no
+                    // unreviewed card.
                     Rx(@"each reveal the top card of their library"
-                        + @"[^\n]{0,140}each put the card they revealed into their hand"),
+                        + @"[^\n]{0,140}each put the card they revealed into their hand"
+                        + @"|each reveal the top card of your library"
+                        + @"[^\n]{0,140}you each put the card you revealed into your hand"),
                     // A trigger hiding behind a LABEL. The anchored rule above wants
                     // "whenever" at the start of the line, and modern cards put an
                     // ability word or a Siege bullet in front of it — "Eerie —
@@ -1434,6 +1454,15 @@ namespace ScatoloneDownloader.Cube
                     // Secrets", whose loot is read by its own words.
                     Rx(@"(?:^|\n|\. |, |: )learn\b(?! their)", RegexOptions.Multiline),
                     Rx(@"look at the top \w+ cards? of your library"),
+                    // An EXPLORE said in its own words, read 2026-11-13 (explore =
+                    // Filter, 2026-09-29): Kianne, Dean of Substance's "{T}: Exile
+                    // the top card of your library. If it's a land card, put it into
+                    // your hand. Otherwise, put a study counter on it", a land into
+                    // the hand or a counter on the card, every tap (Tokens,
+                    // CardAdvantage and Filter by hand). Counted: it is the only card
+                    // in the store that exiles the top card and keeps it only if it
+                    // is a land; no other reviewed card says it.
+                    Rx(@"exile the top card of your library\. if it's a land card, put it into your hand\. otherwise, put an? \w+ counter on it"),
                     // A dig for a creature of the SACRIFICED creature's type, which
                     // TribalCard keeps from being Cheat: Descendants' Fury, Filter
                     // by hand like Call to the Kindred's look at five (read

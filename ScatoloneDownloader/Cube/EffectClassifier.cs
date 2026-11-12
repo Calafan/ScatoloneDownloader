@@ -973,13 +973,12 @@ namespace ScatoloneDownloader.Cube
                 result |= CardEffect.CardAdvantage;
             }
 
-            // …or the loot is one ability and a draw of several another. See
-            // YouDrawSeveral. Not a cycling reminder's "Discard this card: Draw
+            // …or the loot is one ability and a draw on its own another. See
+            // AnotherAbilityDrawsOnItsOwn. Not a cycling reminder's "Discard this card: Draw
             // a card" (Boon of the Wish-Giver), nor a draw that spends the card
             // (Seasoned Cryomancer's out of the graveyard): both moved without
             // these two and no reviewed card did.
-            if (Loot.IsMatch(Parenthetical.Replace(oneSidedLoot, " ")) && Abilities(text).Any(a => YouDrawSeveral.IsMatch(a)
-                    && !a.Contains("discard", StringComparison.OrdinalIgnoreCase) && AbilityRepeatsAtNoCostToItself(a)))
+            if (Loot.IsMatch(Parenthetical.Replace(oneSidedLoot, " ")) && AnotherAbilityDrawsOnItsOwn(card, text))
             {
                 result |= CardEffect.CardAdvantage;
             }
@@ -1120,6 +1119,9 @@ namespace ScatoloneDownloader.Cube
                 // The readings of 2026-10-23 — see EntersOrLeavesImpulse.
                 || EntersOrLeavesImpulse.IsMatch(text)
                 || Abilities(text).Any(a => RevealsAnyNumberIntoHand.IsMatch(a) && !TribalCard.IsMatch(a))
+                // A look that exiles one card to play, on an ability that repeats
+                // (Florian, Voldaren Scion, read 2026-11-13) — see LooksExilesOneAndPlaysIt.
+                || Abilities(text).Any(a => LooksExilesOneAndPlaysIt.IsMatch(a) && RepeatsWithoutPayingACard(a))
                 || GraveyardCardOnEveryHit.IsMatch(text) || DrawThenRepeat.IsMatch(text)
                 || UpkeepExilesSeveralIntoPlay.IsMatch(text) || EachPlayerDrawsEveryTurn.IsMatch(text)
                 || SquadCopiesDraw.IsMatch(text) || MillHandedBack.IsMatch(text)

@@ -3054,4 +3054,176 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
     }
+
+    [Theory]
+    // Read 2026-11-13, twelve single cards, tagged CardAdvantage by hand: Bag of
+    // Tricks (a reveal until a card, with a trailing 'with mana value' clause),
+    // Draugr Necromancer and Grolnok (a standing permission to cast from exile
+    // cards with counters, anchored to a line of its own), Keen Duelist (both
+    // players reveal and keep), Niv-Mizzet Reborn (one chosen per colour pair),
+    // Conspiracy Theorist (exile one from the graveyard and may play it), Florian
+    // (a look that exiles one card to play, every postcombat main phase), Kianne and Plargg (the exile
+    // that turns into a hand card, the free cast until a nonland card), Priest of
+    // Forgotten Gods (sacrifice two others, you draw) and Suspicious
+    // Stowaway (a loot beside a separate repeating draw).
+    [InlineData("Bag of Tricks", "Artifact",
+        "{4}{G}, {T}: Roll a d8. Reveal cards from the top of your library until you reveal a creature card "
+        + "with mana value equal to the result. Put that card onto the battlefield and the rest on the bottom "
+        + "of your library in a random order.")]
+    [InlineData("Draugr Necromancer", "Snow Creature — Zombie Cleric",
+        "If a nontoken creature an opponent controls would die, exile that card with an ice counter on it "
+        + "instead.\nYou may cast spells from among cards in exile your opponents own with ice counters on them, "
+        + "and you may spend mana from snow sources as though it were mana of any color to cast those spells.")]
+    [InlineData("Grolnok, the Omnivore", "Legendary Creature — Frog",
+        "Whenever a Frog you control attacks, mill three cards.\nWhenever a permanent card is put into your "
+        + "graveyard from your library, exile it with a croak counter on it.\nYou may play lands and cast spells "
+        + "from among cards you own in exile with croak counters on them.")]
+    [InlineData("Keen Duelist", "Creature — Human Wizard",
+        "At the beginning of your upkeep, you and target opponent each reveal the top card of your library. "
+        + "You each lose life equal to the mana value of the card revealed by the other player. You each put "
+        + "the card you revealed into your hand.")]
+    [InlineData("Niv-Mizzet Reborn", "Legendary Creature — Dragon Avatar",
+        "Flying\nWhen Niv-Mizzet enters, reveal the top ten cards of your library. For each color pair, choose "
+        + "a card that's exactly those colors from among them. Put the chosen cards into your hand and the rest "
+        + "on the bottom of your library in a random order.")]
+    [InlineData("Conspiracy Theorist", "Creature — Human Shaman",
+        "Whenever this creature attacks, you may pay {1} and discard a card. If you do, draw a card.\nWhenever "
+        + "you discard one or more nonland cards, you may exile one of them from your graveyard. If you do, you "
+        + "may cast it this turn.")]
+    [InlineData("Florian, Voldaren Scion", "Legendary Creature — Vampire Noble",
+        "First strike\nAt the beginning of each of your postcombat main phases, look at the top X cards of "
+        + "your library, where X is the total amount of life your opponents lost this turn. Exile one of those "
+        + "cards and put the rest on the bottom of your library in a random order. You may play the exiled card "
+        + "this turn.")]
+    [InlineData("Kianne, Dean of Substance // Imbraham, Dean of Theory", "Legendary Creature — Elf Druid // Legendary Creature — Bird Wizard",
+        "{T}: Exile the top card of your library. If it's a land card, put it into your hand. Otherwise, put "
+        + "a study counter on it.\n{4}{G}: Create a 0/0 green and blue Fractal creature token. Put a +1/+1 "
+        + "counter on it for each different mana value among nonland cards you own in exile with study counters "
+        + "on them.\nFlying\n{X}{U}{U}, {T}: Exile the top X cards of your library and put a study counter on "
+        + "each of them. Then you may put a card you own in exile with a study counter on it into your hand.")]
+    [InlineData("Plargg, Dean of Chaos // Augusta, Dean of Order", "Legendary Creature — Orc Shaman // Legendary Creature — Human Cleric",
+        "{T}, Discard a card: Draw a card.\n{4}{R}, {T}: Reveal cards from the top of your library until you "
+        + "reveal a nonlegendary, nonland card with mana value 3 or less. You may cast that card without paying "
+        + "its mana cost. Put all revealed cards not cast this way on the bottom of your library in a random "
+        + "order.\nOther tapped creatures you control get +1/+0.\nOther untapped creatures you control get "
+        + "+0/+1.\nWhenever you attack, untap each creature you control, then tap any number of creatures you "
+        + "control.")]
+    [InlineData("Priest of Forgotten Gods", "Creature — Human Cleric",
+        "{T}, Sacrifice two other creatures: Any number of target players each lose 2 life and sacrifice a "
+        + "creature of their choice. You add {B}{B} and draw a card. (Activate only as an instant.)")]
+    [InlineData("Suspicious Stowaway // Seafaring Werewolf", "Creature — Human Rogue Werewolf // Creature — Werewolf",
+        "This creature can't be blocked.\nWhenever this creature deals combat damage to a player, draw a card, "
+        + "then discard a card.\nDaybound (If a player casts no spells during their own turn, it becomes night "
+        + "next turn.)\nThis creature can't be blocked.\nWhenever this creature deals combat damage to a player, "
+        + "draw a card.\nNightbound (If a player casts at least two spells during their own turn, it becomes day "
+        + "next turn.)")]
+    public void Classify_TheNovember13Readings_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Read 2026-11-13, the neighbours that must not move: Old Stickfingers has no
+    // tag by hand (its 'this spell' reveal-until is not a second hand on top), The
+    // Dragon-Kami Reborn keeps a standing exile-with-counters permission as Filter
+    // alone (the Draugr/Grolnok reading is anchored so it stays out: unanchored it
+    // was 1 wrong of 6 reviewed), Aspiring Champion is Burn only.
+    [InlineData("Old Stickfingers", "Legendary Creature — Horror",
+        "When you cast this spell, reveal cards from the top of your library until you reveal X creature "
+        + "cards. Put all creature cards revealed this way into your graveyard, then put the rest on the bottom "
+        + "of your library in a random order.\nOld Stickfingers's power and toughness are each equal to the "
+        + "number of creature cards in your graveyard.")]
+    [InlineData("The Dragon-Kami Reborn // Dragon-Kami's Egg", "Enchantment — Saga // Enchantment Creature — Egg",
+        "(As this Saga enters and after your draw step, add a lore counter.)\nI, II — You gain 2 life. Look at "
+        + "the top three cards of your library. Exile one of them face down with a hatching counter on it, then "
+        + "put the rest on the bottom of your library in any order.\nIII — Exile this Saga, then return it to "
+        + "the battlefield transformed under your control.\nWhenever this creature or a Dragon you control dies, "
+        + "you may cast a creature spell from among cards you own in exile with hatching counters on them "
+        + "without paying its mana cost.")]
+    [InlineData("Aspiring Champion", "Creature — Astartes Warrior",
+        "Menace\nRuinous Ascension — When this creature deals combat damage to a player, sacrifice it. If you "
+        + "do, reveal cards from the top of your library until you reveal a creature card. Put that card onto "
+        + "the battlefield, then shuffle the rest into your library. If that creature is a Demon, it deals "
+        + "damage equal to its power to each opponent.")]
+    // Treasure Keeper, unreviewed: a reveal until a nonland card with mana value 3
+    // or less, cast free, on a death trigger that fires ONCE. 'One cascade is a
+    // discover' (ruled 2026-10-23) and 'a discover made ONCE is not CardAdvantage'
+    // (2026-09-29). The qualifier is read only on an ability that repeats (Plargg,
+    // Dean of Chaos).
+    [InlineData("Treasure Keeper", "Artifact Creature — Construct",
+        "When this creature dies, reveal cards from the top of your library until you reveal a nonland card "
+        + "with mana value 3 or less. You may cast that card without paying its mana cost. Put all revealed "
+        + "cards not cast this way on the bottom of your library in a random order.")]
+    public void Classify_TheNovember13Readings_IsNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Read 2026-11-13, Filter by hand and kept: Conspiracy Theorist, Kianne (the
+    // exile whose land goes to the hand and whose other card takes a counter),
+    // Plargg and Suspicious Stowaway (a loot beside a separate draw is both,
+    // Qiqirn Merchant 2026-09-29), and The Dragon-Kami Reborn.
+    [InlineData("Conspiracy Theorist", "Creature — Human Shaman",
+        "Whenever this creature attacks, you may pay {1} and discard a card. If you do, draw a card.\nWhenever "
+        + "you discard one or more nonland cards, you may exile one of them from your graveyard. If you do, you "
+        + "may cast it this turn.")]
+    [InlineData("Kianne, Dean of Substance // Imbraham, Dean of Theory", "Legendary Creature — Elf Druid // Legendary Creature — Bird Wizard",
+        "{T}: Exile the top card of your library. If it's a land card, put it into your hand. Otherwise, put "
+        + "a study counter on it.\n{4}{G}: Create a 0/0 green and blue Fractal creature token. Put a +1/+1 "
+        + "counter on it for each different mana value among nonland cards you own in exile with study counters "
+        + "on them.\nFlying\n{X}{U}{U}, {T}: Exile the top X cards of your library and put a study counter on "
+        + "each of them. Then you may put a card you own in exile with a study counter on it into your hand.")]
+    [InlineData("Plargg, Dean of Chaos // Augusta, Dean of Order", "Legendary Creature — Orc Shaman // Legendary Creature — Human Cleric",
+        "{T}, Discard a card: Draw a card.\n{4}{R}, {T}: Reveal cards from the top of your library until you "
+        + "reveal a nonlegendary, nonland card with mana value 3 or less. You may cast that card without paying "
+        + "its mana cost. Put all revealed cards not cast this way on the bottom of your library in a random "
+        + "order.\nOther tapped creatures you control get +1/+0.\nOther untapped creatures you control get "
+        + "+0/+1.\nWhenever you attack, untap each creature you control, then tap any number of creatures you "
+        + "control.")]
+    [InlineData("Suspicious Stowaway // Seafaring Werewolf", "Creature — Human Rogue Werewolf // Creature — Werewolf",
+        "This creature can't be blocked.\nWhenever this creature deals combat damage to a player, draw a card, "
+        + "then discard a card.\nDaybound (If a player casts no spells during their own turn, it becomes night "
+        + "next turn.)\nThis creature can't be blocked.\nWhenever this creature deals combat damage to a player, "
+        + "draw a card.\nNightbound (If a player casts at least two spells during their own turn, it becomes day "
+        + "next turn.)")]
+    [InlineData("The Dragon-Kami Reborn // Dragon-Kami's Egg", "Enchantment — Saga // Enchantment Creature — Egg",
+        "(As this Saga enters and after your draw step, add a lore counter.)\nI, II — You gain 2 life. Look at "
+        + "the top three cards of your library. Exile one of them face down with a hatching counter on it, then "
+        + "put the rest on the bottom of your library in any order.\nIII — Exile this Saga, then return it to "
+        + "the battlefield transformed under your control.\nWhenever this creature or a Dragon you control dies, "
+        + "you may cast a creature spell from among cards you own in exile with hatching counters on them "
+        + "without paying its mana cost.")]
+    public void Classify_TheNovember13Readings_IsFilter(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Read 2026-11-13: Florian is CardAdvantage alone (a look that exiles one card
+    // to play, every postcombat main phase), Old
+    // Stickfingers carries nothing, Bag of Tricks and Keen Duelist are
+    // CardAdvantage without a selection.
+    [InlineData("Florian, Voldaren Scion", "Legendary Creature — Vampire Noble",
+        "First strike\nAt the beginning of each of your postcombat main phases, look at the top X cards of "
+        + "your library, where X is the total amount of life your opponents lost this turn. Exile one of those "
+        + "cards and put the rest on the bottom of your library in a random order. You may play the exiled card "
+        + "this turn.")]
+    [InlineData("Old Stickfingers", "Legendary Creature — Horror",
+        "When you cast this spell, reveal cards from the top of your library until you reveal X creature "
+        + "cards. Put all creature cards revealed this way into your graveyard, then put the rest on the bottom "
+        + "of your library in a random order.\nOld Stickfingers's power and toughness are each equal to the "
+        + "number of creature cards in your graveyard.")]
+    [InlineData("Bag of Tricks", "Artifact",
+        "{4}{G}, {T}: Roll a d8. Reveal cards from the top of your library until you reveal a creature card "
+        + "with mana value equal to the result. Put that card onto the battlefield and the rest on the bottom "
+        + "of your library in a random order.")]
+    [InlineData("Keen Duelist", "Creature — Human Wizard",
+        "At the beginning of your upkeep, you and target opponent each reveal the top card of your library. "
+        + "You each lose life equal to the mana value of the card revealed by the other player. You each put "
+        + "the card you revealed into your hand.")]
+    public void Classify_TheNovember13Readings_IsNotFilter(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
 }

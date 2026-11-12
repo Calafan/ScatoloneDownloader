@@ -191,6 +191,25 @@ namespace ScatoloneDownloader.Cube
             + @"|all cards exiled with it into (?:your|their owners?'?s?'?) hands?"
             + @"|(?:cast|play) (?:a |any number of )?(?:spells?|cards?)[\w ,'-]{0,40}"
             + @"from among (?:the |cards )?exiled"
+            // …and the pile NAMED BY ITS COUNTER, a standing permission to play
+            // lands and cast spells from elsewhere (Kagha, Shadow Archdruid,
+            // read 2026-10-30, 9 of 10), read 2026-11-13: Grolnok, the Omnivore's
+            // "from among cards you own in exile with croak counters on them"
+            // and Draugr Necromancer's "from among cards in exile your opponents
+            // own with ice counters on them" (an opponent's creature, played by
+            // you on every hit, the reading of 2026-11-10), both CardAdvantage by
+            // hand. Counted: 2 reviewed cards say it as a line of its own, 2
+            // tagged, no unreviewed card; Gix, Intellect Devourer and Elder Brain,
+            // tagged, say "exiled this way / with this creature" and were read
+            // already. ONLY as a line of its own: the same permission behind a
+            // trigger is a cast per event, not a standing one — The Dragon-Kami
+            // Reborn's "Whenever this creature or a Dragon you control dies, you
+            // may cast a creature spell from among cards you own in exile with
+            // hatching counters" is Filter alone by hand (read without the
+            // anchor: 5 reviewed right, 1 wrong, and Goliath Daydreamer's attack
+            // trigger, unreviewed, moved with it).
+            + @"|(?<=\n|^)you may (?:play lands and )?cast spells from among cards (?:you own |your opponents own )?in exile "
+            + @"(?:you own |your opponents own )?with \w+ counters on them"
             // The count is optional here too: Vaan exiles THE TOP CARD of the
             // player he hit and says "You may cast it", one card at a time and
             // every combat. "Their library" joins "that player's" because
@@ -383,6 +402,19 @@ namespace ScatoloneDownloader.Cube
             // from your graveyard" is also how escape and delve charge a cost.
             + @"|exiles? [\w ,'-]{0,30}cards? [\w ,'-]{0,20}from your graveyard"
             + @"[^\n]{0,60}you may play (?:that card|it)\b"
+            // …and a trigger ON A DISCARD that exiles ONE OF THEM and casts it
+            // (Inti, Seneschal of the Sun and Monument to Endurance, ruled
+            // 2026-10-13: a trigger on a discard that draws or impulses is this
+            // tag), read 2026-11-13: Conspiracy Theorist's "Whenever you discard
+            // one or more nonland cards, you may exile one of them from your
+            // graveyard. If you do, you may cast it this turn" is Containment
+            // Construct's "that card … play" with other nouns (CardAdvantage and
+            // Filter by hand, the Filter being its attack loot). Counted: 1
+            // reviewed card says "exile one of them", tagged. Widening the
+            // existing alternative from "play" to "cast" was measured and
+            // rejected: it reaches Tlincalli Hunter and Radiant Scrollwielder,
+            // Regrowth alone by hand (0 of 2 tagged), and two unreviewed.
+            + @"|exiles? one of them from your graveyard[^\n]{0,60}you may (?:cast|play) (?:that card|it)\b"
             // The card CHOSEN in your graveyard first and cast after: Conduit
             // of Worlds, on every tap (tagged, 2026-10-14).
             + @"|choose target [\w ]{0,30}card in your graveyard[^\n]{0,80}you may cast that card"
@@ -431,8 +463,19 @@ namespace ScatoloneDownloader.Cube
         //   that follows is the card.
         private static readonly Regex StormKeyword = Rx(@"^storm(?: \(|$)", RegexOptions.Multiline);
 
+        // …and the same pile taken into the hand by an ACTIVATED ability, the
+        // pile named by its counter, read 2026-11-13: Kianne, Dean of Substance's
+        // "{X}{U}{U}, {T}: Exile the top X cards … and put a study counter on each
+        // of them. Then you may put a card you own in exile with a study counter
+        // on it into your hand", on top of its {T} that stocks the same pile
+        // (Tokens, CardAdvantage and Filter by hand; the Filter is the {T}, a
+        // separate ability, C4 of 2026-11-12 and Qiqirn Merchant 2026-09-29).
+        // Counted: 2 reviewed cards put a card exiled with a counter or "with
+        // this" into the hand (Kianne, Wall of Mourning), both tagged, and only
+        // Kianne says it as an activated cost.
         private static readonly Regex ExiledPileIntoTheHandEachTurn = Rx(
-            @"^(?:[\w ]+ — )?at the beginning of [^\n]{0,120}\bput a card exiled with this \w+ into (?:your|its owner's) hand",
+            @"^(?:[\w ]+ — )?at the beginning of [^\n]{0,120}\bput a card exiled with this \w+ into (?:your|its owner's) hand"
+            + @"|^[^\n:]{1,70}:[^\n]{0,160}\bput a card you own in exile with an? \w+ counter on it into your hand",
             RegexOptions.Multiline);
 
         private static readonly Regex MilledCreaturesBackToHand = Rx(
@@ -1416,6 +1459,13 @@ namespace ScatoloneDownloader.Cube
         // a discover, ruled 2026-10-23 (see CascadeMoreThanOnce). Only "this
         // spell": the same exile-until on EVERY legendary spell (Jodah, the
         // Unifier, tagged) or on every activation (Codie) is a stream.
+        // The cast trigger may REVEAL instead of exile, read 2026-11-13: Old
+        // Stickfingers' "When you cast this spell, reveal cards from the top
+        // of your library until you reveal X creature cards" puts them into
+        // the graveyard and the rest on the bottom, so no card reaches a hand,
+        // the battlefield or a cast (a false positive, untagged by hand).
+        // Counted: it is the only card in the store that says "cast this
+        // spell, reveal cards … until".
         // Not when only a creature TYPE may be cast from the top: Hakoda, Selfless
         // Commander's "cast Ally spells from the top of your library" (untagged,
         // read 2026-10-27, the tribal ruling of 2026-10-16 as for Rundvelt
@@ -1423,7 +1473,7 @@ namespace ScatoloneDownloader.Cube
         // Chocobo, "play lands and cast Bird spells", tagged), nor a supertype
         // (Isu the Abominable's snow spells, tagged).
         private static readonly Regex SecondHandOnTop = Rx(
-            @"(?:play|cast|plot)(?! this spell, exile cards from the top of your library until)" + NotOnlyATribesSpells
+            @"(?:play|cast|plot)(?! this spell, (?:exile|reveal) cards from the top of your library until)" + NotOnlyATribesSpells
             + @"[\w ,'\d]{0,60}from the top of your library"
             // The bare LOOK ("you may look at the top card of your library any
             // time") is no second hand without a permission to play or cast
@@ -1492,6 +1542,25 @@ namespace ScatoloneDownloader.Cube
             + @"|^look at the top \w+ cards? of your library\. (?:you may exile [^.\n]{0,40}\bcard from among them|exile one of them)"
             + @"[^\n]{0,160}you may cast the exiled card",
             RegexOptions.Multiline);
+
+        // The same look-and-exile-one-to-play, said "exile one of THOSE CARDS and
+        // put the rest on the bottom … You may PLAY the exiled card this turn",
+        // on an ability that REPEATS: an impulse that repeats earns the tag (the
+        // Clue and impulse paragraph at the head of CardAdvantage.md), and one
+        // ability that looks and keeps is this tag alone (2026-09-27, restated
+        // as C4 on 2026-11-12). Read 2026-11-13: Florian, Voldaren Scion, on each
+        // of your postcombat main phases, CardAdvantage alone by hand (it carried
+        // Filter off the look). Counted: 3 reviewed cards say "look at the top …
+        // exile one … you may play/cast" at all; the two that are not Florian
+        // (Nahiri's Warcrafting, Discover the Impossible, Filter by hand) are
+        // one-shots and the repeat gate keeps them out. Not "cast the exiled
+        // card", which ExileAndPlayFromThere read already (Djeru and Hazoret,
+        // Keldon Flamesage); widening ExileAndPlayFromThere to "play the exiled
+        // card" without the gate was measured and rejected: 6 reviewed tagged, 7
+        // untagged (Fight Rigging, Collector's Cage, Clive's Hideaway …).
+        private static readonly Regex LooksExilesOneAndPlaysIt = Rx(
+            @"\blook at the top [\w ]{1,20} cards of your library[^\n]{0,120}\bexile one of those cards"
+            + @" and put the rest on the bottom of your library[^\n]{0,60}\byou may play the exiled card\b");
 
         // A Clue and an impulse draw are both "a card the opponent does not get",
         // and neither is a draw, so both are asked the same question: is it one
@@ -1917,12 +1986,33 @@ namespace ScatoloneDownloader.Cube
                 || SelectionWithACardOnACondition.IsMatch(a));
 
         // The same two abilities when the parity guard has already taken the
-        // draw away: a loot on one ability and a draw of two or more of yours,
-        // with no discard, on ANOTHER — The Royal Scions' "+1: Draw a card,
-        // then discard a card" beside its "−8: Draw four cards" (read
-        // 2026-10-30; 2 of 2 reviewed written so are tagged, Qiqirn Merchant
-        // the other).
-        private static readonly Regex YouDrawSeveral = Rx(@"\bdraw (?:two|three|four|five|six|seven|x) cards");
+        // draw away: a loot on one ability and a draw that is a card on its own
+        // on ANOTHER, which repeats. First written for a draw of two or more
+        // (a YouDrawSeveral regex: The Royal Scions' "+1: Draw a card, then
+        // discard a card" beside its "−8: Draw four cards", read 2026-10-30;
+        // 2 of 2 reviewed written so are tagged, Qiqirn Merchant the other),
+        // widened 2026-11-13 to ANY draw of the kind, which subsumes it: with the
+        // regex removed no card moved (measured, exact match 12770 both ways).
+        // The ruling is a repeatable loot beside a separate draw being both,
+        // Qiqirn Merchant 2026-09-29; C4 of 2026-11-12. Suspicious Stowaway's
+        // day face loots on combat damage and its night
+        // face "draws a card" on the same hit (CardAdvantage and Filter by hand).
+        // Asked of each other ability ALONE, the one reading that knows every
+        // rule of the tag, as SelectsAndGainsOnDifferentAbilities does; an
+        // ability that discards, or is itself a loot, is not asked, which also
+        // keeps the question from calling itself. Counted: the only reviewed
+        // card with a loot beside a separate repeating draw of one is Stowaway;
+        // three unreviewed cards of the same shape move with it (Enclave
+        // Cryptologist, Raving Visionary, Conqueror's Galleon).
+        private static bool AnotherAbilityDrawsOnItsOwn(Card card, string text)
+        {
+            List<string> abilities = [.. Abilities(text).Where(a => a.Trim().Length > 0)];
+
+            return abilities.Count >= 2
+                && abilities.Any(a => !Loot.IsMatch(Parenthetical.Replace(a, " "))
+                    && !a.Contains("discard", StringComparison.OrdinalIgnoreCase) && AbilityRepeatsAtNoCostToItself(a)
+                    && Classify(new OneAbility(card, a)).HasFlag(CardEffect.CardAdvantage));
+        }
 
         // A selection written as its own verb inside the ability that gains
         // (a scry, a surveil) was measured the same day as both tags, as asked
@@ -2043,6 +2133,23 @@ namespace ScatoloneDownloader.Cube
             @"\b(?:reveal|exile)s? cards from the top of [^.\n]* until (?:you|they) (?:reveal|exile) a nonland card\. "
             + @"(?:until end of turn, )?you may cast (?:that card|it) without paying its mana cost\b");
 
+        // The card may be qualified, read 2026-11-13, but only on an ability that
+        // REPEATS: Plargg, Dean of Chaos' "{4}{R}, {T}: Reveal cards … until you
+        // reveal a NONLEGENDARY, nonland card WITH MANA VALUE 3 OR LESS. You may
+        // cast that card without paying its mana cost", named in the ruling of
+        // 2026-11-03 (CardAdvantage, and Filter for the loot by C4 of
+        // 2026-11-12). Said once, it is a discover once and not this tag: "one
+        // cascade is a discover" (ruled 2026-10-23, RevealsANonlandAndCastsItOnce)
+        // and "a discover made ONCE is not CardAdvantage" (2026-09-29): Treasure
+        // Keeper's death trigger, unreviewed, stays out. Counted: the four
+        // reviewed cards of FreeCastUntilANonland all repeat or are flashed back
+        // (Breaching Dragonstorm, Sarevok's Tome, Solstice Revelations, Neera) and
+        // Plargg is the one qualified; the qualifier on a one-shot moved only
+        // Treasure Keeper.
+        private static readonly Regex FreeCastUntilAQualifiedNonland = Rx(
+            @"\b(?:reveal|exile)s? cards from the top of [^.\n]* until (?:you|they) (?:reveal|exile) a (?:nonlegendary, )?nonland card with mana value [^.\n]{0,20}\. "
+            + @"(?:until end of turn, )?you may cast (?:that card|it) without paying its mana cost\b");
+
         // A card off the top SUSPENDED for you: The Tenth Doctor by hand, and
         // the two named, Sibylline Soothsayer and The Parting of the Ways.
         private static readonly Regex SuspendsACardOffTheTop = Rx(
@@ -2117,9 +2224,18 @@ namespace ScatoloneDownloader.Cube
         // A land is Ramp (Nadu, Galadriel of Lothlórien). Doors of Durin says
         // "if a creature card is revealed this way", on every attack (reached,
         // the only reviewed card with that wording).
+        // The card may be qualified AFTER its noun, read 2026-11-13: Bag of
+        // Tricks' "until you reveal a creature card WITH MANA VALUE EQUAL TO THE
+        // RESULT. Put that card onto the battlefield" on "{4}{G}, {T}:" is the
+        // creature off the top by an ability that repeats, the ruling of
+        // 2026-11-03 (CardAdvantage by hand). Counted: 4 reviewed cards say
+        // "until you reveal … card [with …]. Put", 3 tagged (Atla Palani, Esika,
+        // Bag of Tricks) and Aspiring Champion's once, which the repeat gate
+        // keeps out; "with" alone reaches Bag of Tricks and no other reviewed
+        // card.
         private static readonly Regex RevealedOntoTheBattlefield = Rx(
             @"\breveal the top card of your library\. if (?:it's a (?:creature|permanent|artifact) card|(?:a|an) (?:creature|permanent|artifact) card is revealed this way), put it onto the battlefield"
-            + @"|\buntil you reveal an? (?:creature|permanent|nonland|artifact|planeswalker)[^.\n]{0,40}card\. put (?:that card|it) onto the battlefield");
+            + @"|\buntil you reveal an? (?:creature|permanent|nonland|artifact|planeswalker)[^.\n]{0,40}card(?: with [^.\n]{0,40})?\. put (?:that card|it) onto the battlefield");
 
         private static readonly Regex SwapsYourOwn = Rx(
             @"\bsacrifice (?:a|an|another) |\bexile (?:another )?target [\w ]{0,40}you control\b");
@@ -2164,7 +2280,8 @@ namespace ScatoloneDownloader.Cube
             || Abilities(text).Any(a =>
             {
                 string ability = Parenthetical.Replace(a, " ");
-                return (FreeCardOffTheTop.IsMatch(ability) && CastsItFree.IsMatch(ability) && AbilityRepeats(ability))
+                return (FreeCastUntilAQualifiedNonland.IsMatch(ability) && RepeatsWithoutPayingACard(ability))
+                    || (FreeCardOffTheTop.IsMatch(ability) && CastsItFree.IsMatch(ability) && AbilityRepeats(ability))
                     || ((RevealedOntoTheBattlefield.IsMatch(ability) || OneChosenOffTheTop.IsMatch(ability)
                             // Not an ultimate, which is once: Ajani, Outland
                             // Chaperone's −8 (unreviewed) stays a capped Filter.
@@ -2582,11 +2699,22 @@ namespace ScatoloneDownloader.Cube
 
         // "Put UP TO TWO of them into your hand" too, read 2026-11-06: Shadow
         // Prophecy's look at the top X (CardAdvantage alone by hand, 11-03).
+        // One CHOSEN BY YOU for each pair, read 2026-11-13: Niv-Mizzet Reborn's
+        // "reveal the top ten cards … For each color pair, choose a card that's
+        // exactly those colors from among them. Put the chosen cards into your
+        // hand" (CardAdvantage by hand), the several chosen cards of a look into
+        // the hand of Search for Blex and For the Ancestors. Counted: it is the
+        // only card that says "for each …, choose a card … from among them". Not
+        // the bare "put the chosen cards into your hand", which was measured and
+        // rejected: it reaches Guided Passage and Manifold Insights, where an
+        // OPPONENT chooses (0 reviewed, so unread), and Turtles Forever's
+        // tutor.
         private static readonly Regex SeveralKeptFromALook = Rx(
             @"put (?:two|three) of those cards into your hand(?![^.\n]{0,20}instead)"
             + @"|put up to (?:two|three) of them into your hand"
             + @"|reveal up to two [\w ]{0,30}cards from among them and put them into your hand"
-            + @"|for each card type[^,\n]{0,60}, (?:you may )?put a card of that type from among [^.\n]{0,40}into your hand");
+            + @"|for each card type[^,\n]{0,60}, (?:you may )?put a card of that type from among [^.\n]{0,40}into your hand"
+            + @"|for each [\w ]{1,20}, choose a card [^.\n]{0,60}from among them\. put the chosen cards into your hand");
 
         //   a SAGA CHAPTER that fires more than once and hands you a card each
         //     time, or a loot that gains one each time (The Bath Song, An
