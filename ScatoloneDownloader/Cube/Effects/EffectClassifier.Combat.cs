@@ -891,9 +891,11 @@ namespace ScatoloneDownloader.Cube
 
         // A +N/-M is Buff only on YOUR creatures, ruled 2026-10-16 ("Solo sulle
         // tue creature"): Ashnod's Battle Gear's "target creature you control
-        // gets +2/-2" is tagged, an Aura or an Equipment's +N/-M is not (Grave
-        // Servitude handed back). Tourach's Gate's attackers already were.
-        private static readonly Regex PlusMinusOnYours = Rx(@"\bcreatures? you control gets? \+[1-9]\d*/-[1-9]\d*");
+        // gets +2/-2" is tagged, an Aura's +N/-M is not (Grave Servitude, which
+        // can kill an X/1 of theirs, is Removal). Tourach's Gate's attackers
+        // already were. An EQUIPMENT goes only on your creatures, so its +N/-M
+        // is Buff, ruled 2026-11-13 (Barbed Batterfist's +1/-1, named).
+        private static readonly Regex PlusMinusOnYours = Rx(@"\b(?:creatures? you control|equipped creature) gets? \+[1-9]\d*/-[1-9]\d*");
 
         // Same question Buff always asks, in the one place this wording can point
         // the wrong way: a counter on THEIR creatures helps them, not you.
@@ -973,8 +975,11 @@ namespace ScatoloneDownloader.Cube
             // Human each turn, Jade Orb's Dragons).
             + @"|cast (?:a|an|your first) " + NotATribe + @"[A-Z][\w']+ creature spell[^.\n]{0,60}enters with\b"
             // …and the counter only a creature OF the tribe gets (Aunt May's
-            // "if it's a Spider, put a +1/+1 counter on it").
-            + @"|[Ii]f it's an? " + NotATribe + @"[A-Z][\w']+, put [\w ]{0,20}\+1/\+1 counters? on it\b"
+            // "if it's a Spider, put a +1/+1 counter on it"), and the bigger
+            // count only the tribe gets INSTEAD (Wakandan Royal Guard's "If that
+            // creature is another Hero, put two +1/+1 counters on it instead",
+            // read 2026-11-13: its one counter on entry is what is judged).
+            + @"|[Ii]f (?:it's|(?:that creature|it) is) (?:an?|another) " + NotATribe + @"[A-Z][\w']+, put [\w ]{0,20}\+1/\+1 counters? on it\b(?: instead)?"
             // …and the pump only (Goatnap's "if that creature is a Goat, it also
             // gets +3/+0"), read 2026-10-27.
             + @"|[Ii]f (?:that creature|it) is an? " + NotATribe + @"[A-Z][\w']+, it (?:also )?gets \+"
@@ -2892,7 +2897,7 @@ namespace ScatoloneDownloader.Cube
 
         private static readonly Regex EntersTrigger = Rx(@"^when [^,\n]{1,60}\benters\b");
 
-        private const int CreatureOneShotEnough = 3;
+        private static readonly Regex WarpKeyword = Rx(@"^warp \{", RegexOptions.Multiline);
 
         // "A creature WITH a +1/+1 counter on it" names who triggers, not a
         // counter being put: Rayblade Trooper's death trigger and Urdnan's
@@ -3029,7 +3034,10 @@ namespace ScatoloneDownloader.Cube
             // prints, not counted as an engine: Eastfarthing Farmer's +1/+1 per
             // Food lasts the turn it enters (2026-10-14).
             bool entersOnce = creature && timing == PumpTiming.Once && EntersTrigger.IsMatch(head.Trim());
-            int size = SizeOfPump(piece, countsEach: !entersOnce);
+
+            // The size is the pump everybody gets: what only a tribe gets is
+            // judged below, on its own (Wakandan Royal Guard, 2026-11-13).
+            int size = SizeOfPump(TribalPump.Replace(piece, " "), countsEach: !entersOnce);
 
             if (Bite.IsMatch(ModeLabel.Replace(piece, " ")) && timing is PumpTiming.Once or PumpTiming.Instant)
             {
@@ -3130,13 +3138,16 @@ namespace ScatoloneDownloader.Cube
                 return !TemporaryAtSorcerySpeed.IsMatch(piece) || pumpIsTheCard;
             }
 
-            // COUNTERS a creature hands out as it ENTERS have to be bigger:
-            // Apothecary Stomper's two are "come se fosse un 6/6", the body's
-            // stats parked on another creature (2026-09-25).
+            // COUNTERS a creature hands out as it ENTERS meet the same bar as a
+            // temporary pump on entry, ruled 2026-11-13 ("Basta 2 per
+            // entrambi"): Apothecary Stomper's two counters against
+            // Toucan-Puffin's +2/+0 (10 of 10 tagged). This OVERTURNS the bar
+            // of three of 2026-09-25 ("come se fosse un 6/6"), under which a
+            // permanent +2/+2 counted for less than a temporary +2/+0.
             bool countersOnEntry = creature && PutsCounters.IsMatch(piece)
                 && EntersTrigger.IsMatch(head.Trim());
 
-            // …and unearth and encore SUM the entries, ruled 2026-11-05 (see
+            // Unearth and encore SUM the entries, ruled 2026-11-05 (see
             // EntriesOf): Simian Simulacrum's two counters are four with its
             // unearth, Kinsbaile Courier's one is three with its encore
             // ("x 3 entrate in 2vs2"). Counters only. Hypothesis measured and
@@ -3144,12 +3155,19 @@ namespace ScatoloneDownloader.Cube
             // trigger makes, the temporary ones too, moved no card at all
             // (11356 exact either way, the same moves line for line), so it is
             // a rule with nothing to read and is left out.
+            // WARP sums them too, ruled 2026-11-13 ("Warp somma le entrate"):
+            // the card enters for its warp cost and again when it is cast from
+            // exile, as Tokens and CardAdvantage already read it. Drix Fatemaker's
+            // one counter is two (tagged 2026-09-10), and so is Rayblade
+            // Trooper's (untagged 09-25, named). Asked here and not in
+            // EntriesOf, which CardAdvantage reads with its own warp rule
+            // (WarpPaysOnTheWayOutTwice).
             if (countersOnEntry)
             {
-                size *= EntriesOf(card.OracleText ?? string.Empty);
+                size *= EntriesOf(card.OracleText ?? string.Empty) + (WarpKeyword.IsMatch(card.OracleText ?? string.Empty) ? 1 : 0);
             }
 
-            if (size >= (countersOnEntry ? CreatureOneShotEnough : 2))
+            if (size >= 2)
             {
                 return true;
             }
@@ -3206,8 +3224,12 @@ namespace ScatoloneDownloader.Cube
             {
                 foreach ((string piece, string? bullet) in bullets.Select(b => (b, (string?)b)).Prepend((head, null)))
                 {
-                    if (!PumpNumbers.IsMatch(piece) && !PumpCounters.IsMatch(piece) && !PumpDoubles.IsMatch(piece)
-                        && !GivesARole.IsMatch(piece))
+                    // A counter WITH which a creature is named is a condition,
+                    // not a pump: Duskshell Crawler's "Each creature you control
+                    // with a +1/+1 counter on it has trample" (untagged 2026-11-11)
+                    // read as a pump over an area.
+                    if (!PumpNumbers.IsMatch(piece) && !PumpCounters.IsMatch(CounterAsACondition.Replace(piece, " "))
+                        && !PumpDoubles.IsMatch(piece) && !GivesARole.IsMatch(piece))
                     {
                         continue;
                     }

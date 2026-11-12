@@ -591,10 +591,9 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
-    // Two counters as the creature enters are "come se fosse un 6/6".
-    [InlineData("Apothecary Stomper", "Creature — Elephant",
-        "Vigilance (Attacking doesn't cause this creature to tap.)\nWhen this creature enters, choose one —\n• "
-        + "Put two +1/+1 counters on target creature you control.\n• You gain 4 life.")]
+    // Apothecary Stomper's two counters on entry ("come se fosse un 6/6") stood
+    // here until 2026-11-13, when "Basta 2 per entrambi" overturned the bar of
+    // three. See Classify_TheNovember13BuffPass_IsBuff.
     // "+1/+1 a velocità sorcery è irrilevante come effetto. La carta fa altro."
     [InlineData("Starnheim Memento", "Artifact",
         "{T}: Add {W}.\n{1}{W}, {T}: Target creature gets +1/+1 and gains flying until end of turn. Activate "
@@ -701,11 +700,11 @@ public sealed partial class EffectClassifierTests
         "Flying\nWhen this creature enters, create a Royal Role token attached to another target creature you "
         + "control. (If you control another Role on it, put that one into the graveyard. Enchanted creature "
         + "gets +1/+1 and has ward {1}.)")]
-    // Bolster on entry is counters on entry: two are not enough.
-    [InlineData("Sandsteppe Scavenger", "Creature — Dog Scout",
-        "When this creature enters, bolster 2. (Choose a creature with the least toughness among creatures you "
-        + "control and put two +1/+1 counters on it.)")]
-    // "With a +1/+1 counter on it" says who dies, not what is put.
+    // Sandsteppe Scavenger's bolster 2 on entry stood here until 2026-11-13: two
+    // counters on entry are enough now. See Classify_TheNovember13BuffPass_IsBuff.
+    // "With a +1/+1 counter on it" says who dies, not what is put. The real card
+    // also has warp, which makes its counter two (2026-11-13); this text without
+    // it pins the condition alone.
     [InlineData("Rayblade Trooper", "Creature — Human Soldier",
         "When this creature enters, put a +1/+1 counter on target creature you control.\nWhenever a nontoken "
         + "creature you control with a +1/+1 counter on it dies, create a 1/1 white Human Soldier creature "
@@ -1028,8 +1027,8 @@ public sealed partial class EffectClassifierTests
     // Ruled 2026-11-05: unearth and encore SUM the card's entries for Buff as they
     // do for Tokens (2026-10-27). Simian Simulacrum puts two counters on entry,
     // four with its unearth; Kinsbaile Courier puts one, three with its encore
-    // (the cube is played 2vs2, so encore makes two copies). One entry alone stays
-    // below the creature threshold.
+    // (the cube is played 2vs2, so encore makes two copies). Since 2026-11-13 the
+    // bar is two, so Simian's own entry would do; Kinsbaile's one still needs it.
     [InlineData("Simian Simulacrum", "Artifact Creature — Ape",
         "When this creature enters, put two +1/+1 counters on target creature you control.\nUnearth {2}{G}{G} "
         + "({2}{G}{G}: Return this card from your graveyard to the battlefield. It gains haste. Exile it at the "
@@ -1233,6 +1232,72 @@ public sealed partial class EffectClassifierTests
         "{1}, Discard a card: Create a 0/3 blue Crab creature token.\nDelirium — Crabs you control get +1/+1 "
         + "as long as there are four or more card types among cards in your graveyard.")]
     public void Classify_TheNovember12Readings_IsNotBuff(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // Buff pass of 2026-11-13 under the definition (Glorious Anthem). Counters a
+    // creature hands out as it enters meet the bar of two like a temporary pump on
+    // entry ('Basta 2 per entrambi', overturning the bar of three of 2026-09-25):
+    // Apothecary Stomper, Caldaia Strongarm, bolster 2. An Equipment goes only on
+    // your creatures, so its +N/-M is Buff (Barbed Batterfist; Skullclamp beside
+    // its CardAdvantage, 'Buff e CardAdvantage'). Warp sums the entries like
+    // unearth ('Warp somma le entrate'): one counter is two (Drix Fatemaker,
+    // Rayblade Trooper).
+    [InlineData("Apothecary Stomper", "Creature — Elephant",
+        "Vigilance (Attacking doesn't cause this creature to tap.)\nWhen this creature enters, choose one —\n• "
+        + "Put two +1/+1 counters on target creature you control.\n• You gain 4 life.")]
+    [InlineData("Caldaia Strongarm", "Creature — Human Warrior",
+        "When this creature enters, put two +1/+1 counters on target creature.\nBlitz {3}{G} (If you cast this "
+        + "spell for its blitz cost, it gains haste and \"When this creature dies, draw a card.\" Sacrifice it at "
+        + "the beginning of the next end step.)")]
+    [InlineData("Sandsteppe Scavenger", "Creature — Dog Scout",
+        "When this creature enters, bolster 2. (Choose a creature with the least toughness among creatures "
+        + "you control and put two +1/+1 counters on it.)")]
+    [InlineData("Barbed Batterfist", "Artifact — Equipment",
+        "For Mirrodin! (When this Equipment enters, create a 2/2 red Rebel creature token, then attach this "
+        + "to it.)\nEquipped creature gets +1/-1.\nEquip {1} ({1}: Attach to target creature you control. Equip "
+        + "only as a sorcery.)")]
+    [InlineData("Skullclamp", "Artifact — Equipment",
+        "Equipped creature gets +1/-1.\nWhenever equipped creature dies, draw two cards.\nEquip {1}")]
+    [InlineData("Drix Fatemaker", "Creature — Drix Wizard",
+        "When this creature enters, put a +1/+1 counter on target creature.\nEach creature you control with a "
+        + "+1/+1 counter on it has trample.\nWarp {1}{G} (You may cast this card from your hand for its warp "
+        + "cost. Exile this creature at the beginning of the next end step, then you may cast it from exile on "
+        + "a later turn.)")]
+    [InlineData("Rayblade Trooper", "Creature — Human Soldier",
+        "When this creature enters, put a +1/+1 counter on target creature you control.\nWhenever a nontoken "
+        + "creature you control with a +1/+1 counter on it dies, create a 1/1 white Human Soldier creature "
+        + "token.\nWarp {1}{W} (You may cast this card from your hand for its warp cost. Exile this creature at "
+        + "the beginning of the next end step, then you may cast it from exile on a later turn.)")]
+    public void Classify_TheNovember13BuffPass_IsBuff(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // Buff pass of 2026-11-13, the other side. A counter WITH which a creature is
+    // named is a condition, not a pump over an area (Duskshell Crawler, untagged
+    // 2026-11-11). The bigger count only a tribe gets INSTEAD is the tribe's: the
+    // one counter for everybody is judged (Wakandan Royal Guard, Elder Cathar). A
+    // team base SETS rather than adds, raising the small and lowering the big, and
+    // stays out (0 of 9 reviewed; Candlekeep Inspiration).
+    [InlineData("Duskshell Crawler", "Creature — Insect",
+        "When this creature enters, put a +1/+1 counter on target creature.\nEach creature you control with a "
+        + "+1/+1 counter on it has trample. (It can deal excess combat damage to the player or planeswalker "
+        + "it's attacking.)")]
+    [InlineData("Wakandan Royal Guard", "Creature — Human Soldier Hero",
+        "Vigilance\nWhen this creature enters, put a +1/+1 counter on target creature. If that creature is "
+        + "another Hero, put two +1/+1 counters on it instead.")]
+    [InlineData("Elder Cathar", "Creature — Human Soldier",
+        "When this creature dies, put a +1/+1 counter on target creature you control. If that creature is a "
+        + "Human, put two +1/+1 counters on it instead.")]
+    [InlineData("Candlekeep Inspiration", "Sorcery",
+        "Until end of turn, creatures you control have base power and toughness X/X, where X is the number of "
+        + "cards you own in exile and in your graveyard that are instant cards, are sorcery cards, and/or have "
+        + "an Adventure.")]
+    public void Classify_TheNovember13BuffPass_IsNotBuff(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
     }

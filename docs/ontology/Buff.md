@@ -3,6 +3,16 @@
 Canonical record of the rulings for `CardEffect.Buff`. The one-line tooltip shown in the tagger is
 in [`EffectGlossary.cs`](../../ScatoloneDownloader/Mtg/EffectGlossary.cs).
 
+DEFINITION, 2026-11-13 ("Sì, così", Glorious Anthem): ANOTHER creature of yours, or the team, gets
+bigger — power and toughness, +1/+1 counters, double strike, a Role, a new base — when making it
+bigger is what the card is FOR: the pump stays (an anthem, an Aura, an Equipment), it repeats, it is
+big (more than +1/+1), or it is the whole card. Out: the card itself, a tribe or tokens alone, a
+keyword other than double strike, a bite (Removal), a small pump said beside a shield (Protection).
+The rulings below are readings of it. Three exceptions are kept with their reason: on a CREATURE the
+small repeated pump that wears off is an extra of a body judged as a whole (B3, 45 of 45 reviewed on
+2026-10-14); COLORLESS is a tribe, a payoff only a colorless deck collects; and a TEAM BASE sets
+rather than adds (2026-11-13, at the end).
+
 raise POWER and/or TOUGHNESS — that is the whole test, ruled 2026-09-18. A granted KEYWORD is not
 Buff, however good it is: flying, deathtouch, lifelink, first strike, indestructible change what a
 creature does, not what its numbers are, and the hand-tagging says so 49 cards to 5 (Jump and Cloak
@@ -263,3 +273,35 @@ the card ANIMATED (Rise and Shine's 0/0 artifacts with four counters, Tokens alo
 with Animating Faerie, Emergent Sequence and Workshop Elders), and a tribe's anthem behind an
 ability word's dash (Scuttletide's "Delirium — Crabs you control get +1/+1"; History of Benalia's
 Knights and Nut Collector's Squirrels among the unreviewed).
+
+RULED 2026-11-13 ("Basta 2 per entrambi", Apothecary Stomper against Toucan-Puffin): COUNTERS a
+creature hands out as it enters meet the bar of TWO, like a temporary pump on entry (10 of 10
+tagged). This OVERTURNS the bar of three of 2026-09-25 ("come se fosse un 6/6"), under which a
+permanent +2/+2 counted for less than a temporary +2/+0. Apothecary Stomper and Caldaia Strongarm
+are named; bolster 2 (Sandsteppe Scavenger, Elite Scaleguard), Roalesk, Apex Hybrid and Dimension X
+Pizzasaur, unreviewed, follow. Unearth and encore still sum the entries (2026-11-05).
+
+RULED 2026-11-13 ("Fuori, col perché"): a TEAM BASE, "creatures you control have base power and
+toughness X/X", stays out because it SETS rather than adds: it raises the small and lowers the big,
+and the team is not made bigger. 0 of 9 reviewed are tagged (Candlekeep Inspiration, The Meep,
+Katara, Water Tribe's Hope, Graaz, The Capitoline Triad...). The base for ONE creature stays Buff as
+ruled on 2026-10-27 and 2026-11-05.
+
+RULED 2026-11-13 ("Equipaggiamento Buff"): an EQUIPMENT's +N/-M is Buff, because an Equipment goes
+only on your creatures, which is the reason of "Solo sulle tue creature" (2026-10-16). Barbed
+Batterfist is named; Barbed Battlegear follows. An Aura's +N/-M stays out: it can kill an X/1 of
+theirs (Grave Servitude, Removal). Skullclamp, reached and asked, is Buff beside its CardAdvantage
+("Buff e CardAdvantage"), though its -1 is how it kills your X/1 for the cards.
+
+RULED 2026-11-13 ("Warp somma le entrate", Drix Fatemaker against Rayblade Trooper): WARP sums the
+entries for Buff like unearth, as Tokens and CardAdvantage already read it as a second cast. Both
+cards put one counter as they enter, two with the warp: Drix keeps its tag of 2026-09-10 and Rayblade
+Trooper, untagged on 09-25, is named. Weftblade Enhancer was Buff already for its two targets.
+
+Read 2026-11-13: a counter WITH which a creature is named is a condition, not a pump over an area
+(Duskshell Crawler's "Each creature you control with a +1/+1 counter on it has trample", untagged
+2026-11-11; Pridemalkin and Vigorbloom Vanguard, unreviewed, lose the proposal). And the bigger
+count only a tribe gets INSTEAD is the tribe's, the one counter for everybody being what is judged
+(Wakandan Royal Guard's "If that creature is another Hero, put two +1/+1 counters on it instead";
+Elder Cathar's Human, unreviewed). Not asked: a PREPARED creature's spell face that is only a small
+pump (Vigorbloom's Seed Suture, a counter and 1 life), no reviewed prepared card having one.
