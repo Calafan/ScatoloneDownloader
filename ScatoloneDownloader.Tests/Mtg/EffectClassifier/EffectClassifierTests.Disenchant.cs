@@ -195,4 +195,14 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Disenchant));
     }
+
+    [Theory]
+    // Read 2026-11-12: a target permanent destroyed when it turns out to be an
+    // artifact.
+    [InlineData("Topple the Statue", "Instant",
+        "Tap target permanent. If it's an artifact, destroy it.\nDraw a card.")]
+    public void Classify_TheNovember12Readings_APermanentDestroyedIfAnArtifact_IsDisenchant(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Disenchant));
+    }
 }

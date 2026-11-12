@@ -227,3 +227,19 @@ Protection by hand, 1 of 1). And a spell kept from a counter is no permanent sav
 countered" left the vocabulary, 0 of 7 reviewed cards so worded tagged (Mistrise Village's held-up
 "The next spell you cast this turn can't be countered", Frenzied Baloth, Rhythm of the Wild);
 Vexing Shusher, Surrak Dragonclaw, Cavern of Souls and Bound // Determined, unreviewed, lose it.
+
+RULED 2026-11-12, "Solo Protection": what died this turn brought back from your graveyard by a card
+you hold up is this tag alone, never Reanimate as well (Reanimate.md, the same day; Revivify handed
+back, Faith's Reward proposed). Read with it, each the one reviewed card that says it and Protection
+by hand: permanent cards "in graveyards" that were put there from the battlefield this turn,
+returned under their owners' control (Sudden Salvation); and "if a permanent you control would be
+put into a graveyard from the battlefield this turn, exile it instead. Return it" (Cosmic
+Intervention).
+
+Read 2026-11-12: a creature or planeswalker only an opponent controls phased out saves nothing of
+yours and is Pacify alone (Divine Smite); Sapphire Charm's mode loses Protection and is handed back
+(see Pacify.md).
+
+Read 2026-11-12: a flash creature that exiles another creature you control "until this creature
+leaves the battlefield" holds it out of harm's way (Phantom Steed, Tokens and Protection by hand;
+Mardu Siegebreaker, the same entry at sorcery speed, stays untagged).

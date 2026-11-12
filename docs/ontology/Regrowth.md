@@ -111,3 +111,9 @@ hand": a land of your graveyard into the hand, as Druidic Ritual, but kept out (
 prezzo"). The reason: the return is the condition for keeping the creature, a cost the card asks,
 and the card is not there to buy anything back. The form is "unless you return", not the name; it
 is the only card in the store that says it.
+
+Read 2026-11-12, one reviewed card each, Regrowth by hand: five targets before the graveyard
+(Reconstruct History), two cards chosen and the d20 its own sentence (Song of Inspiration), one card
+at random of those it exiled from your graveyard put into its owner's hand (Gorex, the Tombshell),
+and a permanent card PLAYED from your graveyard this turn (Kaldring, the Rimestaff; the casts from
+your graveyard are 6 of 7 tagged, Zul Ashur's tribe the seventh).

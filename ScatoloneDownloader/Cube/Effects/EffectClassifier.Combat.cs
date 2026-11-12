@@ -154,9 +154,12 @@ namespace ScatoloneDownloader.Cube
         // are untagged. The fifth is NORTH STAR, whose whole activation is the
         // permission, and it stays. Any colour of mana, read 2026-11-10 from
         // Grell Philosopher's "spend BLUE mana as though it were mana of any
-        // color to activate those abilities", untagged by hand.
+        // color to activate those abilities", untagged by hand. And mana of one
+        // SOURCE, read 2026-11-12: Draugr Necromancer's "spend mana from snow
+        // sources as though it were mana of any color to cast those spells"
+        // rides on the creatures it steals (Reanimate alone by hand).
         private static readonly Regex SpendAsThoughAny = Rx(
-            @"(?:you may )?spend (?:(?:white|blue|black|red|green|colorless) )?mana as though it were mana of any (?:type|colou?r)");
+            @"(?:you may )?spend (?:(?:white|blue|black|red|green|colorless) )?mana(?: from snow sources)? as though it were mana of any (?:type|colou?r)");
 
         private static readonly Regex SpendAsThoughIsTheAbility = Rx(
             @"^[^\n:]{1,40}: for one spell this turn, you may spend mana as though", RegexOptions.Multiline);
@@ -440,7 +443,9 @@ namespace ScatoloneDownloader.Cube
             // damage equal to its power to THE CREATURE AN OPPONENT CONTROLS"
             // (Beastie Beatdown, Removal by hand).
             + @"|the creature an opponent controls)"
-            + @"|deals? damage to (?:itself|any (?:other )?target|that creature(?!'s)"
+            // Not EACH creature hitting itself, a board (Solar Blaze, Wipe
+            // alone by hand, read 2026-11-12 in the Wipe table).
+            + @"|(?<!\beach creature )deals? damage to (?:itself|any (?:other )?target|that creature(?!'s)"
             + @"|target[\w ,'-]{0,30}creature(?: or planeswalker)?) equal to");
 
         // A shrink is an answer: a creature whose toughness reaches zero dies just
@@ -635,8 +640,23 @@ namespace ScatoloneDownloader.Cube
         // Suit Up (untagged 2026-10-23, its cantrip no other effect) reached.
         // A shrink stays out (Metamorphic Blast's 0/1, Eccentric Apprentice's
         // 1/1): a power under three is the creature taken down, not raised.
+        // The base may be HAD rather than become, read 2026-11-12 under the same
+        // ruling: Square Up's instant "Target creature has base power and
+        // toughness 4/4 until end of turn" (Buff by hand), which reaches
+        // Dreadful as the Storm's 5/5 and Zhalfirin Shapecraft's 4/3 (untagged
+        // 2026-10-08/09, before the ruling, and handed back).
         private static readonly Regex BigBaseForAnyCreature = Rx(
-            @"target creature(?: or vehicle)? becomes [^.\n]{0,60}with base power and toughness (?:[3-9]|\d{2,})/\d+");
+            @"target creature(?: or vehicle)? becomes [^.\n]{0,60}with base power and toughness (?:[3-9]|\d{2,})/\d+"
+            + @"|\btarget creature has base power and toughness (?:[3-9]|\d{2,})/\d+");
+
+        // The counters a card puts on what it has just ANIMATED are that body's
+        // size, not a pump, read 2026-11-12: Rise and Shine's "becomes a 0/0
+        // artifact creature. Put four +1/+1 counters on each artifact that
+        // became a creature this way" is Tokens alone by hand, as are the three
+        // other reviewed cards that animate a 0/0 and fill it with counters
+        // (Animating Faerie, Emergent Sequence, Workshop Elders; 0 of 4 Buff).
+        private static readonly Regex CountersOnWhatItAnimated = Rx(
+            @"becomes? an? 0/0 [\w ]{0,30}creature[^\n]{0,80}?\bput \w+ \+1/\+1 counters? on (?:each [\w ]{0,30}that became a creature this way|it|that \w+)");
 
         // A +1/+1 COUNTER is Buff, ruled 2026-09-15. It is the second vocabulary
         // for raising power and toughness, and the tag asks only where the stats
@@ -763,6 +783,12 @@ namespace ScatoloneDownloader.Cube
             // "On A creature you control" is the same counter without a target
             // (Season of Gathering), written as an effect and not a trigger.
             + @"|\bput (?:a|an|one|two|three) \+1/\+1 counters? on a creature you control"
+            // An ACTIVATION that names its target and then puts the counter
+            // "on it", read 2026-11-12 on Tyrite Sanctum ("{2}, {T}: Target
+            // legendary creature becomes a God in addition to its other types.
+            // Put a +1/+1 counter on it", Buff by hand, the one reviewed card
+            // written so): the repeated counter of 2026-09-25.
+            + @"|(?m:^)[^\n:]{1,40}: target [\w ]{0,30}creature[^.\n]{0,60}\. put an? \+1/\+1 counter on it\b"
             // Seven more wordings read 2026-10-14, every one a counter the
             // human had tagged: a count spelled as a NUMBER OF (Arwen, Weaver of
             // Hope), a player CHOSEN to put them (Gluntch), the creature that
@@ -865,7 +891,10 @@ namespace ScatoloneDownloader.Cube
         // long as enchanted land is a basic Mountain, Goblin creatures get
         // +1/+2"), and the word "creatures" is optional — Lord of Atlantis says
         // "Other Merfolk get +1/+1".
-        private const string ClauseStart = @"(?:^|\n|\. |: |, )";
+        // An ABILITY WORD's dash opens a clause too, read 2026-11-12 on
+        // Scuttletide's "Delirium — Crabs you control get +1/+1" (Tokens alone
+        // by hand: the Crabs are the tokens it makes, the tribe of 2026-09-25).
+        private const string ClauseStart = @"(?:^|\n|\. |: |, |— )";
 
         private static readonly Regex TribalPump = new(
             ClauseStart + @"(?:[Aa]ll |[Oo]ther |[Ee]ach )?" + StateBeforeATribe + NotATribe + @"[A-Z][\w']+s? creatures? (?:you control )?(?:get|have)\b"
@@ -993,6 +1022,18 @@ namespace ScatoloneDownloader.Cube
             // stood here, which it reads whole (a pattern that matches the old
             // one's every wording would only contradict it if kept beside it).
             + @"|\btarget (?:\w+s, )*creatures(?:,? (?:and/or|or|and) \w+)? phase out(?![^\n]{0,20}until)");
+
+        // A target creature (or planeswalker) only an OPPONENT controls phased
+        // out takes their time and saves nothing of yours, read 2026-11-12 on
+        // Divine Smite ("Target creature or planeswalker an opponent controls
+        // phases out", Removal and Pacify by hand, no Protection): the mirror
+        // of the target YOU CONTROL, which is Protection alone. Pacify reads
+        // it; the Protection block blanks it before asking PhasesSomethingOut
+        // (Sapphire Charm's "target creature an opponent controls phases out",
+        // Protection and Pacify by hand on 2026-09-08 before the 09-22 ruling,
+        // loses Protection and is handed back).
+        private static readonly Regex PhasesTheirsOut = Rx(
+            @"target [\w ,]{0,35}creature(?: or planeswalker)? (?:an opponent controls|you don't control) phases out(?![^\n]{0,20}until)");
 
         // NB: no bare "regenerate" — "can't be regenerated" (Wrath) would false-positive.
         private static readonly Regex[] ProtectionPatterns =
@@ -1123,6 +1164,12 @@ namespace ScatoloneDownloader.Cube
             // then roll a d20. / 1—9 | Return those cards", 2026-10-24, 1 of 1
             // reviewed tagged). A reading of the 2026-09-28 blink ruling.
             + @"|exile (?:any number of|each|all) [\w ,-]{0,30}creatures? you control[^\n]{0,120}(?:\n\d+[—–-]\d+ \| )?\b(?:return|cloak)"
+            // …and your own held "until this creature leaves the battlefield",
+            // the return left to the card's own death, read 2026-11-12: Phantom
+            // Steed's flash entry (Tokens and Protection by hand, 1 of 1 with
+            // flash; Mardu Siegebreaker, the same entry at sorcery speed, is
+            // untagged, which HeldUp keeps).
+            + @"|exile another target creature you control until this \w+ leaves the battlefield"
             + @"|exile (?:up to \w+ |x |another )?(?:other )?target [\w ,/]{0,40}\.[^.\n]{0,60}\breturn (?:it|that card|the exiled cards?|those cards)"
             + @"[^.\n]{0,80}at the beginning of the next end step"
             // …and the same with the clock first: "At the beginning of the next
@@ -1398,9 +1445,44 @@ namespace ScatoloneDownloader.Cube
         // to the battlefield tapped", tagged by hand: 1 of 1 reviewed.
         // Reincarnation, which returns a creature card from that graveyard
         // instead, is not read.
+        // Read 2026-11-12 under the ruling below, each the one reviewed card that
+        // says it, Protection by hand: Sudden Salvation's "target permanent cards
+        // IN GRAVEYARDS that were put there from the battlefield this turn",
+        // returned under their owners' control (yours come back to you), and
+        // Cosmic Intervention's "if a permanent you control would be put into a
+        // graveyard from the battlefield this turn, exile it instead. Return it".
         private static readonly Regex ReturnsWhatDiedThisTurn = Rx(
             @"\bin your graveyard that (?:was|were) put there from the battlefield this turn\b"
+            + @"|\bcards? in graveyards that (?:was|were) put there from the battlefield this turn\b"
+            + @"|\bpermanents? you control would be put into a graveyard from the battlefield this turn, exile it instead\b"
             + @"|\bwhen (?:that|target) creature(?: other than this creature)? dies this turn, return (?:it|that card) to (?:the battlefield|its owner's hand)");
+
+        // RULED 2026-11-12 ("Solo Protection"): what died THIS TURN brought back
+        // from your graveyard by a card you HOLD UP is a save after the fact and
+        // nothing else — not Reanimate, though it returns to the battlefield.
+        // Brought Back, Othelm, Gerrard's Hourglass Pendant and Salvager of Ruin
+        // were Protection alone by hand; Revivify (Reanimate and Protection, 11-11)
+        // is reached and handed back, and Faith's Reward, proposed both, loses
+        // Reanimate. A TRIGGER is not held up, so it stays Reanimate: Gerrard,
+        // Weatherlight Hero's "When Gerrard dies" and Moira, Urborg Haunt's
+        // "Whenever Moira deals combat damage" (the line starts with when,
+        // whenever or at). Nor are the cards in ANOTHER graveyard put under your
+        // control (Thrilling Encore, Grim Return, Supper for Spiders: "your
+        // graveyard" is not in their line). Blanked for Reanimate's re-ask: the
+        // line, and, on a card that has one, a line returning "those cards",
+        // "them" or "it" to the battlefield (Revivify's 15-20 row).
+        private static readonly Regex HeldUpUndoOfThisTurn = Rx(
+            @"^(?!(?:when|whenever|at)\b)[^\n]*\bin your graveyard that (?:was|were) put there from the battlefield this turn\b[^\n]*",
+            RegexOptions.Multiline);
+
+        private static readonly Regex ThoseCardsBackToTheBattlefield = Rx(
+            @"^[^\n]*\breturn (?:those cards|them|it|that card)\b[^\n]*\bto the battlefield\b[^\n]*",
+            RegexOptions.Multiline);
+
+        private static string WithoutHeldUpUndo(string text) =>
+            HeldUpUndoOfThisTurn.IsMatch(text)
+                ? ThoseCardsBackToTheBattlefield.Replace(HeldUpUndoOfThisTurn.Replace(text, " "), " ")
+                : text;
 
         // Three returns to hand that answer nobody, found 2026-09-29, each
         // untagged on every reviewed card: a permanent YOU CONTROL or own (0 of
@@ -1532,6 +1614,16 @@ namespace ScatoloneDownloader.Cube
             // PERMANENT IS A CREATURE, it has base power and toughness 1/1"
             // (Awakened Awareness, Buff and Pacify by hand), read 2026-10-27.
             + @"|(?:otherwise|as long as enchanted permanent is a creature), it has base power and toughness [0-2]/"
+            // An Aura that strips the abilities and HAS the small base rather
+            // than IS a named body, read 2026-11-12 (Kasmina's Transmutation,
+            // "Enchanted creature loses all abilities and has base power and
+            // toughness 1/1", Pacify by hand: 8 of 10 reviewed Auras that take
+            // the abilities and set a base are tagged, the other two being
+            // Utter Insignificance's exile and Trickster's Elk's 3/3). Utter
+            // Insignificance says the same sentence and can exile the creature
+            // later ("{2}{C}: Exile enchanted creature"), Removal alone by hand
+            // on 2026-09-23, so that card is left out.
+            + @"|^enchanted creature loses all abilities and has base power and toughness [0-2]/(?![\s\S]*\bexile enchanted creature\b)"
             + @"|target (?![^.\n]{0,60}\byou control\b)[^.\n]{0,60}loses all abilities until your next turn"
             // The abilities may stay: Swift Reconfiguration's Vehicle "loses
             // all other card types" and is no creature until crewed (Pacify by
@@ -1708,6 +1800,7 @@ namespace ScatoloneDownloader.Cube
             Rx(@"detain"),
             NeutralisesWithoutKilling,
             PhasesSomethingOut,
+            PhasesTheirsOut,
             PreventsDamageToYouAlone,
             NobodyUntaps,
             PreventsWhatACreatureDeals,
@@ -1787,6 +1880,11 @@ namespace ScatoloneDownloader.Cube
             @"(?:whenever|when)[^\n]{0,60}attacks?(?: alone)?,[^\n]{0,40}tap (?:up to one )?target[\w ,'-]{0,40}creature"
             + @"(?![^.\n]{0,40}\band put a stun counter on it)"
             + @"|at the beginning of combat on your turn,[^\n]{0,90}tap target[\w ,'-]{0,40}creature"
+            // "Whenever you attack a player" is the same trigger said of the
+            // whole attack, read 2026-11-12 on Karazikar, the Eye Tyrant ("tap
+            // target creature that player controls and goad it", untagged by
+            // hand on 2026-11-06; the one reviewed card written so).
+            + @"|(?:whenever|when) you attack(?: a player| an opponent)?,[^\n]{0,40}tap (?:up to one )?target[\w ,'-]{0,40}creature"
             + @"|(?:whenever|when)[^\n]{0,60}attacks?, choose target[\w ,'-]{0,40}creature"
             + @"[^\n]{0,20}tap it\b");
 
@@ -1993,12 +2091,17 @@ namespace ScatoloneDownloader.Cube
         // sentence after a charge counter (Empowered Autogenerator).
         private static readonly Regex ActivatedManaAbility = Rx(
             @"(?:^[^\n:]{1,70}|""(?![^""\n:]*\b(?:this token|sacrifice this artifact)\b)[^""\n:]{1,70}): "
-            + @"(?:choose a colou?r\. )?(?:target player adds|each player adds|add) "
+            // "For each color among permanents you control, add one mana of that
+            // color" (Faeburrow Elder, Ramp and ManaFixing by hand, read
+            // 2026-11-12; Bloom Tender says the same).
+            + @"(?:choose a colou?r\. |for each colou?r among [\w ]{0,40}, )?(?:target player adds|each player adds|add) "
             + @"(?:[\w ]{0,20}\{|(?:one|two|three|four|five|six|seven|eight|nine|ten|x|\d+|an amount of) mana\b)"
             // …and the mana at the END of the ability, "{T}: Goad target
             // creature … That player draws a card. YOU ADD {R}" (Red Death,
-            // Shipwrecker, Ramp by hand; 2026-10-16).
-            + @"|^(?:[^\n:—]{1,40} — )?\{t\}: [^\n]{0,150}?\. you add \{"
+            // Shipwrecker, Ramp by hand; 2026-10-16), behind a sacrifice too:
+            // "{T}, Sacrifice two other creatures: … You add {B}{B} and draw a
+            // card" (Priest of Forgotten Gods, Ramp by hand, read 2026-11-12).
+            + @"|^(?:[^\n:—]{1,40} — )?\{t\}(?:, [^\n:]{1,40})?: [^\n]{0,150}?\. you add \{"
             + @"|^\{t\}: put a charge counter on this \w+\. add (?:x|\w+) mana\b",
             RegexOptions.Multiline);
 
@@ -2205,8 +2308,16 @@ namespace ScatoloneDownloader.Cube
             // battlefield tapped" (Elemental Teachings, +Ramp ruled 2026-11-10 on
             // the 11-09 definition: two lands in play; family of one).
             + @"|search your library for [^.\n]{0,80}\bland cards?\b[^\n]{0,200}\bthe rest onto the battlefield"
-            + @"|search your library for [^.\n]{0,80}(?<!non)(?:land|forest|plains|island|swamp|mountain) cards?[^.\n]{0,60}\. "
-            + @"put (?:those cards|them|one of them|two of them|that card|it) onto the battlefield"
+            // Gap 60 -> 80 and "both cards", read 2026-11-12, each the one
+            // reviewed card that says it, Ramp by hand: "up to X basic land
+            // cards, where X is the number of different powers among creatures
+            // you control. Put those cards" (Celebrate the Harvest); a creature
+            // exiled and a basic land searched, "Put both cards onto the
+            // battlefield" (Sword of Hearth and Home, on combat damage: a land
+            // outlasts the turn, and 21 of 21 reviewed lands put onto the
+            // battlefield on an attack or a hit are Ramp).
+            + @"|search your library for [^.\n]{0,80}(?<!non)(?:land|forest|plains|island|swamp|mountain) cards?[^.\n]{0,80}\. "
+            + @"put (?:those cards|them|one of them|two of them|both cards|that card|it) onto the battlefield"
             // …and the same put behind a CONDITION, "If an opponent controls more lands
             // than you, you may put that card onto the battlefield tapped" (Scholar of
             // New Horizons, Stoic Farmer: Ramp by hand, ruled 2026-11-05). Embermouth
@@ -2310,9 +2421,11 @@ namespace ScatoloneDownloader.Cube
         // cards; neither is here. The reminder that follows goes with it.
         // "Target opponent creates X Treasure tokens, where X is …" too (Vazi,
         // Keen Negotiator, CardAdvantage and Buff by hand, read 2026-10-24).
+        // "AN opponent creates two Treasure tokens" too (Ingenious Mastery,
+        // CardAdvantage alone by hand, read 2026-11-12).
         private static readonly Regex TreasureForSomebodyElse = Rx(
             @"(?:\bits controller|\beach opponent [^.,\n]{0,50}?) creates? [^.\n]{0,20}\btreasure tokens?\.(?: \([^)\n]*\))?"
-            + @"|\btarget opponent creates [^.\n]{0,20}\btreasure tokens?\b[^.\n]*\.(?: \([^)\n]*\))?"
+            + @"|\b(?:target|an) opponent creates [^.\n]{0,20}\btreasure tokens?\b[^.\n]*\.(?: \([^)\n]*\))?"
             + @"|\bgift an? treasure\b(?: \([^)\n]*\))?");
 
         // A Treasure in a quoted ability a creature has UNTIL END OF TURN is
@@ -2583,9 +2696,17 @@ namespace ScatoloneDownloader.Cube
         // trigger "tap that creature AND it doesn't untap" (Kashi-Tribe
         // Warriors, unreviewed; Frostwalk Bastion, Tokens alone by hand) is
         // NOT read here.
+        // …unless "that creature" is a TARGET the card named before, read
+        // 2026-11-12 on Code of Constraint ("Target creature gets -4/-0 until
+        // end of turn. … Addendum — … tap that creature and it doesn't untap
+        // during its controller's next untap step", Pacify by hand; the one
+        // reviewed card written so). Still not when the tap follows the card's
+        // own COMBAT damage (Matsu-Tribe Decoy's lure names a target creature
+        // first, and its lock is Kashi-Tribe Warriors' trigger).
         private static readonly Regex SelfUntapClause = Rx(
             @"th(?:is|e) (?:artifact|creature|permanent|enchantment|land|vehicle)[\w ]{0,25}does(?:n'?t| not) untap"
-            + @"|(?<!(?:enchanted|copied) creature[^.\n]{0,40})(?<!\btap that creature\. )\bit does(?:n'?t| not) untap"
+            + @"|(?<!(?:enchanted|copied) creature[^.\n]{0,40})(?<!\btap that creature\. )"
+            + @"(?<!\btarget creature\b[\s\S]{0,200}(?<!combat damage to a creature, )\btap that creature and )\bit does(?:n'?t| not) untap"
             + @"|does(?:n'?t| not) untap during your (?:next )?untap step"
             + @"|(?m:^)equipped creature (?:gets [+-][\dX]+/[+-][\dX]+ and )?does(?:n'?t| not) untap"
             + @"|under your control[\s\S]*\nenchanted creature (?:gets [+-][\dX]+/[+-][\dX]+ and )?does(?:n'?t| not) untap");

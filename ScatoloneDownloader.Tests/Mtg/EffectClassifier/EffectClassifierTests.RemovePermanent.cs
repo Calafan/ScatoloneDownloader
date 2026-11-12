@@ -141,4 +141,13 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.RemovePermanent));
     }
+
+    [Theory]
+    // Read 2026-11-12: a colour count qualifies the permanent like 'legendary'.
+    [InlineData("Vanishing Verse", "Instant",
+        "Exile target monocolored permanent.")]
+    public void Classify_TheNovember12Readings_AMonocoloredPermanent_IsRemovePermanent(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.RemovePermanent));
+    }
 }

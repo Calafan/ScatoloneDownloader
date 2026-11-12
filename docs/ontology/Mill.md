@@ -69,3 +69,17 @@ graveyard is the same attack as the top ("Target player puts the bottom card of 
 their graveyard"). Cellar Door is the one card that says it, unreviewed; 0 reviewed. A library
 SEARCHED into their graveyard (Life's Finale, Quiet Speculation, unreviewed) was not asked and stays
 out.
+
+RULED 2026-11-12, "Almeno 3 o ripetuto": a mill made ONCE has to take three cards or more; one or
+two cards once is a rider beside what the card is for, as a single scry is for Filter. A REPEATED
+mill counts from one card: a trigger, an activation (one the card grants in quotes too, Stern
+Mentor), a loyalty ability, a saga chapter that comes twice ("I, II —", Death in Heaven), rad
+counters. So does an amount that is not fixed: X, "that many", "equal to", "for each" (Sanity
+Grinding), half a library. Read one by one on the 121 reviewed Mill cards: 15 take one or two cards
+once and are reached and handed back (Atrocious Experiment, Cruel Fate, Demogorgon's Clutches,
+Desperate Bloodseeker, Disturbing Conversion, Draugr Thought-Thief, Eye Spy, Flitting Guerrilla,
+Foreshadow, Gnawing Vermin, Halo-Charged Skaab, Overwhelmed Apprentice, Path of the Schemer, Ray of
+Erasure, Watcher of the Wayside), and 14 take three once and keep it (Drownyard Amalgam, Deal Gone
+Bad). Of the cards the 11-10 look-at reading reached, Wu Spy and Dimir Charm put two cards into the
+graveyard once and lose it, unreviewed, with Thought Scour, Pilfered Plans, Psychic Strike and 11
+more.

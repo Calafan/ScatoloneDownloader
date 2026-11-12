@@ -83,7 +83,8 @@ back from the dead.
 Read 2026-11-06, the sitting of 11-03..05 and the older misses of the same wordings, each tagged by
 hand: several creature cards chosen in a graveyard and returned "each of them" or "two of them at
 random" in the next sentence (Sinister Waltz, The War in Heaven, 2 of 2); ALL the cards of a kind
-returned, the verb first (Gerrard, Weatherlight Hero, 1 of 1; Faith's Reward is proposed the same);
+returned, the verb first (Gerrard, Weatherlight Hero, 1 of 1; Faith's Reward, proposed the same,
+loses it on 2026-11-12 because it is held up, below);
 and a permanent card put from among the cards the card exiled from your graveyard (Winter, Cynical
 Opportunist, 1 of 1). Not this: a token copy of THIS creature, "exile up to one target creature card
 from an opponent's graveyard. If you do, create a token that's a copy of this creature" (Uchuulon),
@@ -155,3 +156,15 @@ this turn. Put it" (Captain N'ghathrod); and a creature card PUT INTO a graveyar
 the battlefield (Helm of Obedience, which mills until one turns up; Lorcan, Warlock Collector).
 Colossal Grave-Reaver, the same with your own mill, reviewed untagged on 2026-09-10, was reached and
 handed back; Grim Return and Scrounge are proposed the same.
+
+RULED 2026-11-12, "Solo Protection": what died THIS TURN brought back from your graveyard by a card
+you HOLD UP, an instant or an activation, is a save after the fact and Protection alone, not this
+tag, though it returns to the battlefield. Brought Back, Othelm, Sigardian Outcast and Gerrard's
+Hourglass Pendant were already Protection alone by hand. Revivify, Reanimate and Protection by hand
+on 11-11, is reached and handed back; Faith's Reward, unreviewed, loses the tag. A TRIGGER is not
+held up and stays this tag: "When Gerrard dies" (Gerrard, Weatherlight Hero) and "Whenever Moira
+deals combat damage" (Moira, Urborg Haunt). Nor are the cards put from another player's graveyard
+under your control (Thrilling Encore, Grim Return, Supper for Spiders), which keep it.
+
+Read 2026-11-12: the targets chosen first and "put them onto the battlefield under your control" two
+sentences later (Command the Dreadhorde, 1 of 1).

@@ -242,3 +242,10 @@ onto the battlefield under your control" is Filter alone by hand, a card of thei
 CardAdvantage at most). The same "if it's a land card" off YOUR library stays (8 of 8: Risen Reef,
 Nadu, Lantern of Revealing). Oblivion Sower's lands from their LIBRARY are another sentence and stay
 proposed, unreviewed.
+
+Read 2026-11-12: a land search whose put onto the battlefield runs past 60 characters (Celebrate the
+Harvest's "X is the number of different powers among creatures you control") or says "both cards"
+(Sword of Hearth and Home), mana for each colour among your permanents (Faeburrow Elder), and a
+tap-and-sacrifice whose mana comes a sentence later (Priest of Forgotten Gods' "… You add {B}{B}").
+Out: Treasures an OPPONENT creates (Ingenious Mastery, CardAdvantage alone; not ManaFixing either).
+Bloom Tender and Surveyor's Scope follow among the unreviewed.

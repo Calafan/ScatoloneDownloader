@@ -90,3 +90,6 @@ cast trigger is never this tag, and copying ALL the spells and abilities you con
 Q1's ability copied on every activation. The rule "copy all spells you control" read Ulalek alone and
 is gone. No other card has a copy on a creature-type cast trigger (Chancellor of Tales and Gorion
 name Adventure, Jeong Jeong a Lesson), so the tribal half needs no guard in the code.
+
+Read 2026-11-12, out: a spell of yours that "targets only this creature", copied, is your own trick
+doubled (Reflective Golem, untagged by hand).

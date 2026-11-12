@@ -124,4 +124,15 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Counter));
     }
+
+    [Theory]
+    // Read 2026-11-12: a loyalty ability is an activated one.
+    [InlineData("Verdant Command", "Instant",
+        "Choose two —\n• Target player creates two tapped 1/1 green Squirrel creature tokens.\n• Counter target "
+        + "loyalty ability of a planeswalker.\n• Exile target card from a graveyard.\n• Target player gains 3 "
+        + "life.")]
+    public void Classify_TheNovember12Readings_ALoyaltyAbility_IsCounter(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Counter));
+    }
 }

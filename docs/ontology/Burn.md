@@ -278,3 +278,7 @@ loyalty ability that comes again (Chandra, Dressed to Kill's +1) and "an opponen
 (Zaffai, Thunder Conductor's 10 damage) are faces. Under Q7, damage behind a card OF A TRIBE revealed
 from the hand waits on a tribal deck: Invasion of the Giants' "reveal a Giant card from your hand.
 When you do, this Saga deals 2 damage to target opponent", untagged for Burn by hand.
+
+Read 2026-11-12 under the graveyard ruling of 2026-11-05: the creature cards chosen first and "the
+other" returned with haste and exiled at the next end step (Wake to Slaughter, Reanimate and Burn by
+hand).

@@ -154,3 +154,9 @@ and creature your opponents control" (Ajani, Strength of the Pride); the two cre
 chooses, one of theirs and one not, "destroy each creature chosen this way" (Call to the Void, while
 The Horus Heresy's ONE each stays Removal's edict); and "each player shuffles all creatures they own
 into their library" (Collision of Realms; Warp World, unreviewed, follows).
+
+Read 2026-11-12, one reviewed card each, Wipe by hand and never proposed: the card listed first with
+a comma before the board (Sphere of Annihilation's "exile this artifact, all creatures and
+planeswalkers with mana value …"), every creature phased out for as long as the card stays (Out of
+Time, the O-ring phasing of Removal.md over the whole board), and every creature dealing its power
+to itself (Solar Blaze, no longer Removal; Wave of Reckoning unreviewed).

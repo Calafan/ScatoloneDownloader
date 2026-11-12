@@ -63,3 +63,6 @@ Room"), Crash and Burn and Plow Through ("destroy target Vehicle"), Fiery Annihi
 0 of 6 reviewed. The Aura stays because it is the shape in which an enchantment takes a creature
 out, the answer Disenchant is for. Unreviewed and left without the tag: Rustspore Ram, Turn to
 Dust, Unforge, Witchbane Orb ("destroy all Curses attached to you").
+
+Read 2026-11-12: a target permanent destroyed when it turns out to be an artifact (Topple the
+Statue's "Tap target permanent. If it's an artifact, destroy it", Disenchant and Pacify by hand).

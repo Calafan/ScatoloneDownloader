@@ -252,3 +252,14 @@ The NAME of a mode is no fight: You're Ambushed on the Road's "Stand and Fight" 
 pump (Buff and Protection by hand) that "fights" had read as a bite and as an answer on its line;
 Summon: Magus Sisters keeps its Buff and School Daze has no pump. Slip Out the Back's counter is the
 shield's rider (Protection alone, see Protection.md).
+
+Read 2026-11-12 under "Buff se forza >= 3" (2026-11-05): a big base the target creature HAS rather
+than becomes, Square Up's instant "Target creature has base power and toughness 4/4 until end of
+turn" (Buff by hand). It reaches four cards reviewed before that ruling and untagged, handed back:
+Dreadful as the Storm (5/5), Zhalfirin Shapecraft (4/3), Genemorph Imago (3/3 or 6/6 on landfall)
+and Gnottvold Hermit (5/5 on its attack). Read the same day: an activation that names its target and
+puts the counter "on it" (Tyrite Sanctum, the repeated counter). Out: the counters that size what
+the card ANIMATED (Rise and Shine's 0/0 artifacts with four counters, Tokens alone; 0 of 4 reviewed
+with Animating Faerie, Emergent Sequence and Workshop Elders), and a tribe's anthem behind an
+ability word's dash (Scuttletide's "Delirium — Crabs you control get +1/+1"; History of Benalia's
+Knights and Nut Collector's Squirrels among the unreviewed).

@@ -133,6 +133,18 @@ namespace ScatoloneDownloader.Cube
                     // Strength of the Pride's "exile Ajani and each ARTIFACT AND
                     // creature your opponents control" (Wipe by hand, 1 of 1).
                     Rx(@"\b(?:destroy|exile) (?!target\b)[\w,' ]{1,40} and each (?:other )?(?:[\w-]+(?:,| and| or) ){0,3}creature\b(?! you control)"),
+                    // Three more boards read 2026-11-12, one reviewed card each,
+                    // Wipe by hand and never proposed: the card listed first with
+                    // a comma (Sphere of Annihilation's "exile this artifact, all
+                    // creatures and planeswalkers with mana value …"), every
+                    // creature phased out for as long as the card stays, the
+                    // O-ring phasing of Removal.md over the whole board (Out of
+                    // Time), and every creature dealing its power to itself (Solar
+                    // Blaze; Repentance's TARGET creature stays Removal, and
+                    // DamageEqualTo no longer reads "each creature" for it).
+                    Rx(@"\bexile this \w+, all creatures\b(?! you control)"
+                        + @"|\ball creatures\b[^.\n]{0,40}\bphase out until this \w+ leaves the battlefield"
+                        + @"|\beach creature deals damage to itself equal to its power"),
                     Rx(@"(?<!target |attacking |blocking )\bcreatures\b(?:(?! you control\b| with the same name\b)[^.\n]){0,60}? get -[\dX]+/-[1-9X]"),
                     Rx(@"\beach(?: [\w-]{1,15}){0,3} creature\b(?:(?! you control\b)[^.\n]){0,60}? gets (?:twice )?-[\dX]+/-[1-9X]"),
                     Rx(@"-1/-1 counters? on each(?: [\w-]{1,15}){0,3} creature\b(?! you control)"),
@@ -282,7 +294,11 @@ namespace ScatoloneDownloader.Cube
                 // bounce with a tax, like airbend (Soul Partition corrected by
                 // name to Bounce, Aerial Extortionist was Bounce by hand already).
                 (CardEffect.RemovePermanent, [
-                    Rx(@"(?:destroy|exile) (?:[\w ]{0,15})?target (?:(?:non[\w-]+|legendary),? )*permanent"
+                    // A COLOUR COUNT may qualify it like "legendary", read
+                    // 2026-11-12 on Vanishing Verse's "exile target monocolored
+                    // permanent" (RemovePermanent by hand, the one reviewed card
+                    // written so).
+                    Rx(@"(?:destroy|exile) (?:[\w ]{0,15})?target (?:(?:non[\w-]+|legendary|monocolou?red),? )*permanent"
                         + @"(?!s? you (?:own|control)\b)(?!s? cards?\b)"
                         + @"(?![\w ,]{0,30}(?:,? then return it|\. return (?:it|that card)) to the battlefield)"
                         // " and the top card of your library" may stand before the
@@ -400,6 +416,26 @@ namespace ScatoloneDownloader.Cube
                     // (Armored Scrapgorger) found its creature at the far end.
                     Rx(@"exile target(?:(?! cards?\b)[\w ])*(?<!non)creature"),
                     Rx(@"destroy target[\w ]*((?<!non)creature|planeswalker)"),
+                    // A type list that closes on the planeswalker, and any number
+                    // of them, read 2026-11-12: Fracture's "destroy target
+                    // artifact, enchantment, or planeswalker" (Removal and
+                    // Disenchant by hand) and The Elderspell's "destroy any number
+                    // of target planeswalkers" (Removal by hand). 34 of 34 reviewed
+                    // cards that destroy a target planeswalker are Removal.
+                    Rx(@"destroy (?:any number of )?target (?:\w+, ){0,3}(?:(?:and|or|and/or) )?planeswalkers?\b"),
+                    // A colour that turns the answer into an exile, read
+                    // 2026-11-12 on Divine Smite ("Target creature or planeswalker
+                    // an opponent controls phases out. If that permanent is black,
+                    // exile it instead", Removal and Pacify by hand, the one
+                    // reviewed card written so).
+                    Rx(@"\bif (?:that|the) (?:permanent|creature) is (?:white|blue|black|red|green), (?:exile|destroy) it instead"),
+                    // A chosen target that the big creatures of yours all hit, read
+                    // 2026-11-12 on The Bears of Littjara's chapter III ("Choose up
+                    // to one target creature or planeswalker. Each creature with
+                    // power 4 or greater you control deals damage equal to its
+                    // power to that permanent", Removal by hand; Kamahl's Will, aimed at
+                    // any number of them, is Removal too, 2 of 2).
+                    Rx(@"\bchoose (?:up to one )?target creature(?: or planeswalker)?\. each creature [^.\n]{0,40}you control deals damage equal to its power to that (?:creature|permanent)"),
                     // A creature STOLEN and sacrificed at the next end step is gone
                     // from its owner for good, which is a kill, beside the Steal.
                     // Ruled 2026-11-06 with the Burn definition ("Steal + Removal",
@@ -476,7 +512,10 @@ namespace ScatoloneDownloader.Cube
                     // A fight has to name what it fights. The bare word also appears
                     // in the NAME of a mode — School Daze offers "Fight Crime", which
                     // counters a spell and draws a card.
-                    Rx(@"\bfights? [\w ,'-]{0,30}target|\bfights? (?:each|it)\b"),
+                    // Not a target of one TRIBE, read 2026-11-12 on Sawblade
+                    // Slinger's "fights target Zombie an opponent controls"
+                    // (Disenchant alone by hand, the one reviewed card written so).
+                    Rx(@"\bfights? [\w ,'-]{0,30}target(?! (?-i:[A-Z])[a-z]+ (?:an opponent controls|you don't control))|\bfights? (?:each|it)\b"),
                     // A pump that SENTENCES the creature, read 2026-10-16: Blood
                     // Frenzy's "Target attacking or blocking creature gets +4/+0
                     // until end of turn. Destroy that creature at the beginning
@@ -717,7 +756,10 @@ namespace ScatoloneDownloader.Cube
                 // it asks the type line.
                 (CardEffect.Counter, [
                     Rx(@"(?<!\btokens? with ""[^""]{0,120})counter (?:up to \w+ |any number of )?target [\w ,]{0,60}?spell(?! you control| that targets this\b)"),
-                    Rx(@"counter (?:up to one )?target (?:activated|triggered)\b"),
+                    // A LOYALTY ability is an activated one, read 2026-11-12 on
+                    // Verdant Command's "Counter target loyalty ability of a
+                    // planeswalker" (Tokens and Counter by hand, 1 of 1).
+                    Rx(@"counter (?:up to one )?target (?:activated|triggered|loyalty)\b"),
                     Rx(@"counter all (?:other )?spells\b|\bcounter all abilities\b"
                         + @"|\bfor each spell (?:and ability )?your opponents control, counter it\b"),
                     Rx(@"return (?:up to one )?target spells?\b[^.\n]{0,60}?to its owner's hand"),
@@ -836,7 +878,11 @@ namespace ScatoloneDownloader.Cube
                     // Verrak, Chandra's Regulator, …); The Enigma Jewel's Locus
                     // ("Whenever you activate an ability that isn't a mana
                     // ability, copy it") was the twelfth and was ruled -Redirect.
+                    // Nor a spell of yours that "targets only this creature",
+                    // read 2026-11-12 on Reflective Golem (untagged by hand, the
+                    // one reviewed card written so): your own trick doubled.
                     Rx(@"(?<!\bcast this spell\b[^.\n]{0,80})(?<!\bwhenever you activate [^.\n]{0,120})"
+                        + @"(?<!\bspell that targets only this creature\b[^\n]{0,80})"
                         + @"\bcop(?:y|ies) (?:it|that spell(?: or ability)?|them)\b"
                         + @"[^.\n]{0,60}?(?:\.|,| and) you may choose new targets for the cop(?:y|ies)"
                         // Two more delayed copies, read 2026-10-30: "copy THE NEXT
@@ -1813,6 +1859,13 @@ namespace ScatoloneDownloader.Cube
                         // taken out (no card moved).
                         + @"(?:\b(?:sacrifice|exile|return) (?:it|them|that creature|the creature)\b[^\n]{0,60}\bnext end step\b"
                         + @"|\b(?:next|your) end step, (?:sacrifice|exile) (?:it|them|that creature|this permanent)\b)"),
+                    // …the creature cards chosen first and "the other" returned
+                    // sentences later, read 2026-11-12 on Wake to Slaughter
+                    // ("Choose up to two target creature cards in your graveyard.
+                    // … Return the other to the battlefield under your control. It
+                    // gains haste. Exile it at the beginning of the next end
+                    // step", Reanimate and Burn by hand, 1 of 1).
+                    Rx(@"\btarget creature cards? in your graveyard\.[^\n]{0,120}\breturn the other to the battlefield\b[^\n]{0,40}\bhaste\b[^\n]{0,20}\bexile it at the beginning of the next end step"),
                     // …and the keyword that does it, handed to OTHER cards: unearth
                     // in the graveyard (Dregscape Sliver, Sedris, Ghost Ark), blitz
                     // on the creature spells you cast (Henzie). The cards that have
@@ -1864,7 +1917,9 @@ namespace ScatoloneDownloader.Cube
                     // of a colon is the repeatable outlet of 2026-09-25, whatever
                     // the number. Counted broad ("sacrifices? up to"): 1 reviewed
                     // card, tagged, and 1 unreviewed.
-                    Rx(@"sacrifices? (?:a|an|another|two|three|\d+|x\b|one or more\b|up to \w+\b)(?:(?!\battached to\b)[\w ])*(?:creature|artifact|permanent)"),
+                    // A hyphenated qualifier is one word (Dreadfeast Demon's "non-Demon
+                    // creature", 2026-11-12; see WhatAnOutletEats).
+                    Rx(@"sacrifices? (?:a|an|another|two|three|\d+|x\b|one or more\b|up to \w+\b)(?:(?!\battached to\b)[\w -])*(?:creature|artifact|permanent)"),
                     Rx(SacrificeKeywordGranted + @"|\bsacrificing (?:a|an|another)[\w ]*(?:creature|artifact|permanent)"
                         + @"|" + SacrificesOneOfThem),
                     Rx(SacrificesYourOwnByAnotherVerb, RegexOptions.Multiline)]),

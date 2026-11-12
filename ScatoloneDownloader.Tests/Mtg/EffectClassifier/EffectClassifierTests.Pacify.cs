@@ -749,4 +749,62 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
     }
+
+    [Theory]
+    // Read 2026-11-12: an Aura that strips the abilities and HAS a base 1/1, a
+    // target named before 'tap that creature and it doesn't untap', and a creature
+    // or planeswalker only an opponent controls phased out (Pacify alone).
+    [InlineData("Kasmina's Transmutation", "Enchantment — Aura",
+        "Enchant creature\nEnchanted creature loses all abilities and has base power and toughness 1/1.")]
+    [InlineData("Code of Constraint", "Instant",
+        "Target creature gets -4/-0 until end of turn.\nDraw a card.\nAddendum — If you cast this spell during "
+        + "your main phase, tap that creature and it doesn't untap during its controller's next untap step.")]
+    [InlineData("Divine Smite", "Instant",
+        "Target creature or planeswalker an opponent controls phases out. If that permanent is black, exile "
+        + "it instead. (If it phases out, treat it and anything attached to it as though they don't exist until "
+        + "its controller's next turn.)")]
+    public void Classify_TheNovember12Readings_IsPacify(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
+    }
+
+    [Theory]
+    // Read 2026-11-12: 'whenever you attack a player' is the attack trigger's tap
+    // (Karazikar, untagged 2026-11-06); the same base 1/1 on an Aura that can
+    // exile the creature later is Removal alone (Utter Insignificance).
+    [InlineData("Karazikar, the Eye Tyrant", "Legendary Creature — Beholder",
+        "Whenever you attack a player, tap target creature that player controls and goad it. (Until your next "
+        + "turn, that creature attacks each combat if able and attacks a player other than you if "
+        + "able.)\nWhenever an opponent attacks another one of your opponents, you and the attacking player each "
+        + "draw a card and lose 1 life.")]
+    [InlineData("Utter Insignificance", "Enchantment — Aura",
+        "Flash\nEnchant creature\nEnchanted creature loses all abilities and has base power and toughness "
+        + "1/1.\n{2}{C}: Exile enchanted creature.")]
+    // The combat-damage lock after a lure that names a target creature first
+    // (Matsu-Tribe Decoy, unreviewed).
+    [InlineData("Matsu-Tribe Decoy", "Creature — Snake Warrior",
+        "{2}{G}: Target creature blocks this creature this turn if able.\nWhenever this creature deals combat "
+        + "damage to a creature, tap that creature and it doesn't untap during its controller's next untap "
+        + "step.")]
+    public void Classify_TheNovember12Readings_IsNotPacify(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
+    }
+
+    [Theory]
+    // Read 2026-11-12: a creature only an opponent controls phased out saves
+    // nothing of yours (Divine Smite; Sapphire Charm handed back).
+    [InlineData("Divine Smite", "Instant",
+        "Target creature or planeswalker an opponent controls phases out. If that permanent is black, exile "
+        + "it instead. (If it phases out, treat it and anything attached to it as though they don't exist until "
+        + "its controller's next turn.)")]
+    [InlineData("Sapphire Charm", "Instant",
+        "Choose one —\n• Target player draws a card at the beginning of the next turn's upkeep.\n• Target "
+        + "creature gains flying until end of turn.\n• Target creature an opponent controls phases out. (While "
+        + "it's phased out, it's treated as though it doesn't exist. It phases in before its controller untaps "
+        + "during their next untap step.)")]
+    public void Classify_TheNovember12Readings_AnOpponentsCreaturePhasedOut_IsNotProtection(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
+    }
 }

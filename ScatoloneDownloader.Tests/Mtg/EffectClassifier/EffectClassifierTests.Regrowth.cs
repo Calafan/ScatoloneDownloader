@@ -453,4 +453,29 @@ public sealed partial class EffectClassifierTests
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Regrowth));
     }
+
+    [Theory]
+    // Read 2026-11-12: five targets before the graveyard, two cards chosen and the
+    // d20 its own sentence, one exiled card at random put back, and a permanent
+    // card played from your graveyard.
+    [InlineData("Reconstruct History", "Sorcery",
+        "Return up to one target artifact card, up to one target enchantment card, up to one target instant "
+        + "card, up to one target sorcery card, and up to one target planeswalker card from your graveyard to "
+        + "your hand.\nExile Reconstruct History.")]
+    [InlineData("Song of Inspiration", "Instant",
+        "Choose up to two target permanent cards in your graveyard. Roll a d20 and add the total mana value "
+        + "of those cards.\n1—14 | Return those cards to your hand.\n15+ | Return those cards to your hand. You "
+        + "gain life equal to their total mana value.")]
+    [InlineData("Gorex, the Tombshell", "Legendary Creature — Zombie Turtle",
+        "As an additional cost to cast this spell, you may exile any number of creature cards from your "
+        + "graveyard. This spell costs {2} less to cast for each card exiled this way.\nDeathtouch\nWhenever "
+        + "Gorex attacks or dies, choose a card at random exiled with Gorex and put that card into its owner's "
+        + "hand.")]
+    [InlineData("Jorn, God of Winter // Kaldring, the Rimestaff", "Legendary Snow Creature — God // Legendary Snow Artifact",
+        "Whenever Jorn attacks, untap each snow permanent you control.\n{T}: You may play target snow "
+        + "permanent card from your graveyard this turn. If you do, it enters tapped.")]
+    public void Classify_TheNovember12Readings_IsRegrowth(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Regrowth));
+    }
 }

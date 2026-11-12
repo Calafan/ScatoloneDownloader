@@ -339,3 +339,8 @@ RULED 2026-11-10 ("puliscono il mazzo ma poi la terra non è in uso"): a land th
 thins the library and is this tag, not Tutor — Mana Severance (Filter by hand), Trench Gorger, and
 ONE land exiled too (Strata Scythe, the only card the new reading moves). Only for a land: one card
 of another type exiled to be had later selects nothing (Hoarding Dragon, Distant Memories, Tutor).
+
+RULED 2026-11-12, "Com'è, Odric -Filter": Blood made once stays a rider, however many tokens.
+Odric, Blood-Cursed's "When Odric enters, create X Blood tokens", Filter by hand on 11-10, is
+corrected and stays reviewed; the other 31 of the 32 reviewed Blood cards already followed the line
+(17 Blood made again and again tagged, 14 made once untagged).

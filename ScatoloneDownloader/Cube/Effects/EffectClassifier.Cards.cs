@@ -108,6 +108,15 @@ namespace ScatoloneDownloader.Cube
             // from the board.
             + @"|\bwhenever (?!an? |another |one or more |each |creatures? |you\b)[^,\n]{0,40}? becomes? the target of a spell or ability "
             + @"an opponent controls, (?:you may )?draws? (?:a|one) card"
+            // …and the card becoming the target of a spell YOU control, which
+            // needs a second card of yours aimed at it (Nadu's reading, below):
+            // Stormchaser Drake, untagged by hand, the one reviewed card that
+            // says it (read 2026-11-12).
+            + @"|\bbecomes? the target of a spell you control, (?:you may )?draws? (?:a|one) card"
+            // A hit only a creature TOKEN can bring, on a card that makes none:
+            // Curiosity Crafter, untagged by hand, the one reviewed card that
+            // says it (read 2026-11-12).
+            + @"|\bwhenever a creature token you control deals combat damage to a player, (?:you may )?draws? (?:a|one) card"
             // Handing a permanent of yours to another player for the card left
             // this list on 2026-10-14 ("Tutti e due CA"): Discerning Financier
             // gives away a Treasure and Stiltzkin, Moogle Merchant any permanent,
@@ -211,7 +220,14 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex OneDrawButTwoCasts = Rx(
             @"^(?:(?:scry|surveil) \d+, then )?draw a card\."
             + @"|^look at the top (?:two|three|four|five|x|\d+) cards of your library\. "
-            + @"put one of them into your hand and the (?:rest|other)\b",
+            + @"put one of them into your hand and the (?:rest|other)\b"
+            // …and one card of a TYPE revealed from among them, read 2026-11-12:
+            // Tapping at the Window's "You may reveal a creature card from among
+            // them and put it into your hand" with flashback (CardAdvantage and
+            // Filter by hand, the one reviewed card; Arcane Infusion, unreviewed,
+            // says the same for an instant or sorcery).
+            + @"|^look at the top (?:two|three|four|five|six|seven|x|\d+) cards of your library\. "
+            + @"you may reveal an? [\w ]{1,30} card from among them and put it into your hand\b",
             RegexOptions.Multiline);
 
         // JUMP-START pays a card from the hand for its second cast, so one card
@@ -498,6 +514,11 @@ namespace ScatoloneDownloader.Cube
             // Bringer of the Last Gift's cards "that weren't put there this way"
             // stand between the graveyard and the battlefield.
             Rx(@"return[\w ,'\-/]{0,130}(?:from|of)[\w ,'\-/]{0,30}graveyards?(?: that [\w ']{0,40})? to the battlefield"),
+            // The targets chosen first and "put them" two sentences on, read
+            // 2026-11-12 on Command the Dreadhorde ("Choose any number of target
+            // creature and/or planeswalker cards in graveyards. … Put them onto
+            // the battlefield under your control", Reanimate by hand, 1 of 1).
+            Rx(@"target [\w ,'\-/]{0,60}cards? in (?:a |your |their )?graveyards?\.[^\n]{0,160}\bput them onto the battlefield under your control"),
             // The same effect written PUT instead of RETURN, with the graveyard
             // named any of the ways the game names it — "from a graveyard", "in
             // that player's graveyard", "from an opponent's graveyard". All six
@@ -564,7 +585,8 @@ namespace ScatoloneDownloader.Cube
             // your graveyard that were put there from the battlefield this turn",
             // counted broad as "return to the battlefield all ... cards in your
             // graveyard": 1 reviewed tagged, 1 unreviewed, Faith's Reward, the same
-            // mass return); several cards chosen first and returned "each of them"
+            // mass return, which loses the tag on 2026-11-12 because it is held up
+            // — WithoutHeldUpUndo); several cards chosen first and returned "each of them"
             // or "two of them at random" (Sinister Waltz, The War in Heaven: 2
             // reviewed, both tagged, none unreviewed; Bortuk Bonerattle, whose
             // return goes to the hand otherwise, is Regrowth and not matched);
@@ -647,13 +669,22 @@ namespace ScatoloneDownloader.Cube
             // (Sorceress's Schemes). A return that is the PRICE of keeping the
             // card is not this: Harvest Wurm is sacrificed "unless you return a
             // basic land card", untagged.
-            Rx(@"(?<!unless you )return[\w ,'\-/]{0,150}from[\w ,'\-/]{0,30}graveyard(?: or [\w ]{0,40})? to[\w ',]{0,20}hand"),
+            // 180 since 2026-11-12 for Reconstruct History's five targets
+            // ("up to one target artifact card, … and up to one target
+            // planeswalker card from your graveyard to your hand", Regrowth by
+            // hand; Rise from the Wreck's four were the longest before).
+            Rx(@"(?<!unless you )return[\w ,'\-/]{0,180}from[\w ,'\-/]{0,30}graveyard(?: or [\w ]{0,40})? to[\w ',]{0,20}hand"),
             // Cards exiled out of a GRAVEYARD and later returned to their owners'
             // HANDS (Aurelia's Vindicator, The Spot — ruled Regrowth and Bounce
             // on 2026-09-29). Read 2026-10-13 for one card returned: "the
             // exiled card" (The Aesir Escape Valhalla), "target card exiled
             // with Nyla" (Nyla, Shirshu Sleuth).
-            Rx(@"cards? from (?:a |your |their )?graveyards?[\s\S]{0,250}return [^.\n]{0,40}\bexiled\b[^.\n]{0,30} to (?:its|their) owners?'?s?'? hands?"),
+            // One of them AT RANDOM put back, read 2026-11-12 on Gorex, the
+            // Tombshell ("exile any number of creature cards from your
+            // graveyard … choose a card at random exiled with Gorex and put that
+            // card into its owner's hand", Regrowth by hand, 1 of 1).
+            Rx(@"cards? from (?:a |your |their )?graveyards?[\s\S]{0,250}return [^.\n]{0,40}\bexiled\b[^.\n]{0,30} to (?:its|their) owners?'?s?'? hands?"
+                + @"|cards? from your graveyard[\s\S]{0,250}\bchoose a card at random exiled with [^.\n]{0,30} and put that card into its owner's hand"),
             Rx(@"put[\w ,'\-/]{0,60}cards? from[\w ,'\-/]{0,30}graveyard into[\w ]{0,20}hand"),
             // The rest of the sitting of 10-06..10-11, each tagged by hand on
             // every reviewed card that says it (2026-10-13): one of the top two
@@ -678,6 +709,17 @@ namespace ScatoloneDownloader.Cube
             Rx(@"target [\w ,'\-/]{0,50}cards? in your graveyard\.[^\n]{0,80}\byou may cast that card"
                 + @"|target [\w ,'\-/]{0,50}cards? in your graveyard\.[^\n]{0,200}\bput it into your hand"
                 + @"|target [\w ,'\-/]{0,50}cards? in your graveyard, then roll a d20\.[\s\S]{0,200}?\breturn that card to your hand"
+                // …and two cards chosen, the roll its own sentence, read
+                // 2026-11-12 on Song of Inspiration ("Choose up to two target
+                // permanent cards in your graveyard. Roll a d20 … Return those
+                // cards to your hand" on every row, Regrowth by hand, 1 of 1).
+                + @"|target [\w ,'\-/]{0,50}cards? in your graveyard\. roll a d20\b[\s\S]{0,200}?\breturn those cards to your hand"
+                // A permanent card PLAYED from your graveyard this turn, read
+                // 2026-11-12 on Kaldring, the Rimestaff ("{T}: You may play
+                // target snow permanent card from your graveyard this turn",
+                // Regrowth by hand; the casts from your graveyard say it, 6 of 7
+                // reviewed tagged, Zul Ashur's tribe the seventh).
+                + @"|\byou may play target [\w ]{0,30}permanent card from your graveyard this turn"
                 + @"|the top card of [\w' ]{0,25}graveyard is [^,\n]{0,30}, put that card on top of"),
             Rx(@"cards? of your graveyard\.[^.\n]{0,60}put the other (?:one )?into your hand"
                 + @"|from your graveyard[^\n]{0,120}put that pile into your hand"
@@ -1532,12 +1574,19 @@ namespace ScatoloneDownloader.Cube
         // Splitting on newlines alone would read that as a one-shot, which is
         // the very failure the comment above warns about, so the bullets are
         // stitched back on.
+        // A die's table rows ("1—14 | Create …") belong to the roll the same
+        // way, read 2026-11-12: Delina, Wild Mage's attack trigger rolls on one
+        // line and copies the creature on the next, so its token copy read as
+        // a body made once (Tokens by hand, 1 of 42 reviewed cards with a die
+        // table that disagreed).
+        private static readonly Regex DieRollRow = Rx(@"^\s*\d+(?:—\d+)? \|");
+
         private static IEnumerable<string> Abilities(string text)
         {
             List<string> abilities = [];
             foreach (string line in text.Split('\n'))
             {
-                if (line.TrimStart().StartsWith('•') && abilities.Count > 0)
+                if ((line.TrimStart().StartsWith('•') || DieRollRow.IsMatch(line)) && abilities.Count > 0)
                 {
                     abilities[^1] += "\n" + line;
                 }
@@ -1842,6 +1891,12 @@ namespace ScatoloneDownloader.Cube
             @"\b(?:scry|surveil) (?:\d+|x)\.[^\n]*?\b(?:draw a card instead|if you do, draw|may have you draw"
             + @"|then you may cast [^.\n]* from your graveyard)"
             + @"|\bdraw a card if [^.\n]*\. if (?:it|you) (?:doesn't|don't), (?:scry|surveil) (?:\d+|x)\b");
+        // NOT a look whose one card has to be of a TYPE ("You may reveal a
+        // creature card from among them and put it into your hand"): tried
+        // 2026-11-12 for Tapping at the Window (CardAdvantage and Filter by
+        // hand) and rejected, 17 reviewed cards that repeat the same look are
+        // CardAdvantage alone (Duskwatch Recruiter's kin, Vivien's Talent,
+        // Search for Dagger…).
 
         private static bool SelectsEveryTimeGainsSometimes(string text) =>
             Abilities(Parenthetical.Replace(text, " ")).Any(a =>
@@ -2677,7 +2732,16 @@ namespace ScatoloneDownloader.Cube
             // cards".
             // The BOTTOM card, face down, is the same card (Arvinox, the Mind
             // Flail, every end step, tagged, read 2026-10-27, 1 of 1).
-            + @"|\bexile the (?:top|bottom) card of (?:that|target|each) (?:player|opponent)'?s library(?: face down)?\.[^\n]{0,160}\byou may (?:play|cast)"
+            // "Of THEIR library" too (Robber of the Rich, "if defending player
+            // has more cards in hand than you, exile the top card of their
+            // library. During any turn you attacked with a Rogue, you may cast
+            // that card", CardAdvantage by hand, read 2026-11-12).
+            + @"|\bexile the (?:top|bottom) card of (?:(?:that|target|each) (?:player|opponent)'?s|their) library(?: face down)?\.[^\n]{0,160}\byou may (?:play|cast)"
+            // The attacker's controller plays it: Curse of Hospitality, "that
+            // player exiles the top card of their library. Until end of turn,
+            // that creature's controller may play that card" — you, or your
+            // teammate in the 2vs2 cube (CardAdvantage by hand, read 2026-11-12).
+            + @"|\bexiles the top card of their library\. until end of turn, that creature's controller may play that card"
             // …as many as the mana value of what was sacrificed (Rakdos, the Muscle).
             + @"|\bexile cards equal to [^.\n]{0,40} from the top of (?:that|target|each) (?:player|opponent)'?s library\."
             + @"[^\n]{0,80}\byou may (?:play|cast) those cards"
@@ -2793,6 +2857,15 @@ namespace ScatoloneDownloader.Cube
             @"search your library for [^.\n]{0,40}exile it"
             + @"|search your library for [^.\n]{0,120}\. exile that card, then shuffle\. you may cast the exiled card");
 
+        // A SPELL that reveals until a nonland card and casts it free is a
+        // discover, once: the spell for the card it finds, a count of zero
+        // (one cascade is a discover, ruled 2026-10-23). Creative Technique,
+        // untagged by hand, read 2026-11-12, the one spell in the store that
+        // says it; Neera, Wild Mage does it on every spell and stays.
+        private static readonly Regex RevealsANonlandAndCastsItOnce = Rx(
+            @"reveal cards from the top of (?:it|your library) until you reveal a nonland card\. exile that card"
+            + @"[^\n]{0,80}\. you may cast the exiled card without paying");
+
         // Read 2026-10-23, from the sitting of 2026-10-20..23: shapes the human
         // tagged CardAdvantage on the one or two reviewed cards that say them,
         // each a rule this tag already has in words no rule read.
@@ -2830,8 +2903,13 @@ namespace ScatoloneDownloader.Cube
         // The cards may be of a type CHOSEN first (For the Ancestors, kept
         // CardAdvantage on 2026-10-30: a chosen type is no tribe), where a
         // printed one is TribalCard's Filter (Karumonix's Rats).
+        // …and "any number of them" put into your hand off a LOOK, read
+        // 2026-11-12: Search for Blex's "Look at the top five cards of your
+        // library. You may put any number of them into your hand", 3 life each
+        // (CardAdvantage alone by hand, the one card in the store that says it).
         private static readonly Regex RevealsAnyNumberIntoHand = Rx(
-            @"reveal any number of [\w ,/-]{0,40}cards (?:of the chosen (?:creature )?type )?from among them and put (?:them|the revealed cards) into your hand");
+            @"reveal any number of [\w ,/-]{0,40}cards (?:of the chosen (?:creature )?type )?from among them and put (?:them|the revealed cards) into your hand"
+            + @"|\blook at the top \w+ cards of your library\. you may put any number of them into your hand\b");
 
         private static readonly Regex GraveyardCardOnEveryHit = Rx(
             @"^whenever [^\n]{0,60}deals combat damage to a player, choose up to one target card in a graveyard\b"

@@ -225,3 +225,16 @@ Waterdeep, Tokens by hand); "you may copy it" is the creature spell copied of 20
 Herald of Wings), with demonstrate's reminder left out (Silverquill Lecturer, untagged, Redirect's
 2026-11-09 ruling); and a copied ARTIFACT spell asks for no creature (Iron Man, Bleeding Edge, no
 tag), as Tamiyo's permanent card did on 2026-10-24.
+
+Read 2026-11-12: a die's table rows ("1—14 | Create …") belong to the roll above them, so a token
+copy made on an attack trigger one line below the roll is made on every attack (Delina, Wild Mage,
+Tokens by hand; 1 of 42 reviewed cards with a die table disagreed). Among the unreviewed it also
+reaches Swarming Goblins (three Goblins on a 20) and moves Arcane Investigator's repeatable look
+from Filter to CardAdvantage.
+
+Read 2026-11-12, one reviewed card each: the bodies a creature makes as it enters and as it dies are
+counted together, as encore's are (Specimen Collector's Squirrel and Crab, then a token copied as it
+dies: three, Tokens by hand). Out: a cost that sacrifices ANOTHER member of a tribe is the trigger
+on another in a cost's clothes (Cleaver Skaab's "Sacrifice another Zombie: Create two tokens that
+are copies", untagged by hand); "Sacrifice a Goblin" can be paid with the card itself and stays
+(Pashalik Mons).

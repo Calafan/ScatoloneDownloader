@@ -74,3 +74,9 @@ trigger at all, even Redcap Gutter-Dweller's "you may sacrifice"). The follow-up
 phase (Cabal Therapist) in the same shape, all tagged by hand, and that a creature stolen for a turn
 can still be fed there; the answer was "Torniamo indietro, bene mantenimento", then "Tutto come
 prima". So the 2026-09-25 upkeep stands, forced or not: Lord of the Pit stays.
+
+Read 2026-11-12: a hyphenated qualifier is one word, so Dreadfeast Demon's end-step "sacrifice a
+non-Demon creature" is the repeating outlet (Tokens and Sacrifice by hand). It reaches Promise of
+Aclazotz's end-step "you may sacrifice a non-Demon creature", untagged on 2026-10-09 when the rules
+could not read it, handed back with Sacrifice; among the unreviewed, Archdemon of Unx, Extricator of
+Sin and Ooze Garden.

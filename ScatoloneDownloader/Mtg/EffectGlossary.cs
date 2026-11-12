@@ -150,8 +150,8 @@
 
             [CardEffect.Mill] =
                 "ANOTHER player loses cards off the top or bottom of their library to your card (Glimpse the Unthinkable): into "
-                + "their graveyard, blind or chosen by you, or exiled when nobody plays them; 'each player' and rad "
-                + "counters count. Not your own library (fuel), not a reveal they keep part of.",
+                + "their graveyard, blind or chosen by you, or exiled when nobody plays them; three cards or more "
+                + "once, any number again and again. Not your own library (fuel), not a reveal they keep part of.",
 
             [CardEffect.Regrowth] =
                 "A card of YOUR graveyard comes back as a card to play: into the HAND (lands too), onto the TOP of "

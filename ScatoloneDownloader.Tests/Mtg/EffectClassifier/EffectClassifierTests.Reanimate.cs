@@ -606,4 +606,52 @@ public sealed partial class EffectClassifierTests
         Assert.True(result.HasFlag(CardEffect.Reanimate));
         Assert.False(result.HasFlag(CardEffect.Steal));
     }
+
+    [Theory]
+    // RULED 2026-11-12 ('Solo Protection'): what died this turn brought back from
+    // your graveyard by a card you hold up is a save after the fact, Protection
+    // alone. Faith's Reward returns them all; Revivify returns them to the hand on
+    // a low roll and, on 15 or more, 'those cards' to the battlefield.
+    [InlineData("Faith's Reward", "Instant",
+        "Return to the battlefield all permanent cards in your graveyard that were put there from the "
+        + "battlefield this turn.")]
+    [InlineData("Revivify", "Instant",
+        "Roll a d20 and add the number of creature cards in your graveyard that were put there from the "
+        + "battlefield this turn.\n1—14 | Return all creature cards in your graveyard that were put there from "
+        + "the battlefield this turn to your hand.\n15+ | Return those cards from your graveyard to the "
+        + "battlefield.")]
+    public void Classify_TheNovember12Ruling_AHeldUpReturnOfWhatDiedThisTurn_IsProtectionNotReanimate(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.False(result.HasFlag(CardEffect.Reanimate));
+        Assert.True(result.HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // The same ruling: a trigger is not held up, so what died this turn returned
+    // by 'When Gerrard dies' (Gerrard, Weatherlight Hero) or 'Whenever Moira deals
+    // combat damage' (Moira, Urborg Haunt) stays Reanimate.
+    [InlineData("Gerrard, Weatherlight Hero", "Legendary Creature — Human Soldier",
+        "First strike\nWhen Gerrard dies, exile it and return to the battlefield all artifact and creature "
+        + "cards in your graveyard that were put there from the battlefield this turn.")]
+    [InlineData("Moira, Urborg Haunt", "Legendary Creature — Spirit Wizard",
+        "Menace\nWhenever Moira deals combat damage to a player, return to the battlefield target creature "
+        + "card in your graveyard that was put there from the battlefield this turn.")]
+    public void Classify_TheNovember12Ruling_ATriggeredReturnOfWhatDiedThisTurn_StaysReanimate(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
+    }
+
+    [Theory]
+    // Read 2026-11-12: the targets chosen first and 'put them onto the battlefield
+    // under your control' two sentences on.
+    [InlineData("Command the Dreadhorde", "Sorcery",
+        "Choose any number of target creature and/or planeswalker cards in graveyards. Command the Dreadhorde "
+        + "deals damage to you equal to the total mana value of those cards. Put them onto the battlefield "
+        + "under your control.")]
+    public void Classify_TheNovember12Readings_TargetsChosenThenPutThem_IsReanimate(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
+    }
 }

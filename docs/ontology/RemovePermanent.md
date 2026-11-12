@@ -71,3 +71,6 @@ RULED 2026-11-08, Q3: a nonland permanent PHASED OUT for as long as you control 
 O-ring on any permanent ("RemovePermanent"), although it phases back in once the Saga leaves: The
 Phasing of Zhalfir, Removal and Wipe by hand, is corrected by name to RemovePermanent and Wipe. The
 creature phased out so (Oubliette) stays Removal.
+
+Read 2026-11-12: a colour count qualifies the permanent like "legendary" (Vanishing Verse's "exile
+target monocolored permanent"; multicolored and colorless were tried beside it and moved no card).

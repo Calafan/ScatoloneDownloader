@@ -1057,4 +1057,38 @@ public sealed partial class EffectClassifierTests
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
     }
+
+    [Theory]
+    // Read 2026-11-12: a die's table rows belong to the roll, so a token copy made
+    // on Delina's attack trigger, one line below the roll, is made on every
+    // attack.
+    [InlineData("Delina, Wild Mage", "Legendary Creature — Elf Shaman",
+        "Whenever Delina attacks, choose target creature you control, then roll a d20.\n1—14 | Create a tapped "
+        + "and attacking token that's a copy of that creature, except it's not legendary and it has \"At end of "
+        + "combat, exile this token.\"\n15—20 | Create one of those tokens. You may roll again.")]
+    public void Classify_TheNovember12Readings_ADieRowUnderARepeatingTrigger_IsTokens(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    // Read 2026-11-12: a cost that sacrifices ANOTHER member of a tribe is the
+    // trigger on another in a cost's clothes (Cleaver Skaab, untagged by hand).
+    [InlineData("Cleaver Skaab", "Creature — Zombie Horror",
+        "{3}, {T}, Sacrifice another Zombie: Create two tokens that are copies of the sacrificed creature.")]
+    public void Classify_TheNovember12Readings_ACostThatSacrificesAnotherOfATribe_IsNotTokens(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    // Read 2026-11-12: the bodies a creature makes as it enters and as it dies are
+    // counted together, as encore's are (Specimen Collector, two plus one).
+    [InlineData("Specimen Collector", "Creature — Vedalken Wizard",
+        "When this creature enters, create a 1/1 green Squirrel creature token and a 0/3 blue Crab creature "
+        + "token.\nWhen this creature dies, create a token that's a copy of target token you control.")]
+    public void Classify_TheNovember12Readings_BodiesOfOneLifeCountedTogether_IsTokens(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
 }

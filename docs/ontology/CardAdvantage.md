@@ -631,3 +631,12 @@ exiled for you to cast, on a trigger that repeats is the C1 stream of 2026-10-16
 three cards of that player's library, exile one of them face down, then put the rest into their
 graveyard. You may cast that card". It is Mill too, for the rest. The same words once (Gonti, Lord
 of Luxury on entering; Siphon Insight) are one card once, outside the C1 gate, unreviewed.
+
+Read 2026-11-12: the top of "their" library exiled and yours to cast (Robber of the Rich), the card
+a curse exiles played by "that creature's controller" (Curse of Hospitality), any number of a look
+put into your hand (Search for Blex, CardAdvantage alone, no Filter), and one typed card of a look
+on a spell with flashback (Tapping at the Window; Arcane Infusion among the unreviewed). Out: a draw
+when a creature becomes the target of a spell YOU control (Stormchaser Drake), a draw on a creature
+TOKEN's combat damage (Curiosity Crafter), and a nonland card revealed, exiled and cast free once
+(Creative Technique). Measured and rejected the same day: the type-reveal of a look as both tags (17
+reviewed cards that say it are CardAdvantage alone).

@@ -899,4 +899,41 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
     }
+
+    [Theory]
+    // Read 2026-11-12: a type list closing on the planeswalker, any number of
+    // planeswalkers, a colour that turns the answer into an exile, and a chosen
+    // target all your big creatures hit.
+    [InlineData("Fracture", "Instant",
+        "Destroy target artifact, enchantment, or planeswalker.")]
+    [InlineData("The Elderspell", "Sorcery",
+        "Destroy any number of target planeswalkers. Choose a planeswalker you control. Put two loyalty "
+        + "counters on it for each planeswalker destroyed this way.")]
+    [InlineData("Divine Smite", "Instant",
+        "Target creature or planeswalker an opponent controls phases out. If that permanent is black, exile "
+        + "it instead. (If it phases out, treat it and anything attached to it as though they don't exist until "
+        + "its controller's next turn.)")]
+    [InlineData("The Bears of Littjara", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Create "
+        + "a 2/2 blue Shapeshifter creature token with changeling.\nII — Any number of target Shapeshifter "
+        + "creatures you control have base power and toughness 4/4.\nIII — Choose up to one target creature or "
+        + "planeswalker. Each creature with power 4 or greater you control deals damage equal to its power to "
+        + "that permanent.")]
+    public void Classify_TheNovember12Readings_IsRemoval(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
+    // Read 2026-11-12: a fight with a target of one tribe (Sawblade Slinger) and
+    // each creature dealing its power to itself, a Wipe (Solar Blaze).
+    [InlineData("Sawblade Slinger", "Creature — Human Archer",
+        "When this creature enters, choose up to one —\n• Destroy target artifact an opponent controls.\n• This "
+        + "creature fights target Zombie an opponent controls.")]
+    [InlineData("Solar Blaze", "Sorcery",
+        "Each creature deals damage to itself equal to its power.")]
+    public void Classify_TheNovember12Readings_IsNotRemoval(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
+    }
 }

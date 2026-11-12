@@ -2935,4 +2935,60 @@ public sealed partial class EffectClassifierTests
 
         Assert.Equal(expected, EffectClassifier.Classify(card).HasFlag(CardEffect.CardAdvantage));
     }
+
+    [Theory]
+    // Read 2026-11-12: the top of 'their' library exiled for you, the creature's
+    // controller playing the card a curse exiled, any number of a look into your
+    // hand, and one typed card of a look on a spell with flashback.
+    [InlineData("Robber of the Rich", "Creature — Human Archer Rogue",
+        "Reach, haste\nWhenever this creature attacks, if defending player has more cards in hand than you, "
+        + "exile the top card of their library. During any turn you attacked with a Rogue, you may cast that "
+        + "card and you may spend mana as though it were mana of any color to cast that spell.")]
+    [InlineData("Curse of Hospitality", "Enchantment — Aura Curse",
+        "Enchant player\nCreatures attacking enchanted player have trample.\nWhenever a creature deals combat "
+        + "damage to enchanted player, that player exiles the top card of their library. Until end of turn, "
+        + "that creature's controller may play that card and they may spend mana as though it were mana of any "
+        + "color to cast that spell.")]
+    [InlineData("Blex, Vexing Pest // Search for Blex", "Legendary Creature — Pest // Sorcery",
+        "Other Pests, Bats, Insects, Snakes, and Spiders you control get +1/+1.\nWhen Blex dies, you gain 4 "
+        + "life.\nLook at the top five cards of your library. You may put any number of them into your hand and "
+        + "the rest into your graveyard. You lose 3 life for each card you put into your hand this way.")]
+    [InlineData("Tapping at the Window", "Sorcery",
+        "Look at the top three cards of your library. You may reveal a creature card from among them and put "
+        + "it into your hand. Put the rest into your graveyard.\nFlashback {2}{G} (You may cast this card from "
+        + "your graveyard for its flashback cost. Then exile it.)")]
+    public void Classify_TheNovember12Readings_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Read 2026-11-12: a draw on becoming the target of your own spell, a draw on
+    // a token's combat damage, and a nonland card revealed and cast free once.
+    [InlineData("Stormchaser Drake", "Creature — Drake",
+        "Flying\nWhenever this creature becomes the target of a spell you control, draw a card.")]
+    [InlineData("Curiosity Crafter", "Creature — Bird Wizard",
+        "Flying\nYou have no maximum hand size.\nWhenever a creature token you control deals combat damage to a "
+        + "player, draw a card.")]
+    [InlineData("Creative Technique", "Sorcery",
+        "Demonstrate (When you cast this spell, you may copy it. If you do, choose an opponent to also copy "
+        + "it.)\nShuffle your library, then reveal cards from the top of it until you reveal a nonland card. "
+        + "Exile that card and put the rest on the bottom of your library in a random order. You may cast the "
+        + "exiled card without paying its mana cost.")]
+    public void Classify_TheNovember12Readings_IsNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Read 2026-11-12: any number of a look put into your hand is CardAdvantage
+    // alone (Search for Blex).
+    [InlineData("Blex, Vexing Pest // Search for Blex", "Legendary Creature — Pest // Sorcery",
+        "Other Pests, Bats, Insects, Snakes, and Spiders you control get +1/+1.\nWhen Blex dies, you gain 4 "
+        + "life.\nLook at the top five cards of your library. You may put any number of them into your hand and "
+        + "the rest into your graveyard. You lose 3 life for each card you put into your hand this way.")]
+    public void Classify_TheNovember12Readings_AnyNumberIntoYourHand_IsNotFilter(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
 }

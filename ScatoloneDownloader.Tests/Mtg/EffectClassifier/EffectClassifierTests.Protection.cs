@@ -996,4 +996,37 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
     }
+
+    [Theory]
+    // Read 2026-11-12 under the 'Solo Protection' ruling, each Protection by hand:
+    // permanent cards 'in graveyards' that were put there from the battlefield
+    // this turn, returned under their owners' control (Sudden Salvation); and 'if
+    // a permanent you control would be put into a graveyard from the battlefield
+    // this turn, exile it instead. Return it' (Cosmic Intervention).
+    [InlineData("Sudden Salvation", "Instant",
+        "Choose up to three target permanent cards in graveyards that were put there from the battlefield "
+        + "this turn. Return them to the battlefield tapped under their owners' control. You draw a card for "
+        + "each opponent who controls one or more of those permanents.")]
+    [InlineData("Cosmic Intervention", "Instant",
+        "If a permanent you control would be put into a graveyard from the battlefield this turn, exile it "
+        + "instead. Return it to the battlefield under its owner's control at the beginning of the next end "
+        + "step.\nForetell {1}{W} (During your turn, you may pay {2} and exile this card from your hand face "
+        + "down. Cast it on a later turn for its foretell cost.)")]
+    public void Classify_TheNovember12Readings_WhatDiedThisTurnSavedByAnInstant_IsProtection(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // Read 2026-11-12: a flash creature that exiles another creature you control
+    // until it leaves the battlefield saves it (Phantom Steed).
+    [InlineData("Phantom Steed", "Creature — Horse Illusion",
+        "Flash\nWhen this creature enters, exile another target creature you control until this creature "
+        + "leaves the battlefield.\nWhenever this creature attacks, create a tapped and attacking token that's a "
+        + "copy of the exiled card, except it's an Illusion in addition to its other types. Sacrifice that "
+        + "token at end of combat.")]
+    public void Classify_TheNovember12Readings_YourOwnHeldUntilThisLeaves_IsProtection(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
+    }
 }

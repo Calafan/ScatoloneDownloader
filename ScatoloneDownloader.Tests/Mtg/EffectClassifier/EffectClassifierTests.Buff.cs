@@ -1206,4 +1206,34 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
     }
+
+    [Theory]
+    // Read 2026-11-12: a big base HAD by a target creature (the 2026-11-05 'Buff
+    // se forza >= 3' ruling, Square Up), and an activation that names its target
+    // and puts the counter on it (Tyrite Sanctum).
+    [InlineData("Square Up", "Instant",
+        "Target creature has base power and toughness 4/4 until end of turn.")]
+    [InlineData("Tyrite Sanctum", "Land",
+        "{T}: Add {C}.\n{2}, {T}: Target legendary creature becomes a God in addition to its other types. Put "
+        + "a +1/+1 counter on it.\n{4}, {T}, Sacrifice this land: Put an indestructible counter on target God.")]
+    public void Classify_TheNovember12Readings_IsBuff(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
+
+    [Theory]
+    // Read 2026-11-12: the counters that size what the card animated (Rise and
+    // Shine) and a tribe's anthem behind an ability word's dash (Scuttletide's
+    // Crabs).
+    [InlineData("Rise and Shine", "Sorcery",
+        "Target noncreature artifact you control becomes a 0/0 artifact creature. Put four +1/+1 counters on "
+        + "each artifact that became a creature this way.\nOverload {4}{U}{U} (You may cast this spell for its "
+        + "overload cost. If you do, change \"target\" in its text to \"each.\")")]
+    [InlineData("Scuttletide", "Enchantment",
+        "{1}, Discard a card: Create a 0/3 blue Crab creature token.\nDelirium — Crabs you control get +1/+1 "
+        + "as long as there are four or more card types among cards in your graveyard.")]
+    public void Classify_TheNovember12Readings_IsNotBuff(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
 }

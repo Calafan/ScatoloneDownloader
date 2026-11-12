@@ -835,4 +835,17 @@ public sealed partial class EffectClassifierTests
         Assert.True(result.HasFlag(CardEffect.Burn));
         Assert.False(result.HasFlag(CardEffect.Steal));
     }
+
+    [Theory]
+    // Read 2026-11-12 under the 2026-11-05 ruling: the creature cards chosen first
+    // and 'the other' returned with haste and exiled at the next end step.
+    [InlineData("Wake to Slaughter", "Sorcery",
+        "Choose up to two target creature cards in your graveyard. An opponent chooses one of them. Return "
+        + "that card to your hand. Return the other to the battlefield under your control. It gains haste. "
+        + "Exile it at the beginning of the next end step.\nFlashback {4}{B}{R} (You may cast this card from "
+        + "your graveyard for its flashback cost. Then exile it.)")]
+    public void Classify_TheNovember12Readings_TheOtherReturnedWithHaste_IsBurn(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
 }

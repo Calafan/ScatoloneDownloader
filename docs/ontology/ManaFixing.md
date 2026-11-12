@@ -133,3 +133,7 @@ Read the same day: a permission to spend mana of ONE colour as any riding on wha
 (Grell Philosopher, Quicksilver Elemental; 0 of 3 reviewed), and the counters a bare tap stores
 and a trigger cashes for any colour, a source (Coalition Relic, Ramp alone). The land search to
 hand across "where X is …" (Oreskos Explorer, Prismatic Undercurrents) moved with the split.
+
+Read 2026-11-12, out: mana from SNOW sources spent as though it were any colour on the cards the
+card itself exiled (Draugr Necromancer, Reanimate alone by hand), and Treasures an opponent creates
+(Ingenious Mastery).

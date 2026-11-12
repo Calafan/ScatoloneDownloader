@@ -1021,4 +1021,39 @@ public sealed partial class EffectClassifierTests
         Assert.True(result.HasFlag(CardEffect.ManaFixing));
         Assert.False(result.HasFlag(CardEffect.Ramp));
     }
+
+    [Theory]
+    // Read 2026-11-12: a land search whose put onto the battlefield runs past 60
+    // characters or says 'both cards', mana for each colour among your permanents,
+    // and a tap-and-sacrifice whose mana comes a sentence after.
+    [InlineData("Celebrate the Harvest", "Sorcery",
+        "Search your library for up to X basic land cards, where X is the number of different powers among "
+        + "creatures you control. Put those cards onto the battlefield tapped, then shuffle.")]
+    [InlineData("Sword of Hearth and Home", "Artifact — Equipment",
+        "Equipped creature gets +2/+2 and has protection from green and from white.\nWhenever equipped "
+        + "creature deals combat damage to a player, exile up to one target creature you own, then search your "
+        + "library for a basic land card. Put both cards onto the battlefield under your control, then "
+        + "shuffle.\nEquip {2}")]
+    [InlineData("Faeburrow Elder", "Creature — Treefolk Druid",
+        "Vigilance\nThis creature gets +1/+1 for each color among permanents you control.\n{T}: For each color "
+        + "among permanents you control, add one mana of that color.")]
+    [InlineData("Priest of Forgotten Gods", "Creature — Human Cleric",
+        "{T}, Sacrifice two other creatures: Any number of target players each lose 2 life and sacrifice a "
+        + "creature of their choice. You add {B}{B} and draw a card. (Activate only as an instant.)")]
+    public void Classify_TheNovember12Readings_IsRamp(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // Read 2026-11-12: two Treasures an opponent creates are theirs (Ingenious
+    // Mastery, CardAdvantage alone by hand).
+    [InlineData("Ingenious Mastery", "Sorcery",
+        "You may pay {2}{U} rather than pay this spell's mana cost.\nIf the {2}{U} cost was paid, you draw "
+        + "three cards, then an opponent creates two Treasure tokens and they scry 2. If that cost wasn't paid, "
+        + "you draw X cards.")]
+    public void Classify_TheNovember12Readings_TreasureForAnOpponent_IsNotRamp(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
 }

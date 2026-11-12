@@ -186,3 +186,12 @@ mana value less than Nahiri's loyalty from your graveyard" (Removal never tagged
 11-06). Counted broad, a target creature followed by "(or X) card": 26 reviewed, Nahiri the only one
 proposed this tag; Savior of Ollenbock's "creature from the battlefield or creature card from a
 graveyard", the one tagged, keeps its battlefield half.
+
+Read 2026-11-12: a type list that closes on the planeswalker, and any number of them (Fracture's
+"destroy target artifact, enchantment, or planeswalker", The Elderspell's "destroy any number of
+target planeswalkers"; 34 of 34 reviewed cards that destroy a target planeswalker are tagged), a
+colour that turns the answer into an exile (Divine Smite's "if that permanent is black, exile it
+instead"), and a chosen target all your big creatures hit (The Bears of Littjara's chapter III;
+Kamahl's Will, 2 of 2). Out: a fight with a target of one TRIBE (Sawblade Slinger's "fights target
+Zombie an opponent controls", Disenchant alone), and EACH creature dealing its power to itself,
+which is a Wipe (Solar Blaze; Wave of Reckoning among the unreviewed).

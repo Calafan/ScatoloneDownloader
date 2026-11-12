@@ -206,4 +206,15 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Redirect));
     }
+
+    [Theory]
+    // Read 2026-11-12: your own spell that targets only this creature, copied, is
+    // your own trick doubled.
+    [InlineData("Reflective Golem", "Artifact Creature — Golem",
+        "Whenever you cast an instant or sorcery spell that targets only this creature, you may pay {2}. If "
+        + "you do, copy that spell. You may choose new targets for the copy.")]
+    public void Classify_TheNovember12Readings_ASpellThatTargetsOnlyThisCreature_IsNotRedirect(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Redirect));
+    }
 }

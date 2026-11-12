@@ -123,6 +123,17 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
+    // Read 2026-11-12: a hyphenated qualifier is one word, so Dreadfeast Demon's
+    // end-step 'sacrifice a non-Demon creature' is the repeating outlet.
+    [InlineData("Dreadfeast Demon", "Creature — Demon",
+        "Flying\nAt the beginning of your end step, sacrifice a non-Demon creature. If you do, create a token "
+        + "that's a copy of this creature.")]
+    public void Classify_TheNovember12Readings_AHyphenatedQualifier_IsSacrifice(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Sacrifice));
+    }
+
+    [Theory]
     // Three things that are not an outlet: an edict empties somebody ELSE's
     // board, an additional cost to cast is paid once on the way to a different
     // effect, and a land is not a creature.

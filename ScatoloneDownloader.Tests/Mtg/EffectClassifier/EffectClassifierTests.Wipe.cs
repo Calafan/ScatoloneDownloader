@@ -549,4 +549,25 @@ public sealed partial class EffectClassifierTests
         Assert.False(result.HasFlag(CardEffect.Wipe));
         Assert.True(result.HasFlag(CardEffect.Pacify));
     }
+
+    [Theory]
+    // Read 2026-11-12: the card listed first with a comma before all creatures,
+    // every creature phased out while the card stays, and every creature dealing
+    // its power to itself.
+    [InlineData("Sphere of Annihilation", "Artifact",
+        "This artifact enters with X void counters on it.\nAt the beginning of your upkeep, exile this "
+        + "artifact, all creatures and planeswalkers with mana value less than or equal to the number of void "
+        + "counters on it, and all creature and planeswalker cards in graveyards with mana value less than or "
+        + "equal to the number of void counters on it.")]
+    [InlineData("Out of Time", "Enchantment",
+        "When this enchantment enters, untap all creatures, then those creatures phase out until this "
+        + "enchantment leaves the battlefield. Put a time counter on this enchantment for each creature that "
+        + "phased out this way.\nVanishing (At the beginning of your upkeep, remove a time counter from this "
+        + "enchantment. When the last is removed, sacrifice it.)")]
+    [InlineData("Solar Blaze", "Sorcery",
+        "Each creature deals damage to itself equal to its power.")]
+    public void Classify_TheNovember12Readings_IsWipe(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Wipe));
+    }
 }

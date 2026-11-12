@@ -228,3 +228,15 @@ the tap on your own attack trigger above, a combat trick: a BOAST (Goldmaw Champ
 {1}{W}: Tap target creature", untagged by hand) and "Activate only if <name> is attacking" (Gerrard
 Capashen's "{3}{W}: Tap target creature", unreviewed: its stored Pacify is an old proposal and not a
 hand tag, and it goes).
+
+Read 2026-11-12, one reviewed card each unless counted: an Aura that strips the abilities and HAS a
+base 1/1 (Kasmina's Transmutation; 8 of 10 reviewed Auras that take the abilities and set a base are
+tagged — Utter Insignificance, which can exile the creature later, stays Removal alone, and
+Trickster's Elk's 3/3 is no small body); "tap that creature and it doesn't untap" after a TARGET
+creature the card named before (Code of Constraint's addendum; not after the card's own combat
+damage, Matsu-Tribe Decoy, unreviewed); and a creature or planeswalker only an OPPONENT controls
+phased out, Pacify alone (Divine Smite; Teferi, Master of Time's −3 among the unreviewed). That last
+one saves nothing of yours, so Protection no longer reads it: Sapphire Charm's mode, Protection and
+Pacify by hand on 2026-09-08 before the both-tags ruling, loses Protection and is handed back. Out:
+"whenever you attack a player, tap target creature that player controls" is the attack trigger's tap
+(Karazikar, the Eye Tyrant, untagged 2026-11-06).

@@ -44,6 +44,11 @@ namespace ScatoloneDownloader.Cube
         // mode rather than on the words its whole text happens to contain.
         private static readonly Regex[] DisenchantPatterns =
         [
+            // A target PERMANENT destroyed when it turns out to be an artifact,
+            // read 2026-11-12 on Topple the Statue ("Tap target permanent. If
+            // it's an artifact, destroy it", Disenchant and Pacify by hand, the
+            // one reviewed card written so).
+            Rx(@"\btarget permanent\. if it's an? (?:artifact|enchantment)(?: or (?:artifact|enchantment))?, destroy it\b"),
             // The noun may come second in a type list, "destroy target creature,
             // enchantment, or planeswalker" (Get Lost), and the count may say
             // "up to one OTHER target" (Vault 13), both read 2026-10-15.
@@ -551,6 +556,43 @@ namespace ScatoloneDownloader.Cube
             // Drink, Mariposa Military Base, Strong, Tato Farmer).
             Rx(@"(?<!\byou (?:may )?)\bgets? [\w ]{0,25}\brad counters?|\bgive each (?:player|opponent) [\w ]{0,10}\brad counters?"),
         ];
+
+        // RULED 2026-11-12 ("Almeno 3 o ripetuto"): a mill made ONCE has to take
+        // at least three cards; one or two once is a rider beside what the card
+        // is for, as a single scry is for Filter. A REPEATED one counts from one
+        // card (Millstone, Reef Pirates), and so does an amount that is not fixed
+        // (X, "that many", "equal to", half their library), which this does not
+        // blank. Repeated = the line reads as RepeatableWording (whenever, at the
+        // beginning of, an activation or loyalty cost), a saga chapter that comes
+        // more than once ("I, II —", Death in Heaven), or rad counters (their own
+        // pattern, never blanked). Read one by one on the 121 reviewed Mill cards
+        // that day: 15 take one or two cards once and lose the tag (Ray of
+        // Erasure, Foreshadow, Eye Spy, Cruel Fate, Gnawing Vermin, Watcher of the
+        // Wayside, Path of the Schemer…), 14 take three once and keep it
+        // (Drownyard Amalgam, Reito Sentinel, Deal Gone Bad…). Not blanked: "for
+        // each" before the mill, a count (Sanity Grinding's "for each blue mana
+        // symbol…, target opponent mills a card"); and an activation the card
+        // GRANTS in quotes, repeated though the line does not start with its cost
+        // (Stern Mentor's soulbond "{T}: Target player mills two cards"). The
+        // pre-2021 "puts the top two cards of their library into" was tried: on a
+        // line that is not repeated it is on no card in the store (Millstone's is
+        // an activation), so it is not here.
+        private static readonly Regex AFewMilledOnce = Rx(
+            @"(?<!\bfor each\b[^.\n]*)" + OtherPlayer + @"(?:(?!\byou\b)[\w ,]){0,40}\bmills? (?:a|one|two) cards?\b"
+            + @"|\blook at the top [\w ]{0,20}of (?:their|(?:target|each|that) (?:player|opponent)'s) library\.[^\n]*?"
+            + @"\bput (?:that card|it|one of (?:them|those cards)) into (?:their|that player's) graveyard"
+            + @"|\blook at the top (?:two|three) cards of (?:their|(?:target|each|that) (?:player|opponent)'s) library\.[^\n]*?"
+            + @"\bput one back and the rest into (?:their|that player's) graveyard");
+
+        private static readonly Regex ChapterThatComesAgain = Rx(@"^[IVX]+(?:, [IVX]+)+ —", RegexOptions.Multiline);
+
+        private static readonly Regex GrantedActivation = Rx(@"""[^""\n:]{1,40}:");
+
+        private static string WithoutAFewMilledOnce(string text) =>
+            string.Join('\n', text.Split('\n').Select(line =>
+                RepeatableWording.IsMatch(line) || ChapterThatComesAgain.IsMatch(line) || GrantedActivation.IsMatch(line)
+                    ? line
+                    : AFewMilledOnce.Replace(line, " ")));
 
         // The token has to be a CREATURE, and it has to be yours. A Treasure, a
         // Clue, a Food or a Lander is a resource the card hands you on the way
@@ -1064,6 +1106,16 @@ namespace ScatoloneDownloader.Cube
                 return false;
             }
 
+            // The bodies of ONE life are counted together as encore's are, read
+            // 2026-11-12: Specimen Collector makes a Squirrel and a Crab as it
+            // enters and copies a token as it dies, three bodies (Tokens by hand,
+            // 1 of 1 reviewed creature whose entry and death both make bodies
+            // and that had no other reason for the tag).
+            if (entering + dying >= 3)
+            {
+                return false;
+            }
+
             return makesAny;
         }
 
@@ -1093,10 +1145,20 @@ namespace ScatoloneDownloader.Cube
             + @"(?!(?-i:" + NotACreatureType + @")\b)(?<tribe>(?-i:[A-Z])[a-z]+?)(?:s|es)?[ ,][^\n]*",
             RegexOptions.Multiline);
 
+        // A COST that sacrifices ANOTHER member of a tribe is the trigger on
+        // another in a cost's clothes, read 2026-11-12: Cleaver Skaab's "{3},
+        // {T}, Sacrifice another Zombie: Create two tokens that are copies of
+        // the sacrificed creature", untagged by hand, 1 of 1. "Sacrifice a
+        // Goblin" can be paid with the card itself and stays (Pashalik Mons,
+        // Tokens by hand), as do "a Treasure" and "a Desert", which are no tribe.
+        private static readonly Regex BodyCostOnAnotherOfATribe = Rx(
+            @"^[^\n:]*\bsacrifice another (?!(?-i:" + NotACreatureType + @")\b)(?-i:[A-Z])[a-z]+[^\n:]{0,30}:[^\n]*",
+            RegexOptions.Multiline);
+
         /// <summary>The text with every body-making line on a tribe the card
         /// cannot set off by itself blanked. See BodyOnATribe.</summary>
         private static string BlankTribalBodyTriggers(Card card, string text) =>
-            BodyOnATribe.Replace(text, m =>
+            BodyOnATribe.Replace(BodyCostOnAnotherOfATribe.Replace(text, " "), m =>
             {
                 if (m.Groups["cast"].Success)
                 {
@@ -1198,8 +1260,11 @@ namespace ScatoloneDownloader.Cube
         // Broodmother's upkeep token arrives with devour.
         private const string SacrificeKeywordGranted = @"\b(?:have|has|gains?|with) (?:exploit|casualty|devour|bargain)\b";
 
+        // A hyphenated qualifier is one word, read 2026-11-12: Dreadfeast Demon's
+        // end-step "sacrifice a non-Demon creature" (Sacrifice by hand, the
+        // hyphen stopped the reading).
         private const string WhatAnOutletEats =
-            @"sacrifices? (?:a|an|another|two|three|\d+|x|any number of|one or more|up to \w+) [\w ]*(?:creature|artifact|permanent)";
+            @"sacrifices? (?:a|an|another|two|three|\d+|x|any number of|one or more|up to \w+) [\w -]*(?:creature|artifact|permanent)";
 
         // Only a REPEATABLE outlet is this tag, ruled 2026-09-25: "sì, togliamo
         // Sacrifice alle carte una tantum". The human had tagged one-shots 36

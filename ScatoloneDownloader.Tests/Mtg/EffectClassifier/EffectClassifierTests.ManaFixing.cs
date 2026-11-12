@@ -528,4 +528,21 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
     }
+
+    [Theory]
+    // Read 2026-11-12: mana from snow sources spent as though any colour on the
+    // cards it exiled (Draugr Necromancer, Reanimate alone by hand), and Treasures
+    // an opponent creates (Ingenious Mastery).
+    [InlineData("Draugr Necromancer", "Snow Creature — Zombie Cleric",
+        "If a nontoken creature an opponent controls would die, exile that card with an ice counter on it "
+        + "instead.\nYou may cast spells from among cards in exile your opponents own with ice counters on them, "
+        + "and you may spend mana from snow sources as though it were mana of any color to cast those spells.")]
+    [InlineData("Ingenious Mastery", "Sorcery",
+        "You may pay {2}{U} rather than pay this spell's mana cost.\nIf the {2}{U} cost was paid, you draw "
+        + "three cards, then an opponent creates two Treasure tokens and they scry 2. If that cost wasn't paid, "
+        + "you draw X cards.")]
+    public void Classify_TheNovember12Readings_IsNotManaFixing(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.ManaFixing));
+    }
 }

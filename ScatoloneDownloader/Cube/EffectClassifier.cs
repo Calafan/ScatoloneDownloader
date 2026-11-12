@@ -765,9 +765,19 @@ namespace ScatoloneDownloader.Cube
 
                 string ownRecursion = WithoutSelfRecursion(card, aimed);
 
-                if (!ReanimatePatterns.Any(p => p.IsMatch(WithoutTribalRecursion(ReanimatedForSomebodyElse.Replace(ownRecursion, " "))))) { result &= ~CardEffect.Reanimate; }
+                // …and, for Reanimate, what died this turn returned by a card held
+                // up, which is Protection alone (WithoutHeldUpUndo, 2026-11-12).
+                if (!ReanimatePatterns.Any(p => p.IsMatch(WithoutTribalRecursion(ReanimatedForSomebodyElse.Replace(WithoutHeldUpUndo(ownRecursion), " "))))) { result &= ~CardEffect.Reanimate; }
 
                 if (!RegrowthPatterns.Any(p => p.IsMatch(WithoutTribalRegrowth(ownRecursion)))) { result &= ~CardEffect.Regrowth; }
+            }
+
+            // A mill made ONCE has to take three cards or more, ruled 2026-11-12;
+            // repeated, one card is enough. Blanked line by line and asked again.
+            // See AFewMilledOnce.
+            if (result.HasFlag(CardEffect.Mill) && !MillPatterns.Any(p => p.IsMatch(WithoutAFewMilledOnce(text))))
+            {
+                result &= ~CardEffect.Mill;
             }
 
             // The same tribal guard for Cheat, ruled the same day: a type card
@@ -1037,7 +1047,8 @@ namespace ScatoloneDownloader.Cube
                 // 2026-10-14.
                 || (DrawThatMany.IsMatch(text) && !ADrawYouCannotCount.IsMatch(text) && !RummagesThatMany.IsMatch(text))
                 || (ExileAndPlayFromThere.IsMatch(Parenthetical.Replace(text, " ")) && !ThePileIsTheirsAlready.IsMatch(text)
-                    && !TutoredIntoExile.IsMatch(text) && !onlyOneOfThem)
+                    && !TutoredIntoExile.IsMatch(text) && !onlyOneOfThem
+                    && !(card.MacroType == MacroType.Spell && RevealsANonlandAndCastsItOnce.IsMatch(text)))
                 || Abilities(text).Any(a => Discovers.IsMatch(a) && AbilityRepeatsAtNoCostToItself(a))
                 || ((OneDrawButTwoCasts.IsMatch(text) || OneRegrowthButTwoCasts.IsMatch(text))
                     && CastsItselfASecondTime.IsMatch(text) && !PaysACardForTheSecondCast.IsMatch(text))
@@ -1178,6 +1189,17 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Buff;
             }
 
+            // The counters that size what the card animated (2026-11-12, see
+            // CountersOnWhatItAnimated): asked again without them.
+            if (result.HasFlag(CardEffect.Buff) && CountersOnWhatItAnimated.IsMatch(text))
+            {
+                string withoutTheBody = CountersOnWhatItAnimated.Replace(text, " ");
+                if (!BuffPatterns.Any(p => p.IsMatch(withoutTheBody)) && !HandsSomebodyElseAPump(withoutTheBody))
+                {
+                    result &= ~CardEffect.Buff;
+                }
+            }
+
             // Three more ways a pump belongs to something other than this tag,
             // all ruled 2026-09-21. Each is asked by BLANKING the shape and
             // seeing whether any pump is left standing, so a card that explains
@@ -1232,7 +1254,9 @@ namespace ScatoloneDownloader.Cube
             // ("TARGET creature phases out"), so there is nothing in front of it
             // for the self-versus-other gate to inspect and that gate was
             // stripping it.
-            if (PhasesSomethingOut.IsMatch(text) || PhasesAnArtifactOut.IsMatch(text) || PhasesOthersOut.IsMatch(text))
+            // Not a creature only an opponent controls (PhasesTheirsOut, read
+            // 2026-11-12): that one saves nothing of yours.
+            if (PhasesSomethingOut.IsMatch(PhasesTheirsOut.Replace(text, " ")) || PhasesAnArtifactOut.IsMatch(text) || PhasesOthersOut.IsMatch(text))
             {
                 result |= CardEffect.Protection;
             }

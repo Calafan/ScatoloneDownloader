@@ -116,9 +116,11 @@ public sealed partial class EffectClassifierTests
     // Funeral's 'all cards revealed this way', Telemin Performance's 'all
     // noncreature cards', Destroy the Evidence's 'its controller', Dakra Mystic's
     // 'their owners' graveyards'); Q1 'Mill', a top looked at and the card for the
-    // graveyard chosen by you (Cruel Fate, Eye Spy, Wand of Denial, Thief of
-    // Sanity); 'each player' exiling (Timesifter); Q2 'Conta, come Burn', a
-    // token's quoted ability (Ashiok, Nightmare Muse).
+    // graveyard chosen by you (Wand of Denial, Thief of Sanity); 'each player'
+    // exiling (Timesifter); Q2 'Conta, come Burn', a token's quoted ability
+    // (Ashiok, Nightmare Muse). Cruel Fate and Eye Spy, one card once, were here
+    // until the 2026-11-12 threshold moved them to
+    // Classify_TheNovember12Ruling_OneOrTwoCardsMilledOnce_IsNotMill.
     [InlineData("Mind Funeral", "Sorcery",
         "Target opponent reveals cards from the top of their library until four land cards are revealed. That "
         + "player puts all cards revealed this way into their graveyard.")]
@@ -132,11 +134,6 @@ public sealed partial class EffectClassifierTests
     [InlineData("Dakra Mystic", "Creature — Merfolk Wizard",
         "{U}, {T}: Each player reveals the top card of their library. You may put the revealed cards into "
         + "their owners' graveyards. If you don't, each player draws a card.")]
-    [InlineData("Cruel Fate", "Sorcery",
-        "Look at the top five cards of target opponent's library. Put one of those cards into that player's "
-        + "graveyard and the rest on top of their library in any order.")]
-    [InlineData("Eye Spy", "Sorcery",
-        "Look at the top card of target player's library. You may put that card into their graveyard.")]
     [InlineData("Wand of Denial", "Artifact",
         "{T}: Look at the top card of target player's library. If it's a nonland card, you may pay 2 life. If "
         + "you do, put it into that player's graveyard.")]
@@ -198,6 +195,70 @@ public sealed partial class EffectClassifierTests
         "{3}, {T}: Target player puts the bottom card of their library into their graveyard. If it's a "
         + "creature card, you create a 2/2 black Zombie creature token.")]
     public void Classify_TheNovember10Ruling_TheBottomOfTheirLibrary_IsMill(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Mill));
+    }
+
+    [Theory]
+    // RULED 2026-11-12 ('Almeno 3 o ripetuto'): a mill made once has to take three
+    // cards or more. One or two, once, is a rider: 'mills a card' (Ray of
+    // Erasure), 'mills two cards' on entering (Watcher of the Wayside) or for each
+    // player (Halo-Charged Skaab), a top looked at with one card or that card put
+    // into their graveyard (Cruel Fate, Eye Spy, Wu Spy), and three looked at with
+    // one put back and the rest binned (Dimir Charm). Cruel Fate and Eye Spy
+    // pinned the 11-10 definition as Mill.
+    [InlineData("Ray of Erasure", "Instant",
+        "Target player mills a card.\nDraw a card at the beginning of the next turn's upkeep.")]
+    [InlineData("Watcher of the Wayside", "Artifact Creature — Golem",
+        "When this creature enters, target player mills two cards. You gain 2 life. (To mill two cards, a "
+        + "player puts the top two cards of their library into their graveyard.)")]
+    [InlineData("Halo-Charged Skaab", "Creature — Zombie",
+        "When this creature enters, each player mills two cards. Then you may put an instant, sorcery, or "
+        + "battle card from your graveyard on top of your library. (To mill two cards, a player puts the top "
+        + "two cards of their library into their graveyard.)")]
+    [InlineData("Cruel Fate", "Sorcery",
+        "Look at the top five cards of target opponent's library. Put one of those cards into that player's "
+        + "graveyard and the rest on top of their library in any order.")]
+    [InlineData("Eye Spy", "Sorcery",
+        "Look at the top card of target player's library. You may put that card into their graveyard.")]
+    [InlineData("Wu Spy", "Creature — Human Soldier Rogue",
+        "When this creature enters, look at the top two cards of target player's library. Put one of them "
+        + "into their graveyard.")]
+    [InlineData("Dimir Charm", "Instant",
+        "Choose one —\n• Counter target sorcery spell.\n• Destroy target creature with power 2 or less.\n• Look "
+        + "at the top three cards of target player's library. Put one back and the rest into that player's "
+        + "graveyard.")]
+    public void Classify_TheNovember12Ruling_OneOrTwoCardsMilledOnce_IsNotMill(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Mill));
+    }
+
+    [Theory]
+    // The same ruling's other side: three cards once is Mill (Drownyard Amalgam),
+    // and so is a mill of one or two that comes again, a trigger (Scrabbling
+    // Skullcrab), a saga chapter that comes twice (Death in Heaven's 'I, II'), an
+    // activation the card grants in quotes (Stern Mentor), or an amount counted
+    // 'for each' (Sanity Grinding).
+    [InlineData("Drownyard Amalgam", "Creature — Zombie Horror",
+        "When this creature enters, target player mills three cards. (They put the top three cards of their "
+        + "library into their graveyard.)\n{2}{U}: This creature can't be blocked this turn.")]
+    [InlineData("Scrabbling Skullcrab", "Creature — Crab Skeleton",
+        "Eerie — Whenever an enchantment you control enters and whenever you fully unlock a Room, target "
+        + "player mills two cards. (They put the top two cards of their library into their graveyard.)")]
+    [InlineData("Death in Heaven", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI, II — "
+        + "Target player mills two cards, then exiles their graveyard.\nIII — Put all creature cards exiled with "
+        + "this enchantment onto the battlefield face down under your control. They're 2/2 Cyberman artifact "
+        + "creatures.")]
+    [InlineData("Stern Mentor", "Creature — Human Wizard",
+        "Soulbond (You may pair this creature with another unpaired creature when either enters. They remain "
+        + "paired for as long as you control both of them.)\nAs long as this creature is paired with another "
+        + "creature, each of those creatures has \"{T}: Target player mills two cards.\"")]
+    [InlineData("Sanity Grinding", "Sorcery",
+        "Chroma — Reveal the top ten cards of your library. For each blue mana symbol in the mana costs of "
+        + "the revealed cards, target opponent mills a card. Then put the cards you revealed this way on the "
+        + "bottom of your library in any order.")]
+    public void Classify_TheNovember12Ruling_AMillRepeatedOrOfThreeOrCounted_IsMill(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Mill));
     }

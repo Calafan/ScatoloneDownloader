@@ -44,3 +44,6 @@ Read 2026-11-08 under the definition: a counter of "up to four" or "up to two" t
 Reversal, Double Negative), "exile any number of target spells" (Mindbreak Trap), "counter all
 abilities your opponents control" (Kadena's Silencer, Summary Dismissal), and "for each spell and
 ability your opponents control, counter it" (Whirlwind Denial).
+
+Read 2026-11-12: a LOYALTY ability is an activated one (Verdant Command's "counter target loyalty
+ability of a planeswalker", 1 of 1).
