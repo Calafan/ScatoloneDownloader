@@ -305,3 +305,9 @@ count only a tribe gets INSTEAD is the tribe's, the one counter for everybody be
 (Wakandan Royal Guard's "If that creature is another Hero, put two +1/+1 counters on it instead";
 Elder Cathar's Human, unreviewed). Not asked: a PREPARED creature's spell face that is only a small
 pump (Vigorbloom's Seed Suture, a counter and 1 life), no reviewed prepared card having one.
+
+Ruled 2026-11-24, family 3 of 3: double strike given to the team or to several creatures is this
+tag. Terror of Mount Velus ("creatures you control gain double strike") and Sigarda's Vanguard
+("those creatures gain double strike"), Buff by hand; Resolute Blademaster and War Machine, Avenging
+Arsenal, unreviewed, follow. Out: Toph, Greatest Earthbender's "Land creatures you control have
+double strike", untagged by hand, measured and not moved by this reading.

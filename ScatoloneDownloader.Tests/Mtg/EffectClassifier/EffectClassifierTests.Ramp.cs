@@ -1086,4 +1086,31 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
     }
+
+    [Theory]
+    // 2026-11-24: Klothys exiles a card from a graveyard and adds mana if it was a
+    // land (mana every turn, conditioned on a land in a graveyard); Nissa of
+    // Shadowed Boughs stays Ramp.
+    [InlineData("Klothys, God of Destiny", "Legendary Enchantment Creature — God",
+        "Indestructible\nAs long as your devotion to red and green is less than seven, Klothys isn't a "
+        + "creature.\nAt the beginning of your first main phase, exile target card from a graveyard. If it was a "
+        + "land card, add {R} or {G}. Otherwise, you gain 2 life and Klothys deals 2 damage to each opponent.")]
+    public void Classify_TheNovember24Readings_IsRamp(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
+
+    [Theory]
+    // 2026-11-24: Mystic Skull pays {1} for its mana and grants lands a tap (mana
+    // that costs mana); Lithoform Blight turns a land into one that taps for one.
+    [InlineData("Mystic Skull // Mystic Monstrosity", "Artifact // Artifact Creature — Construct",
+        "{1}, {T}: Add one mana of any color.\n{5}, {T}: Transform this artifact.\nLands you control have \"{T}: "
+        + "Add one mana of any color.\"")]
+    [InlineData("Lithoform Blight", "Enchantment — Aura",
+        "Enchant land\nWhen this Aura enters, draw a card.\nEnchanted land loses all land types and abilities "
+        + "and has \"{T}: Add {C}\" and \"{T}, Pay 1 life: Add one mana of any color.\"")]
+    public void Classify_TheNovember24Readings_ManaThatCostsManaOrALandThatTapsForOne_IsNotRamp(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Ramp));
+    }
 }

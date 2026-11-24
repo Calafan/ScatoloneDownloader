@@ -1301,4 +1301,21 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
     }
+
+    [Theory]
+    // 2026-11-24: double strike given to the team or several creatures, third
+    // family of three.
+    [InlineData("Terror of Mount Velus", "Creature — Dragon",
+        "Flying\nDouble strike (This creature deals both first-strike and regular combat damage.)\nWhen this "
+        + "creature enters, creatures you control gain double strike until end of turn.")]
+    [InlineData("Sigarda's Vanguard", "Creature — Angel",
+        "Flash\nFlying\nWhenever this creature enters or attacks, choose any number of creatures with different "
+        + "powers. Those creatures gain double strike until end of turn.")]
+    [InlineData("Resolute Blademaster", "Creature — Human Soldier Ally",
+        "Rally — Whenever this creature or another Ally you control enters, creatures you control gain double "
+        + "strike until end of turn.")]
+    public void Classify_TheNovember24Readings_DoubleStrikeToTheTeam_IsBuff(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Buff));
+    }
 }

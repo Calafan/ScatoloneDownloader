@@ -871,4 +871,38 @@ public sealed partial class EffectClassifierTests
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
     }
+
+    [Theory]
+    // 2026-11-24: an emblem's damage is the card's burn, whatever sets it off
+    // ("Tutti Burn": Narset on each spell cast, Koth on a Mountain, Chandra on an
+    // artifact, Karn on a tap); Relic Robber hands the opponent a token that pings
+    // its controller every upkeep (a 1 that repeats).
+    [InlineData("Narset of the Ancient Way", "Legendary Planeswalker — Narset",
+        "+1: You gain 2 life. Add {U}, {R}, or {W}. Spend this mana only to cast a noncreature spell.\n−2: "
+        + "Draw a card, then you may discard a card. When you discard a nonland card this way, Narset deals "
+        + "damage equal to that card's mana value to target creature or planeswalker.\n−6: You get an emblem "
+        + "with \"Whenever you cast a noncreature spell, this emblem deals 2 damage to any target.\"")]
+    [InlineData("Koth, Fire of Resistance", "Legendary Planeswalker — Koth",
+        "+2: Search your library for a basic Mountain card, reveal it, put it into your hand, then shuffle.\n−3: "
+        + "Koth deals damage to target creature equal to the number of Mountains you control.\n−7: You get an "
+        + "emblem with \"Whenever a Mountain you control enters, this emblem deals 4 damage to any target.\"")]
+    [InlineData("Chandra, Spark Hunter", "Legendary Planeswalker — Chandra",
+        "At the beginning of combat on your turn, choose up to one target Vehicle you control. Until end of turn, "
+        + "it becomes an artifact creature and gains haste.\n+2: You may sacrifice an artifact or discard a card. "
+        + "If you do, draw a card.\n0: Create a 3/2 colorless Vehicle artifact token with crew 1.\n−7: You get an "
+        + "emblem with \"Whenever an artifact you control enters, this emblem deals 3 damage to any target.\"")]
+    [InlineData("Karn, Living Legacy", "Legendary Planeswalker — Karn",
+        "+1: Create a tapped Powerstone token. (It's an artifact with \"{T}: Add {C}. This mana can't be spent to "
+        + "cast a nonartifact spell.\")\n−1: Pay any amount of mana. Look at that many cards from the top of your "
+        + "library, then put one of those cards into your hand and the rest on the bottom of your library in a "
+        + "random order.\n−7: You get an emblem with \"Tap an untapped artifact you control: This emblem deals 1 "
+        + "damage to any target.\"")]
+    [InlineData("Relic Robber", "Creature — Goblin Rogue",
+        "Haste\nWhenever this creature deals combat damage to a player, that player creates a 0/1 colorless "
+        + "Goblin Construct artifact creature token with \"This token can't block\" and \"At the beginning of your "
+        + "upkeep, this token deals 1 damage to you.\"")]
+    public void Classify_TheNovember24Rulings_AnEmblemThatDealsDamageOrATokenThatRepeats_IsBurn(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Burn));
+    }
 }

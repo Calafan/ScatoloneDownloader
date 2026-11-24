@@ -88,3 +88,9 @@ RULED 2026-11-10, Q4 ("Sì, perde una pescata"): a card of their hand PUT BACK o
 chosen by its owner, is this tag — it leaves their hand by force and costs them the next draw. No
 reviewed card says it; Chittering Rats, Chimney Imp, Volrath's Dungeon, Prying Questions and
 Sadistic Augermage ("each player puts a card", when it dies) are proposed.
+
+Ruled 2026-11-24 (V): ward paid in a discard is not this tag. Westgate Regent's "Ward-Discard a
+card" and its reminder ("counter it unless that player discards a card") are the toll on THEIR
+spell, the way ward paid in life is Protection: 9 of the 10 reviewed ward-discard cards are
+untagged. The tenth, Spectral Snatcher (reviewed 2026-09-12, Discard and ManaFixing), is reached and
+handed back; Titania, Rugged Rumbler, unreviewed, loses the proposal.

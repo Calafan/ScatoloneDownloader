@@ -707,6 +707,16 @@ namespace ScatoloneDownloader.Cube
             Rx(@"cast (?!this\b)(?:a |an |target )?[\w ,'\-/]{0,40}\b(?:creature|permanent|nonland|artifact|enchantment|planeswalker)\b[\w ,'\-/]{0,60}"
                 + @"from your (?:hand or )?graveyard[^.\n]{0,80}(?:without paying|rather than paying (?:its|their) mana costs?)"
                 + @"|\b(?:creature|permanent|nonland) card[\w ,'\-/]{0,40}from your graveyard\. copy it, then you may cast the copy without paying"),
+            // The zone AFTER the battlefield, with the hand as the other choice:
+            // Nissa of Shadowed Boughs' "put a creature card with mana value less
+            // than or equal to the number of lands you control onto the battlefield
+            // from your hand or graveyard", Reanimate by hand (11-14). Ruled
+            // 2026-11-24 ("dal cimitero in campo, il tetto MV non conta"): a return
+            // from the graveyard counts under any cap (62 of 62 capped returns, the
+            // definition above), and the hand beside it takes nothing away.
+            // Counted broad, "onto the battlefield from your hand or graveyard": 1
+            // reviewed, tagged, no unreviewed.
+            Rx(@"\bput (?:a |an |up to \w+ )?(?:creature|permanent) cards?[\w ,'\-/]{0,80}onto the battlefield from your hand or (?:your )?graveyard"),
         ];
 
         private static readonly Regex[] RegrowthPatterns =
@@ -1374,7 +1384,15 @@ namespace ScatoloneDownloader.Cube
             // Show, Fervent Mastery the same words): a loot given away, Filter.
             + @"|(?:each player|target player|target opponent|each opponent|an opponent) discards any number of cards[^.\n]*"
             + @"|each player [^.\n]{0,60}\bunless they discard (?:a|two) cards?"
-            + @"|at the beginning of each player's upkeep, that player [^\n]{0,200}?\bthey discard (?:a|two) cards?");
+            + @"|at the beginning of each player's upkeep, that player [^\n]{0,200}?\bthey discard (?:a|two) cards?"
+            // WARD paid in a discard, with its reminder ("counter it unless that
+            // player discards a card"), is the toll on THEIR spell, like the ward
+            // paid in life (Protection, not Burn): Westgate Regent, ruled
+            // 2026-11-24 (V). 9 of the 10 other reviewed ward-discard cards are
+            // untagged (Maha, Sunset Saboteur, Scavenger Regent, Saruman of Many
+            // Colors, Arna Kennerud, Timothar …); the tenth, Spectral Snatcher of
+            // 09-12, is reached and handed back.
+            + @"|\bward—discard [^\n]*");
 
         // Whose draw is it? A card that only ever draws for somebody ELSE gives
         // nothing away for free — Sibilant Spirit and Harbor Guardian pay the

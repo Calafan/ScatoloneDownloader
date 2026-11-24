@@ -654,4 +654,18 @@ public sealed partial class EffectClassifierTests
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
     }
+
+    [Theory]
+    // 2026-11-24: from the graveyard to the battlefield, the mana value cap does
+    // not count; the hand beside it takes nothing away.
+    [InlineData("Nissa of Shadowed Boughs", "Legendary Planeswalker — Nissa",
+        "Landfall — Whenever a land you control enters, put a loyalty counter on Nissa.\n+1: Untap target land "
+        + "you control. You may have it become a 3/3 Elemental creature with haste and menace until end of "
+        + "turn. It's still a land.\n−5: You may put a creature card with mana value less than or equal to the "
+        + "number of lands you control onto the battlefield from your hand or graveyard with two +1/+1 counters "
+        + "on it.")]
+    public void Classify_TheNovember24Ruling_FromHandOrGraveyardOntoTheBattlefield_IsReanimate(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Reanimate));
+    }
 }

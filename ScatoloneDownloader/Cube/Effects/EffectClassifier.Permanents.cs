@@ -108,6 +108,19 @@ namespace ScatoloneDownloader.Cube
             // enchantment an opponent controls SHUFFLES IT INTO their library"
             // (Cathartic Parting, 2026-10-16).
             Rx(@"target " + DisenchantNoun + @"[^.\n]{0,40}shuffles? it into"),
+            // …and so does the BOTTOM of the library, which is gone for good as the
+            // shuffle is: Mystic Repeal's "put target enchantment on the bottom of
+            // its owner's library", Disenchant by hand (11-13), ruled 2026-11-24
+            // ("in fondo al grimorio = via per sempre"). A CARD in a graveyard is
+            // blanked before the patterns are asked (Keeper of the Cadence, 0 of 1
+            // reviewed). Counted broad, "put target artifact/enchantment … on the
+            // bottom of its owner's library": 1 reviewed tagged, 1 untagged (that
+            // graveyard card); Banishing Stroke, Hide // Seek and Natural
+            // Obsolescence, unreviewed, follow. NOT any permanent put on the bottom:
+            // "on the bottom of its owner's library" alone is 1 reviewed card tagged
+            // of 27 (Eternal Isolation, The Spot's Portal Removal, Ether Well and
+            // Rona's Vortex Bounce), measured 2026-11-24 and rejected.
+            Rx(@"\bput (?:up to \w+ )?target (?:[\w '\-]{1,24}, ){0,2}" + DisenchantNoun + @"[^.\n]{0,20}\bon the bottom of its owner's library"),
         ];
 
         /// <summary>A CARD in a graveyard is graveyard hate, not an answer to a
@@ -731,7 +744,13 @@ namespace ScatoloneDownloader.Cube
             @"\bthis (?:land|artifact|enchantment|case) (?:becomes?|is) (?![^.\n]*\bcommanders?\b)an? [^.\n]{0,40}"
             + @"(?:\d+|x)/(?:\d+|x)[^.\n]{0,60}creature"
             + @"|\bthis (?:land|artifact|enchantment) isn't a creature, it becomes an? \d+/\d+"
-            + @"|\bthis (?:land|artifact|enchantment|case) becomes an? [^.\n]{0,60}creature with base power and toughness \d+/\d+");
+            + @"|\bthis (?:land|artifact|enchantment|case) becomes an? [^.\n]{0,60}creature with base power and toughness \d+/\d+"
+            // The land that names itself in the sentence BEFORE, ruled 2026-11-24
+            // ("terra animata", Crawling Barrens, Tokens by hand): "Put two +1/+1
+            // counters on this land. Then you may have IT become a 0/0 Elemental
+            // creature until end of turn". Counted broad, "on this land/artifact.
+            // Then you may have it become": 1 reviewed, tagged, no unreviewed.
+            + @"|\bon this (?:land|artifact)\. then you may have it become an? [^.\n]{0,40}\d+/\d+[^.\n]{0,60}creature");
 
         // An ARTIFACT animated by the card is a body like the land, ruled
         // 2026-10-15 ("Tokens, come le terre"): the hand tags were split 6 to
@@ -787,7 +806,19 @@ namespace ScatoloneDownloader.Cube
         // untagged; Redirect's demonstrate ruling of 2026-11-09).
         private static readonly Regex CopiesYourCreatureSpell = Rx(
             @"(?:whenever|when) you (?:next )?cast [^.\n]{0,60}\b(?:creature|permanent) spells?\b[^.\n]{0,60}, "
-            + @"(?:you may )?copy (?:it|that spell)\b");
+            + @"(?:you may )?copy (?:it|that spell)\b"
+            // "…that doesn't share a creature type with a creature you control or a
+            // creature card in your graveyard, copy that spell" (Volo, Guide to
+            // Monsters, Tokens by hand): the condition on what is already in play is
+            // no tribe, ruled 2026-11-24 ("doesn't share a creature type is not
+            // tribal"), and runs past the 60 characters above. Written for that
+            // wording alone: widening the gap to 140 for every copy was counted, 5
+            // reviewed tagged (Volo, Case of the Shifting Visage, Donal, Jackal,
+            // The Clone Saga) against 3 untagged (Archmage of Echoes, Tawnos,
+            // Thurid), the tribal ones the 2026-11-10 blank keeps out; Volo is the
+            // only card moved either way, so the narrow one ships.
+            + @"|(?:whenever|when) you (?:next )?cast an? (?:creature|permanent) spell that doesn't share a creature type"
+            + @"[^.\n]{0,100}, (?:you may )?copy (?:it|that spell)\b");
 
         // ---- A CREATURE that makes one or two bodies, once ------------------
         //

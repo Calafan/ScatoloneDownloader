@@ -205,4 +205,24 @@ public sealed partial class EffectClassifierTests
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Disenchant));
     }
+
+    [Theory]
+    // 2026-11-24: the bottom of the library is gone for good, like the shuffle.
+    [InlineData("Mystic Repeal", "Instant",
+        "Put target enchantment on the bottom of its owner's library.")]
+    public void Classify_TheNovember24Ruling_OnTheBottomOfTheLibrary_IsDisenchant(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Disenchant));
+    }
+
+    [Theory]
+    // 2026-11-24: an artifact CARD in a graveyard put on the bottom is not a
+    // permanent Disenchant.
+    [InlineData("Keeper of the Cadence", "Creature — Human Wizard",
+        "{3}: Put target artifact, instant, or sorcery card from a graveyard on the bottom of its owner's "
+        + "library.")]
+    public void Classify_TheNovember24Ruling_AGraveyardCardOnTheBottom_IsNotDisenchant(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Disenchant));
+    }
 }

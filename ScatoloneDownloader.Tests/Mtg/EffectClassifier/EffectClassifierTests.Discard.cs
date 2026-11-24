@@ -289,4 +289,21 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Discard));
     }
+
+    [Theory]
+    // 2026-11-24 (V): ward-discard and its reminder text is a toll on their spell,
+    // not a Discard; 9 of 10 reviewed untagged.
+    [InlineData("Westgate Regent", "Creature — Vampire",
+        "Flying\nWard—Discard a card. (Whenever this creature becomes the target of a spell or ability an "
+        + "opponent controls, counter it unless that player discards a card.)\nWhenever this creature deals "
+        + "combat damage to a player, put that many +1/+1 counters on it.")]
+    [InlineData("Maha, Its Feathers Night", "Legendary Creature — Elemental Bird",
+        "Flying, trample\nWard—Discard a card.\nCreatures your opponents control have base toughness 1.")]
+    [InlineData("Sunset Saboteur", "Creature — Human Rogue",
+        "Menace\nWard—Discard a card.\nWhenever this creature attacks, put a +1/+1 counter on target creature "
+        + "an opponent controls.")]
+    public void Classify_TheNovember24Ruling_AWardPaidInADiscard_IsNotDiscard(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Discard));
+    }
 }

@@ -168,3 +168,9 @@ under your control (Thrilling Encore, Grim Return, Supper for Spiders), which ke
 
 Read 2026-11-12: the targets chosen first and "put them onto the battlefield under your control" two
 sentences later (Command the Dreadhorde, 1 of 1).
+
+Ruled 2026-11-24: a creature put from the graveyard onto the battlefield is this tag whatever the
+mana value cap, and the hand beside it takes nothing away. Nissa of Shadowed Boughs's "put a
+creature card with mana value less than or equal to the number of lands you control onto the
+battlefield from your hand or graveyard" (Reanimate by hand; the zone comes after "onto the
+battlefield", 1 of 1).

@@ -259,3 +259,11 @@ before the ruling); Photon, Mighty Marvel, Sakiko, Colossal Plow, Grand Warlord 
 Ventmaw follow among the unreviewed. Kept for good: Fangorn, Tree Shepherd's "unspent green" and
 Ozai, the Phoenix King's firebending turned red, handed back. Out: mana kept only until end of
 COMBAT (Avatar Roku, Fire Lord Ozai, 0 of 2) and mana that is lost (Tesak).
+
+Ruled 2026-11-24, three readings. Mana that COSTS mana is not this tag, and neither is a land that
+taps for one: Mystic Skull's {1} tap with the free tap it grants lands, and Lithoform Blight's Aura
+giving a land one mana (both untagged by hand). Auras granting TWO mana (Grafted Growth, Find the
+Path, Discreet Retreat) stay, 3 of 3. And mana every turn, conditioned on a land in a graveyard, is
+this tag: Klothys, God of Destiny's "If it was a land card, add" (Ramp by hand, the only card worded
+so; any "If ..., add" after a period was measured and rejected, it adds Koth, the Geomancer, Omnath,
+Locus of Creation and Exploratory Mission, unreviewed).

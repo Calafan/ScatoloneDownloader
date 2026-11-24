@@ -1940,6 +1940,13 @@ namespace ScatoloneDownloader.Cube
                     // get is your own (Ajani Steadfast's prevention).
                     Rx(@"(?:each|target) (?:opponent|player) gets an emblem with ""[^""]*"
                         + @"\b(?:deals? [\dX]+ damage to you|you lose [\dX]+ life)"),
+                    // …and a TOKEN handed to an opponent that burns its controller on
+                    // every upkeep, ruled 2026-11-24 ("1 che si ripete"): Relic Robber's
+                    // "that player creates a 0/1 … token with 'At the beginning of your
+                    // upkeep, this token deals 1 damage to you'", Burn by hand, the one
+                    // card the store words so (see DamageFromSomethingItMade).
+                    Rx(@"\b(?:that player|target (?:opponent|player)|each opponent) creates? [^""\n]{0,100}tokens? with "
+                        + @"(?:""[^""\n]*"" and )?""[^""\n]*\bat the beginning of your upkeep, this token deals? [\dX]+ damage to you"),
                     // Life or a sacrifice, whoever is asked: the punisher above with
                     // the source's controller named as the victim (Archfiend of
                     // Spite, "loses that much life unless they sacrifice that many
@@ -2411,20 +2418,32 @@ namespace ScatoloneDownloader.Cube
         // gives: the card makes a body, and what the body then does is the
         // body's. Eight reviewed cards create the 0/1 Wizard that pings on every
         // noncreature spell and none of the eight carries Burn. Keyed on "THIS
-        // TOKEN" (and the emblem, which is the same thing a planeswalker makes),
-        // so an ability granted to a creature you already control keeps the tag:
-        // Black Mage's Rod says "this creature" and Fire Whip burns on a line of
-        // its own.
+        // TOKEN", so an ability granted to a creature you already control keeps
+        // the tag: Black Mage's Rod says "this creature" and Fire Whip burns on a
+        // line of its own.
         // The LIFE LOSS a created token's quoted ability does is the token's too,
         // read once the repeated one-point drain became Burn (2026-09-29): Keimi,
         // the Frog token Tatsunari makes, drains on every enchantment spell, and
         // that is the Frog's, the same evening the human ruled Smaug's Treasures
         // Smaug's and not There and Back Again's. A keyword may come before the
         // quotes (Kaito, Dancing Shadow's Drone "with deathtouch and", 2026-10-14).
-        // An emblem handed to an OPPONENT is not something the card made for
-        // itself: it is the burn (Chandra, Awakened Inferno, 2026-10-23).
+        // An EMBLEM is not a body: it cannot be answered and it never dies, so the
+        // damage it deals is the card's burn, ruled 2026-11-24 ("Tutti Burn"):
+        // Narset of the Ancient Way's "Whenever you cast a noncreature spell, this
+        // emblem deals 2 damage to any target" (Burn by hand), and with it Koth,
+        // Fire of Resistance's Mountain, Chandra, Spark Hunter's artifact and
+        // Karn, Living Legacy's tap (untagged by hand before that day, named);
+        // Ral, Izzet Viceroy, unreviewed, follows. This overturns the emblem half
+        // of the 2026-09-20 key; the emblem handed to an opponent (Chandra,
+        // Awakened Inferno, 2026-10-23) needs no lookbehind of its own any more.
+        // A token the OPPONENT creates, whose quoted ability damages its own
+        // controller ("you" in the quote), is the drain the card put on them, ruled
+        // 2026-11-24: Relic Robber's Goblin Construct, "that player creates a 0/1 …
+        // token with 'At the beginning of your upkeep, this token deals 1 damage to
+        // you'", Burn by hand ("1 che si ripete").
         private static readonly Regex DamageFromSomethingItMade = Rx(
-            @"(?<!\b(?:opponents?|players?|they) gets? an emblem with )""[^""]{0,160}\bthis (?:token|emblem)[^""]{0,60}deals? [\dX]+ damage"
+            @"(?<!\bthat player creates? [^""\n]{0,100}tokens? with (?:""[^""\n]*"" and )?)"
+            + @"""[^""]{0,160}\bthis token[^""]{0,60}deals? [\dX]+ damage"
             + @"|\btokens? with (?:[\w ,]{0,40} and )?""[^""]{0,200}\bloses? [\dX]+ life[^""]*""");
 
         // Removal's side of the same question, narrower: the ONE point a token

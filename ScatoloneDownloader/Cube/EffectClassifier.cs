@@ -384,7 +384,10 @@ namespace ScatoloneDownloader.Cube
             // …and mana that costs mana adds nothing. Late, so it can withdraw
             // the tag whichever rule above granted it, and asked of the whole
             // card so that one free ability elsewhere keeps it.
-            if (result.HasFlag(CardEffect.Ramp) && EveryManaAbilityIsPaidAndPoor(text))
+            // The one mana GRANTED to lands is not a line of the card's own mana
+            // (Mystic Skull's paid tap beside "Lands you control have '{T}: Add
+            // one mana of any color'", ruled 2026-11-24, see EveryManaAbilityIsPaidAndPoor).
+            if (result.HasFlag(CardEffect.Ramp) && EveryManaAbilityIsPaidAndPoor(OneManaGrantedToLands.Replace(text, " ")))
             {
                 result &= ~CardEffect.Ramp;
             }
@@ -438,7 +441,9 @@ namespace ScatoloneDownloader.Cube
             // anywhere on the card, not next to the verb.
             // A body on a tribe's trigger the card cannot set off by itself is
             // somebody else's doing too (2026-10-27, BlankTribalBodyTriggers).
-            string ownBodies = BlankTribalBodyTriggers(card, text);
+            // A token copy of the card ITSELF, when the card is no creature, is no
+            // body either (WithoutASelfCopyOfANoncreature, 2026-11-24).
+            string ownBodies = WithoutASelfCopyOfANoncreature(card, BlankTribalBodyTriggers(card, text));
             if (result.HasFlag(CardEffect.Tokens)
                 && !MakesACreatureBody(WhatSomebodyElseCreates.Replace(ownBodies, " ")))
             {

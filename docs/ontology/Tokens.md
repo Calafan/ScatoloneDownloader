@@ -238,3 +238,9 @@ dies: three, Tokens by hand). Out: a cost that sacrifices ANOTHER member of a tr
 on another in a cost's clothes (Cleaver Skaab's "Sacrifice another Zombie: Create two tokens that
 are copies", untagged by hand); "Sacrifice a Goblin" can be paid with the card itself and stays
 (Pashalik Mons).
+
+Ruled 2026-11-24, three readings. An animated land is a body: Crawling Barrens's "you may have it
+become an X/X Elemental creature" after its counters. A copy of a creature spell that "doesn't share
+a creature type" is not tribal: Volo, Guide to Monsters (Archmage of Echoes, Tawnos and Thurid, the
+tribal ones, stay out). And a copy of a PLANESWALKER is not a creature body: Jace, Mirror Mage's
+"token that's a copy of Jace" is not this tag.

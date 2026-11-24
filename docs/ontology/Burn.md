@@ -290,3 +290,13 @@ alone by hand; Gandalf's Sanction and Ravenous Tyrannosaurus, Removal and Burn b
 Flame Spill and Ram Through, unreviewed, lose the proposal. The sentence is blanked and the card asked
 again, so a burn of its own elsewhere stays. For Burn's next pass, the human's note in their words:
 "se la carta fa anche altro conta l'altro a meno che il danno sia grande, tipo 4+ da guardare".
+
+Ruled 2026-11-24, two rulings on what the card makes for itself. An EMBLEM is not a body: it cannot
+be answered and never dies, so the damage it deals is the card's burn whatever sets it off ("Tutti
+Burn"). Narset of the Ancient Way's "Whenever you cast a noncreature spell, this emblem deals 2
+damage to any target" was Burn by hand; Koth, Fire of Resistance (a Mountain), Chandra, Spark
+Hunter (an artifact) and Karn, Living Legacy (a tap, a 1 that repeats), untagged by hand before,
+are named +Burn; Ral, Izzet Viceroy, unreviewed, follows. This overturns the emblem half of the
+2026-09-20 key, "this token (and the emblem)": the token's damage stays the token's. And a token the
+OPPONENT creates whose ability damages its own controller every upkeep is the drain put on them:
+Relic Robber's Goblin Construct, "a 1 that repeats".

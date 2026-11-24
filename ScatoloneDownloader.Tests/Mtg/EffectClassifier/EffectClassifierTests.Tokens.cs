@@ -1091,4 +1091,30 @@ public sealed partial class EffectClassifierTests
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
     }
+
+    [Theory]
+    // 2026-11-24: an animated land (Crawling Barrens) is a body; Volo copies a
+    // creature spell that doesn't share a creature type, which is not tribal.
+    [InlineData("Crawling Barrens", "Land",
+        "{T}: Add {C}.\n{4}: Put two +1/+1 counters on this land. Then you may have it become a 0/0 Elemental "
+        + "creature until end of turn. It's still a land.")]
+    [InlineData("Volo, Guide to Monsters", "Legendary Creature — Human Wizard",
+        "Whenever you cast a creature spell that doesn't share a creature type with a creature you control or "
+        + "a creature card in your graveyard, copy that spell. (A copy of a creature spell becomes a token.)")]
+    public void Classify_TheNovember24Readings_IsTokens(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
+
+    [Theory]
+    // 2026-11-24: Jace, Mirror Mage copies itself, a planeswalker, not a creature
+    // body.
+    [InlineData("Jace, Mirror Mage", "Legendary Planeswalker — Jace",
+        "Kicker {2}\nWhen Jace enters, if Jace was kicked, create a token that's a copy of Jace, except it's "
+        + "not legendary and its starting loyalty is 1.\n+1: Scry 2.\n0: Draw a card and reveal it. Remove a "
+        + "number of loyalty counters equal to that card's mana value from Jace.")]
+    public void Classify_TheNovember24Readings_ACopyOfAPlaneswalker_IsNotTokens(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tokens));
+    }
 }

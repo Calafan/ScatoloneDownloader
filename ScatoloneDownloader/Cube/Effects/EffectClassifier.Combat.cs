@@ -221,7 +221,18 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex TriggeredMana = Rx(
             @"(?:\bwhenever\b|\bat the beginning of\b)[^.\n]*?,[^.\n]*?\b(?:you |that player |target player |each player )?adds? "
             + @"(?:\{|one mana|two mana|three mana|x mana|an amount|that much|\w+ mana of|mana)"
-            + @"|(?:\bwhenever\b|\bat the beginning of\b)[^.\n]*?,[^\n]{0,200}?\bif you do, (?:you )?adds? (?:\{|\w+ mana\b)");
+            + @"|(?:\bwhenever\b|\bat the beginning of\b)[^.\n]*?,[^\n]{0,200}?\bif you do, (?:you )?adds? (?:\{|\w+ mana\b)"
+            // …or after "IF IT WAS a land card", the mana conditioned on what the
+            // trigger just exiled: Klothys, God of Destiny's "exile target card
+            // from a graveyard. If it was a land card, add {R} or {G}", Ramp by
+            // hand (11-15), ruled 2026-11-24 ("mana ogni turno, condizionato a una
+            // terra in un cimitero"). The only card in the store worded so. Any
+            // "If …, add" after a period on a trigger was measured 2026-11-24 and
+            // rejected: Klothys is the only reviewed card, and it would give Ramp
+            // to three unreviewed more (Koth, the Geomancer's "If that land is a
+            // Mountain, add {R}", Omnath, Locus of Creation's second landfall,
+            // Exploratory Mission), which no hand tag has read.
+            + @"|\bat the beginning of\b[^.\n]*?,[^\n]{0,200}?\bif it was a land card, (?:you )?adds? (?:\{|\w+ mana\b)");
 
         private static readonly Regex OnAnAttack = Rx(
             @"\bwhenever [^,.\n]*\b(?:attacks?|attack with|deals? combat damage)\b");
@@ -670,7 +681,18 @@ namespace ScatoloneDownloader.Cube
             // scores 117, this one 107 before the five cards it disagreed with
             // were realigned to match.
             Rx(@"target [\w -]{0,25}creature[\w ' -]{0,25}gains? [\w ,]{0,30}double strike"
-                + @"|(?:creatures you control|equipped creature|enchanted creature)[\w ,]{0,30}(?:gains?|have|has) [\w ,]{0,30}double strike"),
+                // The beneficiary is a LOOKBEHIND so the subject guard reads it in
+                // front of the match: "When this creature enters, creatures you
+                // control gain double strike" (Terror of Mount Velus, Buff by hand)
+                // matched from "creatures you control" and left the guard only the
+                // trigger's "this creature", which it read as a self-pump. Ruled
+                // 2026-11-24 ("doppio attacco a squadra / più creature", family 3 of
+                // 3: Terror of Mount Velus, Sigarda's Vanguard, both Buff by hand).
+                + @"|(?<=(?:creatures you control|equipped creature|enchanted creature))[\w ,]{0,30}(?:gains?|have|has) [\w ,]{0,30}double strike"
+                // SEVERAL creatures chosen first (Sigarda's Vanguard's "choose any
+                // number of creatures with different powers. Those creatures gain
+                // double strike").
+                + @"|\b(?:those|these) creatures gain [\w ,]{0,30}double strike"),
             // SETTING base power and toughness is the third vocabulary for
             // raising them, ruled 2026-09-21. Written narrowly: an Aura or an
             // Equipment setting the body of the thing it is attached to, or a
@@ -2316,7 +2338,15 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex OneManaNotASource = Rx(
             @"(?<=\benchant creature an opponent controls\b[\s\S]{0,300})""\{t\}: add \{[wubrgc]\}\.?"""
             + @"|(?<=\blose all other land types and abilities and have )""\{t\}: add \{[wubrgc]\}\.?"""
-            + @"|(?<=\ba land named [^.\n]{1,30}\. \w+ gains )""\{t\}: add \{[wubrgc]\}\.?""");
+            + @"|(?<=\ba land named [^.\n]{1,30}\. \w+ gains )""\{t\}: add \{[wubrgc]\}\.?"""
+            // A land made to tap for ONE mana IN PLACE of everything it had is a
+            // land tapping for one, ruled 2026-11-24 (Lithoform Blight, -Ramp: "una
+            // terra che tappa per uno"): "loses all land types and abilities and has
+            // '{T}: Add {C}' and '{T}, Pay 1 life: Add one mana of any color'". The
+            // Auras that hand TWO mana stay Ramp (Grafted Growth, Find the Path,
+            // Discreet Retreat: 3 of 3 reviewed), and so does Wild Growth's extra one.
+            + @"|(?<=\benchanted land loses all land types and abilities and has (?:""[^""\n]*"" and )?)"
+            + @"""\{t\}(?:, pay \d+ life)?: add (?:\{[wubrgc]\}|one mana of any colou?r)\.?""");
 
         private static readonly Regex LandFromHandToPlay = Rx(
             @"(?<!non)lands? cards? from your hand[\w \/]{0,30}onto the battlefield");

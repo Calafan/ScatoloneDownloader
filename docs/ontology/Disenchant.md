@@ -69,3 +69,9 @@ Statue's "Tap target permanent. If it's an artifact, destroy it", Disenchant and
 
 Ruled 2026-11-24: the noun may follow TWO items, "exile target Spirit, creature with disturb, or
 enchantment" (Thraben Exorcism, Removal and Disenchant by hand, 1 of 1; no other card words it so).
+
+Ruled 2026-11-24: the BOTTOM of the library is gone for good, like the shuffle. Mystic Repeal's "put
+target enchantment on the bottom of its owner's library" (Disenchant by hand). Banishing Stroke,
+Hide // Seek and Natural Obsolescence, unreviewed, follow. A CARD in a graveyard stays out (Keeper
+of the Cadence); "on the bottom of its owner's library" alone was measured and rejected, 1 of 27
+reviewed cards tagged.

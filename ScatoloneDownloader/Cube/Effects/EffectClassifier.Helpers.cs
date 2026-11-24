@@ -542,6 +542,30 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex CopiesWhatIsAttached = Rx(
             @"token that's a copy of (?:that|the|each) (?:\w+ )?(?:permanent|aura|equipment) attached\b");
 
+        /// <summary>A token that is a copy of the card ITSELF, by its name, on a card
+        /// whose front face is no creature: Jace, Mirror Mage's kicker makes "a
+        /// token that's a copy of Jace", a planeswalker, and puts no body on the
+        /// board. Ruled 2026-11-24 ("copia di planeswalker, non un corpo creatura"),
+        /// the same reading as the copy of an artifact or a land
+        /// (<see cref="NoncreatureBeingCopied"/>), for which the line names a
+        /// type; here it names the card. The clause is blanked so a body made on
+        /// another line still counts.</summary>
+        private static string WithoutASelfCopyOfANoncreature(Card card, string text)
+        {
+            if (FrontFaceIsACreature(card))
+            {
+                return text;
+            }
+
+            string shortName = ShortName(card);
+            if (shortName.Length < 3)
+            {
+                return text;
+            }
+
+            return Rx(@"tokens? that's a copy of " + Regex.Escape(shortName) + @"\b[^.\n]*").Replace(text, " ");
+        }
+
         private static bool TokenCopiesACreature(string text)
         {
             foreach (string line in text.Split('\n'))
