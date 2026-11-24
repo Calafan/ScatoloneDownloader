@@ -693,7 +693,10 @@ namespace ScatoloneDownloader.Cube
                         // "Enchanted permanent is a Treasure artifact with …
                         // and it loses all other abilities" (RULED 2026-11-05,
                         // Removal and RemovePermanent, not Pacify; CORRECTED
-                        // 2026-11-06 to RemovePermanent alone, see below). Without
+                        // 2026-11-06 to RemovePermanent alone, see below; the
+                        // "not Pacify" OVERTURNED 2026-11-24, "Pacify a tutte":
+                        // the Aura holds it only while it stays, see
+                        // NeutralisesWithoutKilling in Combat.cs). Without
                         // the colour the family is 3 reviewed Auras: In Too Deep
                         // and Sugar Coat already said "colorless" and are Removal
                         // by hand (Sugar Coat also Pacify), Minimus Containment

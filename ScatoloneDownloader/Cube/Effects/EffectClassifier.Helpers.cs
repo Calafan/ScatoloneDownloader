@@ -249,23 +249,22 @@ namespace ScatoloneDownloader.Cube
 
         /// <summary>True when everything that read as Pacify is the card paying
         /// its own way or swinging for one turn: a stun counter it puts on
-        /// itself, a stun bought by its own attack, a tap on its own attack
-        /// trigger, or a "can't attack or block unless" about itself. Written by
-        /// blanking those shapes and asking the Pacify patterns again, so a card
-        /// that taps on attack AND locks somebody down elsewhere keeps the
-        /// tag.</summary>
+        /// itself, a tap or a small base on its own attack trigger, or a "can't
+        /// attack or block unless" about itself. Written by blanking those
+        /// shapes and asking the Pacify patterns again, so a card that taps on
+        /// attack AND locks somebody down elsewhere keeps the tag.</summary>
         private static bool OnlyACombatTrickOrItsOwnPrice(Card card)
         {
             string text = card.OracleText ?? string.Empty;
             bool ownPrice = CantAttackIsItsOwnPrice(card);
 
             if (!ownPrice && !TapsOnItsOwnAttack.IsMatch(text) && !StunsItselfAsADrawback.IsMatch(text)
-                && !StunBoughtOnItsOwnAttack.IsMatch(text))
+                && !ShrinksOnItsOwnAttack.IsMatch(text))
             {
                 return false;
             }
 
-            string rest = StunBoughtOnItsOwnAttack.Replace(
+            string rest = ShrinksOnItsOwnAttack.Replace(
                 StunsItselfAsADrawback.Replace(TapsOnItsOwnAttack.Replace(text, " "), " "), " ");
             if (ownPrice)
             {
@@ -341,6 +340,43 @@ namespace ScatoloneDownloader.Cube
 
             string rest = string.Join('\n', kept);
             return blanked && !PacifyPatterns.Any(p => p.IsMatch(rest));
+        }
+
+        /// <summary>True when a line flickers somebody's creature at instant
+        /// speed. See <see cref="FlickerOfAnyCreature"/> for the ruling. Read per
+        /// line like <see cref="OnlyATapAtSorcerySpeed"/>, a modal bullet taking
+        /// the timing of the line that opens it: a line at sorcery speed (a
+        /// sorcery, the card's own ETB without flash, a land, a chapter or an
+        /// enchantment of yours entering) or on the card's own attack trigger
+        /// does not count.</summary>
+        private static bool FlickersSomebodyAtInstantSpeed(Card card)
+        {
+            string text = Parenthetical.Replace(card.OracleText ?? string.Empty, " ");
+            if (!FlickerOfAnyCreature.IsMatch(text))
+            {
+                return false;
+            }
+
+            bool flash = IsCastInResponse(card);
+            bool sorcery = (card.TypeLine ?? string.Empty).Contains("Sorcery", StringComparison.Ordinal) && !flash;
+            string name = ShortName(card);
+            string opener = string.Empty;
+
+            foreach (string line in text.Split('\n'))
+            {
+                if (!line.StartsWith('•'))
+                {
+                    opener = line.Trim();
+                }
+
+                if (FlickerOfAnyCreature.IsMatch(line) && !AtSorcerySpeed(opener, sorcery, flash, name)
+                    && !OwnAttackTrigger.IsMatch(opener) && !AnEnchantmentOfYoursEnters.IsMatch(opener))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>Whether the ability a line opens happens only on your own

@@ -561,12 +561,10 @@ public sealed partial class EffectClassifierTests
         + "prevent all damage that would be dealt to you this turn.\nForetell {2}{W} (During your turn, you may "
         + "pay {2} and exile this card from your hand face down. Cast it on a later turn for its foretell "
         + "cost.)")]
-    // A stun bought with a sacrifice on its own attack is the trick's price.
-    [InlineData("Vengeful Villagers", "Creature — Human Citizen",
-        "Whenever this creature attacks, choose target creature an opponent controls. Tap it, then you may "
-        + "sacrifice an artifact or creature. If you do, put a stun counter on the chosen creature. (If a "
-        + "permanent with a stun counter would become untapped, remove one from it instead.)")]
-    public void Classify_AFogOrAStunBoughtOnTheAttack_IsNotPacify(string name, string typeLine, string oracle)
+    // Vengeful Villagers, a stun bought with a sacrifice on its own attack, was
+    // pinned here as the trick's price until 2026-11-24 ("Pacify, il costo è
+    // tuo"): it moved to Classify_TheNovember24Definition_IsPacify.
+    public void Classify_AFogCastOnce_IsNotPacify(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
     }
@@ -819,16 +817,15 @@ public sealed partial class EffectClassifierTests
 
     [Theory]
     // Read 2026-11-12: 'whenever you attack a player' is the attack trigger's tap
-    // (Karazikar, untagged 2026-11-06); the same base 1/1 on an Aura that can
-    // exile the creature later is Removal alone (Utter Insignificance).
+    // (Karazikar, untagged 2026-11-06). Utter Insignificance, the same base 1/1
+    // on an Aura that can exile the creature later, was pinned here as Removal
+    // alone until 2026-11-24 ("Removal + Pacify"): it moved to
+    // Classify_TheNovember24Definition_IsPacify.
     [InlineData("Karazikar, the Eye Tyrant", "Legendary Creature — Beholder",
         "Whenever you attack a player, tap target creature that player controls and goad it. (Until your next "
         + "turn, that creature attacks each combat if able and attacks a player other than you if "
         + "able.)\nWhenever an opponent attacks another one of your opponents, you and the attacking player each "
         + "draw a card and lose 1 life.")]
-    [InlineData("Utter Insignificance", "Enchantment — Aura",
-        "Flash\nEnchant creature\nEnchanted creature loses all abilities and has base power and toughness "
-        + "1/1.\n{2}{C}: Exile enchanted creature.")]
     // The combat-damage lock after a lure that names a target creature first
     // (Matsu-Tribe Decoy, unreviewed).
     [InlineData("Matsu-Tribe Decoy", "Creature — Snake Warrior",
@@ -879,6 +876,125 @@ public sealed partial class EffectClassifierTests
         "Whenever this creature attacks, target creature an opponent controls gets -X/-0 until end of turn, "
         + "where X is the number of artifacts you control.")]
     public void Classify_TheNovember24Rulings_IsNotPacify(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
+    }
+
+    [Theory]
+    // The Pacify definition of 2026-11-24 ('Neutralizzata, non tolta'): a creature
+    // of somebody else's stops mattering without leaving for good. Q1 a bare tap
+    // on a cast trigger is instant speed (Devoted Grafkeeper); Q2 an Aura making
+    // it a noncreature Clue or Treasure (In Too Deep); Q3 an Aura that can also
+    // exile it is Removal and Pacify (Utter Insignificance); Q4 a tax that lasts,
+    // with planeswalkers (Sivitri, Nils); Q6 a stun bought with your own sacrifice
+    // (Vengeful Villagers); Q7 target permanent phased out (Unite the Coalition);
+    // Q8 a flicker of any creature at instant speed (Swift Spiral, Parting Gust,
+    // Astral Drift's cycling trigger); Q9 a base 0-2 for the turn at instant speed
+    // (Obscura Confluence, Turn to Frog).
+    [InlineData("Devoted Grafkeeper // Departed Soulkeeper", "Creature — Human Peasant // Creature — Spirit",
+        "When this creature enters, mill two cards.\nWhenever you cast a spell from your graveyard, tap target "
+        + "creature you don't control.\nDisturb {1}{W}{U} (You may cast this card from your graveyard "
+        + "transformed for its disturb cost.)\nFlying\nThis creature can block only creatures with flying.\nIf "
+        + "Departed Soulkeeper would be put into a graveyard from anywhere, exile it instead.")]
+    [InlineData("In Too Deep", "Enchantment — Aura",
+        "Split second (As long as this spell is on the stack, players can't cast spells or activate abilities "
+        + "that aren't mana abilities.)\nEnchant creature, planeswalker, or Clue\nEnchanted permanent is a "
+        + "colorless Clue artifact with \"{2}, Sacrifice this artifact: Draw a card\" and loses all other "
+        + "abilities. (It's no longer a creature or planeswalker.)")]
+    [InlineData("Utter Insignificance", "Enchantment — Aura",
+        "Flash\nEnchant creature\nEnchanted creature loses all abilities and has base power and toughness "
+        + "1/1.\n{2}{C}: Exile enchanted creature.")]
+    [InlineData("Sivitri, Dragon Master", "Legendary Planeswalker — Sivitri",
+        "+1: Until your next turn, creatures can't attack you or planeswalkers you control unless their "
+        + "controller pays 2 life for each of those creatures.\n−3: Search your library for a Dragon card, "
+        + "reveal it, put it into your hand, then shuffle.\n−7: Destroy all non-Dragon creatures.\nSivitri, "
+        + "Dragon Master can be your commander.")]
+    [InlineData("Nils, Discipline Enforcer", "Legendary Creature — Human Cleric",
+        "At the beginning of your end step, for each player, put a +1/+1 counter on up to one target creature "
+        + "that player controls.\nEach creature with one or more counters on it can't attack you or "
+        + "planeswalkers you control unless its controller pays {X}, where X is the number of counters on that "
+        + "creature.")]
+    [InlineData("Vengeful Villagers", "Creature — Human Citizen",
+        "Whenever this creature attacks, choose target creature an opponent controls. Tap it, then you may "
+        + "sacrifice an artifact or creature. If you do, put a stun counter on the chosen creature. (If a "
+        + "permanent with a stun counter would become untapped, remove one from it instead.)")]
+    [InlineData("Unite the Coalition", "Instant",
+        "Choose five. You may choose the same mode more than once.\n• Target permanent phases out.\n• Target "
+        + "player draws a card.\n• Exile target player's graveyard.\n• Unite the Coalition deals 2 damage to any "
+        + "target.\n• Destroy target artifact or enchantment.")]
+    [InlineData("Twining Twins // Swift Spiral", "Creature — Faerie Wizard // Instant — Adventure",
+        "Flying, vigilance, ward {1}\nExile target nontoken creature. Return it to the battlefield under its "
+        + "owner's control at the beginning of the next end step.")]
+    [InlineData("Parting Gust", "Instant",
+        "Gift a tapped Fish (You may promise an opponent a gift as you cast this spell. If you do, they "
+        + "create a tapped 1/1 blue Fish creature token before its other effects.)\nExile target nontoken "
+        + "creature. If the gift wasn't promised, return that card to the battlefield under its owner's control "
+        + "with a +1/+1 counter on it at the beginning of the next end step.")]
+    [InlineData("Astral Drift", "Enchantment",
+        "Whenever you cycle this card or cycle another card while this enchantment is on the battlefield, you "
+        + "may exile target creature. If you do, return that card to the battlefield under its owner's control "
+        + "at the beginning of the next end step.\nCycling {2}{W} ({2}{W}, Discard this card: Draw a card.)")]
+    [InlineData("Obscura Confluence", "Instant",
+        "Choose three. You may choose the same mode more than once.\n• Until end of turn, target creature "
+        + "loses all abilities and has base power and toughness 1/1.\n• Target creature connives. (Draw a card, "
+        + "then discard a card. If you discarded a nonland card, put a +1/+1 counter on that creature.)\n• "
+        + "Target player returns a creature card from their graveyard to their hand.")]
+    [InlineData("Turn to Frog", "Instant",
+        "Until end of turn, target creature loses all abilities and becomes a blue Frog with base power and "
+        + "toughness 1/1.")]
+    // Q9 written 'target creature has base power and toughness 1/1 until end of
+    // turn' on an instant (Diminish, unreviewed).
+    [InlineData("Diminish", "Instant",
+        "Target creature has base power and toughness 1/1 until end of turn.")]
+    public void Classify_TheNovember24Definition_IsPacify(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
+    }
+
+    [Theory]
+    // What the 2026-11-24 definition leaves out. Q8 the flicker at sorcery speed:
+    // a creature's own enter trigger without flash (Flickerwisp), a sorcery
+    // (Voidwalk), an enchantment of yours entering (Skybind, as Rimefur Reindeer's
+    // tap); on the card's own attack (Phelia) or as it becomes tapped (Mistmeadow
+    // Vanisher, 'Fuori, come Phelia'). Q9 a base 0-2 on its own attack trigger
+    // (Warkite Marauder) or on a trigger without flash (Storvald), and the card's
+    // own shape (Skinshifter). The planeswalker clause without a tax, measured and
+    // rejected at 0 of 5 reviewed (Vow of Torment).
+    [InlineData("Flickerwisp", "Creature — Elemental",
+        "Flying\nWhen this creature enters, exile another target permanent. Return that card to the "
+        + "battlefield under its owner's control at the beginning of the next end step.")]
+    [InlineData("Voidwalk", "Sorcery",
+        "Exile target creature. Return it to the battlefield under its owner's control at the beginning of "
+        + "the next end step.\nCipher (Then you may exile this spell card encoded on a creature you control. "
+        + "Whenever that creature deals combat damage to a player, its controller may cast a copy of the "
+        + "encoded card without paying its mana cost.)")]
+    [InlineData("Skybind", "Enchantment",
+        "Constellation — Whenever this enchantment or another enchantment you control enters, exile target "
+        + "nonenchantment permanent. Return that card to the battlefield under its owner's control at the "
+        + "beginning of the next end step.")]
+    [InlineData("Phelia, Exuberant Shepherd", "Legendary Creature — Dog",
+        "Flash\nWhenever Phelia attacks, exile up to one other target nonland permanent. At the beginning of "
+        + "the next end step, return that card to the battlefield under its owner's control. If it entered "
+        + "under your control, put a +1/+1 counter on Phelia.")]
+    [InlineData("Mistmeadow Vanisher", "Creature — Kithkin Wizard",
+        "Whenever this creature becomes tapped, exile up to one target nonland, nontoken permanent. Return "
+        + "that card to the battlefield under its owner's control at the beginning of the next end step.")]
+    [InlineData("Warkite Marauder", "Creature — Human Pirate",
+        "Flying\nWhenever this creature attacks, target creature defending player controls loses all abilities "
+        + "and has base power and toughness 0/1 until end of turn.")]
+    [InlineData("Storvald, Frost Giant Jarl", "Legendary Creature — Giant",
+        "Ward {3}\nOther creatures you control have ward {3}.\nWhenever Storvald enters or attacks, choose one "
+        + "or both —\n• Target creature has base power and toughness 7/7 until end of turn.\n• Target creature "
+        + "has base power and toughness 1/1 until end of turn.")]
+    [InlineData("Skinshifter", "Creature — Human Shaman",
+        "{G}: Choose one. Activate only once each turn.\n• Until end of turn, this creature becomes a Rhino "
+        + "with base power and toughness 4/4 and gains trample.\n• Until end of turn, this creature becomes a "
+        + "Bird with base power and toughness 2/2 and gains flying.\n• Until end of turn, this creature becomes "
+        + "a Plant with base power and toughness 0/8.")]
+    [InlineData("Vow of Torment", "Enchantment — Aura",
+        "Enchant creature\nEnchanted creature gets +2/+2, has menace, and can't attack you or planeswalkers "
+        + "you control. (It can't be blocked except by two or more creatures.)")]
+    public void Classify_TheNovember24Definition_IsNotPacify(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
     }

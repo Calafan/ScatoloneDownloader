@@ -273,6 +273,19 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex VariableShrinkAtFlashSpeed = Rx(
             @"target creature(?! you control)[^.\n]{0,40} gets? -X/-0 until end of turn");
 
+        // A BASE 0-2 FOR THE TURN at instant speed stops an attacker like the
+        // shrink above, ruled 2026-11-24 ("Base 0-2 istantanea = Pacify"):
+        // Obscura Confluence's "Until end of turn, target creature loses all
+        // abilities and has base power and toughness 1/1", named; Turn to Frog,
+        // Snakeform and Diminish, unreviewed, follow. Asked of a card that can
+        // be cast in response, so Storvald's enter-or-attack trigger and
+        // Eccentric Apprentice's beginning of combat stay out, and Hostile
+        // Takeover, a sorcery. The same base on the card's own attack trigger
+        // is a trick: see ShrinksOnItsOwnAttack.
+        private static readonly Regex SmallBaseForTheTurn = Rx(
+            @"target creature(?! you control)[^.\n]{0,60}(?:has|becomes an? [^.\n]{0,40}with) base power and toughness [0-2]/[0-2][^.\n]{0,40}until end of turn"
+            + @"|until end of turn, (?:up to one )?target creature(?! you control)[^.\n]{0,80}base power and toughness [0-2]/[0-2]");
+
         // A blink that puts the target back TAPPED is a tap, Pacify, ruled
         // 2026-11-12 (P2, "Torna tappato = Pacify"): Disorder in the Court and
         // Eldrazi Confluence, 2 of 2 reviewed, Pacify by hand. A flicker that
@@ -289,6 +302,37 @@ namespace ScatoloneDownloader.Cube
             // Back to its OWNER: Vindictive Triumph's "tapped under your
             // control" is a theft for the turn, Removal by hand.
             + @"under (?:its|their) owner(?:'s|s') control");
+
+        // A FLICKER of any creature at instant speed takes it out of combat, and
+        // it comes back only at the next end step: Pacify, ruled 2026-11-24
+        // ("Come il phasing: Pacify+Protection"), which overturns the 2026-10-16
+        // reading that kept the untapped flicker out (Parting Gust, Phelia).
+        // Twining Twins' Swift Spiral named; Parting Gust, Getaway Glamer,
+        // Astral Drift, Blizzard Strix and Touch the Spirit Realm, reviewed
+        // without the tag, reached. Asked line by line with the line's speed:
+        // see FlickersSomebodyAtInstantSpeed. A target "you control" or "you
+        // own" is your own blink (Koya, Abuelo).
+        private static readonly Regex FlickerOfAnyCreature = Rx(
+            @"\bexile (?:x |up to (?:one|two|three|x) |any number of )?(?:another |other )?target "
+            + @"(?![^.\n]{0,40}\b(?:you control|you own)\b)(?:[\w ,/-]{0,40})?\b(?:creatures?|permanents?)\b(?! cards?\b)[^.\n]{0,60}\."
+            + @"(?: if [^,\n]{0,40},)? "
+            + @"(?:at the beginning of the next end step, return (?:it|them|that card|those cards|the exiled cards?) to the battlefield under (?:its|their) owner(?:'s|s') control"
+            + @"|return (?:it|them|that card|those cards|the exiled cards?) to the battlefield under (?:its|their) owner(?:'s|s') control[^.\n]{0,40} at the beginning of the next end step)");
+
+        // The opener of the card's own attack trigger: a flicker there clears a
+        // blocker for the swing (Phelia, Galepowder Mage, Identity Thief), like
+        // TapsOnItsOwnAttack. "Attacks YOU" is the other side's attack.
+        // "Whenever this creature BECOMES TAPPED" is the same trigger, ruled
+        // 2026-11-24 ("Fuori, come Phelia"): on its own the card taps only by
+        // attacking (Mistmeadow Vanisher, reviewed untagged, the one card).
+        private static readonly Regex OwnAttackTrigger = Rx(
+            @"(?:whenever|when)[^,\n]{0,60}\battacks?\b(?! you\b)|(?:whenever|when) this creature becomes tapped\b");
+
+        // An enchantment of yours entering is sorcery speed, as for the tap of
+        // TapOnAnEnchantmentEntering (Rimefur Reindeer, 2026-10-13): Skybind's
+        // constellation flicker, unreviewed, read 2026-11-24.
+        private static readonly Regex AnEnchantmentOfYoursEnters = Rx(
+            @"^(?:[\w ]+ — )?whenever (?:this enchantment or )?(?:an|another) enchantment you control enters\b");
 
         // A MODE that adds mana on a permanent's trigger that fires again, the
         // modes coming back every turn: Galadriel, Light of Valinor's "choose
@@ -1741,8 +1785,12 @@ namespace ScatoloneDownloader.Cube
         //
         // Read 2026-10-16: a base 0 set on a creature YOU cast or control is
         // a trick of yours (Cycle of Life, untagged; 0 of 8 reviewed say it).
+        // So is the card's own shape, read 2026-11-24 on Skinshifter ("this
+        // creature becomes a Plant with base power and toughness 0/8",
+        // unreviewed): only "this creature becomes", since "other than this
+        // creature has" is somebody else's (Sorceress Queen).
         private static readonly Regex NeutralisesWithoutKilling = Rx(
-            @"(?<!creature you (?:cast|control)[^.\n]{0,60})base power (?:and toughness )?0"
+            @"(?<!creature you (?:cast|control)[^.\n]{0,60})(?<!\bthis creature becomes [^.\n]{0,40})base power (?:and toughness )?0"
             // The name may be long: Witness Protection's "is a green and white
             // Citizen creature with base power and toughness 1/1" runs 33
             // characters before "with" (read 2026-11-05 under the 2026-09-22
@@ -1767,11 +1815,13 @@ namespace ScatoloneDownloader.Cube
             // "Enchanted creature loses all abilities and has base power and
             // toughness 1/1", Pacify by hand: 8 of 10 reviewed Auras that take
             // the abilities and set a base are tagged, the other two being
-            // Utter Insignificance's exile and Trickster's Elk's 3/3). Utter
-            // Insignificance says the same sentence and can exile the creature
-            // later ("{2}{C}: Exile enchanted creature"), Removal alone by hand
-            // on 2026-09-23, so that card is left out.
-            + @"|^enchanted creature loses all abilities and has base power and toughness [0-2]/(?![\s\S]*\bexile enchanted creature\b)"
+            // Utter Insignificance's exile and Trickster's Elk's 3/3).
+            // Utter Insignificance says the same sentence and can exile the
+            // creature later ("{2}{C}: Exile enchanted creature"): Removal alone
+            // by hand on 2026-09-23 and kept out by a lookahead until 2026-11-24,
+            // ruled then "Removal + Pacify" — the Aura neutralises it until the
+            // exile is paid for, and the exile is Removal besides.
+            + @"|^enchanted creature loses all abilities and has base power and toughness [0-2]/"
             + @"|target (?![^.\n]{0,60}\byou control\b)[^.\n]{0,60}loses all abilities until your next turn"
             // The abilities may stay: Swift Reconfiguration's Vehicle "loses
             // all other card types" and is no creature until crewed (Pacify by
@@ -1779,7 +1829,13 @@ namespace ScatoloneDownloader.Cube
             // turning it into an ENCHANTMENT, ruled 2026-11-24 (One with the
             // Stars, Pacify by hand: "Enchanted permanent is an enchantment and
             // loses all other card types"; no other Aura says it).
-            + @"|^enchanted (?:creature|permanent) is an? [^\n]{0,60}(?:artifact|enchantment)\b[^\n]{0,200}loses all other card types"
+            // …and the Aura that makes it a Clue, a Food or a Treasure and
+            // "loses all other ABILITIES", ruled 2026-11-24 ("Pacify a tutte":
+            // an Aura that turns the creature into a noncreature artifact holds
+            // it only while the Aura stays). In Too Deep's Clue and Minimus
+            // Containment's Treasure, named, keep their Removal and
+            // RemovePermanent besides.
+            + @"|^enchanted (?:creature|permanent) is an? [^\n]{0,60}(?:artifact|enchantment)\b[^\n]{0,200}loses all other (?:card types|abilities)"
             + @"|attacking creatures get -"
             + @"|(?<!(?:under your control|you control enchanted creature)[\s\S]*)"
             + @"(?:gets? -[\dX]+/-0 and loses all abilities|^enchanted creature gets -[\dX]+/-0)"
@@ -1831,7 +1887,10 @@ namespace ScatoloneDownloader.Cube
         // untagged ("gli incantesimi si giocano come sorcery"). Kept to the
         // enchantment — a creature's own ETB tap is Pacify 20 of 22 reviewed,
         // and so are landfall and cast triggers (Grappling Kraken, Lossarnach
-        // Captain).
+        // Captain). A bare tap on a CAST trigger is instant speed, ruled
+        // 2026-11-24 ("Istantaneo: Pacify") on Devoted Grafkeeper's "Whenever
+        // you cast a spell from your graveyard, tap target creature you don't
+        // control", untagged by hand on 2026-11-06 and named.
         private static readonly Regex TapOnAnEnchantmentEntering = Rx(
             @"^(?:[\w ]+ — )?whenever (?:an|another) enchantment you control enters, tap [^\n]*", RegexOptions.Multiline);
 
@@ -1889,7 +1948,11 @@ namespace ScatoloneDownloader.Cube
         // A lock the OPPONENT can buy out of is a tax, not a lock: Heroism and
         // Winter's Chill let the attacker pay and come through anyway, so whether
         // anything is neutralised is their decision rather than yours. Ruled
-        // 2026-09-16 — "non c'è certezza".
+        // 2026-09-16 — "non c'è certezza". The reason was restated 2026-11-24
+        // ("Tassa che dura sì, una tantum no"): what keeps these two out is that
+        // the tax is paid ONCE, for one combat. A tax that lasts is a lock
+        // (Propaganda, Sivitri's +1 until your next turn), and so is Mangara's
+        // Equity's lasting deterrent.
         private static readonly Regex TheyCanPayToIgnoreIt = Rx(
             @"unless (?:its|their) controller pays|unless that player pays"
             + @"|(?:may|doesn'?t|does) pay \{");
@@ -1923,7 +1986,14 @@ namespace ScatoloneDownloader.Cube
             // (2026-09-22).
             // "OTHER creatures can't attack" is Oracle en-Vec forcing the
             // chosen ones in, untagged (2026-10-16).
-            Rx(@"(?<!other creatures )can'?t attack(?: you)?(\.|,| unless)"),
+            // "…attack you OR PLANESWALKERS YOU CONTROL unless" is the same tax,
+            // read 2026-11-24 under the tax that lasts (Sivitri, Dragon
+            // Master's +1, "until your next turn"; Nils, Discipline Enforcer).
+            // Only with "unless": the same words with a full stop or a comma
+            // were measured and rejected the same day, 0 of 5 reviewed (Vow of
+            // Torment's Aura on your own creature, Combat Calligrapher's
+            // Inklings, Eriette, Promise of Loyalty, Unstable Glyphbridge).
+            Rx(@"(?<!other creatures )can'?t attack(?: you)?(\.|,| unless)|can'?t attack you or planeswalkers you control unless"),
             // A TAP, in every shape the game prints it. Ruled 2026-09-22 after
             // the hand tags were found contradicting themselves on identical
             // wording — Twiddle against Twitch, Riptide against Blinding Light,
@@ -1971,6 +2041,13 @@ namespace ScatoloneDownloader.Cube
             NeutralisesWithoutKilling,
             PhasesSomethingOut,
             PhasesTheirsOut,
+            // A target PERMANENT phased out reaches a creature of theirs as much
+            // as a "target creature" does, ruled 2026-11-24 ("Pacify +
+            // Protection", Unite the Coalition's "Target permanent phases
+            // out"). Kept here, not in PhasesSomethingOut, which Protection
+            // reads too; phased out for as long as you control the card is
+            // RemovePermanent (Phasing of Zhalfir, ruled 2026-11-08).
+            Rx(@"\btarget (?:nonland )?permanent phases out(?!\. it can'?t phase in)(?![^\n]{0,20}until)"),
             PreventsDamageToThePlayerAlone,
             NobodyUntaps,
             PreventsWhatACreatureDeals,
@@ -1979,11 +2056,11 @@ namespace ScatoloneDownloader.Cube
             // reviewed cards carry the word and 18 are tagged; of the six that
             // are not, three put the counter on THEMSELVES as a drawback
             // (Tonberry, Baloth Prime, Ambling Stormshell — see
-            // StunsItselfAsADrawback), one is a stun bought on its own attack
-            // (Vengeful Villagers, read by StunBoughtOnItsOwnAttack), and two
-            // hang it off a bigger effect as a rider (Kitnap steals the creature
-            // it stuns, Magmatic Hellkite stuns the land it just made an
-            // opponent fetch).
+            // StunsItselfAsADrawback), one was a stun bought on its own attack
+            // (Vengeful Villagers, Pacify since 2026-11-24, see
+            // TapsOnItsOwnAttack), and two hang it off a bigger effect as a
+            // rider (Kitnap steals the creature it stuns, Magmatic Hellkite
+            // stuns the land it just made an opponent fetch).
             Rx(@"stun counters? on (?!it\b|this )"),
             // "On it" is the victim too when the card named one first, read
             // 2026-10-13: Trap the Trespassers ("a creature you don't control …
@@ -2011,11 +2088,6 @@ namespace ScatoloneDownloader.Cube
             @"enters tapped with [\w ]{0,12}stun counter"
             + @"|attacks, put [\w ]{0,10}stun counters? on it\b");
 
-        // A stun BOUGHT with a sacrifice on the card's own attack is the
-        // price of the trick, not a lock (Vengeful Villagers, ruled 2026-10-13).
-        private static readonly Regex StunBoughtOnItsOwnAttack = Rx(
-            @"attacks?,[^\n]{0,120}you may sacrifice [^.\n]{0,40}\. if you do, put a stun counter on [^.\n]*");
-
         // PREVENTING DAMAGE TO YOU ONCE, from a SPELL, is a Fog and not this
         // tag, ruled 2026-10-13 ("Ultimate Magic: Holy errore"): Eerie
         // Interference, Take the Bait and Ultimate Magic: Holy untagged, Deep
@@ -2041,9 +2113,11 @@ namespace ScatoloneDownloader.Cube
         //
         // …unless the same tap also STUNS, ruled 2026-10-13: Mjölnir taps and
         // puts a stun counter every time it attacks, which outlasts the swing
-        // (Pacify); Vengeful Villagers stuns only behind a sacrifice, which is
-        // the price StunBoughtOnItsOwnAttack blanks (not Pacify) — "Mjölnir lo fa
-        // sempre, i Villagers solo dietro un costo".
+        // (Pacify). Vengeful Villagers stuns only behind a sacrifice, and that
+        // price kept it out from 2026-10-13 ("Mjölnir lo fa sempre, i Villagers
+        // solo dietro un costo") until 2026-11-24, ruled then "Pacify, il costo
+        // è tuo": a price YOU pay does not undo the lock. Its tap is blanked
+        // here and its "stun counter on the chosen creature" keeps the tag.
         // "Attacks ALONE" is the same trigger (Imperial Subduer, untagged; read
         // 2026-10-27).
         private static readonly Regex TapsOnItsOwnAttack = Rx(
@@ -2057,6 +2131,14 @@ namespace ScatoloneDownloader.Cube
             + @"|(?:whenever|when) you attack(?: a player| an opponent)?,[^\n]{0,40}tap (?:up to one )?target[\w ,'-]{0,40}creature"
             + @"|(?:whenever|when)[^\n]{0,60}attacks?, choose target[\w ,'-]{0,40}creature"
             + @"[^\n]{0,20}tap it\b");
+
+        // A small base for the turn on the card's own attack trigger is the same
+        // trick as the tap above, read 2026-11-24 under the base 0-2 ruling
+        // (Warkite Marauder, "Whenever this creature attacks, target creature
+        // defending player controls loses all abilities and has base power and
+        // toughness 0/1 until end of turn", unreviewed, loses Pacify).
+        private static readonly Regex ShrinksOnItsOwnAttack = Rx(
+            @"(?:whenever|when)[^\n]{0,60}attacks?,[^\n]{0,80}base power and toughness [0-2]/[0-2] until end of turn");
 
         // A BARE TAP AT SORCERY SPEED is not this tag either, ruled 2026-10-27
         // on Harrier Strix: "Se tappa e basta è un Pacify ma deve essere

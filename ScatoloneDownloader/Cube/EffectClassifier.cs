@@ -667,7 +667,8 @@ namespace ScatoloneDownloader.Cube
             // after the vetoes above, which read a one-turn trick. See
             // BigShrinkOnAnInstant.
             if (IsCastInResponse(card)
-                && ((card.MacroType == MacroType.Spell && BigShrinkOnAnInstant.IsMatch(text)) || VariableShrinkAtFlashSpeed.IsMatch(text)))
+                && ((card.MacroType == MacroType.Spell && BigShrinkOnAnInstant.IsMatch(text))
+                    || VariableShrinkAtFlashSpeed.IsMatch(text) || SmallBaseForTheTurn.IsMatch(text)))
             {
                 result |= CardEffect.Pacify;
             }
@@ -675,6 +676,13 @@ namespace ScatoloneDownloader.Cube
             // …and a blink that puts the target back tapped, at instant speed.
             // See BlinkBackTapped.
             if (IsInstantSpeed(card) && BlinkBackTapped.IsMatch(text))
+            {
+                result |= CardEffect.Pacify;
+            }
+
+            // …and a flicker of anybody's creature at instant speed. See
+            // FlickerOfAnyCreature.
+            if (FlickersSomebodyAtInstantSpeed(card))
             {
                 result |= CardEffect.Pacify;
             }

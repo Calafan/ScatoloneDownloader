@@ -137,11 +137,10 @@
                 + "a trigger is Ramp (Birds), unless a land.",
 
             [CardEffect.Pacify] =
-                "Neutralises somebody else's creature without killing it: tapped, stunned, phased out, kept from "
-                + "untapping, can't attack or block, base power 0, a -N/-0 that lasts, -5/-0 on an instant or -X/-0 with flash, "
-                + "or the damage it DEALS "
-                + "prevented. Not a bare tap on your turn, a LAND that won't untap, an artifact tap, or a "
-                + "price the card pays.",
+                "Somebody else's creature stops mattering without leaving for good. Pacifism. A LOCK that lasts "
+                + "(Aura, stun, no untap, small body, phasing, attack tax) or a STOP at instant speed (tap, -5/-0, "
+                + "base 0-2, flicker, out of combat). Not your own, a stop at sorcery speed or on its own attack, a "
+                + "tax paid once, a Fog.",
 
             [CardEffect.LandDestruction] =
                 "Takes a land off the battlefield, however worded: in a type list, behind a count, beside a "

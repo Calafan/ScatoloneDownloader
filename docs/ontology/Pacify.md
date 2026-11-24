@@ -3,22 +3,38 @@
 Canonical record of the rulings for `CardEffect.Pacify`. The one-line tooltip shown in the tagger is
 in [`EffectGlossary.cs`](../../ScatoloneDownloader/Mtg/EffectGlossary.cs).
 
-soft/pseudo removal: neutralise SOMEBODY ELSE'S creature without destroying it (tap-lock/Icy
-Manipulator, Pacifism/Arrest, detain), INCLUDING by preventing what it deals — Maze of Ith and
-Gaseous Form, the reading ruled on 2026-09-05 and finally implemented on 2026-09-15. Three things
-are not this tag, all of them the same question asked again: UNTAPPING a creature (the rules were
-reading "untap target creature" as "tap target creature", which was a quarter of the false
+**Definition, 2026-11-24 ("Neutralizzata, non tolta"): a creature of SOMEBODY ELSE'S stops
+mattering — it cannot attack, cannot block or deals no damage — without leaving the battlefield for
+good. Pacifism is the card.** Either a LOCK that lasts (an Aura like Pacifism, a stun counter,
+"doesn't untap", a small body without abilities, a noncreature artifact or enchantment while the
+Aura stays, phasing, an attack tax that lasts, a prevention that repeats, a -N/-0 until your next
+turn) or a STOP at instant speed (a tap, a -5/-0 or a variable -X/-0 with flash, a base 0-2 for the
+turn, a flicker to the next end step, out of combat). Out: your own creatures and the card itself;
+a stop at sorcery speed or on the card's own attack (a tap, a flicker, a small base); a tax paid
+once (Heroism, Winter's Chill); a Fog cast once; what leaves for good (Removal). Beside Removal when
+the same card can also take it for good (Utter Insignificance, In Too Deep), beside Protection when
+the stop can save one of yours (phasing, a flicker).
+
+Every ruling below is coherent with the definition or is marked as overturned by it; the answers of
+that day are at the end.
+
+Before 2026-11-24, soft/pseudo removal: neutralise SOMEBODY ELSE'S creature without destroying it
+(tap-lock/Icy Manipulator, Pacifism/Arrest, detain), INCLUDING by preventing what it deals — Maze of
+Ith and Gaseous Form, the reading ruled on 2026-09-05 and finally implemented on 2026-09-15. Three
+things are not this tag, all of them the same question asked again: UNTAPPING a creature (the rules
+were reading "untap target creature" as "tap target creature", which was a quarter of the false
 positives), tapping a creature YOU control as a cost (Energy Tap), and a card that stops YOUR OWN
 creatures attacking (Akron Legionnaire). The prevention half asks the same question twice more:
 Mtenda Lion prevents what IT deals, which blunts its own attack, and Ebony Horse prevents what a
 creature YOU CONTROL deals, which is vigilance bought at instant speed — Foxfire says almost the
 same sentence and is Pacify, so the whole difference is "you control". And a lock the OPPONENT CAN
 BUY OUT OF is a tax rather than a lock — Heroism and Winter's Chill let the attacker pay and come
-through, so whether anything is neutralised is their decision (ruled 2026-09-16, "non c'è
-certezza"). Unconditional prevention IS the tag: Safeguard, Warning and Subdue say what Horn of
-Deafening says and were realigned to match. A card that only restrains ITSELF is a stat line, not an
-effect: "this creature can't attack" is defender, printed on a Wall, and "can't attack unless
-defending player controls an Island" is a drawback.
+through, so whether anything is neutralised is their decision (ruled 2026-09-16, "non c'è certezza";
+the reason restated 2026-11-24, Q4 at the end: the tax is paid ONCE). Unconditional prevention IS
+the tag: Safeguard, Warning and Subdue say what Horn of Deafening says and were realigned to match.
+A card that only restrains ITSELF is a stat line, not an effect: "this creature can't attack" is
+defender, printed on a Wall, and "can't attack unless defending player controls an Island" is a
+drawback.
 
 Narrowed 2026-09-15, which was the single largest source of noise on the board.
 
@@ -107,19 +123,20 @@ Interference and Take the Bait untagged; Deep Wood realigned and handed back); t
 prevents again and again stays (Al-abara's Carpet, Conservator, Scarecrow). And a tap on your own
 attack that STUNS every time outlasts the swing and is this tag (Mjölnir, 2026-10-13: "lo fa
 sempre"), while a stun bought with a sacrifice is the trick's price (Vengeful Villagers, "solo
-dietro un costo"). Finally, REMINDER TEXT and worked EXAMPLES lock nobody down — Primal Clay
-explains defender with "(A creature with defender can't attack.)" and Balduvian Shaman quotes "black
-creatures can't attack" twice inside an example of text-changing — so the patterns are re-asked with
-the brackets stripped.
+dietro un costo"; OVERTURNED 2026-11-24, Q6 at the end). Finally, REMINDER TEXT and worked EXAMPLES
+lock nobody down — Primal Clay explains defender with "(A creature with defender can't attack.)" and
+Balduvian Shaman quotes "black creatures can't attack" twice inside an example of text-changing — so
+the patterns are re-asked with the brackets stripped.
 
 Worked again 2026-10-16 and closed at 10 wrong out of 265 reviewed (F1 96.0% -> 98.1%), every one of
 the ten a card the rulings below correct or hand back. Five rulings, asked one at a time.
 
-A FLICKER IS NEVER THIS TAG ("Flicker mai Pacify"): Parting Gust and Phelia, Exuberant Shepherd were
-the only two of seven reviewed flickers of somebody's permanent to the next end step tagged here,
-and both lose it and were handed back. Twining Twins says Parting Gust's very words and is
-Protection alone; the gift that exiles for good is what makes Parting Gust Removal ("Parting Gust ha
-l'opzione per rimuovere definitivamente la creatura"). The Eternal Wanderer's exile to ITS
+OVERTURNED 2026-11-24 for a flicker at instant speed (Q8 at the end; Phelia's attack trigger stays
+out). A FLICKER IS NEVER THIS TAG ("Flicker mai Pacify"): Parting Gust and Phelia, Exuberant
+Shepherd were the only two of seven reviewed flickers of somebody's permanent to the next end step
+tagged here, and both lose it and were handed back. Twining Twins says Parting Gust's very words and
+is Protection alone; the gift that exiles for good is what makes Parting Gust Removal ("Parting Gust
+ha l'opzione per rimuovere definitivamente la creatura"). The Eternal Wanderer's exile to ITS
 CONTROLLER'S next end step, a whole turn of theirs, stays. A blink that puts the card back TAPPED is
 a tap and is this tag since 2026-11-12, see the end.
 
@@ -162,10 +179,11 @@ III, 3 of 4 with Propaganda, Koskun Falls and Elephant Grass; also before 09-22)
 Chosen -Pacify (an untapper, tagged before the 09-15 ruling; Infuse says the same and is untagged).
 
 Ruled 2026-10-25: target creatures phased out in the PLURAL, with no controller named, are this tag
-beside Protection like the single creature (March of Swirling Mist's "Up to X target creatures
-phase out", given Pacify by hand). The plural YOU CONTROL is a save of your own and Protection alone
+beside Protection like the single creature (March of Swirling Mist's "Up to X target creatures phase
+out", given Pacify by hand). The plural YOU CONTROL is a save of your own and Protection alone
 (Gallifrey Falls // No More, Guardian of Faith), and a target PERMANENT stays out (Unite the
-Coalition): folding every plural in took Pacify from 6 wrong to 10 (measured 2026-10-24).
+Coalition; OVERTURNED 2026-11-24, Q7 at the end): folding every plural in took Pacify from 6 wrong
+to 10 (measured 2026-10-24).
 
 Worked again 2026-10-27 from 11 wrong out of 289 reviewed (F1 98.1%) and closed at none wrong out
 of 281: seven false positives and four misses, every one moved by the two rulings and the readings
@@ -215,7 +233,8 @@ types is Sugar Coat's lock (Swift Reconfiguration, 2 of 2).
 RULED 2026-11-05, corrected 2026-11-06: Minimus Containment is named. "Enchanted permanent is a
 Treasure artifact with '{T}, Sacrifice this artifact: Add one mana of any color,' and it loses all
 other abilities" on an Aura for ANY nonland permanent is RemovePermanent alone (Removal too on
-11-05) and NOT this tag, which the hand tag had until then. Its Treasure is the one Vraska,
+11-05) and NOT this tag, which the hand tag had until then (the "not this tag" OVERTURNED
+2026-11-24, Q2 at the end). Its Treasure is the one Vraska,
 Betrayal's Sting's −2 makes (Removal alone), on an Aura for any permanent; Sugar Coat's "Aura =
 +Pacify" above is the one for a creature or Food (see Removal.md and RemovePermanent.md).
 
@@ -233,7 +252,8 @@ hand tag, and it goes).
 
 Read 2026-11-12, one reviewed card each unless counted: an Aura that strips the abilities and HAS a
 base 1/1 (Kasmina's Transmutation; 8 of 10 reviewed Auras that take the abilities and set a base are
-tagged — Utter Insignificance, which can exile the creature later, stays Removal alone, and
+tagged — Utter Insignificance, which can exile the creature later, stays Removal alone (Removal and
+this tag since 2026-11-24, Q3 at the end), and
 Trickster's Elk's 3/3 is no small body); "tap that creature and it doesn't untap" after a TARGET
 creature the card named before (Code of Constraint's addendum; not after the card's own combat
 damage, Matsu-Tribe Decoy, unreviewed); and a creature or planeswalker only an OPPONENT controls
@@ -243,20 +263,21 @@ Pacify by hand on 2026-09-08 before the both-tags ruling, loses Protection and i
 "whenever you attack a player, tap target creature that player controls" is the attack trigger's tap
 (Karazikar, the Eye Tyrant, untagged 2026-11-06).
 
-Ruled 2026-11-12 (P1, "Instant e -5 o più"): an INSTANT's "-N/-0 until end of turn" on one target,
-N of 5 or more, is this tag, overturning "Pacify solo se dura" of 2026-10-13 for that shape. Twisted
+Ruled 2026-11-12 (P1, "Instant e -5 o più"): an INSTANT's "-N/-0 until end of turn" on one target, N
+of 5 or more, is this tag, overturning "Pacify solo se dura" of 2026-10-13 for that shape. Twisted
 Reflection's -6 mode, tagged by hand, and Shrink's -5, untagged before and handed back; Disorient,
-Hydrosurge, Icy Reception and Protect // Serve follow among the unreviewed. Under 5 stays a trick (12
-reviewed instants untagged: Deceive the Messenger, Desperate Parry …), and so did a variable X until
-2026-11-24 (last paragraph below).
-Ivory Charm keeps the tag by its other mode, "Tap target creature" on an instant (2026-10-27), not by
-its "-2/-0"; Code of Constraint keeps it by the tap that does not untap.
+Hydrosurge, Icy Reception and Protect // Serve follow among the unreviewed. Under 5 stays a trick
+(12 reviewed instants untagged: Deceive the Messenger, Desperate Parry …), and so did a variable X
+until 2026-11-24 (last paragraph below). Ivory Charm keeps the tag by its other mode, "Tap target
+creature" on an instant (2026-10-27), not by its "-2/-0"; Code of Constraint keeps it by the tap
+that does not untap.
 
 Ruled 2026-11-12 (P2, "Torna tappato = Pacify"): a blink that returns the target TAPPED under its
-owner's control is a tap and this tag — Disorder in the Court and Eldrazi Confluence, 2 of 2 reviewed,
-Pacify by hand; Eldrazi Displacer and Mystifying Maze follow, unreviewed. Read as a tap, with the
-tap's speed of 2026-10-27: not on a sorcery (Morningtide's Light) nor on an attack trigger (The
-Mighty Thor, Jane Foster). A flicker that returns the card untapped stays out (Parting Gust, Phelia),
+owner's control is a tap and this tag — Disorder in the Court and Eldrazi Confluence, 2 of 2
+reviewed, Pacify by hand; Eldrazi Displacer and Mystifying Maze follow, unreviewed. Read as a tap,
+with the tap's speed of 2026-10-27: not on a sorcery (Morningtide's Light) nor on an attack trigger
+(The Mighty Thor, Jane Foster). A flicker that returns the card untapped stayed out (Parting Gust,
+Phelia) until 2026-11-24 (Q8 at the end: in at instant speed, Phelia's attack trigger still out),
 and so does a return under YOUR control (Vindictive Triumph, a theft for the turn) or of your own
 (Golden Argosy's crew, Gandalf, Shadow's Foe's lands).
 
@@ -267,13 +288,52 @@ P1 of 2026-11-12 for that shape, which left a variable X out. Yuriko, Hope from 
 flash, is reached (unreviewed). Escaped Experiment's attack trigger has no flash and stays out.
 
 Ruled 2026-11-24, one reviewed card each, Pacify by hand and never proposed: a creature taken OUT OF
-COMBAT ("remove target attacking or blocking creature from combat", Labyrinth of Skophos; Hollowhenge
-Spirit and Balduvian Warlord, unreviewed, follow), and an Aura that makes the creature an
-enchantment and takes its other types (One with the Stars, like Swift Reconfiguration's Vehicle).
+COMBAT ("remove target attacking or blocking creature from combat", Labyrinth of Skophos;
+Hollowhenge Spirit and Balduvian Warlord, unreviewed, follow), and an Aura that makes the creature
+an enchantment and takes its other types (One with the Stars, like Swift Reconfiguration's Vehicle).
 
 Ruled 2026-11-24, not this tag: a "can't attack unless" about the card ITSELF is its own price, like
 the "can't attack or block unless" of 2026-10-16 (Gadrak, the Crown-Scourge, ManaFixing alone by
 hand; Zhou Yu, Chief Commander, unreviewed, loses the tag with it); and a prevention for "you and
-creatures you control" is not the player alone (Blessed Sanctuary, Tokens alone by hand; The Wanderer
-and Gideon's Intervention, unreviewed, lose it). Protection keeps the old reading of that phrase, which
-is what holds a fog spell for you and yours out of it (Eerie Interference).
+creatures you control" is not the player alone (Blessed Sanctuary, Tokens alone by hand; The
+Wanderer and Gideon's Intervention, unreviewed, lose it). Protection keeps the old reading of that
+phrase, which is what holds a fog spell for you and yours out of it (Eerie Interference).
+
+RULED 2026-11-24 with the definition ("Neutralizzata, non tolta"), eight answers; Q5 was not asked
+(Mangara's Equity, read under Q4). Q1 "Istantaneo: Pacify": a bare tap on a CAST trigger is instant
+speed — Devoted Grafkeeper ("Whenever you cast a spell from your graveyard, tap target creature you
+don't control", untagged by hand on 11-06) is corrected by name; the code already proposed it. Q2
+"Pacify a tutte": an Aura that makes the creature a noncreature artifact (a Clue, a Food, a
+Treasure, a Vehicle) holds it only while the Aura stays — In Too Deep and Minimus Containment named,
+keeping their Removal and RemovePermanent. Q3 "Removal + Pacify": an Aura that neutralises the
+creature and can exile it later is both — Utter Insignificance named. Q4 "Tassa che dura sì, una
+tantum no": Heroism and Winter's Chill stay out for a new reason, the tax is paid once; a tax that
+lasts is this tag, "or planeswalkers you control" included — Sivitri, Dragon Master's +1 ("until
+your next turn, creatures can't attack you or planeswalkers you control unless their controller pays
+2 life") and Nils, Discipline Enforcer are reached and handed back; Archangel of Tithes, Archon of
+Absolution, Baird, Forbidding Spirit, Norn's Annex and Sphere of Safety follow, unreviewed.
+Mangara's Equity, a deterrent that lasts, stays. Q6 "Pacify, il costo è tuo": a stun bought with
+your own sacrifice still stuns — Vengeful Villagers named. Q7 "Pacify + Protection": "target
+permanent phases out" reaches a creature of theirs — Unite the Coalition named; phased out for as
+long as you control the card stays RemovePermanent (The Phasing of Zhalfir). Q8 "Come il phasing:
+Pacify+Protection": a flicker of any creature to the next end step at instant speed takes it out of
+the fight — Twining Twins' Swift Spiral named; Parting Gust, Getaway Glamer, Astral Drift, Blizzard
+Strix, Hide on the Ceiling and Touch the Spirit Realm reached and handed back; Turn to Mist, Long
+Road Home, Otherworldly Journey, Astral Slide, Mistmeadow Witch, Roon, Angel of Condemnation,
+Voyager Staff, Conciliator's Duelist, Vizier of Deferment and Wiccan follow. Out: the card's own
+attack (Phelia, Galepowder Mage, Identity Thief) and, ruled the same day ("Fuori, come Phelia"),
+"whenever this creature becomes tapped", which on its own taps only by attacking (Mistmeadow
+Vanisher, untagged); a sorcery (Voidwalk, Explosive Getaway); a creature's own ETB without flash
+(Flickerwisp, Glimmerpoint Stag); an enchantment of yours entering (Skybind, as Rimefur Reindeer's
+tap); your own (Koya, Abuelo). Q9 "Base 0-2 istantanea = Pacify": a base power and toughness of 0 to
+2 until end of turn, at instant speed — Obscura Confluence named; Turn to Frog, Snakeform, Diminish
+and Perfected Theory follow (Perfected Theory loses Buff by B2 of 2026-09-25, its pump no longer the
+whole card); Warkite Marauder's attack trigger loses the tag, and Storvald's trigger, Eccentric
+Apprentice's beginning of combat and Hostile Takeover, a sorcery, stay out.
+
+Read the same day: the card's OWN small base is not this tag (Skinshifter's "this creature becomes a
+Plant with base power and toughness 0/8", unreviewed). Measured and rejected: "can't attack you or
+planeswalkers you control" without "unless", 0 of 5 reviewed (Vow of Torment's Aura on your own
+creature, Combat Calligrapher's Inklings, Eriette of the Charmed Apple, Promise of Loyalty, Unstable
+Glyphbridge); Spectral Grasp and Sandwurm Convergence, unreviewed, say it of somebody else's
+creatures and are left unproposed.
