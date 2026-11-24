@@ -978,4 +978,78 @@ public sealed partial class EffectClassifierTests
         Assert.True(result.HasFlag(CardEffect.Removal));
         Assert.True(result.HasFlag(CardEffect.Disenchant));
     }
+
+    [Theory]
+    // The Removal definition of 2026-11-24: one creature or planeswalker of theirs
+    // gone for good, aimed at or one each by a rule. Q1 'Removal a tutte': damage
+    // at a creature of the player your source has just hit, the condition only the
+    // trigger (Chandra's Incinerator named, The Sea Devils since 10-15). Q2
+    // 'Removal': the edict on combat damage, like Witch-king's on the attack
+    // (Demon of Loathing named; Cabal Executioner follows). Fiend Hunter's O-Ring
+    // returns 'the exiled card' when it leaves and stays Removal: the blink
+    // reading of the same day takes the plural only.
+    [InlineData("Chandra's Incinerator", "Creature — Elemental",
+        "This spell costs {X} less to cast, where X is the total amount of noncombat damage dealt to your "
+        + "opponents this turn.\nTrample\nWhenever a source you control deals noncombat damage to an opponent, "
+        + "this creature deals that much damage to target creature or planeswalker that player controls.")]
+    [InlineData("The Sea Devils", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI, II — "
+        + "Create a 2/2 green Alien Salamander creature token with islandwalk. (It can't be blocked as long as "
+        + "defending player controls an Island.)\nIII — Until end of turn, whenever a Salamander deals combat "
+        + "damage to a player, it deals that much damage to target creature that player controls.")]
+    [InlineData("Demon of Loathing", "Creature — Demon",
+        "Flying, trample\nWhenever this creature deals combat damage to a player, that player sacrifices a "
+        + "creature of their choice.")]
+    [InlineData("Cabal Executioner", "Creature — Human Cleric",
+        "Whenever this creature deals combat damage to a player, that player sacrifices a creature of their "
+        + "choice.\nMorph {3}{B}{B} (You may cast this card face down as a 2/2 creature for {3}. Turn it face up "
+        + "any time for its morph cost.)")]
+    [InlineData("Fiend Hunter", "Creature — Human Cleric",
+        "When this creature enters, you may exile another target creature.\nWhen this creature leaves the "
+        + "battlefield, return the exiled card to the battlefield under its owner's control.")]
+    public void Classify_TheNovember24Definition_IsRemoval(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
+    // The Removal definition of 2026-11-24, the other way. Read: Disorder in the
+    // Court's X creatures come back at the next end step ('Return the exiled cards
+    // to the battlefield'), a blink, Removal never by hand. Q3 'Tieni
+    // l'eccezione': a token's one-point ping stays out (0 of 10 reviewed tagged),
+    // the token is the card's body and one point is not its answer.
+    [InlineData("Disorder in the Court", "Instant",
+        "Exile X target creatures, then investigate X times. Return the exiled cards to the battlefield "
+        + "tapped under their owners' control at the beginning of the next end step. (To investigate, create a "
+        + "Clue token. It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")")]
+    [InlineData("Tibalt, Rakish Instigator", "Legendary Planeswalker — Tibalt",
+        "Your opponents can't gain life.\n−2: Create a 1/1 red Devil creature token with \"When this token "
+        + "dies, it deals 1 damage to any target.\"")]
+    public void Classify_TheNovember24Definition_IsNotRemoval(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
+    // Ruled 2026-11-24, Q4 of the Removal definition ('Come il 10-16: Pacify'): a
+    // Saga that exiles a creature at chapter I and returns 'the exiled card' at a
+    // later chapter gives it back within a few turns, the O-Ring on a Saga of
+    // 2026-10-16. The Princess Takes Flight was Removal by hand since 10-08 and is
+    // handed back; The Measure of a Man is the only other card written so.
+    [InlineData("The Princess Takes Flight", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Exile "
+        + "up to one target creature.\nII — Target creature you control gets +2/+2 and gains flying until end of "
+        + "turn.\nIII — Return the exiled card to the battlefield under its owner's control.")]
+    [InlineData("The Measure of a Man", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Exile "
+        + "up to one target nontoken artifact or creature.\nII — Investigate. (Create a Clue token. It's an "
+        + "artifact with \"{2}, Sacrifice this token: Draw a card.\")\nIII — Return the exiled card to the "
+        + "battlefield under its owner's control. You gain 2 life.")]
+    public void Classify_TheNovember24Ruling_ASagaThatReturnsTheCreature_IsPacifyNotRemoval(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.False(result.HasFlag(CardEffect.Removal));
+        Assert.True(result.HasFlag(CardEffect.Pacify));
+    }
 }

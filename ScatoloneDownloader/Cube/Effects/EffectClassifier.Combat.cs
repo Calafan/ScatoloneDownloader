@@ -460,8 +460,16 @@ namespace ScatoloneDownloader.Cube
         // (Removal and Pacify by hand) against Trial of a Time Lord (Removal
         // alone), both corrected by name. An O-Ring on any other permanent stays
         // Removal — 23 reviewed, none tagged Pacify.
+        // The same Saga that gives the creature back at a LATER CHAPTER, ruled
+        // 2026-11-24 (Q4 of the Removal definition, "Come il 10-16: Pacify"): The
+        // Princess Takes Flight's "I — Exile up to one target creature. … III —
+        // Return the exiled card to the battlefield under its owner's control"
+        // (Removal by hand since 10-08, handed back); The Measure of a Man is the
+        // only other card written so. Only the exile sentence is matched, so the
+        // chapters between keep what they earn.
         private static readonly Regex ExileEndsWithTheSaga = Rx(
-            @"exile (?:up to one )?(?:other )?target [^.\n]{0,40}creature[^.\n]{0,40}until this saga leaves the battlefield");
+            @"exile (?:up to one )?(?:other )?target [^.\n]{0,40}creature[^.\n]{0,40}until this saga leaves the battlefield"
+            + @"|exile (?:up to one )?(?:other )?target [^.\n]{0,40}creature\.(?=[^\n]*(?:\n[^\n]*){0,2}\n[IV, ]+ — return the exiled card to the battlefield)");
 
         // An exile with TIME COUNTERS, "exile target creature and put two time
         // counters on it. If it doesn't have suspend, it gains suspend", is
@@ -475,8 +483,13 @@ namespace ScatoloneDownloader.Cube
             @"exile (?:up to one )?target (?:creature|nonland permanent) and put \w+ time counters on it");
 
         // It comes back: a blink is not an answer.
+        // "Return THE EXILED CARDS to the battlefield", read 2026-11-24 with the
+        // Removal definition (gone for good): Disorder in the Court's X creatures
+        // come back at the next end step, Removal never by hand. The plural only:
+        // "the exiled CARD" is the O-Ring's return when it leaves (Fiend Hunter,
+        // Faceless Butcher), which stays Removal.
         private static readonly Regex ReturnsItToPlay = Rx(
-            @"return (?:it|them|that card|those cards)[\w ,']{0,40}to the battlefield");
+            @"return (?:it|them|that card|those cards|the exiled cards)[\w ,']{0,40}to the battlefield");
 
         // "Exile up to one other target creature from the battlefield or creature
         // card from a graveyard" (Savior of Ollenbock, Removal + Reanimate by hand,

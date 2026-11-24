@@ -3,7 +3,24 @@
 Canonical record of the rulings for `CardEffect.Removal`. The one-line tooltip shown in the tagger
 is in [`EffectGlossary.cs`](../../ScatoloneDownloader/Mtg/EffectGlossary.cs).
 
-answer ONE creature or planeswalker.
+**Definition, 2026-11-24: ONE creature or planeswalker of somebody else's leaves the battlefield
+FOR GOOD because of your card, taken by a TARGET (one or more) or ONE per player by a RULE.
+Swords to Plowshares is the card.** For good: destroyed, exiled (for as long as the card stays,
+too), killed by damage, a fight or a toughness malus, shuffled into a library or put on its
+bottom, made a noncreature. One per player: the edict, the punisher, the smallest, the most votes.
+Out: your own creatures; a blink or any exile that gives the creature back (at the next end step,
+when a tapper untaps, when a Saga ends); a creature card in a graveyard; two or more from one side,
+or each creature, by a rule (Wipe); "permanent" in the target (RemovePermanent); the top of a
+library or an exile its owner may play (Bounce); "-N/-0" (Pacify). Kept as exceptions, each with
+its why in the answers of that day at the end: a target limited to a creature type, what only
+touches its blocker, a spell that only sets up damage on your next spells, and a token's one-point
+ping.
+
+Every ruling below is coherent with the definition or is one of those exceptions; Chandra's
+Incinerator and Demon of Loathing are the two cards corrected by name, The Princess Takes Flight
+the one handed back.
+
+Before 2026-11-24: an answer to ONE creature or planeswalker.
 
 A SHRINK counts, ruled 2026-09-15: a creature at zero toughness dies exactly as one that is
 destroyed, in both vocabularies — "target creature gets -3/-3" and "put a -1/-1 counter on target
@@ -210,3 +227,33 @@ qualifies it, not only "each creature" (The Akroan War's chapter III, "each TAPP
 by hand, no longer Removal); and "each opponent sacrifices THAT MANY creatures", as many as the
 Zombies you sacrificed, is two or more from one side and Wipe's (Ravenous Rotbelly, Removal by hand
 until that day; see Wipe.md). Suspend's exile with time counters is Bounce (Bounce.md).
+
+RULED 2026-11-24 with the definition ("Sì, così"), four answers. Q1 "Removal a tutte": damage at a
+creature of the player your source has just hit counts, the condition is only the trigger —
+Chandra's Incinerator ("Whenever a source you control deals noncombat damage to an opponent, this
+creature deals that much damage to target creature or planeswalker that player controls", untagged
+by hand on 11-13) is corrected by name, like The Sea Devils (Removal since 10-15). Q2 "Removal": the
+edict on COMBAT DAMAGE, "whenever this creature deals combat damage to a player, that player
+sacrifices a creature of their choice", is Witch-king's edict on the attack (3 of 3 tagged) one step
+later — Demon of Loathing corrected by name, Cabal Executioner and Wasitora follow; the rule is kept
+to "deals combat damage", because the broad "that player sacrifices a creature" also reaches the
+upkeep edicts that are Wipe's (Ruthless Winnower). Q3 "Tieni l'eccezione": a token's ONE-POINT ping
+stays out (Tibalt, Rakish Instigator; 0 of 10 reviewed tagged, against 88 of 88 for the same ping
+from the card itself and 4 of 4 for two points or more from a token): the token is the card's body,
+Tokens, and one point from it is not the card's answer. Q4 "Come il 10-16: Pacify": a Saga that
+exiles a creature at chapter I and returns "the exiled card" at a later chapter is the O-Ring on a
+Saga of 2026-10-16, Pacify alone — The Princess Takes Flight, Removal by hand since 10-08, is handed
+back without this tag and with Pacify; The Measure of a Man, the only other card written so,
+follows.
+
+The other exceptions, kept with their why. A target limited to a creature TYPE, by the tribal
+rulings of 2026-10-15 that hold across every tag. What only touches its BLOCKER, "target creature
+it's blocking", "whenever this creature blocks" (0 of 93 reviewed tagged): it answers only a
+creature that has already chosen to fight it, a combat trick, as Wipe keeps the same combat shapes
+out. A SPELL that only sets up damage on your next spells (Season of the Bold, 2026-10-13): it
+removes nothing by itself, while a permanent with that trigger does.
+
+Read 2026-11-24: "Return THE EXILED CARDS to the battlefield … at the beginning of the next end
+step" is a blink (Disorder in the Court, Removal never by hand; 0 of 7 reviewed temporary exiles
+tagged). The plural only: "the exiled CARD" is also the O-Ring's return when it leaves (Fiend
+Hunter, Faceless Butcher), which stays this tag.

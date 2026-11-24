@@ -653,7 +653,15 @@ namespace ScatoloneDownloader.Cube
                         + @"|choose two target creatures controlled by the same (?:opponent|player)\. that player (?:chooses and )?sacrifices one of (?:those creatures|them)"
                         + @"|secretly choose a creature that player controls\.[^\n]*?that player sacrifices those creatures"
                         + @"|\bunless (?:they|that player) sacrifices? (?:a|an|another) (?:nontoken )?creature\b(?!,)"
-                        + @"|that player may sacrifice a [\w ]{0,25}(?<!non)creature of their choice\. if that player doesn't"),
+                        + @"|that player may sacrifice a [\w ]{0,25}(?<!non)creature of their choice\. if that player doesn't"
+                        // The edict on COMBAT DAMAGE, ruled 2026-11-24 (Q2 of the
+                        // Removal definition, "Removal"): the trigger is only the
+                        // moment, as Witch-king's attack is (3 of 3 attack edicts
+                        // tagged). Demon of Loathing named. Kept to "deals combat
+                        // damage": the broad "that player sacrifices a creature"
+                        // also reaches the upkeep edicts that are Wipe's (Ruthless
+                        // Winnower) and 12 unreviewed cards nobody asked about.
+                        + @"|deals combat damage to (?:a player|an opponent), that player sacrifices (?:a|an|one) [\w -]{0,25}(?<!non)(?<!non-)creature"),
                     // A creature that ends up in a LIBRARY is as answered as one that
                     // is destroyed, and the Auras are the only place this wording
                     // appears: The Spot's Portal puts it on the bottom, Dramatic

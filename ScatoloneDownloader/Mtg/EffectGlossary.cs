@@ -29,10 +29,10 @@
                 + "repeat. No Treasure, Clue or Food, nor a tribe's trigger.",
 
             [CardEffect.Removal] =
-                "Answers ONE creature/planeswalker: destroy, exile, damage however counted, fight, an edict (one each, a "
-                + "punisher), INTO a library, made a Treasure, or ANY toughness malus (\"+2/-1\"). Not YOUR OWN, a "
-                + "creature TYPE, a BLINK, a GRAVEYARD card, \"-2/-0\" (Pacify), \"each creature\" (Wipe), a "
-                + "token's 1-point ping, or what only touches its blocker.",
+                "ONE creature/planeswalker gone FOR GOOD, by target or one each (edict, punisher): destroy, exile, "
+                + "damage, fight, INTO a library, made a Treasure, ANY toughness malus. Not YOUR OWN, a creature TYPE, "
+                + "an exile that comes back, a GRAVEYARD card, \"-2/-0\" (Pacify), \"each creature\" (Wipe), a "
+                + "token's 1-point ping, or what only hits its blocker.",
 
             [CardEffect.Counter] =
                 "Somebody else's spell or ability taken off the stack — countered, exiled, back to hand or into "
