@@ -1699,19 +1699,11 @@ public sealed partial class EffectClassifierTests
         + "still a land.\n−2: Mill three cards. You may put a permanent card from among the milled cards into "
         + "your hand.\n−7: You get an emblem with \"You may play lands and cast permanent spells from your "
         + "graveyard.\"")]
-    [InlineData("Spinner of Souls", "Creature — Spider Spirit",
-        "Reach\nWhenever another nontoken creature you control dies, you may reveal cards from the top of your "
-        + "library until you reveal a creature card. Put that card into your hand and the rest on the bottom of "
-        + "your library in a random order.")]
     [InlineData("Nissa, Resurgent Animist", "Legendary Creature — Elf Scout",
         "Landfall — Whenever a land you control enters, add one mana of any color. Then if this is the second "
         + "time this ability has resolved this turn, reveal cards from the top of your library until you reveal "
         + "an Elf or Elemental card. Put that card into your hand and the rest on the bottom of your library in "
         + "a random order.")]
-    [InlineData("House Cartographer", "Creature — Human Scout Survivor",
-        "Survival — At the beginning of your second main phase, if this creature is tapped, reveal cards from "
-        + "the top of your library until you reveal a land card. Put that card into your hand and the rest on "
-        + "the bottom of your library in a random order.")]
     [InlineData("Sacred Guide", "Creature — Human Cleric",
         "{1}{W}, Sacrifice this creature: Reveal cards from the top of your library until you reveal a white "
         + "card. Put that card into your hand and exile all other cards revealed this way.")]
@@ -3225,5 +3217,140 @@ public sealed partial class EffectClassifierTests
     public void Classify_TheNovember13Readings_IsNotFilter(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Read 2026-11-24 (Q3, Filter Q5 of 2026-11-06, 'guadagno condizionato =
+    // CA+Filter'): Selective Adaptation takes one card per keyword out of the top
+    // seven, so what it gains depends on what the seven hold.
+    [InlineData("Selective Adaptation", "Sorcery",
+        "Reveal the top seven cards of your library. Choose from among them a card with flying, a card with "
+        + "first strike, and so on for double strike, deathtouch, haste, hexproof, indestructible, lifelink, "
+        + "menace, reach, trample, and vigilance. Put one of the chosen cards onto the battlefield, the other "
+        + "chosen cards into your hand, and the rest into your graveyard.")]
+    public void Classify_TheNovember24Q3_OneOfEachKeywordFromTheTop_IsBothTags(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.True(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Read 2026-11-24 (row 6, 'Look at N, take 2 is CardAdvantage alone',
+    // 2026-10-13): Expressive Iteration puts one into the hand and exiles one to
+    // play, -1 +2 in the same ability.
+    [InlineData("Expressive Iteration", "Sorcery",
+        "Look at the top three cards of your library. Put one of them into your hand, put one of them on the "
+        + "bottom of your library, and exile one of them. You may play the exiled card this turn.")]
+    public void Classify_TheNovember24Row6_ALookAndTakeTwo_IsCardAdvantageNotFilter(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.False(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Read 2026-11-24 (row 9, the net count of 2026-11-07), each the one reviewed
+    // card that says it and tagged by hand: the rest of a reveal into the hand
+    // (Allure of the Unknown), a land sacrificed for two cards and some life
+    // (Gates of Istfell), a conditional draw with escape (Cling to Dust), a draw
+    // that repeats for every land put down (Cultivator Colossus).
+    [InlineData("Allure of the Unknown", "Sorcery",
+        "Reveal the top six cards of your library. An opponent exiles a nonland card from among them, then "
+        + "you put the rest into your hand. That opponent may cast the exiled card without paying its mana "
+        + "cost.")]
+    [InlineData("Gates of Istfell", "Land",
+        "This land enters tapped.\n{T}: Add {W}.\n{2}{W}{U}{U}, {T}, Sacrifice this land: You gain 2 life and "
+        + "draw two cards.")]
+    [InlineData("Cling to Dust", "Instant",
+        "Exile target card from a graveyard. If it was a creature card, you gain 3 life. Otherwise, you draw "
+        + "a card.\nEscape—{3}{B}, Exile five other cards from your graveyard. (You may cast this card from your "
+        + "graveyard for its escape cost.)")]
+    [InlineData("Cultivator Colossus", "Creature — Plant Beast",
+        "Trample\nCultivator Colossus's power and toughness are each equal to the number of lands you "
+        + "control.\nWhen this creature enters, you may put a land card from your hand onto the battlefield "
+        + "tapped. If you do, draw a card and repeat this process.")]
+    public void Classify_TheNovember24Row9_ANetPositiveCount_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Row 9 of 2026-11-24, the limit of Gates of Istfell: the sacrifice that gains
+    // life and draws two but goes on to do more (Path to the World Tree, untagged
+    // by hand) is not the stream.
+    [InlineData("Path to the World Tree", "Enchantment",
+        "When this enchantment enters, search your library for a basic land card, reveal it, put it into your "
+        + "hand, then shuffle.\n{2}{W}{U}{B}{R}{G}, Sacrifice this enchantment: You gain 2 life and draw two "
+        + "cards. Target opponent loses 2 life. This enchantment deals 2 damage to up to one target creature. "
+        + "You create a 2/2 green Bear creature token.")]
+    public void Classify_TheNovember24Row9_ALifeGainBesideTheDraw_IsNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Ruled 2026-11-24 (A2, 'CA + Regrowth'): 'Exchange your hand and graveyard'
+    // also earns CardAdvantage, 1 of 1: the card is played when the graveyard is
+    // bigger than the hand.
+    [InlineData("Harness Infinity", "Instant",
+        "Exchange your hand and graveyard.\nExile Harness Infinity.")]
+    public void Classify_TheNovember24A2_ExchangeYourHandAndGraveyard_IsCardAdvantageAndRegrowth(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.True(result.HasFlag(CardEffect.Regrowth));
+    }
+
+    [Theory]
+    // Ruled 2026-11-24 (A3, proposal accepted): a reveal until that comes back at
+    // no cost is a card every time. A creature dying puts the card into the hand
+    // (Spinner of Souls); an exert attaches an Equipment on the battlefield, the
+    // twin of Songbirds' Blessing, 3 of 3 by hand with Atla Palani and Esika
+    // (Rohirrim Chargers).
+    [InlineData("Spinner of Souls", "Creature — Spider Spirit",
+        "Reach\nWhenever another nontoken creature you control dies, you may reveal cards from the top of your "
+        + "library until you reveal a creature card. Put that card into your hand and the rest on the bottom of "
+        + "your library in a random order.")]
+    [InlineData("Rohirrim Chargers", "Creature — Human Knight",
+        "You may exert this creature as it attacks. (It won't untap during your next untap step.)\nWhenever "
+        + "you exert a creature, reveal cards from the top of your library until you reveal an Equipment card. "
+        + "Put that card onto the battlefield attached to that creature, then put the rest on the bottom of "
+        + "your library in a random order.")]
+    public void Classify_TheNovember24A3_ARepeatedDigAtNoCost_IsCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // A3 of 2026-11-24: House Cartographer's land into the hand every turn is
+    // CardAdvantage and keeps its ManaFixing.
+    [InlineData("House Cartographer", "Creature — Human Scout Survivor",
+        "Survival — At the beginning of your second main phase, if this creature is tapped, reveal cards from "
+        + "the top of your library until you reveal a land card. Put that card into your hand and the rest on "
+        + "the bottom of your library in a random order.")]
+    public void Classify_TheNovember24A3_ARepeatedLandDig_IsCardAdvantageAndManaFixing(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.True(result.HasFlag(CardEffect.ManaFixing));
+    }
+
+    [Theory]
+    // A3 of 2026-11-24, the limit: a dig for a creature TYPE stays out (Nissa,
+    // Resurgent Animist, an Elf or Elemental card, the tribal ruling of
+    // 2026-10-16).
+    [InlineData("Nissa, Resurgent Animist", "Legendary Creature — Elf Scout",
+        "Landfall — Whenever a land you control enters, add one mana of any color. Then if this is the second "
+        + "time this ability has resolved this turn, reveal cards from the top of your library until you reveal "
+        + "an Elf or Elemental card. Put that card into your hand and the rest on the bottom of your library in "
+        + "a random order.")]
+    public void Classify_TheNovember24A3_ATribalDig_IsNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.CardAdvantage));
     }
 }

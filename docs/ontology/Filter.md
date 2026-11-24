@@ -213,7 +213,7 @@ Filter alone by hand; Ashiok, Wicked Manipulator stays out), and a dig until a c
 shares a type with the creature just sacrificed, put onto the battlefield (Descendants' Fury, Filter
 and Sacrifice by hand), which TribalCard keeps from being Cheat. Not widened to a printed type: Hei
 Bai, Forest Guardian's "Shrine card" is Filter by hand and Tom Bombadil's "Saga card" untagged (both
-read 2026-11-06, see the end).
+read 2026-11-06, see the end; Tom Bombadil is Filter since 2026-11-24).
 Sparkshaper Visionary's granted repeating scry is Filter as proposed, its missing tag a slip
 ("svista", 2026-10-30).
 
@@ -356,3 +356,73 @@ Read the same evening, not ruled: four cards tagged CardAdvantage and Filter by 
 Theorist, Suspicious Stowaway, Kianne, Dean of Substance, Plargg, Dean of Chaos) keep both, because
 the selection and the gain are separate abilities (Qiqirn Merchant, 2026-09-29). The answer to C4
 (Tapping at the Window, CardAdvantage alone) is the same-ability case.
+
+Ruled 2026-11-24 (Q1, overturning F1 of 2026-11-12): LEARN follows the rules of every selection with
+no card in it — "Learn è Filter ma con le stesse regole. Se assieme ad altro no, se è su un
+permanente solo se ripetuto. Pop Quiz fa solo quello, direi Filter." A spell that does nothing but
+draw a card and learn (Pop Quiz) keeps the tag, and so does the ability paid with the card itself
+(Overgrown Arch: "Pagata con la carta = Filter", 2026-11-06). A learn beside another effect — a
+sentence, a dies or enters trigger, a modal spell — is a rider and loses it: the seven cards of the
+session (Eyetwitch, Gnarled Professor, Igneous Inspiration, Poet's Quill, Retriever Phoenix, Rise of
+Extus, Study Break) stay untagged, and the twelve reviewed ones the rule of 11-12 had reached
+(Divide by Zero, Dream Strix, Sparring Regimen, Field Trip, Academic Dispute, Arcane Subtraction,
+Cram Session, Enthusiastic Study, First Day of Class, Guiding Voice, Hunt for Specimens, Professor
+of Symbology) go back to review. Measured: 19 reviewed cards lose the tag, no unreviewed card moves,
+false positives 8 to 1. The existing rider test does not read it alone: Cram Session, Academic
+Dispute and Arcane Subtraction earn no other tag, which made them "a spell that does nothing else",
+so for learn the test asks whether any text remains once the keyword, its reminder and a bare "Draw
+a card." are gone.
+
+Ruled 2026-11-24 (Q2, "Secondo me la definizione 1 è corretta"): a reveal or an exile from the top
+until a hit, the rest to the bottom, at ZERO net balance is this tag. What makes it level is the
+permanent sacrificed to pay for it, whatever the card dug for: Audacious Reshapers, Dreamshaper
+Shaman and Descendants' Fury are Filter by hand, so the Descendants' Fury reading (the creature type
+of the sacrificed creature, 10-30) is generalised to "sacrifice a/an/another/one of … reveal cards …
+until … onto the battlefield … the rest on the bottom", and Kethek, Crucible Goliath is REACHED
+(+Filter, handed back). The kind may be chosen first (Abundant Harvest, a spell), and the dig may be
+exiled and cast free as the replacement for a cycling draw (Unpredictable Cyclone). Yuna's Whistle
+keeps the tag (the pump depends on the reveal), and Artificer Class stays Filter and Ramp (Q2 bis:
+"In teoria sta carta la giochi anche per usare il potere 2", the level is what the card is for, even
+once). NOT this tag, left to CardAdvantage (repeated gain at no cost): Spinner of Souls, Rohirrim
+Chargers and House Cartographer, none of which says "sacrifice" before the dig (Tom Bombadil and
+Aspiring Champion were left out here and ruled Filter later the same day, see the end). Of the 24 reviewed cards that say "no" in the
+family only Kethek moves; Jalira, Master Polymorphist ("Sacrifice another creature: Reveal … a
+nonlegendary creature card", unreviewed) follows the same rule.
+
+Read 2026-11-24 (rows 3 and 7, no new ruling): Valakut Awakening "put any number of cards from your
+hand on the bottom of your library, then draw that many cards plus one" is level with the spell
+itself spent (the count of 2026-11-07, the put-back of Brainstorm), Filter by hand; Into the Fire's
+second mode says the same words (Wipe by hand, 10-09) and is REACHED, +Filter. Waker of Waves
+"Discard this card: Look at the top two cards … one into your hand and the other into your
+graveyard" is paid with the card itself (Q8, 2026-11-06), -1 +1 and once: Filter and no longer
+CardAdvantage, the repeat test now counting a discard of itself as a cost to itself; Visionary's
+Dance, unreviewed, says the same and moves with it. Asked instead, and ruled the same day (A1,
+below): Crypt Lurker and Stitched Assistant, Filter by hand on a sacrifice that draws, against the
+same shape CardAdvantage and Filter (Chandra, Spark Hunter, Reckless Detective) or CardAdvantage
+alone (Fell Stinger, Vulturous Aven).
+
+Ruled 2026-11-24 (A1, "Filter"): a creature that ONCE (it enters, it exploits) sacrifices "a
+creature", itself included, to draw ONE card is -1 +1, zero balance: Filter and no CardAdvantage.
+Crypt Lurker ("you may sacrifice a creature or discard a creature card. If you do, draw a card"; the
+discard is parity anyway) and Stitched Assistant ("when this creature exploits a creature, scry 1,
+then draw a card") get the tag, both Filter by hand. The limit: two cards stay CardAdvantage (Fell
+Stinger, Unscrupulous Contractor) and so does a sacrifice that can be paid again and again
+(Soulreaper of Mogis, Gibbering Barricade, Spark Reaper, Kels, Thalia and The Gitrog Monster). No
+other reviewed card moves.
+
+Ruled 2026-11-24 (A3, "proposta accettata"): Tom Bombadil digs for a Saga whenever the final chapter
+of a Saga you control resolves, and that Saga then leaves: one out, one in, zero balance, the
+definition 1 of Q2 with the permanent paid. Filter, not CardAdvantage, REACHED (untagged by hand,
+handed back). This replaces the reading of 2026-11-06 (Q12), which kept it untagged. The other three
+digs that repeat at no cost (Spinner of Souls, House Cartographer, Rohirrim Chargers) are
+CardAdvantage.
+
+Ruled 2026-11-24 (A4, "Filter a entrambe"): the definition 1 of Q2 counts only the zero balance, so
+where the rest of the revealed cards goes (exiled, shuffled, the bottom) does not matter, and the
+permanent sacrificed may be the card itself. Sacred Guide ("{1}{W}, Sacrifice this creature: Reveal
+… a white card. Put that card into your hand and exile all other cards", untagged by hand) and
+Aspiring Champion ("sacrifice it. If you do, reveal … then shuffle the rest", Burn by hand, which it
+keeps) are Filter, both REACHED and handed back. This overturns the note that kept Aspiring Champion
+out because it shuffles, and the "may" clause of Q1 (2026-11-06) that kept it out because the
+creature must go in. The rule reads "sacrifice a/an/another/one of/this creature/it … reveal cards …
+until … onto the battlefield or into your hand".

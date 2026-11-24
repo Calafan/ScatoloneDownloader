@@ -117,3 +117,9 @@ Read 2026-11-12, one reviewed card each, Regrowth by hand: five targets before t
 at random of those it exiled from your graveyard put into its owner's hand (Gorex, the Tombshell),
 and a permanent card PLAYED from your graveyard this turn (Kaldring, the Rimestaff; the casts from
 your graveyard are 6 of 7 tagged, Zul Ashur's tribe the seventh).
+
+Read 2026-11-24 (row 10, the definition of 2026-11-08: "also out of the exile the card moved it
+to"): the card a delve exiled out of your graveyard and the card later returned to its owner's hand
+(Ethereal Forager's "return an instant or sorcery card exiled with this creature to its owner's
+hand"), and the hand and the graveyard exchanged, which puts every card of your graveyard into your
+hand (Harness Infinity). Regrowth by hand, 1 of 1 each; no unreviewed card moves.

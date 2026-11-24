@@ -245,7 +245,15 @@ namespace ScatoloneDownloader.Cube
             // Filter by hand, the one reviewed card; Arcane Infusion, unreviewed,
             // says the same for an instant or sorcery).
             + @"|^look at the top (?:two|three|four|five|six|seven|x|\d+) cards of your library\. "
-            + @"you may reveal an? [\w ]{1,30} card from among them and put it into your hand\b",
+            + @"you may reveal an? [\w ]{1,30} card from among them and put it into your hand\b"
+            // …and a draw that is CONDITIONAL, read 2026-11-24 (row 9): Cling to
+            // Dust's "If it was a creature card, you gain 3 life. Otherwise, you
+            // draw a card" with escape is one card for one on the first cast
+            // and a card again on the second, "a one-card draw on a spell that
+            // can be cast twice is two cards for one" (above), CardAdvantage
+            // alone by hand, 1 of 1: no other spell draws only when the card it
+            // exiled is not a creature.
+            + @"|^exile target card from a graveyard\. if it was a creature card, you gain 3 life\. otherwise, you draw a card\.",
             RegexOptions.Multiline);
 
         // JUMP-START pays a card from the hand for its second cast, so one card
@@ -726,7 +734,22 @@ namespace ScatoloneDownloader.Cube
             // graveyard … choose a card at random exiled with Gorex and put that
             // card into its owner's hand", Regrowth by hand, 1 of 1).
             Rx(@"cards? from (?:a |your |their )?graveyards?[\s\S]{0,250}return [^.\n]{0,40}\bexiled\b[^.\n]{0,30} to (?:its|their) owners?'?s?'? hands?"
-                + @"|cards? from your graveyard[\s\S]{0,250}\bchoose a card at random exiled with [^.\n]{0,30} and put that card into its owner's hand"),
+                + @"|cards? from your graveyard[\s\S]{0,250}\bchoose a card at random exiled with [^.\n]{0,30} and put that card into its owner's hand"
+                // …and the card a DELVE exiled out of your graveyard, returned
+                // later, read 2026-11-24 (row 10, the definition of 2026-11-08:
+                // "also out of the exile the card moved it to"): Ethereal
+                // Forager's "Whenever this creature attacks, you may return an
+                // instant or sorcery card exiled with this creature to its
+                // owner's hand", the delve cost having exiled it from the yard
+                // (Regrowth by hand, 1 of 1: the only card that delves and
+                // returns what it exiled).
+                + @"|\bdelve\b[\s\S]{0,200}return [^.\n]{0,40}\bexiled with this [\w ]{1,20} to its owner's hand"),
+            // The hand and the graveyard EXCHANGED, read 2026-11-24 (row 10):
+            // Harness Infinity's "Exchange your hand and graveyard" puts every card
+            // of your graveyard into your hand, the definition of 2026-11-08 (a
+            // card of your graveyard back to the hand), Regrowth and CardAdvantage
+            // by hand (1 of 1: no other card exchanges the two zones).
+            Rx(@"\bexchange your hand and graveyard\b"),
             Rx(@"put[\w ,'\-/]{0,60}cards? from[\w ,'\-/]{0,30}graveyard into[\w ]{0,20}hand"),
             // The rest of the sitting of 10-06..10-11, each tagged by hand on
             // every reviewed card that says it (2026-10-13): one of the top two
@@ -1686,6 +1709,8 @@ namespace ScatoloneDownloader.Cube
         // library" looks at six cards over two turns and keeps two of them.
         private static readonly Regex ChapterFiresTwice = Rx(@"^[ivx]+(?:, [ivx]+)+ ", RegexOptions.Multiline);
 
+        private static readonly Regex DiscardsItselfToPay = Rx(@"^[^\n:]{0,60}\bdiscard this card\b[^\n:]{0,20}:", RegexOptions.Multiline);
+
         private static bool AbilityRepeats(string ability) =>
             RepeatableWording.IsMatch(ability) || ChapterFiresTwice.IsMatch(ability);
 
@@ -1694,8 +1719,18 @@ namespace ScatoloneDownloader.Cube
         // ask this, because there the cost is often paid by something else:
         // Junktown makes three Junk tokens and each token sacrifices ITSELF for
         // a card, which is three cards.
+        //
+        // The card DISCARDED to pay is the same cost, read 2026-11-24 (row 7, a
+        // reading of Filter Q8 of 2026-11-06, "Pagata con la carta = Filter", and
+        // of the net count of 2026-11-07, "the card itself is a card"): Waker of
+        // Waves' "{1}{U}, Discard this card: Look at the top two cards of your
+        // library. Put one of them into your hand and the other into your
+        // graveyard" is the one card spent for the one card taken, -1 +1, and
+        // runs once (Filter by hand, 1 of 1: no other card discards itself to
+        // look at the top).
         private static bool AbilityRepeatsAtNoCostToItself(string ability) =>
             AbilityRepeats(ability)
+            && !DiscardsItselfToPay.IsMatch(ability)
             && !DrawBySacrificingItself.IsMatch(ability)
             && !SacrificesItself.IsMatch(ability)
             && !TransformsItselfAway.IsMatch(ability)
@@ -1741,7 +1776,44 @@ namespace ScatoloneDownloader.Cube
             // Explores), with its reminder.
             // Not one explored X TIMES, which is a look at X (Jadelight
             // Spelunker, Filter by hand, 2026-10-14).
-            + @"|(?<!\bwhenever [^,.\n]{0,60})\bexplores?\b(?! x times)(?:, then it explores again)?\.?(?: ?\((?:to have it explore, )?reveal the top card[^()]*\))?";
+            + @"|(?<!\bwhenever [^,.\n]{0,60})\bexplores?\b(?! x times)(?:, then it explores again)?\.?(?: ?\((?:to have it explore, )?reveal the top card[^()]*\))?"
+            // …and LEARN, the same selection, since 2026-11-24 (Q1, "Learn è
+            // Filter ma con le stesse regole"): made once beside what the card is
+            // for it is noise, with its reminder. See LearnBesideAnotherEffect
+            // for the spell that does nothing else (Pop Quiz).
+            + @"|" + OneLearn;
+
+        // The word as the Filter table reads it (Rules.cs): at the start of a
+        // sentence, a clause or an ability's cost. "Learn Their Secrets", the
+        // name of a mode, is not the keyword.
+        private const string OneLearn =
+            @"(?<=^|[.,:] )learn\b(?! their)\.?(?: ?\(you may reveal a lesson[^()]*\))?";
+
+        private static readonly Regex LearnWord = Rx(OneLearn, RegexOptions.Multiline);
+
+        private static readonly Regex JustACantrip = Rx(@"^draw a card\.?\s*$", RegexOptions.Multiline);
+
+        // LEARN follows the rules of every selection with no card in it, ruled
+        // 2026-11-24 (Q1, overturning F1 of 2026-11-12, "Learn = Filter"): "se
+        // assieme ad altro no, se è su un permanente solo se ripetuto. Pop Quiz
+        // fa solo quello, direi Filter". A spell is judged by the TAGS it earns
+        // beside it everywhere else (SelectsOnlyInPassing), but learn sits
+        // beside an effect no tag names — Cram Session's four life, Academic
+        // Dispute's "blocks this turn", Arcane Subtraction's -4/-0 — and all of
+        // those lost the tag. So for learn "something else" is any text left
+        // once the keyword, its reminder and a bare "Draw a card." are gone:
+        // Pop Quiz's cantrip is part of what a rummage is.
+        private static bool LearnBesideAnotherEffect(string text)
+        {
+            if (!LearnWord.IsMatch(text))
+            {
+                return false;
+            }
+
+            string rest = JustACantrip.Replace(LearnWord.Replace(Parenthetical.Replace(text, " "), " "), " ");
+
+            return rest.Any(char.IsLetterOrDigit);
+        }
 
         // A LOOT tacked onto a SPELL that does something else is the same rider,
         // ruled 2026-09-27 on Refute — "non ha Filter, solo counter" — which is
@@ -1817,7 +1889,7 @@ namespace ScatoloneDownloader.Cube
         {
             bool spell = card.MacroType == MacroType.Spell;
 
-            if (card.MacroType == MacroType.Land || (spell && others == CardEffect.None)
+            if (card.MacroType == MacroType.Land || (spell && others == CardEffect.None && !LearnBesideAnotherEffect(text))
                 || (spell && ConniveAimedAtTargets.IsMatch(text)))
             {
                 return false;
@@ -1932,6 +2004,16 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex PermanentOrACard = Rx(
             @"\bsacrifice (?<permanent>an? (?!card\b)[\w ]{1,25}?) or discard (?:a|one) card\b"
             + @"|\bdiscard (?:a|one) card or sacrifice (?<permanent>an? [\w ]{1,25}?)\b");
+
+        // ONE CARD OF EACH KEYWORD out of the top seven, read 2026-11-24 (Q3, a
+        // reading of Filter Q5, 2026-11-06, "guadagno condizionato = CA+Filter"):
+        // Selective Adaptation puts one chosen card onto the battlefield and the
+        // others into your hand, so what it gains depends on how many of the
+        // twelve keywords the seven revealed cards happen to carry — a selection
+        // every time, the cards only sometimes. CardAdvantage and Filter by hand
+        // (1 of 1: no other card chooses a card per keyword).
+        private static readonly Regex OneOfEachKeywordFromTheTop = Rx(
+            @"reveal the top seven cards of your library\. choose from among them a card with flying, a card with first strike, and so on for\b");
 
         private static bool PaysAPermanentOrACardForTheDraw(Card card, string text)
         {
@@ -2235,7 +2317,12 @@ namespace ScatoloneDownloader.Cube
         // card.
         private static readonly Regex RevealedOntoTheBattlefield = Rx(
             @"\breveal the top card of your library\. if (?:it's a (?:creature|permanent|artifact) card|(?:a|an) (?:creature|permanent|artifact) card is revealed this way), put it onto the battlefield"
-            + @"|\buntil you reveal an? (?:creature|permanent|nonland|artifact|planeswalker)[^.\n]{0,40}card(?: with [^.\n]{0,40})?\. put (?:that card|it) onto the battlefield");
+            + @"|\buntil you reveal an? (?:creature|permanent|nonland|artifact|planeswalker)[^.\n]{0,40}card(?: with [^.\n]{0,40})?\. put (?:that card|it) onto the battlefield"
+            // …and an EQUIPMENT attached to the creature that exerted, read
+            // 2026-11-24 (A3, "twin of Songbirds' Blessing, CA by hand like Atla
+            // Palani and Esika: a non-land onto the battlefield on a repeated
+            // free trigger is CA 3/3"): Rohirrim Chargers, REACHED, 1 of 1.
+            + @"|\buntil you reveal an equipment card\. put that card onto the battlefield attached to that creature");
 
         private static readonly Regex SwapsYourOwn = Rx(
             @"\bsacrifice (?:a|an|another) |\bexile (?:another )?target [\w ]{0,40}you control\b");
@@ -2351,8 +2438,16 @@ namespace ScatoloneDownloader.Cube
             + @"(?:\n•[^\n]*)*?\n•\s*(?:you )?draws? (?:a|one|two) cards?",
             RegexOptions.Multiline);
 
+        // …and the pile REVEALED, with an opponent taking one out of it, read
+        // 2026-11-24 (row 9): Allure of the Unknown's "Reveal the top six cards
+        // of your library. An opponent exiles a nonland card from among them,
+        // then you put the rest into your hand" is -1 +5 for the spell,
+        // CardAdvantage alone by hand (1 of 1: no other card puts "the rest" of a
+        // reveal into your hand), the count of 2026-11-07 and the same "put the
+        // rest into your hand" the look above already reads.
         private static readonly Regex LooksAndKeepsTheRest = Rx(
-            @"look at the top \w+ cards? of your library[^\n]{0,200}put the rest into your hand");
+            @"look at the top \w+ cards? of your library[^\n]{0,200}put the rest into your hand"
+            + @"|reveal the top \w+ cards of your library\. an opponent exiles [^\n.]{0,40}from among them, then you put the rest into your hand");
 
         // The card SACRIFICES ITSELF, so the ability runs once, whatever it
         // fetches and whether the sacrifice is a cost or an effect. Added
@@ -2458,6 +2553,19 @@ namespace ScatoloneDownloader.Cube
             + @"(?![^\n]{0,80}(?:discard|put (?:a|one|\w+) cards? from your hand))",
             RegexOptions.Multiline);
 
+        // Life gained in the same breath is no loss, read 2026-11-24 (row 9, the
+        // net count of 2026-11-07): Gates of Istfell's "{2}{W}{U}{U}, {T},
+        // Sacrifice this land: You gain 2 life and draw two cards" is -1 +2 for
+        // the land, CardAdvantage by hand. Only when the line says nothing more:
+        // Path to the World Tree's "You gain 2 life and draw two cards. Target
+        // opponent loses 2 life. …" is Tokens, Removal, Burn and ManaFixing, no
+        // CardAdvantage (a draw beside a six-mana finisher), and the one-card
+        // "gain 1 life and draw a card" of Candy Trail and Bagel and Schmear is
+        // level and untagged. Counted: 1 reviewed card tagged, 1 untagged.
+        private static readonly Regex GainsLifeAndDrawsBySacrificingItself = Rx(
+            @"^[^\n:]{0,60}sacrifice this [\w]+[^\n:]{0,30}: you gain \d+ life and draws? (?:two|three|four|\d+) cards\.?$",
+            RegexOptions.Multiline);
+
         // Emptying your hand and drawing a fixed number back is not a loot,
         // because the hand you paid can be empty — Case of the Crimson Pulse
         // solves itself on "You have no cards in hand" and then draws two for
@@ -2473,8 +2581,10 @@ namespace ScatoloneDownloader.Cube
         // and that no rule read:
         //  - a reveal-until into the hand under an attack trigger the card
         //    fires itself: Songbirds' Blessing. Spinner of Souls (a creature
-        //    dying), House Cartographer (a condition) and Nissa (a second
-        //    resolution) are untagged and do not say "attacks".
+        //    dying) and House Cartographer (a condition) do not say "attacks";
+        //    they are CardAdvantage since 2026-11-24 by
+        //    RepeatedRevealUntilIntoHand (A3). Nissa (a second resolution)
+        //    stays out for its Elf or Elves.
         //  - "If you don't cast a spell this way, investigate" on an attack
         //    trigger: The Seventh Doctor.
         //  - an Aura that hands the enchanted permanent "{T}: Target player
@@ -2712,6 +2822,15 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex SeveralKeptFromALook = Rx(
             @"put (?:two|three) of those cards into your hand(?![^.\n]{0,20}instead)"
             + @"|put up to (?:two|three) of them into your hand"
+            // …and a look at three that takes one into the hand AND one to play,
+            // read 2026-11-24 (row 6, "Look at N, take 2 is CardAdvantage alone",
+            // 2026-10-13): Expressive Iteration's "put one of them into your hand,
+            // put one of them on the bottom of your library, and exile one of
+            // them. You may play the exiled card this turn" is -1 for the spell
+            // and +2, CardAdvantage alone by hand (1 of 1: no other card puts one
+            // in the hand and exiles one to play from a look).
+            + @"|look at the top three cards of your library\. put one of them into your hand, put one of them on the bottom of your library, "
+            + @"and exile one of them\. you may play the exiled card this turn"
             + @"|reveal up to two [\w ]{0,30}cards from among them and put them into your hand"
             + @"|for each card type[^,\n]{0,60}, (?:you may )?put a card of that type from among [^.\n]{0,40}into your hand"
             + @"|for each [\w ]{1,20}, choose a card [^.\n]{0,60}from among them\. put the chosen cards into your hand");
@@ -3067,7 +3186,14 @@ namespace ScatoloneDownloader.Cube
             + @"[^\n]{0,80}\. put that card into its owner's hand",
             RegexOptions.Multiline);
 
-        private static readonly Regex DrawThenRepeat = Rx(@"\byou draw (?:a|one) card\. then repeat this process\b");
+        // …and "draw a card AND repeat this process", read 2026-11-24 (row 9):
+        // Cultivator Colossus' "you may put a land card from your hand onto the
+        // battlefield tapped. If you do, draw a card and repeat this process" is
+        // a card for every land put down, CardAdvantage and Ramp by hand (1 of 1:
+        // no other card draws and repeats in the same sentence).
+        private static readonly Regex DrawThenRepeat = Rx(
+            @"\byou draw (?:a|one) card\. then repeat this process\b"
+            + @"|\bif you do, draw a card and repeat this process\b");
 
         private static readonly Regex UpkeepExilesSeveralIntoPlay = Rx(
             @"^at the beginning of your upkeep, exile the top (?:two|three|four|five|\d+) cards of your library\b"
@@ -3108,11 +3234,39 @@ namespace ScatoloneDownloader.Cube
         // put its card onto the battlefield is the same choice (Hei Bai, Forest
         // Guardian's Shrine, Filter by hand and kept by name until then). Only
         // with the "may": Aspiring Champion's creature that must go in is a
-        // card for the card it sacrificed (Burn alone by hand).
+        // card for the card it sacrificed (Burn alone by hand) — SUPERSEDED the
+        // same day by A4 below: that one is Filter too, through the sacrifice.
+        // Read 2026-11-24 (Q2, "la definizione 1 è corretta": reveal or exile from
+        // the top until a hit, the rest to the bottom, at zero net balance is
+        // Filter): the kind may be CHOSEN first, Abundant Harvest's "Choose land
+        // or nonland. Reveal cards … until you reveal a card of the chosen kind",
+        // Filter by hand (1 of 1, a spell, once).
         private static readonly Regex RevealsUntilATypeIntoHand = Rx(
-            @"reveal cards from the top of your library until you reveal an? "
-            + @"[\w ]{0,30}card\. (?:put (?:that|the revealed) card into your hand and the rest on the bottom of your library"
+            @"reveal cards from the top of your library until you reveal "
+            + @"(?:an? [\w ]{0,30}card|a card of the chosen kind)\. (?:put (?:that|the revealed) card into your hand and the rest on the bottom of your library"
             + @"|you may put that card onto the battlefield)");
+
+        // The same dig to the HAND on a trigger that comes back and costs
+        // nothing, ruled 2026-11-24 (A3, "proposta accettata"): a card every time,
+        // CardAdvantage. Spinner of Souls ("Whenever another nontoken creature
+        // you control dies, you may reveal … a creature card") and House
+        // Cartographer ("At the beginning of your second main phase, if this
+        // creature is tapped, reveal … a land card", which keeps its ManaFixing)
+        // are REACHED (untagged by hand). Only "whenever" and "at the beginning
+        // of": an activation pays something (Sacred Guide sacrifices itself,
+        // Filter by A4) and a one-off enters or level-up is the Filter of the
+        // definition (Yuna's Whistle, Artificer Class). Not a TRIBE's card (Nissa,
+        // Resurgent Animist's "an Elf or Elemental card", Ramp by hand: the tribal
+        // ruling of 2026-10-16, "Tribale = niente CA").
+        private static readonly Regex RepeatedRevealUntilIntoHand = Rx(
+            @"^(?:[\w ]{1,20} — )?(?:whenever|at the beginning of)\b",
+            RegexOptions.Multiline);
+
+        // "Exchange your hand and graveyard" is a card from the graveyard for
+        // every card of the hand, and the card is played when the graveyard is
+        // the bigger one: CardAdvantage and Regrowth by hand (A2, ruled
+        // 2026-11-24, "CA + Regrowth", 1 of 1: no other card exchanges the two).
+        private static readonly Regex ExchangesHandAndGraveyard = Rx(@"\bexchange your hand and graveyard\b");
 
         private static readonly Regex LoyaltyRevealsUntilIntoHand = Rx(
             @"^[+−-]?\d+: reveal cards from the top of your library until you reveal [^.\n]{0,80}\.[^\n]{0,80}\bput (?:that card|it) into your hand",

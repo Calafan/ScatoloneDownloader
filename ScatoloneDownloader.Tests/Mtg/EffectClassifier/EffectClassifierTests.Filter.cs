@@ -1312,12 +1312,29 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
-    // Ruled 2026-11-12 (F1, "Learn = Filter"): learn's rummage is a loot. Pop
-    // Quiz, Filter by hand; Divide by Zero, Dream Strix and Overgrown Arch among
-    // the 14 handed back — a sentence, a dies trigger, a sacrifice cost.
+    // Ruled 2026-11-12 (F1, "Learn = Filter"): learn's rummage is a loot. Narrowed
+    // 2026-11-24 (Q1, "Learn è Filter ma con le stesse regole"): the cases that
+    // pinned a learn beside another effect (Divide by Zero, Dream Strix) are
+    // OVERTURNED and moved to the theory below. What stays is the spell that does
+    // nothing else (Pop Quiz) and the ability paid with the card itself
+    // (Overgrown Arch).
     [InlineData("Pop Quiz", "Instant",
         "Draw a card.\nLearn. (You may reveal a Lesson card you own from outside the game and put it into your "
         + "hand, or discard a card to draw a card.)")]
+    [InlineData("Overgrown Arch", "Creature — Plant Wall",
+        "Defender\n{T}: You gain 1 life.\n{2}, Sacrifice this creature: Learn. (You may reveal a Lesson card "
+        + "you own from outside the game and put it into your hand, or discard a card to draw a card.)")]
+    public void Classify_TheNovember12Ruling_Learn_IsFilter(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Ruled 2026-11-24 (Q1, overturning F1 of 2026-11-12): 'Learn è Filter ma con
+    // le stesse regole. Se assieme ad altro no, se è su un permanente solo se
+    // ripetuto.' A learn beside another effect (a sentence, a dies or enters
+    // trigger, a modal spell) is a rider and not Filter: the seven cards of the
+    // session and the twelve reviewed learn cards that lost the tag.
     [InlineData("Divide by Zero", "Instant",
         "Return target spell or permanent with mana value 1 or greater to its owner's hand.\nLearn. (You may "
         + "reveal a Lesson card you own from outside the game and put it into your hand, or discard a card to "
@@ -1326,10 +1343,264 @@ public sealed partial class EffectClassifierTests
         "Flying\nWhen this creature becomes the target of a spell, sacrifice it.\nWhen this creature dies, "
         + "learn. (You may reveal a Lesson card you own from outside the game and put it into your hand, or "
         + "discard a card to draw a card.)")]
-    [InlineData("Overgrown Arch", "Creature — Plant Wall",
-        "Defender\n{T}: You gain 1 life.\n{2}, Sacrifice this creature: Learn. (You may reveal a Lesson card "
+    [InlineData("Sparring Regimen", "Enchantment",
+        "When this enchantment enters, learn. (You may reveal a Lesson card you own from outside the game and "
+        + "put it into your hand, or discard a card to draw a card.)\nWhenever you attack, put a +1/+1 counter "
+        + "on target attacking creature and untap it.")]
+    [InlineData("Field Trip", "Sorcery",
+        "Search your library for a basic Forest card, put that card onto the battlefield tapped, then "
+        + "shuffle.\nLearn. (You may reveal a Lesson card you own from outside the game and put it into your "
+        + "hand, or discard a card to draw a card.)")]
+    [InlineData("Academic Dispute", "Instant",
+        "Target creature blocks this turn if able. You may have it gain reach until end of turn.\nLearn. (You "
+        + "may reveal a Lesson card you own from outside the game and put it into your hand, or discard a card "
+        + "to draw a card.)")]
+    [InlineData("Arcane Subtraction", "Instant",
+        "Target creature gets -4/-0 until end of turn.\nLearn. (You may reveal a Lesson card you own from "
+        + "outside the game and put it into your hand, or discard a card to draw a card.)")]
+    [InlineData("Cram Session", "Sorcery",
+        "You gain 4 life.\nLearn. (You may reveal a Lesson card you own from outside the game and put it into "
+        + "your hand, or discard a card to draw a card.)")]
+    [InlineData("Enthusiastic Study", "Instant",
+        "Target creature gets +3/+1 and gains trample until end of turn.\nLearn. (You may reveal a Lesson card "
         + "you own from outside the game and put it into your hand, or discard a card to draw a card.)")]
-    public void Classify_TheNovember12Ruling_Learn_IsFilter(string name, string typeLine, string oracle)
+    [InlineData("First Day of Class", "Instant",
+        "Whenever a creature you control enters this turn, put a +1/+1 counter on it and it gains haste until "
+        + "end of turn.\nLearn. (You may reveal a Lesson card you own from outside the game and put it into your "
+        + "hand, or discard a card to draw a card.)")]
+    [InlineData("Guiding Voice", "Sorcery",
+        "Put a +1/+1 counter on target creature.\nLearn. (You may reveal a Lesson card you own from outside "
+        + "the game and put it into your hand, or discard a card to draw a card.)")]
+    [InlineData("Hunt for Specimens", "Sorcery",
+        "Create a 1/1 black and green Pest creature token with \"When this token dies, you gain 1 "
+        + "life.\"\nLearn. (You may reveal a Lesson card you own from outside the game and put it into your hand, "
+        + "or discard a card to draw a card.)")]
+    [InlineData("Professor of Symbology", "Creature — Kor Cleric",
+        "When this creature enters, learn. (You may reveal a Lesson card you own from outside the game and "
+        + "put it into your hand, or discard a card to draw a card.)")]
+    [InlineData("Eyetwitch", "Creature — Eye Bat",
+        "Flying\nWhen this creature dies, learn. (You may reveal a Lesson card you own from outside the game "
+        + "and put it into your hand, or discard a card to draw a card.)")]
+    [InlineData("Gnarled Professor", "Creature — Treefolk Druid",
+        "Trample\nWhen this creature enters, learn. (You may reveal a Lesson card you own from outside the "
+        + "game and put it into your hand, or discard a card to draw a card.)")]
+    [InlineData("Igneous Inspiration", "Sorcery",
+        "Igneous Inspiration deals 3 damage to any target.\nLearn. (You may reveal a Lesson card you own from "
+        + "outside the game and put it into your hand, or discard a card to draw a card.)")]
+    [InlineData("Poet's Quill", "Artifact — Equipment",
+        "When this Equipment enters, learn. (You may reveal a Lesson card you own from outside the game and "
+        + "put it into your hand, or discard a card to draw a card.)\nEquipped creature gets +1/+1 and has "
+        + "lifelink.\nEquip {1}{B}")]
+    [InlineData("Retriever Phoenix", "Creature — Phoenix",
+        "Flying, haste\nWhen this creature enters, if you cast it, learn. (You may reveal a Lesson card you "
+        + "own from outside the game and put it into your hand, or discard a card to draw a card.)\nAs long as "
+        + "this card is in your graveyard, if you would learn, you may instead return this card to the "
+        + "battlefield.")]
+    [InlineData("Rise of Extus", "Sorcery",
+        "Exile target creature. Exile up to one target instant or sorcery card from a graveyard.\nLearn. (You "
+        + "may reveal a Lesson card you own from outside the game and put it into your hand, or discard a card "
+        + "to draw a card.)")]
+    [InlineData("Study Break", "Instant",
+        "Tap up to two target creatures.\nLearn. (You may reveal a Lesson card you own from outside the game "
+        + "and put it into your hand, or discard a card to draw a card.)")]
+    public void Classify_TheNovember24Q1_LearnBesideAnotherEffect_IsNotFilter(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Ruled 2026-11-24 (Q2, 'la definizione 1 è corretta'): reveal or exile from
+    // the top until a hit, the rest to the bottom, at zero net balance is Filter.
+    // Abundant Harvest chooses the kind first, Audacious Reshapers and Dreamshaper
+    // Shaman pay a permanent, Unpredictable Cyclone replaces a cycling draw,
+    // Kethek is reached; Yuna's Whistle, Artificer Class (Q2 bis) and Descendants'
+    // Fury keep the tag.
+    [InlineData("Abundant Harvest", "Sorcery",
+        "Choose land or nonland. Reveal cards from the top of your library until you reveal a card of the "
+        + "chosen kind. Put that card into your hand and the rest on the bottom of your library in a random "
+        + "order.")]
+    [InlineData("Audacious Reshapers", "Creature — Human Artificer",
+        "{T}, Sacrifice an artifact: Reveal cards from the top of your library until you reveal an artifact "
+        + "card. Put that card onto the battlefield and the rest on the bottom of your library in a random "
+        + "order. This creature deals damage to you equal to the number of cards revealed this way.")]
+    [InlineData("Dreamshaper Shaman", "Enchantment Creature — Minotaur Shaman",
+        "At the beginning of your end step, you may pay {2}{R} and sacrifice a nonland permanent. If you do, "
+        + "reveal cards from the top of your library until you reveal a nonland permanent card. Put that card "
+        + "onto the battlefield and the rest on the bottom of your library in a random order.")]
+    [InlineData("Unpredictable Cyclone", "Enchantment",
+        "If a cycling ability of another nonland card would cause you to draw a card, instead exile cards "
+        + "from the top of your library until you exile a card that shares a card type with the cycled card. "
+        + "You may cast that card without paying its mana cost. Then put the exiled cards that weren't cast "
+        + "this way on the bottom of your library in a random order.\nCycling {2} ({2}, Discard this card: Draw "
+        + "a card.)")]
+    [InlineData("Kethek, Crucible Goliath", "Legendary Creature — Phyrexian Beast",
+        "At the beginning of your end step, you may sacrifice another creature. If you do, reveal cards from "
+        + "the top of your library until you reveal a nonlegendary creature card with lesser mana value, put it "
+        + "onto the battlefield, then put the rest on the bottom of your library in a random order.")]
+    [InlineData("Yuna's Whistle", "Instant",
+        "Reveal cards from the top of your library until you reveal a creature card. Put that card into your "
+        + "hand and the rest on the bottom of your library in a random order. When you reveal a creature card "
+        + "this way, put X +1/+1 counters on target creature you control, where X is the mana value of that "
+        + "card.")]
+    [InlineData("Artificer Class", "Enchantment — Class",
+        "(Gain the next level as a sorcery to add its ability.)\nThe first artifact spell you cast each turn "
+        + "costs {1} less to cast.\n{1}{U}: Level 2\nWhen this Class becomes level 2, reveal cards from the top "
+        + "of your library until you reveal an artifact card. Put that card into your hand and the rest on the "
+        + "bottom of your library in a random order.\n{5}{U}: Level 3\nAt the beginning of your end step, create "
+        + "a token that's a copy of target artifact you control.")]
+    [InlineData("Descendants' Fury", "Enchantment",
+        "Whenever one or more creatures you control deal combat damage to a player, you may sacrifice one of "
+        + "them. If you do, reveal cards from the top of your library until you reveal a creature card that "
+        + "shares a creature type with the sacrificed creature. Put that card onto the battlefield and the rest "
+        + "on the bottom of your library in a random order.")]
+    public void Classify_TheNovember24Q2_ARevealUntilAtZeroNet_IsFilter(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Q2 of 2026-11-24, the other side: a reveal until that pays nothing and comes
+    // again is a card every time, CardAdvantage and not Filter (Spinner of Souls,
+    // Rohirrim Chargers, House Cartographer; ruled CardAdvantage the same day, A3).
+    // Tom Bombadil and Aspiring Champion moved to the Filter theories below.
+    [InlineData("Spinner of Souls", "Creature — Spider Spirit",
+        "Reach\nWhenever another nontoken creature you control dies, you may reveal cards from the top of your "
+        + "library until you reveal a creature card. Put that card into your hand and the rest on the bottom of "
+        + "your library in a random order.")]
+    [InlineData("Rohirrim Chargers", "Creature — Human Knight",
+        "You may exert this creature as it attacks. (It won't untap during your next untap step.)\nWhenever "
+        + "you exert a creature, reveal cards from the top of your library until you reveal an Equipment card. "
+        + "Put that card onto the battlefield attached to that creature, then put the rest on the bottom of "
+        + "your library in a random order.")]
+    [InlineData("House Cartographer", "Creature — Human Scout Survivor",
+        "Survival — At the beginning of your second main phase, if this creature is tapped, reveal cards from "
+        + "the top of your library until you reveal a land card. Put that card into your hand and the rest on "
+        + "the bottom of your library in a random order.")]
+    public void Classify_TheNovember24Q2_ARevealUntilThatGainsForNothing_IsNotFilter(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Read 2026-11-24 (row 3): Valakut Awakening puts any number of cards on the
+    // bottom and draws that many plus one, level with the spell itself spent (the
+    // net count of 2026-11-07, the put-back of Brainstorm). Into the Fire says the
+    // same words in a mode and is reached.
+    [InlineData("Valakut Awakening // Valakut Stoneforge", "Instant // Land",
+        "Put any number of cards from your hand on the bottom of your library, then draw that many cards plus "
+        + "one.\nThis land enters tapped.\n{T}: Add {R}.")]
+    [InlineData("Into the Fire", "Sorcery",
+        "Choose one —\n• Into the Fire deals 2 damage to each creature, planeswalker, and battle.\n• Put any "
+        + "number of cards from your hand on the bottom of your library, then draw that many cards plus one.")]
+    public void Classify_TheNovember24Row3_APutBackAndDrawPlusOne_IsFilter(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Read 2026-11-24 (row 7, Filter Q8 'Pagata con la carta = Filter'): Waker of
+    // Waves discards itself to look at two and keep one, -1 +1, and runs once.
+    // Visionary's Dance, unreviewed, says the same and moves with it.
+    [InlineData("Waker of Waves", "Creature — Whale",
+        "Creatures your opponents control get -1/-0.\n{1}{U}, Discard this card: Look at the top two cards of "
+        + "your library. Put one of them into your hand and the other into your graveyard.")]
+    [InlineData("Visionary's Dance", "Sorcery",
+        "Create two 3/3 blue and red Elemental creature tokens with flying.\n{2}, Discard this card: Look at "
+        + "the top two cards of your library. Put one of them into your hand and the other into your graveyard.")]
+    public void Classify_TheNovember24Row7_ADiscardOfItselfToLook_IsFilterNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Filter));
+        Assert.False(result.HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Ruled 2026-11-24 (A1, 'Filter'): a creature that once (it enters, it
+    // exploits) sacrifices a creature, itself included, to draw ONE card is -1 +1,
+    // zero balance: Filter and no CardAdvantage. Crypt Lurker's 'or discard a
+    // creature card' is parity anyway.
+    [InlineData("Crypt Lurker", "Creature — Horror",
+        "When this creature enters, you may sacrifice a creature or discard a creature card. If you do, draw "
+        + "a card.")]
+    [InlineData("Stitched Assistant", "Creature — Zombie",
+        "Exploit (When this creature enters, you may sacrifice a creature.)\nWhen this creature exploits a "
+        + "creature, scry 1, then draw a card. (To scry 1, look at the top card of your library, then you may "
+        + "put that card on the bottom.)")]
+    public void Classify_TheNovember24A1_ASacrificeOnceForOneCard_IsFilterNotCardAdvantage(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Filter));
+        Assert.False(result.HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // A1 of 2026-11-24, the limit: a sacrifice that draws TWO cards (Fell Stinger,
+    // Unscrupulous Contractor) or that can be paid again and again (Soulreaper of
+    // Mogis, Gibbering Barricade, Spark Reaper, Kels, Thalia and The Gitrog
+    // Monster) stays CardAdvantage.
+    [InlineData("Fell Stinger", "Creature — Zombie Scorpion",
+        "Deathtouch\nExploit (When this creature enters, you may sacrifice a creature.)\nWhen this creature "
+        + "exploits a creature, target player draws two cards and loses 2 life.")]
+    [InlineData("Unscrupulous Contractor", "Creature — Human Assassin",
+        "When this creature enters, you may sacrifice a creature. When you do, target player draws two cards "
+        + "and loses 2 life.\nPlot {2}{B} (You may pay {2}{B} and exile this card from your hand. Cast it as a "
+        + "sorcery on a later turn without paying its mana cost. Plot only as a sorcery.)")]
+    [InlineData("Soulreaper of Mogis", "Enchantment Creature — Minotaur Shaman",
+        "{2}{B}, Sacrifice a creature: Draw a card.")]
+    [InlineData("Gibbering Barricade", "Creature — Nightmare Wall",
+        "Defender\n{2}{B}, Sacrifice a creature: You gain 1 life and draw a card.")]
+    [InlineData("Spark Reaper", "Creature — Zombie",
+        "{3}, Sacrifice a creature or planeswalker: You gain 1 life and draw a card.")]
+    [InlineData("Kels, Fight Fixer", "Legendary Creature — Azra Warlock",
+        "Menace\nWhenever you sacrifice a creature, you may pay {U/B}. If you do, draw a card. ({U/B} can be "
+        + "paid with either {U} or {B}.)\n{1}, Sacrifice a creature: Kels gains indestructible until end of "
+        + "turn.")]
+    [InlineData("Thalia and The Gitrog Monster", "Legendary Creature — Human Frog Horror",
+        "First strike, deathtouch\nYou may play an additional land on each of your turns.\nCreatures and "
+        + "nonbasic lands your opponents control enter tapped.\nWhenever Thalia and The Gitrog Monster attacks, "
+        + "sacrifice a creature or land, then draw a card.")]
+    public void Classify_TheNovember24A1_TwoCardsOrARepeatedSacrifice_StaysCardAdvantage(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.CardAdvantage));
+        Assert.False(result.HasFlag(CardEffect.Filter));
+    }
+
+    [Theory]
+    // Ruled 2026-11-24 (A3, proposal accepted): Tom Bombadil digs for a Saga
+    // whenever a Saga's final chapter resolves, and that Saga then leaves: one
+    // out, one in, zero balance (the definition of Q2, the permanent paid), Filter
+    // and no CardAdvantage.
+    [InlineData("Tom Bombadil", "Legendary Creature — God Bard",
+        "As long as there are four or more lore counters among Sagas you control, Tom Bombadil has hexproof "
+        + "and indestructible.\nWhenever the final chapter ability of a Saga you control resolves, reveal cards "
+        + "from the top of your library until you reveal a Saga card. Put that card onto the battlefield and "
+        + "the rest on the bottom of your library in a random order. This ability triggers only once each turn.")]
+    public void Classify_TheNovember24A3_ADigForASagaOnTheFinalChapter_IsFilter(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Filter));
+        Assert.False(result.HasFlag(CardEffect.CardAdvantage));
+    }
+
+    [Theory]
+    // Ruled 2026-11-24 (A4, 'Filter a entrambe'): Q2 definition 1 counts only the
+    // zero balance, so where the rest goes (exiled, shuffled, the bottom) does not
+    // matter, and the permanent sacrificed may be the card itself: Sacred Guide,
+    // Aspiring Champion (which keeps Burn).
+    [InlineData("Sacred Guide", "Creature — Human Cleric",
+        "{1}{W}, Sacrifice this creature: Reveal cards from the top of your library until you reveal a white "
+        + "card. Put that card into your hand and exile all other cards revealed this way.")]
+    [InlineData("Aspiring Champion", "Creature — Astartes Warrior",
+        "Menace\nRuinous Ascension — When this creature deals combat damage to a player, sacrifice it. If you "
+        + "do, reveal cards from the top of your library until you reveal a creature card. Put that card onto "
+        + "the battlefield, then shuffle the rest into your library. If that creature is a Demon, it deals "
+        + "damage equal to its power to each opponent.")]
+    public void Classify_TheNovember24A4_ASelfSacrificeBeforeTheDig_IsFilter(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Filter));
     }

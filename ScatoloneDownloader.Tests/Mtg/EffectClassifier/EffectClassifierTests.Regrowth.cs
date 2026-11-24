@@ -478,4 +478,20 @@ public sealed partial class EffectClassifierTests
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Regrowth));
     }
+
+    [Theory]
+    // Read 2026-11-24 (row 10, the definition of 2026-11-08): the card a delve
+    // exiled out of your graveyard returned to the hand later (Ethereal Forager),
+    // and the hand and graveyard exchanged (Harness Infinity), each Regrowth by
+    // hand.
+    [InlineData("Ethereal Forager", "Creature — Elemental Whale",
+        "Delve (Each card you exile from your graveyard while casting this spell pays for "
+        + "{1}.)\nFlying\nWhenever this creature attacks, you may return an instant or sorcery card exiled with "
+        + "this creature to its owner's hand.")]
+    [InlineData("Harness Infinity", "Instant",
+        "Exchange your hand and graveyard.\nExile Harness Infinity.")]
+    public void Classify_TheNovember24Row10_AGraveyardCardBackToTheHand_IsRegrowth(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Regrowth));
+    }
 }

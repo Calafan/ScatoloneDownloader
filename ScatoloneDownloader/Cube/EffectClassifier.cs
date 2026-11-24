@@ -1075,7 +1075,7 @@ namespace ScatoloneDownloader.Cube
                 || Abilities(text).Any(a => Discovers.IsMatch(a) && AbilityRepeatsAtNoCostToItself(a))
                 || ((OneDrawButTwoCasts.IsMatch(text) || OneRegrowthButTwoCasts.IsMatch(text))
                     && CastsItselfASecondTime.IsMatch(text) && !PaysACardForTheSecondCast.IsMatch(text))
-                || SelfSacrificeBuysSeveral.IsMatch(text)
+                || SelfSacrificeBuysSeveral.IsMatch(text) || GainsLifeAndDrawsBySacrificingItself.IsMatch(text)
                 || DiscardYourHandThenDrawSeveral.IsMatch(text)
                 || EntersSacrificeThenDraws.IsMatch(text)
                 || MillsAndTakesTwoBack.IsMatch(text)
@@ -1127,6 +1127,11 @@ namespace ScatoloneDownloader.Cube
                 || SquadCopiesDraw.IsMatch(text) || MillHandedBack.IsMatch(text)
                 || ExilesOnePerTargetAndPlays.IsMatch(text) || TokenThatTapsToDraw.IsMatch(text)
                 || DeathDrawRepeatedByEncore.IsMatch(text) || LoyaltyRevealsUntilIntoHand.IsMatch(text)
+                // A dig that comes back at no cost, and the exchange of hand and
+                // graveyard (A3, A2 of 2026-11-24) — see RepeatedRevealUntilIntoHand.
+                || ExchangesHandAndGraveyard.IsMatch(text)
+                || Abilities(text).Any(a => RepeatedRevealUntilIntoHand.IsMatch(a) && RevealsUntilATypeIntoHand.IsMatch(a)
+                    && !TribalCard.IsMatch(a) && !SwapsYourOwn.IsMatch(a) && RepeatsWithoutPayingACard(a))
                 // Unearth and encore sum the entries (ruled 2026-11-05) — see EntriesOf.
                 || OneDrawOnceIsSeveral(text)
                 || LifePaidForADraw.IsMatch(text) || SplicedCantrip.IsMatch(text)
@@ -1437,7 +1442,8 @@ namespace ScatoloneDownloader.Cube
             // 2026-11-07: see PaysAPermanentOrACardForTheDraw.
             if (DrawThenDiscardUnlessGainsWhenMet(card, text)
                 || (result.HasFlag(CardEffect.CardAdvantage) && SelectsEveryTimeGainsSometimes(text))
-                || PaysAPermanentOrACardForTheDraw(card, text))
+                || PaysAPermanentOrACardForTheDraw(card, text)
+                || OneOfEachKeywordFromTheTop.IsMatch(text))
             {
                 result |= CardEffect.CardAdvantage | CardEffect.Filter;
             }

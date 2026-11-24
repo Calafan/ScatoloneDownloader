@@ -689,3 +689,32 @@ Insights, Turtles Forever, unreviewed); the graveyard-exile alternative widened 
 whole (6 tagged, 7 untagged); the qualifier on a one-shot (moved only Treasure Keeper). Moved among
 the unreviewed, to CardAdvantage: Enclave Cryptologist, Raving Visionary and Conqueror's Galleon (a
 loot beside a separate repeating draw, so both tags, the reading of C4 and Qiqirn Merchant).
+
+Read 2026-11-24 (Q3 and rows 6 and 9, readings of rulings already recorded): Selective Adaptation
+takes one card per keyword out of the top seven, so what it gains depends on what the seven hold —
+the conditional gain of Filter Q5 (2026-11-06), both tags, by hand. Expressive Iteration puts one of
+three into the hand and exiles one to play in the same ability: "Look at N, take 2 is CardAdvantage
+alone" (2026-10-13), no longer Filter. By the net count of 2026-11-07, each tagged by hand: the rest
+of a reveal into your hand while an opponent exiles one (Allure of the Unknown); a land sacrificed
+for two cards and some life (Gates of Istfell, only when the line says nothing more: Path to the
+World Tree's finisher, untagged, stays out); a draw that is conditional on a spell with escape
+(Cling to Dust, as a one-card draw cast twice); a draw that repeats for every land put down
+(Cultivator Colossus). Harness Infinity ("Exchange your hand and graveyard") was CardAdvantage by
+hand and not read there (the count depends on the size of the two zones); ruled the same day,
+A2 below.
+
+Ruled 2026-11-24 (A2, "CA + Regrowth"): "Exchange your hand and graveyard" also earns CardAdvantage
+(1 of 1: Harness Infinity, which keeps its Regrowth). The card is played when the graveyard is the
+bigger of the two zones, and the count of the two zones is not read.
+
+Ruled 2026-11-24 (A3, "proposta accettata"): a reveal until a card that comes back at no cost is a
+card every time, CardAdvantage. Spinner of Souls ("whenever another nontoken creature you control
+dies, you may reveal … a creature card. Put that card into your hand") and House Cartographer ("at
+the beginning of your second main phase, if this creature is tapped, reveal … a land card", which
+keeps its ManaFixing) are REACHED, untagged by hand, handed back. Rohirrim Chargers ("whenever you
+exert a creature, reveal … an Equipment card. Put that card onto the battlefield attached to that
+creature") is REACHED too: the twin of Songbirds' Blessing, CardAdvantage by hand like Atla Palani
+and Esika, a non-land onto the battlefield on a repeated free trigger is CardAdvantage 3 of 3. The
+tribal exception holds: Nissa, Resurgent Animist digs for an Elf or Elemental card and stays out
+("Tribale mai CA"). Tom Bombadil, which digs on a Saga's final chapter and sends that Saga away, is
+Filter (Filter.md).

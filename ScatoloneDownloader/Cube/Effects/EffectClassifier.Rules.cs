@@ -1452,6 +1452,15 @@ namespace ScatoloneDownloader.Cube
                     // them is CardAdvantage, which would exclude it (09-27). Not
                     // You Find the Villains' Lair's mode NAMED "Learn Their
                     // Secrets", whose loot is read by its own words.
+                    // OVERTURNED IN PART 2026-11-24 (Q1, "Learn è Filter ma con le
+                    // stesse regole. Se assieme ad altro no, se è su un permanente
+                    // solo se ripetuto"): beside another effect it is a rider and
+                    // loses the tag: of the 21 reviewed learn cards of the store, 14
+                    // are tagged Filter and 12 of them lose it (to be handed back),
+                    // while the 7 untagged ones are now right; Pop Quiz and
+                    // Overgrown Arch keep it.
+                    // The word is asked in OneScryOrSurveil and
+                    // LearnBesideAnotherEffect (Cards.cs), not here.
                     Rx(@"(?:^|\n|\. |, |: )learn\b(?! their)", RegexOptions.Multiline),
                     Rx(@"look at the top \w+ cards? of your library"),
                     // An EXPLORE said in its own words, read 2026-11-13 (explore =
@@ -1468,8 +1477,68 @@ namespace ScatoloneDownloader.Cube
                     // by hand like Call to the Kindred's look at five (read
                     // 2026-10-30). Not widened to a printed type: Hei Bai's
                     // "Shrine card" is Filter by hand and Tom Bombadil's "Saga
-                    // card" untagged, 1 to 1.
-                    Rx(@"until you reveal a creature card that shares a creature type with [^.\n]{0,40}\. put that card onto the battlefield"),
+                    // card" untagged, 1 to 1 (until 2026-11-24: Tom Bombadil is
+                    // Filter since then, by its own pattern below, A3).
+                    //
+                    // GENERALISED 2026-11-24 (Q2, "la definizione 1 è corretta":
+                    // reveal or exile from the top until a hit, the rest to the
+                    // bottom, at zero net balance is Filter): what makes it level
+                    // is the PERMANENT sacrificed to pay for it, whatever the card
+                    // dug for. Audacious Reshapers ("{T}, Sacrifice an artifact:
+                    // reveal … an artifact card"), Dreamshaper Shaman ("pay … and
+                    // sacrifice a nonland permanent. If you do, reveal …") and the
+                    // old Descendants' Fury are Filter by hand, and Kethek,
+                    // Crucible Goliath ("sacrifice another creature. If you do,
+                    // reveal … a nonlegendary creature card with lesser mana
+                    // value") is REACHED (+Filter, handed back). Counted, "sacrifice
+                    // a/an/another/one of … reveal cards … until … onto the
+                    // battlefield … the rest on the bottom": 4 reviewed cards, 3
+                    // tagged Filter and Kethek the reached one.
+                    // WIDENED THE SAME DAY (A4, "Filter a entrambe"): the
+                    // definition counts only the zero balance, so WHERE THE REST
+                    // GOES (exiled, shuffled, the bottom) and WHERE THE CARD GOES
+                    // (the battlefield or the hand) do not matter, and the
+                    // permanent sacrificed may be the card ITSELF: Sacred Guide's
+                    // "Sacrifice this creature: Reveal … a white card. Put that card
+                    // into your hand and exile all other cards" (untagged by hand)
+                    // and Aspiring Champion's "sacrifice it. If you do, reveal …
+                    // shuffle the rest" (Burn by hand, which it keeps) are REACHED,
+                    // +Filter. This replaces the note that kept Aspiring Champion
+                    // out for shuffling. Spinner of Souls, Rohirrim Chargers and
+                    // House Cartographer pay nothing and repeat, which is
+                    // CardAdvantage (A3): none of them says "sacrifice" before the dig.
+                    Rx(@"\bsacrifice (?:a|an|another|one of|this \w+|it)\b[^\n]{0,150}?\breveal cards from the top of your library until you reveal [^.\n]{0,100}[.,]"
+                        + @"[^\n.]{0,40}\b(?:onto the battlefield|into your hand)\b"),
+                    // …and Tom Bombadil's dig for a Saga on the final chapter of one:
+                    // that Saga then leaves, one out and one in, zero balance (A3,
+                    // 2026-11-24, "Q2 definizione 1: il permanente pagato"), REACHED
+                    // (untagged by hand), 1 of 1: no other card says it.
+                    Rx(@"whenever the final chapter ability of a saga you control resolves, reveal cards from the top of your library until you reveal a saga card\. put that card onto the battlefield"),
+                    // A creature that ONCE (it enters, it exploits) sacrifices "a
+                    // creature" — itself included — to draw ONE card is -1 +1, zero
+                    // balance, Filter and no CardAdvantage (A1, ruled 2026-11-24,
+                    // "Filter"): Crypt Lurker's "you may sacrifice a creature or
+                    // discard a creature card. If you do, draw a card" (the discard
+                    // is parity anyway) and Stitched Assistant's "when this creature
+                    // exploits a creature, scry 1, then draw a card", both Filter by
+                    // hand. Two cards stay CardAdvantage (Fell Stinger, Unscrupulous
+                    // Contractor) and a sacrifice that repeats does too (Soulreaper
+                    // of Mogis, Gibbering Barricade, Spark Reaper, Kels, Thalia and
+                    // The Gitrog Monster). The scry may be blanked first (the rider
+                    // veto), hence the loose gap before "draw". Not "ANOTHER
+                    // creature": it cannot be the card itself, so the one card is a
+                    // gain (a permanent paid is no card, 2026-11-07); no card in the
+                    // store says it on entering (2026-11-24).
+                    Rx(@"^when this creature enters, you may sacrifice a creature(?: or discard a creature card)?\. if you do, draw a card\."
+                        + @"|^when this creature exploits a creature,\s*(?:scry \d+)?,?\s*(?:then\s+)?draw a card\.", RegexOptions.Multiline),
+                    // The same level swap with the dig EXILED and CAST: Unpredictable
+                    // Cyclone makes a cycling ability exile cards "until you exile a
+                    // card that shares a card type with the cycled card", cast it
+                    // free and put the rest on the bottom — the draw it replaces
+                    // for a card (Filter by hand, read 2026-11-24 under Q2, 1 of 1:
+                    // no other card says "shares a card type with the cycled card").
+                    Rx(@"exile cards from the top of your library until you exile a card that shares a card type with the cycled card\."
+                        + @"[^\n]{0,80}\bthen put the exiled cards that weren't cast this way on the bottom of your library"),
                     Rx(@"discard[\w ]* then draw"), Rx(@"draws? [\w ]{0,20}cards?[.,] ?(?:then |and )?(?:you may )?discards?"),
                     // The same exchange written discard-first WITH a count:
                     // "Discard a card, then draw two cards" (Romantic Rendezvous,
@@ -1514,6 +1583,15 @@ namespace ScatoloneDownloader.Cube
                     // N for N: Horrid Shadowspinner draws its power and hands the
                     // same number back, which is a rummage however big.
                     Rx(DrawThatManyHandedBack),
+                    // N for N plus ONE, with the spell itself spent: Valakut
+                    // Awakening's "put any number of cards from your hand on the
+                    // bottom of your library, then draw that many cards plus one"
+                    // is the count of 2026-11-07 ("the card itself is a card", -1
+                    // +1 for the spell) and the put-back-and-draw of Brainstorm
+                    // and Dream Cache (DrawPaidForWithACard): Filter by hand,
+                    // 2026-11-24 row 3, 1 of 1. Into the Fire's second mode says
+                    // the same words (Wipe by hand, 10-09) and is REACHED, +Filter.
+                    Rx(@"put any number of cards from your hand on the bottom of your library, then draw that many cards plus one"),
                     // …and the other way round, a card back FOR EACH card
                     // discarded, read 2026-11-06: Change of
                     // Fortune's wheel of your hand and Mishra's Command's "they
