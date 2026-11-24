@@ -54,7 +54,10 @@ namespace ScatoloneDownloader.Cube
             // "up to one OTHER target" (Vault 13), both read 2026-10-15.
             // "Destroy ANY NUMBER OF target artifacts and/or enchantments"
             // (Rampaging Yao Guai, 2026-10-16).
-            Rx(@"(?:destroy|exile) (?:up to \w+ (?:other )?|another |any number of |x |two |three |four |\d+ )?target (?:[\w '\-]{1,14}, )?" + DisenchantNoun),
+            // Two items may come before it, ruled 2026-11-24: Thraben Exorcism's
+            // "exile target Spirit, creature with disturb, or enchantment"
+            // (Removal and Disenchant by hand, 1 of 1; no other card words it so).
+            Rx(@"(?:destroy|exile) (?:up to \w+ (?:other )?|another |any number of |x |two |three |four |\d+ )?target (?:[\w '\-]{1,24}, ){0,2}" + DisenchantNoun),
             Rx(@"(?:destroy|exile) (?:all|each) " + DisenchantNoun),
             // An edict aimed at an artifact answers one all the same, and unlike
             // the creature edict it cannot be blanked by a token: Pick Your Poison

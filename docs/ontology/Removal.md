@@ -195,3 +195,18 @@ instead"), and a chosen target all your big creatures hit (The Bears of Littjara
 Kamahl's Will, 2 of 2). Out: a fight with a target of one TRIBE (Sawblade Slinger's "fights target
 Zombie an opponent controls", Disenchant alone), and EACH creature dealing its power to itself,
 which is a Wipe (Solar Blaze; Wave of Reckoning among the unreviewed).
+
+Ruled 2026-11-24, Removal by hand and never proposed: a HYPHEN in the type that is left out, in the
+target (Gelatinous Cube's "exile target non-Ooze creature an opponent controls until …") and in the
+edict (Pharika's Spawn's "each opponent sacrifices a non-Gorgon creature of their choice"; Anowon,
+the Ruin Sage's each-player edict, unreviewed, follows); and a list that goes on past a creature
+type into a plain creature, which is not LIMITED to the type (Thraben Exorcism's "exile target
+Spirit, creature with disturb, or enchantment", Removal and Disenchant by hand), a reading that
+overturns R2 of 2026-10-16 for that card alone: a list that ends on the type stays out ("target
+Human creature", King Suleiman).
+
+Ruled 2026-11-24: a creature that "deals damage to itself equal to its power" is a Wipe whatever
+qualifies it, not only "each creature" (The Akroan War's chapter III, "each TAPPED creature", Wipe
+by hand, no longer Removal); and "each opponent sacrifices THAT MANY creatures", as many as the
+Zombies you sacrificed, is two or more from one side and Wipe's (Ravenous Rotbelly, Removal by hand
+until that day; see Wipe.md). Suspend's exile with time counters is Bounce (Bounce.md).

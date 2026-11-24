@@ -243,3 +243,31 @@ yours and is Pacify alone (Divine Smite); Sapphire Charm's mode loses Protection
 Read 2026-11-12: a flash creature that exiles another creature you control "until this creature
 leaves the battlefield" holds it out of harm's way (Phantom Steed, Tokens and Protection by hand;
 Mardu Siegebreaker, the same entry at sorcery speed, stays untagged).
+
+Ruled 2026-11-24, Protection by hand and never proposed: a shield CHOSEN and handed to your
+creatures from an ability you hold up (Linvala, Shield of Sea Gate's "Sacrifice Linvala: Choose
+hexproof or indestructible. Creatures you control gain that ability", 1 of 1: the keyword and its
+beneficiary sit in two sentences); an Aura with FLASH that brings its creature back when it dies
+(Minion's Return, Reanimate and Protection by hand), where the same Aura at sorcery speed stays
+Reanimate alone (False Demise, Necrogen Communion, Unholy Indenture) and a return under its OWNER's
+control is not read (Fungal Fortitude, Ferocity of the Hunt; Changing Loyalty, flash, "under your
+control", unreviewed, follows); and a TAX on the spells that target a group of your permanents,
+ward by another name (Callaphe, Beloved of the Sea's "Creatures and enchantments you control have
+'Spells your opponents cast that target this permanent cost {1} more to cast'"; Jubilant Skybonder,
+flyers only, unreviewed, follows). A tax on spells aimed at ONE creature, itself, is a price and
+stays out (Charix, Boreal Elemental, Pursued Whale, 0 of 3 reviewed tagged), and so does one on
+"one or more commanders" (Esior, Wardwing Familiar: a cube has no commander). Parnesse, the Subtle
+Brush was already Protection.
+
+Ruled 2026-11-24 (Q7, Bronzehide Lion): "La protezione ci sarà ma solo su quella specifica creatura.
+Una carta che si protegge da sola non è Protection". A shield on the HOST of an Aura is fixed at the
+attachment and not chosen in response, like Regeneration, The Brute, Nurturing Licid, Flickering Ward
+and Paladin's Arms, and that holds for a creature that comes back as an Aura enchantment: "It's an
+Aura enchantment with enchant creature you control and '{G}{W}: Enchanted creature gains
+indestructible'" is read as the Aura it says it is, and the creature's own first line shields only
+itself. No other card words it so, so no unreviewed card moves. Minion's Return stays Protection by
+its flash.
+
+Ruled 2026-11-24 (Q4, Alchemist's Retrieval): "Due modi, + Protection": no change, Bounce cleaved
+and Protection printed (the tests of 2026-11-08 pin both). A prevention for "you and creatures you
+control" is not Pacify (Blessed Sanctuary, see Pacify.md) and not Protection either, being static.

@@ -533,6 +533,27 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
+    // Ruled 2026-11-24, Wipe by hand: The Akroan War's each tapped creature deals
+    // damage to itself (a qualified creature, the board hits itself), and Ravenous
+    // Rotbelly's each opponent sacrifices that many creatures, as many as the
+    // Zombies you sacrificed (two or more from one side).
+    [InlineData("The Akroan War", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Gain "
+        + "control of target creature for as long as this Saga remains on the battlefield.\nII — Until your next "
+        + "turn, creatures your opponents control attack each combat if able.\nIII — Each tapped creature deals "
+        + "damage to itself equal to its power.")]
+    [InlineData("Ravenous Rotbelly", "Creature — Zombie Horror",
+        "When this creature enters, you may sacrifice up to three Zombies. When you sacrifice one or more "
+        + "Zombies this way, each opponent sacrifices that many creatures of their choice.")]
+    public void Classify_TheNovember24Rulings_IsWipeNotRemoval(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Wipe));
+        Assert.False(result.HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
     // RULED 2026-11-08 (Q4, '-Wipe, resta Pacify'): 'any number of TARGET tapped
     // creatures turned face down' is targets picked one by one, like Phyrexian
     // Purge (Removal by hand), and the 2/2 left face down is Pacify's. Illithid

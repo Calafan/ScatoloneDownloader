@@ -576,6 +576,14 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Removal;
             }
 
+            // …nor an exile that comes back by SUSPEND, which is Bounce's. See
+            // ExileWithTimeCounters.
+            if (result.HasFlag(CardEffect.Removal) && ExileWithTimeCounters.IsMatch(text)
+                && !Classify(new OneAbility(card, ExileWithTimeCounters.Replace(text, " "))).HasFlag(CardEffect.Removal))
+            {
+                result &= ~CardEffect.Removal;
+            }
+
             // REMINDER TEXT does not lock anybody down. Primal Clay explains
             // defender with "(A creature with defender can't attack.)" and
             // Balduvian Shaman prints a worked EXAMPLE of text-changing that
@@ -653,7 +661,8 @@ namespace ScatoloneDownloader.Cube
             // A big one-shot shrink on an INSTANT stops an attacker. Granted
             // after the vetoes above, which read a one-turn trick. See
             // BigShrinkOnAnInstant.
-            if (card.MacroType == MacroType.Spell && IsCastInResponse(card) && BigShrinkOnAnInstant.IsMatch(text))
+            if (IsCastInResponse(card)
+                && ((card.MacroType == MacroType.Spell && BigShrinkOnAnInstant.IsMatch(text)) || VariableShrinkAtFlashSpeed.IsMatch(text)))
             {
                 result |= CardEffect.Pacify;
             }
@@ -687,7 +696,7 @@ namespace ScatoloneDownloader.Cube
                 result &= ~CardEffect.Wipe;
             }
 
-            // Three returns to hand that answer nobody. See NotAnAnswerToHand.
+            // Returns to hand that answer nobody. See NotAnAnswerToHand.
             if (result.HasFlag(CardEffect.Bounce))
             {
                 string answers = NotAnAnswerToHand.Replace(text, " ");
@@ -1257,7 +1266,7 @@ namespace ScatoloneDownloader.Cube
                 }
             }
 
-            if (result.HasFlag(CardEffect.Protection) && AimsOnlyAtItself(text, ProtectionPatterns, card, bareIsSelf: true))
+            if (result.HasFlag(CardEffect.Protection) && AimsOnlyAtItself(protectable, ProtectionPatterns, card, bareIsSelf: true))
             {
                 result &= ~CardEffect.Protection;
             }
@@ -1305,6 +1314,8 @@ namespace ScatoloneDownloader.Cube
                 || HeldUp(card, protectable, UmbraArmor)
                 || HeldUp(card, protectable, PhasesYourPermanentsOut)
                 || HeldUp(card, protectable, BackupGrantsAShield)
+                || HeldUp(card, protectable, ChosenShieldForYourCreatures)
+                || HeldUp(card, protectable, EnchantedCreatureComesBack)
                 || HeldUp(card, protectable, ReturnsWhatDiedThisTurn)
                 || ShieldsAnAreaStatically(protectable)
                 || AreaReturnsFromDeath.IsMatch(protectable))

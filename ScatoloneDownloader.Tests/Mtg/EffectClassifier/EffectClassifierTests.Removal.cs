@@ -669,7 +669,8 @@ public sealed partial class EffectClassifierTests
     [Theory]
     // The Removal pass of 2026-10-16, what stays out. R2: a target limited to a
     // creature type is never Removal (Rashida Scalebane, Phoenix Down, Tunnel,
-    // Word of Blasting, King Suleiman, Human Frailty, Thraben Exorcism). F1:
+    // Word of Blasting, King Suleiman, Human Frailty; Thraben Exorcism was here
+    // until 2026-11-24 and is in the theory for that ruling). F1:
     // Goblin Vandal's own creature is not a second victim (Floral Spuzzem as it
     // was). Tomb of Annihilation asks for a card or a creature, artifact or land.
     // F4/F7/F18 neighbours: Mogg Cannon and Stone Giant sentence a creature YOU
@@ -690,8 +691,6 @@ public sealed partial class EffectClassifierTests
         "{T}: Destroy target Djinn or Efreet.")]
     [InlineData("Human Frailty", "Instant",
         "Destroy target Human creature.")]
-    [InlineData("Thraben Exorcism", "Instant",
-        "Exile target Spirit, creature with disturb, or enchantment.")]
     [InlineData("Goblin Vandal", "Creature — Goblin Rogue",
         "Whenever this creature attacks and isn't blocked, you may pay {R}. If you do, destroy target "
         + "artifact defending player controls and this creature assigns no combat damage this turn.")]
@@ -935,5 +934,48 @@ public sealed partial class EffectClassifierTests
     public void Classify_TheNovember12Readings_IsNotRemoval(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
+    // Read 2026-11-24, Removal by hand: a hyphen in the type that is left out of
+    // the target or of the edict (Gelatinous Cube's non-Ooze creature, Pharika's
+    // Spawn's non-Gorgon creature).
+    [InlineData("Gelatinous Cube", "Creature — Ooze",
+        "Engulf — When this creature enters, exile target non-Ooze creature an opponent controls until this "
+        + "creature leaves the battlefield.\nDissolve — {X}{B}: Put target creature card with mana value X "
+        + "exiled with this creature into its owner's graveyard.")]
+    [InlineData("Pharika's Spawn", "Creature — Gorgon",
+        "Escape—{5}{B}, Exile three other cards from your graveyard. (You may cast this card from your "
+        + "graveyard for its escape cost.)\nThis creature escapes with two +1/+1 counters on it. When it enters "
+        + "this way, each opponent sacrifices a non-Gorgon creature of their choice.")]
+    public void Classify_TheNovember24Readings_AHyphenInTheType_IsRemoval(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
+    // Read 2026-11-24 with the hyphen of Pharika's Spawn, on the each-player
+    // edict: Anowon, the Ruin Sage, unreviewed, makes each player sacrifice a non-
+    // Vampire creature.
+    [InlineData("Anowon, the Ruin Sage", "Legendary Creature — Vampire Shaman",
+        "At the beginning of your upkeep, each player sacrifices a non-Vampire creature of their choice.")]
+    public void Classify_TheNovember24Reading_ANonTypeEdictOnEveryPlayer_IsRemoval(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Removal));
+    }
+
+    [Theory]
+    // Ruled 2026-11-24 (overturns R2 of 2026-10-16 for this card): Thraben
+    // Exorcism's list goes on past the Spirit into a plain creature with disturb
+    // and an enchantment, so it is not limited to a creature type. Removal and
+    // Disenchant by hand.
+    [InlineData("Thraben Exorcism", "Instant",
+        "Exile target Spirit, creature with disturb, or enchantment.")]
+    public void Classify_TheNovember24Ruling_AListThatContinuesIntoAnyCreature_IsRemovalAndDisenchant(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Removal));
+        Assert.True(result.HasFlag(CardEffect.Disenchant));
     }
 }

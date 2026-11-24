@@ -841,6 +841,49 @@ public sealed partial class EffectClassifierTests
     }
 
     [Theory]
+    // Ruled 2026-11-24, Pacify by hand: Labyrinth of Skophos (remove an attacking
+    // or blocking creature from combat), One with the Stars (the Aura leaves an
+    // enchantment), Threnody Singer (flash and a variable -X/-0, which overturns
+    // P1 of 2026-11-12 for a card with flash). Yuriko, Hope from the Shadows,
+    // unreviewed, is reached.
+    [InlineData("Labyrinth of Skophos", "Land",
+        "{T}: Add {C}.\n{4}, {T}: Remove target attacking or blocking creature from combat.")]
+    [InlineData("One with the Stars", "Enchantment — Aura",
+        "Enchant creature or enchantment\nEnchanted permanent is an enchantment and loses all other card "
+        + "types. (It still has its abilities, but it's no longer a creature.)")]
+    [InlineData("Threnody Singer", "Creature — Siren",
+        "Flash\nFlying\nWhen this creature enters, target creature an opponent controls gets -X/-0 until end of "
+        + "turn, where X is your devotion to blue. (Each {U} in the mana costs of permanents you control counts "
+        + "toward your devotion to blue.)")]
+    [InlineData("Yuriko, Hope from the Shadows", "Legendary Creature — Human Ninja",
+        "Flash\nWhen Yuriko enters, choose one —\n• Target creature gets -X/-0 until end of turn, where X is "
+        + "the number of cards in your graveyard.\n• Surveil 2. (Look at the top two cards of your library, then "
+        + "put any number of them into your graveyard and the rest on top of your library in any order.)")]
+    public void Classify_TheNovember24Rulings_IsPacify(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
+    }
+
+    [Theory]
+    // Ruled 2026-11-24, not Pacify: Gadrak's can't attack unless is its own price,
+    // Blessed Sanctuary's prevention covers you and your creatures, and Escaped
+    // Experiment's -X/-0 is an attack trigger with no flash.
+    [InlineData("Gadrak, the Crown-Scourge", "Legendary Creature — Dragon",
+        "Flying\nGadrak can't attack unless you control four or more artifacts.\nAt the beginning of your end "
+        + "step, create a Treasure token for each nontoken creature that died this turn. (It's an artifact with "
+        + "\"{T}, Sacrifice this token: Add one mana of any color.\")")]
+    [InlineData("Blessed Sanctuary", "Enchantment",
+        "Prevent all noncombat damage that would be dealt to you and creatures you control.\nWhenever a "
+        + "nontoken creature you control enters, create a 2/2 white Unicorn creature token.")]
+    [InlineData("Escaped Experiment", "Artifact Creature — Phyrexian Beast",
+        "Whenever this creature attacks, target creature an opponent controls gets -X/-0 until end of turn, "
+        + "where X is the number of artifacts you control.")]
+    public void Classify_TheNovember24Rulings_IsNotPacify(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
+    }
+
+    [Theory]
     // Read 2026-11-12: a creature only an opponent controls phased out saves
     // nothing of yours (Divine Smite; Sapphire Charm handed back).
     [InlineData("Divine Smite", "Instant",

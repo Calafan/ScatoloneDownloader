@@ -144,7 +144,10 @@ namespace ScatoloneDownloader.Cube
                     // DamageEqualTo no longer reads "each creature" for it).
                     Rx(@"\bexile this \w+, all creatures\b(?! you control)"
                         + @"|\ball creatures\b[^.\n]{0,40}\bphase out until this \w+ leaves the battlefield"
-                        + @"|\beach creature deals damage to itself equal to its power"),
+                        // …a qualified one too, ruled 2026-11-24: The Akroan War's
+                        // chapter III, "each TAPPED creature deals damage to itself
+                        // equal to its power" (Wipe by hand, not Removal).
+                        + @"|\beach(?: [\w-]{1,15}){0,3} creature deals damage to itself equal to its power"),
                     Rx(@"(?<!target |attacking |blocking )\bcreatures\b(?:(?! you control\b| with the same name\b)[^.\n]){0,60}? get -[\dX]+/-[1-9X]"),
                     Rx(@"\beach(?: [\w-]{1,15}){0,3} creature\b(?:(?! you control\b)[^.\n]){0,60}? gets (?:twice )?-[\dX]+/-[1-9X]"),
                     Rx(@"-1/-1 counters? on each(?: [\w-]{1,15}){0,3} creature\b(?! you control)"),
@@ -208,7 +211,11 @@ namespace ScatoloneDownloader.Cube
                     // Not an edict of PERMANENTS of the victim's choice
                     // (annihilator, 0 of the 8 reviewed; Lord Xander's "half the
                     // nonland permanents", 0 of 1): they give lands or tokens.
-                    Rx(@"(?:each opponent|target opponent|target player) sacrifices (?!(?:a|an|one|the|that|it|this)\b)[\w ]{0,20}creatures\b"
+                    // "THAT MANY creatures", as many as the Zombies you sacrificed, is
+                    // a count of two or more as well, ruled 2026-11-24 (Ravenous
+                    // Rotbelly, Wipe by hand: "each opponent sacrifices that many
+                    // creatures of their choice", Removal by hand until that day).
+                    Rx(@"(?:each opponent|target opponent|target player) sacrifices (?!(?:a|an|one|the|that(?! many)|it|this)\b)[\w ]{0,20}creatures\b"
                         + @"|each opponent sacrifices the creatures in their chosen pile"
                         + @"|chooses a creature they control and a creature they don't control\.[^\n]{0,60}\bdestroy each creature chosen this way"),
                     Rx(@"each player[^.\n]{0,120}\b(?:creatures?|permanents?)\b[^.\n]{0,120}sacrifices the rest"
@@ -414,7 +421,10 @@ namespace ScatoloneDownloader.Cube
                     // The exile filler may not cross a CARD: "exile target card
                     // from a graveyard and put an oil counter on this creature"
                     // (Armored Scrapgorger) found its creature at the far end.
-                    Rx(@"exile target(?:(?! cards?\b)[\w ])*(?<!non)creature"),
+                    // A hyphen may stand in the list, 2026-11-24: Gelatinous Cube's
+                    // "exile target NON-OOZE creature an opponent controls" (Removal
+                    // by hand); the "non" keeps its hyphen when it is not a creature.
+                    Rx(@"exile target(?:(?! cards?\b)[\w -])*(?<!non)(?<!non-)creature"),
                     Rx(@"destroy target[\w ]*((?<!non)creature|planeswalker)"),
                     // A type list that closes on the planeswalker, and any number
                     // of them, read 2026-11-12: Fracture's "destroy target
@@ -603,8 +613,11 @@ namespace ScatoloneDownloader.Cube
                     // 2026-09-27 — Jecht's "each opponent sacrifices two
                     // creatures", Rush of Dread's half and Make an Example's pile
                     // (read here 2026-10-16 and 2026-11-05) left this table.
-                    Rx(@"(?:target player|target opponent|each opponent|(?<!unless )defending player)[\w ,]{0,30}(?:sacrifices?|exiles?) (?:a|an|one)[\w ]{0,25}(?<!non)creature"
-                        + @"|each player sacrifices (?:a|an|one|the) [\w ]{0,25}(?<!non)creature"
+                    // A hyphen may stand in the type, 2026-11-24: Pharika's Spawn's
+                    // "each opponent sacrifices a NON-GORGON creature of their choice"
+                    // (Removal by hand).
+                    Rx(@"(?:target player|target opponent|each opponent|(?<!unless )defending player)[\w ,]{0,30}(?:sacrifices?|exiles?) (?:a|an|one)[\w -]{0,25}(?<!non)(?<!non-)creature"
+                        + @"|each player sacrifices (?:a|an|one|the) [\w -]{0,25}(?<!non)(?<!non-)creature"
                         + @"|(?:each|target) opponent chooses (?:a|an|one) [\w ,-]{0,30}creature they control and (?:exiles|sacrifices) it"
                         + @"|villainous choice — that player sacrifices a [\w ]{0,25}(?<!non)creature"
                         + @"|loses? [\dX]+ life unless they sacrifice a (?:nontoken )?creature\b(?!,)"
@@ -766,7 +779,11 @@ namespace ScatoloneDownloader.Cube
                     Rx(@"\bchoose target spell\b[\s\S]{0,250}?\bcounter (?:that|the chosen) spell\b"),
                     Rx(@"\bexile (?:up to one |any number of )?target spells?\b|\btarget spell's controller exiles it\b"),
                     Rx(@"\bowner of target spell\b[^.\n]{0,60}\bputs it\b"
-                        + @"|\bchoose target spell\b[^.\n]{0,60}\.\s*its owner puts it\b"),
+                        // …chosen as "up to one target creature spell or planeswalker
+                        // spell", ruled Counter and not Bounce 2026-11-24 (Subtlety):
+                        // only spells are aimed at, which is a counter of them.
+                        + @"|\bchoose target spell\b[^.\n]{0,60}\.\s*its owner puts it\b"
+                        + @"|\bchoose up to one target [\w ]{0,50}spell\.\s*its owner puts it\b"),
                     Rx(@"(?<!\bto )\bairbend [^.\n]{0,40}\bspells?\b")]),
 
                 // Defined 2026-11-09 from Redirect ("You may choose new targets for
@@ -941,7 +958,9 @@ namespace ScatoloneDownloader.Cube
                     // this (Omen of Fire, 2026-09-28).
                     // A hyphen and "+1/+1" may stand in the list, 2026-10-14
                     // (Jin-Gitaxias's "all non-Phyrexian creatures", Wave Goodbye).
-                    Rx(@"return (?:each|all|every)(?! (?:lands|islands|plains|swamps|mountains|forests)\b)[\w ,'+/-]*to (?:its|their) owner(?:'s|s'|s)? hands?"
+                    // HALF of a player's creatures is a mass return like all of them,
+                    // ruled 2026-11-24 (Split the Party, Bounce by hand).
+                    Rx(@"return (?:each|all|every|half(?: of)?)(?! (?:lands|islands|plains|swamps|mountains|forests)\b)[\w ,'+/-]*to (?:its|their) owner(?:'s|s'|s)? hands?"
                         // Hurkyl's Recall names the owner as the TARGET instead.
                         + @"|return all [\w ]{0,30}target player owns to their hand"),
                     // The owner's choice of TOP OR BOTTOM of the library is the
@@ -974,15 +993,37 @@ namespace ScatoloneDownloader.Cube
                     // creature" (Dovin's Dismissal). A land alone stays out
                     // (Uproot, Rootrunner: LandDestruction), and so does a card
                     // from a graveyard (Noxious Revival).
+                    // A few cards BENEATH the top is the same near-top placement,
+                    // ruled 2026-11-24 (Underdark Rift, Bounce by hand: "into its
+                    // owner's library just beneath the top X cards"); Quarry Colossus
+                    // and Unexpectedly Absent, unreviewed, come with it.
                     Rx(@"put (?:up to \w+ )?target (?:[\w,]+ ){0,5}?(?:creature|permanent|artifact|enchantment|planeswalker)"
                         + @"(?: or land)?(?: an opponent controls)? on top of its owner's library"
                         // FOURTH joined 2026-10-14 (Lost to Legend).
-                        + @"|\btarget [^.\n]{0,60}\binto (?:their|its owner's) library (?:second|third|fourth) from the top"),
+                        + @"|\btarget [^.\n]{0,60}\binto (?:their|its owner's) library (?:(?:second|third|fourth) from the top|just beneath the top)"),
                     // Creatures the OPPONENTS chose, returned (Summon: Valefor),
                     // and the permanent a target opponent chooses (Teferi,
                     // Temporal Pilgrim's -12, 2026-10-14).
+                    // Ruled 2026-11-24: the creature of a CHOSEN player, "Choose a
+                    // player. They return a creature they control" (Multiple Choice,
+                    // Bounce by hand); and the creature a punisher gives back
+                    // UNLESS its controller pays the price, "return that creature to
+                    // its owner's hand unless its controller has you draw a card"
+                    // (Decoy Gambit, Bounce by hand). The edict-bounce on EVERY
+                    // player, or on whoever's upkeep it is, stays unproposed (Curfew,
+                    // Sunken Hope, Umbilicus: a question, 0 reviewed).
                     Rx(@"return those (?:creatures|permanents) to their owners' hands"
-                        + @"|chooses an? [\w ]{0,20}(?:permanent|creature) they control and returns it to its owner's hand"),
+                        + @"|chooses an? [\w ]{0,20}(?:permanent|creature) they control and returns it to its owner's hand"
+                        + @"|choose a player\. they return an? [\w ]{0,20}(?:permanent|creature) they control to its owner's hand"
+                        + @"|return that (?:creature|permanent) to its owner's hand unless"),
+                    // A creature exiled with TIME COUNTERS and given suspend comes
+                    // back to its owner within turns, ruled 2026-11-24 (Suspend,
+                    // Bounce by hand, not Removal): "exile target creature and put two
+                    // time counters on it", and Sinister Concierge's "exile UP TO ONE
+                    // target creature and put three time counters" with it, ruled the
+                    // same day ("Concierge Bounce", Removal by hand until then). See
+                    // ExileWithTimeCounters.
+                    Rx(@"exile (?:up to one )?target (?:creature|nonland permanent) and put \w+ time counters on it"),
                     // Ruled 2026-09-29. AIRBEND aimed where an opponent's permanent
                     // can be is this tag ("airbend sull'opponent è bounce"):
                     // Airbending Lesson, Glider Staff, Aang, the Last Airbender,

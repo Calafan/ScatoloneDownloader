@@ -138,9 +138,9 @@
 
             [CardEffect.Pacify] =
                 "Neutralises somebody else's creature without killing it: tapped, stunned, phased out, kept from "
-                + "untapping, can't attack or block, base power 0, a -N/-0 that lasts or -5/-0 on an instant, or "
-                + "the damage it DEALS "
-                + "prevented. Not a bare tap on your own turn, a LAND that won't untap, an artifact tap, or a "
+                + "untapping, can't attack or block, base power 0, a -N/-0 that lasts, -5/-0 on an instant or -X/-0 with flash, "
+                + "or the damage it DEALS "
+                + "prevented. Not a bare tap on your turn, a LAND that won't untap, an artifact tap, or a "
                 + "price the card pays.",
 
             [CardEffect.LandDestruction] =

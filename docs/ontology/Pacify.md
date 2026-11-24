@@ -247,7 +247,8 @@ Ruled 2026-11-12 (P1, "Instant e -5 o più"): an INSTANT's "-N/-0 until end of t
 N of 5 or more, is this tag, overturning "Pacify solo se dura" of 2026-10-13 for that shape. Twisted
 Reflection's -6 mode, tagged by hand, and Shrink's -5, untagged before and handed back; Disorient,
 Hydrosurge, Icy Reception and Protect // Serve follow among the unreviewed. Under 5 stays a trick (12
-reviewed instants untagged: Deceive the Messenger, Desperate Parry …), and so does a variable X.
+reviewed instants untagged: Deceive the Messenger, Desperate Parry …), and so did a variable X until
+2026-11-24 (last paragraph below).
 Ivory Charm keeps the tag by its other mode, "Tap target creature" on an instant (2026-10-27), not by
 its "-2/-0"; Code of Constraint keeps it by the tap that does not untap.
 
@@ -258,3 +259,21 @@ tap's speed of 2026-10-27: not on a sorcery (Morningtide's Light) nor on an atta
 Mighty Thor, Jane Foster). A flicker that returns the card untapped stays out (Parting Gust, Phelia),
 and so does a return under YOUR control (Vindictive Triumph, a theft for the turn) or of your own
 (Golden Argosy's crew, Gandalf, Shadow's Foe's lands).
+
+Ruled 2026-11-24 (Q8, Threnody Singer): "Pacify, il flash vale istantaneo". A variable "-X/-0 until
+end of turn" on one creature of theirs, from a card with FLASH, is this tag whatever the creature
+is: Threnody Singer ("gets -X/-0 … where X is your devotion to blue"), Pacify by hand. It overturns
+P1 of 2026-11-12 for that shape, which left a variable X out. Yuriko, Hope from the Shadows, with
+flash, is reached (unreviewed). Escaped Experiment's attack trigger has no flash and stays out.
+
+Ruled 2026-11-24, one reviewed card each, Pacify by hand and never proposed: a creature taken OUT OF
+COMBAT ("remove target attacking or blocking creature from combat", Labyrinth of Skophos; Hollowhenge
+Spirit and Balduvian Warlord, unreviewed, follow), and an Aura that makes the creature an
+enchantment and takes its other types (One with the Stars, like Swift Reconfiguration's Vehicle).
+
+Ruled 2026-11-24, not this tag: a "can't attack unless" about the card ITSELF is its own price, like
+the "can't attack or block unless" of 2026-10-16 (Gadrak, the Crown-Scourge, ManaFixing alone by
+hand; Zhou Yu, Chief Commander, unreviewed, loses the tag with it); and a prevention for "you and
+creatures you control" is not the player alone (Blessed Sanctuary, Tokens alone by hand; The Wanderer
+and Gideon's Intervention, unreviewed, lose it). Protection keeps the old reading of that phrase, which
+is what holds a fog spell for you and yours out of it (Eerie Interference).

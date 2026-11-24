@@ -135,4 +135,21 @@ public sealed partial class EffectClassifierTests
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Counter));
     }
+
+    [Theory]
+    // Ruled 2026-11-24: Subtlety aims only at spells (up to one target creature
+    // spell or planeswalker spell) and its owner puts it back in the library, a
+    // counter (Counter by hand). Aether Gust can aim at a permanent and stays
+    // Bounce as well.
+    [InlineData("Subtlety", "Creature — Elemental Incarnation",
+        "Flash\nFlying\nWhen this creature enters, choose up to one target creature spell or planeswalker "
+        + "spell. Its owner puts it on their choice of the top or bottom of their library.\nEvoke—Exile a blue "
+        + "card from your hand.")]
+    public void Classify_TheNovember24Ruling_ASpellPutBackInTheLibrary_IsCounterNotBounce(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Counter));
+        Assert.False(result.HasFlag(CardEffect.Bounce));
+    }
 }

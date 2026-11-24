@@ -242,12 +242,25 @@ namespace ScatoloneDownloader.Cube
         // -6, tagged by hand, and Shrink's -5, untagged before and handed back;
         // Disorient, Hydrosurge, Icy Reception and Protect // Serve follow
         // among the unreviewed. Under 5 stays a trick (Deceive the Messenger,
-        // Desperate Parry, 12 reviewed instants untagged), and so does a
-        // variable X (Silvergill Douser's is an activation, read elsewhere).
+        // Desperate Parry, 12 reviewed instants untagged). A variable X on an
+        // INSTANT stayed out with it until 2026-11-24 (see below). Silvergill
+        // Douser's is an activation, read elsewhere.
         // Asked of the card in EffectClassifier.Classify, which checks it is
         // an instant.
         private static readonly Regex BigShrinkOnAnInstant = Rx(
             @"target creature(?! you control)[^.\n]{0,40} gets? -(?:[5-9]|[1-9]\d)/-0 until end of turn");
+
+        // A variable -X/-0 from a card with FLASH is Pacify, ruled 2026-11-24
+        // ("Pacify, il flash vale istantaneo"), which overturns P1 of
+        // 2026-11-12 for this shape: Threnody Singer's "target creature an
+        // opponent controls gets -X/-0 until end of turn, where X is your
+        // devotion to blue" (Pacify by hand, 1 of 1 reviewed). The flash is
+        // what lets it be cast on their attack, so it is asked of any card that
+        // can be cast in response, a creature included. Yuriko, Hope from the
+        // Shadows is reached, unreviewed. Escaped Experiment, an attack trigger
+        // with no flash, stays out.
+        private static readonly Regex VariableShrinkAtFlashSpeed = Rx(
+            @"target creature(?! you control)[^.\n]{0,40} gets? -X/-0 until end of turn");
 
         // A blink that puts the target back TAPPED is a tap, Pacify, ruled
         // 2026-11-12 (P2, "Torna tappato = Pacify"): Disorder in the Court and
@@ -393,8 +406,7 @@ namespace ScatoloneDownloader.Cube
         // (7 of the 9 reviewed cards were untagged: the Walls, King Suleiman's
         // Djinn or Efreet, Knight of the Mists; the same spirit as the tribal
         // rulings of 10-15). The subtype is the capitalised noun after "target"
-        // — "target Human creature" (Human Frailty), "target Spirit, creature
-        // with disturb, or enchantment" (Thraben Exorcism) — which is why this
+        // — "target Human creature" (Human Frailty) — which is why this
         // one pattern is CASE-SENSITIVE; "target non-Human creature" and
         // "target nonWall creature" begin in lower case and stay broad. Blanked
         // and the card asked again, so Chaos Charm keeps its damage mode. A
@@ -409,9 +421,15 @@ namespace ScatoloneDownloader.Cube
         // the tribal rulings: Ayula, Queen Among Bears' "Target Bear you control
         // fights target creature you don't control", untagged by hand, the one
         // reviewed card written so.
+        // A type that the list continues past into a plain CREATURE is not a
+        // limit, ruled 2026-11-24 (Thraben Exorcism, Removal and Disenchant by
+        // hand: "exile target Spirit, creature with disturb, or enchantment"
+        // can be any creature with disturb, so it answers their board). The
+        // 2026-10-16 reading had put it among the type-limited ones; a list that
+        // ends on the type ("target Spirit or Dragon creature") still is.
         private static readonly Regex TargetLimitedToACreatureType = new(
             @"(?:[Dd]estroy|[Ee]xile|deals? [\dX]+ damage to) target (?:(?:attacking|blocking|tapped|untapped|other|another)(?: or)? )*"
-            + @"(?>[A-Z][a-z]+(?:,? (?:or )?[A-Z][a-z]+)*)(?! and target)"
+            + @"(?>[A-Z][a-z]+(?:,? (?:or )?[A-Z][a-z]+)*)(?! and target)(?!(?:,| or)(?: or)? creature\b)"
             + @"|[Tt]arget (?:[A-Z][a-z]+ )+you control fights\b",
             RegexOptions.CultureInvariant);
 
@@ -433,6 +451,17 @@ namespace ScatoloneDownloader.Cube
         // Removal — 23 reviewed, none tagged Pacify.
         private static readonly Regex ExileEndsWithTheSaga = Rx(
             @"exile (?:up to one )?(?:other )?target [^.\n]{0,40}creature[^.\n]{0,40}until this saga leaves the battlefield");
+
+        // An exile with TIME COUNTERS, "exile target creature and put two time
+        // counters on it. If it doesn't have suspend, it gains suspend", is
+        // Bounce and not Removal, ruled 2026-11-24 (Suspend, Bounce by hand): the
+        // owner casts it again for free when the last counter comes off. Sinister
+        // Concierge's "exile UP TO ONE target creature and put three time counters
+        // on it" goes with it, ruled the same day ("Concierge Bounce", Removal by
+        // hand since 2026-10-11); the two are the only cards worded so.
+        // Blanked and the card asked again, so a card that does more keeps the tag.
+        private static readonly Regex ExileWithTimeCounters = Rx(
+            @"exile (?:up to one )?target (?:creature|nonland permanent) and put \w+ time counters on it");
 
         // It comes back: a blink is not an answer.
         private static readonly Regex ReturnsItToPlay = Rx(
@@ -485,7 +514,9 @@ namespace ScatoloneDownloader.Cube
             + @"|the creature an opponent controls)"
             // Not EACH creature hitting itself, a board (Solar Blaze, Wipe
             // alone by hand, read 2026-11-12 in the Wipe table).
-            + @"|(?<!\beach creature )deals? damage to (?:itself|any (?:other )?target|that creature(?!'s)"
+            // …whatever qualifies the creature, ruled 2026-11-24: The Akroan War's
+            // "each TAPPED creature deals damage to itself" (Wipe alone by hand).
+            + @"|(?<!\beach(?: [\w-]{1,15}){0,3} creature )deals? damage to (?:itself|any (?:other )?target|that creature(?!'s)"
             + @"|target[\w ,'-]{0,30}creature(?: or planeswalker)?) equal to");
 
         // A shrink is an answer: a creature whose toughness reaches zero dies just
@@ -1376,7 +1407,16 @@ namespace ScatoloneDownloader.Cube
             // or a permanent you control becomes the target of a spell or
             // ability an opponent controls, counter that spell or ability unless
             // that player pays 4 life" (1 of 1 reviewed, tagged).
-            + @"|^whenever (?:you or )?(?:a|another) (?:permanent|creature) you control becomes the target of a spell or ability an opponent controls, counter that spell or ability",
+            + @"|^whenever (?:you or )?(?:a|another) (?:permanent|creature) you control becomes the target of a spell or ability an opponent controls, counter that spell or ability"
+            // …and a TAX on the spells that target them, ward by another name,
+            // ruled 2026-11-24 (Callaphe, Beloved of the Sea: "Creatures and
+            // enchantments you control have 'Spells your opponents cast that
+            // target this permanent cost {1} more to cast'", Protection by
+            // hand). Only over a GROUP of yours: the one creature taxing spells
+            // aimed at ITSELF (Charix, Boreal Elemental, Pursued Whale, 0 of 3
+            // reviewed tagged) and the tax on "one or more commanders" (Esior)
+            // stay out. Jubilant Skybonder, flyers only, is reached.
+            + @"|^(?:(?:creatures|permanents|artifacts|enchantments)(?: and )?)+ you control(?: with \w+)? have ""spells your opponents cast that target this (?:creature|permanent) cost \{\d+\} more to cast",
             RegexOptions.Multiline);
 
         // A RETURN FROM DEATH over an area of your creatures is the static shield
@@ -1472,6 +1512,27 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex BackupGrantsAShield = Rx(
             @"\bbackup \d+\b[^\n]*\n(?:hexproof|indestructible|shroud|ward\b|protection from)");
 
+        // A shield CHOSEN, then handed to the creatures you control: Linvala,
+        // Shield of Sea Gate's "Sacrifice Linvala: Choose hexproof or
+        // indestructible. Creatures you control gain that ability until end of
+        // turn" (Protection by hand, ruled 2026-11-24, 1 of 1; no other card
+        // words it so). The keyword and its beneficiary sit in two sentences,
+        // so the keyword gate cannot see the second.
+        private static readonly Regex ChosenShieldForYourCreatures = Rx(
+            @"\bchoose (?:hexproof|indestructible|shroud)(?:,? (?:or )?(?:hexproof|indestructible|shroud))+\.\s*creatures you control gain that ability");
+
+        // An Aura with FLASH that brings its creature back when it dies is held
+        // up like a save in response, ruled 2026-11-24 (Minion's Return,
+        // Reanimate and Protection by hand: "Flash. Enchant creature. When
+        // enchanted creature dies, return that card to the battlefield under
+        // your control"). The same Aura at sorcery speed is Reanimate alone
+        // (False Demise, Necrogen Communion, Unholy Indenture): WithoutAWornShield
+        // blanks it unless the card has flash. Asked "under YOUR control": a
+        // return under its owner's (Fungal Fortitude, Ferocity of the Hunt)
+        // is the creature's own, a Buff.
+        private static readonly Regex EnchantedCreatureComesBack = Rx(
+            @"when enchanted creature dies, return (?:that card|it) to the battlefield under your control");
+
         // A permanent that died THIS TURN brought back from your graveyard is a
         // save after the fact, when it can be held up (Samwise the Stouthearted's
         // flash, Gerrard's Hourglass Pendant's activation; 2026-10-14). Moira,
@@ -1559,7 +1620,13 @@ namespace ScatoloneDownloader.Cube
             + @"(?:(?!to (?:its|their) owners?'?s? hands?|don'?t control|opponents? controls?)[^.\n]){0,60}to (?:its|their) owners?'?s? hands?"
             + @"|\breturn target (?:island|swamp|mountain|forest|plains|land)\b[^.\n]*"
             + @"|\breturn (?:target|all|each other) cards? exiled with[^.\n]*"
-            + @"|\breturn (?:(?!battlefield)[^.\n]){0,50}?\bcards? (?:from|in) [^.\n]{0,30}?graveyards?[^.\n]{0,20}?to (?:its|their) owners?'?s? hands?");
+            + @"|\breturn (?:(?!battlefield)[^.\n]){0,50}?\bcards? (?:from|in) [^.\n]{0,30}?graveyards?[^.\n]{0,20}?to (?:its|their) owners?'?s? hands?"
+            // …and a SPELL the owner puts back in the library is a counter, ruled
+            // 2026-11-24 (Subtlety, Counter by hand): "choose up to one target
+            // creature spell or planeswalker spell. Its owner puts it on their
+            // choice of the top or bottom". Aether Gust's "target spell or
+            // PERMANENT that's red or green" can be a permanent and stays Bounce.
+            + @"|\bchoose up to one target [\w ]{0,50}spell\.\s*its owner puts it[^.\n]*");
 
         // The lines a Protection effect can be held up from without being an
         // instant or having flash: an ACTIVATED ability, a card turned FACE UP
@@ -1673,8 +1740,11 @@ namespace ScatoloneDownloader.Cube
             + @"|target (?![^.\n]{0,60}\byou control\b)[^.\n]{0,60}loses all abilities until your next turn"
             // The abilities may stay: Swift Reconfiguration's Vehicle "loses
             // all other card types" and is no creature until crewed (Pacify by
-            // hand, read 2026-10-30, 2 of 2 with Sugar Coat).
-            + @"|^enchanted (?:creature|permanent) is an? [^\n]{0,60}artifact\b[^\n]{0,200}loses all other card types"
+            // hand, read 2026-10-30, 2 of 2 with Sugar Coat), and the same Aura
+            // turning it into an ENCHANTMENT, ruled 2026-11-24 (One with the
+            // Stars, Pacify by hand: "Enchanted permanent is an enchantment and
+            // loses all other card types"; no other Aura says it).
+            + @"|^enchanted (?:creature|permanent) is an? [^\n]{0,60}(?:artifact|enchantment)\b[^\n]{0,200}loses all other card types"
             + @"|attacking creatures get -"
             + @"|(?<!(?:under your control|you control enchanted creature)[\s\S]*)"
             + @"(?:gets? -[\dX]+/-0 and loses all abilities|^enchanted creature gets -[\dX]+/-0)"
@@ -1737,6 +1807,20 @@ namespace ScatoloneDownloader.Cube
         // Protection as well (Ultimate Magic: Holy).
         private static readonly Regex PreventsDamageToYouAlone = Rx(
             @"prevent (?:all|the next)[\w \d]{0,25}damage that would be dealt to you");
+
+        // …but a prevention for "you AND CREATURES you control" is not a lock on
+        // anybody, ruled 2026-11-24 (Blessed Sanctuary, Tokens alone by hand:
+        // "Prevent all noncombat damage that would be dealt to you and creatures
+        // you control"), and being static it is not Protection either. So the
+        // Pacify table reads this narrower pattern; Protection keeps the one
+        // above, which is what holds a Fog spell for you and yours out of it
+        // (Eerie Interference, untagged). The Wanderer and Gideon's
+        // Intervention, unreviewed, say it the same way and lose Pacify.
+        // Rejected 2026-11-24: narrowing PreventsDamageToYouAlone itself, which
+        // moved 5 cards onto Protection (Eerie Interference, reviewed untagged,
+        // Safe Passage, Endure, Channel Harm, Divine Deflection).
+        private static readonly Regex PreventsDamageToThePlayerAlone = Rx(
+            PreventsDamageToYouAlone + @"(?! and(?:/or)? (?:other )?(?:creatures|permanents)\b)");
 
         // Nobody untaps at all, which is the mass version of the untap lock and
         // says neither "doesn't" nor "don't" (Stasis, Sands of Time).
@@ -1844,10 +1928,15 @@ namespace ScatoloneDownloader.Cube
             // creature, or land".
             Rx(@"\btap or untap target[\w ,'-]{0,35}(?:creature|permanent|land)"),
             Rx(@"detain"),
+            // A creature taken OUT OF COMBAT stops mattering for that combat, ruled
+            // 2026-11-24 (Labyrinth of Skophos, Pacify by hand, 1 of 1 reviewed:
+            // "{4}, {T}: Remove target attacking or blocking creature from
+            // combat"). Balduvian Warlord, unreviewed, is reached.
+            Rx(@"remove target (?:attacking|blocking)(?: or blocking)? creature from combat"),
             NeutralisesWithoutKilling,
             PhasesSomethingOut,
             PhasesTheirsOut,
-            PreventsDamageToYouAlone,
+            PreventsDamageToThePlayerAlone,
             NobodyUntaps,
             PreventsWhatACreatureDeals,
             // A STUN COUNTER is an untap lock that travels with the creature,
@@ -1987,7 +2076,10 @@ namespace ScatoloneDownloader.Cube
         // another forty characters before the verb. Six reviewed cards say it
         // (Hazoret Godseeker, Ketramose, Sab-Sunen, Patchwork Beastie,
         // Tiger-Dillo, The Lion-Turtle) and none is tagged.
-        private static readonly Regex CantAttackOrBlockUnless = Rx(@"can'?t attack or block unless");
+        // "Can't ATTACK unless" alone is the same price, read 2026-11-24: Gadrak,
+        // the Crown-Scourge's "can't attack unless you control four or more
+        // artifacts" (ManaFixing alone by hand, ruled a self restriction).
+        private static readonly Regex CantAttackOrBlockUnless = Rx(@"can'?t attack(?: or block)? unless");
 
         // Tapping a creature YOU control is a cost — Energy Tap and Arena buy
         // something with it. Same question as everywhere else: whose creature?

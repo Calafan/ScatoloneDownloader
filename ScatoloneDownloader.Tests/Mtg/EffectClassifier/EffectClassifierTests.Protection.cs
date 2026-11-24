@@ -1029,4 +1029,72 @@ public sealed partial class EffectClassifierTests
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
     }
+
+    [Theory]
+    // Ruled 2026-11-24, Protection by hand: Linvala's chosen hexproof or
+    // indestructible for your creatures, Minion's Return (an Aura with flash that
+    // returns the creature), and Callaphe's tax on spells that target your
+    // creatures and enchantments, ward by another name. Jubilant Skybonder, flyers
+    // only, is reached.
+    [InlineData("Linvala, Shield of Sea Gate", "Legendary Creature — Angel Wizard",
+        "Flying\nAt the beginning of combat on your turn, if you have a full party, choose target nonland "
+        + "permanent an opponent controls. Until your next turn, it can't attack or block, and its activated "
+        + "abilities can't be activated.\nSacrifice Linvala: Choose hexproof or indestructible. Creatures you "
+        + "control gain that ability until end of turn.")]
+    [InlineData("Minion's Return", "Enchantment — Aura",
+        "Flash\nEnchant creature\nWhen enchanted creature dies, return that card to the battlefield under your "
+        + "control.")]
+    [InlineData("Callaphe, Beloved of the Sea", "Legendary Enchantment Creature — Demigod",
+        "Callaphe's power is equal to your devotion to blue. (Each {U} in the mana costs of permanents you "
+        + "control counts toward your devotion to blue.)\nCreatures and enchantments you control have \"Spells "
+        + "your opponents cast that target this permanent cost {1} more to cast.\"")]
+    [InlineData("Jubilant Skybonder", "Creature — Human Wizard",
+        "Flying\nCreatures you control with flying have \"Spells your opponents cast that target this creature "
+        + "cost {2} more to cast.\"")]
+    public void Classify_TheNovember24Rulings_IsProtection(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
+    }
+
+    [Theory]
+    // Ruled 2026-11-24, untagged: a shield on the HOST of an Aura is fixed at the
+    // attachment, not chosen in response (Bronzehide Lion's Aura, like every
+    // Aura's creature); the same Aura without flash is Reanimate alone (False
+    // Demise, Necrogen Communion, Unholy Indenture) and a return under its owner's
+    // control is a Buff (Fungal Fortitude); and a tax on spells aimed at ONE
+    // creature is a price (Charix, Boreal Elemental, Pursued Whale, Esior's
+    // commanders).
+    [InlineData("Bronzehide Lion", "Creature — Cat",
+        "{G}{W}: This creature gains indestructible until end of turn.\nWhen this creature dies, return it to "
+        + "the battlefield. It's an Aura enchantment with enchant creature you control and \"{G}{W}: Enchanted "
+        + "creature gains indestructible until end of turn,\" and it loses all other abilities.")]
+    [InlineData("False Demise", "Enchantment — Aura",
+        "Enchant creature\nWhen enchanted creature dies, return that card to the battlefield under your "
+        + "control.")]
+    [InlineData("Necrogen Communion", "Enchantment — Aura",
+        "Enchant creature you control\nEnchanted creature has toxic 2. (Players dealt combat damage by it also "
+        + "get two poison counters.)\nWhen enchanted creature dies, return that card to the battlefield under "
+        + "your control.")]
+    [InlineData("Unholy Indenture", "Enchantment — Aura",
+        "Enchant creature\nWhen enchanted creature dies, return that card to the battlefield under your "
+        + "control with a +1/+1 counter on it.")]
+    [InlineData("Fungal Fortitude", "Enchantment — Aura",
+        "Flash\nEnchant creature\nEnchanted creature gets +2/+0.\nWhen enchanted creature dies, return it to the "
+        + "battlefield tapped under its owner's control.")]
+    [InlineData("Charix, the Raging Isle", "Legendary Creature — Leviathan Crab",
+        "Spells your opponents cast that target Charix cost {2} more to cast.\n{3}: Charix gets +X/-X until "
+        + "end of turn, where X is the number of Islands you control.")]
+    [InlineData("Boreal Elemental", "Creature — Elemental",
+        "Flying\nSpells your opponents cast that target this creature cost {2} more to cast.")]
+    [InlineData("Pursued Whale", "Creature — Whale",
+        "When this creature enters, each opponent creates a 1/1 red Pirate creature token with \"This token "
+        + "can't block\" and \"Creatures you control attack each combat if able.\"\nSpells your opponents cast that "
+        + "target this creature cost {3} more to cast.")]
+    [InlineData("Esior, Wardwing Familiar", "Legendary Creature — Bird",
+        "Flying\nSpells your opponents cast that target one or more commanders you control cost {3} more to "
+        + "cast.\nPartner (You can have two commanders if both have partner.)")]
+    public void Classify_TheNovember24Rulings_IsNotProtection(string name, string typeLine, string oracle)
+    {
+        Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Protection));
+    }
 }

@@ -160,3 +160,11 @@ a comma before the board (Sphere of Annihilation's "exile this artifact, all cre
 planeswalkers with mana value …"), every creature phased out for as long as the card stays (Out of
 Time, the O-ring phasing of Removal.md over the whole board), and every creature dealing its power
 to itself (Solar Blaze, no longer Removal; Wave of Reckoning unreviewed).
+
+Ruled 2026-11-24, Wipe by hand: every creature of a KIND dealing its power to itself (The Akroan
+War's chapter III, "each tapped creature deals damage to itself equal to its power", which was
+Removal), and "each opponent sacrifices THAT MANY creatures" (Ravenous Rotbelly, "you may sacrifice
+up to three Zombies. When you sacrifice one or more Zombies this way, each opponent sacrifices that
+many creatures of their choice": "possiamo mettere Wipe", -Removal +Wipe). The tribe named in the
+COST is the creatures you sacrifice, not the ones they lose, so the one-creature-type exclusion does
+not apply to it.

@@ -76,3 +76,25 @@ them, and keeps what either reading earns ("cleave pagato, ogni tag"). Alchemist
 Rejection's "[Wolf or Werewolf] creature" is an Unsummon. Wash Away, the one reviewed cleave card
 with a tag, was already Counter by hand for its cleaved reading. It moves other tags too: Fierce
 Retribution and Parasitic Grasp +Removal, Dig Up +Tutor (and ManaFixing printed).
+
+Ruled 2026-11-24, Bounce by hand on each reviewed card and never proposed: a permanent put into its
+owner's library JUST BENEATH THE TOP X cards, the near-top placement of "second or third from the
+top" (Underdark Rift; Quarry Colossus and Unexpectedly Absent, unreviewed, follow); HALF of a
+player's creatures returned (Split the Party, like "return all"); a creature returned "unless its
+controller" pays the price, a punisher (Decoy Gambit: "unless its controller has you draw a card");
+and the creature a CHOSEN player returns (Multiple Choice: "choose a player. They return a creature
+they control to its owner's hand"). The same return on EVERY player, or on the one whose upkeep it
+is, stays unproposed (Curfew, Sunken Hope, Umbilicus, Words of Wind, Blizzard Specter, Blood Clock:
+none reviewed, a question).
+
+Ruled 2026-11-24 (Suspend): "exile target creature and put two time counters on it", which gives it
+suspend, is Bounce and not Removal: its owner casts it again for free when the last counter comes
+off. Sinister Concierge's "exile up to one target creature and put three time counters on it", the
+same effect on a death trigger and Removal by hand since 2026-10-11, goes with it, ruled the same
+day ("Concierge Bounce"): the owner plays it again from exile, as the definition above says. The
+two are the only cards in the pool worded so.
+
+Ruled 2026-11-24 (Subtlety): "choose up to one target creature spell or planeswalker spell. Its owner
+puts it on their choice of the top or bottom of their library" aims only at SPELLS and is Counter,
+not Bounce (Counter.md). Aether Gust, "spell or permanent that's red or green", can be a permanent
+and stays both.

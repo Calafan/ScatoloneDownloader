@@ -66,3 +66,6 @@ Dust, Unforge, Witchbane Orb ("destroy all Curses attached to you").
 
 Read 2026-11-12: a target permanent destroyed when it turns out to be an artifact (Topple the
 Statue's "Tap target permanent. If it's an artifact, destroy it", Disenchant and Pacify by hand).
+
+Ruled 2026-11-24: the noun may follow TWO items, "exile target Spirit, creature with disturb, or
+enchantment" (Thraben Exorcism, Removal and Disenchant by hand, 1 of 1; no other card words it so).

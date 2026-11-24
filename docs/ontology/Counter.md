@@ -47,3 +47,8 @@ ability your opponents control, counter it" (Whirlwind Denial).
 
 Read 2026-11-12: a LOYALTY ability is an activated one (Verdant Command's "counter target loyalty
 ability of a planeswalker", 1 of 1).
+
+Ruled 2026-11-24: a spell the owner puts back in the library is a counter, chosen as "up to one
+target creature spell or planeswalker spell" (Subtlety, Counter by hand, no longer Bounce): only
+spells are aimed at, which is the definition. Aether Gust, aimed at a spell OR a permanent, keeps
+both tags.

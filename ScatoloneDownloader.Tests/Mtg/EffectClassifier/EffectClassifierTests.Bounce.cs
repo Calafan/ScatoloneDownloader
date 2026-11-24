@@ -310,4 +310,58 @@ public sealed partial class EffectClassifierTests
         Assert.True(result.HasFlag(CardEffect.Bounce));
         Assert.False(result.HasFlag(CardEffect.RemovePermanent));
     }
+
+    [Theory]
+    // Ruled and read 2026-11-24, Bounce by hand on each reviewed card: Underdark
+    // Rift (into its owner's library just beneath the top X cards, so Quarry
+    // Colossus and Unexpectedly Absent, unreviewed, come with it), Split the Party
+    // (half the creatures a player controls), Decoy Gambit (returned unless its
+    // controller pays the price), Multiple Choice (a chosen player returns a
+    // creature they control).
+    [InlineData("Underdark Rift", "Land",
+        "{T}: Add {C}.\n{5}, {T}, Exile this land: Roll a d10. Put target artifact, creature, or planeswalker "
+        + "into its owner's library just beneath the top X cards of that library, where X is the result. "
+        + "Activate only as a sorcery.")]
+    [InlineData("Quarry Colossus", "Creature — Giant",
+        "When this creature enters, put target creature into its owner's library just beneath the top X cards "
+        + "of that library, where X is the number of Plains you control.")]
+    [InlineData("Unexpectedly Absent", "Instant",
+        "Put target nonland permanent into its owner's library just beneath the top X cards of that library.")]
+    [InlineData("Split the Party", "Sorcery",
+        "Choose target player. Return half the creatures they control to their owner's hand, rounded up.")]
+    [InlineData("Decoy Gambit", "Instant",
+        "For each opponent, choose up to one target creature that player controls, then return that creature "
+        + "to its owner's hand unless its controller has you draw a card.")]
+    [InlineData("Multiple Choice", "Sorcery",
+        "If X is 1, scry 1, then draw a card.\nIf X is 2, you may choose a player. They return a creature they "
+        + "control to its owner's hand.\nIf X is 3, create a 4/4 blue and red Elemental creature token.\nIf X is "
+        + "4 or more, do all of the above.")]
+    public void Classify_TheNovember24Readings_IsBounce(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Bounce));
+    }
+
+    [Theory]
+    // Ruled 2026-11-24: an exile with time counters that gives the creature
+    // suspend is Bounce and not Removal, because its owner casts it again for free
+    // (Suspend, Bounce by hand). The same effect with UP TO ONE target on a death
+    // trigger goes with it, ruled the same day ("Concierge Bounce": Sinister
+    // Concierge, Removal by hand since 2026-10-11).
+    [InlineData("Suspend", "Instant",
+        "Exile target creature and put two time counters on it. If it doesn't have suspend, it gains suspend. "
+        + "(At the beginning of its owner's upkeep, they remove a time counter. When the last is removed, they "
+        + "may play it without paying its mana cost. If it's a creature, it has haste.)")]
+    [InlineData("Sinister Concierge", "Creature — Human Wizard",
+        "When this creature dies, you may exile it and put three time counters on it. If you do, exile up to "
+        + "one target creature and put three time counters on it. Each card exiled this way that doesn't have "
+        + "suspend gains suspend. (For each card with suspend, its owner removes a time counter from it at the "
+        + "beginning of their upkeep. When the last is removed, they may cast it without paying its mana cost. "
+        + "Those creature spells have haste.)")]
+    public void Classify_TheNovember24Ruling_ASuspendExile_IsBounceNotRemoval(string name, string typeLine, string oracle)
+    {
+        CardEffect result = EffectClassifier.Classify(MakeCard(name, typeLine, oracle));
+
+        Assert.True(result.HasFlag(CardEffect.Bounce));
+        Assert.False(result.HasFlag(CardEffect.Removal));
+    }
 }

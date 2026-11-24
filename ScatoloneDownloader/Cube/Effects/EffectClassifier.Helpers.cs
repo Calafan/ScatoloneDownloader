@@ -1100,8 +1100,13 @@ namespace ScatoloneDownloader.Cube
         // an ability granted in quotes is left standing.
         private static readonly Regex ItsOwnCreature = Rx(@"[^.\n""]*\b(?:enchanted|equipped) creature\b[^.\n""]*");
 
-        // A Licid is a creature until it becomes the Aura (Nurturing Licid).
-        private static readonly Regex BecomesAnAura = Rx(@"\bbecomes an aura\b");
+        // A Licid is a creature until it becomes the Aura (Nurturing Licid), and
+        // a creature that dies and comes back "as an Aura enchantment with
+        // enchant creature you control" shields the creature it lands on, which
+        // is the host and not a stranger: ruled 2026-11-24 on Bronzehide Lion,
+        // Protection withheld ("{G}{W}: Enchanted creature gains indestructible"
+        // is its host's, like any Aura's; 1 of 1 reviewed, untagged).
+        private static readonly Regex BecomesAnAura = Rx(@"\bbecomes an aura\b|\bit's an aura enchantment with enchant\b");
 
         // A shield on a creature the same line DESTROYS at the next end step
         // saves nothing, ruled 2026-09-29 on Glyph of Destruction ("il muro viene
