@@ -332,10 +332,19 @@ namespace ScatoloneDownloader.Cube
             Rx(@"return (?:all|each) (?:[\w-]+ )?(?:lands|" + BasicLandType + @")(?! you control)"
                 + @"[^.\n]{0,30}to (?:their owners'|its owner's) hands?"),
             // "FOR EACH LAND, destroy that land unless any player pays 1 life"
-            // (Cleansing) names its victim with a pronoun. Anchored on the "each
-            // land" in front of it, because Erosion says "destroy that land" of
-            // the single land it enchants and the human does not tag it.
+            // (Cleansing) names its victim with a pronoun, anchored on the "each
+            // land" in front of it; Erosion's "that land" is the Aura's, below.
             Rx(@"for each land[\w ,'\-]{0,20}destroy that land"),
+            // An AURA that destroys the land it enchants is a Stone Rain on a
+            // delay, ruled 2026-11-24 ("LandDestruction a tutte", Orcish Mine,
+            // tagged, against Blight, Kudzu and Erosion, untagged on 09-04): when
+            // the land is tapped (Blight, Kudzu), when the counters run out
+            // (Orcish Mine), at your command (Pooling Venom), or unless its
+            // controller pays every upkeep (Erosion, as Cleansing). All eight
+            // cards in the store that say it enchant a land anybody may control,
+            // so no "enchant land you control" guard stands beside it.
+            Rx(@"\bdestroy enchanted land\b|\benchanted land becomes tapped, destroy it\b"
+                + @"|\benchanted land's controller, destroy that land\b"),
             // A land edict, with the clause that picks the victim in between:
             // "each player WHO TAPPED A LAND FOR MANA THIS TURN sacrifices a land
             // of their choice" (Desolation). Nature's Wrath names a basic type

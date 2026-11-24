@@ -266,4 +266,28 @@ public sealed partial class EffectClassifierTests
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.LandDestruction));
     }
+
+    [Theory]
+    // An Aura that destroys the land it enchants is a Stone Rain on a delay, ruled
+    // 2026-11-24 ('LandDestruction a tutte', Orcish Mine tagged by hand against
+    // Blight, Kudzu and Erosion untagged on 09-04): when the counters run out,
+    // when the land is tapped, unless its controller pays every upkeep (as
+    // Cleansing), or at your command.
+    [InlineData("Orcish Mine", "Enchantment — Aura",
+        "Enchant land\nThis Aura enters with three ore counters on it.\nAt the beginning of your upkeep and "
+        + "whenever enchanted land becomes tapped, remove an ore counter from this Aura.\nWhen the last ore "
+        + "counter is removed from this Aura, destroy enchanted land and this Aura deals 2 damage to that "
+        + "land's controller.")]
+    [InlineData("Blight", "Enchantment — Aura",
+        "Enchant land\nWhen enchanted land becomes tapped, destroy it.")]
+    [InlineData("Erosion", "Enchantment — Aura",
+        "Enchant land\nAt the beginning of the upkeep of enchanted land's controller, destroy that land unless "
+        + "that player pays {1} or 1 life.")]
+    [InlineData("Pooling Venom", "Enchantment — Aura",
+        "Enchant land\nWhenever enchanted land becomes tapped, its controller loses 2 life.\n{3}{B}: Destroy "
+        + "enchanted land.")]
+    public void Classify_TheNovember24Ruling_AnAuraThatDestroysItsLand_IsLandDestruction(string name, string typeLine, string oracle)
+    {
+        Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.LandDestruction));
+    }
 }

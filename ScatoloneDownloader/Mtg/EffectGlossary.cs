@@ -143,10 +143,10 @@
                 + "tax paid once, a Fog.",
 
             [CardEffect.LandDestruction] =
-                "Takes a land off the battlefield, however worded: in a type list, behind a count, beside a "
-                + "second target, by basic type (\"destroy all Islands\"), or in any sweep that takes them "
-                + "(Balance, Apocalypse). A land edict counts. Not a land in a GRAVEYARD, not an Aura ATTACHED to "
-                + "one, not your own, not mana denial.",
+                "A land that may be somebody else's leaves the battlefield for your card (Stone Rain): targeted "
+                + "as a land (type list, basic type, nonbasic), a land edict, any sweep that takes them (Balance, "
+                + "Apocalypse), or the Aura on it that destroys it. Not your own, not one in a GRAVEYARD, not "
+                + "\"target permanent\", not mana denial.",
 
             [CardEffect.Mill] =
                 "ANOTHER player loses cards off the top or bottom of their library to your card (Glimpse the Unthinkable): into "
