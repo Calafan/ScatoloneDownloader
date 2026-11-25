@@ -234,8 +234,10 @@ namespace ScatoloneDownloader.Cube
             // Exploratory Mission), which no hand tag has read.
             + @"|\bat the beginning of\b[^.\n]*?,[^\n]{0,200}?\bif it was a land card, (?:you )?adds? (?:\{|\w+ mana\b)");
 
-        private static readonly Regex OnAnAttack = Rx(
-            @"\bwhenever [^,.\n]*\b(?:attacks?|attack with|deals? combat damage)\b");
+        // The trigger words shared with AttackTriggerWithItsModes.
+        private const string AttackTriggerWords = @"\bwhenever [^,.\n]*\b(?:attacks?|attack with|deals? combat damage)\b";
+
+        private static readonly Regex OnAnAttack = Rx(AttackTriggerWords);
 
         // Mana from an attack that STAYS the turn is Ramp, ruled 2026-11-12
         // ("Resta = Ramp", superseding "mai Ramp dall'attacco" of 09-29 for this
@@ -363,7 +365,7 @@ namespace ScatoloneDownloader.Cube
         // Ramp (Prosperous Bandit, 11 of 11 reviewed), and mana or lands
         // untapped by the attack, spent in that turn, never are.
         private static readonly Regex AttackTriggerWithItsModes = Rx(
-            @"^[^\n]*\bwhenever [^,.\n]*\b(?:attacks?|attack with|deals? combat damage)\b[^\n]*(?:\n• [^\n]*)*",
+            @"^[^\n]*" + AttackTriggerWords + @"[^\n]*(?:\n• [^\n]*)*",
             RegexOptions.Multiline);
 
         // …but not a SAGA CHAPTER's burst of mana, ruled 2026-09-29 ("non è
@@ -723,7 +725,9 @@ namespace ScatoloneDownloader.Cube
         [
             Rx(@"gets? \+\d+/\+\d+"),
             CreaturesYouControlGet,
-            Rx(@"\+\d+/\+\d+ until end of turn"),
+            // Removed 2026-11-24: every card "+N/+N until end of turn" read is
+            // read by the first pattern of this array (measured: no proposal
+            // moves).
             // A pump sized by X or by a count is still a pump; the rules only
             // read digits. Added to THIS array rather than OR'd in later, which
             // matters: half the cards it reaches are self-pumps ("this creature
@@ -822,7 +826,6 @@ namespace ScatoloneDownloader.Cube
         // See OnlyPumpsInsideQuotes.
         private static readonly Regex Quoted = Rx("\"[^\"\\n]*\"");
         private static readonly Regex PumpInsideQuotes = Rx("\"[^\"\\n]{0,120}gets? \\+[\\dXx]");
-        private static readonly Regex PlainPump = Rx(@"gets? \+[\dXx]+/\+[\dXx]+");
 
         // A pump in quotes HANDED TO the creature you equip or enchant, or to
         // your team, is the card's own pump with one step in between: the
@@ -1899,8 +1902,11 @@ namespace ScatoloneDownloader.Cube
         // solo Pacify" — nothing of yours is being saved, the attack simply
         // stops mattering. A prevention that also covers permanents keeps
         // Protection as well (Ultimate Magic: Holy).
-        private static readonly Regex PreventsDamageToYouAlone = Rx(
-            @"prevent (?:all|the next)[\w \d]{0,25}damage that would be dealt to you");
+        // The words are shared with PreventsDamageToYouOnce and
+        // PreventsDamageToThePlayerAlone.
+        private const string PreventsDamageToYouText = @"prevent (?:all|the next)[\w \d]{0,25}damage that would be dealt to you";
+
+        private static readonly Regex PreventsDamageToYouAlone = Rx(PreventsDamageToYouText);
 
         // …but a prevention for "you AND CREATURES you control" is not a lock on
         // anybody, ruled 2026-11-24 (Blessed Sanctuary, Tokens alone by hand:
@@ -1914,7 +1920,7 @@ namespace ScatoloneDownloader.Cube
         // moved 5 cards onto Protection (Eerie Interference, reviewed untagged,
         // Safe Passage, Endure, Channel Harm, Divine Deflection).
         private static readonly Regex PreventsDamageToThePlayerAlone = Rx(
-            PreventsDamageToYouAlone + @"(?! and(?:/or)? (?:other )?(?:creatures|permanents)\b)");
+            PreventsDamageToYouText + @"(?! and(?:/or)? (?:other )?(?:creatures|permanents)\b)");
 
         // Nobody untaps at all, which is the mass version of the untap lock and
         // says neither "doesn't" nor "don't" (Stasis, Sands of Time).
@@ -2094,7 +2100,7 @@ namespace ScatoloneDownloader.Cube
         // Wood realigned and handed back. The permanent that does it again
         // and again stays (Al-abara's Carpet, Conservator, Scarecrow).
         private static readonly Regex PreventsDamageToYouOnce = Rx(
-            @"[^.\n]*prevent (?:all|the next)[\w \d]{0,25}damage that would be dealt to you[^.\n]*");
+            @"[^.\n]*" + PreventsDamageToYouText + @"[^.\n]*");
 
         // Tapping a creature as an ATTACK TRIGGER is a combat trick, not a
         // lock: it pushes one blocker out of the way for the swing that is
@@ -3123,7 +3129,10 @@ namespace ScatoloneDownloader.Cube
 
         private static readonly Regex AbilityWordPrefix = Rx(@"^[^—\n]{1,40}— ");
         private static readonly Regex OwnTrigger = Rx(@"^(?:when|whenever|at the beginning|at end of combat)|^[^:\n]{1,60}:");
-        private static readonly Regex SeveralChapters = Rx(@"^[ivx]+(?:, [ivx]+)+ —");
+        // A Saga line with several chapter numerals ("I, II —"): asked per line
+        // here, and on the whole ability by AbilityRepeats and
+        // WithoutAFewMilledOnce, hence Multiline.
+        private static readonly Regex SeveralChapters = Rx(@"^[ivx]+(?:, [ivx]+)+ —", RegexOptions.Multiline);
         private static readonly Regex OneChapter = Rx(@"^[ivx]+ —");
         private static readonly Regex LoyaltyCost = Rx(@"^\[?[+−-]?[\dx]+\]?:");
         private static readonly Regex PaidCost = Rx(@"\{|\btap\b|sacrifice|discard|pay|exile|remove|equip");
@@ -3263,7 +3272,7 @@ namespace ScatoloneDownloader.Cube
 
             // The tribe is judged on its own: Take to the Streets pumps the
             // whole team and then Citizens a little more, and the team is Buff.
-            if ((TribalPump.IsMatch(piece) && !PlainPump.IsMatch(TribalPump.Replace(piece, " "))
+            if ((TribalPump.IsMatch(piece) && !PumpNumbers.IsMatch(TribalPump.Replace(piece, " "))
                     && !PumpCounters.IsMatch(TribalPump.Replace(piece, " ")))
                 || CountersMakeTheBody.IsMatch(piece))
             {

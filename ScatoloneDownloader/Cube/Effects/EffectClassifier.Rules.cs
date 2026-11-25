@@ -1034,7 +1034,7 @@ namespace ScatoloneDownloader.Cube
                     // target creature and put three time counters" with it, ruled the
                     // same day ("Concierge Bounce", Removal by hand until then). See
                     // ExileWithTimeCounters.
-                    Rx(@"exile (?:up to one )?target (?:creature|nonland permanent) and put \w+ time counters on it"),
+                    ExileWithTimeCounters,
                     // Ruled 2026-09-29. AIRBEND aimed where an opponent's permanent
                     // can be is this tag ("airbend sull'opponent è bounce"):
                     // Airbending Lesson, Glider Staff, Aang, the Last Airbender,
@@ -1397,7 +1397,7 @@ namespace ScatoloneDownloader.Cube
                         RegexOptions.Multiline),
                     // A Saga chapter that names TWO numbers fires twice, so the card
                     // it draws was bought once and drawn again — the same reading
-                    // ChapterFiresTwice gives the put-into-hand rule. Found
+                    // SeveralChapters gives the put-into-hand rule. Found
                     // 2026-09-20 on Jecht, Reluctant Guardian, whose "I, II — Jecht
                     // Beam — Each opponent discards a card and you draw a card" is
                     // hand-tagged CardAdvantage and was being missed.
@@ -1429,8 +1429,10 @@ namespace ScatoloneDownloader.Cube
                     // The top of your library is a second hand, ruled 2026-09-16:
                     // Fblthp, Glarb and the Traveling Chocobo never run out of cards
                     // to play even though they never draw one.
-                    Rx(@"you may (?:play|cast)[^\n]{0,60}top card of your library"
-                        + @"|play (?:lands|cards|the top card)[^\n]{0,40}from the top of your library"),
+                    // Removed 2026-11-24: every card the pattern here read (two
+                    // alternatives, "you may play/cast … top card of your library"
+                    // and "play lands/cards … from the top of your library") is
+                    // read by SecondHandOnTop below (measured: no proposal moves).
                     // Looking at N and taking MORE THAN ONE is a draw with selection.
                     // Taking exactly one is Filter, which the Filter rules say and
                     // this deliberately does not contradict. Ruled 2026-09-16.
@@ -1513,7 +1515,9 @@ namespace ScatoloneDownloader.Cube
                     // Overgrown Arch keep it.
                     // The word is asked in OneScryOrSurveil and
                     // LearnBesideAnotherEffect (Cards.cs), not here.
-                    Rx(@"(?:^|\n|\. |, |: )learn\b(?! their)", RegexOptions.Multiline),
+                    // Read through LearnWord (the same 21 cards as the pattern
+                    // it replaced, measured 2026-11-24).
+                    LearnWord,
                     Rx(@"look at the top \w+ cards? of your library"),
                     // An EXPLORE said in its own words, read 2026-11-13 (explore =
                     // Filter, 2026-09-29): Kianne, Dean of Substance's "{T}: Exile
@@ -1591,13 +1595,16 @@ namespace ScatoloneDownloader.Cube
                     // no other card says "shares a card type with the cycled card").
                     Rx(@"exile cards from the top of your library until you exile a card that shares a card type with the cycled card\."
                         + @"[^\n]{0,80}\bthen put the exiled cards that weren't cast this way on the bottom of your library"),
-                    Rx(@"discard[\w ]* then draw"), Rx(@"draws? [\w ]{0,20}cards?[.,] ?(?:then |and )?(?:you may )?discards?"),
+                    // Removed 2026-11-24: "discard … then draw" matched 0 of 32580
+                    // store cards.
+                    Rx(@"draws? [\w ]{0,20}cards?[.,] ?(?:then |and )?(?:you may )?discards?"),
                     // The same exchange written discard-first WITH a count:
                     // "Discard a card, then draw two cards" (Romantic Rendezvous,
-                    // Summon: Kujata's third chapter), which the two patterns above
-                    // both miss — one wants the draw first, the other cannot cross
-                    // the comma. The lookahead keeps CYCLING out, which is what an
-                    // earlier and looser version of this pattern swallowed: it fired
+                    // Summon: Kujata's third chapter), which the pattern above
+                    // misses (it wants the draw first; the "discard … then draw"
+                    // pattern removed above could not cross the comma). The
+                    // lookahead keeps CYCLING out, which is what an earlier and
+                    // looser version of this pattern swallowed: it fired
                     // on 45 cards of which only 4 were tagged.
                     // Not THEIR loot: Memory Worm makes the player it hit discard
                     // and draw (untagged Filter by hand, 2026-10-14). "Target

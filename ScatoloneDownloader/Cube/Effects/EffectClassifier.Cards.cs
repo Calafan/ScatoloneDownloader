@@ -719,6 +719,13 @@ namespace ScatoloneDownloader.Cube
             Rx(@"\bput (?:a |an |up to \w+ )?(?:creature|permanent) cards?[\w ,'\-/]{0,80}onto the battlefield from your hand or (?:your )?graveyard"),
         ];
 
+        // "Exchange your hand and graveyard" is a card from the graveyard for
+        // every card of the hand, and the card is played when the graveyard is
+        // the bigger one: CardAdvantage and Regrowth by hand (A2, ruled
+        // 2026-11-24, "CA + Regrowth", 1 of 1: no other card exchanges the two).
+        // Declared above RegrowthPatterns, which reads it (static init order).
+        private static readonly Regex ExchangesHandAndGraveyard = Rx(@"\bexchange your hand and graveyard\b");
+
         private static readonly Regex[] RegrowthPatterns =
         [
             // 90, not 70: Krile Baldesion's "return target creature card WITH MANA
@@ -759,8 +766,9 @@ namespace ScatoloneDownloader.Cube
             // of your graveyard into your hand, the definition of 2026-11-08 (a
             // card of your graveyard back to the hand), Regrowth and CardAdvantage
             // by hand (1 of 1: no other card exchanges the two zones).
-            Rx(@"\bexchange your hand and graveyard\b"),
-            Rx(@"put[\w ,'\-/]{0,60}cards? from[\w ,'\-/]{0,30}graveyard into[\w ]{0,20}hand"),
+            ExchangesHandAndGraveyard,
+            // Removed 2026-11-24: "put … card from … graveyard into … hand"
+            // matched 0 of 32580 store cards.
             // The rest of the sitting of 10-06..10-11, each tagged by hand on
             // every reviewed card that says it (2026-10-13): one of the top two
             // cards of your graveyard to hand (Phyrexian Grimoire); a pile of
@@ -946,7 +954,8 @@ namespace ScatoloneDownloader.Cube
                 // cast above read through the reminder's "their graveyard" until
                 // that left its list on 2026-10-16.
                 + @"|\b(?:instant|sorcery|instant and sorcery) cards in graveyards (?:ha(?:s|ve)|gains?) flashback"),
-            Rx(@"(?:spells?|cards?)[\w ,'\-/]{0,20}(?:can be cast|may be cast) from your graveyard"),
+            // Removed 2026-11-24: "spells or cards … can be cast / may be cast
+            // from your graveyard" matched 0 of 32580 store cards.
         ];
 
         // MEASURED AND REJECTED 2026-09-19, OVERTURNED 2026-10-13: the veto is
@@ -1722,15 +1731,14 @@ namespace ScatoloneDownloader.Cube
             return abilities;
         }
 
-        // A Saga chapter that names more than one number fires more than once:
-        // Rediscover the Way's "I, II — Look at the top three cards of your
-        // library" looks at six cards over two turns and keeps two of them.
-        private static readonly Regex ChapterFiresTwice = Rx(@"^[ivx]+(?:, [ivx]+)+ ", RegexOptions.Multiline);
-
         private static readonly Regex DiscardsItselfToPay = Rx(@"^[^\n:]{0,60}\bdiscard this card\b[^\n:]{0,20}:", RegexOptions.Multiline);
 
+        // A Saga chapter that names more than one number fires more than once:
+        // Rediscover the Way's "I, II — Look at the top three cards of your
+        // library" looks at six cards over two turns and keeps two of them
+        // (SeveralChapters).
         private static bool AbilityRepeats(string ability) =>
-            RepeatableWording.IsMatch(ability) || ChapterFiresTwice.IsMatch(ability);
+            RepeatableWording.IsMatch(ability) || SeveralChapters.IsMatch(ability);
 
         // The same question with the self-consuming costs subtracted: Lupinflower
         // Village sacrifices itself. The impulse family deliberately does NOT
@@ -3279,12 +3287,6 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex RepeatedRevealUntilIntoHand = Rx(
             @"^(?:[\w ]{1,20} — )?(?:whenever|at the beginning of)\b",
             RegexOptions.Multiline);
-
-        // "Exchange your hand and graveyard" is a card from the graveyard for
-        // every card of the hand, and the card is played when the graveyard is
-        // the bigger one: CardAdvantage and Regrowth by hand (A2, ruled
-        // 2026-11-24, "CA + Regrowth", 1 of 1: no other card exchanges the two).
-        private static readonly Regex ExchangesHandAndGraveyard = Rx(@"\bexchange your hand and graveyard\b");
 
         private static readonly Regex LoyaltyRevealsUntilIntoHand = Rx(
             @"^[+−-]?\d+: reveal cards from the top of your library until you reveal [^.\n]{0,80}\.[^\n]{0,80}\bput (?:that card|it) into your hand",

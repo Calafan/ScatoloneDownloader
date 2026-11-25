@@ -35,9 +35,11 @@ namespace ScatoloneDownloader.Cube
         //
         // The run between the player and the verb is what admits "an opponent
         // WOULD mill", "each player MAY mill" and "any number of target players
-        // EACH mill". "Mill" only became keyword wording in 2021, so the
-        // spelled-out pre-2021 form needs its own pattern or the whole old
-        // library goes untagged.
+        // EACH mill". "Mill" only became keyword wording in 2021 and Oracle
+        // text has been rewritten with it since: the spelled-out form survives
+        // only with the victim in front of the verb (Cellar Door, Eye Collector,
+        // Aether Syphon), which keeps its own pattern in MillPatterns; the
+        // verb-first one was removed on 2026-11-24, at 0 of 32580 store cards.
         //
         // Naming the victim also SUBSUMES the old cost guard, which existed to
         // drop Deep Spawn's "unless you mill two cards" and Millikin's

@@ -502,7 +502,7 @@ namespace ScatoloneDownloader.Cube
         /// strike outside them, and the double strike is the Buff (2026-09-25).
         /// </para></summary>
         private static bool OnlyPumpsInsideQuotes(string text) =>
-            PumpInsideQuotes.IsMatch(text) && !PlainPump.IsMatch(Quoted.Replace(text, " "))
+            PumpInsideQuotes.IsMatch(text) && !PumpNumbers.IsMatch(Quoted.Replace(text, " "))
             && !BuffPatterns.Any(p => p.IsMatch(Quoted.Replace(text, " ")))
             && !GrantsAQuotedPump.IsMatch(Parenthetical.Replace(text, " "));
 
@@ -547,12 +547,12 @@ namespace ScatoloneDownloader.Cube
                 return false;
             }
 
-            // Asked with PlainPump rather than BuffPatterns on purpose: the tribal
+            // Asked with PumpNumbers rather than BuffPatterns on purpose: the tribal
             // phrase stops at the verb, so the numbers it was about ("+2/+0 until
             // end of turn") survive the blanking and the bare "+N/+N until end of
             // turn" pattern would see them and vouch for a pump that is not there.
             string rest = TribalPump.Replace(text, " ");
-            return !PlainPump.IsMatch(rest)
+            return !PumpNumbers.IsMatch(rest)
                 && !CreaturesYouControlGet.IsMatch(rest)
                 && !(CounterOnSomebodyElse.IsMatch(rest) && !CounterForAnOpponent.IsMatch(rest));
         }

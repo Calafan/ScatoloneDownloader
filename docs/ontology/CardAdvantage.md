@@ -117,7 +117,7 @@ loot at all — it is their Discard beside your draw, which is what Jecht, Reluc
 hand-tagged.
 
 A SAGA CHAPTER THAT NAMES TWO NUMBERS fires twice, so the card it draws was bought once and drawn
-again; same reading ChapterFiresTwice gives the put-into-hand rule.
+again; same reading SeveralChapters gives the put-into-hand rule.
 
 Six more rulings on 2026-09-21.
 

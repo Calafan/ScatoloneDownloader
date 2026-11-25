@@ -433,7 +433,9 @@ namespace ScatoloneDownloader.Cube
             // eccezione col perché"): for that turn every permanent of theirs is
             // yours to run (Mindslaver, Worst Fears, Secret of Bloodbending).
             Rx(@"(?<!as long as )you control (enchanted|target)"),
-            Rx(@"untap target creature[\w ]*gain control"),
+            // Removed 2026-11-24: every card "untap target creature … gain
+            // control" read is read by the first pattern of this array
+            // (measured: no proposal moves).
             // An exchange is a theft you paid for. Five cards, and the only way
             // any of them was ever going to be found.
             Rx(@"exchange control of"),
@@ -505,9 +507,11 @@ namespace ScatoloneDownloader.Cube
             // 2026-11-10 ("Cellar Door è in effetti macina": "Target player puts
             // the bottom card of their library into their graveyard", the one
             // card that says it, unreviewed; 0 reviewed).
-            Rx(@"put(?:s)? the (?:top|bottom) [\w ]{0,25}" + OtherPlayer + @"[\w' ]{0,20}library into"),
-            // Same sentence with the victim in front of the verb, which is how
-            // Millstone and most pre-2021 mill is actually written.
+            // Read with the victim in front of the verb, which is how Millstone
+            // and most pre-2021 mill was written; 3 store cards still say it
+            // (Cellar Door, Eye Collector, Aether Syphon). The verb-first form,
+            // "put the top N cards of target player's library into", was removed
+            // 2026-11-24: it matched 0 of 32580 store cards.
             Rx(OtherPlayer + @"[\w ,]{0,30}puts? the (?:top|bottom) [\w ]{0,30}library into"),
             // The top of their library EXILED is the same attack, read
             // 2026-10-15 from the three reviewed cards that say it and nothing
@@ -609,13 +613,12 @@ namespace ScatoloneDownloader.Cube
             + @"|\blook at the top (?:two|three) cards of (?:their|(?:target|each|that) (?:player|opponent)'s) library\.[^\n]*?"
             + @"\bput one back and the rest into (?:their|that player's) graveyard");
 
-        private static readonly Regex ChapterThatComesAgain = Rx(@"^[IVX]+(?:, [IVX]+)+ —", RegexOptions.Multiline);
-
         private static readonly Regex GrantedActivation = Rx(@"""[^""\n:]{1,40}:");
 
+        // A chapter that names several numbers comes again (SeveralChapters).
         private static string WithoutAFewMilledOnce(string text) =>
             string.Join('\n', text.Split('\n').Select(line =>
-                RepeatableWording.IsMatch(line) || ChapterThatComesAgain.IsMatch(line) || GrantedActivation.IsMatch(line)
+                RepeatableWording.IsMatch(line) || SeveralChapters.IsMatch(line) || GrantedActivation.IsMatch(line)
                     ? line
                     : AFewMilledOnce.Replace(line, " ")));
 
@@ -627,8 +630,10 @@ namespace ScatoloneDownloader.Cube
         private static readonly Regex[] TokenPatterns =
         [
             Rx(@"create[s]?\b.*\btoken"),
-            Rx(@"put[s]?\b.*\btoken.*onto the battlefield"),
-            // The same sentence with the verb at the END, which the two rules
+            // Removed 2026-11-24: the one store card that "put[s] … token …
+            // onto the battlefield" says is read by the rule above (measured: no
+            // proposal moves).
+            // The same sentence with the verb at the END, which the rule
             // above cannot read: Stridehangar Automaton says "those tokens plus
             // an additional 1/1 Thopter … ARE CREATED instead".
             Rx(@"tokens?[\w ,'\-/]{0,80}(?:are|is) created"),
