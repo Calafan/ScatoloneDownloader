@@ -53,6 +53,28 @@ sheet points to it.
 New sets: `formats.json` holds every expansion with a draft or play booster up to Reality Fracture
 (2026-10-02); add a later set by hand, as one more `1 set` entry.
 
+## Rating consistency
+
+`rating_gaps.py` lists the rated cards (1–5) whose ratings contradict each other: functional
+reprints with different ratings, and a card rated below the card it improves on (the same card
+plus an optional ability, cheaper or bigger). It only reads; the ratings are changed in the tagger
+or by hand. On 2026-11-25 it found 11 reprint groups and 6 pairs, all raised to the higher rating
+(store `b1a78bf`).
+
+```powershell
+$D = "<a new empty directory for the downloads>"
+$T = "E:\Working\Repos\Scryfall\ScatoloneDownloader\tools\cube-metrics"
+$M = "E:\Working\Repos\ScatoloneQuintet\metadata"
+
+# 1. Scryfall Oracle Cards bulk: GET https://api.scryfall.com/bulk-data/oracle-cards,
+#    then download its jsonl_download_uri to "$D\oracle.jsonl.gz"
+
+# 2. the check
+python -I "$T\rating_gaps.py" "$D\oracle.jsonl.gz" $M
+```
+
+A `better` pair marked `check` adds a triggered or static ability: read it before trusting it.
+
 ## History: the 2026-10-18 measurement of the box list
 
 The box list against nine retail draft sets, the halfway table and the swap proposal. The box was
