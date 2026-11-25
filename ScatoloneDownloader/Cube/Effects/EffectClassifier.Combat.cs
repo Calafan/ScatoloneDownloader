@@ -513,9 +513,21 @@ namespace ScatoloneDownloader.Cube
         // (Removal by hand since 10-08, handed back); The Measure of a Man is the
         // only other card written so. Only the exile sentence is matched, so the
         // chapters between keep what they earn.
+        private const string ExileReturnedAtALaterChapter =
+            @"exile (?:up to one )?(?:other )?target [^.\n]{0,40}creature\.(?=[^\n]*(?:\n[^\n]*){0,2}\n[IV, ]+ — return the exiled card to the battlefield)";
+
         private static readonly Regex ExileEndsWithTheSaga = Rx(
-            @"exile (?:up to one )?(?:other )?target [^.\n]{0,40}creature[^.\n]{0,40}until this saga leaves the battlefield"
-            + @"|exile (?:up to one )?(?:other )?target [^.\n]{0,40}creature\.(?=[^\n]*(?:\n[^\n]*){0,2}\n[IV, ]+ — return the exiled card to the battlefield)");
+            @"exile (?:up to one )?(?:other )?target [^.\n]{0,40}creature[^.\n]{0,40}until this saga leaves the battlefield|"
+            + ExileReturnedAtALaterChapter);
+
+        // The later-chapter form alone is not Disenchant either, ruled 2026-11-25
+        // ("Solo Pacify") on The Measure of a Man, which exiles "target nontoken
+        // artifact or creature" and gives it back at III. "Until this Saga
+        // leaves" stays Disenchant: Vault 13: Dweller's Journey, Disenchant by
+        // hand on 2026-10-16, returns two of the exiled and puts the rest on the
+        // bottom of their libraries, which is for good (measured: the whole
+        // ExileEndsWithTheSaga took Disenchant from it).
+        private static readonly Regex SagaGivesTheExiledBack = Rx(ExileReturnedAtALaterChapter);
 
         // An exile with TIME COUNTERS, "exile target creature and put two time
         // counters on it. If it doesn't have suspend, it gains suspend", is

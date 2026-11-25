@@ -72,6 +72,14 @@ public sealed partial class EffectClassifierTests
         + "their owners' control at the beginning of the next end step.")]
     // And your own is never an answer.
     [InlineData("Rats of Rath", "Creature — Rat", "{B}: Destroy target artifact, creature, or land you control.")]
+    // Ruled 2026-11-25 (Solo Pacify): a Saga that exiles an artifact and gives it
+    // back at a later chapter is Pacify, as it is not Removal (the 2026-10-16 Saga
+    // O-Ring).
+    [InlineData("The Measure of a Man", "Enchantment — Saga",
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Exile "
+        + "up to one target nontoken artifact or creature.\nII — Investigate. (Create a Clue token. It's an "
+        + "artifact with \"{2}, Sacrifice this token: Draw a card.\")\nIII — Return the exiled card to the "
+        + "battlefield under its owner's control. You gain 2 life.")]
     public void Classify_WhatOnlyReadsLikeAnArtifactAnswer_IsNotDisenchant(
         string name, string typeLine, string oracle)
     {

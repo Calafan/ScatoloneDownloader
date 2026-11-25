@@ -75,3 +75,11 @@ target enchantment on the bottom of its owner's library" (Disenchant by hand). B
 Hide // Seek and Natural Obsolescence, unreviewed, follow. A CARD in a graveyard stays out (Keeper
 of the Cadence); "on the bottom of its owner's library" alone was measured and rejected, 1 of 27
 reviewed cards tagged.
+
+Ruled 2026-11-25 ("Solo Pacify"): a SAGA that exiles an artifact and RETURNS it at a later chapter
+does not take it for good, as the Saga O-Ring of 2026-10-16 is not Removal. The Measure of a Man
+("I — Exile up to one target nontoken artifact or creature. … III — Return the exiled card"),
+unreviewed and the one card that says it, is Pacify alone. A Saga that keeps some of what it exiled
+stays here: Vault 13: Dweller's Journey returns two and puts the rest on the bottom of their
+libraries (Disenchant by hand on 2026-10-16); the whole Saga O-Ring rule of Pacify would have
+taken the tag from it, so only the later-chapter return is read.

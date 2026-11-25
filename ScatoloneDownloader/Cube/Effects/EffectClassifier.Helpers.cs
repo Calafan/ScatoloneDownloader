@@ -92,9 +92,12 @@ namespace ScatoloneDownloader.Cube
         /// <see cref="TargetCardInAGraveyard"/>, blanked before the patterns are
         /// asked, and <see cref="SweepsCreaturesToo"/>,
         /// <see cref="ExileThatComesBack"/> and <see cref="DisenchantsYourOwn"/>
-        /// for what each veto costs and buys.</summary>
+        /// for what each veto costs and buys. The exile of a Saga that gives the
+        /// card back at a later chapter (<see cref="SagaGivesTheExiledBack"/>) is
+        /// blanked first: it is Pacify, not Disenchant, as it is not Removal.</summary>
         private static bool AnswersAnArtifactOrEnchantment(string text)
         {
+            text = SagaGivesTheExiledBack.Replace(text, " ");
             foreach (string line in text.Split('\n'))
             {
                 if (!DisenchantPatterns.Any(p => p.IsMatch(TargetCardInAGraveyard.Replace(line, " "))))
