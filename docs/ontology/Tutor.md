@@ -118,3 +118,8 @@ Filter, the only Filter move.
 Read 2026-11-10, from the second sitting: "land cards THAT EACH HAVE a basic land type" is the same
 pool as "with a basic land type" (Slimefoot's Survey, Ramp and Filter by hand), so it stays out with
 Boseiju's consolation and Gaea's Balance.
+
+Read 2026-11-25: what the search asks for is read after "library … for", not anywhere on the line. A
+condition that counts "instant and/or sorcery cards in your graveyard" is no second thing searched
+for: Nissa's Pilgrimage fetches basic Forests alone and stays Ramp and ManaFixing (unreviewed, the
+one card the reading moved).

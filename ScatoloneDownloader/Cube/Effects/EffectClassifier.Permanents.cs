@@ -275,8 +275,12 @@ namespace ScatoloneDownloader.Cube
 
         // "A creature OR LAND card" too: Analyze the Pollen searches for a basic
         // land, and "instead" for either once evidence is collected (2026-10-16).
+        // Only what the SEARCH asks for, after "library … for": Nissa's
+        // Pilgrimage's Spell mastery counts "instant and/or sorcery cards in
+        // your graveyard" and searches for basic Forests alone (read 2026-11-25;
+        // the one card the narrowing moved).
         private static readonly Regex SearchesForSomethingElseToo = Rx(
-            @"\b(?:creature|artifact|enchantment|instant|sorcery|planeswalker|equipment|battle"
+            @"library[^.\n]{0,40}for [^.\n]{0,80}?\b(?:creature|artifact|enchantment|instant|sorcery|planeswalker|equipment|battle"
             + @"|legendary|nonland permanent)(?: or land)? cards?\b");
 
         // "Search your library for a card NAMED Llanowar Sentinel" was vetoed for

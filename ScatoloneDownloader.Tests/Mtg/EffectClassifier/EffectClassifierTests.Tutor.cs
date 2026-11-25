@@ -219,6 +219,14 @@ public sealed partial class EffectClassifierTests
         + "onto the battlefield tapped, then shuffle. Look at the top X cards of your library, where X is the "
         + "number of basic land types among lands you control. Put up to one of them on top of your library and "
         + "the rest on the bottom of your library in a random order.")]
+    // Read 2026-11-25: a graveyard condition that names instant and sorcery cards
+    // is not a second thing searched for; the search is for basic Forests only
+    // (Spell mastery).
+    [InlineData("Nissa's Pilgrimage", "Sorcery",
+        "Search your library for up to two basic Forest cards, reveal those cards, and put one onto the "
+        + "battlefield tapped and the rest into your hand. Then shuffle.\nSpell mastery — If there are two or "
+        + "more instant and/or sorcery cards in your graveyard, search your library for up to three basic "
+        + "Forest cards instead of two.")]
     public void Classify_TheNovember10Ruling_ABasicLandTypeOrABasicTypedLand_IsNotTutor(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Tutor));
