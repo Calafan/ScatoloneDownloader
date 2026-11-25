@@ -601,6 +601,121 @@ public sealed class OntologyProbes
         Write("dump.jsonl", sb.ToString());
     }
 
+    /// <summary>WHICH REGEXES READ THE SAME WORDS. Every private static Regex
+    /// field and every element of every Regex[] field on EffectClassifier (and
+    /// of the Rules table), with its pattern and the store cards whose RAW
+    /// oracle text it matches. The input to the overlap pass, which merges the
+    /// families that read the same phrases: a regex the code asks of a blanked
+    /// or per-line text is only approximated here, so measure.py still decides
+    /// every merge. An array element that IS a named field, or an element
+    /// shared by two arrays, is listed once, with every owner. One JSON line
+    /// per regex in regexes.jsonl.</summary>
+    [Fact]
+    public async Task Regexes()
+    {
+        CubeMetadata store = CubeMetadataStore.Load(StorePath);
+
+        List<Card> all;
+        using (GetManager manager = new())
+        {
+            all = await manager.GetDefaultCards();
+        }
+
+        List<(string Name, string Text)> cards = [];
+        HashSet<string> seen = [];
+        foreach (Card card in all)
+        {
+            if (!string.IsNullOrEmpty(card.OracleId) && seen.Add(card.OracleId) && store.Cards.ContainsKey(card.OracleId))
+            {
+                cards.Add((card.Name, card.OracleText ?? string.Empty));
+            }
+        }
+
+        FieldInfo[] fields = typeof(EffectClassifier).GetFields(BindingFlags.NonPublic | BindingFlags.Static);
+
+        // One row per Regex INSTANCE, in the order: named fields, then array
+        // elements; later sightings only add an owner.
+        Dictionary<Regex, (string Id, List<string> Owners)> rows = [];
+
+        void Add(Regex? rx, string id, string owner)
+        {
+            if (rx == null)
+            {
+                return;
+            }
+
+            if (rows.TryGetValue(rx, out var row))
+            {
+                if (owner.Length > 0)
+                {
+                    row.Owners.Add(owner);
+                }
+
+                return;
+            }
+
+            rows[rx] = (id, owner.Length > 0 ? [owner] : []);
+        }
+
+        foreach (FieldInfo field in fields.Where(f => f.FieldType == typeof(Regex)))
+        {
+            Add(field.GetValue(null) as Regex, field.Name, string.Empty);
+        }
+
+        Dictionary<Regex[], string> arrayNames = [];
+        foreach (FieldInfo field in fields.Where(f => f.FieldType == typeof(Regex[])))
+        {
+            if (field.GetValue(null) is not Regex[] array)
+            {
+                continue;
+            }
+
+            arrayNames.TryAdd(array, field.Name);
+            for (int i = 0; i < array.Length; i++)
+            {
+                Add(array[i], $"{field.Name}[{i}]", field.Name);
+            }
+        }
+
+        StringBuilder sb = new();
+        foreach (FieldInfo field in fields.Where(f => f.FieldType == typeof((CardEffect, Regex[])[])))
+        {
+            if (field.GetValue(null) is not (CardEffect Effect, Regex[] Patterns)[] table)
+            {
+                continue;
+            }
+
+            foreach ((CardEffect effect, Regex[] patterns) in table)
+            {
+                string owner = arrayNames.TryGetValue(patterns, out string? name) ? name : $"{field.Name}.{effect}";
+                sb.AppendLine(System.Text.Json.JsonSerializer.Serialize(new { table = field.Name, effect = effect.ToString(), array = owner }));
+                if (owner.StartsWith(field.Name + ".", StringComparison.Ordinal))
+                {
+                    for (int i = 0; i < patterns.Length; i++)
+                    {
+                        Add(patterns[i], $"{owner}[{i}]", owner);
+                    }
+                }
+            }
+        }
+
+        foreach ((Regex rx, (string id, List<string> owners)) in rows)
+        {
+            List<string> hits = cards.Where(c => rx.IsMatch(c.Text)).Select(c => c.Name).ToList();
+            sb.AppendLine(System.Text.Json.JsonSerializer.Serialize(new
+            {
+                id,
+                owners,
+                pattern = rx.ToString(),
+                options = rx.Options.ToString(),
+                n = hits.Count,
+                cards = hits,
+            }));
+        }
+
+        Write("regexes.jsonl", sb.ToString());
+    }
+
     /// <summary>WHAT DOES THIS PHRASE CONTRIBUTE. Blanks every match of the
     /// regex in blank.txt out of each reviewed card's text, classifies again,
     /// and records every card whose proposal moves. The answer to "which of
