@@ -336,4 +336,12 @@ Plant with base power and toughness 0/8", unreviewed). Measured and rejected: "c
 planeswalkers you control" without "unless", 0 of 5 reviewed (Vow of Torment's Aura on your own
 creature, Combat Calligrapher's Inklings, Eriette of the Charmed Apple, Promise of Loyalty, Unstable
 Glyphbridge); Spectral Grasp and Sandwurm Convergence, unreviewed, say it of somebody else's
-creatures and are left unproposed.
+creatures and are left unproposed (the first overturned the next day, below).
+
+Ruled 2026-11-25 ("Solo Spectral Grasp"): an AURA that says "Enchanted creature can't attack you or
+planeswalkers you control." at the start of its line, with no pump in front, is a lock that lasts,
+the twin of Fealty to the Realm's "can't attack you." (Pacify by hand). Spectral Grasp, unreviewed,
+is the one card it moves; the Vows' "gets +2/+2, has …, and can't attack you" stay Buff. The group
+form stays out: Sandwurm Convergence's "Creatures with flying can't attack you or planeswalkers you
+control." is Tokens alone, though Elephant Grass's "Black creatures can't attack you." is Pacify by
+hand.

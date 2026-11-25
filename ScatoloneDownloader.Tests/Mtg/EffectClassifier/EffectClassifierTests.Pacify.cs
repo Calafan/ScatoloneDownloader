@@ -856,6 +856,12 @@ public sealed partial class EffectClassifierTests
         "Flash\nWhen Yuriko enters, choose one —\n• Target creature gets -X/-0 until end of turn, where X is "
         + "the number of cards in your graveyard.\n• Surveil 2. (Look at the top two cards of your library, then "
         + "put any number of them into your graveyard and the rest on top of your library in any order.)")]
+    // Ruled 2026-11-25 (Solo Spectral Grasp): an Aura with no pump in front,
+    // 'Enchanted creature can't attack you or planeswalkers you control.', the
+    // twin of Fealty to the Realm.
+    [InlineData("Spectral Grasp", "Enchantment — Aura",
+        "Enchant creature\nEnchanted creature can't attack you or planeswalkers you control.\nEnchanted "
+        + "creature can't block creatures you control.")]
     public void Classify_TheNovember24Rulings_IsPacify(string name, string typeLine, string oracle)
     {
         Assert.True(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));
@@ -875,6 +881,11 @@ public sealed partial class EffectClassifierTests
     [InlineData("Escaped Experiment", "Artifact Creature — Phyrexian Beast",
         "Whenever this creature attacks, target creature an opponent controls gets -X/-0 until end of turn, "
         + "where X is the number of artifacts you control.")]
+    // The same answer leaves the group form out: Sandwurm Convergence's flyers
+    // that can't attack you stay Tokens alone (2026-11-25).
+    [InlineData("Sandwurm Convergence", "Enchantment",
+        "Creatures with flying can't attack you or planeswalkers you control.\nAt the beginning of your end "
+        + "step, create a 5/5 green Wurm creature token.")]
     public void Classify_TheNovember24Rulings_IsNotPacify(string name, string typeLine, string oracle)
     {
         Assert.False(EffectClassifier.Classify(MakeCard(name, typeLine, oracle)).HasFlag(CardEffect.Pacify));

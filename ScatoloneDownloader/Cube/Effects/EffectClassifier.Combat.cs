@@ -2012,6 +2012,13 @@ namespace ScatoloneDownloader.Cube
             // Torment's Aura on your own creature, Combat Calligrapher's
             // Inklings, Eriette, Promise of Loyalty, Unstable Glyphbridge).
             Rx(@"(?<!other creatures )can'?t attack(?: you)?(\.|,| unless)|can'?t attack you or planeswalkers you control unless"),
+            // An AURA that says it with no pump in front, at the start of the
+            // line, ruled 2026-11-25 ("Solo Spectral Grasp"): the twin of Fealty
+            // to the Realm's "can't attack you." (Pacify by hand). The Vows'
+            // "gets +2/+2, has …, and can't attack you" stay Buff, and Sandwurm
+            // Convergence's "Creatures with flying can't attack you or
+            // planeswalkers you control." stays out by the same answer.
+            Rx(@"^enchanted creature can'?t attack you or planeswalkers you control\.", RegexOptions.Multiline),
             // A TAP, in every shape the game prints it. Ruled 2026-09-22 after
             // the hand tags were found contradicting themselves on identical
             // wording — Twiddle against Twitch, Riptide against Blinding Light,
