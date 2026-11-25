@@ -8,9 +8,20 @@ state/handed-back.json now, and it can always be rebuilt from git, because
 every hand-back is its own commit ("chore(metadata): hand … back for review")
 and nothing else in this workflow ever removes a reviewedAt.
 
+Git finds only the hand-backs still waiting, so the state file holds more than
+git, on purpose (2026-11-25):
+  - cards the human has reviewed since: stale_handbacks.py reads them to ask
+    whether one was confirmed without seeing a tag the classifier now gives;
+  - cards handed back that were never reviewed before (Chandra, Acolyte of
+    Flame; Eye Spy; Overwhelmed Apprentice): they lost no reviewedAt, so git
+    cannot see them; they came in with --add.
+--write therefore only adds what git finds and the file lacks; it never removes
+an entry. It used to replace the file with git's list, which would have dropped
+both groups.
+
 Usage:
     python handed_back.py                  # compare the state file with git, change nothing
-    python handed_back.py --write          # (re)write the state file from git
+    python handed_back.py --write          # add the hand-backs git finds and the state file lacks
     python handed_back.py --add FILE.json  # merge an unreview ruling file into the state file
 
 The state file is a JSON list of {name, oracleId}, the shape the store scripts
@@ -28,8 +39,8 @@ from common import HANDED_BACK, STORE_REPO, git, load_store, read_json, utf8_std
 HAND_BACK_SUBJECT = re.compile(r"^chore\(metadata\): (hand\b|.*\bhanded back\b)")
 
 
-def from_git():
-    """Every card that lost reviewedAt in a hand-back commit and is still unreviewed now."""
+def from_git(now):
+    """Every card that lost reviewedAt in a hand-back commit and is still unreviewed in `now`."""
     lost = {}
     for line in git(STORE_REPO, "log", "--format=%H%x09%s", "--", "metadata/").splitlines():
         sha, subject = line.split("\t", 1)
@@ -40,41 +51,64 @@ def from_git():
             prev = before.get(oid)
             if prev and prev[1].get("reviewedAt") and not entry.get("reviewedAt"):
                 lost[oid] = entry.get("name", "")
-    now = load_store()
     return sorted(({"name": name, "oracleId": oid} for oid, name in lost.items()
                    if oid in now and not now[oid][1].get("reviewedAt")), key=lambda c: c["name"])
+
+
+def merge(state, cards):
+    """The state file plus the cards it lacks, sorted by name; and how many were added."""
+    known = {c["oracleId"] for c in state}
+    extra = [{"name": c.get("name", ""), "oracleId": c["oracleId"]} for c in cards if c["oracleId"] not in known]
+    return sorted(state + extra, key=lambda c: c["name"]), len(extra)
+
+
+def split_by_review(cards, now):
+    """The cards grouped by their state in the store's working tree: reviewed, waiting, not in store."""
+    reviewed, waiting, missing = [], [], []
+    for c in cards:
+        entry = now.get(c["oracleId"])
+        if entry is None:
+            missing.append(c)
+        elif entry[1].get("reviewedAt"):
+            reviewed.append(c)
+        else:
+            waiting.append(c)
+    return reviewed, waiting, missing
 
 
 def main():
     utf8_stdout()
     ap = argparse.ArgumentParser()
-    ap.add_argument("--write", action="store_true", help="rewrite the state file from git")
+    ap.add_argument("--write", action="store_true", help="add the hand-backs git finds and the state file lacks")
     ap.add_argument("--add", help="merge an unreview ruling file into the state file")
     args = ap.parse_args()
 
     state = read_json(HANDED_BACK, [])
     if args.add:
-        known = {c["oracleId"] for c in state}
-        extra = [{"name": c.get("name", ""), "oracleId": c["oracleId"]} for c in read_json(args.add, [])
-                 if c["oracleId"] not in known]
-        state = sorted(state + extra, key=lambda c: c["name"])
+        state, added = merge(state, read_json(args.add, []))
         write_json(HANDED_BACK, state)
-        print("added %d, state file now %d" % (len(extra), len(state)))
+        print("added %d, state file now %d" % (added, len(state)))
         return
 
-    rebuilt = from_git()
+    now = load_store()
+    rebuilt = from_git(now)
     have, want = {c["oracleId"] for c in state}, {c["oracleId"] for c in rebuilt}
-    print("state file: %d | from git: %d | only in state: %d | only in git: %d"
-          % (len(have), len(want), len(have - want), len(want - have)))
-    for c in state:
-        if c["oracleId"] not in want:
-            print("   only in state (reviewed again, or not a hand-back):", c.get("name"))
-    for c in rebuilt:
-        if c["oracleId"] not in have:
-            print("   only in git:", c["name"])
+    reviewed, waiting, missing = split_by_review([c for c in state if c["oracleId"] not in want], now)
+    only_in_git = [c for c in rebuilt if c["oracleId"] not in have]
+    print("state file: %d | from git: %d | only in git: %d" % (len(state), len(rebuilt), len(only_in_git)))
+    print("only in state: %d = reviewed since %d (kept, stale_handbacks.py reads them)"
+          " + waiting %d (never reviewed before the hand-back, git cannot see them) + not in store %d"
+          % (len(reviewed) + len(waiting) + len(missing), len(reviewed), len(waiting), len(missing)))
+    for c in waiting:
+        print("   waiting, not from git:", c.get("name"))
+    for c in missing:
+        print("   not in store (re-keyed or removed?):", c.get("name"))
+    for c in only_in_git:
+        print("   only in git:", c["name"])
     if args.write:
-        write_json(HANDED_BACK, rebuilt)
-        print("wrote", HANDED_BACK)
+        state, added = merge(state, rebuilt)
+        write_json(HANDED_BACK, state)
+        print("added %d, wrote %s (%d)" % (added, HANDED_BACK, len(state)))
 
 
 if __name__ == "__main__":

@@ -219,7 +219,10 @@ lived there, and the next session's `classify --overwrite` would have rewritten
 
 **Fix:** durable state lives in `state/` (gitignored): `handed-back.json` and
 `work/`. `handed_back.py` rebuilds the list from the store's git and compares it
-with the file; run it at the start of a session that will classify.
+with the file; run it at the start of a session that will classify. Its
+`--write` only adds (2026-11-25): git sees only the hand-backs still waiting
+that had been reviewed before, so replacing the file with git's list would drop
+the cards reviewed since and those handed back without a prior review.
 
 ## A "dry run" that rewrote the human's tree
 

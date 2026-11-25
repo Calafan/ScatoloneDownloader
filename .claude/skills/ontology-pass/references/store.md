@@ -53,7 +53,7 @@ refused, because a card from the human's pass carries their rating too.
 The list lives in `state/handed-back.json` — NOT in the session scratchpad, where
 it sat until 2026-09-29 and where a new session would not have found it.
 `restore_handed_back.py`, `split_unreviewed.py` and `verify_tree.py` default to
-it; `store_pass.py handback` adds to it; `handed_back.py` rebuilds it from git,
+it; `store_pass.py handback` adds to it; `handed_back.py` checks it against git (`--write` only adds),
 because every hand-back is its own "chore(metadata): hand … back for review"
 commit and nothing else in this workflow removes a `reviewedAt` (it matched the
 session's list exactly, 156 of 156, when it was written). The human confirms the

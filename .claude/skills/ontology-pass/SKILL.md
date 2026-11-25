@@ -56,9 +56,10 @@ without being told.
 
 `state/handed-back.json` beside it is the list of cards handed back for review
 that every classify must protect. It is the one piece of state a pass cannot
-lose, so it lives here and `scripts/handed_back.py` rebuilds it from the
+lose, so it lives here and `scripts/handed_back.py` checks it against the
 store's git whenever in doubt (`python handed_back.py` compares, `--write`
-rebuilds).
+adds what git finds and the file lacks, never removes: the file also keeps the
+cards reviewed since, which `stale_handbacks.py` reads).
 
 | you write | they write |
 |---|---|
@@ -120,7 +121,7 @@ from a file, never through a heredoc (`references/hazards.md`).
 | `make_rulings.py` | the ruling and hand-back files from `{"Card": ["+Bounce", "-Wipe"]}` |
 | `store_pass.py` | the store commits: rulings, protected classify, commit, hand-back, README |
 | `store_moves.py` | which tags moved on which cards — tree vs HEAD, or one commit |
-| `handed_back.py` | the durable hand-back list: compare with git, rebuild, add |
+| `handed_back.py` | the durable hand-back list: compare with git, add what git finds, add a file |
 | `apply_ruling.py` | a ruling or a hand-back applied to HEAD or to the tree |
 | `split_unreviewed.py` | the classifier's proposals committed without the human's pass |
 | `restore_handed_back.py` | handed-back entries put back after a classify |
