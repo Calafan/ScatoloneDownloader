@@ -75,6 +75,17 @@ python -I "$T\rating_gaps.py" "$D\oracle.jsonl.gz" $M
 
 A `better` pair marked `check` adds a triggered or static ability: read it before trusting it.
 
+`cube_presence.py` lists the store cards that the 8 reference cubes contradict: rated 1–2 in at
+least 3 cubes, rated 5 in no cube, not rated in at least 3 cubes. Read it again after the review
+of each year. Presence in the cubes says "pool or not", not which rating, so the lists are cards
+to look at, not proposals. On 2026-11-25: 35, 49 (45 without status), 132.
+
+```powershell
+# the bulk of step 1 above, and the cubes of step 3 of "Limited over time"
+python -I "$T\fetch_cubes.py" "$D\cubes" modovintage LSVCube 5d617ac6c2a85f3b75fe95a4 gianpeasant 2hgcb 42a6g commandercube thegiantcube
+python -I "$T\cube_presence.py" "$D\oracle.jsonl.gz" $M "$D\cubes"
+```
+
 ## History: the 2026-10-18 measurement of the box list
 
 The box list against nine retail draft sets, the halfway table and the swap proposal. The box was
