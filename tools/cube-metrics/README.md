@@ -87,6 +87,17 @@ python -I "$T\fetch_cubes.py" "$D\cubes" modovintage LSVCube 5d617ac6c2a85f3b75f
 python -I "$T\cube_presence.py" "$D\oracle.jsonl.gz" $M "$D\cubes"
 ```
 
+`family_review.py` writes, by library year, the families of cards to rate together: the same text
+in other colours (Wrath of God and Damnation, River Boa and Mire Boa) and the design cycles of one
+set ("Dictate of …", "… Charm"). The colour counts in a rating, so it proposes none: each family
+with an unrated card goes under that card's year, next to the ratings its other cards already
+have. Run it again before the review of each year. On 2026-11-27: 17 years, 801 cards to rate.
+
+```powershell
+# the bulk of step 1 above; the library's Source folder gives each card its year and set
+python -I "$T\family_review.py" "$D\oracle.jsonl.gz" $M "E:\Working\Repos\ScatoloneQuintet\Source" "$D\family-review.md"
+```
+
 ## History: the 2026-10-18 measurement of the box list
 
 The box list against nine retail draft sets, the halfway table and the swap proposal. The box was
