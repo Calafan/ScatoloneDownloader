@@ -10,6 +10,9 @@ Two checks, printed for a human to read:
              yet A is rated below B. "sure" when every added ability is an activated one or
              a keyword; "check" when an added triggered or static ability needs reading.
 
+Both checks ignore creature subtypes: two cards that differ only in them are the same card
+(user ruling 2026-11-27).
+
 Split, flip and double-faced cards take part in the reprint check only.
 """
 import gzip
@@ -25,7 +28,8 @@ DRAWBACK = re.compile(
     r"additional cost|enters tapped|^echo|cumulative upkeep|can't block|can't attack|^defender|"
     r"doesn't untap|at the beginning of your upkeep|sacrifice (it|~|this)|discard|lose|"
     r"opponent (draws|gains|creates)|each player|^suspend|^fading|^vanishing|stun counter|"
-    r"can't choose|under its owner's control",
+    r"can't choose|under its owner's control|any player may activate|each opponent may|"
+    r"return (it|~|this \w+|an? \w+ you control) to its owner's hand|deals that much damage to you",
     re.IGNORECASE)
 DRAWBACK_KEYWORDS = {"echo", "cumulative upkeep", "defender", "fading", "vanishing", "suspend"}
 
@@ -56,12 +60,20 @@ def blank_own_name(text, name):
     return text
 
 
+def without_creature_subtypes(type_line):
+    """'Creature — Human Wizard' becomes 'Creature'; any other type line stays as it is."""
+    types, dash, _ = type_line.partition(" — ")
+    if dash and "Creature" in types:
+        return types
+    return type_line
+
+
 def reprint_key(card):
     parts = []
     for face in faces(card):
         parts.append((
             face.get("mana_cost", ""),
-            face.get("type_line", ""),
+            without_creature_subtypes(face.get("type_line", "")),
             blank_own_name(face.get("oracle_text", ""), face.get("name", "")),
             face.get("power"), face.get("toughness"), face.get("loyalty"),
         ))
@@ -87,7 +99,10 @@ def abilities(card):
 
 
 def is_activated(line):
-    """An activated ability is optional, so it is never a drawback: a cost, a colon, an effect."""
+    """An activated ability is optional, so it is never a drawback: a cost, a colon, an effect.
+    One that any player may activate is not optional for its controller, so it does not count."""
+    if "any player may activate" in line.lower():
+        return False
     head, colon, _ = line.partition(":")
     if not colon or len(head) >= 60 or '"' in head:
         return False
@@ -177,7 +192,7 @@ def main():
     by_shape = defaultdict(list)
     for card in cards:
         if "card_faces" not in card:
-            by_shape[(card.get("type_line", ""), tuple(card.get("colors", [])))].append(card)
+            by_shape[(without_creature_subtypes(card.get("type_line", "")), tuple(card.get("colors", [])))].append(card)
     pairs = []
     for group in by_shape.values():
         for a in group:

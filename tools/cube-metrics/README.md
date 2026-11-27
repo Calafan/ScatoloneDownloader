@@ -59,7 +59,8 @@ New sets: `formats.json` holds every expansion with a draft or play booster up t
 reprints with different ratings, and a card rated below the card it improves on (the same card
 plus an optional ability, cheaper or bigger). It only reads; the ratings are changed in the tagger
 or by hand. On 2026-11-25 it found 11 reprint groups and 6 pairs, all raised to the higher rating
-(store `b1a78bf`).
+(store `b1a78bf`). Since 2026-11-27 both checks ignore creature subtypes: two cards that differ
+only in them count as the same card (64 groups aligned upwards, store `bed47f6`).
 
 ```powershell
 $D = "<a new empty directory for the downloads>"
